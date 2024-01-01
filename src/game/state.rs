@@ -1,7 +1,7 @@
-use crate::config::Settings;
-use crate::game::actions::Action;
-use crate::game::conditions::Condition;
-use crate::game::effects::Effects;
+use crate::{
+    config::Settings,
+    game::{actions::Action, conditions::Condition, effects::Effects},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {
@@ -15,6 +15,13 @@ impl State {
     pub fn new(settings: &Settings) -> State {
         State::InProgress(InProgress::new(settings))
     }
+
+    pub fn as_in_progress(self) -> Option<InProgress> {
+        match self {
+            State::InProgress(in_progress) => Some(in_progress),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -25,11 +32,11 @@ pub struct Completed {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InProgress {
     pub last_action: Option<Action>,
-    cp: i32,
-    durability: i32,
-    progress: i32,
-    quality: i32,
-    effects: Effects,
+    pub cp: i32,
+    pub durability: i32,
+    pub progress: i32,
+    pub quality: i32,
+    pub effects: Effects,
 }
 
 impl InProgress {
@@ -55,6 +62,10 @@ impl InProgress {
         }
 
         if (action == Action::MuscleMemory || action == Action::Reflect) && !self.last_action.is_none() {
+            return State::Invalid;
+        }
+
+        if action == Action::ByregotsBlessing && self.effects.inner_quiet == 0 {
             return State::Invalid;
         }
 
@@ -91,10 +102,12 @@ impl InProgress {
             new_state.quality += quality_increase;
             new_state.effects.great_strides = 0;
             new_state.effects.inner_quiet += match action {
+                Action::Reflect => 2,
                 Action::PreciseTouch => 2,
                 Action::PreparatoryTouch => 2,
                 _ => 1,
             };
+            new_state.effects.inner_quiet = std::cmp::min(10, new_state.effects.inner_quiet);
         }
 
         if new_state.progress >= settings.max_progress {
@@ -125,11 +138,10 @@ impl InProgress {
             Action::WasteNot => new_state.effects.waste_not = 4 + duration_bonus,
             Action::WasteNot2 => new_state.effects.waste_not = 8 + duration_bonus,
             Action::Manipulation => new_state.effects.manipulation = 8 + duration_bonus,
+            Action::MasterMend => new_state.durability = std::cmp::min(settings.max_durability, new_state.durability + 30),
+            Action::ByregotsBlessing => new_state.effects.inner_quiet = 0,
             _ => (),
         }
-        // match action {
-
-        // }
 
         return State::InProgress(new_state);
     }
@@ -140,20 +152,21 @@ mod tests {
     use super::*;
     use crate::game::actions::{PROG_DENOM, QUAL_DENOM};
 
+    const SETTINGS: Settings = Settings {
+        max_cp: 200,
+        max_durability: 60,
+        max_progress: (20.00 * PROG_DENOM) as i32,
+        max_quality: (400.00 * QUAL_DENOM) as i32,
+    };
+
     #[test]
     fn test_initial_state() {
-        let settings = Settings {
-            max_cp: 200,
-            max_durability: 60,
-            max_progress: (20.00 * PROG_DENOM) as i32,
-            max_quality: (400.00 * QUAL_DENOM) as i32,
-        };
-        let state = State::new(&settings);
+        let state = State::new(&SETTINGS);
         match state {
             State::InProgress(state) => {
                 assert_eq!(state.last_action, None);
-                assert_eq!(state.cp, settings.max_cp);
-                assert_eq!(state.durability, settings.max_durability);
+                assert_eq!(state.cp, SETTINGS.max_cp);
+                assert_eq!(state.durability, SETTINGS.max_durability);
                 assert_eq!(state.progress, 0);
                 assert_eq!(state.quality, 0);
                 assert_eq!(state.effects.inner_quiet, 0);
@@ -164,15 +177,10 @@ mod tests {
 
     #[test]
     fn test_not_enough_cp() {
-        let settings = Settings {
-            max_cp: 10,
-            ..Default::default()
-        };
+        let mut settings: Settings = SETTINGS;
+        settings.max_cp = 10;
         let state = InProgress::new(&settings);
         let state = state.use_action(Action::Manipulation, Condition::Normal, &settings);
-        match state {
-            State::Invalid => (),
-            _ => panic!(),
-        }
+        assert!(matches!(state, State::Invalid));
     }
 }

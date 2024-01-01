@@ -1,10 +1,6 @@
-mod config;
-mod game;
-mod solvers;
-
 use std::time::Instant;
 
-use crate::{
+use raphael_rs::{
     config::Settings,
     game::{
         actions::{PROG_DENOM, QUAL_DENOM},
@@ -24,7 +20,6 @@ fn main() {
     let state = State::new(&settings);
     let solver = MacroSolver::new(settings);
     solver.solve(state);
-
 
     println!("time elapsed: {}s", timer.elapsed().as_secs_f32());
 }

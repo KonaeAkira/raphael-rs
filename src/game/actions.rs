@@ -1,7 +1,6 @@
 use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 
-use crate::game::effects::Effects;
-use crate::game::conditions::Condition;
+use crate::game::{conditions::Condition, effects::Effects};
 
 pub const PROG_DENOM: f32 = 20.0;
 pub const QUAL_DENOM: f32 = 800.0;
@@ -142,7 +141,7 @@ impl Action {
             Action::Innovation => 0,
             // Action::Final Appraisal => 0,
             Action::WasteNot2 => 0,
-            Action::ByregotsBlessing => 0,
+            Action::ByregotsBlessing => 10,
             Action::PreciseTouch => 10,
             Action::MuscleMemory => 10,
             Action::CarefulSynthesis => 10,
@@ -180,13 +179,11 @@ impl Action {
     pub const fn base_progress_increase(&self) -> f32 {
         match *self {
             Action::BasicSynthesis => 1.20,
-            Action::RapidSynthesis { success } => {
-                match success {
-                    Some(true) => 5.0,
-                    Some(false) => 0.0,
-                    None => panic!()
-                }
-            }
+            Action::RapidSynthesis { success } => match success {
+                Some(true) => 5.0,
+                Some(false) => 0.0,
+                None => panic!(),
+            },
             Action::MuscleMemory => 3.00,
             Action::CarefulSynthesis => 1.80,
             Action::FocusedSynthesis => 2.00,
@@ -217,13 +214,11 @@ impl Action {
     pub const fn base_quality_increase(&self) -> f32 {
         match *self {
             Action::BasicTouch => 1.00,
-            Action::HastyTouch { success } => {
-                match success {
-                    Some(true) => 1.0,
-                    Some(false) => 0.0,
-                    None => panic!(),
-                }
-            }
+            Action::HastyTouch { success } => match success {
+                Some(true) => 1.0,
+                Some(false) => 0.0,
+                None => panic!(),
+            },
             Action::StandardTouch => 1.25,
             Action::PreciseTouch => 1.50,
             Action::PrudentTouch => 1.00,
@@ -233,6 +228,7 @@ impl Action {
             Action::DelicateSynthesis => 1.00,
             Action::AdvancedTouch => 1.50,
             Action::TrainedFinesse => 1.00,
+            Action::ByregotsBlessing => 1.00,
             _ => 0.00,
         }
     }
@@ -257,7 +253,11 @@ impl Action {
         if effects.great_strides > 0 {
             effect_multiplier += 1.00;
         }
-        return (base_increase * condition_multiplier * iq_multiplier * effect_multiplier * QUAL_DENOM) as i32;
+        return (base_increase
+            * condition_multiplier
+            * iq_multiplier
+            * effect_multiplier
+            * QUAL_DENOM) as i32;
     }
 
     pub const fn combo_action(&self) -> Option<Self> {
@@ -318,13 +318,17 @@ mod tests {
         );
         assert_eq!(
             10,
-            Action::RapidSynthesis { success: Some(true) }
-                .durability_cost(&effects_default, Condition::Normal)
+            Action::RapidSynthesis {
+                success: Some(true)
+            }
+            .durability_cost(&effects_default, Condition::Normal)
         );
         assert_eq!(
             10,
-            Action::RapidSynthesis { success: Some(false) }
-                .durability_cost(&effects_default, Condition::Normal)
+            Action::RapidSynthesis {
+                success: Some(false)
+            }
+            .durability_cost(&effects_default, Condition::Normal)
         );
     }
 }
