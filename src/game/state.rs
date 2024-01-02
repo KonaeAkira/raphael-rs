@@ -61,18 +61,15 @@ impl InProgress {
             return State::Invalid;
         }
 
-        if (action == Action::MuscleMemory || action == Action::Reflect) && !self.last_action.is_none() {
-            return State::Invalid;
-        }
-
-        if action == Action::ByregotsBlessing && self.effects.inner_quiet == 0 {
-            return State::Invalid;
-        }
-
-        // can't use prudent synth/touch during waste not
-        if self.effects.waste_not > 0
-            && (action == Action::PrudentSynthesis || action == Action::PrudentTouch)
-        {
+        if !match action {
+            Action::MuscleMemory | Action::Reflect => self.last_action.is_none(),
+            Action::ByregotsBlessing => self.effects.inner_quiet != 0,
+            Action::PrudentSynthesis | Action::PrudentTouch => self.effects.waste_not == 0,
+            Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
+                condition == Condition::Good || condition == Condition::Excellent
+            }
+            _ => true,
+        } {
             return State::Invalid;
         }
 
@@ -138,8 +135,14 @@ impl InProgress {
             Action::WasteNot => new_state.effects.waste_not = 4 + duration_bonus,
             Action::WasteNot2 => new_state.effects.waste_not = 8 + duration_bonus,
             Action::Manipulation => new_state.effects.manipulation = 8 + duration_bonus,
-            Action::MasterMend => new_state.durability = std::cmp::min(settings.max_durability, new_state.durability + 30),
+            Action::MasterMend => {
+                new_state.durability =
+                    std::cmp::min(settings.max_durability, new_state.durability + 30)
+            }
             Action::ByregotsBlessing => new_state.effects.inner_quiet = 0,
+            Action::TricksOfTheTrade => {
+                new_state.cp = std::cmp::min(settings.max_cp, new_state.cp + 20)
+            }
             _ => (),
         }
 

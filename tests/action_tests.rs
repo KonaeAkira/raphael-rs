@@ -128,16 +128,6 @@ fn test_master_mend() {
 }
 
 #[test]
-fn test_hasty_touch() {
-    todo!();
-}
-
-#[test]
-fn test_rapid_synthesis() {
-    todo!()
-}
-
-#[test]
 fn test_observe() {
     let state = from_action_sequence(&SETTINGS, &[Action::Observe]);
     match state {
@@ -151,7 +141,28 @@ fn test_observe() {
 
 #[test]
 fn test_tricks_of_the_trade() {
-    todo!()
+    let mut state: InProgress = InProgress::new(&SETTINGS);
+    state.cp -= 50;
+    let state = state.use_action(Action::TricksOfTheTrade, Condition::Good, &SETTINGS);
+    match state {
+        State::InProgress(state) => {
+            assert_eq!(state.cp, 170);
+        },
+        _ => panic!()
+    }
+    // CP after action can't exceed max cp
+    let mut state: InProgress = InProgress::new(&SETTINGS);
+    state.cp -= 10;
+    let state = state.use_action(Action::TricksOfTheTrade, Condition::Excellent, &SETTINGS);
+    match state {
+        State::InProgress(state) => {
+            assert_eq!(state.cp, 200);
+        },
+        _ => panic!()
+    }
+    // can't use action when condition isn't Good or Excellent
+    let state = from_action_sequence(&SETTINGS, &[Action::TricksOfTheTrade]);
+    assert!(matches!(state, State::Invalid));
 }
 
 #[test]
@@ -239,7 +250,21 @@ fn test_byregots_blessing() {
 
 #[test]
 fn test_precise_touch() {
-    todo!()
+    let state: InProgress = InProgress::new(&SETTINGS);
+    let state = state.use_action(Action::PreciseTouch, Condition::Good, &SETTINGS);
+    match state {
+        State::InProgress(state) => {
+            assert_eq!(state.cp, 182);
+            assert_eq!(state.durability, 50);
+            assert_eq!(state.quality, (2.25 * QUAL_DENOM) as i32);
+            assert_eq!(state.effects.inner_quiet, 2);
+            assert_eq!(state.last_action, Some(Action::PreciseTouch));
+        },
+        _ => panic!()
+    }
+    // can't use Precise Touch when condition isn't Good or Excellent
+    let state = from_action_sequence(&SETTINGS, &[Action::PreciseTouch]);
+    assert!(matches!(state, State::Invalid));
 }
 
 #[test]
@@ -405,7 +430,20 @@ fn test_delicate_synthesis() {
 
 #[test]
 fn test_intensive_synthesis() {
-    todo!()
+    let state: InProgress = InProgress::new(&SETTINGS);
+    let state = state.use_action(Action::IntensiveSynthesis, Condition::Good, &SETTINGS);
+    match state {
+        State::InProgress(state) => {
+            assert_eq!(state.cp, 194);
+            assert_eq!(state.durability, 50);
+            assert_eq!(state.progress, (4.00 * PROG_DENOM) as i32);
+            assert_eq!(state.last_action, Some(Action::IntensiveSynthesis));
+        },
+        _ => panic!()
+    }
+    // can't use when condition isn't good or excellent
+    let state = from_action_sequence(&SETTINGS, &[Action::IntensiveSynthesis]);
+    assert!(matches!(state, State::Invalid));
 }
 
 #[test]
@@ -436,14 +474,4 @@ fn test_trained_finesse() {
         },
         _ => panic!()
     }
-}
-
-#[test]
-fn test_heart_and_soul() {
-    todo!()
-}
-
-#[test]
-fn test_careful_observe() {
-    todo!()
 }

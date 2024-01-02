@@ -10,8 +10,6 @@ pub enum Action {
     BasicSynthesis,
     BasicTouch,
     MasterMend,
-    HastyTouch { success: Option<bool> },
-    RapidSynthesis { success: Option<bool> },
     Observe,
     TricksOfTheTrade,
     WasteNot,
@@ -37,8 +35,6 @@ pub enum Action {
     AdvancedTouch,
     PrudentSynthesis,
     TrainedFinesse,
-    HeartAndSoul,
-    CarefulObserve,
 }
 
 impl Action {
@@ -47,8 +43,6 @@ impl Action {
             Action::BasicSynthesis => 3,
             Action::BasicTouch => 3,
             Action::MasterMend => 3,
-            Action::HastyTouch { .. } => 3,
-            Action::RapidSynthesis { .. } => 3,
             Action::Observe => 2,
             Action::TricksOfTheTrade => 2,
             Action::WasteNot => 2,
@@ -73,8 +67,6 @@ impl Action {
             Action::AdvancedTouch => 3,
             Action::PrudentSynthesis => 3,
             Action::TrainedFinesse => 3,
-            Action::HeartAndSoul => 2,
-            Action::CarefulObserve => 2,
         }
     }
 
@@ -83,8 +75,6 @@ impl Action {
             Action::BasicSynthesis => 0,
             Action::BasicTouch => 18,
             Action::MasterMend => 88,
-            Action::HastyTouch { .. } => 0,
-            Action::RapidSynthesis { .. } => 0,
             Action::Observe => 7,
             Action::TricksOfTheTrade => 0,
             Action::WasteNot => 56,
@@ -110,8 +100,6 @@ impl Action {
             Action::AdvancedTouch => 18,
             Action::PrudentSynthesis => 18,
             Action::TrainedFinesse => 32,
-            Action::HeartAndSoul => 0,
-            Action::CarefulObserve => 0,
         }
     }
 
@@ -130,8 +118,6 @@ impl Action {
             Action::BasicSynthesis => 10,
             Action::BasicTouch => 10,
             Action::MasterMend => 0,
-            Action::HastyTouch { .. } => 10,
-            Action::RapidSynthesis { .. } => 10,
             Action::Observe => 0,
             Action::TricksOfTheTrade => 0,
             Action::WasteNot => 0,
@@ -157,8 +143,6 @@ impl Action {
             Action::AdvancedTouch => 10,
             Action::PrudentSynthesis => 5,
             Action::TrainedFinesse => 0,
-            Action::HeartAndSoul => 0,
-            Action::CarefulObserve => 0,
         }
     }
 
@@ -179,11 +163,6 @@ impl Action {
     pub const fn base_progress_increase(&self) -> f32 {
         match *self {
             Action::BasicSynthesis => 1.20,
-            Action::RapidSynthesis { success } => match success {
-                Some(true) => 5.0,
-                Some(false) => 0.0,
-                None => panic!(),
-            },
             Action::MuscleMemory => 3.00,
             Action::CarefulSynthesis => 1.80,
             Action::FocusedSynthesis => 2.00,
@@ -214,11 +193,6 @@ impl Action {
     pub const fn base_quality_increase(&self) -> f32 {
         match *self {
             Action::BasicTouch => 1.00,
-            Action::HastyTouch { success } => match success {
-                Some(true) => 1.0,
-                Some(false) => 0.0,
-                None => panic!(),
-            },
             Action::StandardTouch => 1.25,
             Action::PreciseTouch => 1.50,
             Action::PrudentTouch => 1.00,
@@ -315,20 +289,6 @@ mod tests {
         assert_eq!(
             3,
             Action::BasicTouch.durability_cost(&effects_waste_not, Condition::Sturdy)
-        );
-        assert_eq!(
-            10,
-            Action::RapidSynthesis {
-                success: Some(true)
-            }
-            .durability_cost(&effects_default, Condition::Normal)
-        );
-        assert_eq!(
-            10,
-            Action::RapidSynthesis {
-                success: Some(false)
-            }
-            .durability_cost(&effects_default, Condition::Normal)
         );
     }
 }
