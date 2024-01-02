@@ -68,6 +68,7 @@ impl InProgress {
             Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
                 condition == Condition::Good || condition == Condition::Excellent
             }
+            Action::Groundwork => self.durability >= durability_cost,
             _ => true,
         } {
             return State::Invalid;

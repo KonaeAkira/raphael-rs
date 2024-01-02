@@ -410,6 +410,11 @@ fn test_groundwork() {
         }
         _ => panic!()
     }
+    // can't use Groundwork when there isn't enough durability
+    let mut state: InProgress = InProgress::new(&SETTINGS);
+    state.durability = 10;
+    let state = state.use_action(Action::Groundwork, Condition::Normal, &SETTINGS);
+    assert!(matches!(state, State::Invalid));
 }
 
 #[test]
