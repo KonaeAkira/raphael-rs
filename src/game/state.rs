@@ -69,6 +69,7 @@ impl InProgress {
                 condition == Condition::Good || condition == Condition::Excellent
             }
             Action::Groundwork => self.durability >= durability_cost,
+            Action::TrainedFinesse => self.effects.inner_quiet == 10,
             _ => true,
         } {
             return State::Invalid;

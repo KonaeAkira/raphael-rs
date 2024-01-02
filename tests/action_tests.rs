@@ -479,4 +479,9 @@ fn test_trained_finesse() {
         },
         _ => panic!()
     }
+    // can't use TrainedFinesse when InnerQuiet < 10
+    let mut state: InProgress = InProgress::new(&SETTINGS);
+    state.effects.inner_quiet = 9;
+    let state = state.use_action(Action::TrainedFinesse, Condition::Normal, &SETTINGS);
+    assert!(matches!(state, State::Invalid));
 }
