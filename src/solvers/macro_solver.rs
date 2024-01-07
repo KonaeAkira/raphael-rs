@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::time::Instant;
 use std::vec::Vec;
 
 use crate::{
@@ -6,43 +7,44 @@ use crate::{
     game::{
         actions::{Action, QUAL_DENOM},
         conditions::Condition,
-        state::{Completed, InProgress, State}
-    }
+        state::{Completed, InProgress, State},
+    },
 };
 
-static MACRO_ACTIONS: [Action; 24] = [
-    Action::BasicSynthesis,
-    Action::BasicTouch,
-    Action::MasterMend,
-    Action::Observe,
-    Action::WasteNot,
-    Action::Veneration,
-    Action::StandardTouch,
-    Action::GreatStrides,
-    Action::Innovation,
-    Action::WasteNot2,
-    Action::ByregotsBlessing,
-    Action::MuscleMemory,
-    Action::CarefulSynthesis,
-    Action::Manipulation,
-    Action::PrudentTouch,
-    Action::FocusedSynthesis,
-    Action::FocusedTouch,
-    Action::Reflect,
-    Action::PreparatoryTouch,
-    Action::Groundwork,
-    Action::DelicateSynthesis,
-    Action::AdvancedTouch,
-    Action::PrudentSynthesis,
-    Action::TrainedFinesse,
+static OPENERS: &[&[Action]] = &[&[Action::MuscleMemory], &[Action::Reflect]];
+
+static ACTIONS: &[&[Action]] = &[
+    // singles
+    &[Action::CarefulSynthesis],
+    &[Action::Groundwork],
+    &[Action::PreparatoryTouch],
+    &[Action::PrudentTouch],
+    &[Action::TrainedFinesse],
+    // combos
+    &[
+        Action::BasicTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
+    ],
+    &[Action::Observe, Action::FocusedSynthesis],
+    &[Action::Observe, Action::FocusedTouch],
+    // effects
+    &[Action::MasterMend],
+    &[Action::Manipulation],
+    &[Action::WasteNot],
+    &[Action::WasteNot2],
+    &[Action::Innovation],
+    &[Action::Veneration],
+    // finisher
+    &[Action::GreatStrides, Action::ByregotsBlessing],
+    &[Action::ByregotsBlessing],
 ];
 
 #[derive(Debug, Clone)]
 struct Node {
     state: InProgress,
     parent_node_index: Option<usize>,
-    time_cost: i32,
-    steps: i32,
+    last_action: Vec<Action>,
 }
 
 struct MacroResult {
@@ -73,6 +75,8 @@ impl MacroSolver {
     }
 
     fn do_solve(&self, state: InProgress) -> Option<MacroResult> {
+        let timer = Instant::now();
+
         let mut visited_states: HashSet<InProgress> = HashSet::new();
         let mut search_queue: Vec<Node> = Vec::new();
 
@@ -80,8 +84,7 @@ impl MacroSolver {
         search_queue.push(Node {
             state,
             parent_node_index: None,
-            time_cost: 0,
-            steps: 0,
+            last_action: Vec::new(),
         });
 
         let mut result: Option<MacroResult> = None;
@@ -89,11 +92,8 @@ impl MacroSolver {
         let mut i: usize = 0;
         while i < search_queue.len() {
             let current_node: Node = search_queue[i].clone();
-            for action in MACRO_ACTIONS {
-                let use_action =
-                    current_node
-                        .state
-                        .use_action(action, Condition::Normal, &self.settings);
+            for actions in self.search_space(&current_node.state) {
+                let use_action = self.use_actions(State::InProgress(current_node.state), actions);
                 match use_action {
                     State::InProgress(new_state) => {
                         if !visited_states.contains(&new_state) {
@@ -101,8 +101,7 @@ impl MacroSolver {
                             search_queue.push(Node {
                                 state: new_state,
                                 parent_node_index: Some(i),
-                                time_cost: current_node.time_cost + action.time_cost(),
-                                steps: current_node.steps + 1,
+                                last_action: actions.to_vec(),
                             });
                         }
                     }
@@ -112,21 +111,15 @@ impl MacroSolver {
                             Some(MacroResult { quality, .. }) => quality,
                         };
                         if current_quality < quality {
-                            let mut new_result = MacroResult {
+                            let new_result = MacroResult {
                                 quality,
-                                actions: Vec::new(),
+                                actions: self.trace_steps(&search_queue, i, actions),
                             };
-                            new_result.actions.push(action);
-                            let mut backtrack_index = i;
-                            while backtrack_index != 0 {
-                                let backtrack_node: &Node = &search_queue[backtrack_index];
-                                new_result
-                                    .actions
-                                    .push(backtrack_node.state.last_action.unwrap());
-                                backtrack_index = backtrack_node.parent_node_index.unwrap();
-                            }
-                            new_result.actions.reverse();
-                            println!("new result ({}): {:?}", new_result.quality as f32 / QUAL_DENOM, new_result.actions);
+                            println!(
+                                "result ({}): {:?}",
+                                new_result.quality as f32 / QUAL_DENOM,
+                                new_result.actions
+                            );
                             result = Some(new_result);
                         }
                     }
@@ -136,6 +129,53 @@ impl MacroSolver {
             i += 1;
         }
 
+        let time = timer.elapsed().as_secs_f32();
+        let nodes = search_queue.len() as f32;
+        println!("Time elapsed: {}s", time);
+        println!(
+            "Searched nodes: {:+.2e} ({:+.2e} nodes/s)",
+            nodes,
+            nodes / time
+        );
+
         result
+    }
+
+    fn use_actions(&self, mut state: State, actions: &[Action]) -> State {
+        for action in actions {
+            match state {
+                State::InProgress(in_progress) => {
+                    state = in_progress.use_action(*action, Condition::Normal, &self.settings);
+                }
+                _ => return State::Invalid,
+            }
+        }
+        state
+    }
+
+    fn search_space(&self, state: &InProgress) -> &[&[Action]] {
+        if state.last_action.is_none() {
+            OPENERS
+        } else {
+            ACTIONS
+        }
+    }
+
+    fn trace_steps(&self, nodes: &Vec<Node>, index: usize, last_action: &[Action]) -> Vec<Action> {
+        let mut steps: Vec<Action> = Vec::new();
+        for action in last_action.iter().rev() {
+            steps.push(*action);
+        }
+
+        let mut index: Option<usize> = nodes[index].parent_node_index;
+        while let Some(i) = index {
+            for action in nodes[i].last_action.iter().rev() {
+                steps.push(*action);
+            }
+            index = nodes[i].parent_node_index;
+        }
+
+        steps.reverse();
+        steps
     }
 }
