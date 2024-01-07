@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 use std::time::Instant;
 use std::vec::Vec;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 use crate::{
     config::Settings,
@@ -11,40 +13,10 @@ use crate::{
     },
 };
 
-static OPENERS: &[&[Action]] = &[&[Action::MuscleMemory], &[Action::Reflect]];
-
-static ACTIONS: &[&[Action]] = &[
-    // singles
-    &[Action::CarefulSynthesis],
-    &[Action::Groundwork],
-    &[Action::PreparatoryTouch],
-    &[Action::PrudentTouch],
-    &[Action::TrainedFinesse],
-    // combos
-    &[
-        Action::BasicTouch,
-        Action::StandardTouch,
-        Action::AdvancedTouch,
-    ],
-    &[Action::Observe, Action::FocusedSynthesis],
-    &[Action::Observe, Action::FocusedTouch],
-    // effects
-    &[Action::MasterMend],
-    &[Action::Manipulation],
-    &[Action::WasteNot],
-    &[Action::WasteNot2],
-    &[Action::Innovation],
-    &[Action::Veneration],
-    // finisher
-    &[Action::GreatStrides, Action::ByregotsBlessing],
-    &[Action::ByregotsBlessing],
-];
-
 #[derive(Debug, Clone)]
 struct Node {
     state: InProgress,
-    parent_node_index: Option<usize>,
-    last_action: Vec<Action>,
+    trace: Option<(usize, Sequence)>,
 }
 
 struct MacroResult {
@@ -81,49 +53,47 @@ impl MacroSolver {
         let mut search_queue: Vec<Node> = Vec::new();
 
         visited_states.insert(state.clone());
-        search_queue.push(Node {
-            state,
-            parent_node_index: None,
-            last_action: Vec::new(),
-        });
+        search_queue.push(Node { state, trace: None });
 
         let mut result: Option<MacroResult> = None;
 
         let mut i: usize = 0;
         while i < search_queue.len() {
             let current_node: Node = search_queue[i].clone();
-            for actions in self.search_space(&current_node.state) {
-                let use_action = self.use_actions(State::InProgress(current_node.state), actions);
-                match use_action {
-                    State::InProgress(new_state) => {
-                        if !visited_states.contains(&new_state) {
-                            visited_states.insert(new_state.clone());
-                            search_queue.push(Node {
-                                state: new_state,
-                                parent_node_index: Some(i),
-                                last_action: actions.to_vec(),
-                            });
+            for sequence in Sequence::iter() {
+                if self.should_use(&current_node.state, sequence) {
+                    let use_action =
+                        self.use_actions(State::InProgress(current_node.state), sequence);
+                    match use_action {
+                        State::InProgress(new_state) => {
+                            if !visited_states.contains(&new_state) {
+                                visited_states.insert(new_state.clone());
+                                search_queue.push(Node {
+                                    state: new_state,
+                                    trace: Some((i, sequence)),
+                                });
+                            }
                         }
-                    }
-                    State::Completed(Completed { quality }) => {
-                        let current_quality = match result {
-                            None => -1,
-                            Some(MacroResult { quality, .. }) => quality,
-                        };
-                        if current_quality < quality {
-                            let new_result = MacroResult {
-                                quality,
-                                actions: self.trace_steps(&search_queue, i, actions),
+                        State::Completed(Completed { quality }) => {
+                            let current_quality = match result {
+                                None => -1,
+                                Some(MacroResult { quality, .. }) => quality,
                             };
-                            println!(
-                                "result ({}): {:?}",
-                                new_result.quality as f32 / QUAL_DENOM,
-                                new_result.actions
-                            );
-                            result = Some(new_result);
+                            if current_quality < quality {
+                                let new_result = MacroResult {
+                                    quality,
+                                    actions: self.trace_steps(&search_queue, i, sequence),
+                                };
+                                println!(
+                                    "result ({}): {:?}",
+                                    new_result.quality as f32 / QUAL_DENOM,
+                                    new_result.actions
+                                );
+                                result = Some(new_result);
+                            }
                         }
+                        _ => (),
                     }
-                    _ => (),
                 }
             }
             i += 1;
@@ -141,8 +111,29 @@ impl MacroSolver {
         result
     }
 
-    fn use_actions(&self, mut state: State, actions: &[Action]) -> State {
-        for action in actions {
+    fn should_use(&self, state: &InProgress, sequence: Sequence) -> bool {
+        if state.last_action.is_none() {
+            match sequence {
+                Sequence::MuscleMemoryOpener | Sequence::ReflectOpener => true,
+                _ => false
+            }
+        } else {
+            match sequence {
+                // don't waste effects
+                Sequence::Innovation => state.effects.innovation == 0,
+                Sequence::Veneration => state.effects.veneration == 0,
+                Sequence::WasteNot => state.effects.waste_not == 0,
+                Sequence::WasteNot2 => state.effects.waste_not == 0,
+                Sequence::Manipulation => state.effects.manipulation == 0,
+                // don't waste recovered durability
+                Sequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
+                _ => true,
+            }
+        }
+    }
+
+    fn use_actions(&self, mut state: State, sequence: Sequence) -> State {
+        for action in sequence.to_slice() {
             match state {
                 State::InProgress(in_progress) => {
                     state = in_progress.use_action(*action, Condition::Normal, &self.settings);
@@ -153,29 +144,77 @@ impl MacroSolver {
         state
     }
 
-    fn search_space(&self, state: &InProgress) -> &[&[Action]] {
-        if state.last_action.is_none() {
-            OPENERS
-        } else {
-            ACTIONS
-        }
-    }
-
-    fn trace_steps(&self, nodes: &Vec<Node>, index: usize, last_action: &[Action]) -> Vec<Action> {
+    fn trace_steps(&self, nodes: &Vec<Node>, index: usize, last_sequence: Sequence) -> Vec<Action> {
         let mut steps: Vec<Action> = Vec::new();
-        for action in last_action.iter().rev() {
+        for action in last_sequence.to_slice().iter().rev() {
             steps.push(*action);
         }
 
-        let mut index: Option<usize> = nodes[index].parent_node_index;
-        while let Some(i) = index {
-            for action in nodes[i].last_action.iter().rev() {
+        let mut trace: Option<(usize, Sequence)> = nodes[index].trace;
+        while let Some((i, sequence)) = trace {
+            for action in sequence.to_slice().iter().rev() {
                 steps.push(*action);
             }
-            index = nodes[i].parent_node_index;
+            trace = nodes[i].trace;
         }
 
         steps.reverse();
         steps
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter)]
+enum Sequence {
+    // opener
+    MuscleMemoryOpener,
+    ReflectOpener,
+    // singles
+    MasterMend,
+    CarefulSynthesis,
+    Groundwork,
+    PreparatoryTouch,
+    PrudentTouch,
+    TrainedFinesse,
+    // combos
+    AdvancedTouchCombo,
+    FocusedSynthesisCombo,
+    FocusedTouchCombo,
+    // effects
+    Manipulation,
+    WasteNot,
+    WasteNot2,
+    Innovation,
+    Veneration,
+    // finisher
+    ByresgotsBlessingCombo,
+    ByregotsBlessing,
+}
+
+impl Sequence {
+    pub fn to_slice(&self) -> &[Action] {
+        match *self {
+            Sequence::CarefulSynthesis => &[Action::CarefulSynthesis],
+            Sequence::Groundwork => &[Action::Groundwork],
+            Sequence::PreparatoryTouch => &[Action::PreparatoryTouch],
+            Sequence::PrudentTouch => &[Action::PrudentTouch],
+            Sequence::TrainedFinesse => &[Action::TrainedFinesse],
+            Sequence::AdvancedTouchCombo => &[
+                Action::BasicTouch,
+                Action::StandardTouch,
+                Action::AdvancedTouch,
+            ],
+            Sequence::FocusedSynthesisCombo => &[Action::Observe, Action::FocusedSynthesis],
+            Sequence::FocusedTouchCombo => &[Action::Observe, Action::FocusedTouch],
+            Sequence::MasterMend => &[Action::MasterMend],
+            Sequence::Manipulation => &[Action::Manipulation],
+            Sequence::WasteNot => &[Action::WasteNot],
+            Sequence::WasteNot2 => &[Action::WasteNot2],
+            Sequence::Innovation => &[Action::Innovation],
+            Sequence::Veneration => &[Action::Veneration],
+            Sequence::ByresgotsBlessingCombo => &[Action::GreatStrides, Action::ByregotsBlessing],
+            Sequence::ByregotsBlessing => &[Action::ByregotsBlessing],
+            Sequence::MuscleMemoryOpener => &[Action::MuscleMemory],
+            Sequence::ReflectOpener => &[Action::Reflect],
+        }
     }
 }
