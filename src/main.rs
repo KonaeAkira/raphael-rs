@@ -8,7 +8,7 @@ use raphael_rs::{
 
 fn main() {
     let settings = Settings {
-        max_cp: 200,
+        max_cp: 240,
         max_durability: 60,
         max_progress: (20.00 * PROG_DENOM) as i32,
         max_quality: (400.00 * QUAL_DENOM) as i32,

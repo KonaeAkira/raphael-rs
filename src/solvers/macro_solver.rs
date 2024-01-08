@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::time::Instant;
 use std::vec::Vec;
 use strum::IntoEnumIterator;
@@ -11,6 +10,7 @@ use crate::{
         conditions::Condition,
         state::{Completed, InProgress, State},
     },
+    util::pareto_front::ParetoFront,
 };
 
 #[derive(Debug, Clone)]
@@ -49,10 +49,10 @@ impl MacroSolver {
     fn do_solve(&self, state: InProgress) -> Option<MacroResult> {
         let timer = Instant::now();
 
-        let mut visited_states: HashSet<InProgress> = HashSet::new();
+        let mut pareto_front: ParetoFront = ParetoFront::new();
         let mut search_queue: Vec<Node> = Vec::new();
 
-        visited_states.insert(state.clone());
+        pareto_front.insert(&state);
         search_queue.push(Node { state, trace: None });
 
         let mut result: Option<MacroResult> = None;
@@ -66,8 +66,7 @@ impl MacroSolver {
                         self.use_actions(State::InProgress(current_node.state), sequence);
                     match use_action {
                         State::InProgress(new_state) => {
-                            if !visited_states.contains(&new_state) {
-                                visited_states.insert(new_state.clone());
+                            if pareto_front.insert(&new_state) {
                                 search_queue.push(Node {
                                     state: new_state,
                                     trace: Some((i, sequence)),
@@ -115,12 +114,15 @@ impl MacroSolver {
         if state.last_action.is_none() {
             match sequence {
                 Sequence::MuscleMemoryOpener | Sequence::ReflectOpener => true,
-                _ => false
+                _ => false,
             }
         } else {
             match sequence {
+                Sequence::Groundwork | Sequence::PreparatoryTouch => state.effects.waste_not != 0,
                 // don't waste effects
-                Sequence::Innovation => state.effects.innovation == 0,
+                Sequence::Innovation => {
+                    state.effects.innovation == 0 && state.effects.muscle_memory == 0
+                }
                 Sequence::Veneration => state.effects.veneration == 0,
                 Sequence::WasteNot => state.effects.waste_not == 0,
                 Sequence::WasteNot2 => state.effects.waste_not == 0,

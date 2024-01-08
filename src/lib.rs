@@ -10,3 +10,7 @@ pub mod game {
 pub mod solvers {
     pub mod macro_solver;
 }
+
+pub mod util {
+    pub mod pareto_front;
+}
