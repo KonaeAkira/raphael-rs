@@ -117,19 +117,50 @@ impl MacroSolver {
                 _ => false,
             }
         } else {
+            let is_pre_byregots_blessing: bool =
+                state.effects.inner_quiet != 0 || state.quality == 0;
+            let use_quality_increase: bool =
+                state.effects.muscle_memory == 0 && is_pre_byregots_blessing;
             match sequence {
-                Sequence::Groundwork | Sequence::PreparatoryTouch => state.effects.waste_not != 0,
-                // don't waste effects
-                Sequence::Innovation => {
-                    state.effects.innovation == 0 && state.effects.muscle_memory == 0
+                Sequence::MuscleMemoryOpener => true,
+                Sequence::ReflectOpener => true,
+                Sequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
+                Sequence::CarefulSynthesis => state.effects.muscle_memory == 0,
+                Sequence::Groundwork => {
+                    state.effects.waste_not != 0 || state.effects.muscle_memory != 0
                 }
-                Sequence::Veneration => state.effects.veneration == 0,
+                Sequence::PreparatoryTouch => state.effects.waste_not != 0 && use_quality_increase,
+                Sequence::PrudentTouch => use_quality_increase,
+                Sequence::TrainedFinesse => true,
+                Sequence::AdvancedTouchCombo => {
+                    use_quality_increase
+                        && (state.effects.innovation >= 3 || state.effects.innovation == 0)
+                }
+                Sequence::FocusedSynthesisCombo => {
+                    state.effects.muscle_memory == 0
+                        && (state.effects.veneration >= 2 || state.effects.veneration == 0)
+                }
+                Sequence::FocusedTouchCombo => {
+                    use_quality_increase
+                        && (state.effects.innovation >= 2 || state.effects.innovation == 0)
+                }
+                Sequence::Manipulation => state.effects.manipulation == 0,
                 Sequence::WasteNot => state.effects.waste_not == 0,
                 Sequence::WasteNot2 => state.effects.waste_not == 0,
-                Sequence::Manipulation => state.effects.manipulation == 0,
-                // don't waste recovered durability
-                Sequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
-                _ => true,
+                Sequence::Innovation => {
+                    state.effects.innovation == 0
+                        && state.effects.muscle_memory == 0
+                        && use_quality_increase
+                }
+                Sequence::Veneration => {
+                    state.effects.veneration == 0
+                        && (!use_quality_increase
+                            || state.effects.muscle_memory != 0
+                            || state.cp <= 96)
+                    // 96 cp = veneration + 4 * groundwork
+                }
+                Sequence::ByresgotsBlessingCombo => state.effects.inner_quiet >= 4,
+                Sequence::ByregotsBlessing => state.effects.inner_quiet >= 4,
             }
         }
     }
