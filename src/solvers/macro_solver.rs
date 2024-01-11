@@ -19,6 +19,32 @@ struct Node {
     trace: Option<(usize, Sequence)>,
 }
 
+struct SearchQueue {
+    queues: Vec<Vec<Node>>,
+}
+
+impl SearchQueue {
+    pub fn new(size: usize) -> SearchQueue {
+        SearchQueue {
+            queues: vec![Vec::new(); size],
+        }
+    }
+
+    pub fn push(&mut self, queue_index: usize, element: Node) {
+        self.queues[queue_index].push(element);
+    }
+
+    pub fn pop(&mut self) -> Option<Node> {
+        while self.queues.len() != 0 {
+            match self.queues.last_mut()?.pop() {
+                Some(node) => return Some(node),
+                None => self.queues.pop(),
+            };
+        }
+        None
+    }
+}
+
 struct MacroResult {
     quality: i32,
     actions: Vec<Action>,
@@ -26,14 +52,22 @@ struct MacroResult {
 
 pub struct MacroSolver {
     settings: Settings,
+    pareto_front: ParetoFront,
+    search_queue: SearchQueue,
+    save: Vec<Node>,
 }
 
 impl MacroSolver {
     pub fn new(settings: Settings) -> MacroSolver {
-        MacroSolver { settings }
+        MacroSolver {
+            settings: settings.clone(),
+            pareto_front: ParetoFront::new(),
+            search_queue: SearchQueue::new((settings.max_cp + 1) as usize),
+            save: Vec::new(),
+        }
     }
 
-    pub fn solve(&self, state: State) -> Option<Action> {
+    pub fn solve(&mut self, state: State) -> Option<Action> {
         match state {
             State::InProgress(state) => {
                 let result = self.do_solve(state);
@@ -46,31 +80,30 @@ impl MacroSolver {
         }
     }
 
-    fn do_solve(&self, state: InProgress) -> Option<MacroResult> {
+    fn do_solve(&mut self, state: InProgress) -> Option<MacroResult> {
         let timer = Instant::now();
 
-        let mut pareto_front: ParetoFront = ParetoFront::new();
-        let mut search_queue: Vec<Node> = Vec::new();
-
-        pareto_front.insert(&state);
-        search_queue.push(Node { state, trace: None });
+        self.pareto_front.insert(&state);
+        self.search_queue
+            .push(self.settings.max_cp as usize, Node { state, trace: None });
 
         let mut result: Option<MacroResult> = None;
-
-        let mut i: usize = 0;
-        while i < search_queue.len() {
-            let current_node: Node = search_queue[i].clone();
+        while let Some(current_node) = self.search_queue.pop() {
+            self.save.push(current_node.clone());
             for sequence in Sequence::iter() {
                 if self.should_use(&current_node.state, sequence) {
                     let use_action =
                         self.use_actions(State::InProgress(current_node.state), sequence);
                     match use_action {
                         State::InProgress(new_state) => {
-                            if pareto_front.insert(&new_state) {
-                                search_queue.push(Node {
-                                    state: new_state,
-                                    trace: Some((i, sequence)),
-                                });
+                            if self.pareto_front.insert(&new_state) {
+                                self.search_queue.push(
+                                    new_state.cp as usize,
+                                    Node {
+                                        state: new_state,
+                                        trace: Some((self.save.len() - 1, sequence)),
+                                    },
+                                );
                             }
                         }
                         State::Completed(Completed { quality }) => {
@@ -81,7 +114,7 @@ impl MacroSolver {
                             if current_quality < quality {
                                 let new_result = MacroResult {
                                     quality,
-                                    actions: self.trace_steps(&search_queue, i, sequence),
+                                    actions: self.trace_steps(sequence),
                                 };
                                 println!(
                                     "result ({}): {:?}",
@@ -95,11 +128,10 @@ impl MacroSolver {
                     }
                 }
             }
-            i += 1;
         }
 
         let time = timer.elapsed().as_secs_f32();
-        let nodes = search_queue.len() as f32;
+        let nodes = self.save.len() as f32;
         println!("Time elapsed: {}s", time);
         println!(
             "Searched nodes: {:+.2e} ({:+.2e} nodes/s)",
@@ -177,18 +209,18 @@ impl MacroSolver {
         state
     }
 
-    fn trace_steps(&self, nodes: &Vec<Node>, index: usize, last_sequence: Sequence) -> Vec<Action> {
+    fn trace_steps(&self, last_sequence: Sequence) -> Vec<Action> {
         let mut steps: Vec<Action> = Vec::new();
         for action in last_sequence.to_slice().iter().rev() {
             steps.push(*action);
         }
 
-        let mut trace: Option<(usize, Sequence)> = nodes[index].trace;
+        let mut trace: Option<(usize, Sequence)> = self.save.last().unwrap().trace;
         while let Some((i, sequence)) = trace {
             for action in sequence.to_slice().iter().rev() {
                 steps.push(*action);
             }
-            trace = nodes[i].trace;
+            trace = self.save[i].trace;
         }
 
         steps.reverse();

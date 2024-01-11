@@ -1,4 +1,4 @@
-#[derive(Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct Settings {
     pub max_cp: i32,
     pub max_durability: i32,

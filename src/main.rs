@@ -14,6 +14,6 @@ fn main() {
         max_quality: (400.00 * QUAL_DENOM) as i32,
     };
     let state = State::new(&settings);
-    let solver = MacroSolver::new(settings);
+    let mut solver = MacroSolver::new(settings);
     solver.solve(state);
 }

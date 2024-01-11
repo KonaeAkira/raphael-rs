@@ -5,7 +5,6 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ParetoKey {
     pub last_action: Option<Action>,
-    pub cp: i32,
     pub durability: i32,
     pub effects: Effects,
 }
@@ -14,7 +13,6 @@ impl ParetoKey {
     pub fn new(state: &InProgress) -> ParetoKey {
         ParetoKey {
             last_action: state.last_action,
-            cp: state.cp,
             durability: state.durability,
             effects: state.effects,
         }
