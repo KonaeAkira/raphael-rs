@@ -19,7 +19,7 @@ impl ParetoKey {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct ParetoValue {
     pub progress: i32,
     pub quality: i32,
@@ -67,12 +67,30 @@ impl ParetoFront {
         }
         let front: &mut Vec<ParetoValue> = self.hash_map.get_mut(&key).unwrap();
         let new_value = ParetoValue::new(&state);
-        for value in front.iter() {
-            if *value >= new_value {
-                return false;
-            }
+        for value in front.iter_mut() {
+            match (*value).partial_cmp(&new_value) {
+                Some(Ordering::Less) => *value = new_value.clone(),
+                Some(Ordering::Equal) | Some(Ordering::Greater) => return false,
+                None => (),
+            };
         }
+        front.dedup();
         front.push(new_value);
         true
+    }
+
+    pub fn has(&self, state: &InProgress) -> bool {
+        let key = ParetoKey::new(&state);
+        if let Some(front) = self.hash_map.get(&key) {
+            let new_value = ParetoValue::new(&state);
+            for value in front.iter() {
+                if *value == new_value {
+                    return true;
+                }
+            }
+            false
+        } else {
+            false
+        }
     }
 }

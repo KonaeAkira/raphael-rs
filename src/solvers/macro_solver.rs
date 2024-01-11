@@ -89,6 +89,9 @@ impl MacroSolver {
 
         let mut result: Option<MacroResult> = None;
         while let Some(current_node) = self.search_queue.pop() {
+            if !self.pareto_front.has(&current_node.state) {
+                continue;
+            }
             self.save.push(current_node.clone());
             for sequence in Sequence::iter() {
                 if self.should_use(&current_node.state, sequence) {
