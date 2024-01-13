@@ -65,17 +65,26 @@ impl ParetoFront {
         if !self.hash_map.contains_key(&key) {
             self.hash_map.insert(key.clone(), Vec::new());
         }
+
         let front: &mut Vec<ParetoValue> = self.hash_map.get_mut(&key).unwrap();
-        let new_value = ParetoValue::new(&state);
-        for value in front.iter_mut() {
-            match (*value).partial_cmp(&new_value) {
-                Some(Ordering::Less) => *value = new_value.clone(),
-                Some(Ordering::Equal) | Some(Ordering::Greater) => return false,
-                None => (),
+        let candidate = ParetoValue::new(&state);
+
+        let mut i: usize = 0;
+        while i < front.len() {
+            match candidate.partial_cmp(&front[i]) {
+                Some(Ordering::Greater) => {
+                    front.swap_remove(i);
+                }
+                Some(Ordering::Equal) | Some(Ordering::Less) => {
+                    return false;
+                }
+                None => {
+                    i += 1;
+                }
             };
         }
-        front.dedup();
-        front.push(new_value);
+
+        front.push(candidate);
         true
     }
 

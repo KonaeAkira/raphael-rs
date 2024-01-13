@@ -20,28 +20,52 @@ struct Node {
 }
 
 struct SearchQueue {
-    queues: Vec<Vec<Node>>,
+    seed: Vec<Node>,
+    buckets: Vec<Vec<Node>>,
+    pareto_front: ParetoFront,
 }
 
 impl SearchQueue {
-    pub fn new(size: usize) -> SearchQueue {
+    pub fn new(settings: Settings) -> SearchQueue {
         SearchQueue {
-            queues: vec![Vec::new(); size],
+            seed: Vec::new(),
+            buckets: vec![Vec::new(); (settings.max_cp + 1) as usize],
+            pareto_front: ParetoFront::new(),
         }
     }
 
-    pub fn push(&mut self, queue_index: usize, element: Node) {
-        self.queues[queue_index].push(element);
+    pub fn push_seed(&mut self, node: Node) {
+        self.seed.push(node);
+    }
+
+    pub fn push(&mut self, node: Node) {
+        self.buckets[node.state.cp as usize].push(node);
     }
 
     pub fn pop(&mut self) -> Option<Node> {
-        while self.queues.len() != 0 {
-            match self.queues.last_mut()?.pop() {
-                Some(node) => return Some(node),
-                None => self.queues.pop(),
-            };
+        if let Some(node) = self.seed.pop() {
+            return Some(node);
+        } else if self.pop_bucket() {
+            return self.pop();
+        } else {
+            return None;
         }
-        None
+    }
+
+    fn pop_bucket(&mut self) -> bool {
+        if let Some(bucket) = self.buckets.pop() {
+            for node in bucket.iter() {
+                self.pareto_front.insert(&node.state);
+            }
+            for node in bucket {
+                if self.pareto_front.has(&node.state) {
+                    self.seed.push(node);
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
@@ -52,7 +76,6 @@ struct MacroResult {
 
 pub struct MacroSolver {
     settings: Settings,
-    pareto_front: ParetoFront,
     search_queue: SearchQueue,
     save: Vec<Node>,
 }
@@ -61,8 +84,7 @@ impl MacroSolver {
     pub fn new(settings: Settings) -> MacroSolver {
         MacroSolver {
             settings: settings.clone(),
-            pareto_front: ParetoFront::new(),
-            search_queue: SearchQueue::new((settings.max_cp + 1) as usize),
+            search_queue: SearchQueue::new(settings),
             save: Vec::new(),
         }
     }
@@ -83,15 +105,10 @@ impl MacroSolver {
     fn do_solve(&mut self, state: InProgress) -> Option<MacroResult> {
         let timer = Instant::now();
 
-        self.pareto_front.insert(&state);
-        self.search_queue
-            .push(self.settings.max_cp as usize, Node { state, trace: None });
+        self.search_queue.push_seed(Node { state, trace: None });
 
         let mut result: Option<MacroResult> = None;
         while let Some(current_node) = self.search_queue.pop() {
-            if !self.pareto_front.has(&current_node.state) {
-                continue;
-            }
             self.save.push(current_node.clone());
             for sequence in Sequence::iter() {
                 if self.should_use(&current_node.state, sequence) {
@@ -99,15 +116,10 @@ impl MacroSolver {
                         self.use_actions(State::InProgress(current_node.state), sequence);
                     match use_action {
                         State::InProgress(new_state) => {
-                            if self.pareto_front.insert(&new_state) {
-                                self.search_queue.push(
-                                    new_state.cp as usize,
-                                    Node {
-                                        state: new_state,
-                                        trace: Some((self.save.len() - 1, sequence)),
-                                    },
-                                );
-                            }
+                            self.search_queue.push(Node {
+                                state: new_state,
+                                trace: Some((self.save.len() - 1, sequence)),
+                            });
                         }
                         State::Completed(Completed { quality }) => {
                             let current_quality = match result {
