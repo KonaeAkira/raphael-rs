@@ -7,6 +7,7 @@ use raphael_rs::{
 };
 
 fn main() {
+    env_logger::init();
     let settings = Settings {
         max_cp: 240,
         max_durability: 60,

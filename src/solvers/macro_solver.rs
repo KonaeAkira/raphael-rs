@@ -131,7 +131,7 @@ impl MacroSolver {
                                     quality,
                                     actions: self.trace_steps(sequence),
                                 };
-                                println!(
+                                log::debug!(
                                     "result ({}): {:?}",
                                     new_result.quality as f32 / QUAL_DENOM,
                                     new_result.actions
@@ -147,8 +147,8 @@ impl MacroSolver {
 
         let time = timer.elapsed().as_secs_f32();
         let nodes = self.save.len() as f32;
-        println!("Time elapsed: {}s", time);
-        println!(
+        log::info!("Time elapsed: {}s", time);
+        log::info!(
             "Searched nodes: {:+.2e} ({:+.2e} nodes/s)",
             nodes,
             nodes / time
