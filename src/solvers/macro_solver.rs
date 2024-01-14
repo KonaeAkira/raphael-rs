@@ -54,10 +54,13 @@ impl SearchQueue {
 
     fn pop_bucket(&mut self) -> bool {
         if let Some(bucket) = self.buckets.pop() {
-            for node in bucket.iter() {
-                self.pareto_front.insert(&node.state);
-            }
+            let mut unique: Vec<Node> = Vec::new();
             for node in bucket {
+                if self.pareto_front.insert(&node.state) {
+                    unique.push(node);
+                }
+            }
+            for node in unique {
                 if self.pareto_front.has(&node.state) {
                     self.seed.push(node);
                 }
