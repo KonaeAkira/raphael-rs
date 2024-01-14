@@ -167,27 +167,38 @@ impl MacroSolver {
                 _ => false,
             }
         } else {
-            let is_pre_byregots_blessing: bool =
-                state.effects.inner_quiet != 0 || state.quality == 0;
-            let use_quality_increase: bool =
-                state.effects.muscle_memory == 0 && is_pre_byregots_blessing;
+            // this pruning strategy only works if Byregot's Blessing is part of the optimal rotation
+            let is_post_byregots_blessing: bool =
+                state.effects.inner_quiet == 0 && state.quality != 0;
+            let use_quality_increase: bool = !is_post_byregots_blessing
+                && state.effects.muscle_memory == 0
+                && (state.effects.veneration == 0
+                    || state.progress
+                        + Action::CarefulSynthesis
+                            .progress_increase(&state.effects, Condition::Normal)
+                        >= self.settings.max_progress);
+            let use_progress_increase: bool = !use_quality_increase;
             match sequence {
-                Sequence::MuscleMemoryOpener => true,
-                Sequence::ReflectOpener => true,
+                Sequence::MuscleMemoryOpener => false,
+                Sequence::ReflectOpener => false,
                 Sequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
-                Sequence::CarefulSynthesis => state.effects.muscle_memory == 0,
-                Sequence::Groundwork => {
-                    state.effects.waste_not != 0 || state.effects.muscle_memory != 0
+                Sequence::CarefulSynthesis => {
+                    use_progress_increase && state.effects.muscle_memory == 0
                 }
-                Sequence::PreparatoryTouch => state.effects.waste_not != 0 && use_quality_increase,
+                Sequence::Groundwork => {
+                    use_progress_increase
+                        && (state.effects.waste_not != 0 || state.effects.muscle_memory != 0)
+                }
+                Sequence::PreparatoryTouch => use_quality_increase && state.effects.waste_not != 0,
                 Sequence::PrudentTouch => use_quality_increase,
-                Sequence::TrainedFinesse => true,
+                Sequence::TrainedFinesse => state.effects.inner_quiet == 10,
                 Sequence::AdvancedTouchCombo => {
                     use_quality_increase
                         && (state.effects.innovation >= 3 || state.effects.innovation == 0)
                 }
                 Sequence::FocusedSynthesisCombo => {
-                    state.effects.muscle_memory == 0
+                    use_progress_increase
+                        && state.effects.muscle_memory == 0
                         && (state.effects.veneration >= 2 || state.effects.veneration == 0)
                 }
                 Sequence::FocusedTouchCombo => {
@@ -197,18 +208,8 @@ impl MacroSolver {
                 Sequence::Manipulation => state.effects.manipulation == 0,
                 Sequence::WasteNot => state.effects.waste_not == 0,
                 Sequence::WasteNot2 => state.effects.waste_not == 0,
-                Sequence::Innovation => {
-                    state.effects.innovation == 0
-                        && state.effects.muscle_memory == 0
-                        && use_quality_increase
-                }
-                Sequence::Veneration => {
-                    state.effects.veneration == 0
-                        && (!use_quality_increase
-                            || state.effects.muscle_memory != 0
-                            || state.cp <= 96)
-                    // 96 cp = veneration + 4 * groundwork
-                }
+                Sequence::Innovation => use_quality_increase && state.effects.innovation == 0,
+                Sequence::Veneration => use_progress_increase && state.effects.veneration == 0,
                 Sequence::ByresgotsBlessingCombo => state.effects.inner_quiet >= 4,
                 Sequence::ByregotsBlessing => state.effects.inner_quiet >= 4,
             }
