@@ -1,22 +1,23 @@
 use std::time::Instant;
 use std::vec::Vec;
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
 use crate::{
     config::Settings,
     game::{
         actions::{Action, QUAL_DENOM},
         conditions::Condition,
-        state::{Completed, InProgress, State},
+        state::{InProgress, State},
     },
-    util::pareto_front::ParetoFront,
+    solvers::{
+        finish_solver::FinishSolver,
+        util::{action_sequence::ActionSequence, pareto_front::ParetoFront},
+    },
 };
 
 #[derive(Debug, Clone)]
 struct Node {
     state: InProgress,
-    trace: Option<(usize, Sequence)>,
+    trace: Option<(usize, ActionSequence)>,
 }
 
 struct SearchQueue {
@@ -81,23 +82,25 @@ pub struct MacroSolver {
     settings: Settings,
     search_queue: SearchQueue,
     save: Vec<Node>,
+    finish_solver: FinishSolver,
 }
 
 impl MacroSolver {
     pub fn new(settings: Settings) -> MacroSolver {
         MacroSolver {
             settings: settings.clone(),
-            search_queue: SearchQueue::new(settings),
+            search_queue: SearchQueue::new(settings.clone()),
             save: Vec::new(),
+            finish_solver: FinishSolver::new(settings),
         }
     }
 
-    pub fn solve(&mut self, state: State) -> Option<Action> {
+    pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
         match state {
             State::InProgress(state) => {
                 let result = self.do_solve(state);
                 match result {
-                    Some(result) => Some(result.actions[0]),
+                    Some(result) => Some(result.actions),
                     None => None,
                 }
             }
@@ -111,36 +114,40 @@ impl MacroSolver {
         self.search_queue.push_seed(Node { state, trace: None });
 
         let mut result: Option<MacroResult> = None;
+
         while let Some(current_node) = self.search_queue.pop() {
             self.save.push(current_node.clone());
-            for sequence in Sequence::iter() {
+            for sequence in ACTION_SEQUENCES {
                 if self.should_use(&current_node.state, sequence) {
-                    let use_action =
-                        self.use_actions(State::InProgress(current_node.state), sequence);
+                    let use_action = sequence.apply(
+                        State::InProgress(current_node.state.clone()),
+                        &self.settings,
+                    );
                     match use_action {
-                        State::InProgress(new_state) => {
-                            self.search_queue.push(Node {
-                                state: new_state,
-                                trace: Some((self.save.len() - 1, sequence)),
-                            });
-                        }
-                        State::Completed(Completed { quality }) => {
-                            let current_quality = match result {
+                        State::InProgress(state) => {
+                            let best_quality = match result {
                                 None => -1,
                                 Some(MacroResult { quality, .. }) => quality,
                             };
-                            if current_quality < quality {
+                            if state.quality > best_quality
+                                && state.effects.muscle_memory == 0
+                                && self.finish_solver.can_finish(&state)
+                            {
                                 let new_result = MacroResult {
-                                    quality,
+                                    quality: state.quality,
                                     actions: self.trace_steps(sequence),
                                 };
-                                log::debug!(
+                                log::trace!(
                                     "result ({}): {:?}",
                                     new_result.quality as f32 / QUAL_DENOM,
                                     new_result.actions
                                 );
                                 result = Some(new_result);
                             }
+                            self.search_queue.push(Node {
+                                state,
+                                trace: Some((self.save.len() - 1, sequence)),
+                            });
                         }
                         _ => (),
                     }
@@ -150,8 +157,8 @@ impl MacroSolver {
 
         let time = timer.elapsed().as_secs_f32();
         let nodes = self.save.len() as f32;
-        log::info!("Time elapsed: {}s", time);
-        log::info!(
+        log::debug!("Time elapsed: {}s", time);
+        log::debug!(
             "Searched nodes: {:+.2e} ({:+.2e} nodes/s)",
             nodes,
             nodes / time
@@ -160,83 +167,65 @@ impl MacroSolver {
         result
     }
 
-    fn should_use(&self, state: &InProgress, sequence: Sequence) -> bool {
+    fn should_use(&self, state: &InProgress, sequence: ActionSequence) -> bool {
         if state.last_action.is_none() {
             match sequence {
-                Sequence::MuscleMemoryOpener | Sequence::ReflectOpener => true,
+                ActionSequence::MuscleMemoryOpener | ActionSequence::ReflectOpener => true,
                 _ => false,
             }
+        } else if state.effects.inner_quiet == 0 && state.quality != 0 {
+            false // don't do anything after Byregot's Blessing
         } else {
-            // this pruning strategy only works if Byregot's Blessing is part of the optimal rotation
-            let is_post_byregots_blessing: bool =
-                state.effects.inner_quiet == 0 && state.quality != 0;
-            let use_quality_increase: bool = !is_post_byregots_blessing
-                && state.effects.muscle_memory == 0
-                && (state.effects.veneration == 0
-                    || state.progress
-                        + Action::CarefulSynthesis
-                            .progress_increase(&state.effects, Condition::Normal)
-                        >= self.settings.max_progress);
-            let use_progress_increase: bool = !use_quality_increase;
+            let use_progress_increase: bool =
+                state.effects.muscle_memory != 0 || state.effects.veneration != 0;
+            let use_quality_increase: bool =
+                state.effects.muscle_memory == 0 && state.effects.veneration <= 1;
             match sequence {
-                Sequence::MuscleMemoryOpener => false,
-                Sequence::ReflectOpener => false,
-                Sequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
-                Sequence::CarefulSynthesis => {
+                ActionSequence::MuscleMemoryOpener => false,
+                ActionSequence::ReflectOpener => false,
+                ActionSequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
+                ActionSequence::CarefulSynthesis => {
                     use_progress_increase && state.effects.muscle_memory == 0
                 }
-                Sequence::Groundwork => {
-                    use_progress_increase
-                        && (state.effects.waste_not != 0 || state.effects.muscle_memory != 0)
+                ActionSequence::Groundwork => use_progress_increase,
+                ActionSequence::PreparatoryTouch => {
+                    use_quality_increase && state.effects.waste_not != 0
                 }
-                Sequence::PreparatoryTouch => use_quality_increase && state.effects.waste_not != 0,
-                Sequence::PrudentTouch => use_quality_increase,
-                Sequence::TrainedFinesse => state.effects.inner_quiet == 10,
-                Sequence::AdvancedTouchCombo => {
+                ActionSequence::PrudentTouch => use_quality_increase,
+                ActionSequence::TrainedFinesse => state.effects.inner_quiet == 10,
+                ActionSequence::AdvancedTouchCombo => {
                     use_quality_increase
                         && (state.effects.innovation >= 3 || state.effects.innovation == 0)
                 }
-                Sequence::FocusedSynthesisCombo => {
+                ActionSequence::FocusedSynthesisCombo => {
                     use_progress_increase
                         && state.effects.muscle_memory == 0
                         && (state.effects.veneration >= 2 || state.effects.veneration == 0)
                 }
-                Sequence::FocusedTouchCombo => {
+                ActionSequence::FocusedTouchCombo => {
                     use_quality_increase
                         && (state.effects.innovation >= 2 || state.effects.innovation == 0)
                 }
-                Sequence::Manipulation => state.effects.manipulation == 0,
-                Sequence::WasteNot => state.effects.waste_not == 0,
-                Sequence::WasteNot2 => state.effects.waste_not == 0,
-                Sequence::Innovation => use_quality_increase && state.effects.innovation == 0,
-                Sequence::Veneration => use_progress_increase && state.effects.veneration == 0,
-                Sequence::ByresgotsBlessingCombo => state.effects.inner_quiet >= 4,
-                Sequence::ByregotsBlessing => state.effects.inner_quiet >= 4,
+                ActionSequence::Manipulation => state.effects.manipulation == 0,
+                ActionSequence::WasteNot => state.effects.waste_not == 0,
+                ActionSequence::WasteNot2 => state.effects.waste_not == 0,
+                ActionSequence::Innovation => use_quality_increase && state.effects.innovation == 0,
+                ActionSequence::Veneration => state.effects.muscle_memory != 0,
+                ActionSequence::ByresgotsBlessingCombo => state.effects.inner_quiet >= 4,
+                ActionSequence::ByregotsBlessing => state.effects.inner_quiet >= 3,
             }
         }
     }
 
-    fn use_actions(&self, mut state: State, sequence: Sequence) -> State {
-        for action in sequence.to_slice() {
-            match state {
-                State::InProgress(in_progress) => {
-                    state = in_progress.use_action(*action, Condition::Normal, &self.settings);
-                }
-                _ => return State::Invalid,
-            }
-        }
-        state
-    }
-
-    fn trace_steps(&self, last_sequence: Sequence) -> Vec<Action> {
+    fn trace_steps(&self, last_sequence: ActionSequence) -> Vec<Action> {
         let mut steps: Vec<Action> = Vec::new();
-        for action in last_sequence.to_slice().iter().rev() {
+        for action in last_sequence.actions().iter().rev() {
             steps.push(*action);
         }
 
-        let mut trace: Option<(usize, Sequence)> = self.save.last().unwrap().trace;
+        let mut trace: Option<(usize, ActionSequence)> = self.save.last().unwrap().trace;
         while let Some((i, sequence)) = trace {
-            for action in sequence.to_slice().iter().rev() {
+            for action in sequence.actions().iter().rev() {
                 steps.push(*action);
             }
             trace = self.save[i].trace;
@@ -247,58 +236,28 @@ impl MacroSolver {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter)]
-enum Sequence {
+const ACTION_SEQUENCES: [ActionSequence; 18] = [
     // opener
-    MuscleMemoryOpener,
-    ReflectOpener,
+    ActionSequence::MuscleMemoryOpener,
+    ActionSequence::ReflectOpener,
     // singles
-    MasterMend,
-    CarefulSynthesis,
-    Groundwork,
-    PreparatoryTouch,
-    PrudentTouch,
-    TrainedFinesse,
+    ActionSequence::MasterMend,
+    ActionSequence::CarefulSynthesis,
+    ActionSequence::Groundwork,
+    ActionSequence::PreparatoryTouch,
+    ActionSequence::PrudentTouch,
+    ActionSequence::TrainedFinesse,
     // combos
-    AdvancedTouchCombo,
-    FocusedSynthesisCombo,
-    FocusedTouchCombo,
+    ActionSequence::AdvancedTouchCombo,
+    ActionSequence::FocusedSynthesisCombo,
+    ActionSequence::FocusedTouchCombo,
     // effects
-    Manipulation,
-    WasteNot,
-    WasteNot2,
-    Innovation,
-    Veneration,
+    ActionSequence::Manipulation,
+    ActionSequence::WasteNot,
+    ActionSequence::WasteNot2,
+    ActionSequence::Innovation,
+    ActionSequence::Veneration,
     // finisher
-    ByresgotsBlessingCombo,
-    ByregotsBlessing,
-}
-
-impl Sequence {
-    pub fn to_slice(&self) -> &[Action] {
-        match *self {
-            Sequence::CarefulSynthesis => &[Action::CarefulSynthesis],
-            Sequence::Groundwork => &[Action::Groundwork],
-            Sequence::PreparatoryTouch => &[Action::PreparatoryTouch],
-            Sequence::PrudentTouch => &[Action::PrudentTouch],
-            Sequence::TrainedFinesse => &[Action::TrainedFinesse],
-            Sequence::AdvancedTouchCombo => &[
-                Action::BasicTouch,
-                Action::StandardTouch,
-                Action::AdvancedTouch,
-            ],
-            Sequence::FocusedSynthesisCombo => &[Action::Observe, Action::FocusedSynthesis],
-            Sequence::FocusedTouchCombo => &[Action::Observe, Action::FocusedTouch],
-            Sequence::MasterMend => &[Action::MasterMend],
-            Sequence::Manipulation => &[Action::Manipulation],
-            Sequence::WasteNot => &[Action::WasteNot],
-            Sequence::WasteNot2 => &[Action::WasteNot2],
-            Sequence::Innovation => &[Action::Innovation],
-            Sequence::Veneration => &[Action::Veneration],
-            Sequence::ByresgotsBlessingCombo => &[Action::GreatStrides, Action::ByregotsBlessing],
-            Sequence::ByregotsBlessing => &[Action::ByregotsBlessing],
-            Sequence::MuscleMemoryOpener => &[Action::MuscleMemory],
-            Sequence::ReflectOpener => &[Action::Reflect],
-        }
-    }
-}
+    ActionSequence::ByresgotsBlessingCombo,
+    ActionSequence::ByregotsBlessing,
+];

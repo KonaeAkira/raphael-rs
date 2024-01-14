@@ -9,7 +9,7 @@ use raphael_rs::{
 fn main() {
     env_logger::init();
     let settings = Settings {
-        max_cp: 320,
+        max_cp: 400,
         max_durability: 60,
         max_progress: (20.00 * PROG_DENOM) as i32,
         max_quality: (400.00 * QUAL_DENOM) as i32,

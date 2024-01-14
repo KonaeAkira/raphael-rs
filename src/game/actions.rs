@@ -174,6 +174,10 @@ impl Action {
         }
     }
 
+    pub fn base_progress_increase_int(&self) -> i32 {
+        (self.base_progress_increase() * PROG_DENOM) as i32
+    }
+
     pub fn progress_increase(&self, effects: &Effects, condition: Condition) -> i32 {
         let base_increase = self.base_progress_increase();
         let condition_multiplier = match condition {

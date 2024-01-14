@@ -8,9 +8,10 @@ pub mod game {
 }
 
 pub mod solvers {
+    pub mod util {
+        pub mod action_sequence;
+        pub mod pareto_front;
+    }
+    pub mod finish_solver;
     pub mod macro_solver;
-}
-
-pub mod util {
-    pub mod pareto_front;
 }
