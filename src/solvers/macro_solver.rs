@@ -5,7 +5,6 @@ use crate::{
     config::Settings,
     game::{
         actions::{Action, QUAL_DENOM},
-        conditions::Condition,
         state::{InProgress, State},
     },
     solvers::{
@@ -139,7 +138,7 @@ impl MacroSolver {
                                 };
                                 log::trace!(
                                     "result ({}): {:?}",
-                                    new_result.quality as f32 / QUAL_DENOM,
+                                    new_result.quality as f32 / QUAL_DENOM as f32,
                                     new_result.actions
                                 );
                                 result = Some(new_result);

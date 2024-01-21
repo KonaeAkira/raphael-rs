@@ -5,13 +5,14 @@ use raphael_rs::{
         conditions::Condition,
         state::{InProgress, State},
     },
+    progress, quality,
 };
 
 const SETTINGS: Settings = Settings {
     max_cp: 200,
     max_durability: 60,
-    max_progress: (20.00 * PROG_DENOM) as i32,
-    max_quality: (400.00 * QUAL_DENOM) as i32,
+    max_progress: progress!(2000),
+    max_quality: quality!(40000),
 };
 
 fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
@@ -33,7 +34,7 @@ fn test_basic_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 200);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, (1.20 * PROG_DENOM) as i32);
+            assert_eq!(state.progress, progress!(120));
             assert_eq!(state.last_action, Some(Action::BasicSynthesis));
         }
         _ => panic!(),
@@ -47,7 +48,7 @@ fn test_basic_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, (1.00 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(100));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::BasicTouch));
         }
@@ -62,7 +63,7 @@ fn test_standard_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 164);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.quality, (2.375 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(237.5));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::StandardTouch));
         }
@@ -87,7 +88,7 @@ fn test_advanced_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 146);
             assert_eq!(state.durability, 30);
-            assert_eq!(state.quality, (4.175 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(417.5));
             assert_eq!(state.effects.inner_quiet, 3);
             assert_eq!(state.last_action, Some(Action::AdvancedTouch));
         }
@@ -147,8 +148,8 @@ fn test_tricks_of_the_trade() {
     match state {
         State::InProgress(state) => {
             assert_eq!(state.cp, 170);
-        },
-        _ => panic!()
+        }
+        _ => panic!(),
     }
     // CP after action can't exceed max cp
     let mut state: InProgress = InProgress::new(&SETTINGS);
@@ -157,8 +158,8 @@ fn test_tricks_of_the_trade() {
     match state {
         State::InProgress(state) => {
             assert_eq!(state.cp, 200);
-        },
-        _ => panic!()
+        }
+        _ => panic!(),
     }
     // can't use action when condition isn't Good or Excellent
     let state = from_action_sequence(&SETTINGS, &[Action::TricksOfTheTrade]);
@@ -237,7 +238,7 @@ fn test_byregots_blessing() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 158);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.quality, (2.32 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(232));
             assert_eq!(state.effects.inner_quiet, 0);
             assert_eq!(state.last_action, Some(Action::ByregotsBlessing));
         }
@@ -256,11 +257,11 @@ fn test_precise_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, (2.25 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(225));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::PreciseTouch));
-        },
-        _ => panic!()
+        }
+        _ => panic!(),
     }
     // can't use Precise Touch when condition isn't Good or Excellent
     let state = from_action_sequence(&SETTINGS, &[Action::PreciseTouch]);
@@ -274,7 +275,7 @@ fn test_muscle_memory() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 194);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, (3.00 * PROG_DENOM) as i32);
+            assert_eq!(state.progress, progress!(300));
             assert_eq!(state.effects.muscle_memory, 5);
             assert_eq!(state.last_action, Some(Action::MuscleMemory));
         }
@@ -292,7 +293,7 @@ fn test_careful_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 193);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, (1.80 * PROG_DENOM) as i32);
+            assert_eq!(state.progress, progress!(180));
             assert_eq!(state.last_action, Some(Action::CarefulSynthesis));
         }
         _ => panic!(),
@@ -308,7 +309,7 @@ fn test_manipulation() {
             assert_eq!(state.effects.manipulation, 8);
             assert_eq!(state.last_action, Some(Action::Manipulation));
         }
-        _ => panic!()
+        _ => panic!(),
     }
 }
 
@@ -319,11 +320,11 @@ fn test_prudent_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 175);
             assert_eq!(state.durability, 55);
-            assert_eq!(state.quality, (1.00 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(100));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::PrudentTouch));
         }
-        _ => panic!()
+        _ => panic!(),
     }
     // invalid use (can't use during waste not)
     let state = from_action_sequence(&SETTINGS, &[Action::WasteNot, Action::PrudentTouch]);
@@ -337,10 +338,10 @@ fn test_focused_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 188);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, (2.00 * PROG_DENOM) as i32);
+            assert_eq!(state.progress, progress!(200));
             assert_eq!(state.last_action, Some(Action::FocusedSynthesis));
         }
-        _ => panic!()
+        _ => panic!(),
     }
     // invalid use (need observe combo action)
     let state = from_action_sequence(&SETTINGS, &[Action::FocusedSynthesis]);
@@ -354,11 +355,11 @@ fn test_focused_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 175);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, (1.50 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(150));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::FocusedTouch));
         }
-        _ => panic!()
+        _ => panic!(),
     }
     // invalid use (need observe combo action)
     let state = from_action_sequence(&SETTINGS, &[Action::FocusedTouch]);
@@ -372,7 +373,7 @@ fn test_reflect() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 194);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, (1.00 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(100));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::Reflect));
         }
@@ -390,11 +391,11 @@ fn test_preparatory_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 160);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.quality, (2.00 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(200));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::PreparatoryTouch));
         }
-        _ => panic!()
+        _ => panic!(),
     }
 }
 
@@ -405,10 +406,10 @@ fn test_groundwork() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.progress, (3.60 * PROG_DENOM) as i32);
+            assert_eq!(state.progress, progress!(360));
             assert_eq!(state.last_action, Some(Action::Groundwork));
         }
-        _ => panic!()
+        _ => panic!(),
     }
     // can't use Groundwork when there isn't enough durability
     let mut state: InProgress = InProgress::new(&SETTINGS);
@@ -424,12 +425,12 @@ fn test_delicate_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 168);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, (1.00 * PROG_DENOM) as i32);
-            assert_eq!(state.quality, (1.00 * QUAL_DENOM) as i32);
+            assert_eq!(state.progress, progress!(100));
+            assert_eq!(state.quality, quality!(100));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::DelicateSynthesis));
         }
-        _ => panic!()
+        _ => panic!(),
     }
 }
 
@@ -441,10 +442,10 @@ fn test_intensive_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 194);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, (4.00 * PROG_DENOM) as i32);
+            assert_eq!(state.progress, progress!(400));
             assert_eq!(state.last_action, Some(Action::IntensiveSynthesis));
-        },
-        _ => panic!()
+        }
+        _ => panic!(),
     }
     // can't use when condition isn't good or excellent
     let state = from_action_sequence(&SETTINGS, &[Action::IntensiveSynthesis]);
@@ -458,10 +459,10 @@ fn test_prudent_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 55);
-            assert_eq!(state.progress, (1.80 * PROG_DENOM) as i32);
+            assert_eq!(state.progress, progress!(180));
             assert_eq!(state.last_action, Some(Action::PrudentSynthesis));
         }
-        _ => panic!()
+        _ => panic!(),
     }
 }
 
@@ -473,11 +474,11 @@ fn test_trained_finesse() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 168);
             assert_eq!(state.durability, 60);
-            assert_eq!(state.quality, (2.00 * QUAL_DENOM) as i32);
+            assert_eq!(state.quality, quality!(200));
             assert_eq!(state.effects.inner_quiet, 10);
             assert_eq!(state.last_action, Some(Action::TrainedFinesse));
-        },
-        _ => panic!()
+        }
+        _ => panic!(),
     }
     // can't use TrainedFinesse when InnerQuiet < 10
     let mut state: InProgress = InProgress::new(&SETTINGS);

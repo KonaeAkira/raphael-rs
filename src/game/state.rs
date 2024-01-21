@@ -155,13 +155,13 @@ impl InProgress {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::game::actions::{PROG_DENOM, QUAL_DENOM};
+    use crate::{game::actions::{PROG_DENOM, QUAL_DENOM}, progress, quality};
 
     const SETTINGS: Settings = Settings {
         max_cp: 200,
         max_durability: 60,
-        max_progress: (20.00 * PROG_DENOM) as i32,
-        max_quality: (400.00 * QUAL_DENOM) as i32,
+        max_progress: progress!(2000),
+        max_quality: quality!(40000),
     };
 
     #[test]

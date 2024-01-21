@@ -3,7 +3,9 @@ use raphael_rs::{
     game::{
         actions::{PROG_DENOM, QUAL_DENOM},
         state::State,
-    }, solvers::macro_solver::MacroSolver,
+    },
+    progress, quality,
+    solvers::macro_solver::MacroSolver,
 };
 
 fn main() {
@@ -11,8 +13,8 @@ fn main() {
     let settings = Settings {
         max_cp: 400,
         max_durability: 60,
-        max_progress: (20.00 * PROG_DENOM) as i32,
-        max_quality: (400.00 * QUAL_DENOM) as i32,
+        max_progress: progress!(2000),
+        max_quality: quality!(40000),
     };
     let state = State::new(&settings);
     let mut solver = MacroSolver::new(settings);

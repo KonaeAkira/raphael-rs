@@ -2,8 +2,22 @@ use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 
 use crate::game::{conditions::Condition, effects::Effects};
 
-pub const PROG_DENOM: f32 = 20.0;
-pub const QUAL_DENOM: f32 = 800.0;
+pub const PROG_DENOM: i32 = 20;
+pub const QUAL_DENOM: i32 = 800;
+
+#[macro_export]
+macro_rules! progress {
+    ($l:literal) => {
+        ($l as f32 * PROG_DENOM as f32) as i32
+    };
+}
+
+#[macro_export]
+macro_rules! quality {
+    ($l:literal) => {
+        ($l as f32 * QUAL_DENOM as f32) as i32
+    };
+}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, EnumCountMacro, EnumIter, Hash)]
 pub enum Action {
@@ -17,7 +31,6 @@ pub enum Action {
     StandardTouch,
     GreatStrides,
     Innovation,
-    // Final Appraisal
     WasteNot2,
     ByregotsBlessing,
     PreciseTouch,
@@ -82,7 +95,6 @@ impl Action {
             Action::StandardTouch => 18,
             Action::GreatStrides => 32,
             Action::Innovation => 18,
-            // Action::Final Appraisal => 0,
             Action::WasteNot2 => 98,
             Action::ByregotsBlessing => 24,
             Action::PreciseTouch => 18,
@@ -103,14 +115,11 @@ impl Action {
         }
     }
 
-    pub fn cp_cost(&self, _: &Effects, condition: Condition) -> i32 {
-        let base_cost = self.base_cp_cost() as f32;
-        let condition_multiplier = match condition {
-            Condition::Pliant => 0.50,
-            _ => 1.00,
-        };
-        let final_cost = base_cost * condition_multiplier;
-        return final_cost.ceil() as i32;
+    pub const fn cp_cost(&self, _: &Effects, condition: Condition) -> i32 {
+        match condition {
+            Condition::Pliant => (self.base_cp_cost() + 1) / 2,
+            _ => self.base_cp_cost(),
+        }
     }
 
     pub const fn base_durability_cost(&self) -> i32 {
@@ -125,7 +134,6 @@ impl Action {
             Action::StandardTouch => 10,
             Action::GreatStrides => 0,
             Action::Innovation => 0,
-            // Action::Final Appraisal => 0,
             Action::WasteNot2 => 0,
             Action::ByregotsBlessing => 10,
             Action::PreciseTouch => 10,
@@ -147,95 +155,87 @@ impl Action {
     }
 
     pub fn durability_cost(&self, effects: &Effects, condition: Condition) -> i32 {
-        let base_cost = self.base_durability_cost() as f32;
-        let condition_multiplier = match condition {
-            Condition::Sturdy => 0.50,
-            _ => 1.00,
+        let base_cost: i32 = match condition {
+            Condition::Sturdy => (self.base_durability_cost() + 1) / 2,
+            _ => self.base_durability_cost(),
         };
-        let effect_multiplier = match effects.waste_not > 0 {
-            true => 0.50,
-            false => 1.00,
-        };
-        let final_cost = base_cost * condition_multiplier * effect_multiplier;
-        return final_cost.ceil() as i32;
-    }
-
-    pub const fn base_progress_increase(&self) -> f32 {
-        match *self {
-            Action::BasicSynthesis => 1.20,
-            Action::MuscleMemory => 3.00,
-            Action::CarefulSynthesis => 1.80,
-            Action::FocusedSynthesis => 2.00,
-            Action::Groundwork => 3.60,
-            Action::DelicateSynthesis => 1.00,
-            Action::IntensiveSynthesis => 4.00,
-            Action::PrudentSynthesis => 1.80,
-            _ => 0.00,
+        let mut effect_bonus: i32 = 0;
+        if effects.waste_not > 0 {
+            effect_bonus += base_cost / 2;
         }
+        base_cost - effect_bonus
     }
 
-    pub fn base_progress_increase_int(&self) -> i32 {
-        (self.base_progress_increase() * PROG_DENOM) as i32
+    pub const fn base_progress_increase(&self) -> i32 {
+        PROG_DENOM
+            * match *self {
+                Action::BasicSynthesis => 120,
+                Action::MuscleMemory => 300,
+                Action::CarefulSynthesis => 180,
+                Action::FocusedSynthesis => 200,
+                Action::Groundwork => 360,
+                Action::DelicateSynthesis => 100,
+                Action::IntensiveSynthesis => 400,
+                Action::PrudentSynthesis => 180,
+                _ => 0,
+            }
     }
 
-    pub fn progress_increase(&self, effects: &Effects, condition: Condition) -> i32 {
-        let base_increase = self.base_progress_increase();
-        let condition_multiplier = match condition {
-            Condition::Malleable => 1.50,
-            _ => 1.00,
+    pub const fn progress_increase(&self, effects: &Effects, condition: Condition) -> i32 {
+        let base_increase: i32 = match condition {
+            Condition::Malleable => self.base_progress_increase() * 3 / 2,
+            _ => self.base_progress_increase(),
         };
-        let mut effect_multiplier = 1.00;
+        let mut effect_bonus: i32 = 0;
         if effects.muscle_memory > 0 {
-            effect_multiplier += 1.00;
+            effect_bonus += base_increase;
         }
         if effects.veneration > 0 {
-            effect_multiplier += 0.50;
+            effect_bonus += base_increase / 2;
         }
-        return (base_increase * condition_multiplier * effect_multiplier * PROG_DENOM) as i32;
+        base_increase + effect_bonus
     }
 
-    pub const fn base_quality_increase(&self) -> f32 {
-        match *self {
-            Action::BasicTouch => 1.00,
-            Action::StandardTouch => 1.25,
-            Action::PreciseTouch => 1.50,
-            Action::PrudentTouch => 1.00,
-            Action::FocusedTouch => 1.50,
-            Action::Reflect => 1.00,
-            Action::PreparatoryTouch => 2.00,
-            Action::DelicateSynthesis => 1.00,
-            Action::AdvancedTouch => 1.50,
-            Action::TrainedFinesse => 1.00,
-            Action::ByregotsBlessing => 1.00,
-            _ => 0.00,
-        }
+    pub const fn base_quality_increase(&self) -> i32 {
+        QUAL_DENOM
+            * match *self {
+                Action::BasicTouch => 100,
+                Action::StandardTouch => 125,
+                Action::PreciseTouch => 150,
+                Action::PrudentTouch => 100,
+                Action::FocusedTouch => 150,
+                Action::Reflect => 100,
+                Action::PreparatoryTouch => 200,
+                Action::DelicateSynthesis => 100,
+                Action::AdvancedTouch => 150,
+                Action::TrainedFinesse => 100,
+                Action::ByregotsBlessing => 100,
+                _ => 0,
+            }
     }
 
-    pub fn quality_increase(&self, effects: &Effects, condition: Condition) -> i32 {
-        let base_increase = self.base_quality_increase()
-            + match *self {
-                Action::ByregotsBlessing => effects.inner_quiet as f32 * 0.20,
-                _ => 0.00,
-            };
-        let condition_multiplier = match condition {
-            Condition::Good => 1.50,
-            Condition::Excellent => 4.00,
-            Condition::Poor => 0.50,
-            _ => 1.00,
+    pub const fn quality_increase(&self, effects: &Effects, condition: Condition) -> i32 {
+        let mut base_increase: i32 = match *self {
+            Action::ByregotsBlessing => {
+                self.base_quality_increase() * (2 * effects.inner_quiet as i32 + 10) / 10
+            }
+            _ => self.base_quality_increase(),
         };
-        let iq_multiplier = 1.00 + effects.inner_quiet as f32 * 0.10;
-        let mut effect_multiplier = 1.00;
+        match condition {
+            Condition::Good => base_increase += base_increase / 2,
+            Condition::Excellent => base_increase *= 4,
+            Condition::Poor => base_increase /= 2,
+            _ => (),
+        };
+        base_increase += base_increase * effects.inner_quiet as i32 / 10;
+        let mut effect_bonus: i32 = 0;
         if effects.innovation > 0 {
-            effect_multiplier += 0.50;
+            effect_bonus += base_increase / 2;
         }
         if effects.great_strides > 0 {
-            effect_multiplier += 1.00;
+            effect_bonus += base_increase;
         }
-        return (base_increase
-            * condition_multiplier
-            * iq_multiplier
-            * effect_multiplier
-            * QUAL_DENOM) as i32;
+        return base_increase + effect_bonus;
     }
 
     pub const fn combo_action(&self) -> Option<Self> {

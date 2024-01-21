@@ -124,11 +124,11 @@ impl FinishSolver {
             }
             ActionSequence::CarefulSynthesis => {
                 state.effects.veneration != 0
-                    || Action::CarefulSynthesis.base_progress_increase_int() * 5 >= missing_progress
+                    || Action::CarefulSynthesis.base_progress_increase() * 5 >= missing_progress
             },
             ActionSequence::Groundwork => {
                 state.effects.veneration != 0
-                    || Action::Groundwork.base_progress_increase_int() * 2 >= missing_progress
+                    || Action::Groundwork.base_progress_increase() * 2 >= missing_progress
             }
             ActionSequence::FocusedSynthesisCombo => {
                 !manipulation_capped
