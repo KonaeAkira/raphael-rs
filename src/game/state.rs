@@ -22,6 +22,13 @@ impl State {
             _ => None,
         }
     }
+
+    pub fn as_completed(self) -> Option<Completed> {
+        match self {
+            State::Completed(completed) => Some(completed),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -155,7 +162,10 @@ impl InProgress {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{game::actions::{PROG_DENOM, QUAL_DENOM}, progress, quality};
+    use crate::{
+        game::actions::{PROG_DENOM, QUAL_DENOM},
+        progress, quality,
+    };
 
     const SETTINGS: Settings = Settings {
         max_cp: 200,
