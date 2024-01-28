@@ -132,10 +132,13 @@ impl MacroSolver {
                                 && state.effects.muscle_memory == 0
                                 && self.finish_solver.can_finish(&state)
                             {
-                                let new_result = MacroResult {
+                                let mut new_result = MacroResult {
                                     quality: state.quality,
                                     actions: self.trace_steps(sequence),
                                 };
+                                new_result.actions.append(
+                                    &mut self.finish_solver.get_finish_sequence(&state).unwrap(),
+                                );
                                 log::trace!(
                                     "result ({}): {:?}",
                                     new_result.quality as f32 / QUAL_DENOM as f32,

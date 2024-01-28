@@ -82,6 +82,47 @@ impl FinishSolver {
         }
     }
 
+    pub fn get_finish_sequence(&self, state: &InProgress) -> Option<Vec<Action>> {
+        let reduced_state = ReducedState::from_state(&state);
+        match self.cp_to_finish.get(&reduced_state) {
+            Some(cp) => {
+                if state.cp >= *cp {
+                    let mut result: Vec<Action> = Vec::new();
+                    self.do_trace(&mut result, reduced_state, *cp);
+                    Some(result)
+                } else {
+                    None
+                }
+            }
+            None => None,
+        }
+    }
+
+    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, cp_budget: i32) -> () {
+        for sequence in ACTION_SEQUENCES {
+            let target_cp = cp_budget - sequence.base_cp_cost();
+            if target_cp >= 0 && self.should_use(&state, sequence) {
+                match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
+                    State::InProgress(new_state) => {
+                        let new_state = ReducedState::from_state(&new_state);
+                        let new_state_cost = *self.cp_to_finish.get(&new_state).unwrap();
+                        if new_state_cost == target_cp {
+                            result.extend_from_slice(sequence.actions());
+                            self.do_trace(result, new_state, target_cp);
+                            return;
+                        }
+                    }
+                    State::Completed(_) => {
+                        result.extend_from_slice(sequence.actions());
+                        return;
+                    }
+                    _ => (),
+                }
+            }
+        }
+        panic!()
+    }
+
     pub fn can_finish(&mut self, state: &InProgress) -> bool {
         state.cp >= self.do_solve(ReducedState::from_state(&state))
     }
@@ -125,7 +166,7 @@ impl FinishSolver {
             ActionSequence::CarefulSynthesis => {
                 state.effects.veneration != 0
                     || Action::CarefulSynthesis.base_progress_increase() * 5 >= missing_progress
-            },
+            }
             ActionSequence::Groundwork => {
                 state.effects.veneration != 0
                     || Action::Groundwork.base_progress_increase() * 2 >= missing_progress
