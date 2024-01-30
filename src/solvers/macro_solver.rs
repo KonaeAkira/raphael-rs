@@ -124,32 +124,35 @@ impl MacroSolver {
                     );
                     match use_action {
                         State::InProgress(state) => {
-                            let best_quality = match result {
-                                None => -1,
-                                Some(MacroResult { quality, .. }) => quality,
-                            };
-                            if state.quality > best_quality
-                                && state.effects.muscle_memory == 0
-                                && self.finish_solver.can_finish(&state)
-                            {
-                                let mut new_result = MacroResult {
-                                    quality: state.quality,
-                                    actions: self.trace_steps(sequence),
+                            if self.finish_solver.can_finish(&state) {
+                                let best_quality = match result {
+                                    None => -1,
+                                    Some(MacroResult { quality, .. }) => quality,
                                 };
-                                new_result.actions.append(
-                                    &mut self.finish_solver.get_finish_sequence(&state).unwrap(),
-                                );
-                                log::trace!(
-                                    "result ({}): {:?}",
-                                    new_result.quality as f32 / QUAL_DENOM as f32,
-                                    new_result.actions
-                                );
-                                result = Some(new_result);
+                                if state.quality > best_quality
+                                {
+                                    let mut new_result = MacroResult {
+                                        quality: state.quality,
+                                        actions: self.trace_steps(sequence),
+                                    };
+                                    new_result.actions.append(
+                                        &mut self
+                                            .finish_solver
+                                            .get_finish_sequence(&state)
+                                            .unwrap(),
+                                    );
+                                    log::trace!(
+                                        "result ({}): {:?}",
+                                        new_result.quality as f32 / QUAL_DENOM as f32,
+                                        new_result.actions
+                                    );
+                                    result = Some(new_result);
+                                }
+                                self.search_queue.push(Node {
+                                    state,
+                                    trace: Some((self.save.len() - 1, sequence)),
+                                });
                             }
-                            self.search_queue.push(Node {
-                                state,
-                                trace: Some((self.save.len() - 1, sequence)),
-                            });
                         }
                         _ => (),
                     }
