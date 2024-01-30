@@ -116,6 +116,7 @@ impl InProgress {
             new_state.effects.inner_quiet = std::cmp::min(10, new_state.effects.inner_quiet);
         }
 
+        new_state.quality = std::cmp::min(settings.max_quality, new_state.quality);
         if new_state.progress >= settings.max_progress {
             return State::Completed(Completed {
                 quality: new_state.quality,
