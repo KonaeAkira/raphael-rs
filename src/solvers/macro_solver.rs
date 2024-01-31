@@ -222,11 +222,19 @@ impl MacroSolver {
                     use_quality_increase
                         && (state.effects.innovation >= 2 || state.effects.innovation == 0)
                 }
-                ActionSequence::Manipulation => state.effects.manipulation == 0 && state.effects.waste_not == 0,
-                ActionSequence::WasteNot => state.effects.waste_not == 0 && state.effects.inner_quiet <= 2,
-                ActionSequence::WasteNot2 => state.effects.waste_not == 0 && state.effects.inner_quiet <= 2,
+                ActionSequence::Manipulation => {
+                    state.effects.manipulation == 0 && state.effects.waste_not == 0
+                }
+                ActionSequence::WasteNot => {
+                    state.effects.waste_not == 0 && state.effects.inner_quiet <= 2
+                }
+                ActionSequence::WasteNot2 => {
+                    state.effects.waste_not == 0 && state.effects.inner_quiet <= 2
+                }
                 ActionSequence::Innovation => use_quality_increase && state.effects.innovation == 0,
-                ActionSequence::Veneration => state.effects.muscle_memory != 0 && state.effects.veneration == 0,
+                ActionSequence::Veneration => {
+                    state.effects.muscle_memory != 0 && state.effects.veneration == 0
+                }
                 ActionSequence::ByresgotsBlessingCombo => state.effects.inner_quiet >= 4,
                 ActionSequence::ByregotsBlessing => state.effects.inner_quiet >= 3,
             }
