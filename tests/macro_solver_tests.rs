@@ -84,3 +84,18 @@ fn test_04() {
         .unwrap();
     assert_eq!(final_state.quality, quality!(1000));
 }
+
+#[test]
+fn test_05() {
+    let settings = Settings {
+        max_cp: 450,
+        max_durability: 80,
+        max_progress: progress!(2800),
+        max_quality: quality!(40000),
+    };
+    let actions = solve(&settings).unwrap();
+    let final_state = from_action_sequence(&settings, &actions)
+        .as_completed()
+        .unwrap();
+    assert_eq!(final_state.quality, quality!(1978.25));
+}

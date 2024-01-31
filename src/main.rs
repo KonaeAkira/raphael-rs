@@ -11,9 +11,9 @@ use raphael_rs::{
 fn main() {
     env_logger::init();
     let settings = Settings {
-        max_cp: 400,
-        max_durability: 60,
-        max_progress: progress!(2000),
+        max_cp: 450,
+        max_durability: 80,
+        max_progress: progress!(2800),
         max_quality: quality!(40000),
     };
     let state = State::new(&settings);
