@@ -14,9 +14,15 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+struct Trace {
+    pub parent_index: usize,
+    pub last_action: ActionSequence,
+}
+
+#[derive(Debug, Clone)]
 struct Node {
     state: InProgress,
-    trace: Option<(usize, ActionSequence)>,
+    trace: Option<Trace>,
 }
 
 struct SearchQueue {
@@ -129,11 +135,13 @@ impl MacroSolver {
                                     None => -1,
                                     Some(MacroResult { quality, .. }) => quality,
                                 };
-                                if state.quality > best_quality
-                                {
+                                if state.quality > best_quality {
                                     let mut new_result = MacroResult {
                                         quality: state.quality,
-                                        actions: self.trace_steps(sequence),
+                                        actions: self.trace_steps(Trace {
+                                            parent_index: self.save.len() - 1,
+                                            last_action: sequence,
+                                        }),
                                     };
                                     new_result.actions.append(
                                         &mut self
@@ -150,7 +158,10 @@ impl MacroSolver {
                                 }
                                 self.search_queue.push(Node {
                                     state,
-                                    trace: Some((self.save.len() - 1, sequence)),
+                                    trace: Some(Trace {
+                                        parent_index: self.save.len() - 1,
+                                        last_action: sequence,
+                                    }),
                                 });
                             }
                         }
@@ -222,20 +233,17 @@ impl MacroSolver {
         }
     }
 
-    fn trace_steps(&self, last_sequence: ActionSequence) -> Vec<Action> {
+    fn trace_steps(&self, mut trace: Trace) -> Vec<Action> {
         let mut steps: Vec<Action> = Vec::new();
-        for action in last_sequence.actions().iter().rev() {
-            steps.push(*action);
-        }
-
-        let mut trace: Option<(usize, ActionSequence)> = self.save.last().unwrap().trace;
-        while let Some((i, sequence)) = trace {
-            for action in sequence.actions().iter().rev() {
+        loop {
+            for action in trace.last_action.actions().iter().rev() {
                 steps.push(*action);
             }
-            trace = self.save[i].trace;
+            match &self.save[trace.parent_index].trace {
+                Some(t) => trace = t.clone(),
+                None => break,
+            }
         }
-
         steps.reverse();
         steps
     }
