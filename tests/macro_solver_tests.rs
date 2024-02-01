@@ -28,7 +28,7 @@ fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
 #[test]
 fn test_01() {
     let settings = Settings {
-        max_cp: 240,
+        max_cp: 370,
         max_durability: 60,
         max_progress: progress!(2000),
         max_quality: quality!(40000),
@@ -37,13 +37,13 @@ fn test_01() {
     let final_state = from_action_sequence(&settings, &actions)
         .as_completed()
         .unwrap();
-    assert_eq!(final_state.quality, quality!(667.5));
+    assert_eq!(final_state.quality, quality!(1603));
 }
 
 #[test]
 fn test_02() {
     let settings = Settings {
-        max_cp: 320,
+        max_cp: 553,
         max_durability: 70,
         max_progress: progress!(2400),
         max_quality: quality!(20000),
@@ -52,22 +52,22 @@ fn test_02() {
     let final_state = from_action_sequence(&settings, &actions)
         .as_completed()
         .unwrap();
-    assert_eq!(final_state.quality, quality!(1068));
+    assert_eq!(final_state.quality, quality!(3210));
 }
 
 #[test]
 fn test_03() {
     let settings = Settings {
-        max_cp: 400,
+        max_cp: 612,
         max_durability: 60,
-        max_progress: progress!(2000),
+        max_progress: progress!(2560),
         max_quality: quality!(40000),
     };
     let actions = solve(&settings).unwrap();
     let final_state = from_action_sequence(&settings, &actions)
         .as_completed()
         .unwrap();
-    assert_eq!(final_state.quality, quality!(1813.25));
+    assert_eq!(final_state.quality, quality!(3358.75));
 }
 
 #[test]
@@ -128,4 +128,49 @@ fn test_07() {
         .as_completed()
         .unwrap();
     assert_eq!(final_state.quality, quality!(4503.75));
+}
+
+#[test]
+fn test_08() {
+    let settings = Settings {
+        max_cp: 701,
+        max_durability: 60,
+        max_progress: progress!(3950),
+        max_quality: quality!(6950),
+    };
+    let actions = solve(&settings).unwrap();
+    let final_state = from_action_sequence(&settings, &actions)
+        .as_completed()
+        .unwrap();
+    assert_eq!(final_state.quality, quality!(2740));
+}
+
+#[test]
+fn test_09() {
+    let settings = Settings {
+        max_cp: 606,
+        max_durability: 80,
+        max_progress: progress!(1200),
+        max_quality: quality!(20000),
+    };
+    let actions = solve(&settings).unwrap();
+    let final_state = from_action_sequence(&settings, &actions)
+        .as_completed()
+        .unwrap();
+    assert_eq!(final_state.quality, quality!(5173.75));
+}
+
+#[test]
+fn test_10() {
+    let settings = Settings {
+        max_cp: 501,
+        max_durability: 70,
+        max_progress: progress!(1950),
+        max_quality: quality!(20000),
+    };
+    let actions = solve(&settings).unwrap();
+    let final_state = from_action_sequence(&settings, &actions)
+        .as_completed()
+        .unwrap();
+    assert_eq!(final_state.quality, quality!(3220));
 }
