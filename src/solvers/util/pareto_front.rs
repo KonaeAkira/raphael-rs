@@ -40,9 +40,13 @@ impl PartialOrd for ParetoValue {
             self.progress.cmp(&other.progress),
             self.quality.cmp(&other.quality),
         ) {
-            (Ordering::Less, Ordering::Less) => Some(Ordering::Less),
             (Ordering::Equal, Ordering::Equal) => Some(Ordering::Equal),
-            (Ordering::Greater, Ordering::Greater) => Some(Ordering::Greater),
+            (Ordering::Less | Ordering::Equal, Ordering::Less | Ordering::Equal) => {
+                Some(Ordering::Less)
+            }
+            (Ordering::Greater | Ordering::Equal, Ordering::Greater | Ordering::Equal) => {
+                Some(Ordering::Greater)
+            }
             _ => None,
         }
     }

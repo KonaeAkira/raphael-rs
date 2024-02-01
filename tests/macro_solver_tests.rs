@@ -99,3 +99,33 @@ fn test_05() {
         .unwrap();
     assert_eq!(final_state.quality, quality!(1978.25));
 }
+
+#[test]
+fn test_06() {
+    let settings = Settings {
+        max_cp: 540,
+        max_durability: 70,
+        max_progress: progress!(2700),
+        max_quality: quality!(40000),
+    };
+    let actions = solve(&settings).unwrap();
+    let final_state = from_action_sequence(&settings, &actions)
+        .as_completed()
+        .unwrap();
+    assert_eq!(final_state.quality, quality!(2752.5));
+}
+
+#[test]
+fn test_07() {
+    let settings = Settings {
+        max_cp: 700,
+        max_durability: 70,
+        max_progress: progress!(2500),
+        max_quality: quality!(40000),
+    };
+    let actions = solve(&settings).unwrap();
+    let final_state = from_action_sequence(&settings, &actions)
+        .as_completed()
+        .unwrap();
+    assert_eq!(final_state.quality, quality!(4503.75));
+}
