@@ -200,6 +200,7 @@ impl MacroSolver {
                 ActionSequence::MuscleMemoryOpener => false,
                 ActionSequence::ReflectOpener => false,
                 ActionSequence::MasterMend => false,
+                ActionSequence::BasicSynthesis => false,
                 ActionSequence::CarefulSynthesis => {
                     use_progress_increase && state.effects.muscle_memory == 0
                 }

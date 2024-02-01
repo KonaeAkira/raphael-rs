@@ -158,19 +158,11 @@ impl FinishSolver {
     fn should_use(&self, state: &ReducedState, sequence: ActionSequence) -> bool {
         let manipulation_capped =
             state.effects.manipulation != 0 && state.durability == self.settings.max_durability;
-        let missing_progress = self.settings.max_progress - state.progress;
         match sequence {
-            ActionSequence::MasterMend => {
-                !manipulation_capped && state.durability + 30 <= self.settings.max_durability
-            }
-            ActionSequence::CarefulSynthesis => {
-                state.effects.veneration != 0
-                    || Action::CarefulSynthesis.base_progress_increase() * 5 >= missing_progress
-            }
-            ActionSequence::Groundwork => {
-                state.effects.veneration != 0
-                    || Action::Groundwork.base_progress_increase() * 2 >= missing_progress
-            }
+            ActionSequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
+            ActionSequence::BasicSynthesis => true,
+            ActionSequence::CarefulSynthesis => true,
+            ActionSequence::Groundwork => true,
             ActionSequence::FocusedSynthesisCombo => {
                 !manipulation_capped
                     && state.effects.waste_not == 0
@@ -195,7 +187,8 @@ impl Drop for FinishSolver {
     }
 }
 
-const ACTION_SEQUENCES: [ActionSequence; 8] = [
+const ACTION_SEQUENCES: [ActionSequence; 9] = [
+    ActionSequence::BasicSynthesis,
     ActionSequence::MasterMend,
     ActionSequence::CarefulSynthesis,
     ActionSequence::Groundwork,

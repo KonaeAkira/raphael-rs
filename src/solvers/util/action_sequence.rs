@@ -9,6 +9,7 @@ pub enum ActionSequence {
     MuscleMemoryOpener,
     ReflectOpener,
     // singles
+    BasicSynthesis,
     MasterMend,
     CarefulSynthesis,
     Groundwork,
@@ -57,6 +58,7 @@ impl ActionSequence {
             ActionSequence::ByregotsBlessing => &[Action::ByregotsBlessing],
             ActionSequence::MuscleMemoryOpener => &[Action::MuscleMemory],
             ActionSequence::ReflectOpener => &[Action::Reflect],
+            ActionSequence::BasicSynthesis => &[Action::BasicSynthesis],
         }
     }
 
