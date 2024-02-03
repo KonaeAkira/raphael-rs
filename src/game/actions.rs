@@ -2,22 +2,7 @@ use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 
 use crate::game::{conditions::Condition, effects::Effects};
 
-pub const PROG_DENOM: i32 = 20;
-pub const QUAL_DENOM: i32 = 800;
-
-#[macro_export]
-macro_rules! progress {
-    ($l:literal) => {
-        ($l as f32 * PROG_DENOM as f32) as i32
-    };
-}
-
-#[macro_export]
-macro_rules! quality {
-    ($l:literal) => {
-        ($l as f32 * QUAL_DENOM as f32) as i32
-    };
-}
+use super::units::{progress::Progress, quality::Quality};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, EnumCountMacro, EnumIter, Hash)]
 pub enum Action {
@@ -154,7 +139,7 @@ impl Action {
         }
     }
 
-    pub fn durability_cost(&self, effects: &Effects, condition: Condition) -> i32 {
+    pub const fn durability_cost(&self, effects: &Effects, condition: Condition) -> i32 {
         let base_cost: i32 = match condition {
             Condition::Sturdy => (self.base_durability_cost() + 1) / 2,
             _ => self.base_durability_cost(),
@@ -166,71 +151,69 @@ impl Action {
         base_cost - effect_bonus
     }
 
-    pub const fn base_progress_increase(&self) -> i32 {
-        PROG_DENOM
-            * match *self {
-                Action::BasicSynthesis => 120,
-                Action::MuscleMemory => 300,
-                Action::CarefulSynthesis => 180,
-                Action::FocusedSynthesis => 200,
-                Action::Groundwork => 360,
-                Action::DelicateSynthesis => 100,
-                Action::IntensiveSynthesis => 400,
-                Action::PrudentSynthesis => 180,
-                _ => 0,
-            }
+    pub const fn base_progress_increase(&self) -> Progress {
+        match *self {
+            Action::BasicSynthesis => Progress::from_const(120),
+            Action::MuscleMemory => Progress::from_const(300),
+            Action::CarefulSynthesis => Progress::from_const(180),
+            Action::FocusedSynthesis => Progress::from_const(200),
+            Action::Groundwork => Progress::from_const(360),
+            Action::DelicateSynthesis => Progress::from_const(100),
+            Action::IntensiveSynthesis => Progress::from_const(400),
+            Action::PrudentSynthesis => Progress::from_const(180),
+            _ => Progress::from_const(0),
+        }
     }
 
-    pub const fn progress_increase(&self, effects: &Effects, condition: Condition) -> i32 {
-        let base_increase: i32 = match condition {
-            Condition::Malleable => self.base_progress_increase() * 3 / 2,
+    pub fn progress_increase(&self, effects: &Effects, condition: Condition) -> Progress {
+        let base_increase = match condition {
+            Condition::Malleable => self.base_progress_increase().scale(3, 2),
             _ => self.base_progress_increase(),
         };
-        let mut effect_bonus: i32 = 0;
+        let mut effect_bonus = Progress::from_const(0);
         if effects.muscle_memory > 0 {
             effect_bonus += base_increase;
         }
         if effects.veneration > 0 {
-            effect_bonus += base_increase / 2;
+            effect_bonus += base_increase.scale(1, 2);
         }
         base_increase + effect_bonus
     }
 
-    pub const fn base_quality_increase(&self) -> i32 {
-        QUAL_DENOM
-            * match *self {
-                Action::BasicTouch => 100,
-                Action::StandardTouch => 125,
-                Action::PreciseTouch => 150,
-                Action::PrudentTouch => 100,
-                Action::FocusedTouch => 150,
-                Action::Reflect => 100,
-                Action::PreparatoryTouch => 200,
-                Action::DelicateSynthesis => 100,
-                Action::AdvancedTouch => 150,
-                Action::TrainedFinesse => 100,
-                Action::ByregotsBlessing => 100,
-                _ => 0,
-            }
+    pub const fn base_quality_increase(&self) -> Quality {
+        match *self {
+            Action::BasicTouch => Quality::from_const(100),
+            Action::StandardTouch => Quality::from_const(125),
+            Action::PreciseTouch => Quality::from_const(150),
+            Action::PrudentTouch => Quality::from_const(100),
+            Action::FocusedTouch => Quality::from_const(150),
+            Action::Reflect => Quality::from_const(100),
+            Action::PreparatoryTouch => Quality::from_const(200),
+            Action::DelicateSynthesis => Quality::from_const(100),
+            Action::AdvancedTouch => Quality::from_const(150),
+            Action::TrainedFinesse => Quality::from_const(100),
+            Action::ByregotsBlessing => Quality::from_const(100),
+            _ => Quality::from_const(0),
+        }
     }
 
-    pub const fn quality_increase(&self, effects: &Effects, condition: Condition) -> i32 {
-        let mut base_increase: i32 = match *self {
-            Action::ByregotsBlessing => {
-                self.base_quality_increase() * (2 * effects.inner_quiet as i32 + 10) / 10
-            }
+    pub fn quality_increase(&self, effects: &Effects, condition: Condition) -> Quality {
+        let mut base_increase = match *self {
+            Action::ByregotsBlessing => self
+                .base_quality_increase()
+                .scale(2 * effects.inner_quiet as u32 + 10, 10),
             _ => self.base_quality_increase(),
         };
         match condition {
-            Condition::Good => base_increase += base_increase / 2,
-            Condition::Excellent => base_increase *= 4,
-            Condition::Poor => base_increase /= 2,
+            Condition::Good => base_increase = base_increase.scale(3, 2),
+            Condition::Excellent => base_increase = base_increase.scale(4, 1),
+            Condition::Poor => base_increase = base_increase.scale(1, 2),
             _ => (),
         };
-        base_increase += base_increase * effects.inner_quiet as i32 / 10;
-        let mut effect_bonus: i32 = 0;
+        base_increase += base_increase.scale(effects.inner_quiet as u32, 10);
+        let mut effect_bonus = Quality::from_const(0);
         if effects.innovation > 0 {
-            effect_bonus += base_increase / 2;
+            effect_bonus += base_increase.scale(1, 2);
         }
         if effects.great_strides > 0 {
             effect_bonus += base_increase;

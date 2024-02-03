@@ -1,10 +1,9 @@
 use raphael_rs::{
     config::Settings,
     game::{
-        actions::{PROG_DENOM, QUAL_DENOM},
         state::State,
+        units::{progress::Progress, quality::Quality},
     },
-    progress, quality,
     solvers::macro_solver::MacroSolver,
 };
 
@@ -13,8 +12,8 @@ fn main() {
     let settings = Settings {
         max_cp: 700,
         max_durability: 70,
-        max_progress: progress!(2500),
-        max_quality: quality!(40000),
+        max_progress: Progress::from(2500),
+        max_quality: Quality::from(40000),
     };
     let state = State::new(&settings);
     let mut solver = MacroSolver::new(settings);

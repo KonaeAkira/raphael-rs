@@ -1,9 +1,7 @@
 use crate::{
     config::Settings,
     game::{
-        actions::Action,
-        effects::Effects,
-        state::{InProgress, State},
+        actions::Action, effects::Effects, state::{InProgress, State}, units::{progress::Progress, quality::Quality}
     },
     solvers::util::action_sequence::ActionSequence,
 };
@@ -41,7 +39,7 @@ impl ReducedEffects {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ReducedState {
     durability: i32,
-    progress: i32,
+    progress: Progress,
     effects: ReducedEffects,
 }
 
@@ -62,7 +60,7 @@ impl ReducedState {
             cp: ReducedState::MAX_CP,
             durability: self.durability,
             progress: self.progress,
-            quality: 0,
+            quality: Quality::from(0),
             effects: self.effects.to_effects(),
         }
     }

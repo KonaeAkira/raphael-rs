@@ -1,3 +1,5 @@
+use crate::game::units::progress::Progress;
+use crate::game::units::quality::Quality;
 use crate::game::{actions::Action, effects::Effects, state::InProgress};
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -21,8 +23,8 @@ impl ParetoKey {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ParetoValue {
-    pub progress: i32,
-    pub quality: i32,
+    pub progress: Progress,
+    pub quality: Quality,
 }
 
 impl ParetoValue {

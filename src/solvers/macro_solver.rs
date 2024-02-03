@@ -4,8 +4,9 @@ use std::vec::Vec;
 use crate::{
     config::Settings,
     game::{
-        actions::{Action, QUAL_DENOM},
+        actions::Action,
         state::{InProgress, State},
+        units::quality::Quality,
     },
     solvers::{
         finish_solver::FinishSolver,
@@ -79,7 +80,7 @@ impl SearchQueue {
 }
 
 struct MacroResult {
-    quality: i32,
+    quality: Quality,
     actions: Vec<Action>,
 }
 
@@ -118,7 +119,10 @@ impl MacroSolver {
 
         self.search_queue.push_seed(Node { state, trace: None });
 
-        let mut result: Option<MacroResult> = None;
+        let mut result = MacroResult {
+            quality: Quality::from(0),
+            actions: Vec::new(),
+        };
 
         while let Some(current_node) = self.search_queue.pop() {
             self.save.push(current_node.clone());
@@ -131,19 +135,15 @@ impl MacroSolver {
                     match use_action {
                         State::InProgress(state) => {
                             if self.finish_solver.can_finish(&state) {
-                                let best_quality = match result {
-                                    None => -1,
-                                    Some(MacroResult { quality, .. }) => quality,
-                                };
-                                if state.quality > best_quality {
-                                    let mut new_result = MacroResult {
+                                if state.quality > result.quality {
+                                    result = MacroResult {
                                         quality: state.quality,
                                         actions: self.trace_steps(Trace {
                                             parent_index: self.save.len() - 1,
                                             last_action: sequence,
                                         }),
                                     };
-                                    new_result.actions.append(
+                                    result.actions.append(
                                         &mut self
                                             .finish_solver
                                             .get_finish_sequence(&state)
@@ -151,10 +151,9 @@ impl MacroSolver {
                                     );
                                     log::trace!(
                                         "result ({}): {:?}",
-                                        new_result.quality as f32 / QUAL_DENOM as f32,
-                                        new_result.actions
+                                        result.quality,
+                                        result.actions
                                     );
-                                    result = Some(new_result);
                                 }
                                 self.search_queue.push(Node {
                                     state,
@@ -180,7 +179,7 @@ impl MacroSolver {
             nodes / time
         );
 
-        result
+        Some(result)
     }
 
     fn should_use(&self, state: &InProgress, sequence: ActionSequence) -> bool {
@@ -189,7 +188,7 @@ impl MacroSolver {
                 ActionSequence::MuscleMemoryOpener | ActionSequence::ReflectOpener => true,
                 _ => false,
             }
-        } else if state.effects.inner_quiet == 0 && state.quality != 0 {
+        } else if state.effects.inner_quiet == 0 && state.quality != Quality::from(0) {
             false // don't do anything after Byregot's Blessing
         } else {
             let use_progress_increase: bool =

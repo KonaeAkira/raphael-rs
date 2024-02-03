@@ -1,18 +1,18 @@
 use raphael_rs::{
     config::Settings,
     game::{
-        actions::{Action, PROG_DENOM, QUAL_DENOM},
+        actions::Action,
         conditions::Condition,
         state::{InProgress, State},
+        units::{progress::Progress, quality::Quality},
     },
-    progress, quality,
 };
 
 const SETTINGS: Settings = Settings {
     max_cp: 200,
     max_durability: 60,
-    max_progress: progress!(2000),
-    max_quality: quality!(40000),
+    max_progress: Progress::from_const(2000),
+    max_quality: Quality::from_const(40000),
 };
 
 fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
@@ -34,7 +34,7 @@ fn test_basic_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 200);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, progress!(120));
+            assert_eq!(state.progress, Progress::from(120));
             assert_eq!(state.last_action, Some(Action::BasicSynthesis));
         }
         _ => panic!(),
@@ -48,7 +48,7 @@ fn test_basic_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, quality!(100));
+            assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::BasicTouch));
         }
@@ -63,7 +63,7 @@ fn test_standard_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 164);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.quality, quality!(237.5));
+            assert_eq!(state.quality, Quality::from(237.5));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::StandardTouch));
         }
@@ -88,7 +88,7 @@ fn test_advanced_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 146);
             assert_eq!(state.durability, 30);
-            assert_eq!(state.quality, quality!(417.5));
+            assert_eq!(state.quality, Quality::from(417.5));
             assert_eq!(state.effects.inner_quiet, 3);
             assert_eq!(state.last_action, Some(Action::AdvancedTouch));
         }
@@ -238,7 +238,7 @@ fn test_byregots_blessing() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 158);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.quality, quality!(232));
+            assert_eq!(state.quality, Quality::from(232));
             assert_eq!(state.effects.inner_quiet, 0);
             assert_eq!(state.last_action, Some(Action::ByregotsBlessing));
         }
@@ -257,7 +257,7 @@ fn test_precise_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, quality!(225));
+            assert_eq!(state.quality, Quality::from(225));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::PreciseTouch));
         }
@@ -275,7 +275,7 @@ fn test_muscle_memory() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 194);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, progress!(300));
+            assert_eq!(state.progress, Progress::from(300));
             assert_eq!(state.effects.muscle_memory, 5);
             assert_eq!(state.last_action, Some(Action::MuscleMemory));
         }
@@ -293,7 +293,7 @@ fn test_careful_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 193);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, progress!(180));
+            assert_eq!(state.progress, Progress::from(180));
             assert_eq!(state.last_action, Some(Action::CarefulSynthesis));
         }
         _ => panic!(),
@@ -320,7 +320,7 @@ fn test_prudent_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 175);
             assert_eq!(state.durability, 55);
-            assert_eq!(state.quality, quality!(100));
+            assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::PrudentTouch));
         }
@@ -338,7 +338,7 @@ fn test_focused_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 188);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, progress!(200));
+            assert_eq!(state.progress, Progress::from(200));
             assert_eq!(state.last_action, Some(Action::FocusedSynthesis));
         }
         _ => panic!(),
@@ -355,7 +355,7 @@ fn test_focused_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 175);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, quality!(150));
+            assert_eq!(state.quality, Quality::from(150));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::FocusedTouch));
         }
@@ -373,7 +373,7 @@ fn test_reflect() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 194);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.quality, quality!(100));
+            assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::Reflect));
         }
@@ -391,7 +391,7 @@ fn test_preparatory_touch() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 160);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.quality, quality!(200));
+            assert_eq!(state.quality, Quality::from(200));
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.last_action, Some(Action::PreparatoryTouch));
         }
@@ -406,7 +406,7 @@ fn test_groundwork() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 40);
-            assert_eq!(state.progress, progress!(360));
+            assert_eq!(state.progress, Progress::from(360));
             assert_eq!(state.last_action, Some(Action::Groundwork));
         }
         _ => panic!(),
@@ -425,8 +425,8 @@ fn test_delicate_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 168);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, progress!(100));
-            assert_eq!(state.quality, quality!(100));
+            assert_eq!(state.progress, Progress::from(100));
+            assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.last_action, Some(Action::DelicateSynthesis));
         }
@@ -442,7 +442,7 @@ fn test_intensive_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 194);
             assert_eq!(state.durability, 50);
-            assert_eq!(state.progress, progress!(400));
+            assert_eq!(state.progress, Progress::from(400));
             assert_eq!(state.last_action, Some(Action::IntensiveSynthesis));
         }
         _ => panic!(),
@@ -459,7 +459,7 @@ fn test_prudent_synthesis() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 55);
-            assert_eq!(state.progress, progress!(180));
+            assert_eq!(state.progress, Progress::from(180));
             assert_eq!(state.last_action, Some(Action::PrudentSynthesis));
         }
         _ => panic!(),
@@ -474,7 +474,7 @@ fn test_trained_finesse() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 168);
             assert_eq!(state.durability, 60);
-            assert_eq!(state.quality, quality!(200));
+            assert_eq!(state.quality, Quality::from(200));
             assert_eq!(state.effects.inner_quiet, 10);
             assert_eq!(state.last_action, Some(Action::TrainedFinesse));
         }

@@ -5,6 +5,10 @@ pub mod game {
     pub mod conditions;
     pub mod effects;
     pub mod state;
+    pub mod units {
+        pub mod progress;
+        pub mod quality;
+    }
 }
 
 pub mod solvers {

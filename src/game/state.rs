@@ -3,6 +3,8 @@ use crate::{
     game::{actions::Action, conditions::Condition, effects::Effects},
 };
 
+use super::units::{progress::Progress, quality::Quality};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {
     InProgress(InProgress),
@@ -33,7 +35,7 @@ impl State {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Completed {
-    pub quality: i32,
+    pub quality: Quality,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -41,8 +43,8 @@ pub struct InProgress {
     pub last_action: Option<Action>,
     pub cp: i32,
     pub durability: i32,
-    pub progress: i32,
-    pub quality: i32,
+    pub progress: Progress,
+    pub quality: Quality,
     pub effects: Effects,
 }
 
@@ -52,8 +54,8 @@ impl InProgress {
             last_action: None,
             cp: settings.max_cp,
             durability: settings.max_durability,
-            progress: 0,
-            quality: 0,
+            progress: Progress::from(0),
+            quality: Quality::from(0),
             effects: Default::default(),
         }
     }
@@ -98,13 +100,13 @@ impl InProgress {
         new_state.durability -= durability_cost;
 
         // reset muscle memory if progress increased
-        if progress_increase > 0 {
+        if progress_increase > Progress::from(0) {
             new_state.progress += progress_increase;
             new_state.effects.muscle_memory = 0;
         }
 
         // reset great strides and increase inner quiet if quality increased
-        if quality_increase > 0 {
+        if quality_increase > Quality::from(0) {
             new_state.quality += quality_increase;
             new_state.effects.great_strides = 0;
             new_state.effects.inner_quiet += match action {
@@ -163,16 +165,12 @@ impl InProgress {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        game::actions::{PROG_DENOM, QUAL_DENOM},
-        progress, quality,
-    };
 
     const SETTINGS: Settings = Settings {
         max_cp: 200,
         max_durability: 60,
-        max_progress: progress!(2000),
-        max_quality: quality!(40000),
+        max_progress: Progress::from_const(2000),
+        max_quality: Quality::from_const(40000),
     };
 
     #[test]
@@ -183,8 +181,8 @@ mod tests {
                 assert_eq!(state.last_action, None);
                 assert_eq!(state.cp, SETTINGS.max_cp);
                 assert_eq!(state.durability, SETTINGS.max_durability);
-                assert_eq!(state.progress, 0);
-                assert_eq!(state.quality, 0);
+                assert_eq!(state.progress, Progress::from(0));
+                assert_eq!(state.quality, Quality::from(0));
                 assert_eq!(state.effects.inner_quiet, 0);
             }
             _ => panic!(),
