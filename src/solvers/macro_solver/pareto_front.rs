@@ -1,6 +1,9 @@
-use crate::game::units::progress::Progress;
-use crate::game::units::quality::Quality;
-use crate::game::{actions::Action, effects::Effects, state::InProgress};
+use crate::game::{
+    state::InProgress,
+    units::{Progress, Quality},
+    Action, Effects,
+};
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 

@@ -1,34 +1,18 @@
-use crate::{
-    config::Settings,
-    game::{actions::Action, conditions::Condition, state::State},
-};
+use crate::game::{Action, Condition, Settings, State};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+use strum_macros::EnumIter;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter)]
 pub enum ActionSequence {
-    // opener
-    MuscleMemoryOpener,
-    ReflectOpener,
-    // singles
     BasicSynthesis,
     MasterMend,
     CarefulSynthesis,
     Groundwork,
-    PreparatoryTouch,
-    PrudentTouch,
-    TrainedFinesse,
-    // combos
-    AdvancedTouchCombo,
     FocusedSynthesisCombo,
-    FocusedTouchCombo,
-    // effects
     Manipulation,
     WasteNot,
     WasteNot2,
-    Innovation,
     Veneration,
-    // finisher
-    ByresgotsBlessingCombo,
-    ByregotsBlessing,
 }
 
 impl ActionSequence {
@@ -36,28 +20,12 @@ impl ActionSequence {
         match *self {
             ActionSequence::CarefulSynthesis => &[Action::CarefulSynthesis],
             ActionSequence::Groundwork => &[Action::Groundwork],
-            ActionSequence::PreparatoryTouch => &[Action::PreparatoryTouch],
-            ActionSequence::PrudentTouch => &[Action::PrudentTouch],
-            ActionSequence::TrainedFinesse => &[Action::TrainedFinesse],
-            ActionSequence::AdvancedTouchCombo => &[
-                Action::BasicTouch,
-                Action::StandardTouch,
-                Action::AdvancedTouch,
-            ],
             ActionSequence::FocusedSynthesisCombo => &[Action::Observe, Action::FocusedSynthesis],
-            ActionSequence::FocusedTouchCombo => &[Action::Observe, Action::FocusedTouch],
             ActionSequence::MasterMend => &[Action::MasterMend],
             ActionSequence::Manipulation => &[Action::Manipulation],
             ActionSequence::WasteNot => &[Action::WasteNot],
             ActionSequence::WasteNot2 => &[Action::WasteNot2],
-            ActionSequence::Innovation => &[Action::Innovation],
             ActionSequence::Veneration => &[Action::Veneration],
-            ActionSequence::ByresgotsBlessingCombo => {
-                &[Action::GreatStrides, Action::ByregotsBlessing]
-            }
-            ActionSequence::ByregotsBlessing => &[Action::ByregotsBlessing],
-            ActionSequence::MuscleMemoryOpener => &[Action::MuscleMemory],
-            ActionSequence::ReflectOpener => &[Action::Reflect],
             ActionSequence::BasicSynthesis => &[Action::BasicSynthesis],
         }
     }

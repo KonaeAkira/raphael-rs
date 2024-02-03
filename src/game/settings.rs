@@ -1,4 +1,4 @@
-use crate::game::units::{progress::Progress, quality::Quality};
+use crate::game::units::{Progress, Quality};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Settings {

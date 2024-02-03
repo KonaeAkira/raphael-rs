@@ -1,11 +1,9 @@
-use raphael_rs::{
-    config::Settings,
-    game::{
-        state::State,
-        units::{progress::Progress, quality::Quality},
-    },
-    solvers::macro_solver::MacroSolver,
+use raphael_rs::game::{
+    units::{Progress, Quality},
+    Settings, State,
 };
+
+use raphael_rs::solvers::MacroSolver;
 
 fn main() {
     env_logger::init();

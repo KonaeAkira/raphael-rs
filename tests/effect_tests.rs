@@ -1,8 +1,7 @@
-use raphael_rs::{
-    config::Settings,
-    game::{
-        actions::Action, conditions::Condition, state::{InProgress, State}, units::{progress::Progress, quality::Quality}
-    },
+use raphael_rs::game::{
+    state::InProgress,
+    units::{Progress, Quality},
+    Action, Condition, Settings, State,
 };
 
 const SETTINGS: Settings = Settings {

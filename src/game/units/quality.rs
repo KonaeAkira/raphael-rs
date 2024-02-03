@@ -5,7 +5,9 @@ pub struct Quality {
 
 impl Quality {
     pub const fn scale(self, mul: u32, div: u32) -> Self {
-        Self { value: self.value * mul / div }
+        Self {
+            value: self.value * mul / div,
+        }
     }
 
     pub const fn from_const(value: u32) -> Self {

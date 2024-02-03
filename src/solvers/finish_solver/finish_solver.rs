@@ -1,11 +1,14 @@
-use crate::{
-    config::Settings,
-    game::{
-        actions::Action, effects::Effects, state::{InProgress, State}, units::{progress::Progress, quality::Quality}
-    },
-    solvers::util::action_sequence::ActionSequence,
+use crate::game::{
+    state::InProgress,
+    units::{Progress, Quality},
+    Action, Effects, Settings, State,
 };
+
 use std::collections::HashMap;
+
+use strum::IntoEnumIterator;
+
+use super::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ReducedEffects {
@@ -97,7 +100,7 @@ impl FinishSolver {
     }
 
     fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, cp_budget: i32) -> () {
-        for sequence in ACTION_SEQUENCES {
+        for sequence in ActionSequence::iter() {
             let target_cp = cp_budget - sequence.base_cp_cost();
             if target_cp >= 0 && self.should_use(&state, sequence) {
                 match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
@@ -130,7 +133,7 @@ impl FinishSolver {
             Some(cost) => *cost,
             None => {
                 let mut result: i32 = ReducedState::MAX_CP;
-                for sequence in ACTION_SEQUENCES {
+                for sequence in ActionSequence::iter() {
                     if self.should_use(&state, sequence) {
                         match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
                             State::InProgress(new_state) => {
@@ -171,7 +174,6 @@ impl FinishSolver {
                 !manipulation_capped && state.effects.waste_not == 0
             }
             ActionSequence::Veneration => !manipulation_capped && state.effects.veneration == 0,
-            _ => false,
         }
     }
 }
@@ -184,15 +186,3 @@ impl Drop for FinishSolver {
         );
     }
 }
-
-const ACTION_SEQUENCES: [ActionSequence; 9] = [
-    ActionSequence::BasicSynthesis,
-    ActionSequence::MasterMend,
-    ActionSequence::CarefulSynthesis,
-    ActionSequence::Groundwork,
-    ActionSequence::FocusedSynthesisCombo,
-    ActionSequence::Manipulation,
-    ActionSequence::WasteNot,
-    ActionSequence::WasteNot2,
-    ActionSequence::Veneration,
-];

@@ -1,9 +1,7 @@
-use crate::{
-    config::Settings,
-    game::{actions::Action, conditions::Condition, effects::Effects},
+use crate::game::{
+    units::{Progress, Quality},
+    Action, Condition, Effects, Settings,
 };
-
-use super::units::{progress::Progress, quality::Quality};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {

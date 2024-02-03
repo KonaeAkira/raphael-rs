@@ -1,8 +1,9 @@
-use raphael_rs::{
-    config::Settings,
-    game::{actions::Action, conditions::Condition, state::State, units::{progress::Progress, quality::Quality}},
-    solvers::macro_solver::MacroSolver,
+use raphael_rs::game::{
+    units::{Progress, Quality},
+    Action, Condition, Settings, State,
 };
+
+use raphael_rs::solvers::MacroSolver;
 
 fn solve(settings: &Settings) -> Option<Vec<Action>> {
     MacroSolver::new(settings.clone()).solve(State::new(settings))
