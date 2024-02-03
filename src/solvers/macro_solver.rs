@@ -1,6 +1,8 @@
 use std::time::Instant;
 use std::vec::Vec;
 
+use typed_arena::Arena;
+
 use crate::{
     config::Settings,
     game::{
@@ -15,25 +17,25 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-struct Trace {
-    pub parent_index: usize,
-    pub last_action: ActionSequence,
+struct Trace<'a> {
+    pub parent: &'a Node<'a>,
+    pub action: ActionSequence,
 }
 
 #[derive(Debug, Clone)]
-struct Node {
+struct Node<'a> {
     state: InProgress,
-    trace: Option<Trace>,
+    trace: Option<Trace<'a>>,
 }
 
-struct SearchQueue {
-    seed: Vec<Node>,
-    buckets: Vec<Vec<Node>>,
+struct SearchQueue<'a> {
+    seed: Vec<Node<'a>>,
+    buckets: Vec<Vec<Node<'a>>>,
     pareto_front: ParetoFront,
 }
 
-impl SearchQueue {
-    pub fn new(settings: Settings) -> SearchQueue {
+impl<'a> SearchQueue<'a> {
+    pub fn new(settings: Settings) -> SearchQueue<'a> {
         SearchQueue {
             seed: Vec::new(),
             buckets: vec![Vec::new(); (settings.max_cp + 1) as usize],
@@ -41,15 +43,15 @@ impl SearchQueue {
         }
     }
 
-    pub fn push_seed(&mut self, node: Node) {
+    pub fn push_seed(&mut self, node: Node<'a>) {
         self.seed.push(node);
     }
 
-    pub fn push(&mut self, node: Node) {
+    pub fn push(&mut self, node: Node<'a>) {
         self.buckets[node.state.cp as usize].push(node);
     }
 
-    pub fn pop(&mut self) -> Option<Node> {
+    pub fn pop(&mut self) -> Option<Node<'a>> {
         if let Some(node) = self.seed.pop() {
             return Some(node);
         } else if self.pop_bucket() {
@@ -84,24 +86,24 @@ struct MacroResult {
     actions: Vec<Action>,
 }
 
-pub struct MacroSolver {
+pub struct MacroSolver<'a> {
     settings: Settings,
-    search_queue: SearchQueue,
-    save: Vec<Node>,
+    search_queue: SearchQueue<'a>,
+    explored_nodes: Arena<Node<'a>>,
     finish_solver: FinishSolver,
 }
 
-impl MacroSolver {
-    pub fn new(settings: Settings) -> MacroSolver {
+impl<'a> MacroSolver<'a> {
+    pub fn new(settings: Settings) -> MacroSolver<'a> {
         MacroSolver {
             settings: settings.clone(),
             search_queue: SearchQueue::new(settings.clone()),
-            save: Vec::new(),
+            explored_nodes: Arena::new(),
             finish_solver: FinishSolver::new(settings),
         }
     }
 
-    pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
+    pub fn solve(&'a mut self, state: State) -> Option<Vec<Action>> {
         match state {
             State::InProgress(state) => {
                 let result = self.do_solve(state);
@@ -114,7 +116,7 @@ impl MacroSolver {
         }
     }
 
-    fn do_solve(&mut self, state: InProgress) -> Option<MacroResult> {
+    fn do_solve(&'a mut self, state: InProgress) -> Option<MacroResult> {
         let timer = Instant::now();
 
         self.search_queue.push_seed(Node { state, trace: None });
@@ -125,9 +127,9 @@ impl MacroSolver {
         };
 
         while let Some(current_node) = self.search_queue.pop() {
-            self.save.push(current_node.clone());
+            let current_node: &Node<'_> = self.explored_nodes.alloc(current_node);
             for sequence in ACTION_SEQUENCES {
-                if self.should_use(&current_node.state, sequence) {
+                if Self::should_use(&current_node.state, sequence) {
                     let use_action = sequence.apply(
                         State::InProgress(current_node.state.clone()),
                         &self.settings,
@@ -138,9 +140,9 @@ impl MacroSolver {
                                 if state.quality > result.quality {
                                     result = MacroResult {
                                         quality: state.quality,
-                                        actions: self.trace_steps(Trace {
-                                            parent_index: self.save.len() - 1,
-                                            last_action: sequence,
+                                        actions: Self::trace_steps(Trace {
+                                            parent: current_node,
+                                            action: sequence,
                                         }),
                                     };
                                     result.actions.append(
@@ -158,8 +160,8 @@ impl MacroSolver {
                                 self.search_queue.push(Node {
                                     state,
                                     trace: Some(Trace {
-                                        parent_index: self.save.len() - 1,
-                                        last_action: sequence,
+                                        parent: current_node,
+                                        action: sequence,
                                     }),
                                 });
                             }
@@ -171,7 +173,7 @@ impl MacroSolver {
         }
 
         let time = timer.elapsed().as_secs_f32();
-        let nodes = self.save.len() as f32;
+        let nodes = self.explored_nodes.len() as f32;
         log::debug!("Time elapsed: {}s", time);
         log::debug!(
             "Searched nodes: {:+.2e} ({:+.2e} nodes/s)",
@@ -182,7 +184,7 @@ impl MacroSolver {
         Some(result)
     }
 
-    fn should_use(&self, state: &InProgress, sequence: ActionSequence) -> bool {
+    fn should_use(state: &InProgress, sequence: ActionSequence) -> bool {
         if state.last_action.is_none() {
             match sequence {
                 ActionSequence::MuscleMemoryOpener | ActionSequence::ReflectOpener => true,
@@ -241,13 +243,13 @@ impl MacroSolver {
         }
     }
 
-    fn trace_steps(&self, mut trace: Trace) -> Vec<Action> {
+    fn trace_steps(mut trace: Trace) -> Vec<Action> {
         let mut steps: Vec<Action> = Vec::new();
         loop {
-            for action in trace.last_action.actions().iter().rev() {
+            for action in trace.action.actions().iter().rev() {
                 steps.push(*action);
             }
-            match &self.save[trace.parent_index].trace {
+            match &trace.parent.trace {
                 Some(t) => trace = t.clone(),
                 None => break,
             }
