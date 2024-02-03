@@ -1,10 +1,8 @@
-use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
-
 use crate::game::{conditions::Condition, effects::Effects};
 
 use super::units::{progress::Progress, quality::Quality};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, EnumCountMacro, EnumIter, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Action {
     BasicSynthesis,
     BasicTouch,
