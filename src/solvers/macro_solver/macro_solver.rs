@@ -14,24 +14,20 @@ struct MacroResult {
     actions: Vec<Action>,
 }
 
-pub struct MacroSolver<'a> {
+pub struct MacroSolver {
     settings: Settings,
-    search_queue: SearchQueue<'a>,
-    explored_nodes: Arena<SearchNode<'a>>,
     finish_solver: FinishSolver,
 }
 
-impl<'a> MacroSolver<'a> {
-    pub fn new(settings: Settings) -> MacroSolver<'a> {
+impl MacroSolver {
+    pub fn new(settings: Settings) -> MacroSolver {
         MacroSolver {
             settings: settings.clone(),
-            search_queue: SearchQueue::new(settings.clone()),
-            explored_nodes: Arena::new(),
             finish_solver: FinishSolver::new(settings),
         }
     }
 
-    pub fn solve(&'a mut self, state: State) -> Option<Vec<Action>> {
+    pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
         match state {
             State::InProgress(state) => {
                 let result = self.do_solve(state);
@@ -44,18 +40,21 @@ impl<'a> MacroSolver<'a> {
         }
     }
 
-    fn do_solve(&'a mut self, state: InProgress) -> Option<MacroResult> {
+    fn do_solve(&mut self, state: InProgress) -> Option<MacroResult> {
         let timer = Instant::now();
 
-        self.search_queue.push(SearchNode { state, trace: None });
+        let mut search_queue = SearchQueue::new(self.settings.clone());
+        let explored_nodes: Arena<SearchNode> = Arena::new();
+
+        search_queue.push(SearchNode { state, trace: None });
 
         let mut result = MacroResult {
             quality: Quality::from(0),
             actions: Vec::new(),
         };
 
-        while let Some(current_node) = self.search_queue.pop() {
-            let current_node: &SearchNode<'_> = self.explored_nodes.alloc(current_node);
+        while let Some(current_node) = search_queue.pop() {
+            let current_node: &SearchNode<'_> = explored_nodes.alloc(current_node);
             for sequence in ActionSequence::iter() {
                 if sequence.should_use(&current_node.state) {
                     let use_action = sequence.apply(
@@ -80,13 +79,8 @@ impl<'a> MacroSolver<'a> {
                                             .get_finish_sequence(&state)
                                             .unwrap(),
                                     );
-                                    log::trace!(
-                                        "result ({}): {:?}",
-                                        result.quality,
-                                        result.actions
-                                    );
                                 }
-                                self.search_queue.push(SearchNode {
+                                search_queue.push(SearchNode {
                                     state,
                                     trace: Some(SearchTrace {
                                         parent: current_node,
@@ -101,8 +95,10 @@ impl<'a> MacroSolver<'a> {
             }
         }
 
+        log::trace!("result ({}): {:?}", result.quality, result.actions);
+
         let time = timer.elapsed().as_secs_f32();
-        let nodes = self.explored_nodes.len() as f32;
+        let nodes = explored_nodes.len() as f32;
         log::debug!("Time elapsed: {}s", time);
         log::debug!(
             "Searched nodes: {:+.2e} ({:+.2e} nodes/s)",
