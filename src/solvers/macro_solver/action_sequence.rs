@@ -89,7 +89,7 @@ impl ActionSequence {
                 ActionSequence::PreparatoryTouch => {
                     use_quality_increase && state.effects.waste_not != 0
                 }
-                ActionSequence::PrudentTouch => use_quality_increase,
+                ActionSequence::PrudentTouch => true,
                 ActionSequence::TrainedFinesse => state.effects.inner_quiet == 10,
                 ActionSequence::AdvancedTouchCombo => {
                     use_quality_increase

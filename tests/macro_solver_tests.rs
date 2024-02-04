@@ -48,7 +48,7 @@ fn test_02() {
     let final_state = from_action_sequence(&settings, &actions)
         .as_completed()
         .unwrap();
-    assert_eq!(final_state.quality, Quality::from(3316.25));
+    assert_eq!(final_state.quality, Quality::from(3352.50));
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn test_03() {
     let final_state = from_action_sequence(&settings, &actions)
         .as_completed()
         .unwrap();
-    assert_eq!(final_state.quality, Quality::from(3400));
+    assert_eq!(final_state.quality, Quality::from(3407.5));
 }
 
 #[test]
