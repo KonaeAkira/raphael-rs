@@ -1,7 +1,13 @@
-use crate::game::{state::InProgress, Action, Settings};
+use pareto_front::{Dominate, ParetoFront};
+use std::collections::HashMap;
+
+use crate::game::{
+    state::InProgress,
+    units::{Progress, Quality},
+    Action, ComboAction, Effects, Settings,
+};
 
 use super::ActionSequence;
-use super::ParetoFront;
 
 #[derive(Debug, Clone, Copy)]
 pub struct SearchTrace<'a> {
@@ -33,31 +39,77 @@ pub struct SearchNode<'a> {
     pub trace: Option<SearchTrace<'a>>,
 }
 
+impl<'a> Dominate for SearchNode<'a> {
+    fn dominate(&self, other: &Self) -> bool {
+        self.state.progress >= other.state.progress && self.state.quality >= other.state.quality
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ParetoKey {
+    pub combo: Option<ComboAction>,
+    pub durability: i32,
+    pub effects: Effects,
+}
+
+impl From<&SearchNode<'_>> for ParetoKey {
+    fn from(value: &SearchNode) -> Self {
+        ParetoKey {
+            combo: value.state.combo,
+            durability: value.state.durability,
+            effects: value.state.effects,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParetoValue {
+    pub progress: Progress,
+    pub quality: Quality,
+}
+
+impl<'a> From<&SearchNode<'a>> for ParetoValue {
+    fn from(value: &SearchNode<'a>) -> Self {
+        ParetoValue {
+            progress: value.state.progress,
+            quality: value.state.quality,
+        }
+    }
+}
+
+impl Dominate for ParetoValue {
+    fn dominate(&self, other: &Self) -> bool {
+        self.progress >= other.progress && self.quality >= other.quality
+    }
+}
+
+type FrontHashMap<T> = HashMap<ParetoKey, ParetoFront<T>>;
+
 pub struct SearchQueue<'a> {
-    seed: Vec<SearchNode<'a>>,
-    buckets: Vec<Vec<SearchNode<'a>>>,
-    pareto_front: ParetoFront,
+    current: Vec<SearchNode<'a>>,
+    buckets: Vec<FrontHashMap<SearchNode<'a>>>,
+    pareto_front: FrontHashMap<ParetoValue>,
 }
 
 impl<'a> SearchQueue<'a> {
     pub fn new(settings: Settings) -> SearchQueue<'a> {
         SearchQueue {
-            seed: Vec::new(),
-            buckets: vec![Vec::new(); (settings.max_cp + 1) as usize],
-            pareto_front: ParetoFront::new(),
+            current: Vec::new(),
+            buckets: vec![FrontHashMap::new(); (settings.max_cp + 1) as usize],
+            pareto_front: FrontHashMap::new(),
         }
     }
 
-    pub fn push_seed(&mut self, node: SearchNode<'a>) {
-        self.seed.push(node);
-    }
-
-    pub fn push(&mut self, node: SearchNode<'a>) {
-        self.buckets[node.state.cp as usize].push(node);
+    pub fn push(&mut self, value: SearchNode<'a>) {
+        let key = ParetoKey::from(&value);
+        self.buckets[value.state.cp as usize]
+            .entry(key)
+            .or_default()
+            .push(value);
     }
 
     pub fn pop(&mut self) -> Option<SearchNode<'a>> {
-        if let Some(node) = self.seed.pop() {
+        if let Some(node) = self.current.pop() {
             return Some(node);
         } else if self.pop_bucket() {
             return self.pop();
@@ -68,20 +120,17 @@ impl<'a> SearchQueue<'a> {
 
     fn pop_bucket(&mut self) -> bool {
         if let Some(bucket) = self.buckets.pop() {
-            let mut unique: Vec<SearchNode> = Vec::new();
-            for node in bucket {
-                if self.pareto_front.insert(&node.state) {
-                    unique.push(node);
+            for (key, front) in bucket {
+                let global_front = self.pareto_front.entry(key).or_default();
+                for value in front {
+                    if global_front.push(ParetoValue::from(&value)) {
+                        self.current.push(value);
+                    }
                 }
             }
-            for node in unique {
-                if self.pareto_front.has(&node.state) {
-                    self.seed.push(node);
-                }
-            }
-            return true;
+            true
         } else {
-            return false;
+            false
         }
     }
 }

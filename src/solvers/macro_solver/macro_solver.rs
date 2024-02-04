@@ -47,8 +47,7 @@ impl<'a> MacroSolver<'a> {
     fn do_solve(&'a mut self, state: InProgress) -> Option<MacroResult> {
         let timer = Instant::now();
 
-        self.search_queue
-            .push_seed(SearchNode { state, trace: None });
+        self.search_queue.push(SearchNode { state, trace: None });
 
         let mut result = MacroResult {
             quality: Quality::from(0),
