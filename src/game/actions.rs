@@ -34,9 +34,17 @@ pub enum Action {
     TrainedFinesse,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub enum ComboAction {
+    SynthesisBegin,
+    Observe,
+    BasicTouch,
+    StandardTouch,
+}
+
 impl Action {
-    pub const fn time_cost(&self) -> i32 {
-        match *self {
+    pub const fn time_cost(self) -> i32 {
+        match self {
             Action::BasicSynthesis => 3,
             Action::BasicTouch => 3,
             Action::MasterMend => 3,
@@ -67,8 +75,8 @@ impl Action {
         }
     }
 
-    pub const fn base_cp_cost(&self) -> i32 {
-        match *self {
+    pub const fn base_cp_cost(self) -> i32 {
+        match self {
             Action::BasicSynthesis => 0,
             Action::BasicTouch => 18,
             Action::MasterMend => 88,
@@ -99,15 +107,15 @@ impl Action {
         }
     }
 
-    pub const fn cp_cost(&self, _: &Effects, condition: Condition) -> i32 {
+    pub const fn cp_cost(self, _: &Effects, condition: Condition) -> i32 {
         match condition {
             Condition::Pliant => (self.base_cp_cost() + 1) / 2,
             _ => self.base_cp_cost(),
         }
     }
 
-    pub const fn base_durability_cost(&self) -> i32 {
-        match *self {
+    pub const fn base_durability_cost(self) -> i32 {
+        match self {
             Action::BasicSynthesis => 10,
             Action::BasicTouch => 10,
             Action::MasterMend => 0,
@@ -138,7 +146,7 @@ impl Action {
         }
     }
 
-    pub const fn durability_cost(&self, effects: &Effects, condition: Condition) -> i32 {
+    pub const fn durability_cost(self, effects: &Effects, condition: Condition) -> i32 {
         let base_cost: i32 = match condition {
             Condition::Sturdy => (self.base_durability_cost() + 1) / 2,
             _ => self.base_durability_cost(),
@@ -150,8 +158,8 @@ impl Action {
         base_cost - effect_bonus
     }
 
-    pub const fn base_progress_increase(&self) -> Progress {
-        match *self {
+    pub const fn base_progress_increase(self) -> Progress {
+        match self {
             Action::BasicSynthesis => Progress::from_const(120),
             Action::MuscleMemory => Progress::from_const(300),
             Action::CarefulSynthesis => Progress::from_const(180),
@@ -164,7 +172,7 @@ impl Action {
         }
     }
 
-    pub fn progress_increase(&self, effects: &Effects, condition: Condition) -> Progress {
+    pub fn progress_increase(self, effects: &Effects, condition: Condition) -> Progress {
         let base_increase = match condition {
             Condition::Malleable => self.base_progress_increase().scale(3, 2),
             _ => self.base_progress_increase(),
@@ -179,8 +187,8 @@ impl Action {
         base_increase + effect_bonus
     }
 
-    pub const fn base_quality_increase(&self) -> Quality {
-        match *self {
+    pub const fn base_quality_increase(self) -> Quality {
+        match self {
             Action::BasicTouch => Quality::from_const(100),
             Action::StandardTouch => Quality::from_const(125),
             Action::PreciseTouch => Quality::from_const(150),
@@ -196,8 +204,8 @@ impl Action {
         }
     }
 
-    pub fn quality_increase(&self, effects: &Effects, condition: Condition) -> Quality {
-        let mut base_increase = match *self {
+    pub fn quality_increase(self, effects: &Effects, condition: Condition) -> Quality {
+        let mut base_increase = match self {
             Action::ByregotsBlessing => self
                 .base_quality_increase()
                 .scale(2 * effects.inner_quiet as u32 + 10, 10),
@@ -220,12 +228,23 @@ impl Action {
         return base_increase + effect_bonus;
     }
 
-    pub const fn combo_action(&self) -> Option<Self> {
-        match *self {
-            Action::StandardTouch => Some(Action::BasicTouch),
-            Action::AdvancedTouch => Some(Action::StandardTouch),
-            Action::FocusedSynthesis => Some(Action::Observe),
-            Action::FocusedTouch => Some(Action::Observe),
+    pub const fn required_combo(self) -> Option<ComboAction> {
+        match self {
+            Action::Reflect => Some(ComboAction::SynthesisBegin),
+            Action::MuscleMemory => Some(ComboAction::SynthesisBegin),
+            Action::StandardTouch => Some(ComboAction::BasicTouch),
+            Action::AdvancedTouch => Some(ComboAction::StandardTouch),
+            Action::FocusedSynthesis => Some(ComboAction::Observe),
+            Action::FocusedTouch => Some(ComboAction::Observe),
+            _ => None,
+        }
+    }
+
+    pub const fn to_combo(self) -> Option<ComboAction> {
+        match self {
+            Action::BasicTouch => Some(ComboAction::BasicTouch),
+            Action::StandardTouch => Some(ComboAction::StandardTouch),
+            Action::Observe => Some(ComboAction::Observe),
             _ => None,
         }
     }

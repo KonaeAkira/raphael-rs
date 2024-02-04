@@ -1,4 +1,6 @@
-use crate::game::{state::InProgress, units::Quality, Action, Condition, Settings, State};
+use crate::game::{
+    state::InProgress, units::Quality, Action, ComboAction, Condition, Settings, State,
+};
 
 use strum_macros::EnumIter;
 
@@ -65,7 +67,7 @@ impl ActionSequence {
     }
 
     pub fn should_use(self, state: &InProgress) -> bool {
-        if state.last_action.is_none() {
+        if state.combo == Some(ComboAction::SynthesisBegin) {
             match self {
                 ActionSequence::MuscleMemory | ActionSequence::Reflect => true,
                 _ => false,

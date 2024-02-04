@@ -59,12 +59,12 @@ impl ReducedState {
 
     pub fn to_state(&self) -> InProgress {
         InProgress {
-            last_action: Some(Action::TricksOfTheTrade),
             cp: ReducedState::MAX_CP,
             durability: self.durability,
             progress: self.progress,
             quality: Quality::from(0),
             effects: self.effects.to_effects(),
+            combo: None,
         }
     }
 }

@@ -1,7 +1,7 @@
 use raphael_rs::game::{
     state::InProgress,
     units::{Progress, Quality},
-    Action, Condition, Settings, State,
+    Action, ComboAction, Condition, Settings, State,
 };
 
 const SETTINGS: Settings = Settings {
@@ -31,7 +31,7 @@ fn test_basic_synthesis() {
             assert_eq!(state.cp, 200);
             assert_eq!(state.durability, 50);
             assert_eq!(state.progress, Progress::from(120));
-            assert_eq!(state.last_action, Some(Action::BasicSynthesis));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -46,7 +46,7 @@ fn test_basic_touch() {
             assert_eq!(state.durability, 50);
             assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 1);
-            assert_eq!(state.last_action, Some(Action::BasicTouch));
+            assert_eq!(state.combo, Some(ComboAction::BasicTouch));
         }
         _ => panic!(),
     }
@@ -61,7 +61,7 @@ fn test_standard_touch() {
             assert_eq!(state.durability, 40);
             assert_eq!(state.quality, Quality::from(237.5));
             assert_eq!(state.effects.inner_quiet, 2);
-            assert_eq!(state.last_action, Some(Action::StandardTouch));
+            assert_eq!(state.combo, Some(ComboAction::StandardTouch));
         }
         _ => panic!(),
     }
@@ -86,7 +86,7 @@ fn test_advanced_touch() {
             assert_eq!(state.durability, 30);
             assert_eq!(state.quality, Quality::from(417.5));
             assert_eq!(state.effects.inner_quiet, 3);
-            assert_eq!(state.last_action, Some(Action::AdvancedTouch));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -110,7 +110,7 @@ fn test_master_mend() {
     match state {
         State::InProgress(state) => {
             assert_eq!(state.durability, 50);
-            assert_eq!(state.last_action, Some(Action::MasterMend));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -130,7 +130,7 @@ fn test_observe() {
     match state {
         State::InProgress(state) => {
             assert_eq!(state.cp, 193);
-            assert_eq!(state.last_action, Some(Action::Observe));
+            assert_eq!(state.combo, Some(ComboAction::Observe));
         }
         _ => panic!(),
     }
@@ -169,7 +169,7 @@ fn test_waste_not() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 144);
             assert_eq!(state.effects.waste_not, 4);
-            assert_eq!(state.last_action, Some(Action::WasteNot));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -182,7 +182,7 @@ fn test_waste_not_2() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 102);
             assert_eq!(state.effects.waste_not, 8);
-            assert_eq!(state.last_action, Some(Action::WasteNot2));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -195,7 +195,7 @@ fn test_veneration() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.effects.veneration, 4);
-            assert_eq!(state.last_action, Some(Action::Veneration));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -208,7 +208,7 @@ fn test_innovation() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 182);
             assert_eq!(state.effects.innovation, 4);
-            assert_eq!(state.last_action, Some(Action::Innovation));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -221,7 +221,7 @@ fn test_great_strides() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 168);
             assert_eq!(state.effects.great_strides, 3);
-            assert_eq!(state.last_action, Some(Action::GreatStrides));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -236,7 +236,7 @@ fn test_byregots_blessing() {
             assert_eq!(state.durability, 40);
             assert_eq!(state.quality, Quality::from(232));
             assert_eq!(state.effects.inner_quiet, 0);
-            assert_eq!(state.last_action, Some(Action::ByregotsBlessing));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -255,7 +255,7 @@ fn test_precise_touch() {
             assert_eq!(state.durability, 50);
             assert_eq!(state.quality, Quality::from(225));
             assert_eq!(state.effects.inner_quiet, 2);
-            assert_eq!(state.last_action, Some(Action::PreciseTouch));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -273,7 +273,7 @@ fn test_muscle_memory() {
             assert_eq!(state.durability, 50);
             assert_eq!(state.progress, Progress::from(300));
             assert_eq!(state.effects.muscle_memory, 5);
-            assert_eq!(state.last_action, Some(Action::MuscleMemory));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -290,7 +290,7 @@ fn test_careful_synthesis() {
             assert_eq!(state.cp, 193);
             assert_eq!(state.durability, 50);
             assert_eq!(state.progress, Progress::from(180));
-            assert_eq!(state.last_action, Some(Action::CarefulSynthesis));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -303,7 +303,7 @@ fn test_manipulation() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 104);
             assert_eq!(state.effects.manipulation, 8);
-            assert_eq!(state.last_action, Some(Action::Manipulation));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -318,7 +318,7 @@ fn test_prudent_touch() {
             assert_eq!(state.durability, 55);
             assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 1);
-            assert_eq!(state.last_action, Some(Action::PrudentTouch));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -335,7 +335,7 @@ fn test_focused_synthesis() {
             assert_eq!(state.cp, 188);
             assert_eq!(state.durability, 50);
             assert_eq!(state.progress, Progress::from(200));
-            assert_eq!(state.last_action, Some(Action::FocusedSynthesis));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -353,7 +353,7 @@ fn test_focused_touch() {
             assert_eq!(state.durability, 50);
             assert_eq!(state.quality, Quality::from(150));
             assert_eq!(state.effects.inner_quiet, 1);
-            assert_eq!(state.last_action, Some(Action::FocusedTouch));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -371,7 +371,7 @@ fn test_reflect() {
             assert_eq!(state.durability, 50);
             assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 2);
-            assert_eq!(state.last_action, Some(Action::Reflect));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -389,7 +389,7 @@ fn test_preparatory_touch() {
             assert_eq!(state.durability, 40);
             assert_eq!(state.quality, Quality::from(200));
             assert_eq!(state.effects.inner_quiet, 2);
-            assert_eq!(state.last_action, Some(Action::PreparatoryTouch));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -403,7 +403,7 @@ fn test_groundwork() {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 40);
             assert_eq!(state.progress, Progress::from(360));
-            assert_eq!(state.last_action, Some(Action::Groundwork));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -424,7 +424,7 @@ fn test_delicate_synthesis() {
             assert_eq!(state.progress, Progress::from(100));
             assert_eq!(state.quality, Quality::from(100));
             assert_eq!(state.effects.inner_quiet, 1);
-            assert_eq!(state.last_action, Some(Action::DelicateSynthesis));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -439,7 +439,7 @@ fn test_intensive_synthesis() {
             assert_eq!(state.cp, 194);
             assert_eq!(state.durability, 50);
             assert_eq!(state.progress, Progress::from(400));
-            assert_eq!(state.last_action, Some(Action::IntensiveSynthesis));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -456,7 +456,7 @@ fn test_prudent_synthesis() {
             assert_eq!(state.cp, 182);
             assert_eq!(state.durability, 55);
             assert_eq!(state.progress, Progress::from(180));
-            assert_eq!(state.last_action, Some(Action::PrudentSynthesis));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }
@@ -472,7 +472,7 @@ fn test_trained_finesse() {
             assert_eq!(state.durability, 60);
             assert_eq!(state.quality, Quality::from(200));
             assert_eq!(state.effects.inner_quiet, 10);
-            assert_eq!(state.last_action, Some(Action::TrainedFinesse));
+            assert_eq!(state.combo, None);
         }
         _ => panic!(),
     }

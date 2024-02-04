@@ -1,5 +1,5 @@
 mod actions;
-pub use actions::Action;
+pub use actions::{Action, ComboAction};
 
 pub mod units;
 

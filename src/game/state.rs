@@ -1,6 +1,6 @@
 use crate::game::{
     units::{Progress, Quality},
-    Action, Condition, Effects, Settings,
+    Action, ComboAction, Condition, Effects, Settings,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -38,23 +38,23 @@ pub struct Completed {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InProgress {
-    pub last_action: Option<Action>,
     pub cp: i32,
     pub durability: i32,
     pub progress: Progress,
     pub quality: Quality,
     pub effects: Effects,
+    pub combo: Option<ComboAction>,
 }
 
 impl InProgress {
     pub fn new(settings: &Settings) -> InProgress {
         InProgress {
-            last_action: None,
             cp: settings.max_cp,
             durability: settings.max_durability,
             progress: Progress::from(0),
             quality: Quality::from(0),
             effects: Default::default(),
+            combo: Some(ComboAction::SynthesisBegin),
         }
     }
 
@@ -69,7 +69,6 @@ impl InProgress {
         }
 
         if !match action {
-            Action::MuscleMemory | Action::Reflect => self.last_action.is_none(),
             Action::ByregotsBlessing => self.effects.inner_quiet != 0,
             Action::PrudentSynthesis | Action::PrudentTouch => self.effects.waste_not == 0,
             Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
@@ -83,17 +82,12 @@ impl InProgress {
         }
 
         // last action must match required combo action
-        match action.combo_action() {
-            Some(req_action) => {
-                if self.last_action != Some(req_action) {
-                    return State::Invalid;
-                }
-            }
-            None => (),
+        if action.required_combo().is_some() && self.combo != action.required_combo() {
+            return State::Invalid;
         }
 
         let mut new_state = self.clone();
-        new_state.last_action = Some(action);
+        new_state.combo = action.to_combo();
         new_state.cp -= cp_cost;
         new_state.durability -= durability_cost;
 
@@ -176,7 +170,7 @@ mod tests {
         let state = State::new(&SETTINGS);
         match state {
             State::InProgress(state) => {
-                assert_eq!(state.last_action, None);
+                assert_eq!(state.combo, Some(ComboAction::SynthesisBegin));
                 assert_eq!(state.cp, SETTINGS.max_cp);
                 assert_eq!(state.durability, SETTINGS.max_durability);
                 assert_eq!(state.progress, Progress::from(0));

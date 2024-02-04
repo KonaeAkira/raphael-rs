@@ -1,7 +1,7 @@
 use crate::game::{
     state::InProgress,
     units::{Progress, Quality},
-    Action, Effects,
+    ComboAction, Effects,
 };
 
 use std::cmp::Ordering;
@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ParetoKey {
-    pub last_action: Option<Action>,
+    pub combo: Option<ComboAction>,
     pub durability: i32,
     pub effects: Effects,
 }
@@ -17,7 +17,7 @@ struct ParetoKey {
 impl ParetoKey {
     pub fn new(state: &InProgress) -> ParetoKey {
         ParetoKey {
-            last_action: state.last_action,
+            combo: state.combo,
             durability: state.durability,
             effects: state.effects,
         }
