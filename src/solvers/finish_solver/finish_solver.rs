@@ -4,7 +4,7 @@ use crate::game::{
     Action, Effects, Settings, State,
 };
 
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 use strum::IntoEnumIterator;
 
@@ -79,7 +79,7 @@ impl FinishSolver {
     pub fn new(settings: Settings) -> FinishSolver {
         FinishSolver {
             settings,
-            cp_to_finish: HashMap::new(),
+            cp_to_finish: HashMap::default(),
         }
     }
 

@@ -1,5 +1,6 @@
 use pareto_front::{Dominate, ParetoFront};
-use std::collections::HashMap;
+
+use rustc_hash::FxHashMap as HashMap;
 
 use crate::game::{
     state::InProgress,
@@ -95,8 +96,8 @@ impl<'a> SearchQueue<'a> {
     pub fn new(settings: Settings) -> SearchQueue<'a> {
         SearchQueue {
             current: Vec::new(),
-            buckets: vec![FrontHashMap::new(); (settings.max_cp + 1) as usize],
-            pareto_front: FrontHashMap::new(),
+            buckets: vec![FrontHashMap::default(); (settings.max_cp + 1) as usize],
+            pareto_front: FrontHashMap::default(),
         }
     }
 
