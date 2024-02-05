@@ -42,7 +42,9 @@ pub struct SearchNode<'a> {
 
 impl<'a> Dominate for SearchNode<'a> {
     fn dominate(&self, other: &Self) -> bool {
-        self.state.progress >= other.state.progress && self.state.quality >= other.state.quality
+        self.state.progress >= other.state.progress
+            && self.state.quality >= other.state.quality
+            && self.state.effects.inner_quiet >= other.state.effects.inner_quiet
     }
 }
 
@@ -58,7 +60,10 @@ impl From<&SearchNode<'_>> for ParetoKey {
         ParetoKey {
             combo: value.state.combo,
             durability: value.state.durability,
-            effects: value.state.effects,
+            effects: Effects {
+                inner_quiet: 0,
+                ..value.state.effects
+            },
         }
     }
 }
@@ -67,6 +72,7 @@ impl From<&SearchNode<'_>> for ParetoKey {
 struct ParetoValue {
     pub progress: Progress,
     pub quality: Quality,
+    pub inner_quiet: i8,
 }
 
 impl<'a> From<&SearchNode<'a>> for ParetoValue {
@@ -74,13 +80,16 @@ impl<'a> From<&SearchNode<'a>> for ParetoValue {
         ParetoValue {
             progress: value.state.progress,
             quality: value.state.quality,
+            inner_quiet: value.state.effects.inner_quiet,
         }
     }
 }
 
 impl Dominate for ParetoValue {
     fn dominate(&self, other: &Self) -> bool {
-        self.progress >= other.progress && self.quality >= other.quality
+        self.progress >= other.progress
+            && self.quality >= other.quality
+            && self.inner_quiet >= other.inner_quiet
     }
 }
 
