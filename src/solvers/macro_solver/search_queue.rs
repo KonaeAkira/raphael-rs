@@ -40,14 +40,6 @@ pub struct SearchNode<'a> {
     pub trace: Option<SearchTrace<'a>>,
 }
 
-impl<'a> Dominate for SearchNode<'a> {
-    fn dominate(&self, other: &Self) -> bool {
-        self.state.progress >= other.state.progress
-            && self.state.quality >= other.state.quality
-            && self.state.effects.inner_quiet >= other.state.effects.inner_quiet
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ParetoKey {
     pub combo: Option<ComboAction>,
@@ -97,7 +89,7 @@ type FrontHashMap<T> = HashMap<ParetoKey, ParetoFront<T>>;
 
 pub struct SearchQueue<'a> {
     current: Vec<SearchNode<'a>>,
-    buckets: Vec<FrontHashMap<SearchNode<'a>>>,
+    buckets: Vec<Vec<SearchNode<'a>>>,
     pareto_front: FrontHashMap<ParetoValue>,
 }
 
@@ -105,37 +97,32 @@ impl<'a> SearchQueue<'a> {
     pub fn new(settings: Settings) -> SearchQueue<'a> {
         SearchQueue {
             current: Vec::new(),
-            buckets: vec![FrontHashMap::default(); (settings.max_cp + 1) as usize],
+            buckets: vec![Vec::new(); (settings.max_cp + 1) as usize],
             pareto_front: FrontHashMap::default(),
         }
     }
 
     pub fn push(&mut self, value: SearchNode<'a>) {
-        let key = ParetoKey::from(&value);
-        self.buckets[value.state.cp as usize]
-            .entry(key)
-            .or_default()
-            .push(value);
+        self.buckets[value.state.cp as usize].push(value);
     }
 
     pub fn pop(&mut self) -> Option<SearchNode<'a>> {
         if let Some(node) = self.current.pop() {
-            return Some(node);
+            Some(node)
         } else if self.pop_bucket() {
-            return self.pop();
+            self.pop()
         } else {
-            return None;
+            None
         }
     }
 
     fn pop_bucket(&mut self) -> bool {
-        if let Some(bucket) = self.buckets.pop() {
-            for (key, front) in bucket {
+        if let Some(front) = self.buckets.pop() {
+            for value in front {
+                let key = ParetoKey::from(&value);
                 let global_front = self.pareto_front.entry(key).or_default();
-                for value in front {
-                    if global_front.push(ParetoValue::from(&value)) {
-                        self.current.push(value);
-                    }
+                if global_front.push(ParetoValue::from(&value)) {
+                    self.current.push(value);
                 }
             }
             true
