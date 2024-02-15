@@ -1,7 +1,4 @@
-use crate::game::{
-    units::{Progress, Quality},
-    Condition, Effects,
-};
+use crate::game::{units::*, Condition, Effects};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Action {
@@ -43,7 +40,7 @@ pub enum ComboAction {
 }
 
 impl Action {
-    pub const fn time_cost(self) -> i32 {
+    pub const fn time_cost(self) -> u32 {
         match self {
             Action::BasicSynthesis => 3,
             Action::BasicTouch => 3,
@@ -75,7 +72,7 @@ impl Action {
         }
     }
 
-    pub const fn base_cp_cost(self) -> i32 {
+    pub const fn base_cp_cost(self) -> CP {
         match self {
             Action::BasicSynthesis => 0,
             Action::BasicTouch => 18,
@@ -107,14 +104,14 @@ impl Action {
         }
     }
 
-    pub const fn cp_cost(self, _: &Effects, condition: Condition) -> i32 {
+    pub const fn cp_cost(self, _: &Effects, condition: Condition) -> CP {
         match condition {
             Condition::Pliant => (self.base_cp_cost() + 1) / 2,
             _ => self.base_cp_cost(),
         }
     }
 
-    pub const fn base_durability_cost(self) -> i32 {
+    pub const fn base_durability_cost(self) -> Durability {
         match self {
             Action::BasicSynthesis => 10,
             Action::BasicTouch => 10,
@@ -146,12 +143,12 @@ impl Action {
         }
     }
 
-    pub const fn durability_cost(self, effects: &Effects, condition: Condition) -> i32 {
-        let base_cost: i32 = match condition {
+    pub const fn durability_cost(self, effects: &Effects, condition: Condition) -> Durability {
+        let base_cost = match condition {
             Condition::Sturdy => (self.base_durability_cost() + 1) / 2,
             _ => self.base_durability_cost(),
         };
-        let mut effect_bonus: i32 = 0;
+        let mut effect_bonus = 0;
         if effects.waste_not > 0 {
             effect_bonus += base_cost / 2;
         }

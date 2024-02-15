@@ -1,8 +1,4 @@
-use crate::game::{
-    state::InProgress,
-    units::{Progress, Quality},
-    Action, Effects, Settings, State,
-};
+use crate::game::{state::InProgress, units::*, Action, Effects, Settings, State};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -41,13 +37,13 @@ impl ReducedEffects {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ReducedState {
-    durability: i32,
+    durability: Durability,
     progress: Progress,
     effects: ReducedEffects,
 }
 
 impl ReducedState {
-    pub const MAX_CP: i32 = 100000;
+    pub const MAX_CP: CP = 10000;
 
     pub fn from_state(state: &InProgress) -> ReducedState {
         ReducedState {
@@ -72,7 +68,7 @@ impl ReducedState {
 #[derive(Debug)]
 pub struct FinishSolver {
     settings: Settings,
-    cp_to_finish: HashMap<ReducedState, i32>,
+    cp_to_finish: HashMap<ReducedState, CP>,
 }
 
 impl FinishSolver {
@@ -99,7 +95,7 @@ impl FinishSolver {
         }
     }
 
-    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, cp_budget: i32) -> () {
+    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, cp_budget: CP) -> () {
         for sequence in ActionSequence::iter() {
             let target_cp = cp_budget - sequence.base_cp_cost();
             if target_cp >= 0 && self.should_use(&state, sequence) {
@@ -128,11 +124,11 @@ impl FinishSolver {
         state.cp >= self.do_solve(ReducedState::from_state(&state))
     }
 
-    fn do_solve(&mut self, state: ReducedState) -> i32 {
+    fn do_solve(&mut self, state: ReducedState) -> CP {
         match self.cp_to_finish.get(&state) {
             Some(cost) => *cost,
             None => {
-                let mut result: i32 = ReducedState::MAX_CP;
+                let mut result = ReducedState::MAX_CP;
                 for sequence in ActionSequence::iter() {
                     if self.should_use(&state, sequence) {
                         match sequence.apply(State::InProgress(state.to_state()), &self.settings) {

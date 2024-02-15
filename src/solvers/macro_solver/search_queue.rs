@@ -2,11 +2,7 @@ use pareto_front::{Dominate, ParetoFront};
 
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::game::{
-    state::InProgress,
-    units::{Progress, Quality},
-    Action, ComboAction, Effects, Settings,
-};
+use crate::game::{state::InProgress, units::*, Action, ComboAction, Effects, Settings};
 
 use super::ActionSequence;
 
@@ -43,7 +39,7 @@ pub struct SearchNode<'a> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ParetoKey {
     pub combo: Option<ComboAction>,
-    pub durability: i32,
+    pub durability: Durability,
     pub effects: Effects,
 }
 

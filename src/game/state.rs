@@ -1,7 +1,4 @@
-use crate::game::{
-    units::{Progress, Quality},
-    Action, ComboAction, Condition, Effects, Settings,
-};
+use crate::game::{units::*, Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {
@@ -38,8 +35,8 @@ pub struct Completed {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InProgress {
-    pub cp: i32,
-    pub durability: i32,
+    pub cp: CP,
+    pub durability: Durability,
     pub progress: Progress,
     pub quality: Quality,
     pub effects: Effects,

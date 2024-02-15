@@ -1,4 +1,4 @@
-use crate::game::{Action, Condition, Settings, State};
+use crate::game::{units::*, Action, Condition, Settings, State};
 
 use strum_macros::EnumIter;
 
@@ -30,8 +30,8 @@ impl ActionSequence {
         }
     }
 
-    pub fn base_cp_cost(&self) -> i32 {
-        let mut result: i32 = 0;
+    pub fn base_cp_cost(&self) -> CP {
+        let mut result = 0;
         for action in self.actions() {
             result += action.base_cp_cost();
         }
