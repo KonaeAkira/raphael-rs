@@ -55,33 +55,36 @@ impl InProgress {
         }
     }
 
+    fn can_use_action(&self, action: Action, condition: Condition) -> bool {
+        if action.cp_cost(&self.effects, condition) > self.cp {
+            false
+        } else if action.required_combo().is_some() && self.combo != action.required_combo() {
+            false
+        } else {
+            match action {
+                Action::ByregotsBlessing => self.effects.inner_quiet != 0,
+                Action::PrudentSynthesis | Action::PrudentTouch => self.effects.waste_not == 0,
+                Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
+                    condition == Condition::Good || condition == Condition::Excellent
+                }
+                Action::Groundwork => {
+                    self.durability >= action.durability_cost(&self.effects, condition)
+                }
+                Action::TrainedFinesse => self.effects.inner_quiet == 10,
+                _ => true,
+            }
+        }
+    }
+
     pub fn use_action(&self, action: Action, condition: Condition, settings: &Settings) -> State {
+        if !self.can_use_action(action, condition) {
+            return State::Invalid;
+        }
+
         let cp_cost = action.cp_cost(&self.effects, condition);
         let durability_cost = action.durability_cost(&self.effects, condition);
         let progress_increase = action.progress_increase(&self.effects, condition);
         let quality_increase = action.quality_increase(&self.effects, condition);
-
-        if cp_cost > self.cp {
-            return State::Invalid;
-        }
-
-        if !match action {
-            Action::ByregotsBlessing => self.effects.inner_quiet != 0,
-            Action::PrudentSynthesis | Action::PrudentTouch => self.effects.waste_not == 0,
-            Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
-                condition == Condition::Good || condition == Condition::Excellent
-            }
-            Action::Groundwork => self.durability >= durability_cost,
-            Action::TrainedFinesse => self.effects.inner_quiet == 10,
-            _ => true,
-        } {
-            return State::Invalid;
-        }
-
-        // last action must match required combo action
-        if action.required_combo().is_some() && self.combo != action.required_combo() {
-            return State::Invalid;
-        }
 
         let mut new_state = self.clone();
         new_state.combo = action.to_combo();
@@ -147,7 +150,7 @@ impl InProgress {
             _ => (),
         }
 
-        return State::InProgress(new_state);
+        State::InProgress(new_state)
     }
 }
 
