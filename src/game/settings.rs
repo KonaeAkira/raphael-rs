@@ -1,6 +1,6 @@
 use crate::game::units::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Settings {
     pub max_cp: CP,
     pub max_durability: Durability,

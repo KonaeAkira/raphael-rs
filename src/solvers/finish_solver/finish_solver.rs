@@ -6,7 +6,7 @@ use strum::IntoEnumIterator;
 
 use super::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedEffects {
     pub waste_not: i8,
     pub veneration: i8,
@@ -22,7 +22,7 @@ impl ReducedEffects {
         }
     }
 
-    pub fn to_effects(&self) -> Effects {
+    pub fn to_effects(self) -> Effects {
         Effects {
             inner_quiet: 0,
             waste_not: self.waste_not,
@@ -35,7 +35,7 @@ impl ReducedEffects {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
     durability: Durability,
     progress: Progress,
@@ -53,7 +53,7 @@ impl ReducedState {
         }
     }
 
-    pub fn to_state(&self) -> InProgress {
+    pub fn to_state(self) -> InProgress {
         InProgress {
             cp: ReducedState::MAX_CP,
             durability: self.durability,
@@ -80,7 +80,7 @@ impl FinishSolver {
     }
 
     pub fn get_finish_sequence(&self, state: &InProgress) -> Option<Vec<Action>> {
-        let reduced_state = ReducedState::from_state(&state);
+        let reduced_state = ReducedState::from_state(state);
         match self.cp_to_finish.get(&reduced_state) {
             Some(cp) => {
                 if state.cp >= *cp {
@@ -95,7 +95,7 @@ impl FinishSolver {
         }
     }
 
-    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, cp_budget: CP) -> () {
+    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, cp_budget: CP) {
         for sequence in ActionSequence::iter() {
             let target_cp = cp_budget - sequence.base_cp_cost();
             if target_cp >= 0 && self.should_use(&state, sequence) {
@@ -121,7 +121,7 @@ impl FinishSolver {
     }
 
     pub fn can_finish(&mut self, state: &InProgress) -> bool {
-        state.cp >= self.do_solve(ReducedState::from_state(&state))
+        state.cp >= self.do_solve(ReducedState::from_state(state))
     }
 
     fn do_solve(&mut self, state: ReducedState) -> CP {

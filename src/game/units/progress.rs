@@ -29,9 +29,9 @@ impl std::convert::From<f32> for Progress {
     }
 }
 
-impl std::convert::Into<f32> for Progress {
-    fn into(self) -> f32 {
-        self.value as f32 / 20.0
+impl std::convert::From<Progress> for f32 {
+    fn from(value: Progress) -> Self {
+        value.value as f32 / 20.0
     }
 }
 

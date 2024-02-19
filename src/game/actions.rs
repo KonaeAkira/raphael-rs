@@ -222,7 +222,7 @@ impl Action {
         if effects.great_strides > 0 {
             effect_bonus += base_increase;
         }
-        return base_increase + effect_bonus;
+        base_increase + effect_bonus
     }
 
     pub const fn required_combo(self) -> Option<ComboAction> {

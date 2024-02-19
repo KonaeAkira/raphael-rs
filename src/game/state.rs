@@ -57,22 +57,22 @@ impl InProgress {
 
     fn can_use_action(&self, action: Action, condition: Condition) -> bool {
         if action.cp_cost(&self.effects, condition) > self.cp {
-            false
-        } else if action.required_combo().is_some() && self.combo != action.required_combo() {
-            false
-        } else {
-            match action {
-                Action::ByregotsBlessing => self.effects.inner_quiet != 0,
-                Action::PrudentSynthesis | Action::PrudentTouch => self.effects.waste_not == 0,
-                Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
-                    condition == Condition::Good || condition == Condition::Excellent
-                }
-                Action::Groundwork => {
-                    self.durability >= action.durability_cost(&self.effects, condition)
-                }
-                Action::TrainedFinesse => self.effects.inner_quiet == 10,
-                _ => true,
+            return false;
+        }
+        if action.required_combo().is_some() && self.combo != action.required_combo() {
+            return false;
+        }
+        match action {
+            Action::ByregotsBlessing => self.effects.inner_quiet != 0,
+            Action::PrudentSynthesis | Action::PrudentTouch => self.effects.waste_not == 0,
+            Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
+                condition == Condition::Good || condition == Condition::Excellent
             }
+            Action::Groundwork => {
+                self.durability >= action.durability_cost(&self.effects, condition)
+            }
+            Action::TrainedFinesse => self.effects.inner_quiet == 10,
+            _ => true,
         }
     }
 
@@ -86,7 +86,7 @@ impl InProgress {
         let progress_increase = action.progress_increase(&self.effects, condition);
         let quality_increase = action.quality_increase(&self.effects, condition);
 
-        let mut new_state = self.clone();
+        let mut new_state = *self;
         new_state.combo = action.to_combo();
         new_state.cp -= cp_cost;
         new_state.durability -= durability_cost;
@@ -115,7 +115,8 @@ impl InProgress {
             return State::Completed(Completed {
                 quality: new_state.quality,
             });
-        } else if new_state.durability <= 0 {
+        }
+        if new_state.durability <= 0 {
             return State::Failed;
         }
 

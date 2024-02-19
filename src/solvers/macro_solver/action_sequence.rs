@@ -68,10 +68,7 @@ impl ActionSequence {
 
     pub fn should_use(self, state: &InProgress) -> bool {
         if state.combo == Some(ComboAction::SynthesisBegin) {
-            match self {
-                ActionSequence::MuscleMemory | ActionSequence::Reflect => true,
-                _ => false,
-            }
+            matches!(self, ActionSequence::MuscleMemory | ActionSequence::Reflect)
         } else if state.effects.inner_quiet == 0 && state.quality != Quality::from(0) {
             false // don't do anything after Byregot's Blessing
         } else {

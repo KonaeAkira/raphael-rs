@@ -36,7 +36,7 @@ pub struct SearchNode<'a> {
     pub trace: Option<SearchTrace<'a>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ParetoKey {
     pub combo: Option<ComboAction>,
     pub durability: Durability,
@@ -56,7 +56,7 @@ impl From<&SearchNode<'_>> for ParetoKey {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct ParetoValue {
     pub progress: Progress,
     pub quality: Quality,

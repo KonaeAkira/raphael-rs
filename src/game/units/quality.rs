@@ -29,9 +29,9 @@ impl std::convert::From<f32> for Quality {
     }
 }
 
-impl std::convert::Into<f32> for Quality {
-    fn into(self) -> f32 {
-        self.value as f32 / 800.0
+impl std::convert::From<Quality> for f32 {
+    fn from(value: Quality) -> Self {
+        value.value as f32 / 800.0
     }
 }
 
