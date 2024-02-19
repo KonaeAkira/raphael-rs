@@ -13,3 +13,6 @@ rustc-hash = "1.1.0"
 strum = "0.26.1"
 strum_macros = "0.26.1"
 typed-arena = "2.0.2"
+
+[profile.release]
+lto = "fat"
