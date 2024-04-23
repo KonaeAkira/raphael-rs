@@ -1,9 +1,9 @@
-use raphael_rs::game::{
+use raphael::game::{
     units::{Progress, Quality},
     Settings, State,
 };
 
-use raphael_rs::solvers::MacroSolver;
+use raphael::solvers::MacroSolver;
 
 fn main() {
     dbg!(std::mem::size_of::<State>());

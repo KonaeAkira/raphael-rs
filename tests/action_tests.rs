@@ -1,4 +1,4 @@
-use raphael_rs::game::{
+use raphael::game::{
     state::InProgress,
     units::{Progress, Quality},
     Action, ComboAction, Condition, Settings, State,

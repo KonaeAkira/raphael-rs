@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "raphael"
+crate-type = ["rlib", "cdylib"]
+
 [dependencies]
 env_logger = "0.10.1"
 log = "0.4.20"
