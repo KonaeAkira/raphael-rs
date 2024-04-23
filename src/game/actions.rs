@@ -245,6 +245,42 @@ impl Action {
             _ => None,
         }
     }
+
+    pub const fn duration(self) -> i32 {
+        3  // TODO: implement actual duration
+    }
+
+    pub fn display_name(self) -> String {
+        match self {
+            Action::BasicSynthesis => "Basic Synthesis",
+            Action::BasicTouch => "Basic Touch",
+            Action::MasterMend => "Master's Mend",
+            Action::Observe => "Observe",
+            Action::TricksOfTheTrade => "Tricks of the Trade",
+            Action::WasteNot => "Waste Not",
+            Action::Veneration => "Veneration",
+            Action::StandardTouch => "Standard Touch",
+            Action::GreatStrides => "Great Strides",
+            Action::Innovation => "Innovation",
+            Action::WasteNot2 => "Waste Not II",
+            Action::ByregotsBlessing => "Byregot's Blessing",
+            Action::PreciseTouch => "Precise Touch",
+            Action::MuscleMemory => "Muscle Memory",
+            Action::CarefulSynthesis => "Careful Synthesis",
+            Action::Manipulation => "Manipulation",
+            Action::PrudentTouch => "Prudent Touch",
+            Action::FocusedSynthesis => "Focused Synthesis",
+            Action::FocusedTouch => "Focused Touch",
+            Action::Reflect => "Reflect",
+            Action::PreparatoryTouch => "Preparatory Touch",
+            Action::Groundwork => "Groundwork",
+            Action::DelicateSynthesis => "Delicate Synthesis",
+            Action::IntensiveSynthesis => "Intensive Synthesis",
+            Action::AdvancedTouch => "Advanced Touch",
+            Action::PrudentSynthesis => "Prudent Synthesis",
+            Action::TrainedFinesse => "Trained Finesse",
+        }.to_string()
+    }
 }
 
 #[cfg(test)]
