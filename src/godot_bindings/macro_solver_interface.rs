@@ -1,3 +1,8 @@
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+};
+
 use godot::prelude::*;
 
 use crate::{
@@ -14,6 +19,10 @@ struct MacroSolverInterface {
     base: Base<Node>,
 
     #[export]
+    solver_busy: bool,
+    solver_result: Arc<Mutex<Option<Vec<Action>>>>,
+
+    #[export]
     configuration: Dictionary,
     #[export]
     simulation: Dictionary,
@@ -26,6 +35,8 @@ impl INode for MacroSolverInterface {
     fn init(base: Base<Self::Base>) -> Self {
         Self {
             base,
+            solver_busy: false,
+            solver_result: Arc::new(Mutex::new(None)),
             configuration: dict! {
                 "MAX_PROGRESS": 5060.0,
                 "MAX_QUALITY": 12628.0,
@@ -49,6 +60,9 @@ impl INode for MacroSolverInterface {
 impl MacroSolverInterface {
     #[signal]
     fn state_updated();
+    fn emit_state_updated(&mut self) {
+        self.base_mut().emit_signal("state_updated".into(), &[]);
+    }
 
     fn get_settings(&self) -> Settings {
         let max_progress: f32 = self.configuration.get_or_nil("MAX_PROGRESS").to();
@@ -72,7 +86,7 @@ impl MacroSolverInterface {
             "CP": self.configuration.get_or_nil("MAX_CP"),
         };
         self.macro_string = GString::new();
-        self.base_mut().emit_signal("state_updated".into(), &[]);
+        self.emit_state_updated();
     }
 
     fn set_result(&mut self, actions: Vec<Action>) {
@@ -84,9 +98,12 @@ impl MacroSolverInterface {
             .as_in_progress()
             .unwrap();
         let last_action = actions.last().unwrap();
-        let progress = state.progress + last_action.progress_increase(&state.effects, Condition::Normal);
-        let quality = state.quality + last_action.quality_increase(&state.effects, Condition::Normal);
-        let durability = state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
+        let progress =
+            state.progress + last_action.progress_increase(&state.effects, Condition::Normal);
+        let quality =
+            state.quality + last_action.quality_increase(&state.effects, Condition::Normal);
+        let durability =
+            state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);
         self.simulation
             .set::<&str, f32>("QUALITY", state.quality.into());
@@ -108,21 +125,44 @@ impl MacroSolverInterface {
         }
         self.macro_string = lines.join("\n").into();
 
-        self.base_mut().emit_signal("state_updated".into(), &[]);
+        self.emit_state_updated();
     }
 
     #[func]
-    fn solve(&mut self) -> bool {
-        let settings = self.get_settings();
-        let state = State::new(&settings);
-        let mut solver = MacroSolver::new(settings);
-        match solver.solve(state) {
-            Some(actions) => {
-                self.set_result(actions);
-                true
+    fn check_result(&mut self) {
+        if self.solver_busy {
+            match self.solver_result.clone().try_lock() {
+                Ok(mut lock_guard) => {
+                    match lock_guard.as_ref() {
+                        Some(actions) => self.set_result(actions.clone()),
+                        None => (),
+                    };
+                    *lock_guard = None;
+                    self.solver_busy = false;
+                    self.emit_state_updated();
+                }
+                Err(_) => (),
             }
-            None => false,
         }
+    }
+
+    #[func]
+    fn solve(&mut self) {
+        if !self.solver_busy {
+            self.solver_busy = true;
+            self.emit_state_updated();
+            let mutex = self.solver_result.clone();
+            let settings = self.get_settings();
+            thread::spawn(move || {
+                Self::do_solve(mutex, settings);
+            });
+        }
+    }
+
+    fn do_solve(mutex: Arc<Mutex<Option<Vec<Action>>>>, settings: Settings) {
+        let mut lock_guard = mutex.lock().unwrap();
+        let state = State::new(&settings);
+        *lock_guard = MacroSolver::new(settings).solve(state);
     }
 }
 
