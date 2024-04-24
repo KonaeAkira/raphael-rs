@@ -13,6 +13,10 @@ impl Quality {
     pub const fn from_const(value: u32) -> Self {
         Self { value: value * 800 }
     }
+
+    pub const fn is_zero(self) -> bool {
+        self.value == 0
+    }
 }
 
 impl std::convert::From<u32> for Quality {
@@ -23,9 +27,7 @@ impl std::convert::From<u32> for Quality {
 
 impl std::convert::From<f32> for Quality {
     fn from(value: f32) -> Self {
-        let converted = (value * 800.0) as u32;
-        assert!(converted as f32 == value * 800.0);
-        Self { value: converted }
+        Self { value: (value * 800.0).ceil() as u32 }
     }
 }
 

@@ -247,7 +247,11 @@ impl Action {
     }
 
     pub const fn duration(self) -> i32 {
-        3  // TODO: implement actual duration
+        if self.base_progress_increase().is_zero() && self.base_quality_increase().is_zero() {
+            2
+        } else {
+            3
+        }
     }
 
     pub fn display_name(self) -> String {
@@ -279,7 +283,8 @@ impl Action {
             Action::AdvancedTouch => "Advanced Touch",
             Action::PrudentSynthesis => "Prudent Synthesis",
             Action::TrainedFinesse => "Trained Finesse",
-        }.to_string()
+        }
+        .to_string()
     }
 }
 

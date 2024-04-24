@@ -13,6 +13,10 @@ impl Progress {
     pub const fn from_const(value: u32) -> Self {
         Self { value: value * 20 }
     }
+
+    pub const fn is_zero(self) -> bool {
+        self.value == 0
+    }
 }
 
 impl std::convert::From<u32> for Progress {
@@ -23,9 +27,7 @@ impl std::convert::From<u32> for Progress {
 
 impl std::convert::From<f32> for Progress {
     fn from(value: f32) -> Self {
-        let converted = (value * 20.0) as u32;
-        assert!(converted as f32 == value * 20.0);
-        Self { value: converted }
+        Self { value: (value * 20.0).ceil() as u32 }
     }
 }
 
