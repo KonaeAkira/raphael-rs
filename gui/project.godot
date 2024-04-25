@@ -19,3 +19,7 @@ config/icon="res://icon.svg"
 
 window/size/viewport_width=800
 window/size/viewport_height=500
+
+[editor_plugins]
+
+enabled=PackedStringArray()

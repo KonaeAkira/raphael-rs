@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://dkghcwm3lrc5n"]
+[gd_scene load_steps=21 format=3 uid="uid://dkghcwm3lrc5n"]
 
 [ext_resource type="Theme" uid="uid://c2f5y5psfqir3" path="res://custom-theme.tres" id="1_ej8fr"]
 [ext_resource type="Script" path="res://MacroSolverInterface.gd" id="2_524rp"]
@@ -7,78 +7,137 @@
 
 [sub_resource type="GDScript" id="GDScript_3uamc"]
 script/source = "extends ProgressBar
+@export var target: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated() -> void:
-	value = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
+	target = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
 	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_PROGRESS\"]
 "
 
 [sub_resource type="GDScript" id="GDScript_yutcb"]
 script/source = "extends Label
+@export var target: float = 0
+@export var value: float = 0
+@export var max_value: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 8.0))
+	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	var progress = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
-	var max_progress = get_node(\"%MacroSolverInterface\").configuration[\"MAX_PROGRESS\"]
-	text = str(int(progress)) + \"/\" + str(max_progress)
+	target = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
+	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_PROGRESS\"]
 "
 
 [sub_resource type="GDScript" id="GDScript_m24mk"]
 script/source = "extends ProgressBar
+@export var target: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated() -> void:
-	value = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
+	target = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
 	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_QUALITY\"]
 "
 
 [sub_resource type="GDScript" id="GDScript_o7vhi"]
 script/source = "extends Label
+@export var target: float = 0
+@export var value: float = 0
+@export var max_value: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 8.0))
+	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	var quality = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
-	var max_quality = get_node(\"%MacroSolverInterface\").configuration[\"MAX_QUALITY\"]
-	text = str(int(quality)) + \"/\" + str(max_quality)
+	target = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
+	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_QUALITY\"]
 "
 
 [sub_resource type="GDScript" id="GDScript_lhtja"]
 script/source = "extends ProgressBar
+@export var target: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated():
-	value = get_node(\"%MacroSolverInterface\").simulation[\"DURABILITY\"]
+	target = get_node(\"%MacroSolverInterface\").simulation[\"DURABILITY\"]
 	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_DURABILITY\"]
 "
 
 [sub_resource type="GDScript" id="GDScript_2s0he"]
 script/source = "extends Label
+@export var target: float = 0
+@export var value: float = 0
+@export var max_value: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 8.0))
+	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	var durability = get_node(\"%MacroSolverInterface\").simulation[\"DURABILITY\"]
-	var max_durability = get_node(\"%MacroSolverInterface\").configuration[\"MAX_DURABILITY\"]
-	text = str(durability) + \"/\" + str(max_durability)
+	target = get_node(\"%MacroSolverInterface\").simulation[\"DURABILITY\"]
+	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_DURABILITY\"]
 "
 
 [sub_resource type="GDScript" id="GDScript_wmtbn"]
 script/source = "extends ProgressBar
+@export var target: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated():
-	value = get_node(\"%MacroSolverInterface\").simulation[\"CP\"]
+	target = get_node(\"%MacroSolverInterface\").simulation[\"CP\"]
 	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_CP\"]
 "
 
 [sub_resource type="GDScript" id="GDScript_162jc"]
 script/source = "extends Label
+@export var target: float = 0
+@export var value: float = 0
+@export var max_value: float = 0
 
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 8.0))
+	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	var cp = get_node(\"%MacroSolverInterface\").simulation[\"CP\"]
-	var max_cp = get_node(\"%MacroSolverInterface\").configuration[\"MAX_CP\"]
-	text = str(cp) + \"/\" + str(max_cp)
+	target = get_node(\"%MacroSolverInterface\").simulation[\"CP\"]
+	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_CP\"]
+"
+
+[sub_resource type="GDScript" id="GDScript_htxbq"]
+script/source = "extends Label
+@export var target: float = 0
+@export var value: float = 0
+
+var HQ_TABLE = [
+	1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8,
+	9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 14, 15, 15, 15, 16, 16, 17, 17,
+	17, 18, 18, 18, 19, 19, 20, 20, 21, 22, 23, 24, 26, 28, 31, 34, 38, 42, 47, 52, 58, 64, 68, 71,
+	74, 76, 78, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 94, 96, 98, 100
+]
+
+func _process(delta: float):
+	value += (target - value) * (1 - exp(-delta * 8.0))
+	text = str(round(value)) + \"% HQ\"
+
+func _on_macro_solver_interface_state_updated() -> void:
+	var progress = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
+	var max_progress = get_node(\"%MacroSolverInterface\").configuration[\"MAX_PROGRESS\"]
+	if progress < max_progress:
+		target = 0
+		return
+	var quality = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
+	var max_quality = get_node(\"%MacroSolverInterface\").configuration[\"MAX_QUALITY\"]
+	target = HQ_TABLE[floor(quality / max_quality * 100.0)]
 "
 
 [sub_resource type="GDScript" id="GDScript_wuyky"]
@@ -185,7 +244,6 @@ grow_vertical = 2
 theme = ExtResource("1_ej8fr")
 
 [node name="MacroSolverInterface" type="MacroSolverInterface" parent="."]
-solver_busy = false
 unique_name_in_owner = true
 script = ExtResource("2_524rp")
 
@@ -255,7 +313,6 @@ vertical_alignment = 1
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
-value = 80.0
 show_percentage = false
 script = SubResource("GDScript_3uamc")
 
@@ -354,6 +411,14 @@ horizontal_alignment = 1
 vertical_alignment = 1
 script = SubResource("GDScript_162jc")
 
+[node name="HqRate" type="Label" parent="TabContainer/MacroSolver/MarginContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "0% HQ"
+horizontal_alignment = 2
+vertical_alignment = 1
+script = SubResource("GDScript_htxbq")
+
 [node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/MacroSolver/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -371,16 +436,17 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "Result"
+text = "Macro"
 
 [node name="HSeparator" type="HSeparator" parent="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="MacroTextView" type="TextEdit" parent="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer"]
+[node name="MacroTextView" type="CodeEdit" parent="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/line_spacing = 0
 editable = false
+gutters_draw_line_numbers = true
 script = SubResource("GDScript_wuyky")
 
 [node name="Configuration" type="PanelContainer" parent="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer"]
@@ -515,6 +581,7 @@ script = SubResource("GDScript_u8dfd")
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ProgressIncreaseInput" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/QualityIncreaseInput" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/MacroSolver/MarginContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/HqRate" method="_on_macro_solver_interface_state_updated"]
 [connection signal="value_changed" from="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxProgressInput" to="MacroSolverInterface" method="_on_max_progress_input_value_changed"]
 [connection signal="value_changed" from="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxQualityInput" to="MacroSolverInterface" method="_on_max_quality_input_value_changed"]
 [connection signal="value_changed" from="TabContainer/MacroSolver/MarginContainer/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxDurabilityInput" to="MacroSolverInterface" method="_on_max_durability_input_value_changed"]
