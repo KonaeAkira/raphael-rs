@@ -5,10 +5,6 @@ reloadable = true
 
 [libraries]
 linux.debug.x86_64 =     "res://../target/debug/libraphael.so"
-linux.release.x86_64 =   "res://../target/release/libraphael.so"
+linux.release.x86_64 =   "res://../target/x86_64-unknown-linux-gnu/release/libraphael.so"
 windows.debug.x86_64 =   "res://../target/debug/raphael.dll"
-windows.release.x86_64 = "res://../target/release/raphael.dll"
-macos.debug =            "res://../target/debug/libraphael.dylib"
-macos.release =          "res://../target/release/libraphael.dylib"
-macos.debug.arm64 =      "res://../target/debug/libraphael.dylib"
-macos.release.arm64 =    "res://../target/release/libraphael.dylib"
+windows.release.x86_64 = "res://../target/x86_64-pc-windows-gnu/release/raphael.dll"
