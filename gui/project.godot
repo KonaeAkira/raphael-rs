@@ -10,7 +10,8 @@ config_version=5
 
 [application]
 
-config/name="raphael-gui"
+config/name="Raphael"
+config/version="0.1.0"
 run/main_scene="res://control.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
 config/icon="res://icon.svg"
@@ -23,3 +24,7 @@ window/size/viewport_height=500
 [editor_plugins]
 
 enabled=PackedStringArray()
+
+[rendering]
+
+anti_aliasing/screen_space_roughness_limiter/enabled=false
