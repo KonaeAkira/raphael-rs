@@ -85,12 +85,20 @@ impl Dominate for ParetoValue {
     }
 }
 
+impl<'a> Dominate for SearchNode<'a> {
+    fn dominate(&self, other: &Self) -> bool {
+        self.state.progress >= other.state.progress
+            && self.state.quality >= other.state.quality
+            && self.state.effects.inner_quiet >= other.state.effects.inner_quiet
+    }
+}
+
 type FrontHashMap<T> = HashMap<ParetoKey, ParetoFront<T>>;
 
 pub struct SearchQueue<'a> {
     current: Vec<SearchNode<'a>>,
     buckets: Vec<Vec<SearchNode<'a>>>,
-    pareto_front: FrontHashMap<ParetoValue>,
+    fronts: FrontHashMap<ParetoValue>,
 }
 
 impl<'a> SearchQueue<'a> {
@@ -98,7 +106,7 @@ impl<'a> SearchQueue<'a> {
         SearchQueue {
             current: Vec::new(),
             buckets: vec![Vec::new(); (settings.max_cp + 1) as usize],
-            pareto_front: FrontHashMap::default(),
+            fronts: FrontHashMap::default(),
         }
     }
 
@@ -117,12 +125,19 @@ impl<'a> SearchQueue<'a> {
     }
 
     fn pop_bucket(&mut self) -> bool {
-        if let Some(front) = self.buckets.pop() {
-            for value in front {
-                let key = ParetoKey::from(&value);
-                let global_front = self.pareto_front.entry(key).or_default();
-                if global_front.push(ParetoValue::from(&value)) {
-                    self.current.push(value);
+        if let Some(bucket) = self.buckets.pop() {
+            let mut local_fronts: FrontHashMap<SearchNode<'a>> = FrontHashMap::default();
+            for node in bucket {
+                let key = ParetoKey::from(&node);
+                let local_front = local_fronts.entry(key).or_default();
+                local_front.push(node);
+            }
+            for (key, local_front) in local_fronts.into_iter() {
+                let global_front = self.fronts.entry(key).or_default();
+                for node in local_front.into_iter() {
+                    if global_front.push(ParetoValue::from(&node)) {
+                        self.current.push(node);
+                    }
                 }
             }
             true
