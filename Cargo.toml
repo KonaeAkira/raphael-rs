@@ -11,13 +11,16 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 env_logger = "0.10.1"
-godot = { git = "https://github.com/godot-rust/gdext", rev = "ca586182f430df3fb4ef8548d43bc756ce92022e" }
+godot = { git = "https://github.com/godot-rust/gdext", rev = "ca586182f430df3fb4ef8548d43bc756ce92022e", optional = true }
 log = "0.4.20"
 pareto_front = "1.0.1"
 rustc-hash = "1.1.0"
 strum = "0.26.1"
 strum_macros = "0.26.1"
 typed-arena = "2.0.2"
+
+[features]
+godot_binding = ["dep:godot"]
 
 [profile.release]
 lto = "fat"

@@ -30,13 +30,13 @@ Building for other platforms will require some tweaking.
 On Linux:
 
 ```
-cargo build --release --target x86_64-unknown-linux-gnu
+cargo build --release --features godot_binding --target x86_64-unknown-linux-gnu
 ```
 
 On Windows:
 
 ```
-cargo build --release --target x86_64-pc-windows-gnu
+cargo build --release --features godot_binding --target x86_64-pc-windows-gnu
 ```
 
 #### Building the graphical interface

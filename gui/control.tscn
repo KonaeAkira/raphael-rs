@@ -597,7 +597,7 @@ layout_mode = 2
 focus_mode = 0
 disabled = true
 button_mask = 0
-text = "v0.1.0"
+text = "v0.1.0-rc1"
 
 [node name="GitHub Link" type="Button" parent="TabContainer/About/VBoxContainer/General Info/MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
