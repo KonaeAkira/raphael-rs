@@ -82,16 +82,10 @@ impl MacroSolver {
             }
         }
 
-        log::trace!("result ({}): {:?}", result.quality, result.actions);
-
-        let time = timer.elapsed().as_secs_f32();
-        let nodes = explored_nodes.len() as f32;
-        log::debug!("Time elapsed: {}s", time);
-        log::debug!(
-            "Searched nodes: {:+.2e} ({:+.2e} nodes/s)",
-            nodes,
-            nodes / time
-        );
+        let seconds = timer.elapsed().as_secs_f32();
+        let nodes = explored_nodes.len();
+        let nodes_per_sec = nodes as f32 / seconds;
+        dbg!(seconds, nodes, nodes_per_sec);
 
         Some(result)
     }

@@ -176,9 +176,7 @@ impl FinishSolver {
 
 impl Drop for FinishSolver {
     fn drop(&mut self) {
-        log::debug!(
-            "FinishSolver: {:+.2e} states",
-            self.cp_to_finish.len() as f32
-        );
+        let finish_solver_states = self.cp_to_finish.len();
+        dbg!(finish_solver_states);
     }
 }

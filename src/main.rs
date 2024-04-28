@@ -9,8 +9,6 @@ fn main() {
     dbg!(std::mem::size_of::<State>());
     dbg!(std::mem::align_of::<State>());
 
-    env_logger::init();
-
     let settings = Settings {
         max_cp: 700,
         max_durability: 70,
