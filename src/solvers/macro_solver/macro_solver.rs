@@ -56,33 +56,28 @@ impl MacroSolver {
         while let Some(current_node) = search_queue.pop() {
             let current_node: &SearchNode<'_> = explored_nodes.alloc(current_node);
             for sequence in ActionSequence::iter() {
-                if sequence.should_use(&current_node.state) {
-                    let use_action =
-                        sequence.apply(State::InProgress(current_node.state), &self.settings);
-                    if let State::InProgress(state) = use_action {
-                        if self.finish_solver.can_finish(&state) {
-                            if state.quality > result.quality {
-                                result = MacroResult {
-                                    quality: state.quality,
-                                    actions: SearchTrace {
-                                        parent: current_node,
-                                        action: sequence,
-                                    }
-                                    .actions(),
-                                };
-                                result.actions.append(
-                                    &mut self.finish_solver.get_finish_sequence(&state).unwrap(),
-                                );
-                            }
-                            search_queue.push(SearchNode {
-                                state,
-                                trace: Some(SearchTrace {
-                                    parent: current_node,
-                                    action: sequence,
-                                }),
-                            });
-                        }
+                if !sequence.should_use(&current_node.state) {
+                    continue;
+                }
+                let new_state =
+                    sequence.apply(State::InProgress(current_node.state), &self.settings);
+                if let State::InProgress(state) = new_state {
+                    if !self.finish_solver.can_finish(&state) {
+                        continue;
                     }
+                    if state.quality > result.quality {
+                        let mut actions = SearchTrace::new(current_node, sequence).actions();
+                        actions
+                            .append(&mut self.finish_solver.get_finish_sequence(&state).unwrap());
+                        result = MacroResult {
+                            quality: state.quality,
+                            actions,
+                        };
+                    }
+                    search_queue.push(SearchNode {
+                        state,
+                        trace: Some(SearchTrace::new(current_node, sequence)),
+                    });
                 }
             }
         }

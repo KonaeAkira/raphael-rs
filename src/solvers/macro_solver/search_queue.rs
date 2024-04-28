@@ -13,6 +13,10 @@ pub struct SearchTrace<'a> {
 }
 
 impl<'a> SearchTrace<'a> {
+    pub fn new(parent: &'a SearchNode<'a>, action: ActionSequence) -> Self {
+        SearchTrace { parent, action }
+    }
+
     pub fn actions(self) -> Vec<Action> {
         let mut actions: Vec<Action> = Vec::new();
         self.do_trace(&mut actions);
