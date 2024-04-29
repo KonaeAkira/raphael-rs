@@ -153,6 +153,7 @@ impl MacroSolverInterface {
             self.emit_state_updated();
             let mutex = self.solver_result.clone();
             let settings = self.get_settings();
+            dbg!("spawning solver thread");
             thread::spawn(move || {
                 Self::do_solve(mutex, settings);
             });

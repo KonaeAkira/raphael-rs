@@ -6,6 +6,10 @@ Raphael is an open-source crafting macro solver for the online game Final Fantas
 
 ## Installing from source
 
+> [!NOTE]
+> Pre-compiled binaries can be found under [Releases](https://github.com/KonaeAkira/raphael-rs/releases).
+> Building the program from source code isn't recommended unless you have a good reason to do so.
+
 ### Prerequisites
 
 The following dependencies need to be installed on your computer:
