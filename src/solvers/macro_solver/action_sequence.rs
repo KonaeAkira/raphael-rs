@@ -66,55 +66,60 @@ impl ActionSequence {
 
     pub fn should_use(self, state: &InProgress) -> bool {
         if state.combo == Some(ComboAction::SynthesisBegin) {
-            matches!(self, ActionSequence::MuscleMemory | ActionSequence::Reflect)
-        } else if state.effects.inner_quiet == 0 && state.quality != Quality::from(0) {
-            false // don't do anything after Byregot's Blessing
-        } else {
-            let use_progress_increase: bool =
-                state.effects.muscle_memory != 0 || state.effects.veneration != 0;
-            let use_quality_increase: bool =
-                state.effects.muscle_memory == 0 && state.effects.veneration <= 1;
-            match self {
-                ActionSequence::MuscleMemory => false,
-                ActionSequence::Reflect => false,
-                ActionSequence::CarefulSynthesis => {
-                    use_progress_increase && state.effects.muscle_memory == 0
-                }
-                ActionSequence::Groundwork => use_progress_increase,
-                ActionSequence::PreparatoryTouch => {
-                    use_quality_increase && state.effects.waste_not != 0
-                }
-                ActionSequence::PrudentTouch => true,
-                ActionSequence::TrainedFinesse => state.effects.inner_quiet == 10,
-                ActionSequence::AdvancedTouchCombo => {
-                    use_quality_increase
-                        && (state.effects.innovation >= 3 || state.effects.innovation == 0)
-                }
-                ActionSequence::FocusedSynthesisCombo => {
-                    use_progress_increase
-                        && state.effects.muscle_memory == 0
-                        && (state.effects.veneration >= 2 || state.effects.veneration == 0)
-                }
-                ActionSequence::FocusedTouchCombo => {
-                    use_quality_increase
-                        && (state.effects.innovation >= 2 || state.effects.innovation == 0)
-                }
-                ActionSequence::Manipulation => {
-                    state.effects.manipulation == 0 && state.effects.waste_not == 0
-                }
-                ActionSequence::WasteNot => {
-                    state.effects.waste_not == 0 && state.effects.inner_quiet <= 2
-                }
-                ActionSequence::WasteNot2 => {
-                    state.effects.waste_not == 0 && state.effects.inner_quiet <= 2
-                }
-                ActionSequence::Innovation => use_quality_increase && state.effects.innovation == 0,
-                ActionSequence::Veneration => {
-                    state.effects.muscle_memory != 0 && state.effects.veneration == 0
-                }
-                ActionSequence::GreatStrides => state.effects.inner_quiet >= 8,
-                ActionSequence::ByregotsBlessing => state.effects.inner_quiet >= 4,
+            return matches!(self, ActionSequence::MuscleMemory | ActionSequence::Reflect);
+        }
+        if state.effects.inner_quiet == 0 && state.quality != Quality::from(0) {
+            return false; // don't do anything after Byregot's Blessing
+        }
+        let use_progress_increase: bool =
+            state.effects.muscle_memory != 0 || state.effects.veneration != 0;
+        let use_quality_increase: bool =
+            state.effects.muscle_memory == 0 && state.effects.veneration <= 1;
+        match self {
+            ActionSequence::MuscleMemory => false,
+            ActionSequence::Reflect => false,
+            ActionSequence::CarefulSynthesis => {
+                use_progress_increase && state.effects.muscle_memory == 0
             }
+            ActionSequence::Groundwork => use_progress_increase,
+            ActionSequence::PreparatoryTouch => {
+                use_quality_increase && state.effects.waste_not != 0
+            }
+            ActionSequence::PrudentTouch => state.effects.great_strides == 0,
+            ActionSequence::TrainedFinesse => {
+                state.effects.inner_quiet == 10 && state.effects.great_strides == 0
+            }
+            ActionSequence::AdvancedTouchCombo => {
+                use_quality_increase
+                    && (state.effects.innovation >= 3 || state.effects.innovation == 0)
+                    && state.effects.great_strides == 0
+            }
+            ActionSequence::FocusedSynthesisCombo => {
+                use_progress_increase
+                    && state.effects.muscle_memory == 0
+                    && (state.effects.veneration >= 2 || state.effects.veneration == 0)
+            }
+            ActionSequence::FocusedTouchCombo => {
+                use_quality_increase
+                    && (state.effects.innovation >= 2 || state.effects.innovation == 0)
+            }
+            ActionSequence::Manipulation => {
+                state.effects.manipulation == 0 && state.effects.waste_not == 0
+            }
+            ActionSequence::WasteNot => {
+                state.effects.waste_not == 0 && state.effects.inner_quiet <= 1
+            }
+            ActionSequence::WasteNot2 => {
+                state.effects.waste_not == 0 && state.effects.inner_quiet <= 1
+            }
+            ActionSequence::Innovation => use_quality_increase && state.effects.innovation == 0,
+            ActionSequence::Veneration => {
+                state.effects.muscle_memory != 0 && state.effects.veneration == 0
+            }
+            ActionSequence::GreatStrides => {
+                state.effects.inner_quiet >= 8 && state.effects.great_strides == 0
+            }
+            ActionSequence::ByregotsBlessing => state.effects.inner_quiet >= 4,
         }
     }
 }
