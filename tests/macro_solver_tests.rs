@@ -128,7 +128,7 @@ fn test_09() {
         max_quality: Quality::from(20000),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 5173.75);
+    assert_eq!(get_quality(&settings, &actions), 5212.50);
 }
 
 #[test]
@@ -141,4 +141,16 @@ fn test_10() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3220.00);
+}
+
+#[test]
+fn test_11() {
+    let settings = Settings {
+        max_cp: 680,
+        max_durability: 70,
+        max_progress: Progress::from(2210),
+        max_quality: Quality::from(20000),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 4685.00);
 }

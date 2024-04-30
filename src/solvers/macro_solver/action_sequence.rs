@@ -21,7 +21,7 @@ pub enum ActionSequence {
     WasteNot2,
     Innovation,
     Veneration,
-    GreatStridesByresgotsBlessing,
+    GreatStrides,
     ByregotsBlessing,
 }
 
@@ -45,9 +45,7 @@ impl ActionSequence {
             ActionSequence::WasteNot2 => &[Action::WasteNot2],
             ActionSequence::Innovation => &[Action::Innovation],
             ActionSequence::Veneration => &[Action::Veneration],
-            ActionSequence::GreatStridesByresgotsBlessing => {
-                &[Action::GreatStrides, Action::ByregotsBlessing]
-            }
+            ActionSequence::GreatStrides => &[Action::GreatStrides],
             ActionSequence::ByregotsBlessing => &[Action::ByregotsBlessing],
             ActionSequence::MuscleMemory => &[Action::MuscleMemory],
             ActionSequence::Reflect => &[Action::Reflect],
@@ -114,8 +112,8 @@ impl ActionSequence {
                 ActionSequence::Veneration => {
                     state.effects.muscle_memory != 0 && state.effects.veneration == 0
                 }
-                ActionSequence::GreatStridesByresgotsBlessing => state.effects.inner_quiet >= 4,
-                ActionSequence::ByregotsBlessing => state.effects.inner_quiet >= 3,
+                ActionSequence::GreatStrides => state.effects.inner_quiet >= 8,
+                ActionSequence::ByregotsBlessing => state.effects.inner_quiet >= 4,
             }
         }
     }
