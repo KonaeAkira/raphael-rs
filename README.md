@@ -1,6 +1,9 @@
 # Raphael
 
-[![Downloads](https://static.pepy.tech/badge/video2tfrecord)](https://pepy.tech/project/video2tfrecord)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/KonaeAkira/raphael-rs/total?logo=github&color=blue)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/KonaeAkira/raphael-rs/latest?include_prereleases&color=yellow)
+
+
 
 Raphael is an open-source crafting macro solver for the online game Final Fantasy XIV.
 
