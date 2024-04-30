@@ -6,10 +6,12 @@ use raphael::game::{
 use raphael::solvers::MacroSolver;
 
 fn solve(settings: &Settings) -> Option<Vec<Action>> {
-    MacroSolver::new(settings.clone()).solve(State::new(settings))
+    let result = MacroSolver::new(settings.clone()).solve(State::new(settings));
+    dbg!(&result);
+    result
 }
 
-fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
+fn get_quality(settings: &Settings, actions: &[Action]) -> f32 {
     let mut state: State = State::new(&settings);
     for action in actions {
         state = state.as_in_progress().unwrap().use_action(
@@ -18,7 +20,7 @@ fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
             &settings,
         );
     }
-    return state;
+    state.as_completed().unwrap().quality.into()
 }
 
 #[test]
@@ -30,10 +32,7 @@ fn test_01() {
         max_quality: Quality::from(40000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(1603));
+    assert_eq!(get_quality(&settings, &actions), 1603.00);
 }
 
 #[test]
@@ -45,10 +44,7 @@ fn test_02() {
         max_quality: Quality::from(20000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(3352.50));
+    assert_eq!(get_quality(&settings, &actions), 3352.50);
 }
 
 #[test]
@@ -60,10 +56,7 @@ fn test_03() {
         max_quality: Quality::from(40000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(3407.5));
+    assert_eq!(get_quality(&settings, &actions), 3407.50);
 }
 
 #[test]
@@ -75,10 +68,7 @@ fn test_04() {
         max_quality: Quality::from(1000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(1000));
+    assert_eq!(get_quality(&settings, &actions), 1000.00);
 }
 
 #[test]
@@ -90,10 +80,7 @@ fn test_05() {
         max_quality: Quality::from(40000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(1978.25));
+    assert_eq!(get_quality(&settings, &actions), 1978.25);
 }
 
 #[test]
@@ -105,10 +92,7 @@ fn test_06() {
         max_quality: Quality::from(40000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(2752.5));
+    assert_eq!(get_quality(&settings, &actions), 2752.50);
 }
 
 #[test]
@@ -120,10 +104,7 @@ fn test_07() {
         max_quality: Quality::from(40000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(4546.25));
+    assert_eq!(get_quality(&settings, &actions), 4546.25);
 }
 
 #[test]
@@ -135,10 +116,7 @@ fn test_08() {
         max_quality: Quality::from(6950),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(2740));
+    assert_eq!(get_quality(&settings, &actions), 2740.00);
 }
 
 #[test]
@@ -150,10 +128,7 @@ fn test_09() {
         max_quality: Quality::from(20000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(5173.75));
+    assert_eq!(get_quality(&settings, &actions), 5173.75);
 }
 
 #[test]
@@ -165,8 +140,5 @@ fn test_10() {
         max_quality: Quality::from(20000),
     };
     let actions = solve(&settings).unwrap();
-    let final_state = from_action_sequence(&settings, &actions)
-        .as_completed()
-        .unwrap();
-    assert_eq!(final_state.quality, Quality::from(3220));
+    assert_eq!(get_quality(&settings, &actions), 3220.00);
 }
