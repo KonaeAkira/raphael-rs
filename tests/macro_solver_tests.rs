@@ -146,6 +146,18 @@ fn test_10() {
 #[test]
 fn test_11() {
     let settings = Settings {
+        max_cp: 640,
+        max_durability: 70,
+        max_progress: Progress::from(2170),
+        max_quality: Quality::from(20000),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 4347.50);
+}
+
+#[test]
+fn test_rinascita_min_stats() {
+    let settings = Settings {
         max_cp: 680,
         max_durability: 70,
         max_progress: Progress::from(2210),
@@ -153,4 +165,28 @@ fn test_11() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4685.00);
+}
+
+#[test]
+fn test_pactmaker_min_stats() {
+    let settings = Settings {
+        max_cp: 600,
+        max_durability: 70,
+        max_progress: Progress::from(2150),
+        max_quality: Quality::from(20000),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 4052.50);
+}
+
+#[test]
+fn test_diadochos_min_stats() {
+    let settings = Settings {
+        max_cp: 640,
+        max_durability: 70,
+        max_progress: Progress::from(2705),
+        max_quality: Quality::from(20000),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 3818.75);
 }

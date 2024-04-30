@@ -117,7 +117,7 @@ impl ActionSequence {
                 state.effects.muscle_memory != 0 && state.effects.veneration == 0
             }
             ActionSequence::GreatStrides => {
-                state.effects.inner_quiet >= 8 && state.effects.great_strides == 0
+                state.effects.inner_quiet >= 6 && state.effects.great_strides == 0
             }
             ActionSequence::ByregotsBlessing => state.effects.inner_quiet >= 4,
         }
