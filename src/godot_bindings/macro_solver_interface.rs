@@ -122,7 +122,7 @@ impl MacroSolverInterface {
             lines.push(format!(
                 "/ac \"{}\" <wait.{}>",
                 action.display_name(),
-                action.duration()
+                action.time_cost()
             ))
         }
         self.macro_string = lines.join("\n").into();

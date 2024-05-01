@@ -45,7 +45,7 @@ impl Action {
             Action::BasicSynthesis => 3,
             Action::BasicTouch => 3,
             Action::MasterMend => 3,
-            Action::Observe => 2,
+            Action::Observe => 3,
             Action::TricksOfTheTrade => 2,
             Action::WasteNot => 2,
             Action::Veneration => 2,
@@ -250,38 +250,6 @@ impl Action {
             Action::StandardTouch => Some(ComboAction::StandardTouch),
             Action::Observe => Some(ComboAction::Observe),
             _ => None,
-        }
-    }
-
-    pub const fn duration(self) -> i32 {
-        match self {
-            Action::BasicSynthesis => 3,
-            Action::BasicTouch => 3,
-            Action::MasterMend => 3,
-            Action::Observe => 3,
-            Action::TricksOfTheTrade => 2,
-            Action::WasteNot => 2,
-            Action::Veneration => 2,
-            Action::StandardTouch => 3,
-            Action::GreatStrides => 2,
-            Action::Innovation => 2,
-            Action::WasteNot2 => 2,
-            Action::ByregotsBlessing => 3,
-            Action::PreciseTouch => 3,
-            Action::MuscleMemory => 3,
-            Action::CarefulSynthesis => 3,
-            Action::Manipulation => 2,
-            Action::PrudentTouch => 3,
-            Action::FocusedSynthesis => 3,
-            Action::FocusedTouch => 3,
-            Action::Reflect => 3,
-            Action::PreparatoryTouch => 3,
-            Action::Groundwork => 3,
-            Action::DelicateSynthesis => 3,
-            Action::IntensiveSynthesis => 3,
-            Action::AdvancedTouch => 3,
-            Action::PrudentSynthesis => 3,
-            Action::TrainedFinesse => 3,
         }
     }
 
