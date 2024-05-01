@@ -56,7 +56,7 @@ impl MacroSolver {
         while let Some(current_node) = search_queue.pop() {
             let current_node: &SearchNode<'_> = explored_nodes.alloc(current_node);
             for sequence in ActionSequence::iter() {
-                if !sequence.should_use(&current_node.state) {
+                if !sequence.should_use(&current_node.state, &self.settings) {
                     continue;
                 }
                 let new_state =
@@ -65,12 +65,16 @@ impl MacroSolver {
                     if !self.finish_solver.can_finish(&state) {
                         continue;
                     }
-                    if state.quality > result.quality {
+                    let final_quality = self
+                        .settings
+                        .max_quality
+                        .saturating_sub(state.missing_quality);
+                    if final_quality > result.quality {
                         let mut actions = SearchTrace::new(current_node, sequence).actions();
                         actions
                             .append(&mut self.finish_solver.get_finish_sequence(&state).unwrap());
                         result = MacroResult {
-                            quality: state.quality,
+                            quality: final_quality,
                             actions,
                         };
                     }

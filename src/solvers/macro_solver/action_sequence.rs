@@ -1,6 +1,4 @@
-use crate::game::{
-    state::InProgress, units::Quality, Action, ComboAction, Condition, Settings, State,
-};
+use crate::game::{state::InProgress, Action, ComboAction, Condition, Settings, State};
 
 use strum_macros::EnumIter;
 
@@ -64,11 +62,11 @@ impl ActionSequence {
         state
     }
 
-    pub fn should_use(self, state: &InProgress) -> bool {
+    pub fn should_use(self, state: &InProgress, settings: &Settings) -> bool {
         if state.combo == Some(ComboAction::SynthesisBegin) {
             return matches!(self, ActionSequence::MuscleMemory | ActionSequence::Reflect);
         }
-        if state.effects.inner_quiet == 0 && state.quality != Quality::new(0) {
+        if state.effects.inner_quiet == 0 && state.missing_quality != settings.max_quality {
             return false; // don't do anything after Byregot's Blessing
         }
         let use_progress_increase: bool =

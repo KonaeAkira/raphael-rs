@@ -17,7 +17,10 @@ fn test_muscle_memory() {
     state.effects.muscle_memory = 3;
     match state.use_action(Action::CarefulSynthesis, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.progress, Progress::from(360.00));
+            assert_eq!(
+                state.missing_progress,
+                SETTINGS.max_progress.saturating_sub(Progress::from(360.00))
+            );
             assert_eq!(state.effects.muscle_memory, 0);
         }
         _ => panic!(),
@@ -36,7 +39,10 @@ fn test_veneration() {
     state.effects.veneration = 3;
     match state.use_action(Action::CarefulSynthesis, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.progress, Progress::from(270.00));
+            assert_eq!(
+                state.missing_progress,
+                SETTINGS.max_progress.saturating_sub(Progress::from(270.00))
+            );
             assert_eq!(state.effects.veneration, 2);
         }
         _ => panic!(),
@@ -50,7 +56,10 @@ fn test_muscle_memory_veneration() {
     state.effects.veneration = 3;
     match state.use_action(Action::CarefulSynthesis, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.progress, Progress::from(450.00));
+            assert_eq!(
+                state.missing_progress,
+                SETTINGS.max_progress.saturating_sub(Progress::from(450.00))
+            );
             assert_eq!(state.effects.muscle_memory, 0);
             assert_eq!(state.effects.veneration, 2);
         }
@@ -120,7 +129,10 @@ fn test_great_strides() {
     state.effects.great_strides = 3;
     match state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.quality, Quality::from(200.00));
+            assert_eq!(
+                state.missing_quality,
+                SETTINGS.max_quality.saturating_sub(Quality::from(200.00))
+            );
             assert_eq!(state.effects.great_strides, 0);
         }
         _ => panic!(),
@@ -139,7 +151,10 @@ fn test_innovation() {
     state.effects.innovation = 3;
     match state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.quality, Quality::from(150.00));
+            assert_eq!(
+                state.missing_quality,
+                SETTINGS.max_quality.saturating_sub(Quality::from(150.00))
+            );
             assert_eq!(state.effects.innovation, 2);
         }
         _ => panic!(),
@@ -153,7 +168,10 @@ fn test_great_strides_innovation() {
     state.effects.innovation = 3;
     match state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.quality, Quality::from(250.00));
+            assert_eq!(
+                state.missing_quality,
+                SETTINGS.max_quality.saturating_sub(Quality::from(250.00))
+            );
             assert_eq!(state.effects.great_strides, 0);
             assert_eq!(state.effects.innovation, 2);
         }
@@ -167,7 +185,10 @@ fn test_inner_quiet() {
     state.effects.inner_quiet = 4;
     match state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.quality, Quality::from(140.00));
+            assert_eq!(
+                state.missing_quality,
+                SETTINGS.max_quality.saturating_sub(Quality::from(140.00))
+            );
             assert_eq!(state.effects.inner_quiet, 5);
         }
         _ => panic!(),
@@ -181,7 +202,10 @@ fn test_innovation_inner_quiet() {
     state.effects.inner_quiet = 4;
     match state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS) {
         State::InProgress(state) => {
-            assert_eq!(state.quality, Quality::from(210.00));
+            assert_eq!(
+                state.missing_quality,
+                SETTINGS.max_quality.saturating_sub(Quality::from(210.00))
+            );
             assert_eq!(state.effects.innovation, 2);
             assert_eq!(state.effects.inner_quiet, 5);
         }

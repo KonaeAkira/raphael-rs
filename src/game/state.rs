@@ -37,8 +37,8 @@ pub struct Completed {
 pub struct InProgress {
     pub cp: CP,
     pub durability: Durability,
-    pub progress: Progress,
-    pub quality: Quality,
+    pub missing_progress: Progress,
+    pub missing_quality: Quality,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
 }
@@ -48,8 +48,8 @@ impl InProgress {
         InProgress {
             cp: settings.max_cp,
             durability: settings.max_durability,
-            progress: Progress::new(0),
-            quality: Quality::new(0),
+            missing_progress: settings.max_progress,
+            missing_quality: settings.max_quality,
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
         }
@@ -93,13 +93,13 @@ impl InProgress {
 
         // reset muscle memory if progress increased
         if progress_increase > Progress::new(0) {
-            new_state.progress = new_state.progress.saturating_add(progress_increase);
+            new_state.missing_progress = new_state.missing_progress.saturating_sub(progress_increase);
             new_state.effects.muscle_memory = 0;
         }
 
         // reset great strides and increase inner quiet if quality increased
         if quality_increase > Quality::new(0) {
-            new_state.quality = new_state.quality.saturating_add(quality_increase);
+            new_state.missing_quality = new_state.missing_quality.saturating_sub(quality_increase);
             new_state.effects.great_strides = 0;
             new_state.effects.inner_quiet += match action {
                 Action::Reflect => 2,
@@ -110,10 +110,9 @@ impl InProgress {
             new_state.effects.inner_quiet = std::cmp::min(10, new_state.effects.inner_quiet);
         }
 
-        new_state.quality = std::cmp::min(settings.max_quality, new_state.quality);
-        if new_state.progress >= settings.max_progress {
+        if new_state.missing_progress == Progress::new(0) {
             return State::Completed(Completed {
-                quality: new_state.quality,
+                quality: settings.max_quality.saturating_sub(new_state.missing_quality),
             });
         }
         if new_state.durability <= 0 {
@@ -174,8 +173,8 @@ mod tests {
                 assert_eq!(state.combo, Some(ComboAction::SynthesisBegin));
                 assert_eq!(state.cp, SETTINGS.max_cp);
                 assert_eq!(state.durability, SETTINGS.max_durability);
-                assert_eq!(state.progress, Progress::new(0));
-                assert_eq!(state.quality, Quality::new(0));
+                assert_eq!(state.missing_progress, SETTINGS.max_progress);
+                assert_eq!(state.missing_quality, SETTINGS.max_quality);
                 assert_eq!(state.effects.inner_quiet, 0);
             }
             _ => panic!(),

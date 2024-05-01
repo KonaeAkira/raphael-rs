@@ -93,22 +93,28 @@ impl MacroSolverInterface {
         let base_progress: f32 = self.configuration.get_or_nil("PROGRESS_INCREASE").to();
         let base_quality: f32 = self.configuration.get_or_nil("QUALITY_INCREASE").to();
 
+        let settings = self.get_settings();
+
         // set simulation state
-        let state = from_action_sequence(&self.get_settings(), &actions[0..actions.len() - 1])
+        let state = from_action_sequence(&settings, &actions[0..actions.len() - 1])
             .as_in_progress()
             .unwrap();
         let last_action = actions.last().unwrap();
-        let progress = state
-            .progress
-            .saturating_add(last_action.progress_increase(&state.effects, Condition::Normal));
-        let quality = state
-            .quality
-            .saturating_add(last_action.quality_increase(&state.effects, Condition::Normal));
+
+        let missing_progress = state
+            .missing_progress
+            .saturating_sub(last_action.progress_increase(&state.effects, Condition::Normal));
+        let progress = settings.max_progress.saturating_sub(missing_progress);
+
+        let missing_quality = state
+            .missing_quality
+            .saturating_sub(last_action.quality_increase(&state.effects, Condition::Normal));
+        let quality = settings.max_quality.saturating_sub(missing_quality);
+
         let durability =
             state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);
-        self.simulation
-            .set::<&str, f32>("QUALITY", state.quality.into());
+        
         self.simulation = dict! {
             "PROGRESS": f32::from(progress) * base_progress / 100.0,
             "QUALITY": f32::from(quality) * base_quality / 100.0,

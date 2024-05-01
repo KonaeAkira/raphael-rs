@@ -38,7 +38,7 @@ impl ReducedEffects {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
     durability: Durability,
-    progress: Progress,
+    missing_progress: Progress,
     effects: ReducedEffects,
 }
 
@@ -48,7 +48,7 @@ impl ReducedState {
     pub fn from_state(state: &InProgress) -> ReducedState {
         ReducedState {
             durability: state.durability,
-            progress: state.progress,
+            missing_progress: state.missing_progress,
             effects: ReducedEffects::from_effects(&state.effects),
         }
     }
@@ -57,8 +57,8 @@ impl ReducedState {
         InProgress {
             cp: ReducedState::MAX_CP,
             durability: self.durability,
-            progress: self.progress,
-            quality: Quality::new(0),
+            missing_progress: self.missing_progress,
+            missing_quality: Quality::new(0),
             effects: self.effects.to_effects(),
             combo: None,
         }
