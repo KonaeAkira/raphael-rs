@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://dkghcwm3lrc5n"]
+[gd_scene load_steps=24 format=3 uid="uid://dkghcwm3lrc5n"]
 
 [ext_resource type="Theme" uid="uid://c2f5y5psfqir3" path="res://custom-theme.tres" id="1_ej8fr"]
 [ext_resource type="Script" path="res://MacroSolverInterface.gd" id="2_524rp"]
@@ -238,12 +238,40 @@ func _on_pressed():
 	release_focus()
 "
 
+[sub_resource type="GDScript" id="GDScript_7wdal"]
+script/source = "extends Button
+
+func _ready():
+	text = ProjectSettings.get_setting(\"application/config/version\")
+"
+
 [sub_resource type="GDScript" id="GDScript_yxa12"]
 script/source = "extends Button
 
 
 func _on_pressed():
 	OS.shell_open(\"https://github.com/KonaeAkira/raphael-rs\")
+"
+
+[sub_resource type="GDScript" id="GDScript_xqimc"]
+script/source = "extends MarginContainer
+
+func _ready():
+	$HTTPRequest.request_completed.connect(_on_request_completed)
+	$HTTPRequest.request(\"https://api.github.com/repos/KonaeAkira/raphael-rs/releases/latest\")
+
+func _on_request_completed(result, response_code, headers, body):
+	if result != HTTPRequest.RESULT_SUCCESS:
+		printerr(\"Error fetching latest version: HTTP request failed.\")
+		return
+	var data = JSON.parse_string(body.get_string_from_utf8())
+	if typeof(data) != TYPE_DICTIONARY or !data.has(\"tag_name\"):
+		printerr(\"Error fetching latest version: Invalid JSON.\")
+		return
+	var remote_tag = data[\"tag_name\"]
+	var local_tag = ProjectSettings.get_setting(\"application/config/version\")
+	if remote_tag != local_tag:
+		$ReleaseLink.set(\"visible\", true)
 "
 
 [node name="Main" type="Control"]
@@ -601,7 +629,8 @@ layout_mode = 2
 focus_mode = 0
 disabled = true
 button_mask = 0
-text = "v0.1.0"
+text = "v0.0.0"
+script = SubResource("GDScript_7wdal")
 
 [node name="GitHub Link" type="Button" parent="TabContainer/About/VBoxContainer/General Info/MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
@@ -610,6 +639,29 @@ mouse_default_cursor_shape = 2
 theme_override_constants/icon_max_width = 16
 text = "GitHub"
 script = SubResource("GDScript_yxa12")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -189.0
+offset_bottom = 39.0
+grow_horizontal = 0
+theme_override_constants/margin_top = 3
+script = SubResource("GDScript_xqimc")
+
+[node name="HTTPRequest" type="HTTPRequest" parent="MarginContainer"]
+
+[node name="ReleaseLink" type="LinkButton" parent="MarginContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.462745, 0.462745, 0.462745, 1)
+action_mode = 0
+text = "Update Available"
+uri = "https://github.com/KonaeAkira/raphael-rs/releases"
 
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar/SimulationProgressLabel" method="_on_macro_solver_interface_state_updated"]
