@@ -232,6 +232,10 @@ script/source = "extends Button
 
 func _on_macro_solver_interface_state_updated() -> void:
 	disabled = get_node(\"%MacroSolverInterface\").solver_busy
+
+
+func _on_pressed():
+	release_focus()
 "
 
 [sub_resource type="GDScript" id="GDScript_yxa12"]
@@ -561,7 +565,6 @@ flat = true
 [node name="SolveButton" type="Button" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
-focus_mode = 0
 text = "Solve"
 script = SubResource("GDScript_u8dfd")
 
@@ -632,4 +635,5 @@ script = SubResource("GDScript_yxa12")
 [connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ProgressIncreaseInput" to="MacroSolverInterface" method="_on_base_progress_input_value_changed"]
 [connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/QualityIncreaseInput" to="MacroSolverInterface" method="_on_base_quality_input_value_changed"]
 [connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="MacroSolverInterface" method="_on_solve_button_pressed"]
+[connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_pressed"]
 [connection signal="pressed" from="TabContainer/About/VBoxContainer/General Info/MarginContainer/VBoxContainer/HBoxContainer/GitHub Link" to="TabContainer/About/VBoxContainer/General Info/MarginContainer/VBoxContainer/HBoxContainer/GitHub Link" method="_on_pressed"]
