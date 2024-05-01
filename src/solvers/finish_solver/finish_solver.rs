@@ -8,9 +8,9 @@ use super::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedEffects {
-    pub waste_not: i8,
-    pub veneration: i8,
-    pub manipulation: i8,
+    pub waste_not: u8,
+    pub veneration: u8,
+    pub manipulation: u8,
 }
 
 impl ReducedEffects {

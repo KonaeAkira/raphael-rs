@@ -64,7 +64,7 @@ impl From<&SearchNode<'_>> for ParetoKey {
 struct ParetoValue {
     pub missing_progress: Progress,
     pub missing_quality: Quality,
-    pub inner_quiet: i8,
+    pub inner_quiet: u8,
 }
 
 impl<'a> From<&SearchNode<'a>> for ParetoValue {
