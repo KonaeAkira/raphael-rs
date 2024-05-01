@@ -157,72 +157,79 @@ impl Action {
 
     pub const fn base_progress_increase(self) -> Progress {
         match self {
-            Action::BasicSynthesis => Progress::from_const(120),
-            Action::MuscleMemory => Progress::from_const(300),
-            Action::CarefulSynthesis => Progress::from_const(180),
-            Action::FocusedSynthesis => Progress::from_const(200),
-            Action::Groundwork => Progress::from_const(360),
-            Action::DelicateSynthesis => Progress::from_const(100),
-            Action::IntensiveSynthesis => Progress::from_const(400),
-            Action::PrudentSynthesis => Progress::from_const(180),
-            _ => Progress::from_const(0),
+            Action::BasicSynthesis => Progress::new(120),
+            Action::MuscleMemory => Progress::new(300),
+            Action::CarefulSynthesis => Progress::new(180),
+            Action::FocusedSynthesis => Progress::new(200),
+            Action::Groundwork => Progress::new(360),
+            Action::DelicateSynthesis => Progress::new(100),
+            Action::IntensiveSynthesis => Progress::new(400),
+            Action::PrudentSynthesis => Progress::new(180),
+            _ => Progress::new(0),
         }
     }
 
     pub fn progress_increase(self, effects: &Effects, condition: Condition) -> Progress {
-        let base_increase = match condition {
+        let base_progress = match condition {
             Condition::Malleable => self.base_progress_increase().scale(3, 2),
             _ => self.base_progress_increase(),
         };
-        let mut effect_bonus = Progress::from_const(0);
+        let mut effect_bonus = Progress::new(0);
         if effects.muscle_memory > 0 {
-            effect_bonus += base_increase;
+            let muscle_memory_bonus = base_progress;
+            effect_bonus = effect_bonus.saturating_add(muscle_memory_bonus);
         }
         if effects.veneration > 0 {
-            effect_bonus += base_increase.scale(1, 2);
+            let veneration_bonus = base_progress.scale(1, 2);
+            effect_bonus = effect_bonus.saturating_add(veneration_bonus);
         }
-        base_increase + effect_bonus
+        base_progress.saturating_add(effect_bonus)
     }
 
     pub const fn base_quality_increase(self) -> Quality {
         match self {
-            Action::BasicTouch => Quality::from_const(100),
-            Action::StandardTouch => Quality::from_const(125),
-            Action::PreciseTouch => Quality::from_const(150),
-            Action::PrudentTouch => Quality::from_const(100),
-            Action::FocusedTouch => Quality::from_const(150),
-            Action::Reflect => Quality::from_const(100),
-            Action::PreparatoryTouch => Quality::from_const(200),
-            Action::DelicateSynthesis => Quality::from_const(100),
-            Action::AdvancedTouch => Quality::from_const(150),
-            Action::TrainedFinesse => Quality::from_const(100),
-            Action::ByregotsBlessing => Quality::from_const(100),
-            _ => Quality::from_const(0),
+            Action::BasicTouch => Quality::new(100),
+            Action::StandardTouch => Quality::new(125),
+            Action::PreciseTouch => Quality::new(150),
+            Action::PrudentTouch => Quality::new(100),
+            Action::FocusedTouch => Quality::new(150),
+            Action::Reflect => Quality::new(100),
+            Action::PreparatoryTouch => Quality::new(200),
+            Action::DelicateSynthesis => Quality::new(100),
+            Action::AdvancedTouch => Quality::new(150),
+            Action::TrainedFinesse => Quality::new(100),
+            Action::ByregotsBlessing => Quality::new(100),
+            _ => Quality::new(0),
         }
     }
 
     pub fn quality_increase(self, effects: &Effects, condition: Condition) -> Quality {
-        let mut base_increase = match self {
+        let mut base_quality = match self {
             Action::ByregotsBlessing => self
                 .base_quality_increase()
                 .scale(2 * effects.inner_quiet as u32 + 10, 10),
             _ => self.base_quality_increase(),
         };
         match condition {
-            Condition::Good => base_increase = base_increase.scale(3, 2),
-            Condition::Excellent => base_increase = base_increase.scale(4, 1),
-            Condition::Poor => base_increase = base_increase.scale(1, 2),
+            Condition::Good => base_quality = base_quality.scale(3, 2),
+            Condition::Excellent => base_quality = base_quality.scale(4, 1),
+            Condition::Poor => base_quality = base_quality.scale(1, 2),
             _ => (),
         };
-        base_increase += base_increase.scale(effects.inner_quiet as u32, 10);
-        let mut effect_bonus = Quality::from_const(0);
-        if effects.innovation > 0 {
-            effect_bonus += base_increase.scale(1, 2);
-        }
-        if effects.great_strides > 0 {
-            effect_bonus += base_increase;
-        }
-        base_increase + effect_bonus
+        base_quality = base_quality.scale(10 + effects.inner_quiet as u32, 10);
+        let innovation_bonus = if effects.innovation != 0 {
+            base_quality.scale(1, 2)
+        } else {
+            Quality::new(0)
+        };
+        let great_strides_bonus = if effects.great_strides != 0 {
+            base_quality
+        } else {
+            Quality::new(0)
+        };
+        base_quality
+            .saturating_add(innovation_bonus)
+            .saturating_add(great_strides_bonus)
     }
 
     pub const fn required_combo(self) -> Option<ComboAction> {

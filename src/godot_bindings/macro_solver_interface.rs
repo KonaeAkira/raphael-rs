@@ -98,10 +98,12 @@ impl MacroSolverInterface {
             .as_in_progress()
             .unwrap();
         let last_action = actions.last().unwrap();
-        let progress =
-            state.progress + last_action.progress_increase(&state.effects, Condition::Normal);
-        let quality =
-            state.quality + last_action.quality_increase(&state.effects, Condition::Normal);
+        let progress = state
+            .progress
+            .saturating_add(last_action.progress_increase(&state.effects, Condition::Normal));
+        let quality = state
+            .quality
+            .saturating_add(last_action.quality_increase(&state.effects, Condition::Normal));
         let durability =
             state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);

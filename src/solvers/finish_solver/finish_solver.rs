@@ -58,7 +58,7 @@ impl ReducedState {
             cp: ReducedState::MAX_CP,
             durability: self.durability,
             progress: self.progress,
-            quality: Quality::from(0),
+            quality: Quality::new(0),
             effects: self.effects.to_effects(),
             combo: None,
         }

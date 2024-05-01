@@ -68,7 +68,7 @@ impl ActionSequence {
         if state.combo == Some(ComboAction::SynthesisBegin) {
             return matches!(self, ActionSequence::MuscleMemory | ActionSequence::Reflect);
         }
-        if state.effects.inner_quiet == 0 && state.quality != Quality::from(0) {
+        if state.effects.inner_quiet == 0 && state.quality != Quality::new(0) {
             return false; // don't do anything after Byregot's Blessing
         }
         let use_progress_increase: bool =

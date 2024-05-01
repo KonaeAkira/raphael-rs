@@ -48,8 +48,8 @@ impl InProgress {
         InProgress {
             cp: settings.max_cp,
             durability: settings.max_durability,
-            progress: Progress::from(0),
-            quality: Quality::from(0),
+            progress: Progress::new(0),
+            quality: Quality::new(0),
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
         }
@@ -92,14 +92,14 @@ impl InProgress {
         new_state.durability -= durability_cost;
 
         // reset muscle memory if progress increased
-        if progress_increase > Progress::from(0) {
-            new_state.progress += progress_increase;
+        if progress_increase > Progress::new(0) {
+            new_state.progress = new_state.progress.saturating_add(progress_increase);
             new_state.effects.muscle_memory = 0;
         }
 
         // reset great strides and increase inner quiet if quality increased
-        if quality_increase > Quality::from(0) {
-            new_state.quality += quality_increase;
+        if quality_increase > Quality::new(0) {
+            new_state.quality = new_state.quality.saturating_add(quality_increase);
             new_state.effects.great_strides = 0;
             new_state.effects.inner_quiet += match action {
                 Action::Reflect => 2,
@@ -162,8 +162,8 @@ mod tests {
     const SETTINGS: Settings = Settings {
         max_cp: 200,
         max_durability: 60,
-        max_progress: Progress::from_const(2000),
-        max_quality: Quality::from_const(40000),
+        max_progress: Progress::new(2000),
+        max_quality: Quality::new(40000),
     };
 
     #[test]
@@ -174,8 +174,8 @@ mod tests {
                 assert_eq!(state.combo, Some(ComboAction::SynthesisBegin));
                 assert_eq!(state.cp, SETTINGS.max_cp);
                 assert_eq!(state.durability, SETTINGS.max_durability);
-                assert_eq!(state.progress, Progress::from(0));
-                assert_eq!(state.quality, Quality::from(0));
+                assert_eq!(state.progress, Progress::new(0));
+                assert_eq!(state.quality, Quality::new(0));
                 assert_eq!(state.effects.inner_quiet, 0);
             }
             _ => panic!(),

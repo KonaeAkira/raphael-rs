@@ -49,7 +49,7 @@ impl MacroSolver {
         search_queue.push(SearchNode { state, trace: None });
 
         let mut result = MacroResult {
-            quality: Quality::from(0),
+            quality: Quality::new(0),
             actions: Vec::new(),
         };
 
