@@ -3,8 +3,8 @@ use crate::game::{units::*, Action, ComboAction, Condition, Effects, Settings};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {
     InProgress(InProgress),
-    Completed(Completed),
-    Failed,
+    Completed { quality: Quality },
+    Failed { missing_progress: Progress },
     Invalid,
 }
 
@@ -19,18 +19,6 @@ impl State {
             _ => None,
         }
     }
-
-    pub fn as_completed(self) -> Option<Completed> {
-        match self {
-            State::Completed(completed) => Some(completed),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Completed {
-    pub quality: Quality,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -93,7 +81,8 @@ impl InProgress {
 
         // reset muscle memory if progress increased
         if progress_increase > Progress::new(0) {
-            new_state.missing_progress = new_state.missing_progress.saturating_sub(progress_increase);
+            new_state.missing_progress =
+                new_state.missing_progress.saturating_sub(progress_increase);
             new_state.effects.muscle_memory = 0;
         }
 
@@ -111,12 +100,16 @@ impl InProgress {
         }
 
         if new_state.missing_progress == Progress::new(0) {
-            return State::Completed(Completed {
-                quality: settings.max_quality.saturating_sub(new_state.missing_quality),
-            });
+            return State::Completed {
+                quality: settings
+                    .max_quality
+                    .saturating_sub(new_state.missing_quality),
+            };
         }
         if new_state.durability <= 0 {
-            return State::Failed;
+            return State::Failed {
+                missing_progress: new_state.missing_progress,
+            };
         }
 
         // remove manipulation before it is triggered

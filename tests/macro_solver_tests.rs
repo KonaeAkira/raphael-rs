@@ -20,7 +20,10 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> f32 {
             &settings,
         );
     }
-    state.as_completed().unwrap().quality.into()
+    match state {
+        State::Completed { quality } => quality.into(),
+        _ => 0.0,
+    }
 }
 
 #[test]

@@ -38,26 +38,26 @@ impl ReducedEffects {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
     durability: Durability,
-    missing_progress: Progress,
+    cp: CP,
     effects: ReducedEffects,
 }
 
 impl ReducedState {
-    pub const MAX_CP: CP = 10000;
+    pub const INF_PROGRESS: Progress = Progress::new(100_000);
 
     pub fn from_state(state: &InProgress) -> ReducedState {
         ReducedState {
             durability: state.durability,
-            missing_progress: state.missing_progress,
+            cp: state.cp,
             effects: ReducedEffects::from_effects(&state.effects),
         }
     }
 
     pub fn to_state(self) -> InProgress {
         InProgress {
-            cp: ReducedState::MAX_CP,
             durability: self.durability,
-            missing_progress: self.missing_progress,
+            cp: self.cp,
+            missing_progress: Self::INF_PROGRESS,
             missing_quality: Quality::new(0),
             effects: self.effects.to_effects(),
             combo: None,
@@ -68,24 +68,25 @@ impl ReducedState {
 #[derive(Debug)]
 pub struct FinishSolver {
     settings: Settings,
-    cp_to_finish: HashMap<ReducedState, CP>,
+    // maps ReducedState to maximum additional progress that can be gained from that state
+    memoization: HashMap<ReducedState, Progress>,
 }
 
 impl FinishSolver {
     pub fn new(settings: Settings) -> FinishSolver {
         FinishSolver {
             settings,
-            cp_to_finish: HashMap::default(),
+            memoization: HashMap::default(),
         }
     }
 
     pub fn get_finish_sequence(&self, state: &InProgress) -> Option<Vec<Action>> {
         let reduced_state = ReducedState::from_state(state);
-        match self.cp_to_finish.get(&reduced_state) {
-            Some(cp) => {
-                if state.cp >= *cp {
+        match self.memoization.get(&reduced_state) {
+            Some(progress) => {
+                if state.missing_progress <= *progress {
                     let mut result: Vec<Action> = Vec::new();
-                    self.do_trace(&mut result, reduced_state, *cp);
+                    self.do_trace(&mut result, reduced_state, *progress);
                     Some(result)
                 } else {
                     None
@@ -95,88 +96,85 @@ impl FinishSolver {
         }
     }
 
-    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, cp_budget: CP) {
+    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, target_progress: Progress) {
+        if target_progress == Progress::new(0) {
+            return;
+        }
         for sequence in ActionSequence::iter() {
-            let target_cp = cp_budget - sequence.base_cp_cost();
-            if target_cp >= 0 && self.should_use(&state, sequence) {
-                match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
-                    State::InProgress(new_state) => {
-                        let new_state = ReducedState::from_state(&new_state);
-                        let new_state_cost = *self.cp_to_finish.get(&new_state).unwrap();
-                        if new_state_cost == target_cp {
-                            result.extend_from_slice(sequence.actions());
-                            self.do_trace(result, new_state, target_cp);
-                            return;
-                        }
+            match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
+                State::InProgress(new_state) => {
+                    let gained_progress =
+                        ReducedState::INF_PROGRESS.saturating_sub(new_state.missing_progress);
+                    let new_state = ReducedState::from_state(&new_state);
+                    let new_state_potential = *self.memoization.get(&new_state).unwrap();
+                    if gained_progress.saturating_add(new_state_potential) == target_progress {
+                        result.extend_from_slice(sequence.actions());
+                        self.do_trace(result, new_state, new_state_potential);
+                        return;
                     }
-                    State::Completed(_) => {
+                }
+                State::Failed { missing_progress } => {
+                    let gained_progress =
+                        ReducedState::INF_PROGRESS.saturating_sub(missing_progress);
+                    if gained_progress == target_progress {
                         result.extend_from_slice(sequence.actions());
                         return;
                     }
-                    _ => (),
                 }
+                State::Completed { .. } => {
+                    panic!("This state should never be reached. INF_PROGRESS probably isn't high enough.")
+                }
+                State::Invalid => (),
             }
         }
-        panic!()
+        panic!("Unable to find a trace.")
     }
 
     pub fn can_finish(&mut self, state: &InProgress) -> bool {
-        state.cp >= self.do_solve(ReducedState::from_state(state))
+        state.missing_progress <= self.do_solve(ReducedState::from_state(state))
     }
 
-    fn do_solve(&mut self, state: ReducedState) -> CP {
-        match self.cp_to_finish.get(&state) {
-            Some(cost) => *cost,
+    fn do_solve(&mut self, state: ReducedState) -> Progress {
+        match self.memoization.get(&state) {
+            Some(progress) => *progress,
             None => {
-                let mut result = ReducedState::MAX_CP;
+                let mut max_progress = Progress::new(0);
                 for sequence in ActionSequence::iter() {
-                    if self.should_use(&state, sequence) {
-                        match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
-                            State::InProgress(new_state) => {
-                                let new_state_cost =
-                                    self.do_solve(ReducedState::from_state(&new_state));
-                                result =
-                                    std::cmp::min(result, new_state_cost + sequence.base_cp_cost());
-                            }
-                            State::Completed(_) => {
-                                result = std::cmp::min(result, sequence.base_cp_cost());
-                            }
-                            State::Invalid => (),
-                            State::Failed => (),
+                    match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
+                        State::InProgress(new_state) => {
+                            let gained_progress = ReducedState::INF_PROGRESS
+                                .saturating_sub(new_state.missing_progress);
+                            let new_state_potential =
+                                self.do_solve(ReducedState::from_state(&new_state));
+                            max_progress = std::cmp::max(
+                                max_progress,
+                                gained_progress.saturating_add(new_state_potential),
+                            );
                         }
+                        State::Failed { missing_progress } => {
+                            let gained_progress =
+                                ReducedState::INF_PROGRESS.saturating_sub(missing_progress);
+                            max_progress = std::cmp::max(max_progress, gained_progress);
+                        }
+                        State::Completed { .. } => {
+                            panic!("This state should never be reached. INF_PROGRESS probably isn't high enough.")
+                        }
+                        State::Invalid => (),
+                    }
+                    if max_progress >= self.settings.max_progress {
+                        break;
                     }
                 }
-                self.cp_to_finish.insert(state, result);
-                result
+                self.memoization.insert(state, max_progress);
+                max_progress
             }
-        }
-    }
-
-    fn should_use(&self, state: &ReducedState, sequence: ActionSequence) -> bool {
-        let manipulation_capped =
-            state.effects.manipulation != 0 && state.durability == self.settings.max_durability;
-        match sequence {
-            ActionSequence::MasterMend => state.durability + 30 <= self.settings.max_durability,
-            ActionSequence::BasicSynthesis => true,
-            ActionSequence::CarefulSynthesis => true,
-            ActionSequence::Groundwork => true,
-            ActionSequence::FocusedSynthesisCombo => {
-                !manipulation_capped
-                    && state.effects.waste_not == 0
-                    && (state.effects.veneration >= 2 || state.effects.veneration == 0)
-            }
-            ActionSequence::Manipulation => state.effects.manipulation == 0,
-            ActionSequence::WasteNot | ActionSequence::WasteNot2 => {
-                !manipulation_capped && state.effects.waste_not == 0
-            }
-            ActionSequence::Veneration => !manipulation_capped && state.effects.veneration == 0,
         }
     }
 }
 
 impl Drop for FinishSolver {
     fn drop(&mut self) {
-        let finish_solver_states = self.cp_to_finish.len();
+        let finish_solver_states = self.memoization.len();
         dbg!(finish_solver_states);
     }
 }
