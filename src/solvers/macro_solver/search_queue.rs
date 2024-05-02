@@ -97,21 +97,25 @@ type FrontHashMap<T> = HashMap<ParetoKey, ParetoFront<T>>;
 
 pub struct SearchQueue<'a> {
     current: Vec<SearchNode<'a>>,
-    buckets: Vec<Vec<SearchNode<'a>>>,
-    fronts: FrontHashMap<ParetoValue>,
+    local_fronts: Vec<FrontHashMap<SearchNode<'a>>>,
+    global_front: FrontHashMap<ParetoValue>,
 }
 
 impl<'a> SearchQueue<'a> {
     pub fn new(settings: Settings) -> SearchQueue<'a> {
         SearchQueue {
             current: Vec::new(),
-            buckets: vec![Vec::new(); (settings.max_cp + 1) as usize],
-            fronts: FrontHashMap::default(),
+            local_fronts: vec![FrontHashMap::default(); (settings.max_cp + 1) as usize],
+            global_front: FrontHashMap::default(),
         }
     }
 
     pub fn push(&mut self, value: SearchNode<'a>) {
-        self.buckets[value.state.cp as usize].push(value);
+        let key = ParetoKey::from(&value);
+        self.local_fronts[value.state.cp as usize]
+            .entry(key)
+            .or_default()
+            .push(value);
     }
 
     pub fn pop(&mut self) -> Option<SearchNode<'a>> {
@@ -125,15 +129,9 @@ impl<'a> SearchQueue<'a> {
     }
 
     fn pop_bucket(&mut self) -> bool {
-        if let Some(bucket) = self.buckets.pop() {
-            let mut local_fronts: FrontHashMap<SearchNode<'a>> = FrontHashMap::default();
-            for node in bucket {
-                let key = ParetoKey::from(&node);
-                let local_front = local_fronts.entry(key).or_default();
-                local_front.push(node);
-            }
-            for (key, local_front) in local_fronts.into_iter() {
-                let global_front = self.fronts.entry(key).or_default();
+        if let Some(local_front) = self.local_fronts.pop() {
+            for (key, local_front) in local_front.into_iter() {
+                let global_front = self.global_front.entry(key).or_default();
                 for node in local_front.into_iter() {
                     if global_front.push(ParetoValue::from(&node)) {
                         self.current.push(node);
