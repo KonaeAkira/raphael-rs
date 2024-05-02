@@ -9,11 +9,6 @@ use strum::IntoEnumIterator;
 
 use super::*;
 
-struct MacroResult {
-    quality: Quality,
-    actions: Vec<Action>,
-}
-
 pub struct MacroSolver {
     settings: Settings,
     finish_solver: FinishSolver,
@@ -29,32 +24,24 @@ impl MacroSolver {
 
     pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
         match state {
-            State::InProgress(state) => {
-                let result = self.do_solve(state);
-                match result {
-                    Some(result) => Some(result.actions),
-                    None => None,
-                }
-            }
+            State::InProgress(state) => self.do_solve(state),
             _ => None,
         }
     }
 
-    fn do_solve(&mut self, state: InProgress) -> Option<MacroResult> {
+    fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
         let timer = Instant::now();
 
         let mut search_queue = SearchQueue::new(self.settings);
-        let explored_nodes: Arena<SearchNode> = Arena::new();
+        let traces: Arena<Option<SearchTrace>> = Arena::new();
 
         search_queue.push(SearchNode { state, trace: None });
 
-        let mut result = MacroResult {
-            quality: Quality::new(0),
-            actions: Vec::new(),
-        };
+        let mut best_quality = Quality::new(0);
+        let mut best_actions: Option<Vec<Action>> = None;
 
         while let Some(current_node) = search_queue.pop() {
-            let current_node: &SearchNode<'_> = explored_nodes.alloc(current_node);
+            let trace: &Option<SearchTrace> = traces.alloc(current_node.trace);
             for sequence in ActionSequence::iter() {
                 if !sequence.should_use(&current_node.state, &self.settings) {
                     continue;
@@ -69,28 +56,25 @@ impl MacroSolver {
                         .settings
                         .max_quality
                         .saturating_sub(state.missing_quality);
-                    if final_quality > result.quality {
-                        let mut actions = SearchTrace::new(current_node, sequence).actions();
-                        actions
-                            .append(&mut self.finish_solver.get_finish_sequence(&state).unwrap());
-                        result = MacroResult {
-                            quality: final_quality,
-                            actions,
-                        };
+                    if final_quality > best_quality {
+                        best_quality = final_quality;
+                        let mut actions = SearchTrace::new(trace, sequence).actions();
+                        actions.extend(self.finish_solver.get_finish_sequence(&state).unwrap());
+                        best_actions = Some(actions);
                     }
                     search_queue.push(SearchNode {
                         state,
-                        trace: Some(SearchTrace::new(current_node, sequence)),
+                        trace: Some(SearchTrace::new(trace, sequence)),
                     });
                 }
             }
         }
 
         let seconds = timer.elapsed().as_secs_f32();
-        let nodes = explored_nodes.len();
+        let nodes = traces.len();
         let nodes_per_sec = nodes as f32 / seconds;
         dbg!(seconds, nodes, nodes_per_sec);
 
-        Some(result)
+        best_actions
     }
 }

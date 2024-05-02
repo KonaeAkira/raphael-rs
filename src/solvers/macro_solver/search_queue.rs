@@ -8,12 +8,12 @@ use super::ActionSequence;
 
 #[derive(Debug, Clone, Copy)]
 pub struct SearchTrace<'a> {
-    pub parent: &'a SearchNode<'a>,
+    pub parent: &'a Option<SearchTrace<'a>>,
     pub action: ActionSequence,
 }
 
 impl<'a> SearchTrace<'a> {
-    pub fn new(parent: &'a SearchNode<'a>, action: ActionSequence) -> Self {
+    pub fn new(parent: &'a Option<SearchTrace<'a>>, action: ActionSequence) -> Self {
         SearchTrace { parent, action }
     }
 
@@ -28,7 +28,7 @@ impl<'a> SearchTrace<'a> {
         for action in self.action.actions().iter().rev() {
             actions.push(*action);
         }
-        if let Some(parent) = self.parent.trace {
+        if let Some(parent) = self.parent {
             parent.do_trace(actions);
         }
     }
