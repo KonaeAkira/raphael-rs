@@ -33,24 +33,28 @@ impl UpperBoundSolver {
 
     pub fn quality_upper_bound(&mut self, state: &InProgress) -> Quality {
         let cp_budget = Self::_get_cp_budget(&state);
-        for cp_for_progress in 0..=cp_budget {
-            if self
-                .progress_bound_solver
-                .progress_upper_bound(cp_for_progress)
-                >= state.missing_progress
-            {
-                let cp_for_quality = cp_budget - cp_for_progress;
-                let existing_quality = self
-                    .settings
-                    .max_quality
-                    .saturating_sub(state.missing_quality);
-                return self
-                    .quality_bound_solver
-                    .quality_upper_bound(cp_for_quality, state.effects.inner_quiet)
-                    .saturating_add(existing_quality);
+        let cp_for_progress = self._calculate_cp_for_progress(state, cp_budget);
+        let existing_quality = self
+            .settings
+            .max_quality
+            .saturating_sub(state.missing_quality);
+        self.quality_bound_solver
+            .quality_upper_bound(cp_budget - cp_for_progress, state.effects.inner_quiet)
+            .saturating_add(existing_quality)
+    }
+
+    fn _calculate_cp_for_progress(&mut self, state: &InProgress, cp_budget: CP) -> CP {
+        let mut lo: CP = 0;
+        let mut hi: CP = cp_budget;
+        while lo < hi {
+            let mean = (lo + hi) / 2;
+            if self.progress_bound_solver.progress_upper_bound(mean) >= state.missing_progress {
+                hi = mean;
+            } else {
+                lo = mean + 1;
             }
         }
-        Quality::new(0)
+        lo
     }
 
     const fn _get_cp_budget(state: &InProgress) -> CP {
