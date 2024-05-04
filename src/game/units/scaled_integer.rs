@@ -25,6 +25,7 @@ impl<const C: u32> ScaledU32<C> {
     }
 
     pub const fn scale(self, mul: u32, div: u32) -> Self {
+        debug_assert!(self.inner_value * mul % div == 0);
         Self {
             inner_value: self.inner_value * mul / div,
         }
