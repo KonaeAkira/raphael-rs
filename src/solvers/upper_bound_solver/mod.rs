@@ -13,7 +13,7 @@ use crate::game::{
 };
 
 use self::constants::{
-    DURABILITY_COST, GREAT_STRIDES_COST, INNOVATION_COST, MANIPULATION_COST, WASTE_NOT_COST,
+    DURABILITY_COST, MANIPULATION_COST, WASTE_NOT_COST,
 };
 
 pub struct UpperBoundSolver {
@@ -39,7 +39,12 @@ impl UpperBoundSolver {
             .max_quality
             .saturating_sub(state.missing_quality);
         self.quality_bound_solver
-            .quality_upper_bound(cp_budget - cp_for_progress, state.effects.inner_quiet)
+            .quality_upper_bound(
+                cp_budget - cp_for_progress,
+                state.effects.inner_quiet,
+                state.effects.innovation,
+                state.effects.great_strides,
+            )
             .saturating_add(existing_quality)
     }
 
@@ -66,12 +71,6 @@ impl UpperBoundSolver {
         state.cp
             + (state.durability as CP / 5) * DURABILITY_COST
             + state.effects.waste_not as CP * WASTE_NOT_COST
-            + state.effects.innovation as CP * INNOVATION_COST
             + state.effects.manipulation as CP * MANIPULATION_COST
-            + if state.effects.great_strides != 0 {
-                GREAT_STRIDES_COST
-            } else {
-                0
-            }
     }
 }

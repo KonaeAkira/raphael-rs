@@ -6,7 +6,7 @@ use crate::game::{
     Action, Condition, Effects, Settings, State,
 };
 
-use super::constants::{DURABILITY_COST, VENERATION_COST, WASTE_NOT_COST};
+use super::constants::{DURABILITY_COST, WASTE_NOT_COST};
 
 const MAX_DURABILITY: Durability = 100;
 const MAX_PROGRESS: Progress = Progress::new(100_000);
@@ -90,21 +90,15 @@ impl ProgressBoundSolver {
 
     fn _solve_bound(&mut self, state: ReducedState) -> Progress {
         let mut best_progress = Progress::new(0);
-        for waste_not in 0..=2 {
-            let effect_cost: CP = waste_not * WASTE_NOT_COST;
-            if effect_cost > state.cp {
-                continue;
-            }
-            let mut full_state = InProgress::from(state);
-            full_state.cp -= effect_cost;
-            full_state.effects.waste_not = waste_not as u8;
-            for action_sequence in ACTION_SEQUENCES {
-                let new_state = State::InProgress(full_state).use_actions(
-                    action_sequence,
-                    Condition::Normal,
-                    &self.settings,
-                );
-                if let State::InProgress(in_progress) = new_state {
+        for action_sequence in ACTION_SEQUENCES {
+            for use_waste_not in [false, true] {
+                let mut full_state = State::InProgress(state.into());
+                if use_waste_not {
+                    full_state = Self::_apply_waste_not(full_state, action_sequence.len() as u8);
+                }
+                full_state =
+                    full_state.use_actions(action_sequence, Condition::Normal, &self.settings);
+                if let State::InProgress(in_progress) = full_state {
                     let action_progress = MAX_PROGRESS.saturating_sub(in_progress.missing_progress);
                     let total_progress = action_progress
                         .saturating_add(self._get_bound(ReducedState::from(in_progress)));
@@ -113,6 +107,21 @@ impl ProgressBoundSolver {
             }
         }
         best_progress
+    }
+
+    fn _apply_waste_not(state: State, duration: u8) -> State {
+        match state {
+            State::InProgress(mut in_progress) => {
+                let effect_cost: CP = duration as CP * WASTE_NOT_COST;
+                if effect_cost > in_progress.cp {
+                    return State::Invalid;
+                }
+                in_progress.cp -= effect_cost;
+                in_progress.effects.waste_not = duration;
+                State::InProgress(in_progress)
+            }
+            _ => State::Invalid,
+        }
     }
 }
 
