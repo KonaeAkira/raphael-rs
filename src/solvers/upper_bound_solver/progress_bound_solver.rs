@@ -12,17 +12,20 @@ const MAX_DURABILITY: Durability = 100;
 const MAX_PROGRESS: Progress = Progress::new(100_000);
 const MAX_QUALITY: Quality = Quality::new(100_000);
 
-const ACTION_SEQUENCES: [&[Action]; 5] = [
+const ACTION_SEQUENCES: [&[Action]; 6] = [
     &[Action::BasicSynthesis],
     &[Action::CarefulSynthesis],
     &[Action::Groundwork],
     &[Action::PrudentSynthesis],
     &[Action::Observe, Action::FocusedSynthesis],
+    &[Action::Veneration],
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
     cp: CP,
+    muscle_memory: u8,
+    veneration: u8,
 }
 
 impl std::convert::From<InProgress> for ReducedState {
@@ -30,6 +33,8 @@ impl std::convert::From<InProgress> for ReducedState {
         let durability_cost = DURABILITY_COST * (MAX_DURABILITY - state.durability) as CP / 5;
         Self {
             cp: state.cp - durability_cost,
+            muscle_memory: state.effects.muscle_memory,
+            veneration: state.effects.veneration,
         }
     }
 }
@@ -41,7 +46,11 @@ impl std::convert::From<ReducedState> for InProgress {
             durability: MAX_DURABILITY,
             missing_progress: MAX_PROGRESS,
             missing_quality: MAX_QUALITY,
-            effects: Effects::default(),
+            effects: Effects {
+                muscle_memory: state.muscle_memory,
+                veneration: state.veneration,
+                ..Default::default()
+            },
             combo: None,
         }
     }
@@ -60,8 +69,12 @@ impl ProgressBoundSolver {
         }
     }
 
-    pub fn progress_upper_bound(&mut self, cp: CP) -> Progress {
-        self._get_bound(ReducedState { cp })
+    pub fn progress_upper_bound(&mut self, cp: CP, muscle_memory: u8, veneration: u8) -> Progress {
+        self._get_bound(ReducedState {
+            cp,
+            muscle_memory,
+            veneration,
+        })
     }
 
     fn _get_bound(&mut self, state: ReducedState) -> Progress {
@@ -77,29 +90,25 @@ impl ProgressBoundSolver {
 
     fn _solve_bound(&mut self, state: ReducedState) -> Progress {
         let mut best_progress = Progress::new(0);
-        for veneration in 0..=2 {
-            for waste_not in 0..=2 {
-                let effect_cost: CP = veneration * VENERATION_COST + waste_not * WASTE_NOT_COST;
-                if effect_cost > state.cp {
-                    continue;
-                }
-                let mut full_state = InProgress::from(state);
-                full_state.cp -= effect_cost;
-                full_state.effects.veneration = veneration as u8;
-                full_state.effects.waste_not = waste_not as u8;
-                for action_sequence in ACTION_SEQUENCES {
-                    let new_state = State::InProgress(full_state).use_actions(
-                        action_sequence,
-                        Condition::Normal,
-                        &self.settings,
-                    );
-                    if let State::InProgress(in_progress) = new_state {
-                        let action_progress =
-                            MAX_PROGRESS.saturating_sub(in_progress.missing_progress);
-                        let total_progress = action_progress
-                            .saturating_add(self._get_bound(ReducedState::from(in_progress)));
-                        best_progress = std::cmp::max(best_progress, total_progress);
-                    }
+        for waste_not in 0..=2 {
+            let effect_cost: CP = waste_not * WASTE_NOT_COST;
+            if effect_cost > state.cp {
+                continue;
+            }
+            let mut full_state = InProgress::from(state);
+            full_state.cp -= effect_cost;
+            full_state.effects.waste_not = waste_not as u8;
+            for action_sequence in ACTION_SEQUENCES {
+                let new_state = State::InProgress(full_state).use_actions(
+                    action_sequence,
+                    Condition::Normal,
+                    &self.settings,
+                );
+                if let State::InProgress(in_progress) = new_state {
+                    let action_progress = MAX_PROGRESS.saturating_sub(in_progress.missing_progress);
+                    let total_progress = action_progress
+                        .saturating_add(self._get_bound(ReducedState::from(in_progress)));
+                    best_progress = std::cmp::max(best_progress, total_progress);
                 }
             }
         }

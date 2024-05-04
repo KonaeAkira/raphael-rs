@@ -48,7 +48,12 @@ impl UpperBoundSolver {
         let mut hi: CP = cp_budget;
         while lo < hi {
             let mean = (lo + hi) / 2;
-            if self.progress_bound_solver.progress_upper_bound(mean) >= state.missing_progress {
+            if self.progress_bound_solver.progress_upper_bound(
+                mean,
+                state.effects.muscle_memory,
+                state.effects.veneration,
+            ) >= state.missing_progress
+            {
                 hi = mean;
             } else {
                 lo = mean + 1;
@@ -62,7 +67,6 @@ impl UpperBoundSolver {
             + (state.durability as CP / 5) * DURABILITY_COST
             + state.effects.waste_not as CP * WASTE_NOT_COST
             + state.effects.innovation as CP * INNOVATION_COST
-            + state.effects.veneration as CP * WASTE_NOT_COST
             + state.effects.manipulation as CP * MANIPULATION_COST
             + if state.effects.great_strides != 0 {
                 GREAT_STRIDES_COST
