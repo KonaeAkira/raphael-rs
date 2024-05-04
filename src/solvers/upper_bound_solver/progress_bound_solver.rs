@@ -12,10 +12,11 @@ const MAX_DURABILITY: Durability = 100;
 const MAX_PROGRESS: Progress = Progress::new(100_000);
 const MAX_QUALITY: Quality = Quality::new(100_000);
 
-const ACTION_SEQUENCES: [&[Action]; 4] = [
+const ACTION_SEQUENCES: [&[Action]; 5] = [
     &[Action::BasicSynthesis],
     &[Action::CarefulSynthesis],
     &[Action::Groundwork],
+    &[Action::PrudentSynthesis],
     &[Action::Observe, Action::FocusedSynthesis],
 ];
 
