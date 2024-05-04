@@ -33,9 +33,11 @@ impl MacroSolver {
 
     fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
         let timer = Instant::now();
+        let mut finish_solver_rejected_node: usize = 0;
+        let mut upper_bound_solver_rejected_nodes: usize = 0;
 
-        let mut search_queue = SearchQueue::new(self.settings);
         let traces: Arena<Option<SearchTrace>> = Arena::new();
+        let mut search_queue = SearchQueue::new(self.settings);
 
         search_queue.push(SearchNode { state, trace: None });
 
@@ -52,9 +54,11 @@ impl MacroSolver {
                     sequence.apply(State::InProgress(current_node.state), &self.settings);
                 if let State::InProgress(state) = new_state {
                     if !self.finish_solver.can_finish(&state) {
+                        finish_solver_rejected_node += 1;
                         continue;
                     }
                     if self.bound_solver.quality_upper_bound(&state) <= best_quality {
+                        upper_bound_solver_rejected_nodes += 1;
                         continue;
                     }
                     let final_quality = self
@@ -80,6 +84,12 @@ impl MacroSolver {
         let nodes_per_sec = nodes as f32 / seconds;
         dbg!(seconds, nodes, nodes_per_sec);
 
+        dbg!(
+            finish_solver_rejected_node,
+            upper_bound_solver_rejected_nodes
+        );
+
+        dbg!(f32::from(best_quality));
         best_actions
     }
 }

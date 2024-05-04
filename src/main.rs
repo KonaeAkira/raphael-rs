@@ -19,5 +19,4 @@ fn main() {
     let state = State::new(&settings);
     let mut solver = MacroSolver::new(settings);
     solver.solve(state);
-    solver.solve(state);
 }

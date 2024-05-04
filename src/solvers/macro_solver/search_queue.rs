@@ -99,6 +99,9 @@ pub struct SearchQueue<'a> {
     current: Vec<SearchNode<'a>>,
     local_fronts: Vec<FrontHashMap<SearchNode<'a>>>,
     global_front: FrontHashMap<ParetoValue>,
+    accepted_nodes: usize,
+    locally_rejected_nodes: usize,
+    globally_rejected_nodes: usize,
 }
 
 impl<'a> SearchQueue<'a> {
@@ -107,15 +110,20 @@ impl<'a> SearchQueue<'a> {
             current: Vec::new(),
             local_fronts: vec![FrontHashMap::default(); (settings.max_cp + 1) as usize],
             global_front: FrontHashMap::default(),
+            accepted_nodes: 0,
+            locally_rejected_nodes: 0,
+            globally_rejected_nodes: 0,
         }
     }
 
     pub fn push(&mut self, value: SearchNode<'a>) {
-        let key = ParetoKey::from(&value);
-        self.local_fronts[value.state.cp as usize]
-            .entry(key)
+        if !self.local_fronts[value.state.cp as usize]
+            .entry(ParetoKey::from(&value))
             .or_default()
-            .push(value);
+            .push(value)
+        {
+            self.locally_rejected_nodes += 1;
+        }
     }
 
     pub fn pop(&mut self) -> Option<SearchNode<'a>> {
@@ -135,6 +143,9 @@ impl<'a> SearchQueue<'a> {
                 for node in local_front.into_iter() {
                     if global_front.push(ParetoValue::from(&node)) {
                         self.current.push(node);
+                        self.accepted_nodes += 1;
+                    } else {
+                        self.globally_rejected_nodes += 1;
                     }
                 }
             }
@@ -142,5 +153,15 @@ impl<'a> SearchQueue<'a> {
         } else {
             false
         }
+    }
+}
+
+impl<'a> Drop for SearchQueue<'a> {
+    fn drop(&mut self) {
+        dbg!(
+            self.accepted_nodes,
+            self.locally_rejected_nodes,
+            self.globally_rejected_nodes
+        );
     }
 }
