@@ -1,5 +1,5 @@
 use crate::game::{state::InProgress, units::Quality, Action, Settings, State};
-use crate::solvers::FinishSolver;
+use crate::solvers::{FinishSolver, UpperBoundSolver};
 
 use std::time::Instant;
 use std::vec::Vec;
@@ -12,6 +12,7 @@ use super::*;
 pub struct MacroSolver {
     settings: Settings,
     finish_solver: FinishSolver,
+    bound_solver: UpperBoundSolver,
 }
 
 impl MacroSolver {
@@ -19,6 +20,7 @@ impl MacroSolver {
         MacroSolver {
             settings,
             finish_solver: FinishSolver::new(settings),
+            bound_solver: UpperBoundSolver::new(settings),
         }
     }
 
@@ -50,6 +52,9 @@ impl MacroSolver {
                     sequence.apply(State::InProgress(current_node.state), &self.settings);
                 if let State::InProgress(state) = new_state {
                     if !self.finish_solver.can_finish(&state) {
+                        continue;
+                    }
+                    if self.bound_solver.quality_upper_bound(&state) <= best_quality {
                         continue;
                     }
                     let final_quality = self

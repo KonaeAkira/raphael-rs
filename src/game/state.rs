@@ -13,6 +13,19 @@ impl State {
         State::InProgress(InProgress::new(settings))
     }
 
+    pub fn use_actions(self, actions: &[Action], condition: Condition, settings: &Settings) -> State {
+        let mut current_state = self;
+        for action in actions {
+            match current_state {
+                State::InProgress(in_progress) => {
+                    current_state = in_progress.use_action(*action, condition, settings);
+                }
+                _ => return State::Invalid,
+            }
+        }
+        current_state
+    }
+
     pub fn as_in_progress(self) -> Option<InProgress> {
         match self {
             State::InProgress(in_progress) => Some(in_progress),
