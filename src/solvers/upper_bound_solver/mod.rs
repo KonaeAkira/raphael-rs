@@ -32,7 +32,7 @@ impl UpperBoundSolver {
     }
 
     pub fn quality_upper_bound(&mut self, state: &InProgress) -> Quality {
-        let cp_budget = Self::_get_cp_budget(&state);
+        let cp_budget = Self::_get_cp_budget(state);
         let cp_for_progress = self._calculate_cp_for_progress(state, cp_budget);
         let existing_quality = self
             .settings
