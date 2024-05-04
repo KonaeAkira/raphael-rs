@@ -114,9 +114,13 @@ impl QualityBoundSolver {
                 full_state =
                     full_state.use_actions(action_sequence, Condition::Normal, &self.settings);
                 if let State::InProgress(in_progress) = full_state {
+                    let new_state = ReducedState::from(in_progress);
+                    if new_state.cp < 0 {
+                        continue;
+                    }
                     let action_quality = MAX_QUALITY.saturating_sub(in_progress.missing_quality);
                     let total_quality = action_quality
-                        .saturating_add(self._get_bound(ReducedState::from(in_progress)));
+                        .saturating_add(self._get_bound(new_state));
                     best_quality = std::cmp::max(best_quality, total_quality);
                 }
             }
