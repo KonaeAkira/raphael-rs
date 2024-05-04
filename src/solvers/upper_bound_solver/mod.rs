@@ -12,9 +12,7 @@ use crate::game::{
     Settings,
 };
 
-use self::constants::{
-    DURABILITY_COST, MANIPULATION_COST, WASTE_NOT_COST,
-};
+use self::constants::{DURABILITY_COST, MANIPULATION_COST, WASTE_NOT_COST};
 
 pub struct UpperBoundSolver {
     settings: Settings,
@@ -33,7 +31,11 @@ impl UpperBoundSolver {
 
     pub fn quality_upper_bound(&mut self, state: &InProgress) -> Quality {
         let cp_budget = Self::_get_cp_budget(state);
-        let cp_for_progress = self._calculate_cp_for_progress(state, cp_budget);
+        let cp_for_progress = self.progress_bound_solver.get_cp_lower_bound(
+            state.missing_progress,
+            state.effects.muscle_memory,
+            state.effects.veneration,
+        );
         let existing_quality = self
             .settings
             .max_quality
@@ -46,25 +48,6 @@ impl UpperBoundSolver {
                 state.effects.great_strides,
             )
             .saturating_add(existing_quality)
-    }
-
-    fn _calculate_cp_for_progress(&mut self, state: &InProgress, cp_budget: CP) -> CP {
-        let mut lo: CP = 0;
-        let mut hi: CP = cp_budget;
-        while lo < hi {
-            let mean = (lo + hi) / 2;
-            if self.progress_bound_solver.progress_upper_bound(
-                mean,
-                state.effects.muscle_memory,
-                state.effects.veneration,
-            ) >= state.missing_progress
-            {
-                hi = mean;
-            } else {
-                lo = mean + 1;
-            }
-        }
-        lo
     }
 
     const fn _get_cp_budget(state: &InProgress) -> CP {
