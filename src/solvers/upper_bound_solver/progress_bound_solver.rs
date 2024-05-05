@@ -8,7 +8,7 @@ use crate::{
         units::{Durability, Progress, Quality, CP},
         Condition, Effects, Settings, State,
     },
-    solvers::action_sequences::{ActionSequence, ALL_PROGRESS_ACTIONS},
+    solvers::action_sequences::{ActionSequence, PROGRESS_ACTIONS},
 };
 
 use super::{DURABILITY_COST, WASTE_NOT_COST};
@@ -17,7 +17,7 @@ const MAX_DURABILITY: Durability = 100;
 const MAX_PROGRESS: Progress = Progress::new(100_000);
 const MAX_QUALITY: Quality = Quality::new(100_000);
 
-const ACTION_SEQUENCES: &[ActionSequence] = ALL_PROGRESS_ACTIONS;
+const ACTION_SEQUENCES: &[ActionSequence] = PROGRESS_ACTIONS;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {

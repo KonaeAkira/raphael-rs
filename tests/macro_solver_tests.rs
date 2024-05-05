@@ -107,7 +107,7 @@ fn test_07() {
         max_quality: Quality::from(40000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4546.25);
+    assert_eq!(get_quality(&settings, &actions), 4685.00);
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn test_10() {
         max_quality: Quality::from(20000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3220.00);
+    assert_eq!(get_quality(&settings, &actions), 3221.25);
 }
 
 #[test]

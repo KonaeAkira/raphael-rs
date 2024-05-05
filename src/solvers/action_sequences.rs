@@ -14,9 +14,11 @@ pub const LIMITED_PROGRESS_ACTIONS: &[ActionSequence] = &[
     &[Action::Veneration],
 ];
 
-pub const ALL_PROGRESS_ACTIONS: &[ActionSequence] =
+// actions that increase only Progress
+pub const PROGRESS_ACTIONS: &[ActionSequence] =
     concat_slices!([ActionSequence]: LIMITED_PROGRESS_ACTIONS, &[&[Action::BasicSynthesis]]);
 
+// actions that increase only Quality
 pub const QUALITY_ACTIONS: &[ActionSequence] = &[
     &[Action::Reflect],
     &[Action::PrudentTouch],
@@ -32,6 +34,9 @@ pub const QUALITY_ACTIONS: &[ActionSequence] = &[
     &[Action::Innovation],
     &[Action::GreatStrides],
 ];
+
+// actions that that increase Progress and Quality
+pub const MIXED_ACTIONS: &[ActionSequence] = &[&[Action::DelicateSynthesis]];
 
 pub const DURABILITY_ACTIONS: &[ActionSequence] = &[
     &[Action::MasterMend],

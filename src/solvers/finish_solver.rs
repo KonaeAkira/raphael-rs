@@ -1,6 +1,6 @@
 use crate::{
     game::{state::InProgress, units::*, Action, Condition, Effects, Settings, State},
-    solvers::action_sequences::{ALL_PROGRESS_ACTIONS, DURABILITY_ACTIONS},
+    solvers::action_sequences::{PROGRESS_ACTIONS, DURABILITY_ACTIONS},
 };
 
 use constcat::concat_slices;
@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap as HashMap;
 use super::action_sequences::ActionSequence;
 
 const ACTION_SEQUENCES: &[ActionSequence] =
-    concat_slices!([ActionSequence]: ALL_PROGRESS_ACTIONS, DURABILITY_ACTIONS);
+    concat_slices!([ActionSequence]: PROGRESS_ACTIONS, DURABILITY_ACTIONS);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedEffects {
