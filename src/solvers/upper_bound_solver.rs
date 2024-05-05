@@ -4,7 +4,6 @@ use crate::{
 };
 
 use constcat::concat_slices;
-use pareto_front::{Dominate, ParetoFront};
 use rustc_hash::FxHashMap as HashMap;
 
 use super::action_sequences::ActionSequence;
@@ -53,21 +52,85 @@ impl std::convert::From<ReducedState> for InProgress {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ParetoValue {
-    progress: Progress,
-    quality: Quality,
+struct ParetoFront {
+    values: Vec<(Progress, Quality)>,
 }
 
-impl Dominate for ParetoValue {
-    fn dominate(&self, other: &Self) -> bool {
-        self.progress >= other.progress && self.quality >= other.quality
+impl ParetoFront {
+    pub fn new() -> Self {
+        Self {
+            values: vec![(Progress::new(0), Quality::new(0))],
+        }
+    }
+
+    pub fn get(&self, progress: Progress) -> Quality {
+        let mut lo = 0;
+        let mut hi = self.values.len();
+        while lo + 1 < hi {
+            if self.values[(lo + hi) / 2].0 < progress {
+                hi = (lo + hi) / 2;
+            } else {
+                lo = (lo + hi) / 2;
+            }
+        }
+        self.values[lo].1
+    }
+
+    fn _try_push(&mut self, new_value: (Progress, Quality)) {
+        match self.values.last_mut() {
+            Some(value) => {
+                if value.0 == new_value.0 {
+                    value.1 = std::cmp::max(value.1, new_value.1);
+                } else {
+                    assert!(value.0 > new_value.0);
+                    if value.1 < new_value.1 {
+                        self.values.push(new_value);
+                    }
+                }
+            }
+            None => self.values.push(new_value),
+        }
+    }
+
+    pub fn merge<I: Iterator<Item = (Progress, Quality)>>(self, values: I) -> Self {
+        let mut new_front = Self { values: Vec::new() };
+
+        let mut i = self.values.into_iter().peekable();
+        let mut j = values.peekable();
+
+        let mut i_opt = i.next();
+        let mut j_opt = j.next();
+
+        loop {
+            match (i_opt, j_opt) {
+                (None, None) => break,
+                (None, Some(j_value)) => {
+                    new_front._try_push(j_value);
+                    j_opt = j.next();
+                }
+                (Some(i_value), None) => {
+                    new_front._try_push(i_value);
+                    i_opt = i.next();
+                }
+                (Some(i_value), Some(j_value)) => {
+                    if i_value.0 > j_value.0 {
+                        new_front._try_push(i_value);
+                        i_opt = i.next();
+                    } else {
+                        new_front._try_push(j_value);
+                        j_opt = j.next();
+                    }
+                }
+            }
+        }
+
+        new_front
     }
 }
 
 pub struct UpperBoundSolver {
     settings: Settings,
-    memory: HashMap<ReducedState, ParetoFront<ParetoValue>>,
+    memory: HashMap<ReducedState, ParetoFront>,
 }
 
 impl UpperBoundSolver {
@@ -85,25 +148,18 @@ impl UpperBoundSolver {
             .max_quality
             .saturating_sub(state.missing_quality);
         self._solve(ReducedState::from(state));
-        let pareto_front = self.memory.get(&ReducedState::from(state)).unwrap();
-        let mut best_quality = Quality::new(0);
-        for value in pareto_front.iter() {
-            if value.progress >= state.missing_progress {
-                best_quality = std::cmp::max(best_quality, value.quality);
-            }
-        }
-        current_quality.saturating_add(best_quality)
+        self.memory
+            .get(&ReducedState::from(state))
+            .unwrap()
+            .get(state.missing_progress)
+            .saturating_add(current_quality)
     }
 
     fn _solve(&mut self, state: ReducedState) {
         if self.memory.contains_key(&state) {
             return;
         }
-        let mut current_front: ParetoFront<ParetoValue> = ParetoFront::new();
-        current_front.push(ParetoValue {
-            progress: Progress::new(0),
-            quality: Quality::new(0),
-        });
+        let mut current_front: ParetoFront = ParetoFront::new();
         for actions in ACTION_SEQUENCES {
             let new_state = State::InProgress(state.into()).use_actions(
                 actions,
@@ -116,18 +172,20 @@ impl UpperBoundSolver {
                     let action_quality = INF_QUALITY.saturating_sub(new_state.missing_quality);
                     self._solve(ReducedState::from(new_state));
                     let child_front = self.memory.get(&ReducedState::from(new_state)).unwrap();
-                    for value in child_front.iter() {
-                        current_front.push(ParetoValue {
-                            progress: std::cmp::min(
-                                self.settings.max_progress,
-                                action_progress.saturating_add(value.progress),
-                            ),
-                            quality: std::cmp::min(
-                                self.settings.max_quality,
-                                action_quality.saturating_add(value.quality),
-                            ),
-                        });
-                    }
+                    current_front = current_front.merge(child_front.values.iter().map(
+                        |(progress, quality)| {
+                            (
+                                std::cmp::min(
+                                    self.settings.max_progress,
+                                    action_progress.saturating_add(*progress),
+                                ),
+                                std::cmp::min(
+                                    self.settings.max_quality,
+                                    action_quality.saturating_add(*quality),
+                                ),
+                            )
+                        },
+                    ));
                 }
                 State::Invalid => (),
                 _ => panic!(),
@@ -143,7 +201,7 @@ impl Drop for UpperBoundSolver {
         let states = self.memory.len();
         let mut pareto_values: usize = 0;
         for (_, pareto_front) in self.memory.iter() {
-            pareto_values += pareto_front.len();
+            pareto_values += pareto_front.values.len();
         }
         dbg!(states, pareto_values);
     }
