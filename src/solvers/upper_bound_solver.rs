@@ -19,10 +19,20 @@ pub const MANIPULATION_COST: CP = Action::Manipulation.base_cp_cost() / 8;
 // CP value for 5 Durability
 pub const DURABILITY_COST: CP = Action::Manipulation.base_cp_cost() / 8;
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub struct ReducedEffects {
+    pub inner_quiet: u8,
+    pub waste_not: u8,
+    pub innovation: u8,
+    pub veneration: u8,
+    pub great_strides: u8,
+    pub muscle_memory: u8,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
     cp: CP,
-    effects: Effects,
+    effects: ReducedEffects,
 }
 
 impl std::convert::From<InProgress> for ReducedState {
@@ -31,9 +41,13 @@ impl std::convert::From<InProgress> for ReducedState {
         Self {
             cp: state.cp - used_durability as CP * DURABILITY_COST
                 + state.effects.manipulation as CP * MANIPULATION_COST,
-            effects: Effects {
-                manipulation: 0,
-                ..state.effects
+            effects: ReducedEffects {
+                inner_quiet: state.effects.inner_quiet,
+                waste_not: state.effects.waste_not,
+                innovation: state.effects.innovation,
+                veneration: state.effects.veneration,
+                great_strides: state.effects.great_strides,
+                muscle_memory: state.effects.muscle_memory,
             },
         }
     }
@@ -46,7 +60,15 @@ impl std::convert::From<ReducedState> for InProgress {
             cp: state.cp,
             missing_progress: INF_PROGRESS,
             missing_quality: INF_QUALITY,
-            effects: state.effects,
+            effects: Effects {
+                inner_quiet: state.effects.inner_quiet,
+                waste_not: state.effects.waste_not,
+                innovation: state.effects.innovation,
+                veneration: state.effects.veneration,
+                great_strides: state.effects.great_strides,
+                muscle_memory: state.effects.muscle_memory,
+                manipulation: 0,
+            },
             combo: None,
         }
     }
@@ -138,6 +160,8 @@ pub struct UpperBoundSolver {
 
 impl UpperBoundSolver {
     pub fn new(settings: Settings) -> Self {
+        dbg!(std::mem::size_of::<ReducedState>());
+        dbg!(std::mem::align_of::<ReducedState>());
         UpperBoundSolver {
             settings,
             memory: HashMap::default(),
@@ -173,8 +197,9 @@ impl UpperBoundSolver {
                 State::InProgress(new_state) => {
                     let action_progress = INF_PROGRESS.saturating_sub(new_state.missing_progress);
                     let action_quality = INF_QUALITY.saturating_sub(new_state.missing_quality);
-                    self._solve(ReducedState::from(new_state));
-                    let child_front = self.memory.get(&ReducedState::from(new_state)).unwrap();
+                    let new_state = ReducedState::from(new_state);
+                    self._solve(new_state);
+                    let child_front = self.memory.get(&new_state).unwrap();
                     current_front = current_front.merge(child_front.values.iter().map(
                         |(progress, quality)| {
                             (
@@ -194,7 +219,6 @@ impl UpperBoundSolver {
                 _ => panic!(),
             }
         }
-        // dbg!(&state, &current_front);
         self.memory.insert(state, current_front);
     }
 }
