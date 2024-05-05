@@ -1,8 +1,10 @@
+use constcat::concat_slices;
+
 use crate::game::Action;
 
 pub type ActionSequence = &'static [Action];
 
-pub const PROGRESS_ACTIONS: &[ActionSequence] = &[
+pub const LIMITED_PROGRESS_ACTIONS: &[ActionSequence] = &[
     &[Action::MuscleMemory],
     // &[Action::BasicSynthesis], macro_solver doesn't support 0-cp actions yet
     &[Action::CarefulSynthesis],
@@ -11,6 +13,9 @@ pub const PROGRESS_ACTIONS: &[ActionSequence] = &[
     &[Action::Observe, Action::FocusedSynthesis],
     &[Action::Veneration],
 ];
+
+pub const ALL_PROGRESS_ACTIONS: &[ActionSequence] =
+    concat_slices!([ActionSequence]: LIMITED_PROGRESS_ACTIONS, &[&[Action::BasicSynthesis]]);
 
 pub const QUALITY_ACTIONS: &[ActionSequence] = &[
     &[Action::Reflect],

@@ -1,10 +1,15 @@
-use crate::game::{state::InProgress, units::*, Action, Effects, Settings, State};
+use crate::{
+    game::{state::InProgress, units::*, Action, Condition, Effects, Settings, State},
+    solvers::action_sequences::{ALL_PROGRESS_ACTIONS, DURABILITY_ACTIONS},
+};
 
+use constcat::concat_slices;
 use rustc_hash::FxHashMap as HashMap;
 
-use strum::IntoEnumIterator;
+use super::action_sequences::ActionSequence;
 
-use super::*;
+const ACTION_SEQUENCES: &[ActionSequence] =
+    concat_slices!([ActionSequence]: ALL_PROGRESS_ACTIONS, DURABILITY_ACTIONS);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedEffects {
@@ -87,7 +92,7 @@ impl FinishSolver {
                 if state.missing_progress <= *progress {
                     let mut result: Vec<Action> = Vec::new();
                     self.do_trace(&mut result, reduced_state, *progress);
-                    Some(result)
+                    Some(self.truncate(*state, &result))
                 } else {
                     None
                 }
@@ -96,19 +101,41 @@ impl FinishSolver {
         }
     }
 
+    fn truncate(&self, mut state: InProgress, actions: &[Action]) -> Vec<Action> {
+        let mut result: Vec<Action> = Vec::new();
+        for action in actions {
+            match state.use_action(*action, Condition::Normal, &self.settings) {
+                State::InProgress(in_progress) => {
+                    result.push(*action);
+                    state = in_progress;
+                }
+                State::Completed { quality: _ } => {
+                    result.push(*action);
+                    break;
+                }
+                _ => panic!("Invalid finish sequence"),
+            }
+        }
+        result
+    }
+
     fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, target_progress: Progress) {
         if target_progress == Progress::new(0) {
             return;
         }
-        for sequence in ActionSequence::iter() {
-            match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
+        for sequence in ACTION_SEQUENCES {
+            match State::InProgress(state.to_state()).use_actions(
+                sequence,
+                Condition::Normal,
+                &self.settings,
+            ) {
                 State::InProgress(new_state) => {
                     let gained_progress =
                         ReducedState::INF_PROGRESS.saturating_sub(new_state.missing_progress);
                     let new_state = ReducedState::from_state(&new_state);
                     let new_state_potential = *self.memoization.get(&new_state).unwrap();
                     if gained_progress.saturating_add(new_state_potential) == target_progress {
-                        result.extend_from_slice(sequence.actions());
+                        result.extend_from_slice(sequence);
                         self.do_trace(result, new_state, new_state_potential);
                         return;
                     }
@@ -117,7 +144,7 @@ impl FinishSolver {
                     let gained_progress =
                         ReducedState::INF_PROGRESS.saturating_sub(missing_progress);
                     if gained_progress == target_progress {
-                        result.extend_from_slice(sequence.actions());
+                        result.extend_from_slice(sequence);
                         return;
                     }
                 }
@@ -139,8 +166,12 @@ impl FinishSolver {
             Some(progress) => *progress,
             None => {
                 let mut max_progress = Progress::new(0);
-                for sequence in ActionSequence::iter() {
-                    match sequence.apply(State::InProgress(state.to_state()), &self.settings) {
+                for sequence in ACTION_SEQUENCES {
+                    match State::InProgress(state.to_state()).use_actions(
+                        sequence,
+                        Condition::Normal,
+                        &self.settings,
+                    ) {
                         State::InProgress(new_state) => {
                             let gained_progress = ReducedState::INF_PROGRESS
                                 .saturating_sub(new_state.missing_progress);

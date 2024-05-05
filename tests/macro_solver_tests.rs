@@ -83,7 +83,7 @@ fn test_05() {
         max_quality: Quality::from(40000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1978.25);
+    assert_eq!(get_quality(&settings, &actions), 2018.25);
 }
 
 #[test]

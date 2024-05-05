@@ -1,7 +1,7 @@
 use crate::game::Condition;
 use crate::game::{state::InProgress, units::Quality, Action, Settings, State};
 use crate::solvers::action_sequences::{
-    ActionSequence, DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS,
+    ActionSequence, DURABILITY_ACTIONS, LIMITED_PROGRESS_ACTIONS, QUALITY_ACTIONS,
 };
 use crate::solvers::{FinishSolver, UpperBoundSolver};
 
@@ -15,7 +15,7 @@ use super::*;
 const LIMITED_ACTIONS: &[ActionSequence] =
     concat_slices!([ActionSequence]: QUALITY_ACTIONS, DURABILITY_ACTIONS);
 const ALL_ACTIONS: &[ActionSequence] =
-    concat_slices!([ActionSequence]: PROGRESS_ACTIONS, QUALITY_ACTIONS, DURABILITY_ACTIONS);
+    concat_slices!([ActionSequence]: LIMITED_PROGRESS_ACTIONS, QUALITY_ACTIONS, DURABILITY_ACTIONS);
 
 pub struct MacroSolver {
     settings: Settings,
