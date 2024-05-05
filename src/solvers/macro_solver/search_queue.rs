@@ -2,9 +2,10 @@ use pareto_front::{Dominate, ParetoFront};
 
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::game::{state::InProgress, units::*, Action, ComboAction, Effects, Settings};
-
-use super::ActionSequence;
+use crate::{
+    game::{state::InProgress, units::*, Action, ComboAction, Effects, Settings},
+    solvers::action_sequences::ActionSequence,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct SearchTrace<'a> {
@@ -25,7 +26,7 @@ impl<'a> SearchTrace<'a> {
     }
 
     fn do_trace(self, actions: &mut Vec<Action>) {
-        for action in self.action.actions().iter().rev() {
+        for action in self.action.iter().rev() {
             actions.push(*action);
         }
         if let Some(parent) = self.parent {

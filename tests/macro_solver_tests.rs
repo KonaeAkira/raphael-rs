@@ -35,7 +35,7 @@ fn test_01() {
         max_quality: Quality::from(40000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1603.00);
+    assert_eq!(get_quality(&settings, &actions), 1653.00);
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_08() {
         max_quality: Quality::from(6950.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2740.00);
+    assert_eq!(get_quality(&settings, &actions), 2840.00);
 }
 
 #[test]
@@ -155,7 +155,7 @@ fn test_11() {
         max_quality: Quality::from(20000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4347.50);
+    assert_eq!(get_quality(&settings, &actions), 4405.00);
 }
 
 #[test]
@@ -167,7 +167,7 @@ fn test_rinascita_min_stats() {
         max_quality: Quality::from(20000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4685.00);
+    assert_eq!(get_quality(&settings, &actions), 4695.00);
 }
 
 #[test]
