@@ -1,7 +1,7 @@
 use crate::game::Condition;
 use crate::game::{state::InProgress, units::Quality, Action, Settings, State};
 use crate::solvers::action_sequences::{
-    ActionSequence, DURABILITY_ACTIONS, LIMITED_PROGRESS_ACTIONS, MIXED_ACTIONS, QUALITY_ACTIONS
+    ActionSequence, DURABILITY_ACTIONS, LIMITED_PROGRESS_ACTIONS, MIXED_ACTIONS, QUALITY_ACTIONS,
 };
 use crate::solvers::{FinishSolver, UpperBoundSolver};
 
@@ -14,8 +14,7 @@ use super::*;
 
 const LIMITED_ACTIONS: &[ActionSequence] =
     concat_slices!([ActionSequence]: QUALITY_ACTIONS, DURABILITY_ACTIONS);
-const ALL_ACTIONS: &[ActionSequence] =
-    concat_slices!([ActionSequence]: LIMITED_PROGRESS_ACTIONS, QUALITY_ACTIONS, MIXED_ACTIONS, DURABILITY_ACTIONS);
+const ALL_ACTIONS: &[ActionSequence] = concat_slices!([ActionSequence]: LIMITED_PROGRESS_ACTIONS, QUALITY_ACTIONS, MIXED_ACTIONS, DURABILITY_ACTIONS);
 
 pub struct MacroSolver {
     settings: Settings,
@@ -79,7 +78,7 @@ impl MacroSolver {
                         finish_solver_rejected_node += 1;
                         continue;
                     }
-                    if self.bound_solver.quality_upper_bound(&state) <= best_quality {
+                    if self.bound_solver.quality_upper_bound(state) <= best_quality {
                         upper_bound_solver_rejected_nodes += 1;
                         continue;
                     }

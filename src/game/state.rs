@@ -3,7 +3,7 @@ use crate::game::{units::*, Action, ComboAction, Condition, Effects, Settings};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {
     InProgress(InProgress),
-    Completed { quality: Quality },
+    Completed { missing_quality: Quality },
     Failed { missing_progress: Progress },
     Invalid,
 }
@@ -13,7 +13,12 @@ impl State {
         State::InProgress(InProgress::new(settings))
     }
 
-    pub fn use_actions(self, actions: &[Action], condition: Condition, settings: &Settings) -> State {
+    pub fn use_actions(
+        self,
+        actions: &[Action],
+        condition: Condition,
+        settings: &Settings,
+    ) -> State {
         let mut current_state = self;
         for action in actions {
             match current_state {
@@ -114,9 +119,7 @@ impl InProgress {
 
         if new_state.missing_progress == Progress::new(0) {
             return State::Completed {
-                quality: settings
-                    .max_quality
-                    .saturating_sub(new_state.missing_quality),
+                missing_quality: new_state.missing_quality,
             };
         }
         if new_state.durability <= 0 {

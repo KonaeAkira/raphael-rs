@@ -21,7 +21,9 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> f32 {
         );
     }
     match state {
-        State::Completed { quality } => quality.into(),
+        State::Completed { missing_quality } => {
+            settings.max_quality.saturating_sub(missing_quality).into()
+        }
         _ => 0.0,
     }
 }

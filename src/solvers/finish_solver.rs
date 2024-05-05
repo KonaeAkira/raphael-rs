@@ -109,7 +109,7 @@ impl FinishSolver {
                     result.push(*action);
                     state = in_progress;
                 }
-                State::Completed { quality: _ } => {
+                State::Completed { missing_quality: _ } => {
                     result.push(*action);
                     break;
                 }
