@@ -2,26 +2,22 @@ use std::hash::Hash;
 
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::game::{
-    state::InProgress,
-    units::{Durability, Progress, Quality, CP},
-    Action, Condition, Effects, Settings, State,
+use crate::{
+    game::{
+        state::InProgress,
+        units::{Durability, Progress, Quality, CP},
+        Condition, Effects, Settings, State,
+    },
+    solvers::action_sequences::{ActionSequence, ALL_PROGRESS_ACTIONS},
 };
 
-use super::constants::{DURABILITY_COST, WASTE_NOT_COST};
+use super::{DURABILITY_COST, WASTE_NOT_COST};
 
 const MAX_DURABILITY: Durability = 100;
 const MAX_PROGRESS: Progress = Progress::new(100_000);
 const MAX_QUALITY: Quality = Quality::new(100_000);
 
-const ACTION_SEQUENCES: [&[Action]; 6] = [
-    &[Action::BasicSynthesis],
-    &[Action::CarefulSynthesis],
-    &[Action::Groundwork],
-    &[Action::PrudentSynthesis],
-    &[Action::Observe, Action::FocusedSynthesis],
-    &[Action::Veneration],
-];
+const ACTION_SEQUENCES: &[ActionSequence] = ALL_PROGRESS_ACTIONS;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {

@@ -1,30 +1,21 @@
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::game::{
-    state::InProgress,
-    units::{Durability, Progress, Quality, CP},
-    Action, Condition, Effects, Settings, State,
+use crate::{
+    game::{
+        state::InProgress,
+        units::{Durability, Progress, Quality, CP},
+        Condition, Effects, Settings, State,
+    },
+    solvers::action_sequences::{ActionSequence, QUALITY_ACTIONS},
 };
 
-use super::constants::{DURABILITY_COST, WASTE_NOT_COST};
+use super::{DURABILITY_COST, WASTE_NOT_COST};
 
 const MAX_DURABILITY: Durability = 100;
 const MAX_PROGRESS: Progress = Progress::new(100_000);
 const MAX_QUALITY: Quality = Quality::new(100_000);
 
-const ACTION_SEQUENCES: [&[Action]; 7] = [
-    &[Action::PrudentTouch],
-    &[
-        Action::BasicTouch,
-        Action::StandardTouch,
-        Action::AdvancedTouch,
-    ],
-    &[Action::PreparatoryTouch],
-    &[Action::Observe, Action::FocusedTouch],
-    &[Action::ByregotsBlessing],
-    &[Action::Innovation],
-    &[Action::GreatStrides],
-];
+const ACTION_SEQUENCES: &[ActionSequence] = QUALITY_ACTIONS;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
@@ -119,8 +110,7 @@ impl QualityBoundSolver {
                         continue;
                     }
                     let action_quality = MAX_QUALITY.saturating_sub(in_progress.missing_quality);
-                    let total_quality = action_quality
-                        .saturating_add(self._get_bound(new_state));
+                    let total_quality = action_quality.saturating_add(self._get_bound(new_state));
                     best_quality = std::cmp::max(best_quality, total_quality);
                 }
             }

@@ -1,5 +1,3 @@
-mod constants;
-
 mod progress_bound_solver;
 use progress_bound_solver::ProgressBoundSolver;
 
@@ -7,12 +5,15 @@ mod quality_bound_solver;
 use quality_bound_solver::QualityBoundSolver;
 
 use crate::game::{
-    state::InProgress,
-    units::{Quality, CP},
-    Settings,
+    state::InProgress, units::{Quality, CP}, Action, Settings
 };
 
-use self::constants::{DURABILITY_COST, MANIPULATION_COST, WASTE_NOT_COST};
+// cost per effect stack
+pub const WASTE_NOT_COST: CP = Action::WasteNot2.base_cp_cost() / 8;
+pub const MANIPULATION_COST: CP = Action::Manipulation.base_cp_cost() / 8;
+
+// cost for 5 duration
+pub const DURABILITY_COST: CP = Action::Manipulation.base_cp_cost() / 8;
 
 pub struct UpperBoundSolver {
     settings: Settings,
