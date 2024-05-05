@@ -124,6 +124,9 @@ impl ParetoFront {
             }
         }
 
+        if new_front.values.last().unwrap().0 == Progress::new(0) {
+            new_front.values.pop();
+        }
         new_front
     }
 }
