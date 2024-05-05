@@ -69,7 +69,7 @@ impl MacroSolver {
             let trace: &Option<SearchTrace> = traces.alloc(current_node.trace);
             for sequence in allowed_actions {
                 let new_state = State::InProgress(current_node.state).use_actions(
-                    &sequence,
+                    sequence,
                     Condition::Normal,
                     &self.settings,
                 );
@@ -88,13 +88,13 @@ impl MacroSolver {
                         .saturating_sub(state.missing_quality);
                     if final_quality > best_quality {
                         best_quality = final_quality;
-                        let mut actions = SearchTrace::new(trace, *sequence).actions();
+                        let mut actions = SearchTrace::new(trace, sequence).actions();
                         actions.extend(self.finish_solver.get_finish_sequence(&state).unwrap());
                         best_actions = Some(actions);
                     }
                     search_queue.push(SearchNode {
                         state,
-                        trace: Some(SearchTrace::new(trace, *sequence)),
+                        trace: Some(SearchTrace::new(trace, sequence)),
                     });
                 }
             }
