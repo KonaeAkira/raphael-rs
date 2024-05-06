@@ -77,6 +77,7 @@ impl std::convert::From<ReducedState> for InProgress {
 pub struct UpperBoundSolver {
     settings: Settings,
     solved_states: HashMap<ReducedState, Box<[ParetoValue]>>,
+    pareto_front_builder: ParetoFrontBuilder,
 }
 
 impl UpperBoundSolver {
@@ -86,6 +87,7 @@ impl UpperBoundSolver {
         UpperBoundSolver {
             settings,
             solved_states: HashMap::default(),
+            pareto_front_builder: ParetoFrontBuilder::new(),
         }
     }
 
@@ -96,6 +98,9 @@ impl UpperBoundSolver {
             .max_quality
             .saturating_sub(state.missing_quality);
         let pareto_front = self.get_pareto_front(ReducedState::from(state));
+        if pareto_front.is_empty() {
+            return Quality::new(0);
+        }
         let mut lo = 0;
         let mut hi = pareto_front.len();
         while lo + 1 < hi {
@@ -112,15 +117,16 @@ impl UpperBoundSolver {
         match self.solved_states.get(&state) {
             Some(pareto_front) => pareto_front.clone(),
             None => {
-                let pareto_front = self.solve_state(state);
-                self.solved_states.insert(state, pareto_front);
-                self.solved_states.get(&state).unwrap().clone()
+                self.solve_state(state);
+                let pareto_front = self.pareto_front_builder.finalize();
+                self.pareto_front_builder.clear();
+                pareto_front
             }
         }
     }
 
-    fn solve_state(&mut self, state: ReducedState) -> Box<[ParetoValue]> {
-        let mut pareto_front_builder = ParetoFrontBuilder::new();
+    fn solve_state(&mut self, state: ReducedState) {
+        self.pareto_front_builder.start_new_front();
         for actions in ACTION_SEQUENCES {
             let new_state = State::InProgress(state.into()).use_actions(
                 actions,
@@ -129,30 +135,23 @@ impl UpperBoundSolver {
             );
             match new_state {
                 State::InProgress(new_state) => {
-                    pareto_front_builder.add(
-                        self.get_pareto_front(ReducedState::from(new_state))
-                            .as_ref(),
-                        INF_PROGRESS.saturating_sub(new_state.missing_progress),
-                        INF_QUALITY.saturating_sub(new_state.missing_quality),
-                    );
+                    let action_progress = INF_PROGRESS.saturating_sub(new_state.missing_progress);
+                    let action_quality = INF_QUALITY.saturating_sub(new_state.missing_quality);
+                    match self.solved_states.get(&ReducedState::from(new_state)) {
+                        Some(pareto_front) => self
+                            .pareto_front_builder
+                            .import_front(pareto_front.as_ref()),
+                        None => self.solve_state(ReducedState::from(new_state)),
+                    }
+                    self.pareto_front_builder
+                        .shift_last_front_value(action_progress, action_quality);
+                    self.pareto_front_builder.merge_last_two_fronts();
                 }
                 State::Invalid => (),
                 _ => panic!(),
             }
         }
-        pareto_front_builder.finalize().into()
+        self.solved_states
+            .insert(state, self.pareto_front_builder.finalize());
     }
 }
-
-// impl<'a> Drop for UpperBoundSolver<'a> {
-//     fn drop(&mut self) {
-//         let states = self.solved_states.len();
-//         let mut pareto_values: usize = 0;
-//         let mut wasted_capacity: usize = 0;
-//         for (_, pareto_front) in self.memory.iter() {
-//             pareto_values += pareto_front.values.len();
-//             wasted_capacity += pareto_front.values.capacity() - pareto_front.values.len();
-//         }
-//         dbg!(states, pareto_values, wasted_capacity);
-//     }
-// }

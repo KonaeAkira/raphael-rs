@@ -15,4 +15,4 @@ pub type Progress = scaled_integer::ScaledU32<20>;
 pub type Quality = scaled_integer::ScaledU32<800>;
 
 pub type CP = i16;
-pub type Durability = i8;
+pub type Durability = i16;
