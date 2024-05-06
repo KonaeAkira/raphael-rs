@@ -1,6 +1,6 @@
 use core::fmt;
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct ScaledU32<const C: u32> {
     inner_value: u32,
 }
