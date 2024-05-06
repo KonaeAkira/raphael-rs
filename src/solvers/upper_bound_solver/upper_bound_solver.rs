@@ -87,7 +87,7 @@ impl UpperBoundSolver {
         UpperBoundSolver {
             settings,
             solved_states: HashMap::default(),
-            pareto_front_builder: ParetoFrontBuilder::new(),
+            pareto_front_builder: ParetoFrontBuilder::new(settings),
         }
     }
 
