@@ -137,11 +137,17 @@ impl UpperBoundSolver {
                 State::InProgress(new_state) => {
                     let action_progress = INF_PROGRESS.saturating_sub(new_state.missing_progress);
                     let action_quality = INF_QUALITY.saturating_sub(new_state.missing_quality);
-                    match self.solved_states.get(&ReducedState::from(new_state)) {
-                        Some(pareto_front) => self
-                            .pareto_front_builder
-                            .import_front(pareto_front.as_ref()),
-                        None => self.solve_state(ReducedState::from(new_state)),
+                    let new_state = ReducedState::from(new_state);
+                    if new_state.cp > 0 {
+                        match self.solved_states.get(&new_state) {
+                            Some(pareto_front) => self
+                                .pareto_front_builder
+                                .import_front(pareto_front.as_ref()),
+                            None => self.solve_state(new_state),
+                        }
+                    } else {
+                        self.pareto_front_builder
+                            .import_front(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
                     }
                     self.pareto_front_builder
                         .shift_last_front_value(action_progress, action_quality);

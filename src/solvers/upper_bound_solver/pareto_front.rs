@@ -84,22 +84,13 @@ impl ParetoFrontBuilder {
     }
 
     pub fn import_front(&mut self, front: &[ParetoValue]) {
-        if front.is_empty() {
-            self.ensure_buffer_size(self.length + 1);
-            self.fronts.push(self.length);
-            unsafe {
-                *self.buffer.add(self.length) = ParetoValue::new(Progress::new(0), Quality::new(0));
-            }
-            self.length += 1;
-        } else {
-            self.ensure_buffer_size(self.length + front.len());
-            self.fronts.push(self.length);
-            unsafe {
-                std::slice::from_raw_parts_mut(self.buffer.add(self.length), front.len())
-                    .copy_from_slice(front);
-            }
-            self.length += front.len();
+        self.ensure_buffer_size(self.length + front.len());
+        self.fronts.push(self.length);
+        unsafe {
+            std::slice::from_raw_parts_mut(self.buffer.add(self.length), front.len())
+                .copy_from_slice(front);
         }
+        self.length += front.len();
     }
 
     pub fn shift_last_front_value(&mut self, progress: Progress, quality: Quality) {
