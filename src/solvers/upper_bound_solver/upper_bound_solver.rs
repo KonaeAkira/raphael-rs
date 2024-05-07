@@ -145,13 +145,16 @@ impl UpperBoundSolver {
                                 .import_front(pareto_front.as_ref()),
                             None => self.solve_state(new_state),
                         }
-                    } else {
+                        self.pareto_front_builder
+                            .shift_last_front_value(action_progress, action_quality);
+                        self.pareto_front_builder.merge_last_two_fronts();
+                    } else if action_progress != Progress::new(0) {
                         self.pareto_front_builder
                             .import_front(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
+                        self.pareto_front_builder
+                            .shift_last_front_value(action_progress, action_quality);
+                        self.pareto_front_builder.merge_last_two_fronts();
                     }
-                    self.pareto_front_builder
-                        .shift_last_front_value(action_progress, action_quality);
-                    self.pareto_front_builder.merge_last_two_fronts();
                 }
                 State::Invalid => (),
                 _ => panic!(),
