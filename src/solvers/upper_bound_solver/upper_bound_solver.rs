@@ -110,7 +110,10 @@ impl UpperBoundSolver {
                 lo = (lo + hi) / 2;
             }
         }
-        pareto_front[lo].quality.saturating_add(current_quality)
+        std::cmp::min(
+            self.settings.max_quality,
+            pareto_front[lo].quality.saturating_add(current_quality),
+        )
     }
 
     fn get_pareto_front(&mut self, state: ReducedState) -> Box<[ParetoValue]> {
