@@ -124,21 +124,24 @@ impl ParetoFrontBuilder {
         let segment_b = self.segments.pop().unwrap();
         let segment_a = self.segments.pop().unwrap();
 
-        self.ensure_buffer_size(self.buffer_head + segment_a.length + segment_b.length);
+        let length_c = segment_a.length + segment_b.length;
+        let offset_c = if segment_a.offset + segment_a.length + length_c <= segment_b.offset {
+            // sandwich C between A and B
+            segment_a.offset + segment_a.length
+        } else {
+            // allocate C after B
+            self.ensure_buffer_size(self.buffer_head + length_c);
+            self.buffer_head
+        };
 
-        let slice_a: &[ParetoValue];
-        let slice_b: &[ParetoValue];
-        let slice_c: &mut [ParetoValue];
-        unsafe {
-            slice_a =
-                std::slice::from_raw_parts(self.buffer.add(segment_a.offset), segment_a.length);
-            slice_b =
-                std::slice::from_raw_parts(self.buffer.add(segment_b.offset), segment_b.length);
-            slice_c = std::slice::from_raw_parts_mut(
-                self.buffer.add(self.buffer_head),
-                segment_a.length + segment_b.length,
-            );
-        }
+        let slice_a = unsafe {
+            std::slice::from_raw_parts(self.buffer.add(segment_a.offset), segment_a.length)
+        };
+        let slice_b = unsafe {
+            std::slice::from_raw_parts(self.buffer.add(segment_b.offset), segment_b.length)
+        };
+        let slice_c =
+            unsafe { std::slice::from_raw_parts_mut(self.buffer.add(offset_c), length_c) };
 
         let mut head_a: usize = 0;
         let mut head_b: usize = 0;
@@ -189,16 +192,12 @@ impl ParetoFrontBuilder {
             head_c += 1;
         }
 
-        let segment_r = Segment {
-            offset: segment_a.offset,
+        let segment_c = Segment {
+            offset: offset_c + head_c,
             length: tail_c - head_c,
         };
-        unsafe {
-            std::slice::from_raw_parts_mut(self.buffer.add(segment_a.offset), tail_c - head_c)
-                .copy_from_slice(&slice_c[head_c..tail_c]);
-        }
-        self.buffer_head = segment_r.offset + segment_r.length;
-        self.segments.push(segment_r);
+        self.buffer_head = segment_c.offset + segment_c.length;
+        self.segments.push(segment_c);
     }
 
     pub fn peek(&mut self) -> Option<Box<[ParetoValue]>> {
