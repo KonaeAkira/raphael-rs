@@ -214,6 +214,33 @@ impl ParetoFrontBuilder {
             None => None,
         }
     }
+
+    #[cfg(test)]
+    fn check_invariants(&self) {
+        for window in self.segments.windows(2) {
+            // segments musn't overlap and must have left-to-right ordering
+            assert!(window[0].offset + window[0].length <= window[1].offset);
+        }
+        match self.segments.last() {
+            Some(segment) => {
+                // buffer head must point to the element right after the last segment
+                assert_eq!(segment.offset + segment.length, self.buffer_head);
+                // buffer head must remain within buffer capacity
+                assert!(self.buffer_head <= self.buffer_capacity);
+            }
+            None => assert_eq!(self.buffer_head, 0),
+        };
+        for segment in self.segments.iter() {
+            // each segment must form a valid pareto front
+            let slice = unsafe {
+                std::slice::from_raw_parts(self.buffer.add(segment.offset), segment.length)
+            };
+            for window in slice.windows(2) {
+                assert!(window[0].progress > window[1].progress);
+                assert!(window[0].quality < window[1].quality);
+            }
+        }
+    }
 }
 
 impl Drop for ParetoFrontBuilder {
@@ -232,6 +259,8 @@ impl Drop for ParetoFrontBuilder {
 
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
+
     use super::*;
 
     const SETTINGS: Settings = Settings {
@@ -261,7 +290,8 @@ mod tests {
         builder.push_empty();
         builder.merge();
         let front = builder.peek().unwrap();
-        assert!(front.as_ref().is_empty())
+        assert!(front.as_ref().is_empty());
+        builder.check_invariants();
     }
 
     #[test]
@@ -277,7 +307,8 @@ mod tests {
                 ParetoValue::new(Progress::new(300), Quality::new(300)),
                 ParetoValue::new(Progress::new(200), Quality::new(400)),
             ]
-        )
+        );
+        builder.check_invariants();
     }
 
     #[test]
@@ -296,7 +327,8 @@ mod tests {
                 ParetoValue::new(Progress::new(150), Quality::new(250)),
                 ParetoValue::new(Progress::new(100), Quality::new(300)),
             ]
-        )
+        );
+        builder.check_invariants();
     }
 
     #[test]
@@ -311,6 +343,26 @@ mod tests {
         assert_eq!(
             *front,
             [ParetoValue::new(Progress::new(1100), Quality::new(2300))]
-        )
+        );
+        builder.check_invariants();
+    }
+
+    #[test]
+    fn test_random_simulation() {
+        let mut rng = rand::thread_rng();
+        let mut builder = ParetoFrontBuilder::new(SETTINGS);
+        for _ in 0..5000 {
+            builder.push(&[ParetoValue {
+                progress: Progress::new(rng.gen_range(0..1000)),
+                quality: Quality::new(rng.gen_range(0..1000)),
+            }]);
+            builder.check_invariants();
+        }
+        for _ in 1..5000 {
+            builder.merge();
+            builder.check_invariants();
+        }
+        builder.clear();
+        builder.check_invariants();
     }
 }

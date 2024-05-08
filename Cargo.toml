@@ -21,3 +21,6 @@ godot_binding = ["dep:godot"]
 
 [profile.release]
 lto = "fat"
+
+[dev-dependencies]
+rand = "0.8.5"
