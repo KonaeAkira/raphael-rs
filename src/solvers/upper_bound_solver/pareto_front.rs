@@ -17,12 +17,19 @@ impl ParetoValue {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Segment {
+    pub offset: usize,
+    pub length: usize,
+}
+
 pub struct ParetoFrontBuilder {
     settings: Settings,
     buffer: *mut ParetoValue,
-    capacity: usize,
-    fronts: Vec<usize>,
-    length: usize,
+    buffer_head: usize,
+    buffer_capacity: usize,
+    segments: Vec<Segment>,
+    // variables used for profiling
     fronts_generated: usize,
     values_generated: usize,
 }
@@ -38,9 +45,9 @@ impl ParetoFrontBuilder {
             Self {
                 settings,
                 buffer: alloc::alloc(layout) as *mut ParetoValue,
-                capacity: INITIAL_CAPACITY,
-                fronts: Vec::new(),
-                length: 0,
+                buffer_head: 0,
+                buffer_capacity: INITIAL_CAPACITY,
+                segments: Vec::new(),
                 fronts_generated: 0,
                 values_generated: 0,
             }
@@ -48,12 +55,12 @@ impl ParetoFrontBuilder {
     }
 
     pub fn clear(&mut self) {
-        self.fronts.clear();
-        self.length = 0;
+        self.segments.clear();
+        self.buffer_head = 0;
     }
 
     fn buffer_byte_size(&self) -> usize {
-        self.capacity * std::mem::size_of::<ParetoValue>()
+        self.buffer_capacity * std::mem::size_of::<ParetoValue>()
     }
 
     fn layout(&self) -> Layout {
@@ -65,12 +72,12 @@ impl ParetoFrontBuilder {
         }
     }
 
-    fn ensure_buffer_size(&mut self, min_size: usize) {
-        if self.capacity < min_size {
+    fn ensure_buffer_size(&mut self, min_buffer_capacity: usize) {
+        if self.buffer_capacity < min_buffer_capacity {
             unsafe {
                 let layout = self.layout();
-                while self.capacity < min_size {
-                    self.capacity *= 2;
+                while self.buffer_capacity < min_buffer_capacity {
+                    self.buffer_capacity *= 2;
                 }
                 self.buffer =
                     alloc::realloc(self.buffer as *mut u8, layout, self.buffer_byte_size())
@@ -79,26 +86,32 @@ impl ParetoFrontBuilder {
         }
     }
 
-    pub fn start_new_front(&mut self) {
-        self.fronts.push(self.length);
+    pub fn push_empty(&mut self) {
+        self.segments.push(Segment {
+            offset: self.buffer_head,
+            length: 0,
+        });
     }
 
-    pub fn import_front(&mut self, front: &[ParetoValue]) {
-        self.ensure_buffer_size(self.length + front.len());
-        self.fronts.push(self.length);
+    pub fn push(&mut self, values: &[ParetoValue]) {
+        let segment = Segment {
+            offset: self.buffer_head,
+            length: values.len(),
+        };
+        self.ensure_buffer_size(segment.offset + segment.length);
         unsafe {
-            std::slice::from_raw_parts_mut(self.buffer.add(self.length), front.len())
-                .copy_from_slice(front);
+            std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length)
+                .copy_from_slice(values);
         }
-        self.length += front.len();
+        self.buffer_head += segment.length;
+        self.segments.push(segment);
     }
 
-    pub fn shift_last_front_value(&mut self, progress: Progress, quality: Quality) {
-        let head = *self.fronts.last().unwrap();
-        let length = self.length - head;
+    pub fn add(&mut self, progress: Progress, quality: Quality) {
+        let segment = self.segments.last().unwrap();
         let slice: &mut [ParetoValue];
         unsafe {
-            slice = std::slice::from_raw_parts_mut(self.buffer.add(head), length);
+            slice = std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length);
         }
         for x in slice.iter_mut() {
             x.progress = x.progress.saturating_add(progress);
@@ -106,22 +119,25 @@ impl ParetoFrontBuilder {
         }
     }
 
-    pub fn merge_last_two_fronts(&mut self) {
-        assert!(self.fronts.len() >= 2);
+    pub fn merge(&mut self) {
+        assert!(self.segments.len() >= 2);
+        let segment_b = self.segments.pop().unwrap();
+        let segment_a = self.segments.pop().unwrap();
 
-        let offset_b = self.fronts.pop().unwrap();
-        let offset_a = *self.fronts.last().unwrap();
-        let offset_c = self.length;
+        self.ensure_buffer_size(self.buffer_head + segment_a.length + segment_b.length);
 
         let slice_a: &[ParetoValue];
         let slice_b: &[ParetoValue];
         let slice_c: &mut [ParetoValue];
         unsafe {
-            let max_len_c = self.length - offset_a;
-            self.ensure_buffer_size(self.length + max_len_c);
-            slice_a = std::slice::from_raw_parts(self.buffer.add(offset_a), offset_b - offset_a);
-            slice_b = std::slice::from_raw_parts(self.buffer.add(offset_b), offset_c - offset_b);
-            slice_c = std::slice::from_raw_parts_mut(self.buffer.add(self.length), max_len_c);
+            slice_a =
+                std::slice::from_raw_parts(self.buffer.add(segment_a.offset), segment_a.length);
+            slice_b =
+                std::slice::from_raw_parts(self.buffer.add(segment_b.offset), segment_b.length);
+            slice_c = std::slice::from_raw_parts_mut(
+                self.buffer.add(self.buffer_head),
+                segment_a.length + segment_b.length,
+            );
         }
 
         let mut head_a: usize = 0;
@@ -169,27 +185,34 @@ impl ParetoFrontBuilder {
         }
 
         // cut out values that are over max_progress
-        while head_c + 1 < slice_c.len()
-            && slice_c[head_c + 1].progress >= self.settings.max_progress
-        {
+        while head_c + 1 < tail_c && slice_c[head_c + 1].progress >= self.settings.max_progress {
             head_c += 1;
         }
 
-        let slice_r: &mut [ParetoValue];
+        let segment_r = Segment {
+            offset: segment_a.offset,
+            length: tail_c - head_c,
+        };
         unsafe {
-            slice_r = std::slice::from_raw_parts_mut(self.buffer.add(offset_a), tail_c - head_c);
+            std::slice::from_raw_parts_mut(self.buffer.add(segment_a.offset), tail_c - head_c)
+                .copy_from_slice(&slice_c[head_c..tail_c]);
         }
-        slice_r.copy_from_slice(&slice_c[head_c..tail_c]);
-        self.length = offset_a + tail_c - head_c;
+        self.buffer_head = segment_r.offset + segment_r.length;
+        self.segments.push(segment_r);
     }
 
-    pub fn finalize(&mut self) -> Box<[ParetoValue]> {
-        unsafe {
-            let head = *self.fronts.last().unwrap();
-            let len = self.length - head;
-            self.fronts_generated += 1;
-            self.values_generated += len;
-            std::slice::from_raw_parts(self.buffer.add(head), len).into()
+    pub fn peek(&mut self) -> Option<Box<[ParetoValue]>> {
+        match self.segments.last() {
+            Some(segment) => {
+                self.fronts_generated += 1;
+                self.values_generated += segment.length;
+                unsafe {
+                    let slice =
+                        std::slice::from_raw_parts(self.buffer.add(segment.offset), segment.length);
+                    Some(slice.into())
+                }
+            }
+            None => None,
         }
     }
 }
@@ -235,19 +258,19 @@ mod tests {
     #[test]
     fn test_merge_empty() {
         let mut builder = ParetoFrontBuilder::new(SETTINGS);
-        builder.start_new_front();
-        builder.start_new_front();
-        builder.merge_last_two_fronts();
-        let front = builder.finalize();
+        builder.push_empty();
+        builder.push_empty();
+        builder.merge();
+        let front = builder.peek().unwrap();
         assert!(front.as_ref().is_empty())
     }
 
     #[test]
     fn test_value_shift() {
         let mut builder = ParetoFrontBuilder::new(SETTINGS);
-        builder.import_front(SAMPLE_FRONT_1);
-        builder.shift_last_front_value(Progress::new(100), Quality::new(100));
-        let front = builder.finalize();
+        builder.push(SAMPLE_FRONT_1);
+        builder.add(Progress::new(100), Quality::new(100));
+        let front = builder.peek().unwrap();
         assert_eq!(
             *front,
             [
@@ -261,10 +284,10 @@ mod tests {
     #[test]
     fn test_merge() {
         let mut builder = ParetoFrontBuilder::new(SETTINGS);
-        builder.import_front(SAMPLE_FRONT_1);
-        builder.import_front(SAMPLE_FRONT_2);
-        builder.merge_last_two_fronts();
-        let front = builder.finalize();
+        builder.push(SAMPLE_FRONT_1);
+        builder.push(SAMPLE_FRONT_2);
+        builder.merge();
+        let front = builder.peek().unwrap();
         assert_eq!(
             *front,
             [
@@ -280,12 +303,12 @@ mod tests {
     #[test]
     fn test_merge_truncated() {
         let mut builder = ParetoFrontBuilder::new(SETTINGS);
-        builder.import_front(SAMPLE_FRONT_1);
-        builder.shift_last_front_value(SETTINGS.max_progress, SETTINGS.max_quality);
-        builder.import_front(SAMPLE_FRONT_2);
-        builder.shift_last_front_value(SETTINGS.max_progress, SETTINGS.max_quality);
-        builder.merge_last_two_fronts();
-        let front = builder.finalize();
+        builder.push(SAMPLE_FRONT_1);
+        builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
+        builder.push(SAMPLE_FRONT_2);
+        builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
+        builder.merge();
+        let front = builder.peek().unwrap();
         assert_eq!(
             *front,
             [ParetoValue::new(Progress::new(1100), Quality::new(2300))]

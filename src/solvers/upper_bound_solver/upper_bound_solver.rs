@@ -118,7 +118,7 @@ impl UpperBoundSolver {
             Some(pareto_front) => pareto_front.clone(),
             None => {
                 self.solve_state(state);
-                let pareto_front = self.pareto_front_builder.finalize();
+                let pareto_front = self.pareto_front_builder.peek().unwrap();
                 self.pareto_front_builder.clear();
                 pareto_front
             }
@@ -126,7 +126,7 @@ impl UpperBoundSolver {
     }
 
     fn solve_state(&mut self, state: ReducedState) {
-        self.pareto_front_builder.start_new_front();
+        self.pareto_front_builder.push_empty();
         for actions in ACTION_SEQUENCES {
             let new_state = State::InProgress(state.into()).use_actions(
                 actions,
@@ -140,20 +140,20 @@ impl UpperBoundSolver {
                     let new_state = ReducedState::from(new_state);
                     if new_state.cp > 0 {
                         match self.solved_states.get(&new_state) {
-                            Some(pareto_front) => self
-                                .pareto_front_builder
-                                .import_front(pareto_front.as_ref()),
+                            Some(pareto_front) => {
+                                self.pareto_front_builder.push(pareto_front.as_ref())
+                            }
                             None => self.solve_state(new_state),
                         }
                         self.pareto_front_builder
-                            .shift_last_front_value(action_progress, action_quality);
-                        self.pareto_front_builder.merge_last_two_fronts();
+                            .add(action_progress, action_quality);
+                        self.pareto_front_builder.merge();
                     } else if action_progress != Progress::new(0) {
                         self.pareto_front_builder
-                            .import_front(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
+                            .push(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
                         self.pareto_front_builder
-                            .shift_last_front_value(action_progress, action_quality);
-                        self.pareto_front_builder.merge_last_two_fronts();
+                            .add(action_progress, action_quality);
+                        self.pareto_front_builder.merge();
                     }
                 }
                 State::Invalid => (),
@@ -161,6 +161,6 @@ impl UpperBoundSolver {
             }
         }
         self.solved_states
-            .insert(state, self.pareto_front_builder.finalize());
+            .insert(state, self.pareto_front_builder.peek().unwrap());
     }
 }
