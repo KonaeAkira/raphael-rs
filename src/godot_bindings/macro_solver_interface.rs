@@ -7,7 +7,7 @@ use godot::prelude::*;
 
 use crate::{
     game::{
-        units::{Progress, Quality},
+        units::{Durability, Progress, Quality, CP},
         Action, Condition, Settings, State,
     },
     solvers::MacroSolver,
@@ -70,8 +70,9 @@ impl MacroSolverInterface {
         let base_progress: f32 = self.configuration.get_or_nil("PROGRESS_INCREASE").to();
         let base_quality: f32 = self.configuration.get_or_nil("QUALITY_INCREASE").to();
         Settings {
-            max_cp: self.configuration.get_or_nil("MAX_CP").to::<f64>() as i16,
-            max_durability: self.configuration.get_or_nil("MAX_DURABILITY").to::<f64>() as i8,
+            max_cp: self.configuration.get_or_nil("MAX_CP").to::<f64>() as CP,
+            max_durability: self.configuration.get_or_nil("MAX_DURABILITY").to::<f64>()
+                as Durability,
             max_progress: Progress::from(100.0 * max_progress / base_progress),
             max_quality: Quality::from(100.0 * max_quality / base_quality),
         }
@@ -114,7 +115,7 @@ impl MacroSolverInterface {
         let durability =
             state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);
-        
+
         self.simulation = dict! {
             "PROGRESS": f32::from(progress) * base_progress / 100.0,
             "QUALITY": f32::from(quality) * base_quality / 100.0,

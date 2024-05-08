@@ -4,7 +4,7 @@ compatibility_minimum = 4.1
 reloadable = true
 
 [libraries]
-linux.debug.x86_64 =     "res://../target/x86_64-unknown-linux-gnu/debug/libraphael.so"
+linux.debug.x86_64 =     "res://../target/x86_64-unknown-linux-gnu/release/libraphael.so"
 linux.release.x86_64 =   "res://../target/x86_64-unknown-linux-gnu/release/libraphael.so"
-windows.debug.x86_64 =   "res://../target/x86_64-pc-windows-gnu/debug/raphael.dll"
+windows.debug.x86_64 =   "res://../target/x86_64-pc-windows-gnu/release/raphael.dll"
 windows.release.x86_64 = "res://../target/x86_64-pc-windows-gnu/release/raphael.dll"
