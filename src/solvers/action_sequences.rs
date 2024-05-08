@@ -1,22 +1,17 @@
-use constcat::concat_slices;
-
 use crate::game::Action;
 
 pub type ActionSequence = &'static [Action];
 
-pub const LIMITED_PROGRESS_ACTIONS: &[ActionSequence] = &[
+// actions that increase only Progress
+pub const PROGRESS_ACTIONS: &[ActionSequence] = &[
     &[Action::MuscleMemory],
-    // &[Action::BasicSynthesis], macro_solver doesn't support 0-cp actions yet
+    &[Action::BasicSynthesis],
     &[Action::CarefulSynthesis],
     &[Action::Groundwork],
     &[Action::PrudentSynthesis],
     &[Action::Observe, Action::FocusedSynthesis],
     &[Action::Veneration],
 ];
-
-// actions that increase only Progress
-pub const PROGRESS_ACTIONS: &[ActionSequence] =
-    concat_slices!([ActionSequence]: LIMITED_PROGRESS_ACTIONS, &[&[Action::BasicSynthesis]]);
 
 // actions that increase only Quality
 pub const QUALITY_ACTIONS: &[ActionSequence] = &[

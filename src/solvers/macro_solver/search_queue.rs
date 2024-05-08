@@ -118,12 +118,25 @@ impl<'a> SearchQueue<'a> {
     }
 
     pub fn push(&mut self, value: SearchNode<'a>) {
-        if !self.local_fronts[value.state.cp as usize]
-            .entry(ParetoKey::from(&value))
-            .or_default()
-            .push(value)
-        {
-            self.locally_rejected_nodes += 1;
+        if value.state.cp as usize >= self.local_fronts.len() {
+            if !self
+                .global_front
+                .entry(ParetoKey::from(&value))
+                .or_default()
+                .push(ParetoValue::from(&value))
+            {
+                self.globally_rejected_nodes += 1;
+            } else {
+                self.current.push(value);
+            }
+        } else {
+            if !self.local_fronts[value.state.cp as usize]
+                .entry(ParetoKey::from(&value))
+                .or_default()
+                .push(value)
+            {
+                self.locally_rejected_nodes += 1;
+            }
         }
     }
 
