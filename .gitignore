@@ -13,8 +13,9 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-# Ignore Visual Studio Code config files
+# Ignore IDE config files
 .vscode/
+.idea/
 
 # Ignore cargo config
 .cargo/
