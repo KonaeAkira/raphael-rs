@@ -1,7 +1,8 @@
-[gd_scene load_steps=24 format=3 uid="uid://dkghcwm3lrc5n"]
+[gd_scene load_steps=26 format=3 uid="uid://dkghcwm3lrc5n"]
 
 [ext_resource type="Theme" uid="uid://c2f5y5psfqir3" path="res://custom-theme.tres" id="1_ej8fr"]
 [ext_resource type="Script" path="res://MacroSolverInterface.gd" id="2_524rp"]
+[ext_resource type="Texture2D" uid="uid://dt8m1wfj06fib" path="res://radial_progress.svg" id="3_jv5hd"]
 
 [sub_resource type="Theme" id="Theme_5skxr"]
 
@@ -224,6 +225,17 @@ func _ready():
 
 func _on_macro_solver_interface_state_updated() -> void:
 	editable = !get_node(\"%MacroSolverInterface\").solver_busy
+"
+
+[sub_resource type="GDScript" id="GDScript_07vfa"]
+script/source = "extends TextureProgressBar
+
+func _ready() -> void:
+	var tween = get_tree().create_tween().set_loops()
+	tween.tween_property(self, \"radial_initial_angle\", 360.0, 1.0).as_relative()
+
+func _on_macro_solver_interface_state_updated() -> void:
+	visible = get_node(\"%MacroSolverInterface\").solver_busy
 "
 
 [sub_resource type="GDScript" id="GDScript_u8dfd"]
@@ -582,13 +594,16 @@ layout_mode = 2
 [node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 10
+theme_override_constants/separation = 0
 
-[node name="CancelButton" type="Button" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
+[node name="TextureProgressBar" type="TextureProgressBar" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
 visible = false
 layout_mode = 2
-disabled = true
-text = "Cancel"
-flat = true
+value = 50.0
+fill_mode = 4
+texture_progress = ExtResource("3_jv5hd")
+tint_progress = Color(0.462291, 0.462291, 0.462291, 1)
+script = SubResource("GDScript_07vfa")
 
 [node name="SolveButton" type="Button" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(64, 0)
@@ -679,6 +694,7 @@ uri = "https://github.com/KonaeAkira/raphael-rs/releases"
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxCpInput" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ProgressIncreaseInput" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/QualityIncreaseInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/TextureProgressBar" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_macro_solver_interface_state_updated"]
 [connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxProgressInput" to="MacroSolverInterface" method="_on_max_progress_input_value_changed"]
 [connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxQualityInput" to="MacroSolverInterface" method="_on_max_quality_input_value_changed"]
