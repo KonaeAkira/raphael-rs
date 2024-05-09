@@ -6,9 +6,7 @@ use raphael::game::{
 use raphael::solvers::MacroSolver;
 
 fn solve(settings: &Settings) -> Option<Vec<Action>> {
-    let result = MacroSolver::new(settings.clone()).solve(State::new(settings));
-    dbg!(&result);
-    result
+    MacroSolver::new(settings.clone()).solve(State::new(settings))
 }
 
 fn get_quality(settings: &Settings, actions: &[Action]) -> f32 {
@@ -65,7 +63,19 @@ fn test_03() {
 }
 
 #[test]
-fn test_04() {
+fn test_unsolvable() {
+    let settings = Settings {
+        max_cp: 100,
+        max_durability: 60,
+        max_progress: Progress::from(4000.00),
+        max_quality: Quality::from(1000.00),
+    };
+    let actions = solve(&settings);
+    assert_eq!(actions, None);
+}
+
+#[test]
+fn test_max_quality() {
     let settings = Settings {
         max_cp: 400,
         max_durability: 60,
@@ -74,6 +84,18 @@ fn test_04() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1000.00);
+}
+
+#[test]
+fn test_zero_quality() {
+    let settings = Settings {
+        max_cp: 80,
+        max_durability: 60,
+        max_progress: Progress::from(1920.00),
+        max_quality: Quality::from(1000.00),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 0.00);
 }
 
 #[test]

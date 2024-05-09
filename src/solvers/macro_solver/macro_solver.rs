@@ -12,9 +12,15 @@ use typed_arena::Arena;
 
 use super::*;
 
-const LIMITED_ACTIONS: &[ActionSequence] =
+const PRELIM_ACTIONS: &[ActionSequence] =
     concat_slices!([ActionSequence]: QUALITY_ACTIONS, DURABILITY_ACTIONS);
 const ALL_ACTIONS: &[ActionSequence] = concat_slices!([ActionSequence]: PROGRESS_ACTIONS, QUALITY_ACTIONS, MIXED_ACTIONS, DURABILITY_ACTIONS);
+
+#[derive(Debug)]
+pub struct MacroResult {
+    pub quality: Quality,
+    pub actions: Vec<Action>,
+}
 
 pub struct MacroSolver {
     settings: Settings,
@@ -34,14 +40,16 @@ impl MacroSolver {
     pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
         match state {
             State::InProgress(state) => {
-                let (prelim_quality, prelim_actions) =
-                    self._do_solve(state, Quality::new(0), LIMITED_ACTIONS);
-                let (quality, actions) = self._do_solve(state, prelim_quality, ALL_ACTIONS);
-                if prelim_quality == quality {
-                    prelim_actions
-                } else {
-                    actions
+                if !self.finish_solver.can_finish(&state) {
+                    return None;
                 }
+                let best_result = MacroResult {
+                    quality: Quality::new(0),
+                    actions: self.finish_solver.get_finish_sequence(&state).unwrap(),
+                };
+                let best_result = self._do_solve(state, best_result, PRELIM_ACTIONS);
+                let best_result = self._do_solve(state, best_result, ALL_ACTIONS);
+                Some(best_result.actions)
             }
             _ => None,
         }
@@ -50,9 +58,9 @@ impl MacroSolver {
     fn _do_solve(
         &mut self,
         state: InProgress,
-        quality_lower_bound: Quality,
+        mut best_result: MacroResult,
         allowed_actions: &[ActionSequence],
-    ) -> (Quality, Option<Vec<Action>>) {
+    ) -> MacroResult {
         let timer = Instant::now();
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
@@ -61,9 +69,6 @@ impl MacroSolver {
         let mut search_queue = SearchQueue::new(self.settings);
 
         search_queue.push(SearchNode { state, trace: None });
-
-        let mut best_quality = quality_lower_bound;
-        let mut best_actions: Option<Vec<Action>> = None;
 
         while let Some(current_node) = search_queue.pop() {
             let trace: &Option<SearchTrace> = traces.alloc(current_node.trace);
@@ -78,19 +83,18 @@ impl MacroSolver {
                         finish_solver_rejected_node += 1;
                         continue;
                     }
-                    if self.bound_solver.quality_upper_bound(state) <= best_quality {
+                    if best_result.quality >= self.bound_solver.quality_upper_bound(state) {
                         upper_bound_solver_rejected_nodes += 1;
                         continue;
                     }
-                    let final_quality = self
+                    let quality = self
                         .settings
                         .max_quality
                         .saturating_sub(state.missing_quality);
-                    if final_quality > best_quality {
-                        best_quality = final_quality;
+                    if quality > best_result.quality {
                         let mut actions = SearchTrace::new(trace, sequence).actions();
                         actions.extend(self.finish_solver.get_finish_sequence(&state).unwrap());
-                        best_actions = Some(actions);
+                        best_result = MacroResult { quality, actions };
                     }
                     search_queue.push(SearchNode {
                         state,
@@ -110,7 +114,7 @@ impl MacroSolver {
             upper_bound_solver_rejected_nodes
         );
 
-        dbg!(f32::from(best_quality));
-        (best_quality, best_actions)
+        dbg!(&best_result);
+        best_result
     }
 }

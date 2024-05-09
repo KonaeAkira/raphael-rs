@@ -1,6 +1,6 @@
 use crate::{
-    game::{state::InProgress, units::*, Action, Condition, Effects, Settings, State},
-    solvers::action_sequences::{PROGRESS_ACTIONS, DURABILITY_ACTIONS},
+    game::{state::InProgress, units::*, Action, ComboAction, Condition, Effects, Settings, State},
+    solvers::action_sequences::{DURABILITY_ACTIONS, PROGRESS_ACTIONS},
 };
 
 use constcat::concat_slices;
@@ -13,6 +13,7 @@ const ACTION_SEQUENCES: &[ActionSequence] =
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedEffects {
+    pub muscle_memory: u8,
     pub waste_not: u8,
     pub veneration: u8,
     pub manipulation: u8,
@@ -21,6 +22,7 @@ struct ReducedEffects {
 impl ReducedEffects {
     pub fn from_effects(effects: &Effects) -> ReducedEffects {
         ReducedEffects {
+            muscle_memory: effects.muscle_memory,
             waste_not: effects.waste_not,
             veneration: effects.veneration,
             manipulation: effects.manipulation,
@@ -34,7 +36,7 @@ impl ReducedEffects {
             innovation: 0,
             veneration: self.veneration,
             great_strides: 0,
-            muscle_memory: 0,
+            muscle_memory: self.muscle_memory,
             manipulation: self.manipulation,
         }
     }
@@ -45,6 +47,7 @@ struct ReducedState {
     durability: Durability,
     cp: CP,
     effects: ReducedEffects,
+    combo: Option<ComboAction>,
 }
 
 impl ReducedState {
@@ -55,6 +58,7 @@ impl ReducedState {
             durability: state.durability,
             cp: state.cp,
             effects: ReducedEffects::from_effects(&state.effects),
+            combo: state.combo,
         }
     }
 
@@ -65,7 +69,7 @@ impl ReducedState {
             missing_progress: Self::INF_PROGRESS,
             missing_quality: Quality::new(0),
             effects: self.effects.to_effects(),
-            combo: None,
+            combo: self.combo,
         }
     }
 }
