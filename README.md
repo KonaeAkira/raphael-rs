@@ -3,11 +3,16 @@
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/KonaeAkira/raphael-rs/total?logo=github&color=blue)
 ![GitHub commits since latest release](https://img.shields.io/github/commits-since/KonaeAkira/raphael-rs/latest?include_prereleases&color=yellow)
 
-
-
-Raphael is an open-source crafting macro solver for the online game Final Fantasy XIV.
-
 ![GUI Preview](resources/gui-preview.png)
+
+Raphael is crafting macro solver for the online game Final Fantasy XIV.
+
+**Features:**
+* Produces fully-solved macros (i.e. no hand-tuned branch pruning)
+* Uses a reasonable amount of resources:
+    * Time: 20 to 60 seconds (single-threaded)
+    * Memory: 500 MB to 1500 MB
+* Deterministic (i.e. produces the same macro when given the same parameters).
 
 ## Installing from source
 
