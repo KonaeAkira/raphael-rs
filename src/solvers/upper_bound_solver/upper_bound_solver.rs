@@ -39,8 +39,7 @@ impl std::convert::From<InProgress> for ReducedState {
     fn from(state: InProgress) -> Self {
         let used_durability = (INF_DURABILITY - state.durability) / 5;
         Self {
-            cp: state.cp - used_durability as CP * DURABILITY_COST
-                + state.effects.manipulation as CP * MANIPULATION_COST,
+            cp: state.cp - used_durability as CP * DURABILITY_COST,
             effects: ReducedEffects {
                 inner_quiet: state.effects.inner_quiet,
                 waste_not: state.effects.waste_not,
@@ -92,40 +91,44 @@ impl UpperBoundSolver {
     }
 
     pub fn quality_upper_bound(&mut self, mut state: InProgress) -> Quality {
-        state.durability += INF_DURABILITY;
         let current_quality = self
             .settings
             .max_quality
             .saturating_sub(state.missing_quality);
-        let pareto_front = self.get_pareto_front(ReducedState::from(state));
-        if pareto_front.is_empty() {
-            return Quality::new(0);
+        state.durability += INF_DURABILITY;
+        state.cp += state.effects.manipulation as CP * MANIPULATION_COST;
+        let reduced_state = ReducedState::from(state);
+
+        if !self.solved_states.contains_key(&reduced_state) {
+            self.solve_state(reduced_state);
+            self.pareto_front_builder.clear();
         }
+        let pareto_front = self.solved_states.get(&reduced_state).unwrap();
+
+        match pareto_front.first() {
+            Some(first) => {
+                if first.progress < state.missing_progress {
+                    return Quality::new(0);
+                }
+            }
+            None => return Quality::new(0),
+        }
+
         let mut lo = 0;
         let mut hi = pareto_front.len();
-        while lo + 1 < hi {
-            if pareto_front[(lo + hi) / 2].progress < state.missing_progress {
-                hi = (lo + hi) / 2;
+        while lo + 1 != hi {
+            let m = (lo + hi) / 2;
+            if pareto_front[m].progress < state.missing_progress {
+                hi = m;
             } else {
-                lo = (lo + hi) / 2;
+                lo = m;
             }
         }
+
         std::cmp::min(
             self.settings.max_quality,
             pareto_front[lo].quality.saturating_add(current_quality),
         )
-    }
-
-    fn get_pareto_front(&mut self, state: ReducedState) -> Box<[ParetoValue]> {
-        match self.solved_states.get(&state) {
-            Some(pareto_front) => pareto_front.clone(),
-            None => {
-                self.solve_state(state);
-                let pareto_front = self.pareto_front_builder.peek().unwrap();
-                self.pareto_front_builder.clear();
-                pareto_front
-            }
-        }
     }
 
     fn solve_state(&mut self, state: ReducedState) {
@@ -152,6 +155,7 @@ impl UpperBoundSolver {
                             .add(action_progress, action_quality);
                         self.pareto_front_builder.merge();
                     } else if action_progress != Progress::new(0) {
+                        // last action must be a progress increase
                         self.pareto_front_builder
                             .push(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
                         self.pareto_front_builder
