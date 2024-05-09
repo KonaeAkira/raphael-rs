@@ -351,17 +351,37 @@ mod tests {
     fn test_random_simulation() {
         let mut rng = rand::thread_rng();
         let mut builder = ParetoFrontBuilder::new(SETTINGS);
-        for _ in 0..5000 {
-            builder.push(&[ParetoValue {
-                progress: Progress::new(rng.gen_range(0..1000)),
-                quality: Quality::new(rng.gen_range(0..1000)),
-            }]);
-            builder.check_invariants();
+        let mut lut = [Quality::new(0); 5000];
+
+        for _ in 0..200 {
+            let cnt = rng.gen_range(1..200);
+            for _ in 0..cnt {
+                let progress: u32 = rng.gen_range(0..5000);
+                let quality: u32 = rng.gen_range(0..10000);
+                for i in 0..=progress as usize {
+                    lut[i] = std::cmp::max(lut[i], Quality::new(quality));
+                }
+                builder.push(&[ParetoValue {
+                    progress: Progress::new(progress),
+                    quality: Quality::new(quality),
+                }]);
+                builder.check_invariants();
+            }
+            for _ in 1..cnt {
+                builder.merge();
+                builder.check_invariants();
+            }
         }
-        for _ in 1..5000 {
+        for _ in 1..200 {
             builder.merge();
             builder.check_invariants();
         }
+
+        let front = builder.peek().unwrap();
+        for value in front.iter() {
+            assert_eq!(lut[f32::from(value.progress) as usize], value.quality);
+        }
+
         builder.clear();
         builder.check_invariants();
     }
