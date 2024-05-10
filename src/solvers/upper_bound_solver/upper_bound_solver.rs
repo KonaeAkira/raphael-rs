@@ -37,6 +37,8 @@ struct ReducedState {
 
 impl std::convert::From<InProgress> for ReducedState {
     fn from(state: InProgress) -> Self {
+        #[cfg(test)]
+        assert_eq!(state.combo, None);
         let used_durability = (INF_DURABILITY - state.durability) / 5;
         Self {
             cp: state.cp - used_durability as CP * DURABILITY_COST,
@@ -175,6 +177,7 @@ impl UpperBoundSolver {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use more_asserts::*;
 
     fn solve(settings: Settings, actions: &[Action]) -> f32 {
         let state = State::new(&settings).use_actions(actions, Condition::Normal, &settings);
@@ -208,6 +211,108 @@ mod tests {
             ],
         );
         assert_eq!(result, 3455.00); // tightness test
-        assert!(result >= 3352.50); // correctness test
+        assert_ge!(result, 3352.50); // correctness test
+    }
+
+    #[test]
+    fn test_02() {
+        let settings = Settings {
+            max_cp: 700,
+            max_durability: 70,
+            max_progress: Progress::from(2500.00),
+            max_quality: Quality::from(5000.00),
+        };
+        let result = solve(
+            settings,
+            &[
+                Action::MuscleMemory,
+                Action::Manipulation,
+                Action::Veneration,
+                Action::WasteNot,
+                Action::Groundwork,
+                Action::Groundwork,
+            ],
+        );
+        assert_eq!(result, 4797.50); // tightness test
+        assert_ge!(result, 4685.50); // correctness test
+    }
+
+    #[test]
+    fn test_03() {
+        let settings = Settings {
+            max_cp: 617,
+            max_durability: 60,
+            max_progress: Progress::from(2120.00),
+            max_quality: Quality::from(5000.00),
+        };
+        let result = solve(
+            settings,
+            &[
+                Action::MuscleMemory,
+                Action::Manipulation,
+                Action::Veneration,
+                Action::Groundwork,
+                Action::CarefulSynthesis,
+                Action::PrudentSynthesis,
+                Action::PrudentSynthesis,
+                Action::Innovation,
+                Action::PrudentTouch,
+                Action::PrudentTouch,
+            ],
+        );
+        assert_eq!(result, 4103.75); // tightness test
+        assert_ge!(result, 4016.25); // correctness test
+    }
+
+    #[test]
+    fn test_04() {
+        let settings = Settings {
+            max_cp: 411,
+            max_durability: 60,
+            max_progress: Progress::from(1990.00),
+            max_quality: Quality::from(5000.00),
+        };
+        let result = solve(settings, &[Action::MuscleMemory]);
+        assert_eq!(result, 2335.00); // tightness test
+        assert_ge!(result, 2005.00); // correctness test
+    }
+
+    #[test]
+    fn test_05() {
+        let settings = Settings {
+            max_cp: 450,
+            max_durability: 60,
+            max_progress: Progress::from(1970.00),
+            max_quality: Quality::from(2000.00),
+        };
+        let result = solve(settings, &[Action::MuscleMemory]);
+        assert_eq!(result, 2000.00); // tightness test
+        assert_ge!(result, 2000.00); // correctness test
+    }
+
+    #[test]
+    fn test_06() {
+        let settings = Settings {
+            max_cp: 673,
+            max_durability: 60,
+            max_progress: Progress::from(2345.00),
+            max_quality: Quality::from(8000.00),
+        };
+        let result = solve(settings, &[Action::MuscleMemory]);
+        assert_eq!(result, 4455.00); // tightness test
+        assert_ge!(result, 4340.00); // correctness test
+    }
+
+    #[test]
+    fn test_07() {
+        let settings = Settings {
+            max_cp: 673,
+            max_durability: 60,
+            max_progress: Progress::from(2345.00),
+            max_quality: Quality::from(8000.00),
+        };
+        let result = solve(settings, &[Action::Reflect]);
+        assert_eq!(result, 4322.50); // tightness test
+        assert_ge!(result, 4135.00); // correctness test
     }
 }
