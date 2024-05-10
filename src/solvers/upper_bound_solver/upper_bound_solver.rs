@@ -169,7 +169,7 @@ impl UpperBoundSolver {
                     }
                 }
                 State::Invalid => (),
-                _ => panic!(),
+                _ => unreachable!("INF_PROGRESS not high enough"),
             }
         }
         self.solved_states

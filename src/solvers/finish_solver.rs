@@ -117,7 +117,7 @@ impl FinishSolver {
                     result.push(*action);
                     break;
                 }
-                _ => panic!("Invalid finish sequence"),
+                _ => unreachable!("attempting to truncate an invalid finish sequence"),
             }
         }
         result
@@ -153,12 +153,12 @@ impl FinishSolver {
                     }
                 }
                 State::Completed { .. } => {
-                    panic!("This state should never be reached. INF_PROGRESS probably isn't high enough.")
+                    unreachable!("INF_PROGRESS not high enough")
                 }
                 State::Invalid => (),
             }
         }
-        panic!("Unable to find a trace.")
+        unreachable!("no trace found")
     }
 
     pub fn can_finish(&mut self, state: &InProgress) -> bool {
@@ -192,7 +192,7 @@ impl FinishSolver {
                             max_progress = std::cmp::max(max_progress, gained_progress);
                         }
                         State::Completed { .. } => {
-                            panic!("This state should never be reached. INF_PROGRESS probably isn't high enough.")
+                            unreachable!("INF_PROGRESS not high enough")
                         }
                         State::Invalid => (),
                     }
