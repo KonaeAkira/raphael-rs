@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap as HashMap;
 use super::pareto_front::{ParetoFrontBuilder, ParetoValue};
 
 const ACTION_SEQUENCES: &[ActionSequence] = concat_slices!([ActionSequence]:
-    PROGRESS_ACTIONS, QUALITY_ACTIONS, MIXED_ACTIONS, &[&[Action::WasteNot, Action::WasteNot2]]);
+    PROGRESS_ACTIONS, QUALITY_ACTIONS, MIXED_ACTIONS, &[&[Action::WasteNot], &[Action::WasteNot2]]);
 
 const INF_PROGRESS: Progress = Progress::new(100_000);
 const INF_QUALITY: Quality = Quality::new(100_000);
@@ -156,7 +156,10 @@ impl UpperBoundSolver {
                         self.pareto_front_builder
                             .add(action_progress, action_quality);
                         self.pareto_front_builder.merge();
-                    } else if action_progress != Progress::new(0) {
+                    } else if new_state.cp + 3 * DURABILITY_COST >= 0
+                        && action_progress != Progress::new(0)
+                    {
+                        // durability must be at least -15
                         // last action must be a progress increase
                         self.pareto_front_builder
                             .push(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
@@ -233,7 +236,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4797.50); // tightness test
+        assert_eq!(result, 4796.25); // tightness test
         assert_ge!(result, 4685.50); // correctness test
     }
 
@@ -273,7 +276,7 @@ mod tests {
             max_quality: Quality::from(5000.00),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2335.00); // tightness test
+        assert_eq!(result, 2153.25); // tightness test
         assert_ge!(result, 2005.00); // correctness test
     }
 
@@ -299,7 +302,7 @@ mod tests {
             max_quality: Quality::from(8000.00),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4455.00); // tightness test
+        assert_eq!(result, 4451.25); // tightness test
         assert_ge!(result, 4340.00); // correctness test
     }
 
@@ -312,7 +315,20 @@ mod tests {
             max_quality: Quality::from(8000.00),
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 4322.50); // tightness test
+        assert_eq!(result, 4386.25); // tightness test
         assert_ge!(result, 4135.00); // correctness test
+    }
+
+    #[test]
+    fn test_08() {
+        let settings = Settings {
+            max_cp: 32,
+            max_durability: 10,
+            max_progress: Progress::from(100.00),
+            max_quality: Quality::from(200.00),
+        };
+        let result = solve(settings, &[Action::PrudentTouch]);
+        assert_eq!(result, 100.00); // tightness test
+        assert_ge!(result, 100.00); // correctness test
     }
 }
