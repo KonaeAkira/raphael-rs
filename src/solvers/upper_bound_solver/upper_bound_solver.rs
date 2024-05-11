@@ -93,10 +93,7 @@ impl UpperBoundSolver {
     }
 
     pub fn quality_upper_bound(&mut self, mut state: InProgress) -> Quality {
-        let current_quality = self
-            .settings
-            .max_quality
-            .saturating_sub(state.missing_quality);
+        let current_quality = self.settings.max_quality.sub(state.missing_quality);
         state.durability += INF_DURABILITY;
         state.cp += state.effects.manipulation as CP * MANIPULATION_COST;
         let reduced_state = ReducedState::from(state);
@@ -143,8 +140,8 @@ impl UpperBoundSolver {
             );
             match new_state {
                 State::InProgress(new_state) => {
-                    let action_progress = INF_PROGRESS.saturating_sub(new_state.missing_progress);
-                    let action_quality = INF_QUALITY.saturating_sub(new_state.missing_quality);
+                    let action_progress = INF_PROGRESS.sub(new_state.missing_progress);
+                    let action_quality = INF_QUALITY.sub(new_state.missing_quality);
                     let new_state = ReducedState::from(new_state);
                     if new_state.cp > 0 {
                         match self.solved_states.get(&new_state) {

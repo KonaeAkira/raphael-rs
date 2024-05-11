@@ -135,7 +135,7 @@ impl FinishSolver {
             ) {
                 State::InProgress(new_state) => {
                     let gained_progress =
-                        ReducedState::INF_PROGRESS.saturating_sub(new_state.missing_progress);
+                        ReducedState::INF_PROGRESS.sub(new_state.missing_progress);
                     let new_state = ReducedState::from_state(&new_state);
                     let new_state_potential = *self.memoization.get(&new_state).unwrap();
                     if gained_progress.add(new_state_potential) == target_progress {
@@ -145,8 +145,7 @@ impl FinishSolver {
                     }
                 }
                 State::Failed { missing_progress } => {
-                    let gained_progress =
-                        ReducedState::INF_PROGRESS.saturating_sub(missing_progress);
+                    let gained_progress = ReducedState::INF_PROGRESS.sub(missing_progress);
                     if gained_progress == target_progress {
                         result.extend_from_slice(sequence);
                         return;
@@ -177,8 +176,8 @@ impl FinishSolver {
                         &self.settings,
                     ) {
                         State::InProgress(new_state) => {
-                            let gained_progress = ReducedState::INF_PROGRESS
-                                .saturating_sub(new_state.missing_progress);
+                            let gained_progress =
+                                ReducedState::INF_PROGRESS.sub(new_state.missing_progress);
                             let new_state_potential =
                                 self.do_solve(ReducedState::from_state(&new_state));
                             max_progress = std::cmp::max(
@@ -187,8 +186,7 @@ impl FinishSolver {
                             );
                         }
                         State::Failed { missing_progress } => {
-                            let gained_progress =
-                                ReducedState::INF_PROGRESS.saturating_sub(missing_progress);
+                            let gained_progress = ReducedState::INF_PROGRESS.sub(missing_progress);
                             max_progress = std::cmp::max(max_progress, gained_progress);
                         }
                         State::Completed { .. } => {

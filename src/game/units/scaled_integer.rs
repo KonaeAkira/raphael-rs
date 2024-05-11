@@ -18,6 +18,12 @@ impl<const C: u32> ScaledU32<C> {
         }
     }
 
+    pub const fn sub(self, other: Self) -> Self {
+        Self {
+            inner_value: self.inner_value - other.inner_value,
+        }
+    }
+
     pub const fn saturating_sub(self, other: Self) -> Self {
         Self {
             inner_value: self.inner_value.saturating_sub(other.inner_value),

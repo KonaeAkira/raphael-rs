@@ -87,10 +87,7 @@ impl MacroSolver {
                         upper_bound_solver_rejected_nodes += 1;
                         continue;
                     }
-                    let quality = self
-                        .settings
-                        .max_quality
-                        .saturating_sub(state.missing_quality);
+                    let quality = self.settings.max_quality.sub(state.missing_quality);
                     if quality > best_result.quality {
                         let mut actions = SearchTrace::new(trace, sequence).actions();
                         actions.extend(self.finish_solver.get_finish_sequence(&state).unwrap());

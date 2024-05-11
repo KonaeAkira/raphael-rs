@@ -105,12 +105,12 @@ impl MacroSolverInterface {
         let missing_progress = state
             .missing_progress
             .saturating_sub(last_action.progress_increase(&state.effects, Condition::Normal));
-        let progress = settings.max_progress.saturating_sub(missing_progress);
+        let progress = settings.max_progress.sub(missing_progress);
 
         let missing_quality = state
             .missing_quality
             .saturating_sub(last_action.quality_increase(&state.effects, Condition::Normal));
-        let quality = settings.max_quality.saturating_sub(missing_quality);
+        let quality = settings.max_quality.sub(missing_quality);
 
         let durability =
             state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
