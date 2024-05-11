@@ -138,7 +138,7 @@ impl FinishSolver {
                         ReducedState::INF_PROGRESS.saturating_sub(new_state.missing_progress);
                     let new_state = ReducedState::from_state(&new_state);
                     let new_state_potential = *self.memoization.get(&new_state).unwrap();
-                    if gained_progress.saturating_add(new_state_potential) == target_progress {
+                    if gained_progress.add(new_state_potential) == target_progress {
                         result.extend_from_slice(sequence);
                         self.do_trace(result, new_state, new_state_potential);
                         return;
@@ -183,7 +183,7 @@ impl FinishSolver {
                                 self.do_solve(ReducedState::from_state(&new_state));
                             max_progress = std::cmp::max(
                                 max_progress,
-                                gained_progress.saturating_add(new_state_potential),
+                                gained_progress.add(new_state_potential),
                             );
                         }
                         State::Failed { missing_progress } => {

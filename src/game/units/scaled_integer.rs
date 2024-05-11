@@ -12,9 +12,9 @@ impl<const C: u32> ScaledU32<C> {
         }
     }
 
-    pub const fn saturating_add(self, other: Self) -> Self {
+    pub const fn add(self, other: Self) -> Self {
         Self {
-            inner_value: self.inner_value.saturating_add(other.inner_value),
+            inner_value: self.inner_value + other.inner_value,
         }
     }
 

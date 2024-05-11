@@ -114,8 +114,8 @@ impl ParetoFrontBuilder {
             slice = std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length);
         }
         for x in slice.iter_mut() {
-            x.progress = x.progress.saturating_add(progress);
-            x.quality = x.quality.saturating_add(quality);
+            x.progress = x.progress.add(progress);
+            x.quality = x.quality.add(quality);
         }
     }
 

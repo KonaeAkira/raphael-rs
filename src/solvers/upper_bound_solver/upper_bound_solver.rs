@@ -129,7 +129,7 @@ impl UpperBoundSolver {
 
         std::cmp::min(
             self.settings.max_quality,
-            pareto_front[lo].quality.saturating_add(current_quality),
+            pareto_front[lo].quality.add(current_quality),
         )
     }
 

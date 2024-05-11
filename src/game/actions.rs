@@ -177,13 +177,13 @@ impl Action {
         let mut effect_bonus = Progress::new(0);
         if effects.muscle_memory > 0 {
             let muscle_memory_bonus = base_progress;
-            effect_bonus = effect_bonus.saturating_add(muscle_memory_bonus);
+            effect_bonus = effect_bonus.add(muscle_memory_bonus);
         }
         if effects.veneration > 0 {
             let veneration_bonus = base_progress.scale(1, 2);
-            effect_bonus = effect_bonus.saturating_add(veneration_bonus);
+            effect_bonus = effect_bonus.add(veneration_bonus);
         }
-        base_progress.saturating_add(effect_bonus)
+        base_progress.add(effect_bonus)
     }
 
     pub const fn base_quality_increase(self) -> Quality {
@@ -228,8 +228,8 @@ impl Action {
             Quality::new(0)
         };
         base_quality
-            .saturating_add(innovation_bonus)
-            .saturating_add(great_strides_bonus)
+            .add(innovation_bonus)
+            .add(great_strides_bonus)
     }
 
     pub const fn required_combo(self) -> Option<ComboAction> {
