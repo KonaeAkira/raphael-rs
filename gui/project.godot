@@ -14,7 +14,7 @@ config/name="Raphael"
 config/version="v0.2.0"
 run/main_scene="res://control.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://resources/icon.svg"
 
 [display]
 

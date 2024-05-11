@@ -37,14 +37,7 @@ impl INode for MacroSolverInterface {
             base,
             solver_busy: false,
             solver_result: Arc::new(Mutex::new(None)),
-            configuration: dict! {
-                "MAX_PROGRESS": 5060.0,
-                "MAX_QUALITY": 12628.0,
-                "MAX_DURABILITY": 70.0,
-                "MAX_CP": 680.0,
-                "PROGRESS_INCREASE": 229.0,
-                "QUALITY_INCREASE": 224.0,
-            },
+            configuration: Dictionary::new(),
             simulation: dict! {
                 "PROGRESS": 0.0,
                 "QUALITY": 0.0,
