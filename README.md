@@ -5,13 +5,13 @@
 
 ![GUI Preview](resources/gui-preview.png)
 
-Raphael is crafting macro solver for the online game Final Fantasy XIV.
+Raphael is a standalone crafting macro solver for the online game Final Fantasy XIV.
 
 **Features:**
 * Produces fully-solved macros (i.e. no hand-tuned branch pruning)
 * Uses a reasonable amount of resources:
-    * Time: 20 to 60 seconds (single-threaded)
-    * Memory: 500 MB to 1500 MB
+    * Time: 15 to 20 seconds (single-threaded)
+    * Memory: 500 MB to 800 MB
 * Deterministic (i.e. produces the same macro when given the same parameters).
 
 ## Installing from source
