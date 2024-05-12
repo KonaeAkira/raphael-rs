@@ -234,7 +234,7 @@ mod tests {
             ],
         );
         assert_eq!(result, 4796.25); // tightness test
-        assert_ge!(result, 4685.50); // correctness test
+        assert_ge!(result, 4685.00); // correctness test
     }
 
     #[test]
@@ -251,17 +251,18 @@ mod tests {
                 Action::MuscleMemory,
                 Action::Manipulation,
                 Action::Veneration,
+                Action::WasteNot,
                 Action::Groundwork,
                 Action::CarefulSynthesis,
-                Action::PrudentSynthesis,
-                Action::PrudentSynthesis,
+                Action::Groundwork,
+                Action::PreparatoryTouch,
                 Action::Innovation,
-                Action::PrudentTouch,
-                Action::PrudentTouch,
+                Action::BasicTouch,
+                Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 4103.75); // tightness test
-        assert_ge!(result, 4016.25); // correctness test
+        assert_eq!(result, 4148.75); // tightness test
+        assert_ge!(result, 4055.00); // correctness test
     }
 
     #[test]
@@ -273,8 +274,8 @@ mod tests {
             max_quality: Quality::from(5000.00),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        // assert_eq!(result, 2153.25); // tightness test
-        assert_ge!(result, 2005.00); // correctness test
+        assert_eq!(result, 2203.75); // tightness test
+        assert_ge!(result, 2011.25); // correctness test
     }
 
     #[test]
@@ -300,7 +301,7 @@ mod tests {
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 4451.25); // tightness test
-        assert_ge!(result, 4340.00); // correctness test
+        assert_ge!(result, 4405.00); // correctness test
     }
 
     #[test]
@@ -313,7 +314,7 @@ mod tests {
         };
         let result = solve(settings, &[Action::Reflect]);
         assert_eq!(result, 4386.25); // tightness test
-        assert_ge!(result, 4135.00); // correctness test
+        assert_ge!(result, 4138.75); // correctness test
     }
 
     #[test]
