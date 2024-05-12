@@ -250,6 +250,10 @@ func _on_close_requested():
 
 func _on_recipe_search_result_item_activated(index):
 	visible = false
+
+func _on_visibility_changed():
+	if visible:
+		%RecipeSearchInput.grab_focus()
 "
 
 [sub_resource type="GDScript" id="GDScript_qsyne"]
@@ -668,6 +672,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="RecipeSearchInput" type="LineEdit" parent="TabContainer/Macro Solver/RecipeSelectWindow/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 focus_next = NodePath("../../../PanelContainer2/MarginContainer/PanelContainer/RecipeSearchResult")
@@ -785,6 +790,7 @@ uri = "https://github.com/KonaeAkira/raphael-rs/releases"
 [connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="MacroSolverInterface" method="_on_solve_button_pressed"]
 [connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_pressed"]
 [connection signal="close_requested" from="TabContainer/Macro Solver/RecipeSelectWindow" to="TabContainer/Macro Solver/RecipeSelectWindow" method="_on_close_requested"]
+[connection signal="visibility_changed" from="TabContainer/Macro Solver/RecipeSelectWindow" to="TabContainer/Macro Solver/RecipeSelectWindow" method="_on_visibility_changed"]
 [connection signal="text_changed" from="TabContainer/Macro Solver/RecipeSelectWindow/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/RecipeSearchInput" to="TabContainer/Macro Solver/RecipeSelectWindow/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/RecipeSearchInput" method="_on_text_changed"]
 [connection signal="item_activated" from="TabContainer/Macro Solver/RecipeSelectWindow/PanelContainer/MarginContainer/VBoxContainer/PanelContainer2/MarginContainer/PanelContainer/RecipeSearchResult" to="MacroSolverInterface" method="_on_recipe_search_result_item_activated"]
 [connection signal="item_activated" from="TabContainer/Macro Solver/RecipeSelectWindow/PanelContainer/MarginContainer/VBoxContainer/PanelContainer2/MarginContainer/PanelContainer/RecipeSearchResult" to="TabContainer/Macro Solver/RecipeSelectWindow" method="_on_recipe_search_result_item_activated"]
