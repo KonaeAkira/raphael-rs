@@ -35,7 +35,7 @@ fn test_01() {
         max_quality: Quality::from(40000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1653.00);
+    assert_eq!(get_quality(&settings, &actions), 1683.00);
 }
 
 #[test]
@@ -167,7 +167,7 @@ fn test_10() {
         max_quality: Quality::from(20000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3221.25);
+    assert_eq!(get_quality(&settings, &actions), 3261.25);
 }
 
 #[test]
@@ -203,7 +203,7 @@ fn test_pactmaker_min_stats() {
         max_quality: Quality::from(20000.00),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4052.50);
+    assert_eq!(get_quality(&settings, &actions), 4076.25);
 }
 
 #[test]

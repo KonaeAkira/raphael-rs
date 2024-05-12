@@ -1,15 +1,12 @@
-use crate::{
-    game::{state::InProgress, units::*, Action, ComboAction, Condition, Effects, Settings, State},
-    solvers::action_sequences::{DURABILITY_ACTIONS, PROGRESS_ACTIONS},
+use crate::game::{
+    state::InProgress, units::*, Action, ComboAction, Condition, Effects, Settings, State,
 };
 
-use constcat::concat_slices;
 use rustc_hash::FxHashMap as HashMap;
 
-use super::action_sequences::ActionSequence;
+use super::actions::{ActionMask, DURABILITY_ACTIONS, PROGRESS_ACTIONS};
 
-const ACTION_SEQUENCES: &[ActionSequence] =
-    concat_slices!([ActionSequence]: PROGRESS_ACTIONS, DURABILITY_ACTIONS);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedEffects {
@@ -95,23 +92,18 @@ impl FinishSolver {
         }
         let mut finish_sequence: Vec<Action> = Vec::new();
         loop {
-            for actions in ACTION_SEQUENCES {
-                match State::InProgress(state).use_actions(
-                    actions,
-                    Condition::Normal,
-                    &self.settings,
-                ) {
+            for action in SEARCH_ACTIONS.actions_iter() {
+                let new_state = state.use_action(action, Condition::Normal, &self.settings);
+                match new_state {
                     State::InProgress(new_state) => {
                         if self.can_finish(&new_state) {
-                            finish_sequence.extend_from_slice(actions);
-                            state = State::InProgress(state)
-                                .use_actions(actions, Condition::Normal, &self.settings)
-                                .as_in_progress()
-                                .unwrap();
+                            finish_sequence.push(action);
+                            state = new_state;
+                            break;
                         }
                     }
                     State::Completed { missing_quality: _ } => {
-                        finish_sequence.extend_from_slice(actions);
+                        finish_sequence.push(action);
                         return Some(finish_sequence);
                     }
                     _ => (),
@@ -129,12 +121,12 @@ impl FinishSolver {
             Some(progress) => *progress,
             None => {
                 let mut max_progress = Progress::new(0);
-                for sequence in ACTION_SEQUENCES {
-                    match State::InProgress(state.to_state()).use_actions(
-                        sequence,
-                        Condition::Normal,
-                        &self.settings,
-                    ) {
+                for action in SEARCH_ACTIONS.actions_iter() {
+                    let new_state =
+                        state
+                            .to_state()
+                            .use_action(action, Condition::Normal, &self.settings);
+                    match new_state {
                         State::InProgress(new_state) => {
                             let gained_progress =
                                 ReducedState::INF_PROGRESS.sub(new_state.missing_progress);

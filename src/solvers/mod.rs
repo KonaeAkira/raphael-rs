@@ -1,4 +1,4 @@
-mod action_sequences;
+mod actions;
 
 mod finish_solver;
 use finish_solver::FinishSolver;
