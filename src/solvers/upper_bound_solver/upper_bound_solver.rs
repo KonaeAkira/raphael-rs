@@ -133,44 +133,72 @@ impl UpperBoundSolver {
     }
 
     fn solve_state(&mut self, state: ReducedState) {
-        self.pareto_front_builder.push_empty();
-
-        for action in SEARCH_ACTIONS.actions_iter() {
-            let new_state =
-                InProgress::from(state).use_action(action, Condition::Normal, &self.settings);
-            match new_state {
-                State::InProgress(new_state) => {
-                    let action_progress = INF_PROGRESS.sub(new_state.missing_progress);
-                    let action_quality = INF_QUALITY.sub(new_state.missing_quality);
-                    let new_state = ReducedState::from(new_state);
-                    if new_state.cp > 0 {
-                        match self.solved_states.get(&new_state) {
-                            Some(pareto_front) => {
-                                self.pareto_front_builder.push(pareto_front.as_ref())
-                            }
-                            None => self.solve_state(new_state),
-                        }
-                        self.pareto_front_builder
-                            .add(action_progress, action_quality);
-                        self.pareto_front_builder.merge();
-                    } else if new_state.cp + 3 * DURABILITY_COST >= 0
-                        && action_progress != Progress::new(0)
-                    {
-                        // durability must be at least -15
-                        // last action must be a progress increase
-                        self.pareto_front_builder
-                            .push(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
-                        self.pareto_front_builder
-                            .add(action_progress, action_quality);
-                        self.pareto_front_builder.merge();
-                    }
+        match state.combo {
+            Some(combo) => {
+                let non_combo_state = ReducedState {
+                    combo: None,
+                    ..state
+                };
+                match self.solved_states.get(&non_combo_state) {
+                    Some(pareto_front) => self.pareto_front_builder.push(&pareto_front),
+                    None => self.solve_non_combo_state(non_combo_state),
                 }
-                State::Invalid => (),
-                _ => unreachable!("INF_PROGRESS not high enough"),
+                let combo_actions: &[Action] = match combo {
+                    ComboAction::SynthesisBegin => &[Action::MuscleMemory, Action::Reflect],
+                    ComboAction::Observe => &[Action::FocusedSynthesis, Action::FocusedTouch],
+                    ComboAction::BasicTouch => &[Action::ComboStandardTouch],
+                    ComboAction::StandardTouch => &[Action::ComboAdvancedTouch],
+                };
+                for action in combo_actions {
+                    self.build_child_front(state, *action);
+                }
+            }
+            None => {
+                self.solve_non_combo_state(state);
             }
         }
-        self.solved_states
-            .insert(state, self.pareto_front_builder.peek().unwrap());
+        let pareto_front = self.pareto_front_builder.peek().unwrap();
+        self.solved_states.insert(state, pareto_front);
+    }
+
+    fn solve_non_combo_state(&mut self, state: ReducedState) {
+        self.pareto_front_builder.push_empty();
+        for action in SEARCH_ACTIONS.actions_iter() {
+            self.build_child_front(state, action);
+        }
+    }
+
+    fn build_child_front(&mut self, state: ReducedState, action: Action) {
+        let new_state =
+            InProgress::from(state).use_action(action, Condition::Normal, &self.settings);
+        match new_state {
+            State::InProgress(new_state) => {
+                let action_progress = INF_PROGRESS.sub(new_state.missing_progress);
+                let action_quality = INF_QUALITY.sub(new_state.missing_quality);
+                let new_state = ReducedState::from(new_state);
+                if new_state.cp > 0 {
+                    match self.solved_states.get(&new_state) {
+                        Some(pareto_front) => self.pareto_front_builder.push(&pareto_front),
+                        None => self.solve_state(new_state),
+                    }
+                    self.pareto_front_builder
+                        .add(action_progress, action_quality);
+                    self.pareto_front_builder.merge();
+                } else if new_state.cp + 3 * DURABILITY_COST >= 0
+                    && action_progress != Progress::new(0)
+                {
+                    // durability must be at least -15
+                    // last action must be a progress increase
+                    self.pareto_front_builder
+                        .push(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
+                    self.pareto_front_builder
+                        .add(action_progress, action_quality);
+                    self.pareto_front_builder.merge();
+                }
+            }
+            State::Invalid => (),
+            _ => unreachable!("INF_PROGRESS or INF_DURABILITY not high enough"),
+        }
     }
 }
 
