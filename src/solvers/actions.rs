@@ -60,6 +60,7 @@ const ALL_ACTIONS: &[Action] = &[
     Action::WasteNot,
     Action::Veneration,
     Action::StandardTouch,
+    Action::ComboStandardTouch,
     Action::GreatStrides,
     Action::Innovation,
     Action::WasteNot2,
@@ -77,6 +78,7 @@ const ALL_ACTIONS: &[Action] = &[
     Action::DelicateSynthesis,
     Action::IntensiveSynthesis,
     Action::AdvancedTouch,
+    Action::ComboAdvancedTouch,
     Action::PrudentSynthesis,
     Action::TrainedFinesse,
 ];
@@ -97,6 +99,7 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::BasicTouch,
     Action::Observe,
     Action::StandardTouch,
+    Action::ComboStandardTouch,
     Action::GreatStrides,
     Action::Innovation,
     Action::ByregotsBlessing,
@@ -106,6 +109,7 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::Reflect,
     Action::PreparatoryTouch,
     Action::AdvancedTouch,
+    Action::ComboAdvancedTouch,
     Action::TrainedFinesse
 );
 

@@ -60,7 +60,7 @@ fn test_basic_touch() {
 
 #[test]
 fn test_standard_touch() {
-    let state = from_action_sequence(&SETTINGS, &[Action::BasicTouch, Action::StandardTouch]);
+    let state = from_action_sequence(&SETTINGS, &[Action::BasicTouch, Action::ComboStandardTouch]);
     match state {
         State::InProgress(state) => {
             assert_eq!(state.cp, 164);
@@ -75,7 +75,7 @@ fn test_standard_touch() {
         _ => panic!(),
     }
     // can't use without first using basic touch
-    let state = from_action_sequence(&SETTINGS, &[Action::StandardTouch]);
+    let state = from_action_sequence(&SETTINGS, &[Action::ComboStandardTouch]);
     assert!(matches!(state, State::Invalid));
 }
 
@@ -85,8 +85,8 @@ fn test_advanced_touch() {
         &SETTINGS,
         &[
             Action::BasicTouch,
-            Action::StandardTouch,
-            Action::AdvancedTouch,
+            Action::ComboStandardTouch,
+            Action::ComboAdvancedTouch,
         ],
     );
     match state {
@@ -103,7 +103,7 @@ fn test_advanced_touch() {
         _ => panic!(),
     }
     // can't use without first using basic touch
-    let state = from_action_sequence(&SETTINGS, &[Action::AdvancedTouch]);
+    let state = from_action_sequence(&SETTINGS, &[Action::ComboAdvancedTouch]);
     assert!(matches!(state, State::Invalid));
 }
 

@@ -9,7 +9,8 @@ pub enum Action {
     TricksOfTheTrade,
     WasteNot,
     Veneration,
-    StandardTouch,
+    StandardTouch, // out-of-combo version
+    ComboStandardTouch,
     GreatStrides,
     Innovation,
     WasteNot2,
@@ -26,7 +27,8 @@ pub enum Action {
     Groundwork,
     DelicateSynthesis,
     IntensiveSynthesis,
-    AdvancedTouch,
+    AdvancedTouch, // out-of-combo version
+    ComboAdvancedTouch,
     PrudentSynthesis,
     TrainedFinesse,
 }
@@ -50,6 +52,7 @@ impl Action {
             Action::WasteNot => 2,
             Action::Veneration => 2,
             Action::StandardTouch => 3,
+            Action::ComboStandardTouch => 3,
             Action::GreatStrides => 2,
             Action::Innovation => 2,
             Action::WasteNot2 => 2,
@@ -67,6 +70,7 @@ impl Action {
             Action::DelicateSynthesis => 3,
             Action::IntensiveSynthesis => 3,
             Action::AdvancedTouch => 3,
+            Action::ComboAdvancedTouch => 3,
             Action::PrudentSynthesis => 3,
             Action::TrainedFinesse => 3,
         }
@@ -81,7 +85,8 @@ impl Action {
             Action::TricksOfTheTrade => 0,
             Action::WasteNot => 56,
             Action::Veneration => 18,
-            Action::StandardTouch => 18,
+            Action::StandardTouch => 32,
+            Action::ComboStandardTouch => 18,
             Action::GreatStrides => 32,
             Action::Innovation => 18,
             Action::WasteNot2 => 98,
@@ -98,7 +103,8 @@ impl Action {
             Action::Groundwork => 18,
             Action::DelicateSynthesis => 32,
             Action::IntensiveSynthesis => 6,
-            Action::AdvancedTouch => 18,
+            Action::AdvancedTouch => 46,
+            Action::ComboAdvancedTouch => 18,
             Action::PrudentSynthesis => 18,
             Action::TrainedFinesse => 32,
         }
@@ -121,6 +127,7 @@ impl Action {
             Action::WasteNot => 0,
             Action::Veneration => 0,
             Action::StandardTouch => 10,
+            Action::ComboStandardTouch => 10,
             Action::GreatStrides => 0,
             Action::Innovation => 0,
             Action::WasteNot2 => 0,
@@ -138,6 +145,7 @@ impl Action {
             Action::DelicateSynthesis => 10,
             Action::IntensiveSynthesis => 10,
             Action::AdvancedTouch => 10,
+            Action::ComboAdvancedTouch => 10,
             Action::PrudentSynthesis => 5,
             Action::TrainedFinesse => 0,
         }
@@ -190,6 +198,7 @@ impl Action {
         match self {
             Action::BasicTouch => Quality::new(100),
             Action::StandardTouch => Quality::new(125),
+            Action::ComboStandardTouch => Quality::new(125),
             Action::PreciseTouch => Quality::new(150),
             Action::PrudentTouch => Quality::new(100),
             Action::FocusedTouch => Quality::new(150),
@@ -197,6 +206,7 @@ impl Action {
             Action::PreparatoryTouch => Quality::new(200),
             Action::DelicateSynthesis => Quality::new(100),
             Action::AdvancedTouch => Quality::new(150),
+            Action::ComboAdvancedTouch => Quality::new(150),
             Action::TrainedFinesse => Quality::new(100),
             Action::ByregotsBlessing => Quality::new(100),
             _ => Quality::new(0),
@@ -227,17 +237,15 @@ impl Action {
         } else {
             Quality::new(0)
         };
-        base_quality
-            .add(innovation_bonus)
-            .add(great_strides_bonus)
+        base_quality.add(innovation_bonus).add(great_strides_bonus)
     }
 
     pub const fn required_combo(self) -> Option<ComboAction> {
         match self {
             Action::Reflect => Some(ComboAction::SynthesisBegin),
             Action::MuscleMemory => Some(ComboAction::SynthesisBegin),
-            Action::StandardTouch => Some(ComboAction::BasicTouch),
-            Action::AdvancedTouch => Some(ComboAction::StandardTouch),
+            Action::ComboStandardTouch => Some(ComboAction::BasicTouch),
+            Action::ComboAdvancedTouch => Some(ComboAction::StandardTouch),
             Action::FocusedSynthesis => Some(ComboAction::Observe),
             Action::FocusedTouch => Some(ComboAction::Observe),
             _ => None,
@@ -247,7 +255,7 @@ impl Action {
     pub const fn to_combo(self) -> Option<ComboAction> {
         match self {
             Action::BasicTouch => Some(ComboAction::BasicTouch),
-            Action::StandardTouch => Some(ComboAction::StandardTouch),
+            Action::ComboStandardTouch => Some(ComboAction::StandardTouch),
             Action::Observe => Some(ComboAction::Observe),
             _ => None,
         }
@@ -262,7 +270,7 @@ impl Action {
             Action::TricksOfTheTrade => "Tricks of the Trade",
             Action::WasteNot => "Waste Not",
             Action::Veneration => "Veneration",
-            Action::StandardTouch => "Standard Touch",
+            Action::StandardTouch | Action::ComboStandardTouch => "Standard Touch",
             Action::GreatStrides => "Great Strides",
             Action::Innovation => "Innovation",
             Action::WasteNot2 => "Waste Not II",
@@ -279,7 +287,7 @@ impl Action {
             Action::Groundwork => "Groundwork",
             Action::DelicateSynthesis => "Delicate Synthesis",
             Action::IntensiveSynthesis => "Intensive Synthesis",
-            Action::AdvancedTouch => "Advanced Touch",
+            Action::AdvancedTouch | Action::ComboAdvancedTouch => "Advanced Touch",
             Action::PrudentSynthesis => "Prudent Synthesis",
             Action::TrainedFinesse => "Trained Finesse",
         }
