@@ -89,82 +89,42 @@ impl FinishSolver {
         }
     }
 
-    pub fn get_finish_sequence(&self, state: &InProgress) -> Option<Vec<Action>> {
-        let reduced_state = ReducedState::from_state(state);
-        match self.memoization.get(&reduced_state) {
-            Some(progress) => {
-                if state.missing_progress <= *progress {
-                    let mut result: Vec<Action> = Vec::new();
-                    self.do_trace(&mut result, reduced_state, *progress);
-                    Some(self.truncate(*state, &result))
-                } else {
-                    None
-                }
-            }
-            None => None,
+    pub fn get_finish_sequence(&mut self, mut state: InProgress) -> Option<Vec<Action>> {
+        if !self.can_finish(&state) {
+            return None;
         }
-    }
-
-    fn truncate(&self, mut state: InProgress, actions: &[Action]) -> Vec<Action> {
-        let mut result: Vec<Action> = Vec::new();
-        for action in actions {
-            match state.use_action(*action, Condition::Normal, &self.settings) {
-                State::InProgress(in_progress) => {
-                    result.push(*action);
-                    state = in_progress;
-                }
-                State::Completed { missing_quality: _ } => {
-                    result.push(*action);
-                    break;
-                }
-                _ => unreachable!("attempting to truncate an invalid finish sequence"),
-            }
-        }
-        result
-    }
-
-    fn do_trace(&self, result: &mut Vec<Action>, state: ReducedState, target_progress: Progress) {
-        if target_progress == Progress::new(0) {
-            return;
-        }
-        for sequence in ACTION_SEQUENCES {
-            match State::InProgress(state.to_state()).use_actions(
-                sequence,
-                Condition::Normal,
-                &self.settings,
-            ) {
-                State::InProgress(new_state) => {
-                    let gained_progress =
-                        ReducedState::INF_PROGRESS.sub(new_state.missing_progress);
-                    let new_state = ReducedState::from_state(&new_state);
-                    let new_state_potential = *self.memoization.get(&new_state).unwrap();
-                    if gained_progress.add(new_state_potential) == target_progress {
-                        result.extend_from_slice(sequence);
-                        self.do_trace(result, new_state, new_state_potential);
-                        return;
+        let mut finish_sequence: Vec<Action> = Vec::new();
+        loop {
+            for actions in ACTION_SEQUENCES {
+                match State::InProgress(state).use_actions(
+                    actions,
+                    Condition::Normal,
+                    &self.settings,
+                ) {
+                    State::InProgress(new_state) => {
+                        if self.can_finish(&new_state) {
+                            finish_sequence.extend_from_slice(actions);
+                            state = State::InProgress(state)
+                                .use_actions(actions, Condition::Normal, &self.settings)
+                                .as_in_progress()
+                                .unwrap();
+                        }
                     }
-                }
-                State::Failed { missing_progress } => {
-                    let gained_progress = ReducedState::INF_PROGRESS.sub(missing_progress);
-                    if gained_progress == target_progress {
-                        result.extend_from_slice(sequence);
-                        return;
+                    State::Completed { missing_quality: _ } => {
+                        finish_sequence.extend_from_slice(actions);
+                        return Some(finish_sequence);
                     }
+                    _ => (),
                 }
-                State::Completed { .. } => {
-                    unreachable!("INF_PROGRESS not high enough")
-                }
-                State::Invalid => (),
             }
         }
-        unreachable!("no trace found")
     }
 
     pub fn can_finish(&mut self, state: &InProgress) -> bool {
-        state.missing_progress <= self.do_solve(ReducedState::from_state(state))
+        state.missing_progress <= self._do_solve(ReducedState::from_state(state))
     }
 
-    fn do_solve(&mut self, state: ReducedState) -> Progress {
+    fn _do_solve(&mut self, state: ReducedState) -> Progress {
         match self.memoization.get(&state) {
             Some(progress) => *progress,
             None => {
@@ -179,7 +139,7 @@ impl FinishSolver {
                             let gained_progress =
                                 ReducedState::INF_PROGRESS.sub(new_state.missing_progress);
                             let new_state_potential =
-                                self.do_solve(ReducedState::from_state(&new_state));
+                                self._do_solve(ReducedState::from_state(&new_state));
                             max_progress = std::cmp::max(
                                 max_progress,
                                 gained_progress.add(new_state_potential),

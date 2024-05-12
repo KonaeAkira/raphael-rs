@@ -45,7 +45,7 @@ impl MacroSolver {
                 }
                 let best_result = MacroResult {
                     quality: Quality::new(0),
-                    actions: self.finish_solver.get_finish_sequence(&state).unwrap(),
+                    actions: self.finish_solver.get_finish_sequence(state).unwrap(),
                 };
                 let best_result = self._do_solve(state, best_result, PRELIM_ACTIONS);
                 let best_result = self._do_solve(state, best_result, ALL_ACTIONS);
@@ -90,7 +90,7 @@ impl MacroSolver {
                     let quality = self.settings.max_quality.sub(state.missing_quality);
                     if quality > best_result.quality {
                         let mut actions = SearchTrace::new(trace, sequence).actions();
-                        actions.extend(self.finish_solver.get_finish_sequence(&state).unwrap());
+                        actions.extend(self.finish_solver.get_finish_sequence(state).unwrap());
                         best_result = MacroResult { quality, actions };
                     }
                     search_queue.push(SearchNode {
