@@ -184,10 +184,10 @@ impl UpperBoundSolver {
                     self.pareto_front_builder
                         .add(action_progress, action_quality);
                     self.pareto_front_builder.merge();
-                } else if new_state.cp + 3 * DURABILITY_COST >= 0
+                } else if new_state.cp + DURABILITY_COST >= 0
                     && action_progress != Progress::new(0)
                 {
-                    // durability must be at least -15
+                    // "durability" must not go lower than -5
                     // last action must be a progress increase
                     self.pareto_front_builder
                         .push(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
@@ -238,7 +238,7 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3455.00); // tightness test
+        assert_eq!(result, 3352.50); // tightness test
         assert_ge!(result, 3352.50); // correctness test
     }
 
@@ -261,7 +261,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4796.25); // tightness test
+        assert_eq!(result, 4695.00); // tightness test
         assert_ge!(result, 4685.00); // correctness test
     }
 
@@ -289,7 +289,7 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 4148.75); // tightness test
+        assert_eq!(result, 4055.00); // tightness test
         assert_ge!(result, 4055.00); // correctness test
     }
 
@@ -302,7 +302,7 @@ mod tests {
             max_quality: Quality::from(5000.00),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2203.75); // tightness test
+        assert_eq!(result, 2075.00); // tightness test
         assert_ge!(result, 2011.25); // correctness test
     }
 
@@ -328,7 +328,7 @@ mod tests {
             max_quality: Quality::from(8000.00),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4451.25); // tightness test
+        assert_eq!(result, 4440.00); // tightness test
         assert_ge!(result, 4405.00); // correctness test
     }
 
@@ -341,7 +341,7 @@ mod tests {
             max_quality: Quality::from(8000.00),
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 4386.25); // tightness test
+        assert_eq!(result, 4251.25); // tightness test
         assert_ge!(result, 4138.75); // correctness test
     }
 
