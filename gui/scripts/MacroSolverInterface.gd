@@ -1,10 +1,10 @@
 extends MacroSolverInterface
 
-@export var item_name: String = "Rinascita Sword"
+@export var item_name: String = "Indagator's Saw"
 @export var job_level: int = 90
-@export var craftsmanship: int = 4021
-@export var control: int = 4023
-@export var max_cp: int = 596
+@export var craftsmanship: int = 3858
+@export var control: int = 4057
+@export var max_cp: int = 687
 
 func update_configuration() -> void:
 	configuration["MAX_CP"] = float(max_cp)

@@ -217,3 +217,15 @@ fn test_diadochos_min_stats() {
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3818.75);
 }
+
+#[test]
+fn test_indagator_3858_4057() {
+    let settings = Settings {
+        max_cp: 687,
+        max_durability: 70,
+        max_progress: Progress::from(5720.00 / 239.00 * 100.00),
+        max_quality: Quality::from(12900.00 / 271.00 * 100.00),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 4722.50);
+}
