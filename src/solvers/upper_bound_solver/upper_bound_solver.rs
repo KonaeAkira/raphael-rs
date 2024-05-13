@@ -1,5 +1,4 @@
 use crate::{
-    action_mask,
     game::{state::InProgress, units::*, Action, ComboAction, Condition, Effects, Settings, State},
     solvers::actions::{ActionMask, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
 };
@@ -8,15 +7,13 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::pareto_front::{ParetoFrontBuilder, ParetoValue};
 
-const SEARCH_ACTIONS: ActionMask = action_mask!(Action::WasteNot, Action::WasteNot2)
-    .union(PROGRESS_ACTIONS)
-    .union(QUALITY_ACTIONS)
-    .union(MIXED_ACTIONS);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS).union(MIXED_ACTIONS);
 
 const INF_PROGRESS: Progress = Progress::new(100_000);
 const INF_QUALITY: Quality = Quality::new(100_000);
 const INF_DURABILITY: Durability = 100;
 
+pub const WASTE_NOT_COST: CP = Action::WasteNot2.base_cp_cost() / 8;
 pub const MANIPULATION_COST: CP = Action::Manipulation.base_cp_cost() / 8;
 // CP value for 5 Durability
 pub const DURABILITY_COST: CP = Action::Manipulation.base_cp_cost() / 8;
@@ -24,7 +21,6 @@ pub const DURABILITY_COST: CP = Action::Manipulation.base_cp_cost() / 8;
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct ReducedEffects {
     pub inner_quiet: u8,
-    pub waste_not: u8,
     pub innovation: u8,
     pub veneration: u8,
     pub great_strides: u8,
@@ -41,12 +37,15 @@ struct ReducedState {
 impl std::convert::From<InProgress> for ReducedState {
     fn from(state: InProgress) -> Self {
         let used_durability = (INF_DURABILITY - state.durability) / 5;
+        let durability_cost = std::cmp::min(
+            used_durability * DURABILITY_COST,
+            (used_durability + 1) / 2 * DURABILITY_COST + WASTE_NOT_COST,
+        );
         Self {
-            cp: state.cp - used_durability as CP * DURABILITY_COST,
+            cp: state.cp - durability_cost,
             combo: state.combo,
             effects: ReducedEffects {
                 inner_quiet: state.effects.inner_quiet,
-                waste_not: state.effects.waste_not,
                 innovation: state.effects.innovation,
                 veneration: state.effects.veneration,
                 great_strides: state.effects.great_strides,
@@ -65,7 +64,7 @@ impl std::convert::From<ReducedState> for InProgress {
             missing_quality: INF_QUALITY,
             effects: Effects {
                 inner_quiet: state.effects.inner_quiet,
-                waste_not: state.effects.waste_not,
+                waste_not: 0,
                 innovation: state.effects.innovation,
                 veneration: state.effects.veneration,
                 great_strides: state.effects.great_strides,
@@ -96,8 +95,13 @@ impl UpperBoundSolver {
 
     pub fn quality_upper_bound(&mut self, mut state: InProgress) -> Quality {
         let current_quality = self.settings.max_quality.sub(state.missing_quality);
-        state.durability += INF_DURABILITY;
+
+        // refund effects and durability
         state.cp += state.effects.manipulation as CP * MANIPULATION_COST;
+        state.cp += state.effects.waste_not as CP * WASTE_NOT_COST;
+        state.cp += state.durability / 5 * DURABILITY_COST;
+        state.durability = INF_DURABILITY;
+
         let reduced_state = ReducedState::from(state);
 
         if !self.solved_states.contains_key(&reduced_state) {
@@ -184,8 +188,7 @@ impl UpperBoundSolver {
                     self.pareto_front_builder
                         .add(action_progress, action_quality);
                     self.pareto_front_builder.merge();
-                } else if new_state.cp + DURABILITY_COST >= 0
-                    && action_progress != Progress::new(0)
+                } else if new_state.cp + DURABILITY_COST >= 0 && action_progress != Progress::new(0)
                 {
                     // "durability" must not go lower than -5
                     // last action must be a progress increase
@@ -238,7 +241,7 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3352.50); // tightness test
+        assert_eq!(result, 3485.00); // tightness test
         assert_ge!(result, 3352.50); // correctness test
     }
 
@@ -261,7 +264,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4695.00); // tightness test
+        assert_eq!(result, 4767.50); // tightness test
         assert_ge!(result, 4685.00); // correctness test
     }
 
@@ -302,7 +305,7 @@ mod tests {
             max_quality: Quality::from(5000.00),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2075.00); // tightness test
+        assert_eq!(result, 2221.25); // tightness test
         assert_ge!(result, 2011.25); // correctness test
     }
 
@@ -328,7 +331,7 @@ mod tests {
             max_quality: Quality::from(8000.00),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4440.00); // tightness test
+        assert_eq!(result, 4556.25); // tightness test
         assert_ge!(result, 4405.00); // correctness test
     }
 
@@ -341,7 +344,7 @@ mod tests {
             max_quality: Quality::from(8000.00),
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 4251.25); // tightness test
+        assert_eq!(result, 4477.50); // tightness test
         assert_ge!(result, 4138.75); // correctness test
     }
 
