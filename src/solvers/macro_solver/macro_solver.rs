@@ -11,7 +11,6 @@ use typed_arena::Arena;
 
 use super::*;
 
-const PRELIM_SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS.union(DURABILITY_ACTIONS);
 const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
     .union(MIXED_ACTIONS)
@@ -44,15 +43,20 @@ impl MacroSolver {
                 if !self.finish_solver.can_finish(&state) {
                     return None;
                 }
-                let best_result = MacroResult {
-                    quality: Quality::new(0),
-                    actions: self.finish_solver.get_finish_sequence(state).unwrap(),
-                };
-                let best_result =
-                    self._do_solve(state, best_result, &PRELIM_SEARCH_ACTIONS.actions());
-                let best_result =
-                    self._do_solve(state, best_result, &FULL_SEARCH_ACTIONS.actions());
-                Some(best_result.actions)
+                let mut lower_bound = self.bound_solver.quality_upper_bound(state);
+                while lower_bound != Quality::new(0) {
+                    lower_bound = lower_bound.saturating_sub(Quality::new(20));
+                    let result = MacroResult {
+                        quality: lower_bound,
+                        actions: Vec::new(),
+                    };
+                    let result = self._do_solve(state, result, &FULL_SEARCH_ACTIONS.actions());
+                    if !result.actions.is_empty() {
+                        return Some(result.actions);
+                    }
+                }
+                // impossible to get any quality
+                Some(self.finish_solver.get_finish_sequence(state).unwrap())
             }
             _ => None,
         }

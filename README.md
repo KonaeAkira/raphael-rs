@@ -10,8 +10,8 @@ Raphael is a standalone crafting macro solver for the online game Final Fantasy 
 **Features:**
 * Produces fully-solved macros (i.e. no hand-tuned branch pruning)
 * Uses a reasonable amount of resources:
-    * Time: 10 to 30 seconds (single-threaded)
-    * Memory: 300 MB to 700 MB
+    * Time: 2 to 5 seconds (single-threaded)
+    * Memory: 300 MB to 400 MB
 * Deterministic (i.e. produces the same macro when given the same parameters).
 
 ## Installing from source
