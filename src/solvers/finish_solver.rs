@@ -1,10 +1,11 @@
 use crate::game::{
-    state::InProgress, units::*, Action, ComboAction, Condition, Effects, Settings, State,
+    state::InProgress, units::*, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+    State,
 };
 
 use rustc_hash::FxHashMap as HashMap;
 
-use super::actions::{ActionMask, DURABILITY_ACTIONS, PROGRESS_ACTIONS};
+use super::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS};
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
 
@@ -92,7 +93,10 @@ impl FinishSolver {
         }
         let mut finish_sequence: Vec<Action> = Vec::new();
         loop {
-            for action in SEARCH_ACTIONS.actions_iter() {
+            for action in SEARCH_ACTIONS
+                .intersection(self.settings.allowed_actions)
+                .actions_iter()
+            {
                 let new_state = state.use_action(action, Condition::Normal, &self.settings);
                 match new_state {
                     State::InProgress(new_state) => {
@@ -121,7 +125,10 @@ impl FinishSolver {
             Some(progress) => *progress,
             None => {
                 let mut max_progress = Progress::new(0);
-                for action in SEARCH_ACTIONS.actions_iter() {
+                for action in SEARCH_ACTIONS
+                    .intersection(self.settings.allowed_actions)
+                    .actions_iter()
+                {
                     let new_state =
                         state
                             .to_state()

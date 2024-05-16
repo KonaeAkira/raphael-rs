@@ -1,7 +1,5 @@
 use raphael::game::{
-    state::InProgress,
-    units::{Progress, Quality},
-    Action, ComboAction, Condition, Settings, State,
+    state::InProgress, units::{Progress, Quality}, Action, ActionMask, ComboAction, Condition, Settings, State
 };
 
 const SETTINGS: Settings = Settings {
@@ -9,6 +7,7 @@ const SETTINGS: Settings = Settings {
     max_durability: 60,
     max_progress: Progress::new(2000),
     max_quality: Quality::new(40000),
+    allowed_actions: ActionMask::new(),
 };
 
 fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {

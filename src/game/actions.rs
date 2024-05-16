@@ -42,6 +42,40 @@ pub enum ComboAction {
 }
 
 impl Action {
+    pub const fn level_requirement(self) -> u32 {
+        match self {
+            Action::BasicSynthesis => 1,
+            Action::BasicTouch => 5,
+            Action::MasterMend => 7,
+            Action::Observe => 13,
+            Action::TricksOfTheTrade => 13,
+            Action::WasteNot => 15,
+            Action::Veneration => 15,
+            Action::StandardTouch => 18,
+            Action::ComboStandardTouch => 18,
+            Action::GreatStrides => 21,
+            Action::Innovation => 26,
+            Action::WasteNot2 => 47,
+            Action::ByregotsBlessing => 50,
+            Action::PreciseTouch => 53,
+            Action::MuscleMemory => 54,
+            Action::CarefulSynthesis => 62,
+            Action::Manipulation => 65,
+            Action::PrudentTouch => 66,
+            Action::FocusedSynthesis => 67,
+            Action::FocusedTouch => 68,
+            Action::Reflect => 69,
+            Action::PreparatoryTouch => 71,
+            Action::Groundwork => 72,
+            Action::DelicateSynthesis => 76,
+            Action::IntensiveSynthesis => 78,
+            Action::AdvancedTouch => 84,
+            Action::ComboAdvancedTouch => 84,
+            Action::PrudentSynthesis => 88,
+            Action::TrainedFinesse => 90,
+        }
+    }
+
     pub const fn time_cost(self) -> u32 {
         match self {
             Action::BasicSynthesis => 3,

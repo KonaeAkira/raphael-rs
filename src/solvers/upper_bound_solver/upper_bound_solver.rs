@@ -1,6 +1,9 @@
 use crate::{
-    game::{state::InProgress, units::*, Action, ComboAction, Condition, Effects, Settings, State},
-    solvers::actions::{ActionMask, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    game::{
+        state::InProgress, units::*, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+        State,
+    },
+    solvers::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -154,7 +157,9 @@ impl UpperBoundSolver {
                     ComboAction::StandardTouch => &[Action::ComboAdvancedTouch],
                 };
                 for action in combo_actions {
-                    self.build_child_front(state, *action);
+                    if self.settings.allowed_actions.has(*action) {
+                        self.build_child_front(state, *action);
+                    }
                 }
             }
             None => {
@@ -167,7 +172,10 @@ impl UpperBoundSolver {
 
     fn solve_non_combo_state(&mut self, state: ReducedState) {
         self.pareto_front_builder.push_empty();
-        for action in SEARCH_ACTIONS.actions_iter() {
+        for action in SEARCH_ACTIONS
+            .intersection(self.settings.allowed_actions)
+            .actions_iter()
+        {
             self.build_child_front(state, action);
         }
     }
@@ -226,6 +234,7 @@ mod tests {
             max_durability: 70,
             max_progress: Progress::from(2400.00),
             max_quality: Quality::from(20000.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(
             settings,
@@ -252,6 +261,7 @@ mod tests {
             max_durability: 70,
             max_progress: Progress::from(2500.00),
             max_quality: Quality::from(5000.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(
             settings,
@@ -275,6 +285,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(2120.00),
             max_quality: Quality::from(5000.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(
             settings,
@@ -303,6 +314,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(1990.00),
             max_quality: Quality::from(5000.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 2221.25); // tightness test
@@ -316,6 +328,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(1970.00),
             max_quality: Quality::from(2000.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 2000.00); // tightness test
@@ -329,6 +342,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(2345.00),
             max_quality: Quality::from(8000.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 4556.25); // tightness test
@@ -342,6 +356,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(2345.00),
             max_quality: Quality::from(8000.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::Reflect]);
         assert_eq!(result, 4477.50); // tightness test
@@ -355,6 +370,7 @@ mod tests {
             max_durability: 10,
             max_progress: Progress::from(100.00),
             max_quality: Quality::from(200.00),
+            allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::PrudentTouch]);
         assert_eq!(result, 100.00); // tightness test

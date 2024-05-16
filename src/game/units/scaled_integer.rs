@@ -53,6 +53,20 @@ impl<const C: u32> std::convert::From<ScaledU32<C>> for f32 {
     }
 }
 
+impl<const C: u32> std::convert::From<f64> for ScaledU32<C> {
+    fn from(value: f64) -> Self {
+        Self {
+            inner_value: (value * C as f64).ceil() as u32,
+        }
+    }
+}
+
+impl<const C: u32> std::convert::From<ScaledU32<C>> for f64 {
+    fn from(value: ScaledU32<C>) -> Self {
+        value.inner_value as f64 / C as f64
+    }
+}
+
 impl<const C: u32> fmt::Debug for ScaledU32<C> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ScaledU32")

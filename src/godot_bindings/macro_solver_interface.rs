@@ -8,7 +8,7 @@ use godot::prelude::*;
 use crate::{
     game::{
         units::{Durability, Progress, Quality, CP},
-        Action, Condition, Settings, State,
+        Action, ActionMask, Condition, Settings, State,
     },
     solvers::MacroSolver,
 };
@@ -23,7 +23,22 @@ struct MacroSolverInterface {
     solver_result: Arc<Mutex<Option<Vec<Action>>>>,
 
     #[export]
-    configuration: Dictionary,
+    setting_max_progress: f64,
+    #[export]
+    setting_max_quality: f64,
+    #[export]
+    setting_max_durability: i64,
+    #[export]
+    setting_max_cp: i64,
+    #[export]
+    setting_base_progress: f64,
+    #[export]
+    setting_base_quality: f64,
+    #[export]
+    setting_job_level: i64,
+    #[export]
+    setting_manipulation_unlocked: bool,
+
     #[export]
     simulation: Dictionary,
     #[export]
@@ -37,14 +52,17 @@ impl INode for MacroSolverInterface {
             base,
             solver_busy: false,
             solver_result: Arc::new(Mutex::new(None)),
-            configuration: Dictionary::new(),
-            simulation: dict! {
-                "PROGRESS": 0.0,
-                "QUALITY": 0.0,
-                "DURABILITY": 0.0,
-                "CP": 0.0,
-            },
+            simulation: dict! {"PROGRESS":0.0,"QUALITY":0.0,"DURABILITY":0.0,"CP":0.0,},
             macro_string: GString::new(),
+
+            setting_max_progress: 0.0,
+            setting_max_quality: 0.0,
+            setting_max_durability: 0,
+            setting_max_cp: 0,
+            setting_base_progress: 0.0,
+            setting_base_quality: 0.0,
+            setting_job_level: 0,
+            setting_manipulation_unlocked: false,
         }
     }
 }
@@ -58,16 +76,19 @@ impl MacroSolverInterface {
     }
 
     fn get_settings(&self) -> Settings {
-        let max_progress: f32 = self.configuration.get_or_nil("MAX_PROGRESS").to();
-        let max_quality: f32 = self.configuration.get_or_nil("MAX_QUALITY").to();
-        let base_progress: f32 = self.configuration.get_or_nil("PROGRESS_INCREASE").to();
-        let base_quality: f32 = self.configuration.get_or_nil("QUALITY_INCREASE").to();
         Settings {
-            max_cp: self.configuration.get_or_nil("MAX_CP").to::<f64>() as CP,
-            max_durability: self.configuration.get_or_nil("MAX_DURABILITY").to::<f64>()
-                as Durability,
-            max_progress: Progress::from(100.0 * max_progress / base_progress),
-            max_quality: Quality::from(100.0 * max_quality / base_quality),
+            max_cp: self.setting_max_cp as CP,
+            max_durability: self.setting_max_durability as Durability,
+            max_progress: Progress::from(
+                100.0 * self.setting_max_progress / self.setting_base_progress,
+            ),
+            max_quality: Quality::from(
+                100.0 * self.setting_max_quality / self.setting_base_quality,
+            ),
+            allowed_actions: ActionMask::from_level(
+                self.setting_job_level as u32,
+                self.setting_manipulation_unlocked,
+            ),
         }
     }
 
@@ -76,17 +97,14 @@ impl MacroSolverInterface {
         self.simulation = dict! {
             "PROGRESS": 0.0,
             "QUALITY": 0.0,
-            "DURABILITY": self.configuration.get_or_nil("MAX_DURABILITY"),
-            "CP": self.configuration.get_or_nil("MAX_CP"),
+            "DURABILITY": self.setting_max_durability,
+            "CP": self.setting_max_cp,
         };
         self.macro_string = GString::new();
         self.emit_state_updated();
     }
 
     fn set_result(&mut self, actions: Vec<Action>) {
-        let base_progress: f32 = self.configuration.get_or_nil("PROGRESS_INCREASE").to();
-        let base_quality: f32 = self.configuration.get_or_nil("QUALITY_INCREASE").to();
-
         let settings = self.get_settings();
 
         // set simulation state
@@ -110,8 +128,8 @@ impl MacroSolverInterface {
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);
 
         self.simulation = dict! {
-            "PROGRESS": f32::from(progress) * base_progress / 100.0,
-            "QUALITY": f32::from(quality) * base_quality / 100.0,
+            "PROGRESS": f64::from(progress) * self.setting_base_progress / 100.0,
+            "QUALITY": f64::from(quality) * self.setting_base_quality / 100.0,
             "DURABILITY": durability,
             "CP": cp,
         };

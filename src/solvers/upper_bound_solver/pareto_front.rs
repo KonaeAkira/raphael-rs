@@ -261,6 +261,8 @@ impl Drop for ParetoFrontBuilder {
 mod tests {
     use rand::Rng;
 
+    use crate::game::ActionMask;
+
     use super::*;
 
     const SETTINGS: Settings = Settings {
@@ -268,6 +270,7 @@ mod tests {
         max_durability: 60,
         max_progress: Progress::new(1000),
         max_quality: Quality::new(2000),
+        allowed_actions: ActionMask::new(),
     };
 
     const SAMPLE_FRONT_1: &[ParetoValue] = &[

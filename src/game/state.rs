@@ -165,6 +165,8 @@ impl InProgress {
 
 #[cfg(test)]
 mod tests {
+    use crate::game::ActionMask;
+
     use super::*;
 
     const SETTINGS: Settings = Settings {
@@ -172,6 +174,7 @@ mod tests {
         max_durability: 60,
         max_progress: Progress::new(2000),
         max_quality: Quality::new(40000),
+        allowed_actions: ActionMask::new(),
     };
 
     #[test]

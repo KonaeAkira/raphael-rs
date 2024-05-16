@@ -13,4 +13,4 @@ pub mod state;
 pub use state::State;
 
 mod settings;
-pub use settings::Settings;
+pub use settings::{ActionMask, Settings};

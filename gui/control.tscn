@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://dkghcwm3lrc5n"]
+[gd_scene load_steps=34 format=3 uid="uid://dkghcwm3lrc5n"]
 
 [ext_resource type="Theme" uid="uid://c2f5y5psfqir3" path="res://resources/custom-theme.tres" id="1_ej8fr"]
 [ext_resource type="Script" path="res://scripts/MacroSolverInterface.gd" id="2_524rp"]
@@ -17,8 +17,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_PROGRESS\"]
+	target = %MacroSolverInterface.simulation[\"PROGRESS\"]
+	max_value = %MacroSolverInterface.setting_max_progress
 "
 
 [sub_resource type="GDScript" id="GDScript_yutcb"]
@@ -32,8 +32,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_PROGRESS\"]
+	target = %MacroSolverInterface.simulation[\"PROGRESS\"]
+	max_value = %MacroSolverInterface.setting_max_progress
 "
 
 [sub_resource type="GDScript" id="GDScript_m24mk"]
@@ -44,8 +44,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_QUALITY\"]
+	target = %MacroSolverInterface.simulation[\"QUALITY\"]
+	max_value = %MacroSolverInterface.setting_max_quality
 "
 
 [sub_resource type="GDScript" id="GDScript_o7vhi"]
@@ -59,8 +59,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_QUALITY\"]
+	target = %MacroSolverInterface.simulation[\"QUALITY\"]
+	max_value = %MacroSolverInterface.setting_max_quality
 "
 
 [sub_resource type="GDScript" id="GDScript_lhtja"]
@@ -71,8 +71,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated():
-	target = get_node(\"%MacroSolverInterface\").simulation[\"DURABILITY\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_DURABILITY\"]
+	target = %MacroSolverInterface.simulation[\"DURABILITY\"]
+	max_value = %MacroSolverInterface.setting_max_durability
 "
 
 [sub_resource type="GDScript" id="GDScript_2s0he"]
@@ -86,8 +86,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = get_node(\"%MacroSolverInterface\").simulation[\"DURABILITY\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_DURABILITY\"]
+	target = %MacroSolverInterface.simulation[\"DURABILITY\"]
+	max_value = %MacroSolverInterface.setting_max_durability
 "
 
 [sub_resource type="GDScript" id="GDScript_wmtbn"]
@@ -98,8 +98,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated():
-	target = get_node(\"%MacroSolverInterface\").simulation[\"CP\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_CP\"]
+	target = %MacroSolverInterface.simulation[\"CP\"]
+	max_value = %MacroSolverInterface.setting_max_cp
 "
 
 [sub_resource type="GDScript" id="GDScript_162jc"]
@@ -113,8 +113,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = get_node(\"%MacroSolverInterface\").simulation[\"CP\"]
-	max_value = get_node(\"%MacroSolverInterface\").configuration[\"MAX_CP\"]
+	target = %MacroSolverInterface.simulation[\"CP\"]
+	max_value = %MacroSolverInterface.setting_max_cp
 "
 
 [sub_resource type="GDScript" id="GDScript_htxbq"]
@@ -134,13 +134,13 @@ func _process(delta: float):
 	text = str(round(value)) + \"% HQ\"
 
 func _on_macro_solver_interface_state_updated() -> void:
-	var progress = get_node(\"%MacroSolverInterface\").simulation[\"PROGRESS\"]
-	var max_progress = get_node(\"%MacroSolverInterface\").configuration[\"MAX_PROGRESS\"]
+	var progress = %MacroSolverInterface.simulation[\"PROGRESS\"]
+	var max_progress = %MacroSolverInterface.setting_max_progress
 	if progress < max_progress:
 		target = 0
 		return
-	var quality = get_node(\"%MacroSolverInterface\").simulation[\"QUALITY\"]
-	var max_quality = get_node(\"%MacroSolverInterface\").configuration[\"MAX_QUALITY\"]
+	var quality = %MacroSolverInterface.simulation[\"QUALITY\"]
+	var max_quality = %MacroSolverInterface.setting_max_quality
 	target = HQ_TABLE[floor(quality / max_quality * 100.0)]
 "
 
@@ -195,21 +195,45 @@ func _on_macro_solver_interface_state_updated() -> void:
 [sub_resource type="GDScript" id="GDScript_3ptyu"]
 script/source = "extends SpinBox
 
-
-# Called when the node enters the scene tree for the first time.
 func _ready():
-	value = get_node(\"%MacroSolverInterface\").max_cp
-
+	value = %MacroSolverInterface.setting_max_cp
 
 func _on_macro_solver_interface_state_updated() -> void:
-	editable = !get_node(\"%MacroSolverInterface\").solver_busy
+	editable = !%MacroSolverInterface.solver_busy
+"
+
+[sub_resource type="GDScript" id="GDScript_j26k4"]
+script/source = "extends SpinBox
+
+func _ready():
+	value = %MacroSolverInterface.setting_job_level
+
+func _on_macro_solver_interface_state_updated() -> void:
+	editable = !%MacroSolverInterface.solver_busy
+"
+
+[sub_resource type="GDScript" id="GDScript_fl6hb"]
+script/source = "extends OptionButton
+
+func _ready():
+	if %MacroSolverInterface.setting_manipulation_unlocked:
+		selected = 0
+	else:
+		selected = 1
+
+func _on_macro_solver_interface_state_updated() -> void:
+	disabled = %MacroSolverInterface.solver_busy
+
+func _on_item_selected(index):
+	%MacroSolverInterface.setting_manipulation_unlocked = index == 0
+	%MacroSolverInterface.update_configuration()
 "
 
 [sub_resource type="GDScript" id="GDScript_kxsbr"]
 script/source = "extends Label
 
 func _on_macro_solver_interface_state_updated():
-	var base_prog = %MacroSolverInterface.configuration[\"PROGRESS_INCREASE\"]
+	var base_prog = %MacroSolverInterface.setting_base_progress
 	text = \"Progress increase per 100 potency: \" + str(base_prog)
 "
 
@@ -217,7 +241,7 @@ func _on_macro_solver_interface_state_updated():
 script/source = "extends Label
 
 func _on_macro_solver_interface_state_updated():
-	var base_qual = %MacroSolverInterface.configuration[\"QUALITY_INCREASE\"]
+	var base_qual = %MacroSolverInterface.setting_base_quality
 	text = \"Quality increase per 100 potency: \" + str(base_qual)
 "
 
@@ -308,6 +332,9 @@ unique_name_in_owner = true
 script = ExtResource("3_i3uhh")
 
 [node name="MacroSolverInterface" type="MacroSolverInterface" parent="."]
+setting_max_cp = 687
+setting_job_level = 90
+setting_manipulation_unlocked = true
 unique_name_in_owner = true
 script = ExtResource("2_524rp")
 
@@ -590,9 +617,36 @@ text = "Level"
 layout_mode = 2
 min_value = 1.0
 max_value = 90.0
-value = 90.0
+value = 1.0
 alignment = 2
-editable = false
+script = SubResource("GDScript_j26k4")
+
+[node name="Manipulation" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+layout_mode = 2
+text = "Manipulation"
+
+[node name="ManipulationInput" type="OptionButton" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "Yes"
+popup/item_0/id = 0
+popup/item_1/text = "No"
+popup/item_1/id = 1
+script = SubResource("GDScript_fl6hb")
+
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+layout_mode = 2
+text = "Specialist"
+
+[node name="OptionButton2" type="OptionButton" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+layout_mode = 2
+disabled = true
+item_count = 2
+selected = 1
+popup/item_0/text = "Yes"
+popup/item_0/id = 0
+popup/item_1/text = "No"
+popup/item_1/id = 1
 
 [node name="HSeparator2" type="HSeparator" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -779,6 +833,8 @@ uri = "https://github.com/KonaeAkira/raphael-rs/releases"
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/CraftsmanshipInput" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ControlInput" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxCpInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/LevelInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/BaseProg" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/BaseQual" method="_on_macro_solver_interface_state_updated"]
 [connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/TextureProgressBar" method="_on_macro_solver_interface_state_updated"]
@@ -787,6 +843,8 @@ uri = "https://github.com/KonaeAkira/raphael-rs/releases"
 [connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/CraftsmanshipInput" to="MacroSolverInterface" method="_on_craftsmanship_input_value_changed"]
 [connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ControlInput" to="MacroSolverInterface" method="_on_control_input_value_changed"]
 [connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxCpInput" to="MacroSolverInterface" method="_on_max_cp_input_value_changed"]
+[connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/LevelInput" to="MacroSolverInterface" method="_on_level_input_value_changed"]
+[connection signal="item_selected" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" method="_on_item_selected"]
 [connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="MacroSolverInterface" method="_on_solve_button_pressed"]
 [connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_pressed"]
 [connection signal="close_requested" from="TabContainer/Macro Solver/RecipeSelectWindow" to="TabContainer/Macro Solver/RecipeSelectWindow" method="_on_close_requested"]

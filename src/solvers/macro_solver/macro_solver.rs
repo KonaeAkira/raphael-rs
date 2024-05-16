@@ -1,7 +1,7 @@
-use crate::game::Condition;
 use crate::game::{state::InProgress, units::Quality, Action, Settings, State};
+use crate::game::{ActionMask, Condition};
 use crate::solvers::actions::{
-    ActionMask, DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS,
+    DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS,
 };
 use crate::solvers::{FinishSolver, UpperBoundSolver};
 
@@ -11,7 +11,7 @@ use typed_arena::Arena;
 
 use super::*;
 
-const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
     .union(MIXED_ACTIONS)
     .union(DURABILITY_ACTIONS);
@@ -50,7 +50,7 @@ impl MacroSolver {
                         quality: lower_bound,
                         actions: Vec::new(),
                     };
-                    let result = self._do_solve(state, result, &FULL_SEARCH_ACTIONS.actions());
+                    let result = self._do_solve(state, result);
                     if !result.actions.is_empty() {
                         return Some(result.actions);
                     }
@@ -62,12 +62,7 @@ impl MacroSolver {
         }
     }
 
-    fn _do_solve(
-        &mut self,
-        state: InProgress,
-        mut best_result: MacroResult,
-        allowed_actions: &[Action],
-    ) -> MacroResult {
+    fn _do_solve(&mut self, state: InProgress, mut best_result: MacroResult) -> MacroResult {
         let timer = Instant::now();
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
@@ -79,11 +74,14 @@ impl MacroSolver {
 
         while let Some(current_node) = search_queue.pop() {
             let trace: &Option<SearchTrace> = traces.alloc(current_node.trace);
-            for action in allowed_actions {
+            for action in SEARCH_ACTIONS
+                .intersection(self.settings.allowed_actions)
+                .actions_iter()
+            {
                 let new_state =
                     current_node
                         .state
-                        .use_action(*action, Condition::Normal, &self.settings);
+                        .use_action(action, Condition::Normal, &self.settings);
                 if let State::InProgress(state) = new_state {
                     if !self.finish_solver.can_finish(&state) {
                         finish_solver_rejected_node += 1;
@@ -95,13 +93,13 @@ impl MacroSolver {
                     }
                     let quality = self.settings.max_quality.sub(state.missing_quality);
                     if quality > best_result.quality {
-                        let mut actions = SearchTrace::new(trace, *action).actions();
+                        let mut actions = SearchTrace::new(trace, action).actions();
                         actions.extend(self.finish_solver.get_finish_sequence(state).unwrap());
                         best_result = MacroResult { quality, actions };
                     }
                     search_queue.push(SearchNode {
                         state,
-                        trace: Some(SearchTrace::new(trace, *action)),
+                        trace: Some(SearchTrace::new(trace, action)),
                     });
                 }
             }
