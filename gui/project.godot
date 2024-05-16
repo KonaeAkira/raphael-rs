@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Raphael"
-config/version="v0.4.0-dev"
+config/version="v0.4.0"
 run/main_scene="res://control.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
 config/icon="res://resources/icon.svg"
