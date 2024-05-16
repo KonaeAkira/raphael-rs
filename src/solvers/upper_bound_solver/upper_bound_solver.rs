@@ -16,11 +16,6 @@ const INF_PROGRESS: Progress = Progress::new(100_000);
 const INF_QUALITY: Quality = Quality::new(100_000);
 const INF_DURABILITY: Durability = 100;
 
-pub const WASTE_NOT_COST: CP = Action::WasteNot2.base_cp_cost() / 8;
-pub const MANIPULATION_COST: CP = Action::Manipulation.base_cp_cost() / 8;
-// CP value for 5 Durability
-pub const DURABILITY_COST: CP = Action::Manipulation.base_cp_cost() / 8;
-
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct ReducedEffects {
     pub inner_quiet: u8,
@@ -37,12 +32,12 @@ struct ReducedState {
     effects: ReducedEffects,
 }
 
-impl std::convert::From<InProgress> for ReducedState {
-    fn from(state: InProgress) -> Self {
+impl ReducedState {
+    fn from_state(state: InProgress, base_durability_cost: CP, waste_not_cost: CP) -> Self {
         let used_durability = (INF_DURABILITY - state.durability) / 5;
         let durability_cost = std::cmp::min(
-            used_durability * DURABILITY_COST,
-            (used_durability + 1) / 2 * DURABILITY_COST + WASTE_NOT_COST,
+            used_durability * base_durability_cost,
+            (used_durability + 1) / 2 * base_durability_cost + waste_not_cost,
         );
         Self {
             cp: state.cp - durability_cost,
@@ -81,6 +76,8 @@ impl std::convert::From<ReducedState> for InProgress {
 
 pub struct UpperBoundSolver {
     settings: Settings,
+    base_durability_cost: CP,
+    waste_not_cost: CP,
     solved_states: HashMap<ReducedState, Box<[ParetoValue]>>,
     pareto_front_builder: ParetoFrontBuilder,
 }
@@ -91,6 +88,18 @@ impl UpperBoundSolver {
         dbg!(std::mem::align_of::<ReducedState>());
         UpperBoundSolver {
             settings,
+            base_durability_cost: if settings.allowed_actions.has(Action::Manipulation) {
+                Action::Manipulation.base_cp_cost() / 8
+            } else {
+                Action::MasterMend.base_cp_cost() / 6
+            },
+            waste_not_cost: if settings.allowed_actions.has(Action::WasteNot2) {
+                Action::WasteNot2.base_cp_cost() / 8
+            } else if settings.allowed_actions.has(Action::WasteNot) {
+                Action::WasteNot.base_cp_cost() / 4
+            } else {
+                1000 // inf
+            },
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(settings),
         }
@@ -100,12 +109,13 @@ impl UpperBoundSolver {
         let current_quality = self.settings.max_quality.sub(state.missing_quality);
 
         // refund effects and durability
-        state.cp += state.effects.manipulation as CP * MANIPULATION_COST;
-        state.cp += state.effects.waste_not as CP * WASTE_NOT_COST;
-        state.cp += state.durability / 5 * DURABILITY_COST;
+        state.cp += state.effects.manipulation as CP * (Action::Manipulation.base_cp_cost() / 8);
+        state.cp += state.effects.waste_not as CP * self.waste_not_cost;
+        state.cp += state.durability / 5 * self.base_durability_cost;
         state.durability = INF_DURABILITY;
 
-        let reduced_state = ReducedState::from(state);
+        let reduced_state =
+            ReducedState::from_state(state, self.base_durability_cost, self.waste_not_cost);
 
         if !self.solved_states.contains_key(&reduced_state) {
             self.solve_state(reduced_state);
@@ -187,7 +197,11 @@ impl UpperBoundSolver {
             State::InProgress(new_state) => {
                 let action_progress = INF_PROGRESS.sub(new_state.missing_progress);
                 let action_quality = INF_QUALITY.sub(new_state.missing_quality);
-                let new_state = ReducedState::from(new_state);
+                let new_state = ReducedState::from_state(
+                    new_state,
+                    self.base_durability_cost,
+                    self.waste_not_cost,
+                );
                 if new_state.cp > 0 {
                     match self.solved_states.get(&new_state) {
                         Some(pareto_front) => self.pareto_front_builder.push(&pareto_front),
@@ -196,7 +210,8 @@ impl UpperBoundSolver {
                     self.pareto_front_builder
                         .add(action_progress, action_quality);
                     self.pareto_front_builder.merge();
-                } else if new_state.cp + DURABILITY_COST >= 0 && action_progress != Progress::new(0)
+                } else if new_state.cp + self.base_durability_cost >= 0
+                    && action_progress != Progress::new(0)
                 {
                     // "durability" must not go lower than -5
                     // last action must be a progress increase
@@ -375,5 +390,19 @@ mod tests {
         let result = solve(settings, &[Action::PrudentTouch]);
         assert_eq!(result, 100.00); // tightness test
         assert_ge!(result, 100.00); // correctness test
+    }
+
+    #[test]
+    fn test_09() {
+        let settings = Settings {
+            max_cp: 700,
+            max_durability: 70,
+            max_progress: Progress::from(2500.00),
+            max_quality: Quality::from(40000.00),
+            allowed_actions: ActionMask::from_level(90, false),
+        };
+        let result = solve(settings, &[]);
+        assert_eq!(result, 4767.50); // tightness test
+        assert_ge!(result, 4440.00); // correctness test
     }
 }
