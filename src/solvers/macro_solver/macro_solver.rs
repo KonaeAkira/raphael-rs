@@ -43,15 +43,13 @@ impl MacroSolver {
                 if !self.finish_solver.can_finish(&state) {
                     return None;
                 }
-                let mut lower_bound = self.bound_solver.quality_upper_bound(state);
-                while lower_bound != Quality::new(0) {
-                    lower_bound = lower_bound.saturating_sub(Quality::new(20));
-                    let result = MacroResult {
-                        quality: lower_bound,
-                        actions: Vec::new(),
-                    };
-                    let result = self._do_solve(state, result);
-                    if !result.actions.is_empty() {
+                let mut minimum_quality = self.bound_solver.quality_upper_bound(state);
+                while minimum_quality != Quality::new(0) {
+                    minimum_quality = minimum_quality.saturating_sub(Quality::new(20));
+                    let result = self.do_solve(state, minimum_quality);
+                    if result.quality == self.settings.max_quality
+                        || result.quality >= minimum_quality
+                    {
                         return Some(result.actions);
                     }
                 }
@@ -62,13 +60,18 @@ impl MacroSolver {
         }
     }
 
-    fn _do_solve(&mut self, state: InProgress, mut best_result: MacroResult) -> MacroResult {
+    fn do_solve(&mut self, state: InProgress, mut minimum_quality: Quality) -> MacroResult {
         let timer = Instant::now();
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
         let traces: Arena<Option<SearchTrace>> = Arena::new();
         let mut search_queue = SearchQueue::new(self.settings);
+
+        let mut best_result = MacroResult {
+            quality: Quality::new(0),
+            actions: Vec::new(),
+        };
 
         search_queue.push(SearchNode { state, trace: None });
 
@@ -87,7 +90,7 @@ impl MacroSolver {
                         finish_solver_rejected_node += 1;
                         continue;
                     }
-                    if best_result.quality >= self.bound_solver.quality_upper_bound(state) {
+                    if minimum_quality >= self.bound_solver.quality_upper_bound(state) {
                         upper_bound_solver_rejected_nodes += 1;
                         continue;
                     }
@@ -96,6 +99,7 @@ impl MacroSolver {
                         let mut actions = SearchTrace::new(trace, action).actions();
                         actions.extend(self.finish_solver.get_finish_sequence(state).unwrap());
                         best_result = MacroResult { quality, actions };
+                        minimum_quality = std::cmp::max(minimum_quality, best_result.quality);
                     }
                     search_queue.push(SearchNode {
                         state,

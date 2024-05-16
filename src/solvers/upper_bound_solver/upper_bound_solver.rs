@@ -143,10 +143,7 @@ impl UpperBoundSolver {
             }
         }
 
-        std::cmp::min(
-            self.settings.max_quality,
-            pareto_front[lo].quality.add(current_quality),
-        )
+        pareto_front[lo].quality.add(current_quality)
     }
 
     fn solve_state(&mut self, state: ReducedState) {
@@ -346,7 +343,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2000.00); // tightness test
+        assert_eq!(result, 2605.00); // tightness test
         assert_ge!(result, 2000.00); // correctness test
     }
 
