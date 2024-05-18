@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS};
 
-const INF_PROGRESS: Progress = Progress::new(100000);
+const INF_PROGRESS: Progress = 1_000_000;
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -64,7 +64,7 @@ impl ReducedState {
             durability: self.durability,
             cp: self.cp,
             missing_progress: INF_PROGRESS,
-            missing_quality: Quality::new(0),
+            missing_quality: 0,
             effects: self.effects.to_effects(),
             combo: self.combo,
         }
@@ -156,7 +156,7 @@ impl FinishSolver {
                             .use_action(action, Condition::Normal, &self.settings);
                     match new_state {
                         State::InProgress(new_state) => {
-                            let progress = INF_PROGRESS.sub(new_state.missing_progress);
+                            let progress = INF_PROGRESS - new_state.missing_progress;
                             let sub_result = self.solve(ReducedState::from_state(&new_state));
                             Self::update_result(
                                 &mut result,
@@ -166,13 +166,8 @@ impl FinishSolver {
                             );
                         }
                         State::Failed { missing_progress } => {
-                            let progress = INF_PROGRESS.sub(missing_progress);
-                            Self::update_result(
-                                &mut result,
-                                &[Progress::new(0)],
-                                action.time_cost(),
-                                progress,
-                            );
+                            let progress = INF_PROGRESS - missing_progress;
+                            Self::update_result(&mut result, &[0], action.time_cost(), progress);
                         }
                         _ => (),
                     }
@@ -191,17 +186,17 @@ impl FinishSolver {
         progress_increase: Progress,
     ) {
         if result.len() < sub_result.len() + time_offset as usize {
-            result.resize(sub_result.len() + time_offset as usize, Progress::new(0));
+            result.resize(sub_result.len() + time_offset as usize, 0);
         }
         let result: &mut [Progress] =
             &mut result[time_offset as usize..time_offset as usize + sub_result.len()];
         for (a, b) in result.iter_mut().zip(sub_result.iter()) {
-            *a = std::cmp::max(*a, (*b).add(progress_increase));
+            *a = std::cmp::max(*a, (*b) + progress_increase);
         }
     }
 
     fn canonicalize_result(&self, result: &mut Vec<Progress>) {
-        let mut rolling_max = Progress::new(0);
+        let mut rolling_max = 0;
         for a in result.iter_mut() {
             rolling_max = std::cmp::max(rolling_max, *a);
             *a = rolling_max;
@@ -237,8 +232,10 @@ mod tests {
         let settings = Settings {
             max_cp: 100,
             max_durability: 30,
-            max_progress: Progress::from(360.00),
-            max_quality: Quality::from(20000.00),
+            max_progress: 360,
+            max_quality: 20000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -251,8 +248,10 @@ mod tests {
         let settings = Settings {
             max_cp: 100,
             max_durability: 60,
-            max_progress: Progress::from(2100.00),
-            max_quality: Quality::from(20000.00),
+            max_progress: 2100,
+            max_quality: 20000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };

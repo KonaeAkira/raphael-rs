@@ -6,6 +6,8 @@ pub struct Settings {
     pub max_durability: Durability,
     pub max_progress: Progress,
     pub max_quality: Quality,
+    pub base_progress: Progress,
+    pub base_quality: Quality,
     pub job_level: u8,
     pub allowed_actions: ActionMask,
 }

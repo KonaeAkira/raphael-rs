@@ -114,8 +114,8 @@ impl ParetoFrontBuilder {
             slice = std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length);
         }
         for x in slice.iter_mut() {
-            x.progress = x.progress.add(progress);
-            x.quality = x.quality.add(quality);
+            x.progress = x.progress + progress;
+            x.quality = x.quality + quality;
         }
     }
 
@@ -268,23 +268,25 @@ mod tests {
     const SETTINGS: Settings = Settings {
         max_cp: 500,
         max_durability: 60,
-        max_progress: Progress::new(1000),
-        max_quality: Quality::new(2000),
+        max_progress: 1000,
+        max_quality: 2000,
+        base_progress: 0,
+        base_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::none(),
     };
 
     const SAMPLE_FRONT_1: &[ParetoValue] = &[
-        ParetoValue::new(Progress::new(300), Quality::new(100)),
-        ParetoValue::new(Progress::new(200), Quality::new(200)),
-        ParetoValue::new(Progress::new(100), Quality::new(300)),
+        ParetoValue::new(300, 100),
+        ParetoValue::new(200, 200),
+        ParetoValue::new(100, 300),
     ];
 
     const SAMPLE_FRONT_2: &[ParetoValue] = &[
-        ParetoValue::new(Progress::new(300), Quality::new(50)),
-        ParetoValue::new(Progress::new(250), Quality::new(150)),
-        ParetoValue::new(Progress::new(150), Quality::new(250)),
-        ParetoValue::new(Progress::new(50), Quality::new(270)),
+        ParetoValue::new(300, 50),
+        ParetoValue::new(250, 150),
+        ParetoValue::new(150, 250),
+        ParetoValue::new(50, 270),
     ];
 
     #[test]
@@ -302,14 +304,14 @@ mod tests {
     fn test_value_shift() {
         let mut builder = ParetoFrontBuilder::new(SETTINGS);
         builder.push(SAMPLE_FRONT_1);
-        builder.add(Progress::new(100), Quality::new(100));
+        builder.add(100, 100);
         let front = builder.peek().unwrap();
         assert_eq!(
             *front,
             [
-                ParetoValue::new(Progress::new(400), Quality::new(200)),
-                ParetoValue::new(Progress::new(300), Quality::new(300)),
-                ParetoValue::new(Progress::new(200), Quality::new(400)),
+                ParetoValue::new(400, 200),
+                ParetoValue::new(300, 300),
+                ParetoValue::new(200, 400),
             ]
         );
         builder.check_invariants();
@@ -325,11 +327,11 @@ mod tests {
         assert_eq!(
             *front,
             [
-                ParetoValue::new(Progress::new(300), Quality::new(100)),
-                ParetoValue::new(Progress::new(250), Quality::new(150)),
-                ParetoValue::new(Progress::new(200), Quality::new(200)),
-                ParetoValue::new(Progress::new(150), Quality::new(250)),
-                ParetoValue::new(Progress::new(100), Quality::new(300)),
+                ParetoValue::new(300, 100),
+                ParetoValue::new(250, 150),
+                ParetoValue::new(200, 200),
+                ParetoValue::new(150, 250),
+                ParetoValue::new(100, 300),
             ]
         );
         builder.check_invariants();
@@ -344,10 +346,7 @@ mod tests {
         builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
         builder.merge();
         let front = builder.peek().unwrap();
-        assert_eq!(
-            *front,
-            [ParetoValue::new(Progress::new(1100), Quality::new(2300))]
-        );
+        assert_eq!(*front, [ParetoValue::new(1100, 2300)]);
         builder.check_invariants();
     }
 
@@ -355,7 +354,7 @@ mod tests {
     fn test_random_simulation() {
         let mut rng = rand::thread_rng();
         let mut builder = ParetoFrontBuilder::new(SETTINGS);
-        let mut lut = [Quality::new(0); 5000];
+        let mut lut = [0; 5000];
 
         for _ in 0..200 {
             let cnt = rng.gen_range(1..200);
@@ -363,12 +362,9 @@ mod tests {
                 let progress: u32 = rng.gen_range(0..5000);
                 let quality: u32 = rng.gen_range(0..10000);
                 for i in 0..=progress as usize {
-                    lut[i] = std::cmp::max(lut[i], Quality::new(quality));
+                    lut[i] = std::cmp::max(lut[i], quality);
                 }
-                builder.push(&[ParetoValue {
-                    progress: Progress::new(progress),
-                    quality: Quality::new(quality),
-                }]);
+                builder.push(&[ParetoValue { progress, quality }]);
                 builder.check_invariants();
             }
             for _ in 1..cnt {
@@ -383,7 +379,7 @@ mod tests {
 
         let front = builder.peek().unwrap();
         for value in front.iter() {
-            assert_eq!(lut[f32::from(value.progress) as usize], value.quality);
+            assert_eq!(lut[value.progress as usize], value.quality);
         }
 
         builder.clear();

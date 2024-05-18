@@ -1,9 +1,7 @@
 use radix_heap::RadixHeapMap;
 use rustc_hash::FxHashSet;
 
-use crate::game::{
-    state::InProgress, units::Quality, Action, ActionMask, Condition, Settings, State,
-};
+use crate::game::{state::InProgress, Action, ActionMask, Condition, Settings, State};
 use crate::solvers::actions::{
     DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS,
 };
@@ -59,7 +57,7 @@ impl MacroSolver {
         let mut search_queue = RadixHeapMap::new();
         let mut traces: Vec<Option<SearchTrace>> = Vec::new();
 
-        let mut best_quality = Quality::new(0);
+        let mut best_quality = 0;
         let mut best_actions = None;
 
         visited_states.insert(state);
@@ -111,7 +109,7 @@ impl MacroSolver {
                         action,
                     }));
 
-                    let quality = self.settings.max_quality.sub(state.missing_quality);
+                    let quality = self.settings.max_quality - state.missing_quality;
                     if quality > best_quality {
                         best_quality = quality;
                         let actions = get_actions(&traces, traces.len() - 1);

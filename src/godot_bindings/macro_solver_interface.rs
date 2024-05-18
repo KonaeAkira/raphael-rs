@@ -79,12 +79,10 @@ impl MacroSolverInterface {
         Settings {
             max_cp: self.setting_max_cp as CP,
             max_durability: self.setting_max_durability as Durability,
-            max_progress: Progress::from(
-                100.0 * self.setting_max_progress / self.setting_base_progress,
-            ),
-            max_quality: Quality::from(
-                100.0 * self.setting_max_quality / self.setting_base_quality,
-            ),
+            max_progress: self.setting_max_progress as Progress,
+            max_quality: self.setting_max_quality as Quality,
+            base_progress: self.setting_base_progress as Progress,
+            base_quality: self.setting_base_quality as Quality,
             job_level: self.setting_job_level as u8,
             allowed_actions: ActionMask::from_level(
                 self.setting_job_level as u32,
@@ -122,7 +120,7 @@ impl MacroSolverInterface {
                     &state.effects,
                     Condition::Normal,
                 ));
-        let progress = settings.max_progress.sub(missing_progress);
+        let progress = settings.max_progress - missing_progress;
 
         let missing_quality = state
             .missing_quality
@@ -131,15 +129,15 @@ impl MacroSolverInterface {
                 &state.effects,
                 Condition::Normal,
             ));
-        let quality = settings.max_quality.sub(missing_quality);
+        let quality = settings.max_quality - missing_quality;
 
         let durability =
             state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);
 
         self.simulation = dict! {
-            "PROGRESS": f64::from(progress) * self.setting_base_progress / 100.0,
-            "QUALITY": f64::from(quality) * self.setting_base_quality / 100.0,
+            "PROGRESS": progress,
+            "QUALITY": quality,
             "DURABILITY": durability,
             "CP": cp,
         };

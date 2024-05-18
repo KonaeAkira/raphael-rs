@@ -12,8 +12,8 @@ use super::pareto_front::{ParetoFrontBuilder, ParetoValue};
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS).union(MIXED_ACTIONS);
 
-const INF_PROGRESS: Progress = Progress::new(100_000);
-const INF_QUALITY: Quality = Quality::new(100_000);
+const INF_PROGRESS: Progress = 1_000_000;
+const INF_QUALITY: Quality = 1_000_000;
 const INF_DURABILITY: Durability = 100;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -106,7 +106,7 @@ impl UpperBoundSolver {
     }
 
     pub fn quality_upper_bound(&mut self, mut state: InProgress) -> Quality {
-        let current_quality = self.settings.max_quality.sub(state.missing_quality);
+        let current_quality = self.settings.max_quality - state.missing_quality;
 
         // refund effects and durability
         state.cp += state.effects.manipulation as CP * (Action::Manipulation.base_cp_cost() / 8);
@@ -126,10 +126,10 @@ impl UpperBoundSolver {
         match pareto_front.first() {
             Some(first) => {
                 if first.progress < state.missing_progress {
-                    return Quality::new(0);
+                    return 0;
                 }
             }
-            None => return Quality::new(0),
+            None => return 0,
         }
 
         let mut lo = 0;
@@ -143,7 +143,7 @@ impl UpperBoundSolver {
             }
         }
 
-        pareto_front[lo].quality.add(current_quality)
+        pareto_front[lo].quality + current_quality
     }
 
     fn solve_state(&mut self, state: ReducedState) {
@@ -192,8 +192,8 @@ impl UpperBoundSolver {
             InProgress::from(state).use_action(action, Condition::Normal, &self.settings);
         match new_state {
             State::InProgress(new_state) => {
-                let action_progress = INF_PROGRESS.sub(new_state.missing_progress);
-                let action_quality = INF_QUALITY.sub(new_state.missing_quality);
+                let action_progress = INF_PROGRESS - new_state.missing_progress;
+                let action_quality = INF_QUALITY - new_state.missing_quality;
                 let new_state = ReducedState::from_state(
                     new_state,
                     self.base_durability_cost,
@@ -207,13 +207,10 @@ impl UpperBoundSolver {
                     self.pareto_front_builder
                         .add(action_progress, action_quality);
                     self.pareto_front_builder.merge();
-                } else if new_state.cp + self.base_durability_cost >= 0
-                    && action_progress != Progress::new(0)
-                {
+                } else if new_state.cp + self.base_durability_cost >= 0 && action_progress != 0 {
                     // "durability" must not go lower than -5
                     // last action must be a progress increase
-                    self.pareto_front_builder
-                        .push(&[ParetoValue::new(Progress::new(0), Quality::new(0))]);
+                    self.pareto_front_builder.push(&[ParetoValue::new(0, 0)]);
                     self.pareto_front_builder
                         .add(action_progress, action_quality);
                     self.pareto_front_builder.merge();
@@ -230,11 +227,10 @@ mod tests {
     use super::*;
     use more_asserts::*;
 
-    fn solve(settings: Settings, actions: &[Action]) -> f32 {
+    fn solve(settings: Settings, actions: &[Action]) -> Quality {
         let state = State::new(&settings).use_actions(actions, Condition::Normal, &settings);
-        let result = UpperBoundSolver::new(settings)
-            .quality_upper_bound(state.as_in_progress().unwrap())
-            .into();
+        let result =
+            UpperBoundSolver::new(settings).quality_upper_bound(state.as_in_progress().unwrap());
         dbg!(result);
         result
     }
@@ -244,8 +240,10 @@ mod tests {
         let settings = Settings {
             max_cp: 553,
             max_durability: 70,
-            max_progress: Progress::from(2400.00),
-            max_quality: Quality::from(20000.00),
+            max_progress: 2400,
+            max_quality: 20000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -263,8 +261,8 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3485.00); // tightness test
-        assert_ge!(result, 3352.50); // correctness test
+        assert_eq!(result, 3484); // tightness test
+        assert_ge!(result, 3352); // correctness test
     }
 
     #[test]
@@ -272,8 +270,10 @@ mod tests {
         let settings = Settings {
             max_cp: 700,
             max_durability: 70,
-            max_progress: Progress::from(2500.00),
-            max_quality: Quality::from(5000.00),
+            max_progress: 2500,
+            max_quality: 5000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -288,8 +288,8 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4767.50); // tightness test
-        assert_ge!(result, 4685.00); // correctness test
+        assert_eq!(result, 4766); // tightness test
+        assert_ge!(result, 4685); // correctness test
     }
 
     #[test]
@@ -297,8 +297,10 @@ mod tests {
         let settings = Settings {
             max_cp: 617,
             max_durability: 60,
-            max_progress: Progress::from(2120.00),
-            max_quality: Quality::from(5000.00),
+            max_progress: 2120,
+            max_quality: 5000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -318,8 +320,8 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 4055.00); // tightness test
-        assert_ge!(result, 4055.00); // correctness test
+        assert_eq!(result, 4052); // tightness test
+        assert_ge!(result, 4052); // correctness test
     }
 
     #[test]
@@ -327,14 +329,16 @@ mod tests {
         let settings = Settings {
             max_cp: 411,
             max_durability: 60,
-            max_progress: Progress::from(1990.00),
-            max_quality: Quality::from(5000.00),
+            max_progress: 1990,
+            max_quality: 5000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2221.25); // tightness test
-        assert_ge!(result, 2011.25); // correctness test
+        assert_eq!(result, 2220); // tightness test
+        assert_ge!(result, 2011); // correctness test
     }
 
     #[test]
@@ -342,14 +346,16 @@ mod tests {
         let settings = Settings {
             max_cp: 450,
             max_durability: 60,
-            max_progress: Progress::from(1970.00),
-            max_quality: Quality::from(2000.00),
+            max_progress: 1970,
+            max_quality: 2000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2605.00); // tightness test
-        assert_ge!(result, 2000.00); // correctness test
+        assert_eq!(result, 2604); // tightness test
+        assert_ge!(result, 2000); // correctness test
     }
 
     #[test]
@@ -357,14 +363,16 @@ mod tests {
         let settings = Settings {
             max_cp: 673,
             max_durability: 60,
-            max_progress: Progress::from(2345.00),
-            max_quality: Quality::from(8000.00),
+            max_progress: 2345,
+            max_quality: 8000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4556.25); // tightness test
-        assert_ge!(result, 4405.00); // correctness test
+        assert_eq!(result, 4554); // tightness test
+        assert_ge!(result, 4405); // correctness test
     }
 
     #[test]
@@ -372,14 +380,16 @@ mod tests {
         let settings = Settings {
             max_cp: 673,
             max_durability: 60,
-            max_progress: Progress::from(2345.00),
-            max_quality: Quality::from(8000.00),
+            max_progress: 2345,
+            max_quality: 8000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 4477.50); // tightness test
-        assert_ge!(result, 4138.75); // correctness test
+        assert_eq!(result, 4477); // tightness test
+        assert_ge!(result, 4138); // correctness test
     }
 
     #[test]
@@ -387,14 +397,16 @@ mod tests {
         let settings = Settings {
             max_cp: 32,
             max_durability: 10,
-            max_progress: Progress::from(100.00),
-            max_quality: Quality::from(200.00),
+            max_progress: 10000,
+            max_quality: 20000,
+            base_progress: 10000,
+            base_quality: 10000,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::PrudentTouch]);
-        assert_eq!(result, 100.00); // tightness test
-        assert_ge!(result, 100.00); // correctness test
+        assert_eq!(result, 10000); // tightness test
+        assert_ge!(result, 10000); // correctness test
     }
 
     #[test]
@@ -402,13 +414,15 @@ mod tests {
         let settings = Settings {
             max_cp: 700,
             max_durability: 70,
-            max_progress: Progress::from(2500.00),
-            max_quality: Quality::from(40000.00),
+            max_progress: 2500,
+            max_quality: 40000,
+            base_progress: 100,
+            base_quality: 100,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, false),
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 4767.50); // tightness test
-        assert_ge!(result, 4440.00); // correctness test
+        assert_eq!(result, 4766); // tightness test
+        assert_ge!(result, 4440); // correctness test
     }
 }

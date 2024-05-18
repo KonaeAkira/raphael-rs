@@ -1,12 +1,15 @@
 use raphael::game::{
-    state::InProgress, units::{Progress, Quality}, Action, ActionMask, ComboAction, Condition, Settings, State
+    state::InProgress,
+    Action, ActionMask, ComboAction, Condition, Settings, State,
 };
 
 const SETTINGS: Settings = Settings {
     max_cp: 200,
     max_durability: 60,
-    max_progress: Progress::new(2000),
-    max_quality: Quality::new(40000),
+    max_progress: 2000,
+    max_quality: 40000,
+    base_progress: 100,
+    base_quality: 100,
     job_level: 90,
     allowed_actions: ActionMask::none(),
 };
@@ -32,7 +35,7 @@ fn test_basic_synthesis() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(120.00))
+                SETTINGS.max_progress.saturating_sub(120)
             );
             assert_eq!(state.combo, None);
         }
@@ -49,7 +52,7 @@ fn test_basic_touch() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(100.00))
+                SETTINGS.max_quality.saturating_sub(100)
             );
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.combo, Some(ComboAction::BasicTouch));
@@ -67,7 +70,7 @@ fn test_standard_touch() {
             assert_eq!(state.durability, 40);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(237.50))
+                SETTINGS.max_quality.saturating_sub(237)
             );
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.combo, Some(ComboAction::StandardTouch));
@@ -95,7 +98,7 @@ fn test_advanced_touch() {
             assert_eq!(state.durability, 30);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(417.50))
+                SETTINGS.max_quality.saturating_sub(417)
             );
             assert_eq!(state.effects.inner_quiet, 3);
             assert_eq!(state.combo, None);
@@ -248,7 +251,7 @@ fn test_byregots_blessing() {
             assert_eq!(state.durability, 40);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(232.00))
+                SETTINGS.max_quality.saturating_sub(232)
             );
             assert_eq!(state.effects.inner_quiet, 0);
             assert_eq!(state.combo, None);
@@ -270,7 +273,7 @@ fn test_precise_touch() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(225.00))
+                SETTINGS.max_quality.saturating_sub(225)
             );
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.combo, None);
@@ -291,7 +294,7 @@ fn test_muscle_memory() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(300.00))
+                SETTINGS.max_progress.saturating_sub(300)
             );
             assert_eq!(state.effects.muscle_memory, 5);
             assert_eq!(state.combo, None);
@@ -312,7 +315,7 @@ fn test_careful_synthesis() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(180.00))
+                SETTINGS.max_progress.saturating_sub(180)
             );
             assert_eq!(state.combo, None);
         }
@@ -342,7 +345,7 @@ fn test_prudent_touch() {
             assert_eq!(state.durability, 55);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(100.00))
+                SETTINGS.max_quality.saturating_sub(100)
             );
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.combo, None);
@@ -363,7 +366,7 @@ fn test_focused_synthesis() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(200.00))
+                SETTINGS.max_progress.saturating_sub(200)
             );
             assert_eq!(state.combo, None);
         }
@@ -383,7 +386,7 @@ fn test_focused_touch() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(150.00))
+                SETTINGS.max_quality.saturating_sub(150)
             );
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.combo, None);
@@ -404,7 +407,7 @@ fn test_reflect() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(100.00))
+                SETTINGS.max_quality.saturating_sub(100)
             );
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.combo, None);
@@ -425,7 +428,7 @@ fn test_preparatory_touch() {
             assert_eq!(state.durability, 40);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(200.00))
+                SETTINGS.max_quality.saturating_sub(200)
             );
             assert_eq!(state.effects.inner_quiet, 2);
             assert_eq!(state.combo, None);
@@ -443,7 +446,7 @@ fn test_groundwork() {
             assert_eq!(state.durability, 40);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(360.00))
+                SETTINGS.max_progress.saturating_sub(360)
             );
             assert_eq!(state.combo, None);
         }
@@ -465,11 +468,11 @@ fn test_delicate_synthesis() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(100.00))
+                SETTINGS.max_progress.saturating_sub(100)
             );
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(100.00))
+                SETTINGS.max_quality.saturating_sub(100)
             );
             assert_eq!(state.effects.inner_quiet, 1);
             assert_eq!(state.combo, None);
@@ -488,7 +491,7 @@ fn test_intensive_synthesis() {
             assert_eq!(state.durability, 50);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(400.00))
+                SETTINGS.max_progress.saturating_sub(400)
             );
             assert_eq!(state.combo, None);
         }
@@ -508,7 +511,7 @@ fn test_prudent_synthesis() {
             assert_eq!(state.durability, 55);
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(180.00))
+                SETTINGS.max_progress.saturating_sub(180)
             );
             assert_eq!(state.combo, None);
         }
@@ -526,7 +529,7 @@ fn test_trained_finesse() {
             assert_eq!(state.durability, 60);
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(200.00))
+                SETTINGS.max_quality.saturating_sub(200)
             );
             assert_eq!(state.effects.inner_quiet, 10);
             assert_eq!(state.combo, None);

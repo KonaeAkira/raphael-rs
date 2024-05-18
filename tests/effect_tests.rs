@@ -1,14 +1,12 @@
-use raphael::game::{
-    state::InProgress,
-    units::{Progress, Quality},
-    Action, ActionMask, Condition, Settings, State,
-};
+use raphael::game::{state::InProgress, Action, ActionMask, Condition, Settings, State};
 
 const SETTINGS: Settings = Settings {
     max_cp: 200,
     max_durability: 60,
-    max_progress: Progress::new(2000),
-    max_quality: Quality::new(40000),
+    max_progress: 2000,
+    max_quality: 40000,
+    base_progress: 100,
+    base_quality: 100,
     job_level: 90,
     allowed_actions: ActionMask::none(),
 };
@@ -21,7 +19,7 @@ fn test_muscle_memory() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(360.00))
+                SETTINGS.max_progress.saturating_sub(360)
             );
             assert_eq!(state.effects.muscle_memory, 0);
         }
@@ -43,7 +41,7 @@ fn test_veneration() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(270.00))
+                SETTINGS.max_progress.saturating_sub(270)
             );
             assert_eq!(state.effects.veneration, 2);
         }
@@ -60,7 +58,7 @@ fn test_muscle_memory_veneration() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_progress,
-                SETTINGS.max_progress.saturating_sub(Progress::from(450.00))
+                SETTINGS.max_progress.saturating_sub(450)
             );
             assert_eq!(state.effects.muscle_memory, 0);
             assert_eq!(state.effects.veneration, 2);
@@ -133,7 +131,7 @@ fn test_great_strides() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(200.00))
+                SETTINGS.max_quality.saturating_sub(200)
             );
             assert_eq!(state.effects.great_strides, 0);
         }
@@ -155,7 +153,7 @@ fn test_innovation() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(150.00))
+                SETTINGS.max_quality.saturating_sub(150)
             );
             assert_eq!(state.effects.innovation, 2);
         }
@@ -172,7 +170,7 @@ fn test_great_strides_innovation() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(250.00))
+                SETTINGS.max_quality.saturating_sub(250)
             );
             assert_eq!(state.effects.great_strides, 0);
             assert_eq!(state.effects.innovation, 2);
@@ -189,7 +187,7 @@ fn test_inner_quiet() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(140.00))
+                SETTINGS.max_quality.saturating_sub(140)
             );
             assert_eq!(state.effects.inner_quiet, 5);
         }
@@ -206,7 +204,7 @@ fn test_innovation_inner_quiet() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(Quality::from(210.00))
+                SETTINGS.max_quality.saturating_sub(209)
             );
             assert_eq!(state.effects.innovation, 2);
             assert_eq!(state.effects.inner_quiet, 5);

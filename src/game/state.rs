@@ -98,14 +98,14 @@ impl InProgress {
         new_state.durability -= durability_cost;
 
         // reset muscle memory if progress increased
-        if progress_increase > Progress::new(0) {
+        if progress_increase != 0 {
             new_state.missing_progress =
                 new_state.missing_progress.saturating_sub(progress_increase);
             new_state.effects.muscle_memory = 0;
         }
 
         // reset great strides and increase inner quiet if quality increased
-        if quality_increase > Quality::new(0) && settings.job_level >= 11 {
+        if quality_increase != 0 && settings.job_level >= 11 {
             new_state.missing_quality = new_state.missing_quality.saturating_sub(quality_increase);
             new_state.effects.great_strides = 0;
             new_state.effects.inner_quiet += match action {
@@ -117,7 +117,7 @@ impl InProgress {
             new_state.effects.inner_quiet = std::cmp::min(10, new_state.effects.inner_quiet);
         }
 
-        if new_state.missing_progress == Progress::new(0) {
+        if new_state.missing_progress == 0 {
             return State::Completed {
                 missing_quality: new_state.missing_quality,
             };
@@ -160,46 +160,5 @@ impl InProgress {
         }
 
         State::InProgress(new_state)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::game::ActionMask;
-
-    use super::*;
-
-    const SETTINGS: Settings = Settings {
-        max_cp: 200,
-        max_durability: 60,
-        max_progress: Progress::new(2000),
-        max_quality: Quality::new(40000),
-        job_level: 90,
-        allowed_actions: ActionMask::none(),
-    };
-
-    #[test]
-    fn test_initial_state() {
-        let state = State::new(&SETTINGS);
-        match state {
-            State::InProgress(state) => {
-                assert_eq!(state.combo, Some(ComboAction::SynthesisBegin));
-                assert_eq!(state.cp, SETTINGS.max_cp);
-                assert_eq!(state.durability, SETTINGS.max_durability);
-                assert_eq!(state.missing_progress, SETTINGS.max_progress);
-                assert_eq!(state.missing_quality, SETTINGS.max_quality);
-                assert_eq!(state.effects.inner_quiet, 0);
-            }
-            _ => panic!(),
-        }
-    }
-
-    #[test]
-    fn test_not_enough_cp() {
-        let mut settings: Settings = SETTINGS;
-        settings.max_cp = 10;
-        let state = InProgress::new(&settings);
-        let state = state.use_action(Action::Manipulation, Condition::Normal, &settings);
-        assert!(matches!(state, State::Invalid));
     }
 }

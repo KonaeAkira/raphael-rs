@@ -199,35 +199,35 @@ impl Action {
         base_cost - effect_bonus
     }
 
-    pub const fn progress_efficiency(self, job_level: u8) -> Progress {
+    pub const fn progress_efficiency(self, job_level: u8) -> f32 {
         match self {
             Action::BasicSynthesis => {
                 if job_level < 31 {
-                    Progress::new(100)
+                    1.00
                 } else {
-                    Progress::new(120)
+                    1.20
                 }
             }
-            Action::MuscleMemory => Progress::new(300),
+            Action::MuscleMemory => 3.00,
             Action::CarefulSynthesis => {
                 if job_level < 82 {
-                    Progress::new(150)
+                    1.50
                 } else {
-                    Progress::new(180)
+                    1.80
                 }
             }
-            Action::FocusedSynthesis => Progress::new(200),
+            Action::FocusedSynthesis => 2.00,
             Action::Groundwork => {
                 if job_level < 86 {
-                    Progress::new(300)
+                    3.00
                 } else {
-                    Progress::new(360)
+                    3.60
                 }
             }
-            Action::DelicateSynthesis => Progress::new(100),
-            Action::IntensiveSynthesis => Progress::new(400),
-            Action::PrudentSynthesis => Progress::new(180),
-            _ => Progress::new(0),
+            Action::DelicateSynthesis => 1.00,
+            Action::IntensiveSynthesis => 4.00,
+            Action::PrudentSynthesis => 1.80,
+            _ => 0.00,
         }
     }
 
@@ -237,66 +237,67 @@ impl Action {
         effects: &Effects,
         condition: Condition,
     ) -> Progress {
-        let base_progress = match condition {
-            Condition::Malleable => self.progress_efficiency(settings.job_level).scale(3, 2),
-            _ => self.progress_efficiency(settings.job_level),
+        let efficiency_mod = self.progress_efficiency(settings.job_level);
+        let condition_mod = match condition {
+            Condition::Malleable => 1.50,
+            _ => 1.00,
         };
-        let mut effect_bonus = Progress::new(0);
+        let mut effect_mod = 1.00;
         if effects.muscle_memory > 0 {
-            let muscle_memory_bonus = base_progress;
-            effect_bonus = effect_bonus.add(muscle_memory_bonus);
+            effect_mod += 1.00;
         }
         if effects.veneration > 0 {
-            let veneration_bonus = base_progress.scale(1, 2);
-            effect_bonus = effect_bonus.add(veneration_bonus);
+            effect_mod += 0.50;
         }
-        base_progress.add(effect_bonus)
+        (settings.base_progress as f32 * efficiency_mod * condition_mod * effect_mod) as Progress
     }
 
-    pub const fn base_quality_increase(self) -> Quality {
+    pub const fn base_quality_increase(self) -> f32 {
         match self {
-            Action::BasicTouch => Quality::new(100),
-            Action::StandardTouch => Quality::new(125),
-            Action::ComboStandardTouch => Quality::new(125),
-            Action::PreciseTouch => Quality::new(150),
-            Action::PrudentTouch => Quality::new(100),
-            Action::FocusedTouch => Quality::new(150),
-            Action::Reflect => Quality::new(100),
-            Action::PreparatoryTouch => Quality::new(200),
-            Action::DelicateSynthesis => Quality::new(100),
-            Action::AdvancedTouch => Quality::new(150),
-            Action::ComboAdvancedTouch => Quality::new(150),
-            Action::TrainedFinesse => Quality::new(100),
-            Action::ByregotsBlessing => Quality::new(100),
-            _ => Quality::new(0),
+            Action::BasicTouch => 1.00,
+            Action::StandardTouch => 1.25,
+            Action::ComboStandardTouch => 1.25,
+            Action::PreciseTouch => 1.50,
+            Action::PrudentTouch => 1.00,
+            Action::FocusedTouch => 1.50,
+            Action::Reflect => 1.00,
+            Action::PreparatoryTouch => 2.00,
+            Action::DelicateSynthesis => 1.00,
+            Action::AdvancedTouch => 1.50,
+            Action::ComboAdvancedTouch => 1.50,
+            Action::TrainedFinesse => 1.00,
+            Action::ByregotsBlessing => 1.00,
+            _ => 0.00,
         }
     }
 
-    pub fn quality_increase(self, _settings: &Settings, effects: &Effects, condition: Condition) -> Quality {
-        let mut base_quality = match self {
-            Action::ByregotsBlessing => self
-                .base_quality_increase()
-                .scale(2 * effects.inner_quiet as u32 + 10, 10),
+    pub fn quality_increase(
+        self,
+        settings: &Settings,
+        effects: &Effects,
+        condition: Condition,
+    ) -> Quality {
+        let efficieny_mod = match self {
+            Action::ByregotsBlessing => {
+                self.base_quality_increase() * (1.00 + 0.20 * effects.inner_quiet as f32)
+            }
             _ => self.base_quality_increase(),
         };
-        match condition {
-            Condition::Good => base_quality = base_quality.scale(3, 2),
-            Condition::Excellent => base_quality = base_quality.scale(4, 1),
-            Condition::Poor => base_quality = base_quality.scale(1, 2),
-            _ => (),
+        let condition_mod = match condition {
+            Condition::Good => 1.50,
+            Condition::Excellent => 4.00,
+            Condition::Poor => 0.50,
+            _ => 1.00,
         };
-        base_quality = base_quality.scale(10 + effects.inner_quiet as u32, 10);
-        let innovation_bonus = if effects.innovation != 0 {
-            base_quality.scale(1, 2)
-        } else {
-            Quality::new(0)
-        };
-        let great_strides_bonus = if effects.great_strides != 0 {
-            base_quality
-        } else {
-            Quality::new(0)
-        };
-        base_quality.add(innovation_bonus).add(great_strides_bonus)
+        let mut effect_mod = 1.00;
+        if effects.innovation != 0 {
+            effect_mod += 0.50;
+        }
+        if effects.great_strides != 0 {
+            effect_mod += 1.00;
+        }
+        effect_mod *= 1.00 + 0.10 * effects.inner_quiet as f32;
+        (settings.base_quality as f32 * efficieny_mod * condition_mod * effect_mod) as Quality
     }
 
     pub const fn required_combo(self) -> Option<ComboAction> {
