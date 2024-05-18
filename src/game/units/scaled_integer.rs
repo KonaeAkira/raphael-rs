@@ -1,5 +1,7 @@
 use core::fmt;
 
+use radix_heap::Radix;
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct ScaledU32<const C: u32> {
     inner_value: u32,
@@ -74,4 +76,12 @@ impl<const C: u32> fmt::Debug for ScaledU32<C> {
             .field("inner_value", &self.inner_value)
             .finish()
     }
+}
+
+impl<const C: u32> Radix for ScaledU32<C> {
+    fn radix_similarity(&self, other: &Self) -> u32 {
+        self.inner_value.radix_similarity(&other.inner_value)
+    }
+
+    const RADIX_BITS: u32 = u32::RADIX_BITS;
 }

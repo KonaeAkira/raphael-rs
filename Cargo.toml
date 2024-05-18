@@ -11,9 +11,8 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 godot = { git = "https://github.com/godot-rust/gdext", rev = "ca586182f430df3fb4ef8548d43bc756ce92022e", optional = true }
-pareto_front = "1.0.1"
+radix-heap = "0.4.2"
 rustc-hash = "1.1.0"
-typed-arena = "2.0.2"
 
 [features]
 godot_binding = ["dep:godot"]

@@ -1,3 +1,5 @@
+use radix_heap::RadixHeapMap;
+
 use crate::game::{
     state::InProgress, units::Quality, Action, ActionMask, Condition, Settings, State,
 };
@@ -6,7 +8,6 @@ use crate::solvers::actions::{
 };
 use crate::solvers::{FinishSolver, UpperBoundSolver};
 
-use std::collections::BinaryHeap;
 use std::time::Instant;
 use std::vec::Vec;
 
@@ -23,6 +24,8 @@ pub struct MacroSolver {
 
 impl MacroSolver {
     pub fn new(settings: Settings) -> MacroSolver {
+        dbg!(std::mem::size_of::<SearchNode>());
+        dbg!(std::mem::align_of::<SearchNode>());
         MacroSolver {
             settings,
             finish_solver: FinishSolver::new(settings),
@@ -52,20 +55,22 @@ impl MacroSolver {
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
-        let mut search_queue = BinaryHeap::new();
+        let mut search_queue = RadixHeapMap::new();
 
         let mut best_quality = Quality::new(0);
         let mut best_actions = None;
 
-        search_queue.push(SearchNode {
-            state: state,
-            quality_bound: self.bound_solver.quality_upper_bound(state),
-            actions: Vec::new(),
-        });
+        search_queue.push(
+            self.bound_solver.quality_upper_bound(state),
+            SearchNode {
+                state: state,
+                actions: Vec::new(),
+            },
+        );
 
-        while let Some(node) = search_queue.pop() {
+        while let Some((quality_bound, node)) = search_queue.pop() {
             accepted_nodes += 1;
-            if best_quality == self.settings.max_quality || node.quality_bound <= best_quality {
+            if best_quality == self.settings.max_quality || quality_bound <= best_quality {
                 continue;
             }
             for action in SEARCH_ACTIONS
@@ -94,11 +99,7 @@ impl MacroSolver {
                         best_actions =
                             Some(actions.iter().chain(&finish_actions).copied().collect());
                     }
-                    search_queue.push(SearchNode {
-                        state,
-                        quality_bound,
-                        actions,
-                    });
+                    search_queue.push(quality_bound, SearchNode { state, actions });
                 }
             }
         }
@@ -117,21 +118,8 @@ impl MacroSolver {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 struct SearchNode {
     pub state: InProgress,
-    pub quality_bound: Quality,
     pub actions: Vec<Action>,
-}
-
-impl std::cmp::PartialOrd for SearchNode {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl std::cmp::Ord for SearchNode {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.quality_bound.cmp(&other.quality_bound)
-    }
 }
