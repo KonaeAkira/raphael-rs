@@ -1,7 +1,4 @@
-use raphael::game::{
-    state::InProgress,
-    Action, ActionMask, ComboAction, Condition, Settings, State,
-};
+use crate::game::{state::InProgress, Action, ActionMask, ComboAction, Condition, Settings, State};
 
 const SETTINGS: Settings = Settings {
     max_cp: 200,

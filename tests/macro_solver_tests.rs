@@ -24,7 +24,7 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> Quality {
 }
 
 #[test]
-fn test_01() {
+fn test_random_0f93c79f() {
     let settings = Settings {
         max_cp: 370,
         max_durability: 60,
@@ -40,7 +40,7 @@ fn test_01() {
 }
 
 #[test]
-fn test_02() {
+fn test_random_1e281667() {
     let settings = Settings {
         max_cp: 553,
         max_durability: 70,
@@ -56,7 +56,7 @@ fn test_02() {
 }
 
 #[test]
-fn test_03() {
+fn test_random_d0bf2aef() {
     let settings = Settings {
         max_cp: 612,
         max_durability: 60,
@@ -120,7 +120,7 @@ fn test_zero_quality() {
 }
 
 #[test]
-fn test_05() {
+fn test_random_e413e05d() {
     let settings = Settings {
         max_cp: 450,
         max_durability: 80,
@@ -136,7 +136,7 @@ fn test_05() {
 }
 
 #[test]
-fn test_06() {
+fn test_random_bb38a037() {
     let settings = Settings {
         max_cp: 540,
         max_durability: 70,
@@ -152,7 +152,7 @@ fn test_06() {
 }
 
 #[test]
-fn test_07() {
+fn test_random_a300ca2b() {
     let settings = Settings {
         max_cp: 700,
         max_durability: 70,
@@ -168,7 +168,7 @@ fn test_07() {
 }
 
 #[test]
-fn test_08() {
+fn test_random_0f9d7781() {
     let settings = Settings {
         max_cp: 701,
         max_durability: 60,
@@ -184,7 +184,7 @@ fn test_08() {
 }
 
 #[test]
-fn test_09() {
+fn test_random_e451d981() {
     let settings = Settings {
         max_cp: 606,
         max_durability: 80,
@@ -200,7 +200,7 @@ fn test_09() {
 }
 
 #[test]
-fn test_10() {
+fn test_random_6799bb1d() {
     let settings = Settings {
         max_cp: 501,
         max_durability: 70,
@@ -216,7 +216,7 @@ fn test_10() {
 }
 
 #[test]
-fn test_11() {
+fn test_random_940b4755() {
     let settings = Settings {
         max_cp: 640,
         max_durability: 70,
@@ -232,63 +232,65 @@ fn test_11() {
 }
 
 #[test]
-fn test_rinascita_min_stats() {
+fn test_rinascita_3700_3280() {
     let settings = Settings {
         max_cp: 680,
         max_durability: 70,
-        max_progress: 2210,
-        max_quality: 20000,
-        base_progress: 100,
-        base_quality: 100,
+        max_progress: 5060,
+        max_quality: 12628,
+        base_progress: 229,
+        base_quality: 224,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4693);
+    assert_eq!(get_quality(&settings, &actions), 10513);
 }
 
 #[test]
-fn test_pactmaker_min_stats() {
+fn test_pactmaker_3240_3130() {
     let settings = Settings {
         max_cp: 600,
         max_durability: 70,
-        max_progress: 2150,
-        max_quality: 20000,
-        base_progress: 100,
-        base_quality: 100,
+        max_progress: 4300,
+        max_quality: 12800,
+        base_progress: 200,
+        base_quality: 215,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4073);
+    assert_eq!(get_quality(&settings, &actions), 8758);
 }
 
 #[test]
-fn test_diadochos_min_stats() {
+fn test_diadochos_4021_3660() {
     let settings = Settings {
         max_cp: 640,
         max_durability: 70,
-        max_progress: 2705,
-        max_quality: 20000,
-        base_progress: 100,
-        base_quality: 100,
+        max_progress: 6600,
+        max_quality: 14040,
+        base_progress: 249,
+        base_quality: 247,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3816);
+    assert_eq!(get_quality(&settings, &actions), 9688);
 }
 
-// #[test]
-// fn test_indagator_3858_4057() {
-//     let settings = Settings {
-//         max_cp: 687,
-//         max_durability: 70,
-//         max_progress: 5720.00 / 239.00 * 100.00,
-//         max_quality: 12900.00 / 271.00 * 100.00,
-//         job_level: 90,
-//         allowed_actions: ActionMask::from_level(90, true),
-//     };
-//     let actions = solve(&settings).unwrap();
-//     assert_eq!(get_quality(&settings, &actions), 4722.50);
-// }
+#[test]
+fn test_indagator_3858_4057() {
+    let settings = Settings {
+        max_cp: 687,
+        max_durability: 70,
+        max_progress: 5720,
+        max_quality: 12900,
+        base_progress: 239,
+        base_quality: 271,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90, true),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 12793);
+}

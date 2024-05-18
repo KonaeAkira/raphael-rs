@@ -105,16 +105,18 @@ impl InProgress {
         }
 
         // reset great strides and increase inner quiet if quality increased
-        if quality_increase != 0 && settings.job_level >= 11 {
+        if quality_increase != 0 {
             new_state.missing_quality = new_state.missing_quality.saturating_sub(quality_increase);
             new_state.effects.great_strides = 0;
-            new_state.effects.inner_quiet += match action {
-                Action::Reflect => 2,
-                Action::PreciseTouch => 2,
-                Action::PreparatoryTouch => 2,
-                _ => 1,
-            };
-            new_state.effects.inner_quiet = std::cmp::min(10, new_state.effects.inner_quiet);
+            if settings.job_level >= 11 {
+                new_state.effects.inner_quiet += match action {
+                    Action::Reflect => 2,
+                    Action::PreciseTouch => 2,
+                    Action::PreparatoryTouch => 2,
+                    _ => 1,
+                };
+                new_state.effects.inner_quiet = std::cmp::min(10, new_state.effects.inner_quiet);
+            }
         }
 
         if new_state.missing_progress == 0 {

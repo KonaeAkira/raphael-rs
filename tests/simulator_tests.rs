@@ -13,7 +13,81 @@ fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
 }
 
 #[test]
+fn test_random_926ae85b() {
+    // Copper Gorget
+    // 10 Craftsmanship, 10 Control
+    let settings = Settings {
+        max_cp: 50,
+        max_durability: 60,
+        max_progress: 33,
+        max_quality: 150,
+        base_progress: 4,
+        base_quality: 38,
+        job_level: 10,
+        allowed_actions: ActionMask::none(),
+    };
+    let state = from_action_sequence(
+        &settings,
+        &[
+            Action::BasicSynthesis,
+            Action::BasicTouch,
+            Action::BasicTouch,
+        ],
+    );
+    match state {
+        State::InProgress(state) => {
+            assert_eq!(state.cp, 14);
+            assert_eq!(state.durability, 30);
+            assert_eq!(settings.max_progress - state.missing_progress, 4);
+            assert_eq!(settings.max_quality - state.missing_quality, 76);
+            assert_eq!(state.effects.inner_quiet, 0);
+        }
+        _ => panic!(),
+    }
+}
+
+#[test]
+fn test_random_3c721e47() {
+    // Ironwood Spear
+    // 3000 Craftsmanship, 3000 Control
+    let settings = Settings {
+        max_cp: 500,
+        max_durability: 80,
+        max_progress: 3100,
+        max_quality: 6800,
+        base_progress: 240,
+        base_quality: 307,
+        job_level: 85,
+        allowed_actions: ActionMask::none(),
+    };
+    let state = from_action_sequence(
+        &settings,
+        &[
+            Action::MuscleMemory,
+            Action::Veneration,
+            Action::WasteNot,
+            Action::Groundwork,
+            Action::Manipulation,
+            Action::Innovation,
+            Action::PreparatoryTouch,
+            Action::PrudentTouch,
+        ],
+    );
+    match state {
+        State::InProgress(state) => {
+            assert_eq!(state.cp, 223);
+            assert_eq!(state.durability, 60);
+            assert_eq!(settings.max_progress - state.missing_progress, 2520);
+            assert_eq!(settings.max_quality - state.missing_quality, 1473);
+        }
+        _ => panic!(),
+    }
+}
+
+#[test]
 fn test_random_3ba90d3a() {
+    // Grade 4 Skybuilders' Stone
+    // 1826 Craftsmanship, 1532 Control
     let settings = Settings {
         max_cp: 427,
         max_durability: 60,
@@ -30,36 +104,8 @@ fn test_random_3ba90d3a() {
             Action::Veneration,
             Action::CarefulSynthesis,
             Action::CarefulSynthesis,
-        ],
-    );
-    match state {
-        State::InProgress(state) => {
-            assert_eq!(state.cp, 395);
-            assert_eq!(state.durability, 40);
-            assert_eq!(settings.max_progress - state.missing_progress, 918);
-            assert_eq!(settings.max_quality - state.missing_quality, 0);
-        }
-        _ => panic!(),
-    }
-}
-
-#[test]
-fn test_random_cf2bca5c() {
-    let settings = Settings {
-        max_cp: 427,
-        max_durability: 60,
-        max_progress: 1080,
-        max_quality: 9900,
-        base_progress: 204,
-        base_quality: 253,
-        job_level: 81,
-        allowed_actions: ActionMask::none(),
-    };
-    let state = from_action_sequence(
-        &settings,
-        &[
-            Action::Reflect,
             Action::PreparatoryTouch,
+            Action::MasterMend,
             Action::Innovation,
             Action::PrudentTouch,
             Action::BasicTouch,
@@ -68,10 +114,12 @@ fn test_random_cf2bca5c() {
     );
     match state {
         State::InProgress(state) => {
-            assert_eq!(state.cp, 302);
-            assert_eq!(state.durability, 5);
-            assert_eq!(settings.max_progress - state.missing_progress, 0);
-            assert_eq!(settings.max_quality - state.missing_quality, 2719);
+            assert_eq!(state.cp, 188);
+            assert_eq!(state.durability, 25);
+            assert_eq!(settings.max_progress - state.missing_progress, 918);
+            assert_eq!(settings.max_quality - state.missing_quality, 2118);
+            assert_eq!(state.effects.inner_quiet, 5);
+            assert_eq!(state.effects.innovation, 1);
         }
         _ => panic!(),
     }

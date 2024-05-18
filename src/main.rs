@@ -4,14 +4,14 @@ use raphael::solvers::MacroSolver;
 
 fn main() {
     let settings = Settings {
-        max_cp: 700,
+        max_cp: 687,
         max_durability: 70,
-        max_progress: 6600,
-        max_quality: 14040,
-        base_progress: 248,
-        base_quality: 270,
+        max_progress: 5720,
+        max_quality: 12900,
+        base_progress: 239,
+        base_quality: 271,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, false),
+        allowed_actions: ActionMask::from_level(90, true),
     };
 
     let state = State::new(&settings);
