@@ -89,8 +89,8 @@ impl InProgress {
 
         let cp_cost = action.cp_cost(&self.effects, condition);
         let durability_cost = action.durability_cost(&self.effects, condition);
-        let progress_increase = action.progress_increase(&self.effects, condition);
-        let quality_increase = action.quality_increase(&self.effects, condition);
+        let progress_increase = action.progress_increase(settings, &self.effects, condition);
+        let quality_increase = action.quality_increase(settings, &self.effects, condition);
 
         let mut new_state = *self;
         new_state.combo = action.to_combo();
@@ -105,7 +105,7 @@ impl InProgress {
         }
 
         // reset great strides and increase inner quiet if quality increased
-        if quality_increase > Quality::new(0) {
+        if quality_increase > Quality::new(0) && settings.job_level >= 11 {
             new_state.missing_quality = new_state.missing_quality.saturating_sub(quality_increase);
             new_state.effects.great_strides = 0;
             new_state.effects.inner_quiet += match action {
@@ -174,6 +174,7 @@ mod tests {
         max_durability: 60,
         max_progress: Progress::new(2000),
         max_quality: Quality::new(40000),
+        job_level: 90,
         allowed_actions: ActionMask::none(),
     };
 

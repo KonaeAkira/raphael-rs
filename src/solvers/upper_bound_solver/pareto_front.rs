@@ -270,6 +270,7 @@ mod tests {
         max_durability: 60,
         max_progress: Progress::new(1000),
         max_quality: Quality::new(2000),
+        job_level: 90,
         allowed_actions: ActionMask::none(),
     };
 

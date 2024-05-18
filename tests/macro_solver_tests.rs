@@ -33,6 +33,7 @@ fn test_01() {
         max_durability: 60,
         max_progress: Progress::from(2000.00),
         max_quality: Quality::from(40000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -46,6 +47,7 @@ fn test_02() {
         max_durability: 70,
         max_progress: Progress::from(2400.00),
         max_quality: Quality::from(20000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -59,6 +61,7 @@ fn test_03() {
         max_durability: 60,
         max_progress: Progress::from(2560.00),
         max_quality: Quality::from(40000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -72,6 +75,7 @@ fn test_unsolvable() {
         max_durability: 60,
         max_progress: Progress::from(4000.00),
         max_quality: Quality::from(1000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings);
@@ -85,6 +89,7 @@ fn test_max_quality() {
         max_durability: 60,
         max_progress: Progress::from(2000.00),
         max_quality: Quality::from(1000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -98,6 +103,7 @@ fn test_zero_quality() {
         max_durability: 60,
         max_progress: Progress::from(1920.00),
         max_quality: Quality::from(1000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -111,6 +117,7 @@ fn test_05() {
         max_durability: 80,
         max_progress: Progress::from(2800.00),
         max_quality: Quality::from(40000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -124,6 +131,7 @@ fn test_06() {
         max_durability: 70,
         max_progress: Progress::from(2700.00),
         max_quality: Quality::from(40000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -137,6 +145,7 @@ fn test_07() {
         max_durability: 70,
         max_progress: Progress::from(2500.00),
         max_quality: Quality::from(40000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -150,6 +159,7 @@ fn test_08() {
         max_durability: 60,
         max_progress: Progress::from(3950.00),
         max_quality: Quality::from(6950.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -163,6 +173,7 @@ fn test_09() {
         max_durability: 80,
         max_progress: Progress::from(1200.00),
         max_quality: Quality::from(20000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -176,6 +187,7 @@ fn test_10() {
         max_durability: 70,
         max_progress: Progress::from(1950.00),
         max_quality: Quality::from(20000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -189,6 +201,7 @@ fn test_11() {
         max_durability: 70,
         max_progress: Progress::from(2170.00),
         max_quality: Quality::from(20000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -202,6 +215,7 @@ fn test_rinascita_min_stats() {
         max_durability: 70,
         max_progress: Progress::from(2210.00),
         max_quality: Quality::from(20000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -215,6 +229,7 @@ fn test_pactmaker_min_stats() {
         max_durability: 70,
         max_progress: Progress::from(2150.00),
         max_quality: Quality::from(20000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -228,6 +243,7 @@ fn test_diadochos_min_stats() {
         max_durability: 70,
         max_progress: Progress::from(2705.00),
         max_quality: Quality::from(20000.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
@@ -241,6 +257,7 @@ fn test_indagator_3858_4057() {
         max_durability: 70,
         max_progress: Progress::from(5720.00 / 239.00 * 100.00),
         max_quality: Quality::from(12900.00 / 271.00 * 100.00),
+        job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();

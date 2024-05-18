@@ -239,6 +239,7 @@ mod tests {
             max_durability: 30,
             max_progress: Progress::from(360.00),
             max_quality: Quality::from(20000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let actions = solve(settings, &[]);
@@ -252,6 +253,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(2100.00),
             max_quality: Quality::from(20000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let actions = solve(settings, &[]);

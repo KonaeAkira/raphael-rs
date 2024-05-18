@@ -246,6 +246,7 @@ mod tests {
             max_durability: 70,
             max_progress: Progress::from(2400.00),
             max_quality: Quality::from(20000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(
@@ -273,6 +274,7 @@ mod tests {
             max_durability: 70,
             max_progress: Progress::from(2500.00),
             max_quality: Quality::from(5000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(
@@ -297,6 +299,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(2120.00),
             max_quality: Quality::from(5000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(
@@ -326,6 +329,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(1990.00),
             max_quality: Quality::from(5000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -340,6 +344,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(1970.00),
             max_quality: Quality::from(2000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -354,6 +359,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(2345.00),
             max_quality: Quality::from(8000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -368,6 +374,7 @@ mod tests {
             max_durability: 60,
             max_progress: Progress::from(2345.00),
             max_quality: Quality::from(8000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::Reflect]);
@@ -382,6 +389,7 @@ mod tests {
             max_durability: 10,
             max_progress: Progress::from(100.00),
             max_quality: Quality::from(200.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::PrudentTouch]);
@@ -396,6 +404,7 @@ mod tests {
             max_durability: 70,
             max_progress: Progress::from(2500.00),
             max_quality: Quality::from(40000.00),
+            job_level: 90,
             allowed_actions: ActionMask::from_level(90, false),
         };
         let result = solve(settings, &[]);

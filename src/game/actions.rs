@@ -1,5 +1,7 @@
 use crate::game::{units::*, Condition, Effects};
 
+use super::Settings;
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Action {
     BasicSynthesis,
@@ -197,13 +199,31 @@ impl Action {
         base_cost - effect_bonus
     }
 
-    pub const fn base_progress_increase(self) -> Progress {
+    pub const fn progress_efficiency(self, job_level: u8) -> Progress {
         match self {
-            Action::BasicSynthesis => Progress::new(120),
+            Action::BasicSynthesis => {
+                if job_level < 31 {
+                    Progress::new(100)
+                } else {
+                    Progress::new(120)
+                }
+            }
             Action::MuscleMemory => Progress::new(300),
-            Action::CarefulSynthesis => Progress::new(180),
+            Action::CarefulSynthesis => {
+                if job_level < 82 {
+                    Progress::new(150)
+                } else {
+                    Progress::new(180)
+                }
+            }
             Action::FocusedSynthesis => Progress::new(200),
-            Action::Groundwork => Progress::new(360),
+            Action::Groundwork => {
+                if job_level < 86 {
+                    Progress::new(300)
+                } else {
+                    Progress::new(360)
+                }
+            }
             Action::DelicateSynthesis => Progress::new(100),
             Action::IntensiveSynthesis => Progress::new(400),
             Action::PrudentSynthesis => Progress::new(180),
@@ -211,10 +231,15 @@ impl Action {
         }
     }
 
-    pub fn progress_increase(self, effects: &Effects, condition: Condition) -> Progress {
+    pub fn progress_increase(
+        self,
+        settings: &Settings,
+        effects: &Effects,
+        condition: Condition,
+    ) -> Progress {
         let base_progress = match condition {
-            Condition::Malleable => self.base_progress_increase().scale(3, 2),
-            _ => self.base_progress_increase(),
+            Condition::Malleable => self.progress_efficiency(settings.job_level).scale(3, 2),
+            _ => self.progress_efficiency(settings.job_level),
         };
         let mut effect_bonus = Progress::new(0);
         if effects.muscle_memory > 0 {
@@ -247,7 +272,7 @@ impl Action {
         }
     }
 
-    pub fn quality_increase(self, effects: &Effects, condition: Condition) -> Quality {
+    pub fn quality_increase(self, _settings: &Settings, effects: &Effects, condition: Condition) -> Quality {
         let mut base_quality = match self {
             Action::ByregotsBlessing => self
                 .base_quality_increase()

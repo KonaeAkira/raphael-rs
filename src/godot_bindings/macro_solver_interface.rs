@@ -85,6 +85,7 @@ impl MacroSolverInterface {
             max_quality: Quality::from(
                 100.0 * self.setting_max_quality / self.setting_base_quality,
             ),
+            job_level: self.setting_job_level as u8,
             allowed_actions: ActionMask::from_level(
                 self.setting_job_level as u32,
                 self.setting_manipulation_unlocked,
@@ -113,14 +114,23 @@ impl MacroSolverInterface {
             .unwrap();
         let last_action = actions.last().unwrap();
 
-        let missing_progress = state
-            .missing_progress
-            .saturating_sub(last_action.progress_increase(&state.effects, Condition::Normal));
+        let missing_progress =
+            state
+                .missing_progress
+                .saturating_sub(last_action.progress_increase(
+                    &settings,
+                    &state.effects,
+                    Condition::Normal,
+                ));
         let progress = settings.max_progress.sub(missing_progress);
 
         let missing_quality = state
             .missing_quality
-            .saturating_sub(last_action.quality_increase(&state.effects, Condition::Normal));
+            .saturating_sub(last_action.quality_increase(
+                &settings,
+                &state.effects,
+                Condition::Normal,
+            ));
         let quality = settings.max_quality.sub(missing_quality);
 
         let durability =
