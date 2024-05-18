@@ -1,4 +1,5 @@
 use radix_heap::RadixHeapMap;
+use rustc_hash::FxHashSet;
 
 use crate::game::{
     state::InProgress, units::Quality, Action, ActionMask, Condition, Settings, State,
@@ -55,11 +56,13 @@ impl MacroSolver {
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
+        let mut visited_states = FxHashSet::default();
         let mut search_queue = RadixHeapMap::new();
 
         let mut best_quality = Quality::new(0);
         let mut best_actions = None;
 
+        visited_states.insert(state);
         search_queue.push(
             self.bound_solver.quality_upper_bound(state),
             SearchNode {
@@ -99,7 +102,10 @@ impl MacroSolver {
                         best_actions =
                             Some(actions.iter().chain(&finish_actions).copied().collect());
                     }
-                    search_queue.push(quality_bound, SearchNode { state, actions });
+                    if !visited_states.contains(&state) {
+                        visited_states.insert(state);
+                        search_queue.push(quality_bound, SearchNode { state, actions });
+                    }
                 }
             }
         }
