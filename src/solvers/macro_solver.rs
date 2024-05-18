@@ -52,12 +52,12 @@ impl MacroSolver {
     fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
         let timer = Instant::now();
 
-        let mut accepted_nodes: usize = 0;
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
         let mut visited_states = FxHashSet::default();
         let mut search_queue = RadixHeapMap::new();
+        let mut traces: Vec<Option<SearchTrace>> = Vec::new();
 
         let mut best_quality = Quality::new(0);
         let mut best_actions = None;
@@ -67,12 +67,12 @@ impl MacroSolver {
             self.bound_solver.quality_upper_bound(state),
             SearchNode {
                 state: state,
-                actions: Vec::new(),
+                backtrack_index: 0,
             },
         );
+        traces.push(None);
 
         while let Some((quality_bound, node)) = search_queue.pop() {
-            accepted_nodes += 1;
             if best_quality == self.settings.max_quality || quality_bound <= best_quality {
                 continue;
             }
@@ -84,6 +84,10 @@ impl MacroSolver {
                     .state
                     .use_action(action, Condition::Normal, &self.settings);
                 if let State::InProgress(state) = state {
+                    if visited_states.contains(&state) {
+                        continue;
+                    }
+
                     if !self.finish_solver.can_finish(&state) {
                         finish_solver_rejected_node += 1;
                         continue;
@@ -93,18 +97,26 @@ impl MacroSolver {
                         upper_bound_solver_rejected_nodes += 1;
                         continue;
                     }
+
+                    visited_states.insert(state);
+                    search_queue.push(
+                        quality_bound,
+                        SearchNode {
+                            state,
+                            backtrack_index: traces.len(),
+                        },
+                    );
+                    traces.push(Some(SearchTrace {
+                        parent: node.backtrack_index,
+                        action,
+                    }));
+
                     let quality = self.settings.max_quality.sub(state.missing_quality);
-                    let actions: Vec<Action> =
-                        node.actions.iter().chain(&[action]).copied().collect();
                     if quality > best_quality {
                         best_quality = quality;
+                        let actions = get_actions(&traces, traces.len() - 1);
                         let finish_actions = self.finish_solver.get_finish_sequence(state).unwrap();
-                        best_actions =
-                            Some(actions.iter().chain(&finish_actions).copied().collect());
-                    }
-                    if !visited_states.contains(&state) {
-                        visited_states.insert(state);
-                        search_queue.push(quality_bound, SearchNode { state, actions });
+                        best_actions = Some(actions.chain(finish_actions.into_iter()).collect());
                     }
                 }
             }
@@ -114,7 +126,7 @@ impl MacroSolver {
         dbg!(seconds);
 
         dbg!(
-            accepted_nodes,
+            traces.len(),
             finish_solver_rejected_node,
             upper_bound_solver_rejected_nodes
         );
@@ -127,5 +139,20 @@ impl MacroSolver {
 #[derive(Debug, Clone)]
 struct SearchNode {
     pub state: InProgress,
-    pub actions: Vec<Action>,
+    pub backtrack_index: usize,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct SearchTrace {
+    pub parent: usize,
+    pub action: Action,
+}
+
+fn get_actions(traces: &[Option<SearchTrace>], mut index: usize) -> impl Iterator<Item = Action> {
+    let mut actions = Vec::new();
+    while let Some(trace) = traces[index] {
+        actions.push(trace.action);
+        index = trace.parent;
+    }
+    actions.into_iter().rev()
 }
