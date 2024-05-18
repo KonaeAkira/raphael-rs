@@ -315,7 +315,8 @@ func _on_request_completed(result, response_code, headers, body):
 	var remote_tag = data[\"tag_name\"]
 	var local_tag = ProjectSettings.get_setting(\"application/config/version\")
 	if remote_tag != local_tag:
-		$ReleaseLink.set(\"visible\", true)
+		$ReleaseLink.text = \"Update Avaliable (\" + remote_tag + \")\"
+		$ReleaseLink.visible = true
 "
 
 [node name="Main" type="Control"]
