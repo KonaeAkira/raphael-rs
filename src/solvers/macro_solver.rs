@@ -66,7 +66,7 @@ impl MacroSolver {
         search_queue.push(
             self.bound_solver.quality_upper_bound(state),
             SearchNode {
-                state: state,
+                state,
                 backtrack_index: 0,
             },
         );

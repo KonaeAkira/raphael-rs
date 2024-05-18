@@ -154,7 +154,7 @@ impl UpperBoundSolver {
                     ..state
                 };
                 match self.solved_states.get(&non_combo_state) {
-                    Some(pareto_front) => self.pareto_front_builder.push(&pareto_front),
+                    Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
                     None => self.solve_non_combo_state(non_combo_state),
                 }
                 let combo_actions: &[Action] = match combo {
@@ -201,7 +201,7 @@ impl UpperBoundSolver {
                 );
                 if new_state.cp > 0 {
                     match self.solved_states.get(&new_state) {
-                        Some(pareto_front) => self.pareto_front_builder.push(&pareto_front),
+                        Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
                         None => self.solve_state(new_state),
                     }
                     self.pareto_front_builder

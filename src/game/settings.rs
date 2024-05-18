@@ -17,12 +17,12 @@ pub struct ActionMask {
 }
 
 impl ActionMask {
-    pub const fn new() -> Self {
+    pub const fn none() -> Self {
         Self { mask: 0 }
     }
 
     pub fn from_level(level: u32, manipulation: bool) -> Self {
-        let mut result = Self::new();
+        let mut result = Self::none();
         for action in ALL_ACTIONS {
             if action.level_requirement() <= level {
                 result = result.add(*action);
@@ -84,7 +84,7 @@ impl ActionMask {
 macro_rules! action_mask {
     ( $( $x:expr ),* ) => {
         {
-            let mut action_mask = ActionMask::new();
+            let mut action_mask = ActionMask::none();
             $(
                 action_mask = action_mask.add($x);
             )*

@@ -270,7 +270,7 @@ mod tests {
         max_durability: 60,
         max_progress: Progress::new(1000),
         max_quality: Quality::new(2000),
-        allowed_actions: ActionMask::new(),
+        allowed_actions: ActionMask::none(),
     };
 
     const SAMPLE_FRONT_1: &[ParetoValue] = &[

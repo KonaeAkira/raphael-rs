@@ -9,7 +9,7 @@ const SETTINGS: Settings = Settings {
     max_durability: 60,
     max_progress: Progress::new(2000),
     max_quality: Quality::new(40000),
-    allowed_actions: ActionMask::new(),
+    allowed_actions: ActionMask::none(),
 };
 
 #[test]
