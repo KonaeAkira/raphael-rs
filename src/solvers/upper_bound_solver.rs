@@ -261,7 +261,7 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3484); // tightness test
+        assert_eq!(result, 3485); // tightness test
         assert_ge!(result, 3352); // correctness test
     }
 
@@ -288,7 +288,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4766); // tightness test
+        assert_eq!(result, 4767); // tightness test
         assert_ge!(result, 4685); // correctness test
     }
 
@@ -320,8 +320,8 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 4052); // tightness test
-        assert_ge!(result, 4052); // correctness test
+        assert_eq!(result, 4053); // tightness test
+        assert_ge!(result, 4053); // correctness test
     }
 
     #[test]
@@ -371,7 +371,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4554); // tightness test
+        assert_eq!(result, 4555); // tightness test
         assert_ge!(result, 4405); // correctness test
     }
 
@@ -422,7 +422,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, false),
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 4766); // tightness test
+        assert_eq!(result, 4767); // tightness test
         assert_ge!(result, 4440); // correctness test
     }
 }

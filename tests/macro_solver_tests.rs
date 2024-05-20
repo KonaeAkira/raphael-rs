@@ -52,7 +52,7 @@ fn test_random_1e281667() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3351);
+    assert_eq!(get_quality(&settings, &actions), 3352);
 }
 
 #[test]
@@ -68,7 +68,7 @@ fn test_random_d0bf2aef() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3405);
+    assert_eq!(get_quality(&settings, &actions), 3407);
 }
 
 #[test]
@@ -132,7 +132,7 @@ fn test_random_e413e05d() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2017);
+    assert_eq!(get_quality(&settings, &actions), 2018);
 }
 
 #[test]
@@ -148,7 +148,7 @@ fn test_random_bb38a037() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2751);
+    assert_eq!(get_quality(&settings, &actions), 2752);
 }
 
 #[test]
@@ -196,7 +196,7 @@ fn test_random_e451d981() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 5210);
+    assert_eq!(get_quality(&settings, &actions), 5212);
 }
 
 #[test]
@@ -212,7 +212,7 @@ fn test_random_6799bb1d() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3259);
+    assert_eq!(get_quality(&settings, &actions), 3261);
 }
 
 #[test]
@@ -228,7 +228,7 @@ fn test_random_940b4755() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4402);
+    assert_eq!(get_quality(&settings, &actions), 4403);
 }
 
 #[test]
@@ -244,7 +244,7 @@ fn test_rinascita_3700_3280() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 10513);
+    assert_eq!(get_quality(&settings, &actions), 10514);
 }
 
 #[test]

@@ -204,7 +204,7 @@ fn test_innovation_inner_quiet() {
         State::InProgress(state) => {
             assert_eq!(
                 state.missing_quality,
-                SETTINGS.max_quality.saturating_sub(209)
+                SETTINGS.max_quality.saturating_sub(210)
             );
             assert_eq!(state.effects.innovation, 2);
             assert_eq!(state.effects.inner_quiet, 5);

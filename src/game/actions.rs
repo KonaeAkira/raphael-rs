@@ -199,39 +199,39 @@ impl Action {
         base_cost - effect_bonus
     }
 
-    pub const fn progress_efficiency(self, job_level: u8) -> f32 {
+    pub const fn progress_efficiency(self, job_level: u8) -> u64 {
         match self {
             Action::BasicSynthesis => {
                 if job_level < 31 {
-                    1.00
+                    100
                 } else {
-                    1.20
+                    120
                 }
             }
-            Action::MuscleMemory => 3.00,
+            Action::MuscleMemory => 300,
             Action::CarefulSynthesis => {
                 if job_level < 82 {
-                    1.50
+                    150
                 } else {
-                    1.80
+                    180
                 }
             }
-            Action::FocusedSynthesis => 2.00,
+            Action::FocusedSynthesis => 200,
             Action::Groundwork => {
                 if job_level < 86 {
-                    3.00
+                    300
                 } else {
-                    3.60
+                    360
                 }
             }
-            Action::DelicateSynthesis => 1.00,
-            Action::IntensiveSynthesis => 4.00,
-            Action::PrudentSynthesis => 1.80,
-            _ => 0.00,
+            Action::DelicateSynthesis => 100,
+            Action::IntensiveSynthesis => 400,
+            Action::PrudentSynthesis => 180,
+            _ => 0,
         }
     }
 
-    pub fn progress_increase(
+    pub const fn progress_increase(
         self,
         settings: &Settings,
         effects: &Effects,
@@ -239,65 +239,66 @@ impl Action {
     ) -> Progress {
         let efficiency_mod = self.progress_efficiency(settings.job_level);
         let condition_mod = match condition {
-            Condition::Malleable => 1.50,
-            _ => 1.00,
+            Condition::Malleable => 150,
+            _ => 100,
         };
-        let mut effect_mod = 1.00;
+        let mut effect_mod = 100;
         if effects.muscle_memory > 0 {
-            effect_mod += 1.00;
+            effect_mod += 100;
         }
         if effects.veneration > 0 {
-            effect_mod += 0.50;
+            effect_mod += 50;
         }
-        (settings.base_progress as f32 * efficiency_mod * condition_mod * effect_mod) as Progress
+        (settings.base_progress as u64 * efficiency_mod * condition_mod * effect_mod / 1000000)
+            as Progress
     }
 
-    pub const fn base_quality_increase(self) -> f32 {
+    pub const fn quality_efficiency(self, inner_quiet: u8) -> u64 {
         match self {
-            Action::BasicTouch => 1.00,
-            Action::StandardTouch => 1.25,
-            Action::ComboStandardTouch => 1.25,
-            Action::PreciseTouch => 1.50,
-            Action::PrudentTouch => 1.00,
-            Action::FocusedTouch => 1.50,
-            Action::Reflect => 1.00,
-            Action::PreparatoryTouch => 2.00,
-            Action::DelicateSynthesis => 1.00,
-            Action::AdvancedTouch => 1.50,
-            Action::ComboAdvancedTouch => 1.50,
-            Action::TrainedFinesse => 1.00,
-            Action::ByregotsBlessing => 1.00,
-            _ => 0.00,
+            Action::BasicTouch => 100,
+            Action::StandardTouch => 125,
+            Action::ComboStandardTouch => 125,
+            Action::PreciseTouch => 150,
+            Action::PrudentTouch => 100,
+            Action::FocusedTouch => 150,
+            Action::Reflect => 100,
+            Action::PreparatoryTouch => 200,
+            Action::DelicateSynthesis => 100,
+            Action::AdvancedTouch => 150,
+            Action::ComboAdvancedTouch => 150,
+            Action::TrainedFinesse => 100,
+            Action::ByregotsBlessing => 100 + 20 * inner_quiet as u64,
+            _ => 0,
         }
     }
 
-    pub fn quality_increase(
+    pub const fn quality_increase(
         self,
         settings: &Settings,
         effects: &Effects,
         condition: Condition,
     ) -> Quality {
-        let efficieny_mod = match self {
-            Action::ByregotsBlessing => {
-                self.base_quality_increase() * (1.00 + 0.20 * effects.inner_quiet as f32)
-            }
-            _ => self.base_quality_increase(),
-        };
+        let efficieny_mod = self.quality_efficiency(effects.inner_quiet);
         let condition_mod = match condition {
-            Condition::Good => 1.50,
-            Condition::Excellent => 4.00,
-            Condition::Poor => 0.50,
-            _ => 1.00,
+            Condition::Good => 150,
+            Condition::Excellent => 400,
+            Condition::Poor => 50,
+            _ => 100,
         };
-        let mut effect_mod = 1.00;
+        let mut effect_mod = 100;
         if effects.innovation != 0 {
-            effect_mod += 0.50;
+            effect_mod += 50;
         }
         if effects.great_strides != 0 {
-            effect_mod += 1.00;
+            effect_mod += 100;
         }
-        effect_mod *= 1.00 + 0.10 * effects.inner_quiet as f32;
-        (settings.base_quality as f32 * efficieny_mod * condition_mod * effect_mod) as Quality
+        let inner_quiet_mod = 100 + 10 * effects.inner_quiet as u64;
+        (settings.base_quality as u64
+            * efficieny_mod
+            * condition_mod
+            * effect_mod
+            * inner_quiet_mod
+            / 100000000) as Quality
     }
 
     pub const fn required_combo(self) -> Option<ComboAction> {
