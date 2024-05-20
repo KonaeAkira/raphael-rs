@@ -35,9 +35,12 @@ impl MacroSolver {
     pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
         match state {
             State::InProgress(state) => {
+                let timer = Instant::now();
                 if !self.finish_solver.can_finish(&state) {
                     return None;
                 }
+                let seconds = timer.elapsed().as_secs_f32();
+                dbg!(seconds);
                 match self.do_solve(state) {
                     Some(actions) => Some(actions),
                     None => Some(self.finish_solver.get_finish_sequence(state).unwrap()),

@@ -5,7 +5,10 @@ use crate::game::{
 
 use rustc_hash::FxHashMap as HashMap;
 
-use super::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS};
+use super::{
+    actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS},
+    pareto_front::{ParetoFrontBuilder, ParetoValue},
+};
 
 const INF_PROGRESS: Progress = 1_000_000;
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
@@ -71,17 +74,20 @@ impl ReducedState {
     }
 }
 
-#[derive(Debug)]
 pub struct FinishSolver {
     settings: Settings,
-    memoization: HashMap<ReducedState, Vec<Progress>>,
+    memoization: HashMap<ReducedState, Box<[ParetoValue<Progress, i32>]>>,
+    pareto_front_builder: ParetoFrontBuilder<Progress, i32>,
 }
 
 impl FinishSolver {
     pub fn new(settings: Settings) -> FinishSolver {
+        dbg!(std::mem::size_of::<ReducedState>());
+        dbg!(std::mem::align_of::<ReducedState>());
         FinishSolver {
             settings,
             memoization: HashMap::default(),
+            pareto_front_builder: ParetoFrontBuilder::new(settings.max_progress),
         }
     }
 
@@ -91,7 +97,7 @@ impl FinishSolver {
         }
         let mut finish_sequence: Vec<Action> = Vec::new();
         loop {
-            let mut best_time = 100000;
+            let mut best_time = i32::MAX;
             let mut best_action = Action::BasicSynthesis;
             for action in SEARCH_ACTIONS
                 .intersection(self.settings.allowed_actions)
@@ -128,82 +134,67 @@ impl FinishSolver {
     }
 
     pub fn can_finish(&mut self, state: &InProgress) -> bool {
-        *self.solve(ReducedState::from_state(state)).last().unwrap() >= state.missing_progress
+        let reduced_state = ReducedState::from_state(state);
+        if !self.memoization.contains_key(&reduced_state) {
+            self.solve(reduced_state);
+            self.pareto_front_builder.clear();
+        }
+        let result = self.memoization.get(&reduced_state).unwrap();
+        match result.first() {
+            Some(first_element) => first_element.first >= state.missing_progress,
+            None => false,
+        }
     }
 
-    pub fn time_to_finish(&mut self, state: &InProgress) -> Option<u32> {
-        let result = self.solve(ReducedState::from_state(state));
-        for (time, progress) in result.into_iter().enumerate() {
-            if progress >= state.missing_progress {
-                return Some(time as u32);
+    pub fn time_to_finish(&mut self, state: &InProgress) -> Option<i32> {
+        let reduced_state = ReducedState::from_state(state);
+        if !self.memoization.contains_key(&reduced_state) {
+            self.solve(reduced_state);
+            self.pareto_front_builder.clear();
+        }
+        let result = self.memoization.get(&reduced_state).unwrap();
+        for ParetoValue {
+            first: progress,
+            second: time,
+        } in result.iter().rev()
+        {
+            if *progress >= state.missing_progress {
+                return Some(-*time);
             }
         }
         None
     }
 
-    fn solve(&mut self, state: ReducedState) -> Vec<Progress> {
-        match self.memoization.get(&state) {
-            Some(result) => result.clone(),
-            None => {
-                let mut result = Vec::new();
-                for action in SEARCH_ACTIONS
-                    .intersection(self.settings.allowed_actions)
-                    .actions_iter()
-                {
-                    let new_state =
-                        state
-                            .to_state()
-                            .use_action(action, Condition::Normal, &self.settings);
-                    match new_state {
-                        State::InProgress(new_state) => {
-                            let progress = INF_PROGRESS - new_state.missing_progress;
-                            let sub_result = self.solve(ReducedState::from_state(&new_state));
-                            Self::update_result(
-                                &mut result,
-                                &sub_result,
-                                action.time_cost(),
-                                progress,
-                            );
-                        }
-                        State::Failed { missing_progress } => {
-                            let progress = INF_PROGRESS - missing_progress;
-                            Self::update_result(&mut result, &[0], action.time_cost(), progress);
-                        }
-                        _ => (),
+    fn solve(&mut self, state: ReducedState) {
+        self.pareto_front_builder.push_empty();
+        for action in SEARCH_ACTIONS
+            .intersection(self.settings.allowed_actions)
+            .actions_iter()
+        {
+            let new_state = state
+                .to_state()
+                .use_action(action, Condition::Normal, &self.settings);
+            match new_state {
+                State::InProgress(new_state) => {
+                    let progress = INF_PROGRESS - new_state.missing_progress;
+                    match self.memoization.get(&ReducedState::from_state(&new_state)) {
+                        Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
+                        None => self.solve(ReducedState::from_state(&new_state)),
                     }
+                    self.pareto_front_builder.add(progress, -action.time_cost());
+                    self.pareto_front_builder.merge();
                 }
-                self.canonicalize_result(&mut result);
-                self.memoization.insert(state, result.clone());
-                result
+                State::Failed { missing_progress } => {
+                    let progress = INF_PROGRESS - missing_progress;
+                    self.pareto_front_builder
+                        .push(&[ParetoValue::new(progress, -action.time_cost())]);
+                    self.pareto_front_builder.merge();
+                }
+                _ => (),
             }
         }
-    }
-
-    fn update_result(
-        result: &mut Vec<Progress>,
-        sub_result: &[Progress],
-        time_offset: u32,
-        progress_increase: Progress,
-    ) {
-        if result.len() < sub_result.len() + time_offset as usize {
-            result.resize(sub_result.len() + time_offset as usize, 0);
-        }
-        let result: &mut [Progress] =
-            &mut result[time_offset as usize..time_offset as usize + sub_result.len()];
-        for (a, b) in result.iter_mut().zip(sub_result.iter()) {
-            *a = std::cmp::max(*a, (*b) + progress_increase);
-        }
-    }
-
-    fn canonicalize_result(&self, result: &mut Vec<Progress>) {
-        let mut rolling_max = 0;
-        for a in result.iter_mut() {
-            rolling_max = std::cmp::max(rolling_max, *a);
-            *a = rolling_max;
-        }
-        while result.len() >= 2 && result[result.len() - 2] >= self.settings.max_progress {
-            result.pop();
-        }
+        let pareto_front = self.pareto_front_builder.peek().unwrap();
+        self.memoization.insert(state, pareto_front);
     }
 }
 

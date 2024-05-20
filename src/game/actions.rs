@@ -78,7 +78,7 @@ impl Action {
         }
     }
 
-    pub const fn time_cost(self) -> u32 {
+    pub const fn time_cost(self) -> i32 {
         match self {
             Action::BasicSynthesis => 3,
             Action::BasicTouch => 3,
