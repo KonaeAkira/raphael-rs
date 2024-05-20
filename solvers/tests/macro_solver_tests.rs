@@ -1,6 +1,5 @@
-use raphael::game::{units::Quality, Action, ActionMask, Condition, Settings, State};
-
-use raphael::solvers::MacroSolver;
+use simulator::{units::Quality, Action, ActionMask, Condition, Settings, State};
+use solvers::MacroSolver;
 
 fn solve(settings: &Settings) -> Option<Vec<Action>> {
     MacroSolver::new(settings.clone()).solve(State::new(settings))

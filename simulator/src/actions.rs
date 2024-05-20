@@ -1,4 +1,4 @@
-use crate::game::{units::*, Condition, Effects};
+use crate::{units::*, Condition, Effects};
 
 use super::Settings;
 

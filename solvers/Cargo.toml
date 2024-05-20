@@ -1,0 +1,21 @@
+[package]
+name = "solvers"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+simulator = { path = "../simulator" }
+num-traits = "0.2.19"
+radix-heap = "0.4.2"
+rustc-hash = "1.1.0"
+
+[profile.release]
+lto = "fat"
+
+[dev-dependencies]
+more-asserts = "0.3.1"
+rand = "0.8.5"

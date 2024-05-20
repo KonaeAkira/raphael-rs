@@ -14,6 +14,3 @@ pub use state::State;
 
 mod settings;
 pub use settings::{ActionMask, Settings};
-
-#[cfg(test)]
-mod tests;

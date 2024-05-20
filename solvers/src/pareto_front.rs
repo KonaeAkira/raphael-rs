@@ -268,7 +268,7 @@ where
 mod tests {
     use rand::Rng;
 
-    use crate::game::{
+    use simulator::{
         units::{Progress, Quality},
         ActionMask, Settings,
     };

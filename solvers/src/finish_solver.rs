@@ -1,4 +1,4 @@
-use crate::game::{
+use simulator::{
     state::InProgress, units::*, Action, ActionMask, ComboAction, Condition, Effects, Settings,
     State,
 };

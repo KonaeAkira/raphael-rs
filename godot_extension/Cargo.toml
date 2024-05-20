@@ -1,0 +1,16 @@
+[package]
+name = "godot-extension"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+simulator = { path = "../simulator" }
+solvers = { path = "../solvers" }
+godot = { git = "https://github.com/godot-rust/gdext", rev = "ca586182f430df3fb4ef8548d43bc756ce92022e" }
+
+[profile.release]
+lto = "thin"

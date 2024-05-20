@@ -1,4 +1,4 @@
-use crate::game::{state::InProgress, Action, ActionMask, Condition, Settings, State};
+use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, State};
 
 const SETTINGS: Settings = Settings {
     max_cp: 200,

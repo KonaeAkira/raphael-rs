@@ -1,7 +1,4 @@
-use crate::{
-    action_mask,
-    game::{Action, ActionMask},
-};
+use simulator::{action_mask, Action, ActionMask};
 
 pub const PROGRESS_ACTIONS: ActionMask = action_mask!(
     Action::BasicSynthesis,

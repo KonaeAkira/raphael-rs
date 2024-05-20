@@ -1,26 +1,6 @@
-[package]
-name = "raphael-rs"
-version = "0.4.1"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-name = "raphael"
-crate-type = ["rlib", "cdylib"]
-
-[dependencies]
-godot = { git = "https://github.com/godot-rust/gdext", rev = "ca586182f430df3fb4ef8548d43bc756ce92022e", optional = true }
-num-traits = "0.2.19"
-radix-heap = "0.4.2"
-rustc-hash = "1.1.0"
-
-[features]
-godot_binding = ["dep:godot"]
-
-[profile.release]
-lto = "fat"
-
-[dev-dependencies]
-more-asserts = "0.3.1"
-rand = "0.8.5"
+[workspace]
+members = [
+    "simulator",
+    "solvers",
+    "godot_extension"
+]

@@ -1,4 +1,4 @@
-use raphael::game::{Action, ActionMask, Condition, Settings, State};
+use simulator::{Action, ActionMask, Condition, Settings, State};
 
 fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
     let mut state: State = State::new(&settings);

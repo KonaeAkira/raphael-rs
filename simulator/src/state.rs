@@ -1,4 +1,4 @@
-use crate::game::{units::*, Action, ComboAction, Condition, Effects, Settings};
+use crate::{units::*, Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {

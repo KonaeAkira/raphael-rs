@@ -1,6 +1,5 @@
-use raphael::game::{ActionMask, Settings, State};
-
-use raphael::solvers::MacroSolver;
+use simulator::{ActionMask, Settings, State};
+use solvers::MacroSolver;
 
 fn main() {
     let settings = Settings {

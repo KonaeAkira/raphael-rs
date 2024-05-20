@@ -1,4 +1,4 @@
-use crate::game::units::*;
+use crate::units::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Settings {
@@ -12,7 +12,7 @@ pub struct Settings {
     pub allowed_actions: ActionMask,
 }
 
-use crate::game::Action;
+use crate::Action;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ActionMask {

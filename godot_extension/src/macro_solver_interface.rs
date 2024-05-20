@@ -5,13 +5,11 @@ use std::{
 
 use godot::prelude::*;
 
-use crate::{
-    game::{
-        units::{Durability, Progress, Quality, CP},
-        Action, ActionMask, Condition, Settings, State,
-    },
-    solvers::MacroSolver,
+use simulator::{
+    units::{Durability, Progress, Quality, CP},
+    Action, ActionMask, Condition, Settings, State,
 };
+use solvers::MacroSolver;
 
 #[derive(GodotClass)]
 #[class(base=Node)]

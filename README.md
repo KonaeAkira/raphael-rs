@@ -44,18 +44,18 @@ Building for other platforms will require some tweaking.
 On Linux:
 
 ```
-cargo build --release --features godot_binding --target x86_64-unknown-linux-gnu
+cargo build --release --target x86_64-unknown-linux-gnu
 ```
 
 On Windows:
 
 ```
-cargo build --release --features godot_binding --target x86_64-pc-windows-gnu
+cargo build --release --target x86_64-pc-windows-gnu
 ```
 
 #### Building the graphical interface
 
-1. Open Godot 4 and import the project at `gui/project.godot`
+1. Open Godot 4 and import the project at `godot_application/project.godot`
 2. In the top-left corner, select `Project > Export...`
 3. Select the platform you want to build for (either "Linux/X11" or "Windows Desktop")
 4. Select "Export Project...", uncheck "Export With Debug", and select the directory where the resulting executable should lie.

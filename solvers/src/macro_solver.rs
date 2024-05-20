@@ -1,11 +1,9 @@
 use radix_heap::RadixHeapMap;
 use rustc_hash::FxHashSet;
 
-use crate::game::{state::InProgress, Action, ActionMask, Condition, Settings, State};
-use crate::solvers::actions::{
-    DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS,
-};
-use crate::solvers::{FinishSolver, UpperBoundSolver};
+use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
+use crate::{FinishSolver, UpperBoundSolver};
+use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, State};
 
 use std::time::Instant;
 use std::vec::Vec;

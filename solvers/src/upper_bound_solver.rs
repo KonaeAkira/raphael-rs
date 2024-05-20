@@ -1,9 +1,7 @@
-use crate::{
-    game::{
-        state::InProgress, units::*, Action, ActionMask, ComboAction, Condition, Effects, Settings,
-        State,
-    },
-    solvers::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
+use crate::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
+use simulator::{
+    state::InProgress, units::*, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+    State,
 };
 
 use rustc_hash::FxHashMap as HashMap;
