@@ -61,7 +61,8 @@ impl MacroSolver {
         let mut traces: Vec<Option<SearchTrace>> = Vec::new();
 
         let mut best_quality = 0;
-        let mut best_actions = None;
+        let mut best_state = None;
+        let mut best_trace = 0;
 
         visited_states.insert(state);
         search_queue.push(
@@ -115,13 +116,21 @@ impl MacroSolver {
                     let quality = self.settings.max_quality - state.missing_quality;
                     if quality > best_quality {
                         best_quality = quality;
-                        let actions = get_actions(&traces, traces.len() - 1);
-                        let finish_actions = self.finish_solver.get_finish_sequence(state).unwrap();
-                        best_actions = Some(actions.chain(finish_actions.into_iter()).collect());
+                        best_state = Some(state);
+                        best_trace = traces.len() - 1;
                     }
                 }
             }
         }
+
+        let best_actions = match best_state {
+            Some(best_state) => {
+                let trace_actions = get_actions(&traces, best_trace);
+                let finish_actions = self.finish_solver.get_finish_sequence(best_state).unwrap();
+                Some(trace_actions.chain(finish_actions.into_iter()).collect())
+            }
+            None => None,
+        };
 
         let seconds = timer.elapsed().as_secs_f32();
         dbg!(seconds);
