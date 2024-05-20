@@ -1,19 +1,14 @@
 use std::alloc::{self, Layout};
 
-use crate::game::{
-    units::{Progress, Quality},
-    Settings,
-};
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct ParetoValue {
-    pub progress: Progress,
-    pub quality: Quality,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ParetoValue<T, U> {
+    pub first: T,
+    pub second: U,
 }
 
-impl ParetoValue {
-    pub const fn new(progress: Progress, quality: Quality) -> Self {
-        Self { progress, quality }
+impl<T, U> ParetoValue<T, U> {
+    pub const fn new(first: T, second: U) -> Self {
+        Self { first, second }
     }
 }
 
@@ -23,31 +18,39 @@ struct Segment {
     pub length: usize,
 }
 
-pub struct ParetoFrontBuilder {
-    settings: Settings,
-    buffer: *mut ParetoValue,
+pub struct ParetoFrontBuilder<T, U>
+where
+    T: num_traits::int::PrimInt,
+    U: num_traits::int::PrimInt,
+{
+    buffer: *mut ParetoValue<T, U>,
     buffer_head: usize,
     buffer_capacity: usize,
     segments: Vec<Segment>,
+    max_first: T,
     // variables used for profiling
     fronts_generated: usize,
     values_generated: usize,
 }
 
-impl ParetoFrontBuilder {
-    pub fn new(settings: Settings) -> Self {
+impl<T, U> ParetoFrontBuilder<T, U>
+where
+    T: num_traits::int::PrimInt,
+    U: num_traits::int::PrimInt,
+{
+    pub fn new(max_first: T) -> Self {
         const INITIAL_CAPACITY: usize = 1024;
         unsafe {
             let layout = alloc::Layout::from_size_align_unchecked(
-                INITIAL_CAPACITY * std::mem::size_of::<ParetoValue>(),
-                std::mem::align_of::<ParetoValue>(),
+                INITIAL_CAPACITY * std::mem::size_of::<ParetoValue<T, U>>(),
+                std::mem::align_of::<ParetoValue<T, U>>(),
             );
             Self {
-                settings,
-                buffer: alloc::alloc(layout) as *mut ParetoValue,
+                buffer: alloc::alloc(layout) as *mut ParetoValue<T, U>,
                 buffer_head: 0,
                 buffer_capacity: INITIAL_CAPACITY,
                 segments: Vec::new(),
+                max_first,
                 fronts_generated: 0,
                 values_generated: 0,
             }
@@ -60,14 +63,14 @@ impl ParetoFrontBuilder {
     }
 
     fn buffer_byte_size(&self) -> usize {
-        self.buffer_capacity * std::mem::size_of::<ParetoValue>()
+        self.buffer_capacity * std::mem::size_of::<ParetoValue<T, U>>()
     }
 
     fn layout(&self) -> Layout {
         unsafe {
             alloc::Layout::from_size_align_unchecked(
                 self.buffer_byte_size(),
-                std::mem::align_of::<ParetoValue>(),
+                std::mem::align_of::<ParetoValue<T, U>>(),
             )
         }
     }
@@ -81,7 +84,7 @@ impl ParetoFrontBuilder {
                 }
                 self.buffer =
                     alloc::realloc(self.buffer as *mut u8, layout, self.buffer_byte_size())
-                        as *mut ParetoValue;
+                        as *mut ParetoValue<T, U>;
             }
         }
     }
@@ -93,7 +96,7 @@ impl ParetoFrontBuilder {
         });
     }
 
-    pub fn push(&mut self, values: &[ParetoValue]) {
+    pub fn push(&mut self, values: &[ParetoValue<T, U>]) {
         let segment = Segment {
             offset: self.buffer_head,
             length: values.len(),
@@ -107,15 +110,15 @@ impl ParetoFrontBuilder {
         self.segments.push(segment);
     }
 
-    pub fn add(&mut self, progress: Progress, quality: Quality) {
+    pub fn add(&mut self, first: T, second: U) {
         let segment = self.segments.last().unwrap();
-        let slice: &mut [ParetoValue];
+        let slice: &mut [ParetoValue<T, U>];
         unsafe {
             slice = std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length);
         }
         for x in slice.iter_mut() {
-            x.progress = x.progress + progress;
-            x.quality = x.quality + quality;
+            x.first = x.first + first;
+            x.second = x.second + second;
         }
     }
 
@@ -148,25 +151,25 @@ impl ParetoFrontBuilder {
         let mut head_c: usize = 0;
         let mut tail_c: usize = 0;
 
-        let mut cur_quality: Option<Quality> = None;
-        let mut try_insert = |x: ParetoValue| {
-            if cur_quality.is_none() || x.quality > cur_quality.unwrap() {
-                cur_quality = Some(x.quality);
+        let mut rolling_max: Option<U> = None;
+        let mut try_insert = |x: ParetoValue<T, U>| {
+            if rolling_max.is_none() || x.second > rolling_max.unwrap() {
+                rolling_max = Some(x.second);
                 slice_c[tail_c] = x;
                 tail_c += 1;
             }
         };
 
         while head_a < slice_a.len() && head_b < slice_b.len() {
-            match slice_a[head_a].progress.cmp(&slice_b[head_b].progress) {
+            match slice_a[head_a].first.cmp(&slice_b[head_b].first) {
                 std::cmp::Ordering::Less => {
                     try_insert(slice_b[head_b]);
                     head_b += 1;
                 }
                 std::cmp::Ordering::Equal => {
-                    let progress = slice_a[head_a].progress;
-                    let quality = std::cmp::max(slice_a[head_a].quality, slice_b[head_b].quality);
-                    try_insert(ParetoValue { progress, quality });
+                    let first = slice_a[head_a].first;
+                    let second = std::cmp::max(slice_a[head_a].second, slice_b[head_b].second);
+                    try_insert(ParetoValue::new(first, second));
                     head_a += 1;
                     head_b += 1;
                 }
@@ -187,8 +190,8 @@ impl ParetoFrontBuilder {
             head_b += 1;
         }
 
-        // cut out values that are over max_progress
-        while head_c + 1 < tail_c && slice_c[head_c + 1].progress >= self.settings.max_progress {
+        // cut out values that are over max_first
+        while head_c + 1 < tail_c && slice_c[head_c + 1].first >= self.max_first {
             head_c += 1;
         }
 
@@ -200,7 +203,7 @@ impl ParetoFrontBuilder {
         self.segments.push(segment_c);
     }
 
-    pub fn peek(&mut self) -> Option<Box<[ParetoValue]>> {
+    pub fn peek(&mut self) -> Option<Box<[ParetoValue<T, U>]>> {
         match self.segments.last() {
             Some(segment) => {
                 self.fronts_generated += 1;
@@ -236,14 +239,18 @@ impl ParetoFrontBuilder {
                 std::slice::from_raw_parts(self.buffer.add(segment.offset), segment.length)
             };
             for window in slice.windows(2) {
-                assert!(window[0].progress > window[1].progress);
-                assert!(window[0].quality < window[1].quality);
+                assert!(window[0].first > window[1].first);
+                assert!(window[0].second < window[1].second);
             }
         }
     }
 }
 
-impl Drop for ParetoFrontBuilder {
+impl<T, U> Drop for ParetoFrontBuilder<T, U>
+where
+    T: num_traits::int::PrimInt,
+    U: num_traits::int::PrimInt,
+{
     fn drop(&mut self) {
         let buffer_byte_size = self.layout().size();
         dbg!(
@@ -261,7 +268,10 @@ impl Drop for ParetoFrontBuilder {
 mod tests {
     use rand::Rng;
 
-    use crate::game::ActionMask;
+    use crate::game::{
+        units::{Progress, Quality},
+        ActionMask, Settings,
+    };
 
     use super::*;
 
@@ -276,13 +286,13 @@ mod tests {
         allowed_actions: ActionMask::none(),
     };
 
-    const SAMPLE_FRONT_1: &[ParetoValue] = &[
+    const SAMPLE_FRONT_1: &[ParetoValue<Progress, Quality>] = &[
         ParetoValue::new(300, 100),
         ParetoValue::new(200, 200),
         ParetoValue::new(100, 300),
     ];
 
-    const SAMPLE_FRONT_2: &[ParetoValue] = &[
+    const SAMPLE_FRONT_2: &[ParetoValue<Progress, Quality>] = &[
         ParetoValue::new(300, 50),
         ParetoValue::new(250, 150),
         ParetoValue::new(150, 250),
@@ -291,7 +301,8 @@ mod tests {
 
     #[test]
     fn test_merge_empty() {
-        let mut builder = ParetoFrontBuilder::new(SETTINGS);
+        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+            ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push_empty();
         builder.push_empty();
         builder.merge();
@@ -302,7 +313,8 @@ mod tests {
 
     #[test]
     fn test_value_shift() {
-        let mut builder = ParetoFrontBuilder::new(SETTINGS);
+        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+            ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.add(100, 100);
         let front = builder.peek().unwrap();
@@ -319,7 +331,8 @@ mod tests {
 
     #[test]
     fn test_merge() {
-        let mut builder = ParetoFrontBuilder::new(SETTINGS);
+        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+            ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.push(SAMPLE_FRONT_2);
         builder.merge();
@@ -339,7 +352,8 @@ mod tests {
 
     #[test]
     fn test_merge_truncated() {
-        let mut builder = ParetoFrontBuilder::new(SETTINGS);
+        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+            ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
         builder.push(SAMPLE_FRONT_2);
@@ -353,7 +367,8 @@ mod tests {
     #[test]
     fn test_random_simulation() {
         let mut rng = rand::thread_rng();
-        let mut builder = ParetoFrontBuilder::new(SETTINGS);
+        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+            ParetoFrontBuilder::new(SETTINGS.max_progress);
         let mut lut = [0; 5000];
 
         for _ in 0..200 {
@@ -364,7 +379,7 @@ mod tests {
                 for i in 0..=progress as usize {
                     lut[i] = std::cmp::max(lut[i], quality);
                 }
-                builder.push(&[ParetoValue { progress, quality }]);
+                builder.push(&[ParetoValue::new(progress, quality)]);
                 builder.check_invariants();
             }
             for _ in 1..cnt {
@@ -379,7 +394,7 @@ mod tests {
 
         let front = builder.peek().unwrap();
         for value in front.iter() {
-            assert_eq!(lut[value.progress as usize], value.quality);
+            assert_eq!(lut[value.first as usize], value.second);
         }
 
         builder.clear();

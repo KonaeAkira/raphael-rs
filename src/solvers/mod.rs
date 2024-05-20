@@ -1,10 +1,11 @@
 mod actions;
+mod pareto_front;
 
 mod finish_solver;
 use finish_solver::FinishSolver;
 
-mod macro_solver;
-pub use macro_solver::MacroSolver;
-
 mod upper_bound_solver;
 use upper_bound_solver::UpperBoundSolver;
+
+mod macro_solver;
+pub use macro_solver::MacroSolver;

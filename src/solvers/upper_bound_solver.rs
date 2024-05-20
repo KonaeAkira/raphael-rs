@@ -78,8 +78,8 @@ pub struct UpperBoundSolver {
     settings: Settings,
     base_durability_cost: CP,
     waste_not_cost: CP,
-    solved_states: HashMap<ReducedState, Box<[ParetoValue]>>,
-    pareto_front_builder: ParetoFrontBuilder,
+    solved_states: HashMap<ReducedState, Box<[ParetoValue<Progress, Quality>]>>,
+    pareto_front_builder: ParetoFrontBuilder<Progress, Quality>,
 }
 
 impl UpperBoundSolver {
@@ -101,7 +101,7 @@ impl UpperBoundSolver {
                 1000 // inf
             },
             solved_states: HashMap::default(),
-            pareto_front_builder: ParetoFrontBuilder::new(settings),
+            pareto_front_builder: ParetoFrontBuilder::new(settings.max_progress),
         }
     }
 
@@ -124,8 +124,8 @@ impl UpperBoundSolver {
         let pareto_front = self.solved_states.get(&reduced_state).unwrap();
 
         match pareto_front.first() {
-            Some(first) => {
-                if first.progress < state.missing_progress {
+            Some(first_element) => {
+                if first_element.first < state.missing_progress {
                     return 0;
                 }
             }
@@ -136,14 +136,14 @@ impl UpperBoundSolver {
         let mut hi = pareto_front.len();
         while lo + 1 != hi {
             let m = (lo + hi) / 2;
-            if pareto_front[m].progress < state.missing_progress {
+            if pareto_front[m].first < state.missing_progress {
                 hi = m;
             } else {
                 lo = m;
             }
         }
 
-        pareto_front[lo].quality + current_quality
+        pareto_front[lo].second + current_quality
     }
 
     fn solve_state(&mut self, state: ReducedState) {
