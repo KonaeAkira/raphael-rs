@@ -1,4 +1,4 @@
-RLVL,Difficulty,Quality,ProgressDivider,QualityDivider,ProgressModifier,QualityModifier,Durability
+RLVL,Difficulty,u32,ProgressDivider,QualityDivider,ProgressModifier,QualityModifier,i16
 1,19,100,50,30,100,100,60
 2,20,110,50,30,100,100,60
 3,20,120,50,30,100,100,60

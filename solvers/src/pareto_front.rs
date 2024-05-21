@@ -268,10 +268,7 @@ where
 mod tests {
     use rand::Rng;
 
-    use simulator::{
-        units::{Progress, Quality},
-        ActionMask, Settings,
-    };
+    use simulator::{ActionMask, Settings};
 
     use super::*;
 
@@ -286,13 +283,13 @@ mod tests {
         allowed_actions: ActionMask::none(),
     };
 
-    const SAMPLE_FRONT_1: &[ParetoValue<Progress, Quality>] = &[
+    const SAMPLE_FRONT_1: &[ParetoValue<u32, u32>] = &[
         ParetoValue::new(300, 100),
         ParetoValue::new(200, 200),
         ParetoValue::new(100, 300),
     ];
 
-    const SAMPLE_FRONT_2: &[ParetoValue<Progress, Quality>] = &[
+    const SAMPLE_FRONT_2: &[ParetoValue<u32, u32>] = &[
         ParetoValue::new(300, 50),
         ParetoValue::new(250, 150),
         ParetoValue::new(150, 250),
@@ -301,7 +298,7 @@ mod tests {
 
     #[test]
     fn test_merge_empty() {
-        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+        let mut builder: ParetoFrontBuilder<u32, u32> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push_empty();
         builder.push_empty();
@@ -313,7 +310,7 @@ mod tests {
 
     #[test]
     fn test_value_shift() {
-        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+        let mut builder: ParetoFrontBuilder<u32, u32> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.add(100, 100);
@@ -331,7 +328,7 @@ mod tests {
 
     #[test]
     fn test_merge() {
-        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+        let mut builder: ParetoFrontBuilder<u32, u32> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.push(SAMPLE_FRONT_2);
@@ -352,7 +349,7 @@ mod tests {
 
     #[test]
     fn test_merge_truncated() {
-        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+        let mut builder: ParetoFrontBuilder<u32, u32> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
@@ -367,7 +364,7 @@ mod tests {
     #[test]
     fn test_random_simulation() {
         let mut rng = rand::thread_rng();
-        let mut builder: ParetoFrontBuilder<Progress, Quality> =
+        let mut builder: ParetoFrontBuilder<u32, u32> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         let mut lut = [0; 5000];
 

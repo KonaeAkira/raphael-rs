@@ -98,7 +98,7 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated():
-	target = %MacroSolverInterface.simulation[\"CP\"]
+	target = %MacroSolverInterface.simulation[\"i16\"]
 	max_value = %MacroSolverInterface.setting_max_cp
 "
 
@@ -113,7 +113,7 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = %MacroSolverInterface.simulation[\"CP\"]
+	target = %MacroSolverInterface.simulation[\"i16\"]
 	max_value = %MacroSolverInterface.setting_max_cp
 "
 
@@ -234,7 +234,7 @@ script/source = "extends Label
 
 func _on_macro_solver_interface_state_updated():
 	var base_prog = %MacroSolverInterface.setting_base_progress
-	text = \"Progress increase per 100 potency: \" + str(base_prog)
+	text = \"u32 increase per 100 potency: \" + str(base_prog)
 "
 
 [sub_resource type="GDScript" id="GDScript_t464c"]
@@ -242,7 +242,7 @@ script/source = "extends Label
 
 func _on_macro_solver_interface_state_updated():
 	var base_qual = %MacroSolverInterface.setting_base_quality
-	text = \"Quality increase per 100 potency: \" + str(base_qual)
+	text = \"u32 increase per 100 potency: \" + str(base_qual)
 "
 
 [sub_resource type="GDScript" id="GDScript_07vfa"]
@@ -388,7 +388,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-text = "Progress"
+text = "u32"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -417,7 +417,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-text = "Quality"
+text = "u32"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -446,7 +446,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-text = "Durability"
+text = "i16"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -471,7 +471,7 @@ script = SubResource("GDScript_2s0he")
 
 [node name="Label2" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
-text = "    CP"
+text = "    i16"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -599,7 +599,7 @@ script = SubResource("GDScript_hni1j")
 
 [node name="MaxCp" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
-text = "Max CP"
+text = "Max i16"
 
 [node name="MaxCpInput" type="SpinBox" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
@@ -652,13 +652,13 @@ popup/item_1/id = 1
 [node name="BaseProg" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.494118, 0.494118, 0.494118, 1)
-text = "Progress increase per 100 potency: N/A"
+text = "u32 increase per 100 potency: N/A"
 script = SubResource("GDScript_kxsbr")
 
 [node name="BaseQual" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.494118, 0.494118, 0.494118, 1)
-text = "Quality increase per 100 potency: N/A"
+text = "u32 increase per 100 potency: N/A"
 script = SubResource("GDScript_t464c")
 
 [node name="HSeparator3" type="HSeparator" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]

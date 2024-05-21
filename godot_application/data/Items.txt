@@ -6959,7 +6959,7 @@
 7057,
 7058,
 7059,"Spiritbond Potion"
-7060,"Durability Draught"
+7060,"i16 Draught"
 7061,"Gold Decorative Egg"
 7062,"Silver Decorative Egg"
 7063,"Bronze Decorative Egg"

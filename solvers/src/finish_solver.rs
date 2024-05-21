@@ -1,6 +1,5 @@
 use simulator::{
-    state::InProgress, units::*, Action, ActionMask, ComboAction, Condition, Effects, Settings,
-    State,
+    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings, State,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -10,7 +9,7 @@ use super::{
     pareto_front::{ParetoFrontBuilder, ParetoValue},
 };
 
-const INF_PROGRESS: Progress = 1_000_000;
+const INF_PROGRESS: u32 = 1_000_000;
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -46,8 +45,8 @@ impl ReducedEffects {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
-    durability: Durability,
-    cp: CP,
+    durability: i16,
+    cp: i16,
     effects: ReducedEffects,
     combo: Option<ComboAction>,
 }
@@ -77,10 +76,10 @@ impl ReducedState {
 pub struct FinishSolver {
     settings: Settings,
     // maximum attainable progress for each state
-    max_progress: HashMap<ReducedState, Progress>,
+    max_progress: HashMap<ReducedState, u32>,
     // pareto-optimal set of (progress, duration) for each state
-    pareto_fronts: HashMap<ReducedState, Box<[ParetoValue<Progress, i32>]>>,
-    pareto_front_builder: ParetoFrontBuilder<Progress, i32>,
+    pareto_fronts: HashMap<ReducedState, Box<[ParetoValue<u32, i32>]>>,
+    pareto_front_builder: ParetoFrontBuilder<u32, i32>,
 }
 
 impl FinishSolver {
@@ -161,7 +160,7 @@ impl FinishSolver {
         None
     }
 
-    fn solve_max_progress(&mut self, state: ReducedState) -> Progress {
+    fn solve_max_progress(&mut self, state: ReducedState) -> u32 {
         match self.max_progress.get(&state) {
             Some(max_progress) => *max_progress,
             None => {

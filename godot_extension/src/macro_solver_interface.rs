@@ -5,10 +5,7 @@ use std::{
 
 use godot::prelude::*;
 
-use simulator::{
-    units::{Durability, Progress, Quality, CP},
-    Action, ActionMask, Condition, Settings, State,
-};
+use simulator::{Action, ActionMask, Condition, Settings, State};
 use solvers::MacroSolver;
 
 #[derive(GodotClass)]
@@ -50,7 +47,7 @@ impl INode for MacroSolverInterface {
             base,
             solver_busy: false,
             solver_result: Arc::new(Mutex::new(None)),
-            simulation: dict! {"PROGRESS":0.0,"QUALITY":0.0,"DURABILITY":0.0,"CP":0.0,},
+            simulation: dict! {"PROGRESS":0.0,"QUALITY":0.0,"DURABILITY":0.0,"i16":0.0,},
             macro_string: GString::new(),
 
             setting_max_progress: 0.0,
@@ -75,12 +72,12 @@ impl MacroSolverInterface {
 
     fn get_settings(&self) -> Settings {
         Settings {
-            max_cp: self.setting_max_cp as CP,
-            max_durability: self.setting_max_durability as Durability,
-            max_progress: self.setting_max_progress as Progress,
-            max_quality: self.setting_max_quality as Quality,
-            base_progress: self.setting_base_progress as Progress,
-            base_quality: self.setting_base_quality as Quality,
+            max_cp: self.setting_max_cp as i16,
+            max_durability: self.setting_max_durability as i16,
+            max_progress: self.setting_max_progress as u32,
+            max_quality: self.setting_max_quality as u32,
+            base_progress: self.setting_base_progress as u32,
+            base_quality: self.setting_base_quality as u32,
             job_level: self.setting_job_level as u8,
             allowed_actions: ActionMask::from_level(
                 self.setting_job_level as u32,
@@ -95,7 +92,7 @@ impl MacroSolverInterface {
             "PROGRESS": 0.0,
             "QUALITY": 0.0,
             "DURABILITY": self.setting_max_durability,
-            "CP": self.setting_max_cp,
+            "i16": self.setting_max_cp,
         };
         self.macro_string = GString::new();
         self.emit_state_updated();
@@ -137,7 +134,7 @@ impl MacroSolverInterface {
             "PROGRESS": progress,
             "QUALITY": quality,
             "DURABILITY": durability,
-            "CP": cp,
+            "i16": cp,
         };
 
         // set macro string

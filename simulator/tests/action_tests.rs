@@ -159,7 +159,7 @@ fn test_tricks_of_the_trade() {
         }
         _ => panic!(),
     }
-    // CP after action can't exceed max cp
+    // i16 after action can't exceed max cp
     let mut state: InProgress = InProgress::new(&SETTINGS);
     state.cp -= 10;
     let state = state.use_action(Action::TricksOfTheTrade, Condition::Excellent, &SETTINGS);

@@ -1,11 +1,11 @@
-use simulator::{units::Quality, Action, ActionMask, Condition, Settings, State};
+use simulator::{Action, ActionMask, Condition, Settings, State};
 use solvers::MacroSolver;
 
 fn solve(settings: &Settings) -> Option<Vec<Action>> {
     MacroSolver::new(settings.clone()).solve(State::new(settings))
 }
 
-fn get_quality(settings: &Settings, actions: &[Action]) -> Quality {
+fn get_quality(settings: &Settings, actions: &[Action]) -> u32 {
     let mut state: State = State::new(&settings);
     for action in actions {
         state = state.as_in_progress().unwrap().use_action(

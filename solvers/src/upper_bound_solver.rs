@@ -1,7 +1,6 @@
 use crate::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use simulator::{
-    state::InProgress, units::*, Action, ActionMask, ComboAction, Condition, Effects, Settings,
-    State,
+    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings, State,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -10,9 +9,9 @@ use super::pareto_front::{ParetoFrontBuilder, ParetoValue};
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS).union(MIXED_ACTIONS);
 
-const INF_PROGRESS: Progress = 1_000_000;
-const INF_QUALITY: Quality = 1_000_000;
-const INF_DURABILITY: Durability = 100;
+const INF_PROGRESS: u32 = 1_000_000;
+const INF_QUALITY: u32 = 1_000_000;
+const INF_DURABILITY: i16 = 100;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct ReducedEffects {
@@ -25,13 +24,13 @@ pub struct ReducedEffects {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
-    cp: CP,
+    cp: i16,
     combo: Option<ComboAction>,
     effects: ReducedEffects,
 }
 
 impl ReducedState {
-    fn from_state(state: InProgress, base_durability_cost: CP, waste_not_cost: CP) -> Self {
+    fn from_state(state: InProgress, base_durability_cost: i16, waste_not_cost: i16) -> Self {
         let used_durability = (INF_DURABILITY - state.durability) / 5;
         let durability_cost = std::cmp::min(
             used_durability * base_durability_cost,
@@ -74,10 +73,10 @@ impl std::convert::From<ReducedState> for InProgress {
 
 pub struct UpperBoundSolver {
     settings: Settings,
-    base_durability_cost: CP,
-    waste_not_cost: CP,
-    solved_states: HashMap<ReducedState, Box<[ParetoValue<Progress, Quality>]>>,
-    pareto_front_builder: ParetoFrontBuilder<Progress, Quality>,
+    base_durability_cost: i16,
+    waste_not_cost: i16,
+    solved_states: HashMap<ReducedState, Box<[ParetoValue<u32, u32>]>>,
+    pareto_front_builder: ParetoFrontBuilder<u32, u32>,
 }
 
 impl UpperBoundSolver {
@@ -103,12 +102,12 @@ impl UpperBoundSolver {
         }
     }
 
-    pub fn quality_upper_bound(&mut self, mut state: InProgress) -> Quality {
+    pub fn quality_upper_bound(&mut self, mut state: InProgress) -> u32 {
         let current_quality = self.settings.max_quality - state.missing_quality;
 
         // refund effects and durability
-        state.cp += state.effects.manipulation as CP * (Action::Manipulation.base_cp_cost() / 8);
-        state.cp += state.effects.waste_not as CP * self.waste_not_cost;
+        state.cp += state.effects.manipulation as i16 * (Action::Manipulation.base_cp_cost() / 8);
+        state.cp += state.effects.waste_not as i16 * self.waste_not_cost;
         state.cp += state.durability / 5 * self.base_durability_cost;
         state.durability = INF_DURABILITY;
 
@@ -225,7 +224,7 @@ mod tests {
     use super::*;
     use more_asserts::*;
 
-    fn solve(settings: Settings, actions: &[Action]) -> Quality {
+    fn solve(settings: Settings, actions: &[Action]) -> u32 {
         let state = State::new(&settings).use_actions(actions, Condition::Normal, &settings);
         let result =
             UpperBoundSolver::new(settings).quality_upper_bound(state.as_in_progress().unwrap());

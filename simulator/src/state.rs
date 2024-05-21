@@ -1,10 +1,10 @@
-use crate::{units::*, Action, ComboAction, Condition, Effects, Settings};
+use crate::{Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum State {
     InProgress(InProgress),
-    Completed { missing_quality: Quality },
-    Failed { missing_progress: Progress },
+    Completed { missing_quality: u32 },
+    Failed { missing_progress: u32 },
     Invalid,
 }
 
@@ -41,10 +41,10 @@ impl State {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InProgress {
-    pub cp: CP,
-    pub durability: Durability,
-    pub missing_progress: Progress,
-    pub missing_quality: Quality,
+    pub cp: i16,
+    pub durability: i16,
+    pub missing_progress: u32,
+    pub missing_quality: u32,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
 }
