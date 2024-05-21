@@ -11,6 +11,3 @@ crate-type = ["cdylib"]
 simulator = { path = "../simulator" }
 solvers = { path = "../solvers" }
 godot = { git = "https://github.com/godot-rust/gdext", rev = "ca586182f430df3fb4ef8548d43bc756ce92022e" }
-
-[profile.release]
-lto = "thin"

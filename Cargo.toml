@@ -1,6 +1,10 @@
 [workspace]
+resolver = "2"
 members = [
     "simulator",
     "solvers",
     "godot_extension"
 ]
+
+[profile.release]
+lto = "fat"
