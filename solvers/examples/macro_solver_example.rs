@@ -3,12 +3,12 @@ use solvers::MacroSolver;
 
 fn main() {
     let settings = Settings {
-        max_cp: 687,
+        max_cp: 600,
         max_durability: 70,
-        max_progress: 5720,
-        max_quality: 12900,
-        base_progress: 239,
-        base_quality: 271,
+        max_progress: 4300,
+        max_quality: 12800,
+        base_progress: 200,
+        base_quality: 215,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };

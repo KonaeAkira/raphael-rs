@@ -102,6 +102,9 @@ impl UpperBoundSolver {
         }
     }
 
+    /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
+    /// The returned upper-bound is NOT clamped to settings.max_quality.
+    /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, mut state: InProgress) -> u32 {
         let current_quality = self.settings.max_quality - state.missing_quality;
 

@@ -1,5 +1,5 @@
 use radix_heap::RadixHeapMap;
-use rustc_hash::FxHashSet;
+use rustc_hash::FxHashMap;
 
 use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::{FinishSolver, UpperBoundSolver};
@@ -30,6 +30,9 @@ impl MacroSolver {
         }
     }
 
+    /// Returns a list of Actions that maximizes Quality of the completed state.
+    /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
+    /// The solver makes an effort to produce a short solution, but it is not (yet) guaranteed to be the shortest solution.
     pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
         match state {
             State::InProgress(state) => {
@@ -54,15 +57,21 @@ impl MacroSolver {
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
-        let mut visited_states = FxHashSet::default();
+        // key: State::InProgress (with missing_quality set to 0)
+        // value: min missing_quality seen for the key
+        let mut visited_states = FxHashMap::default();
+
+        // priority queue based on quality upper bound
         let mut search_queue = RadixHeapMap::new();
+
+        // backtracking data
         let mut traces: Vec<Option<SearchTrace>> = Vec::new();
 
         let mut best_quality = 0;
         let mut best_state = None;
         let mut best_trace = 0;
 
-        visited_states.insert(state);
+        visited_states.insert(hash_key(state), state.missing_quality);
         search_queue.push(
             self.bound_solver.quality_upper_bound(state),
             SearchNode {
@@ -84,21 +93,27 @@ impl MacroSolver {
                     .state
                     .use_action(action, Condition::Normal, &self.settings);
                 if let State::InProgress(state) = state {
-                    if visited_states.contains(&state) {
-                        continue;
+                    // skip this state if we already visited the same state but with equal or more Quality
+                    if let Some(missing_quality) = visited_states.get(&hash_key(state)) {
+                        if *missing_quality <= state.missing_quality {
+                            continue;
+                        }
                     }
 
+                    // skip this state if it is impossible to max out Progress
                     if !self.finish_solver.can_finish(&state) {
                         finish_solver_rejected_node += 1;
                         continue;
                     }
+
+                    // skip this state if its Quality upper bound is not greater than the current best Quality
                     let quality_bound = self.bound_solver.quality_upper_bound(state);
                     if quality_bound <= best_quality {
                         upper_bound_solver_rejected_nodes += 1;
                         continue;
                     }
 
-                    visited_states.insert(state);
+                    visited_states.insert(hash_key(state), state.missing_quality);
                     search_queue.push(
                         quality_bound,
                         SearchNode {
@@ -163,4 +178,11 @@ fn get_actions(traces: &[Option<SearchTrace>], mut index: usize) -> impl Iterato
         index = trace.parent;
     }
     actions.into_iter().rev()
+}
+
+fn hash_key(state: InProgress) -> InProgress {
+    InProgress {
+        missing_quality: 0,
+        ..state
+    }
 }
