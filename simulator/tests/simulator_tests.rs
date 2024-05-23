@@ -1,15 +1,30 @@
 use simulator::{Action, ActionMask, Condition, Settings, State};
 
-fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
+fn simulate(settings: &Settings, steps: impl Iterator<Item = (Action, Condition)>) -> Vec<State> {
     let mut state: State = State::new(&settings);
-    for action in actions {
-        state = state.as_in_progress().unwrap().use_action(
-            action.clone(),
-            Condition::Normal,
-            &settings,
-        );
+    let mut result = Vec::new();
+    for (action, condition) in steps {
+        state = state
+            .as_in_progress()
+            .unwrap()
+            .use_action(action, condition, &settings);
+        result.push(state);
     }
-    return state;
+    result
+}
+
+fn progress_quality_pair(settings: &Settings, state: State) -> (u32, u32) {
+    match state {
+        State::InProgress(state) => (
+            settings.max_progress - state.missing_progress,
+            settings.max_quality - state.missing_quality,
+        ),
+        State::Completed { missing_quality } => (
+            settings.max_progress,
+            settings.max_quality - missing_quality,
+        ),
+        _ => panic!("unsupported"),
+    }
 }
 
 #[test]
@@ -26,15 +41,18 @@ fn test_random_926ae85b() {
         job_level: 10,
         allowed_actions: ActionMask::none(),
     };
-    let state = from_action_sequence(
+    let actions = [
+        Action::BasicSynthesis,
+        Action::BasicTouch,
+        Action::BasicTouch,
+    ];
+    let states = simulate(
         &settings,
-        &[
-            Action::BasicSynthesis,
-            Action::BasicTouch,
-            Action::BasicTouch,
-        ],
+        actions
+            .into_iter()
+            .zip(std::iter::repeat(Condition::Normal)),
     );
-    match state {
+    match states.last().unwrap() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 14);
             assert_eq!(state.durability, 30);
@@ -60,20 +78,23 @@ fn test_random_3c721e47() {
         job_level: 85,
         allowed_actions: ActionMask::none(),
     };
-    let state = from_action_sequence(
+    let actions = [
+        Action::MuscleMemory,
+        Action::Veneration,
+        Action::WasteNot,
+        Action::Groundwork,
+        Action::Manipulation,
+        Action::Innovation,
+        Action::PreparatoryTouch,
+        Action::PrudentTouch,
+    ];
+    let states = simulate(
         &settings,
-        &[
-            Action::MuscleMemory,
-            Action::Veneration,
-            Action::WasteNot,
-            Action::Groundwork,
-            Action::Manipulation,
-            Action::Innovation,
-            Action::PreparatoryTouch,
-            Action::PrudentTouch,
-        ],
+        actions
+            .into_iter()
+            .zip(std::iter::repeat(Condition::Normal)),
     );
-    match state {
+    match states.last().unwrap() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 223);
             assert_eq!(state.durability, 60);
@@ -98,21 +119,24 @@ fn test_random_3ba90d3a() {
         job_level: 81,
         allowed_actions: ActionMask::none(),
     };
-    let state = from_action_sequence(
+    let actions = [
+        Action::Veneration,
+        Action::CarefulSynthesis,
+        Action::CarefulSynthesis,
+        Action::PreparatoryTouch,
+        Action::MasterMend,
+        Action::Innovation,
+        Action::PrudentTouch,
+        Action::BasicTouch,
+        Action::ComboStandardTouch,
+    ];
+    let states = simulate(
         &settings,
-        &[
-            Action::Veneration,
-            Action::CarefulSynthesis,
-            Action::CarefulSynthesis,
-            Action::PreparatoryTouch,
-            Action::MasterMend,
-            Action::Innovation,
-            Action::PrudentTouch,
-            Action::BasicTouch,
-            Action::ComboStandardTouch,
-        ],
+        actions
+            .into_iter()
+            .zip(std::iter::repeat(Condition::Normal)),
     );
-    match state {
+    match states.last().unwrap() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 188);
             assert_eq!(state.durability, 25);
@@ -139,38 +163,41 @@ fn test_random_bce2650c() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, false),
     };
-    let state = from_action_sequence(
+    let actions = [
+        Action::MuscleMemory,
+        Action::WasteNot,
+        Action::Veneration,
+        Action::Groundwork,
+        Action::Groundwork,
+        Action::Groundwork,
+        Action::PrudentSynthesis,
+        Action::MasterMend,
+        Action::PrudentTouch,
+        Action::Innovation,
+        Action::PrudentTouch,
+        Action::PrudentTouch,
+        Action::PrudentTouch,
+        Action::PrudentTouch,
+        Action::MasterMend,
+        Action::Innovation,
+        Action::PrudentTouch,
+        Action::BasicTouch,
+        Action::ComboStandardTouch,
+        Action::ComboAdvancedTouch,
+        Action::GreatStrides,
+        Action::Innovation,
+        Action::Observe,
+        Action::FocusedTouch,
+        Action::GreatStrides,
+        Action::ByregotsBlessing,
+    ];
+    let states = simulate(
         &settings,
-        &[
-            Action::MuscleMemory,
-            Action::WasteNot,
-            Action::Veneration,
-            Action::Groundwork,
-            Action::Groundwork,
-            Action::Groundwork,
-            Action::PrudentSynthesis,
-            Action::MasterMend,
-            Action::PrudentTouch,
-            Action::Innovation,
-            Action::PrudentTouch,
-            Action::PrudentTouch,
-            Action::PrudentTouch,
-            Action::PrudentTouch,
-            Action::MasterMend,
-            Action::Innovation,
-            Action::PrudentTouch,
-            Action::BasicTouch,
-            Action::ComboStandardTouch,
-            Action::ComboAdvancedTouch,
-            Action::GreatStrides,
-            Action::Innovation,
-            Action::Observe,
-            Action::FocusedTouch,
-            Action::GreatStrides,
-            Action::ByregotsBlessing,
-        ],
+        actions
+            .into_iter()
+            .zip(std::iter::repeat(Condition::Normal)),
     );
-    match state {
+    match states.last().unwrap() {
         State::InProgress(state) => {
             assert_eq!(state.cp, 1);
             assert_eq!(state.durability, 5);
@@ -179,4 +206,70 @@ fn test_random_bce2650c() {
         }
         _ => panic!(),
     }
+}
+
+#[test]
+fn test_ingame_be9fc5c2() {
+    // Classical Index
+    // 4000 Craftsmanship, 3962 Control
+    let settings = Settings {
+        max_cp: 594,
+        max_durability: 70,
+        max_progress: 3900,
+        max_quality: 10920,
+        base_progress: 247,
+        base_quality: 265,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90, true),
+    };
+    let states: Vec<(u32, u32)> = simulate(
+        &settings,
+        [
+            (Action::Reflect, Condition::Normal), // 0, 265
+            (Action::Manipulation, Condition::Normal),
+            (Action::PreciseTouch, Condition::Excellent), // 0, 2173
+            (Action::WasteNot, Condition::Poor),
+            (Action::PreparatoryTouch, Condition::Normal), // 0, 2915
+            (Action::MasterMend, Condition::Normal),
+            (Action::PreparatoryTouch, Condition::Normal), // 0, 3763
+            (Action::Innovation, Condition::Normal),
+            (Action::BasicTouch, Condition::Normal), // 0, 4478
+            (Action::ComboStandardTouch, Condition::Normal), // 0, 5422
+            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 6614
+            (Action::PrudentTouch, Condition::Normal), // 0, 7409
+            (Action::GreatStrides, Condition::Normal),
+            (Action::Innovation, Condition::Normal),
+            (Action::Observe, Condition::Normal),
+            (Action::FocusedTouch, Condition::Normal), // 0, 9396
+            (Action::Veneration, Condition::Normal),
+            (Action::Groundwork, Condition::Normal), // 1333, 9396
+            (Action::DelicateSynthesis, Condition::Normal), // 1703, 9926
+        ]
+        .into_iter(),
+    )
+    .into_iter()
+    .map(|state| progress_quality_pair(&settings, state))
+    .collect();
+    let expected = [
+        (0, 265),
+        (0, 265),
+        (0, 2173),
+        (0, 2173),
+        (0, 2915),
+        (0, 2915),
+        (0, 3763),
+        (0, 3763),
+        (0, 4478),
+        (0, 5422),
+        (0, 6614),
+        (0, 7409),
+        (0, 7409),
+        (0, 7409),
+        (0, 7409),
+        (0, 9396),
+        (0, 9396),
+        (1333, 9396),
+        (1703, 9926),
+    ];
+    assert_eq!(states, expected);
 }
