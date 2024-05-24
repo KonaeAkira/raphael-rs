@@ -147,7 +147,7 @@ impl FinishSolver {
             self.solve_pareto_front(reduced_state);
             self.pareto_front_builder.clear();
         }
-        let result: &Box<[ParetoValue<u32, i32>]> = self.pareto_fronts.get(&reduced_state).unwrap();
+        let result: &[ParetoValue<u32, i32>] = self.pareto_fronts.get(&reduced_state).unwrap();
         for ParetoValue {
             first: progress,
             second: time,

@@ -154,17 +154,13 @@ impl MacroSolverInterface {
     #[func]
     fn check_result(&mut self) {
         if self.solver_busy {
-            match self.solver_result.clone().try_lock() {
-                Ok(mut lock_guard) => {
-                    match lock_guard.as_ref() {
-                        Some(actions) => self.set_result(actions.clone()),
-                        None => (),
-                    };
-                    *lock_guard = None;
-                    self.solver_busy = false;
-                    self.emit_state_updated();
+            if let Ok(mut lock_guard) = self.solver_result.clone().try_lock() {
+                if let Some(actions) = lock_guard.as_ref() {
+                    self.set_result(actions.clone());
                 }
-                Err(_) => (),
+                *lock_guard = None;
+                self.solver_busy = false;
+                self.emit_state_updated();
             }
         }
     }
@@ -191,13 +187,12 @@ impl MacroSolverInterface {
 }
 
 fn from_action_sequence(settings: &Settings, actions: &[Action]) -> State {
-    let mut state: State = State::new(&settings);
+    let mut state: State = State::new(settings);
     for action in actions {
-        state = state.as_in_progress().unwrap().use_action(
-            action.clone(),
-            Condition::Normal,
-            &settings,
-        );
+        state = state
+            .as_in_progress()
+            .unwrap()
+            .use_action(*action, Condition::Normal, settings);
     }
-    return state;
+    state
 }

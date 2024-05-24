@@ -140,7 +140,7 @@ impl MacroSolver {
             Some(best_state) => {
                 let trace_actions = get_actions(&traces, best_trace);
                 let finish_actions = self.finish_solver.get_finish_sequence(best_state).unwrap();
-                Some(trace_actions.chain(finish_actions.into_iter()).collect())
+                Some(trace_actions.chain(finish_actions).collect())
             }
             None => None,
         };
