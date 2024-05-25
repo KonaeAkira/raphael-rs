@@ -29,7 +29,7 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut items_with_recipe = HashSet::new();
-    let mut recipes = phf_codegen::Map::new();
+    let mut recipes = phf_codegen::OrderedMap::new();
 
     for recipe_record in recipes_csv.deserialize::<RecipeRecord>() {
         let recipe_record = recipe_record?;
@@ -57,8 +57,8 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
     writeln!(writer, "{}", recipes.build())?;
 
-    let mut item_ids = phf_codegen::Map::new();
-    let mut items = phf_codegen::Map::new();
+    let mut item_ids = phf_codegen::OrderedMap::new();
+    let mut items = phf_codegen::OrderedMap::new();
 
     for item_record in items_csv.deserialize::<ItemRecord>() {
         let item_record = item_record?;

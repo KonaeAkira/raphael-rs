@@ -25,9 +25,9 @@ const LEVELS: [u32; 90] = [
     555, 560,
 ];
 
-static ITEM_IDS: phf::Map<&'static str, u32> = include!(concat!(env!("OUT_DIR"), "/item_ids.rs"));
-// static ITEMS: phf::Map<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
-static RECIPES: phf::Map<u32, Recipe> = include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
+static ITEM_IDS: phf::OrderedMap<&'static str, u32> = include!(concat!(env!("OUT_DIR"), "/item_ids.rs"));
+// static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
+static RECIPES: phf::OrderedMap<u32, Recipe> = include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
 
 pub fn get_item_names() -> impl Iterator<Item = &'static str> {
     ITEM_IDS.keys().into_iter().copied()
