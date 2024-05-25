@@ -18,8 +18,8 @@ config/icon="res://resources/icon.svg"
 
 [display]
 
-window/size/viewport_width=800
-window/size/viewport_height=500
+window/size/viewport_width=840
+window/size/viewport_height=525
 
 [editor_plugins]
 

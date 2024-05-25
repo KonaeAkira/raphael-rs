@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3 uid="uid://dkghcwm3lrc5n"]
+[gd_scene load_steps=34 format=3 uid="uid://dkghcwm3lrc5n"]
 
 [ext_resource type="Theme" uid="uid://c2f5y5psfqir3" path="res://resources/custom-theme.tres" id="1_ej8fr"]
 [ext_resource type="Script" path="res://scripts/MacroSolverInterface.gd" id="2_524rp"]
@@ -171,6 +171,27 @@ func _on_macro_solver_interface_state_updated():
 	disabled = %MacroSolverInterface.solver_busy
 "
 
+[sub_resource type="GDScript" id="GDScript_l8xas"]
+script/source = "extends HBoxContainer
+
+@export var index: int;
+
+func _ready():
+	index = get_index()
+	%MacroSolverInterface.state_updated.connect(_on_state_updated)
+	get_node(\"SpinBox\").value_changed.connect(_on_value_changed)
+	
+func _on_state_updated():
+	get_node(\"SpinBox\").editable = not %MacroSolverInterface.solver_busy
+	get_node(\"SpinBox\").max_value = %MacroSolverInterface.ingredient_amounts[index]
+	get_node(\"LineEdit\").text = %MacroSolverInterface.ingredient_names[index]
+	visible = %MacroSolverInterface.ingredient_has_hq[index];
+
+func _on_value_changed(value: float):
+	%MacroSolverInterface.setting_hq_ingredient_amount[index] = int(value)
+	%MacroSolverInterface.reset_simulation_parameters()
+"
+
 [sub_resource type="GDScript" id="GDScript_myq66"]
 script/source = "extends SpinBox
 
@@ -334,15 +355,6 @@ setting_manipulation_unlocked = true
 unique_name_in_owner = true
 script = ExtResource("2_524rp")
 
-[node name="Title" type="Label" parent="."]
-visible = false
-layout_mode = 0
-offset_left = 10.0
-offset_top = 4.0
-offset_right = 170.0
-offset_bottom = 27.0
-text = "FFXIV Crafting Solver"
-
 [node name="TabContainer" type="TabContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -356,45 +368,51 @@ tab_focus_mode = 0
 [node name="Macro Solver" type="MarginContainer" parent="TabContainer"]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver"]
+[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver"]
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="Simulator" type="PanelContainer" parent="TabContainer/Macro Solver/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Simulator" type="PanelContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Macro Solver/VBoxContainer/Simulator"]
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator"]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer"]
 layout_mode = 2
 theme = SubResource("Theme_5skxr")
 
-[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Simulation"
 
-[node name="HSeparator" type="HSeparator" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "Progress"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="SimulationProgressBar" type="ProgressBar" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="SimulationProgressBar" type="ProgressBar" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
 show_percentage = false
 script = SubResource("GDScript_3uamc")
 
-[node name="SimulationProgressLabel" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar"]
+[node name="SimulationProgressLabel" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -406,24 +424,24 @@ horizontal_alignment = 1
 vertical_alignment = 1
 script = SubResource("GDScript_yutcb")
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2"]
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "Quality"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="SimulationQualityBar" type="ProgressBar" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2"]
+[node name="SimulationQualityBar" type="ProgressBar" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
 show_percentage = false
 script = SubResource("GDScript_m24mk")
 
-[node name="SimulationQualityLabel" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2/SimulationQualityBar"]
+[node name="SimulationQualityLabel" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2/SimulationQualityBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -435,24 +453,24 @@ horizontal_alignment = 1
 vertical_alignment = 1
 script = SubResource("GDScript_o7vhi")
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "Durability"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="SimulationDurabilityBar" type="ProgressBar" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="SimulationDurabilityBar" type="ProgressBar" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
 show_percentage = false
 script = SubResource("GDScript_lhtja")
 
-[node name="SimulationDurabilityLabel" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationDurabilityBar"]
+[node name="SimulationDurabilityLabel" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationDurabilityBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -464,20 +482,20 @@ horizontal_alignment = 1
 vertical_alignment = 1
 script = SubResource("GDScript_2s0he")
 
-[node name="Label2" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="Label2" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 text = "    CP"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="SimulationCpBar" type="ProgressBar" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="SimulationCpBar" type="ProgressBar" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
 show_percentage = false
 script = SubResource("GDScript_wmtbn")
 
-[node name="SimulationCpLabel" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationCpBar"]
+[node name="SimulationCpLabel" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationCpBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -489,7 +507,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 script = SubResource("GDScript_162jc")
 
-[node name="HqRate" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="HqRate" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 custom_minimum_size = Vector2(96, 0)
 layout_mode = 2
 text = "0% HQ"
@@ -497,29 +515,25 @@ horizontal_alignment = 2
 vertical_alignment = 1
 script = SubResource("GDScript_htxbq")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 8
-
-[node name="Result" type="PanelContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer"]
+[node name="Result" type="PanelContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Result"]
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Result"]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Result/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Result/MarginContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Result/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Macro"
 
-[node name="HSeparator" type="HSeparator" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Result/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="MacroTextView" type="CodeEdit" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer"]
+[node name="MacroTextView" type="CodeEdit" parent="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Result/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/line_spacing = 0
@@ -527,76 +541,161 @@ editable = false
 gutters_draw_line_numbers = true
 script = SubResource("GDScript_wuyky")
 
-[node name="Configuration" type="PanelContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer"]
+[node name="Configuration" type="PanelContainer" parent="TabContainer/Macro Solver/HBoxContainer"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration"]
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration"]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer"]
 custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Configuration"
 
-[node name="HSeparator" type="HSeparator" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="HBoxContainer3" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Recipe" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="Recipe" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 text = "Recipe"
 
-[node name="RecipeInput" type="LineEdit" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="RecipeInput" type="LineEdit" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 0
 editable = false
 script = SubResource("GDScript_ftokq")
 
-[node name="SelectButton" type="Button" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="SelectButton" type="Button" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 text = "..."
 script = SubResource("GDScript_n8qgc")
 
-[node name="MacroSolverSettingsPanel" type="GridContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="Label2" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "HQ Materials"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="HqIngredient1" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+script = SubResource("GDScript_l8xas")
+
+[node name="LineEdit" type="LineEdit" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient1"]
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient1"]
+layout_mode = 2
+alignment = 2
+
+[node name="HqIngredient2" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+script = SubResource("GDScript_l8xas")
+
+[node name="LineEdit" type="LineEdit" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient2"]
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient2"]
+layout_mode = 2
+alignment = 2
+
+[node name="HqIngredient3" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+script = SubResource("GDScript_l8xas")
+
+[node name="LineEdit" type="LineEdit" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient3"]
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient3"]
+layout_mode = 2
+alignment = 2
+
+[node name="HqIngredient4" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+script = SubResource("GDScript_l8xas")
+
+[node name="LineEdit" type="LineEdit" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient4"]
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient4"]
+layout_mode = 2
+alignment = 2
+
+[node name="HqIngredient5" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+script = SubResource("GDScript_l8xas")
+
+[node name="LineEdit" type="LineEdit" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient5"]
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient5"]
+layout_mode = 2
+alignment = 2
+
+[node name="HqIngredient6" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+script = SubResource("GDScript_l8xas")
+
+[node name="LineEdit" type="LineEdit" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient6"]
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/VBoxContainer/HqIngredient6"]
+layout_mode = 2
+alignment = 2
+
+[node name="HSeparator2" type="HSeparator" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="MacroSolverSettingsPanel" type="GridContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/h_separation = 8
 columns = 4
 
-[node name="Craftsmanship" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="Craftsmanship" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 text = "Craftsmanship"
 
-[node name="CraftsmanshipInput" type="SpinBox" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="CraftsmanshipInput" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 max_value = 9999.0
 alignment = 2
 script = SubResource("GDScript_myq66")
 
-[node name="Control" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="Control" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 text = "Control"
 
-[node name="ControlInput" type="SpinBox" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="ControlInput" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 max_value = 9999.0
 alignment = 2
 script = SubResource("GDScript_hni1j")
 
-[node name="MaxCp" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="MaxCp" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 text = "Max CP"
 
-[node name="MaxCpInput" type="SpinBox" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="MaxCpInput" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = 1.0
@@ -605,11 +704,11 @@ value = 1.0
 alignment = 2
 script = SubResource("GDScript_3ptyu")
 
-[node name="Level" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="Level" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 text = "Level"
 
-[node name="LevelInput" type="SpinBox" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="LevelInput" type="SpinBox" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 min_value = 1.0
 max_value = 90.0
@@ -617,11 +716,11 @@ value = 1.0
 alignment = 2
 script = SubResource("GDScript_j26k4")
 
-[node name="Manipulation" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="Manipulation" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 text = "Manipulation"
 
-[node name="ManipulationInput" type="OptionButton" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="ManipulationInput" type="OptionButton" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 item_count = 2
 popup/item_0/text = "Yes"
@@ -630,11 +729,11 @@ popup/item_1/text = "No"
 popup/item_1/id = 1
 script = SubResource("GDScript_fl6hb")
 
-[node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="Label" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 text = "Specialist"
 
-[node name="OptionButton2" type="OptionButton" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
+[node name="OptionButton2" type="OptionButton" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
 disabled = true
 item_count = 2
@@ -644,30 +743,30 @@ popup/item_0/id = 0
 popup/item_1/text = "No"
 popup/item_1/id = 1
 
-[node name="BaseProg" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="BaseProg" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.494118, 0.494118, 0.494118, 1)
 text = "Progress increase per 100 potency: N/A"
 script = SubResource("GDScript_kxsbr")
 
-[node name="BaseQual" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="BaseQual" type="Label" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.494118, 0.494118, 0.494118, 1)
 text = "Quality increase per 100 potency: N/A"
 script = SubResource("GDScript_t464c")
 
-[node name="HSeparator3" type="HSeparator" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="HSeparator3" type="HSeparator" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_constants/separation = 0
 
-[node name="TextureProgressBar" type="TextureProgressBar" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
+[node name="TextureProgressBar" type="TextureProgressBar" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
 visible = false
 layout_mode = 2
 value = 50.0
@@ -676,7 +775,7 @@ texture_progress = ExtResource("3_jv5hd")
 tint_progress = Color(0.462291, 0.462291, 0.462291, 1)
 script = SubResource("GDScript_07vfa")
 
-[node name="SolveButton" type="Button" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
+[node name="SolveButton" type="Button" parent="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
 text = "Solve"
@@ -811,35 +910,35 @@ action_mode = 0
 text = "Update Available"
 uri = "https://github.com/KonaeAkira/raphael-rs/releases"
 
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar/SimulationProgressLabel" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2/SimulationQualityBar" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2/SimulationQualityBar/SimulationQualityLabel" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationDurabilityBar" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationDurabilityBar/SimulationDurabilityLabel" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationCpBar" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationCpBar/SimulationCpLabel" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/HqRate" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Result/MarginContainer/VBoxContainer/MacroTextView" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/RecipeInput" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/SelectButton" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/CraftsmanshipInput" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ControlInput" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxCpInput" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/LevelInput" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/BaseProg" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/BaseQual" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/TextureProgressBar" method="_on_macro_solver_interface_state_updated"]
-[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_macro_solver_interface_state_updated"]
-[connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/SelectButton" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/SelectButton" method="_on_pressed"]
-[connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/CraftsmanshipInput" to="MacroSolverInterface" method="_on_craftsmanship_input_value_changed"]
-[connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ControlInput" to="MacroSolverInterface" method="_on_control_input_value_changed"]
-[connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxCpInput" to="MacroSolverInterface" method="_on_max_cp_input_value_changed"]
-[connection signal="value_changed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/LevelInput" to="MacroSolverInterface" method="_on_level_input_value_changed"]
-[connection signal="item_selected" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" method="_on_item_selected"]
-[connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="MacroSolverInterface" method="_on_solve_button_pressed"]
-[connection signal="pressed" from="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_pressed"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer/SimulationProgressBar/SimulationProgressLabel" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2/SimulationQualityBar" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2/SimulationQualityBar/SimulationQualityLabel" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationDurabilityBar" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationDurabilityBar/SimulationDurabilityLabel" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationCpBar" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/SimulationCpBar/SimulationCpLabel" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3/HqRate" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/VBoxContainer/Result/MarginContainer/VBoxContainer/MacroTextView" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/RecipeInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/SelectButton" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/CraftsmanshipInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ControlInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxCpInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/LevelInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/BaseProg" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/BaseQual" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/TextureProgressBar" method="_on_macro_solver_interface_state_updated"]
+[connection signal="state_updated" from="MacroSolverInterface" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_macro_solver_interface_state_updated"]
+[connection signal="pressed" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/SelectButton" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer3/SelectButton" method="_on_pressed"]
+[connection signal="value_changed" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/CraftsmanshipInput" to="MacroSolverInterface" method="_on_craftsmanship_input_value_changed"]
+[connection signal="value_changed" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ControlInput" to="MacroSolverInterface" method="_on_control_input_value_changed"]
+[connection signal="value_changed" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/MaxCpInput" to="MacroSolverInterface" method="_on_max_cp_input_value_changed"]
+[connection signal="value_changed" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/LevelInput" to="MacroSolverInterface" method="_on_level_input_value_changed"]
+[connection signal="item_selected" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel/ManipulationInput" method="_on_item_selected"]
+[connection signal="pressed" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="MacroSolverInterface" method="_on_solve_button_pressed"]
+[connection signal="pressed" from="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" to="TabContainer/Macro Solver/HBoxContainer/Configuration/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer/SolveButton" method="_on_pressed"]
 [connection signal="close_requested" from="TabContainer/Macro Solver/RecipeSelectWindow" to="TabContainer/Macro Solver/RecipeSelectWindow" method="_on_close_requested"]
 [connection signal="visibility_changed" from="TabContainer/Macro Solver/RecipeSelectWindow" to="TabContainer/Macro Solver/RecipeSelectWindow" method="_on_visibility_changed"]
 [connection signal="text_changed" from="TabContainer/Macro Solver/RecipeSelectWindow/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/RecipeSearchInput" to="TabContainer/Macro Solver/RecipeSelectWindow/PanelContainer/MarginContainer/VBoxContainer/PanelContainer/MarginContainer/RecipeSearchInput" method="_on_text_changed"]

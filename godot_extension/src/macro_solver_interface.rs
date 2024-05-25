@@ -3,10 +3,10 @@ use std::{
     thread,
 };
 
-use game_data::{get_item_names, get_simulator_settings};
+use game_data::{get_craftable_item_names, get_ingredients, ITEMS, ITEM_IDS, LEVELS, RECIPES};
 use godot::prelude::*;
 
-use simulator::{Action, Condition, Settings, State};
+use simulator::{Action, ActionMask, Condition, Settings, State};
 use solvers::MacroSolver;
 
 #[derive(GodotClass)]
@@ -34,12 +34,23 @@ struct MacroSolverInterface {
     #[export]
     setting_manipulation_unlocked: bool,
 
+    #[var]
+    ingredient_names: Array<GString>,
+    #[var]
+    ingredient_amounts: Array<i64>,
+    #[var]
+    ingredient_has_hq: Array<bool>,
+    #[var]
+    setting_hq_ingredient_amount: Array<i64>,
+
     #[export]
     simulation_progress: i64,
     #[export]
     simulation_max_progress: i64,
     #[export]
     simulation_base_progress: i64,
+    #[export]
+    simulation_initial_quality: i64,
     #[export]
     simulation_quality: i64,
     #[export]
@@ -68,7 +79,7 @@ impl INode for MacroSolverInterface {
             solver_result: Arc::new(Mutex::new(None)),
             macro_string: GString::new(),
 
-            item_names: get_item_names().map(|s| s.to_godot()).collect(),
+            item_names: get_craftable_item_names().map(|s| s.to_godot()).collect(),
 
             setting_recipe: "".to_godot(),
             setting_craftsmanship: 0,
@@ -77,9 +88,16 @@ impl INode for MacroSolverInterface {
             setting_job_level: 0,
             setting_manipulation_unlocked: false,
 
+            #[rustfmt::skip]
+            ingredient_names: array!["".into(), "".into(), "".into(), "".into(), "".into(), "".into()],
+            ingredient_amounts: array![0, 0, 0, 0, 0, 0],
+            ingredient_has_hq: array![true, true, true, true, true, true],
+            setting_hq_ingredient_amount: array![0, 0, 0, 0, 0, 0],
+
             simulation_progress: 0,
             simulation_max_progress: 0,
             simulation_base_progress: 0,
+            simulation_initial_quality: 0,
             simulation_quality: 0,
             simulation_max_quality: 0,
             simulation_base_quality: 0,
@@ -100,32 +118,76 @@ impl MacroSolverInterface {
     }
 
     fn get_settings(&self) -> Settings {
-        get_simulator_settings(
-            self.setting_recipe.clone().into(),
-            self.setting_craftsmanship as u32,
-            self.setting_control as u32,
-            self.setting_max_cp as u32,
-            self.setting_job_level as u32,
-            self.setting_manipulation_unlocked,
-        )
-        .expect("Failed to get simulator settings")
+        Settings {
+            max_cp: self.simulation_max_cp as i16,
+            max_durability: self.simulation_max_durability as i16,
+            max_progress: self.simulation_max_progress as u32,
+            max_quality: (self.simulation_max_quality - self.simulation_initial_quality) as u32,
+            base_progress: self.simulation_base_progress as u32,
+            base_quality: self.simulation_base_quality as u32,
+            job_level: self.setting_job_level as u8,
+            allowed_actions: ActionMask::from_level(
+                self.setting_job_level as u32,
+                self.setting_manipulation_unlocked,
+            ),
+        }
     }
 
     #[func]
-    fn reset_simulation(&mut self) {
-        self.macro_string = GString::new();
+    fn reset_simulation_parameters(&mut self) {
+        let item_id = ITEM_IDS
+            .get(&self.setting_recipe.to_string())
+            .expect("No such item name");
+        let recipe = RECIPES.get(item_id).expect("No recipe for item");
 
-        let settings = self.get_settings();
+        let mut base_progress: f64 =
+            self.setting_craftsmanship as f64 * 10.0 / recipe.progress_div as f64 + 2.0;
+        let mut base_quality: f64 =
+            self.setting_control as f64 * 10.0 / recipe.quality_div as f64 + 35.0;
+        if LEVELS[self.setting_job_level as usize - 1] <= recipe.recipe_level {
+            base_progress = base_progress * recipe.progress_mod as f64 / 100.0;
+            base_quality = base_quality * recipe.quality_mod as f64 / 100.0;
+        }
+
+        let ingredients = get_ingredients(self.setting_recipe.clone().into());
+        self.ingredient_names = ingredients
+            .iter()
+            .map(|i| ITEMS.get(&i.item_id).unwrap().name.to_godot())
+            .collect();
+        self.ingredient_amounts = ingredients.iter().map(|i| i.amount as i64).collect();
+        self.ingredient_has_hq = ingredients
+            .iter()
+            .map(|i| ITEMS.get(&i.item_id).unwrap().can_be_hq)
+            .collect();
+
+        // calculate initial quality
+        let mut total_ilvl: i64 = 0;
+        let mut selected_ilvl: i64 = 0;
+        for (ingredient, selected_amount) in ingredients
+            .iter()
+            .zip(self.setting_hq_ingredient_amount.iter_shared())
+        {
+            let item = ITEMS.get(&ingredient.item_id).unwrap();
+            if item.can_be_hq {
+                total_ilvl += item.item_level as i64 * ingredient.amount as i64;
+                selected_ilvl += item.item_level as i64 * selected_amount;
+            }
+        }
+        self.simulation_initial_quality =
+            self.simulation_max_quality * recipe.material_quality_factor as i64 * selected_ilvl
+                / total_ilvl
+                / 100;
+
         self.simulation_progress = 0;
-        self.simulation_max_progress = settings.max_progress as i64;
-        self.simulation_base_progress = settings.base_progress as i64;
-        self.simulation_quality = 0;
-        self.simulation_max_quality = settings.max_quality as i64;
-        self.simulation_base_quality = settings.base_quality as i64;
-        self.simulation_durability = settings.max_durability as i64;
-        self.simulation_max_durability = settings.max_durability as i64;
-        self.simulation_cp = settings.max_cp as i64;
-        self.simulation_max_cp = settings.max_cp as i64;
+        self.simulation_max_progress = recipe.progress as i64;
+        self.simulation_base_progress = base_progress.floor() as i64;
+        self.simulation_quality = self.simulation_initial_quality;
+        self.simulation_max_quality = recipe.quality as i64;
+        self.simulation_base_quality = base_quality.floor() as i64;
+        self.simulation_durability = recipe.durability as i64;
+        self.simulation_max_durability = recipe.durability as i64;
+        self.simulation_cp = self.setting_max_cp;
+        self.simulation_max_cp = self.setting_max_cp;
 
         self.emit_state_updated();
     }
@@ -163,7 +225,7 @@ impl MacroSolverInterface {
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);
 
         self.simulation_progress = progress as i64;
-        self.simulation_quality = quality as i64;
+        self.simulation_quality = self.simulation_initial_quality + quality as i64;
         self.simulation_durability = durability as i64;
         self.simulation_cp = cp as i64;
 
