@@ -1,0 +1,17 @@
+[package]
+name = "game-data"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+simulator = { path = "../simulator" }
+phf = "0.10.0"
+
+[build-dependencies]
+csv = "1.1.6"
+phf_codegen = "0.10.0"
+serde = { version = "1.0.132", features = ["derive"] }

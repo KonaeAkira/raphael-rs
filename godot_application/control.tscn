@@ -1,8 +1,7 @@
-[gd_scene load_steps=34 format=3 uid="uid://dkghcwm3lrc5n"]
+[gd_scene load_steps=33 format=3 uid="uid://dkghcwm3lrc5n"]
 
 [ext_resource type="Theme" uid="uid://c2f5y5psfqir3" path="res://resources/custom-theme.tres" id="1_ej8fr"]
 [ext_resource type="Script" path="res://scripts/MacroSolverInterface.gd" id="2_524rp"]
-[ext_resource type="Script" path="res://scripts/RecipeDatabase.gd" id="3_i3uhh"]
 [ext_resource type="Texture2D" uid="uid://dt8m1wfj06fib" path="res://resources/radial_progress.svg" id="3_jv5hd"]
 [ext_resource type="Texture2D" uid="uid://ujijl3xmje4x" path="res://resources/search.svg" id="5_iydh1"]
 [ext_resource type="Script" path="res://scripts/RecipeSearchInput.gd" id="6_i66lw"]
@@ -17,8 +16,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = %MacroSolverInterface.simulation[\"PROGRESS\"]
-	max_value = %MacroSolverInterface.setting_max_progress
+	target = %MacroSolverInterface.simulation_progress
+	max_value = %MacroSolverInterface.simulation_max_progress
 "
 
 [sub_resource type="GDScript" id="GDScript_yutcb"]
@@ -32,8 +31,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = %MacroSolverInterface.simulation[\"PROGRESS\"]
-	max_value = %MacroSolverInterface.setting_max_progress
+	target = %MacroSolverInterface.simulation_progress
+	max_value = %MacroSolverInterface.simulation_max_progress
 "
 
 [sub_resource type="GDScript" id="GDScript_m24mk"]
@@ -44,8 +43,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = %MacroSolverInterface.simulation[\"QUALITY\"]
-	max_value = %MacroSolverInterface.setting_max_quality
+	target = %MacroSolverInterface.simulation_quality
+	max_value = %MacroSolverInterface.simulation_max_quality
 "
 
 [sub_resource type="GDScript" id="GDScript_o7vhi"]
@@ -59,8 +58,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = %MacroSolverInterface.simulation[\"QUALITY\"]
-	max_value = %MacroSolverInterface.setting_max_quality
+	target = %MacroSolverInterface.simulation_quality
+	max_value = %MacroSolverInterface.simulation_max_quality
 "
 
 [sub_resource type="GDScript" id="GDScript_lhtja"]
@@ -71,8 +70,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated():
-	target = %MacroSolverInterface.simulation[\"DURABILITY\"]
-	max_value = %MacroSolverInterface.setting_max_durability
+	target = %MacroSolverInterface.simulation_durability
+	max_value = %MacroSolverInterface.simulation_max_durability
 "
 
 [sub_resource type="GDScript" id="GDScript_2s0he"]
@@ -86,8 +85,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = %MacroSolverInterface.simulation[\"DURABILITY\"]
-	max_value = %MacroSolverInterface.setting_max_durability
+	target = %MacroSolverInterface.simulation_durability
+	max_value = %MacroSolverInterface.simulation_max_durability
 "
 
 [sub_resource type="GDScript" id="GDScript_wmtbn"]
@@ -98,8 +97,8 @@ func _process(delta: float):
 	value += (target - value) * (1 - exp(-delta * 4.0))
 
 func _on_macro_solver_interface_state_updated():
-	target = %MacroSolverInterface.simulation[\"i16\"]
-	max_value = %MacroSolverInterface.setting_max_cp
+	target = %MacroSolverInterface.simulation_cp
+	max_value = %MacroSolverInterface.simulation_max_cp
 "
 
 [sub_resource type="GDScript" id="GDScript_162jc"]
@@ -113,8 +112,8 @@ func _process(delta: float):
 	text = str(round(value)) + \"/\" + str(max_value)
 
 func _on_macro_solver_interface_state_updated() -> void:
-	target = %MacroSolverInterface.simulation[\"i16\"]
-	max_value = %MacroSolverInterface.setting_max_cp
+	target = %MacroSolverInterface.simulation_cp
+	max_value = %MacroSolverInterface.simulation_max_cp
 "
 
 [sub_resource type="GDScript" id="GDScript_htxbq"]
@@ -134,13 +133,13 @@ func _process(delta: float):
 	text = str(round(value)) + \"% HQ\"
 
 func _on_macro_solver_interface_state_updated() -> void:
-	var progress = %MacroSolverInterface.simulation[\"PROGRESS\"]
-	var max_progress = %MacroSolverInterface.setting_max_progress
+	var progress = %MacroSolverInterface.simulation_progress
+	var max_progress = %MacroSolverInterface.simulation_max_progress
 	if progress < max_progress:
 		target = 0
 		return
-	var quality = %MacroSolverInterface.simulation[\"QUALITY\"]
-	var max_quality = %MacroSolverInterface.setting_max_quality
+	var quality: float = %MacroSolverInterface.simulation_quality
+	var max_quality: float = %MacroSolverInterface.simulation_max_quality
 	target = HQ_TABLE[floor(quality / max_quality * 100.0)]
 "
 
@@ -156,10 +155,10 @@ func _on_macro_solver_interface_state_updated() -> void:
 script/source = "extends LineEdit
 
 func _ready():
-	text = get_node(\"%MacroSolverInterface\").item_name
+	text = %MacroSolverInterface.setting_recipe
 
 func _on_macro_solver_interface_state_updated():
-	text = get_node(\"%MacroSolverInterface\").item_name
+	text = %MacroSolverInterface.setting_recipe
 "
 
 [sub_resource type="GDScript" id="GDScript_n8qgc"]
@@ -176,20 +175,20 @@ func _on_macro_solver_interface_state_updated():
 script/source = "extends SpinBox
 
 func _ready():
-	value = get_node(\"%MacroSolverInterface\").craftsmanship
+	value = %MacroSolverInterface.setting_craftsmanship
 
 func _on_macro_solver_interface_state_updated() -> void:
-	editable = !get_node(\"%MacroSolverInterface\").solver_busy
+	editable = !%MacroSolverInterface.solver_busy
 "
 
 [sub_resource type="GDScript" id="GDScript_hni1j"]
 script/source = "extends SpinBox
 
 func _ready():
-	value = get_node(\"%MacroSolverInterface\").control
+	value = %MacroSolverInterface.setting_control
 
 func _on_macro_solver_interface_state_updated() -> void:
-	editable = !get_node(\"%MacroSolverInterface\").solver_busy
+	editable = !%MacroSolverInterface.solver_busy
 "
 
 [sub_resource type="GDScript" id="GDScript_3ptyu"]
@@ -226,23 +225,23 @@ func _on_macro_solver_interface_state_updated() -> void:
 
 func _on_item_selected(index):
 	%MacroSolverInterface.setting_manipulation_unlocked = index == 0
-	%MacroSolverInterface.update_configuration()
+	%MacroSolverInterface.reset_simulation()
 "
 
 [sub_resource type="GDScript" id="GDScript_kxsbr"]
 script/source = "extends Label
 
 func _on_macro_solver_interface_state_updated():
-	var base_prog = %MacroSolverInterface.setting_base_progress
-	text = \"u32 increase per 100 potency: \" + str(base_prog)
+	var base_prog = %MacroSolverInterface.simulation_base_progress
+	text = \"Progress increase per 100 potency: \" + str(base_prog)
 "
 
 [sub_resource type="GDScript" id="GDScript_t464c"]
 script/source = "extends Label
 
 func _on_macro_solver_interface_state_updated():
-	var base_qual = %MacroSolverInterface.setting_base_quality
-	text = \"u32 increase per 100 potency: \" + str(base_qual)
+	var base_qual = %MacroSolverInterface.simulation_base_quality
+	text = \"Quality increase per 100 potency: \" + str(base_qual)
 "
 
 [sub_resource type="GDScript" id="GDScript_07vfa"]
@@ -328,10 +327,6 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_ej8fr")
 
-[node name="RecipeDatabase" type="Node" parent="."]
-unique_name_in_owner = true
-script = ExtResource("3_i3uhh")
-
 [node name="MacroSolverInterface" type="MacroSolverInterface" parent="."]
 setting_max_cp = 687
 setting_job_level = 90
@@ -388,7 +383,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-text = "u32"
+text = "Progress"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -417,7 +412,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-text = "u32"
+text = "Quality"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -446,7 +441,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-text = "i16"
+text = "Durability"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -471,7 +466,7 @@ script = SubResource("GDScript_2s0he")
 
 [node name="Label2" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/Simulator/MarginContainer/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
-text = "    i16"
+text = "    CP"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -652,13 +647,13 @@ popup/item_1/id = 1
 [node name="BaseProg" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.494118, 0.494118, 0.494118, 1)
-text = "u32 increase per 100 potency: N/A"
+text = "Progress increase per 100 potency: N/A"
 script = SubResource("GDScript_kxsbr")
 
 [node name="BaseQual" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.494118, 0.494118, 0.494118, 1)
-text = "u32 increase per 100 potency: N/A"
+text = "Quality increase per 100 potency: N/A"
 script = SubResource("GDScript_t464c")
 
 [node name="HSeparator3" type="HSeparator" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer"]

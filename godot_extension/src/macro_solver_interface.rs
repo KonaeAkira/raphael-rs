@@ -3,9 +3,10 @@ use std::{
     thread,
 };
 
+use game_data::{get_item_names, get_simulator_settings};
 use godot::prelude::*;
 
-use simulator::{Action, ActionMask, Condition, Settings, State};
+use simulator::{Action, Condition, Settings, State};
 use solvers::MacroSolver;
 
 #[derive(GodotClass)]
@@ -17,25 +18,43 @@ struct MacroSolverInterface {
     solver_busy: bool,
     solver_result: Arc<Mutex<Option<Vec<Action>>>>,
 
+    #[var]
+    item_names: Array<GString>,
+
     #[export]
-    setting_max_progress: f64,
+    setting_recipe: GString,
     #[export]
-    setting_max_quality: f64,
+    setting_craftsmanship: i64,
     #[export]
-    setting_max_durability: i64,
+    setting_control: i64,
     #[export]
     setting_max_cp: i64,
-    #[export]
-    setting_base_progress: f64,
-    #[export]
-    setting_base_quality: f64,
     #[export]
     setting_job_level: i64,
     #[export]
     setting_manipulation_unlocked: bool,
 
     #[export]
-    simulation: Dictionary,
+    simulation_progress: i64,
+    #[export]
+    simulation_max_progress: i64,
+    #[export]
+    simulation_base_progress: i64,
+    #[export]
+    simulation_quality: i64,
+    #[export]
+    simulation_max_quality: i64,
+    #[export]
+    simulation_base_quality: i64,
+    #[export]
+    simulation_durability: i64,
+    #[export]
+    simulation_max_durability: i64,
+    #[export]
+    simulation_cp: i64,
+    #[export]
+    simulation_max_cp: i64,
+
     #[export]
     macro_string: GString,
 }
@@ -47,17 +66,27 @@ impl INode for MacroSolverInterface {
             base,
             solver_busy: false,
             solver_result: Arc::new(Mutex::new(None)),
-            simulation: dict! {"PROGRESS":0.0,"QUALITY":0.0,"DURABILITY":0.0,"i16":0.0,},
             macro_string: GString::new(),
 
-            setting_max_progress: 0.0,
-            setting_max_quality: 0.0,
-            setting_max_durability: 0,
+            item_names: get_item_names().map(|s| s.to_godot()).collect(),
+
+            setting_recipe: "".to_godot(),
+            setting_craftsmanship: 0,
+            setting_control: 0,
             setting_max_cp: 0,
-            setting_base_progress: 0.0,
-            setting_base_quality: 0.0,
             setting_job_level: 0,
             setting_manipulation_unlocked: false,
+
+            simulation_progress: 0,
+            simulation_max_progress: 0,
+            simulation_base_progress: 0,
+            simulation_quality: 0,
+            simulation_max_quality: 0,
+            simulation_base_quality: 0,
+            simulation_durability: 0,
+            simulation_max_durability: 0,
+            simulation_cp: 0,
+            simulation_max_cp: 0,
         }
     }
 }
@@ -71,30 +100,33 @@ impl MacroSolverInterface {
     }
 
     fn get_settings(&self) -> Settings {
-        Settings {
-            max_cp: self.setting_max_cp as i16,
-            max_durability: self.setting_max_durability as i16,
-            max_progress: self.setting_max_progress as u32,
-            max_quality: self.setting_max_quality as u32,
-            base_progress: self.setting_base_progress as u32,
-            base_quality: self.setting_base_quality as u32,
-            job_level: self.setting_job_level as u8,
-            allowed_actions: ActionMask::from_level(
-                self.setting_job_level as u32,
-                self.setting_manipulation_unlocked,
-            ),
-        }
+        get_simulator_settings(
+            self.setting_recipe.clone().into(),
+            self.setting_craftsmanship as u32,
+            self.setting_control as u32,
+            self.setting_max_cp as u32,
+            self.setting_job_level as u32,
+            self.setting_manipulation_unlocked,
+        )
+        .expect("Failed to get simulator settings")
     }
 
     #[func]
-    fn reset_result(&mut self) {
-        self.simulation = dict! {
-            "PROGRESS": 0.0,
-            "QUALITY": 0.0,
-            "DURABILITY": self.setting_max_durability,
-            "i16": self.setting_max_cp,
-        };
+    fn reset_simulation(&mut self) {
         self.macro_string = GString::new();
+
+        let settings = self.get_settings();
+        self.simulation_progress = 0;
+        self.simulation_max_progress = settings.max_progress as i64;
+        self.simulation_base_progress = settings.base_progress as i64;
+        self.simulation_quality = 0;
+        self.simulation_max_quality = settings.max_quality as i64;
+        self.simulation_base_quality = settings.base_quality as i64;
+        self.simulation_durability = settings.max_durability as i64;
+        self.simulation_max_durability = settings.max_durability as i64;
+        self.simulation_cp = settings.max_cp as i64;
+        self.simulation_max_cp = settings.max_cp as i64;
+
         self.emit_state_updated();
     }
 
@@ -130,12 +162,10 @@ impl MacroSolverInterface {
             state.durability - last_action.durability_cost(&state.effects, Condition::Normal);
         let cp = state.cp - last_action.cp_cost(&state.effects, Condition::Normal);
 
-        self.simulation = dict! {
-            "PROGRESS": progress,
-            "QUALITY": quality,
-            "DURABILITY": durability,
-            "i16": cp,
-        };
+        self.simulation_progress = progress as i64;
+        self.simulation_quality = quality as i64;
+        self.simulation_durability = durability as i64;
+        self.simulation_cp = cp as i64;
 
         // set macro string
         let mut lines: Vec<String> = Vec::new();
