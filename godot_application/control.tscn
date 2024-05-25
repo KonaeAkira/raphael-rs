@@ -594,7 +594,7 @@ script = SubResource("GDScript_hni1j")
 
 [node name="MaxCp" type="Label" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
-text = "Max i16"
+text = "Max CP"
 
 [node name="MaxCpInput" type="SpinBox" parent="TabContainer/Macro Solver/VBoxContainer/HBoxContainer/Configuration/MarginContainer/VBoxContainer/MacroSolverSettingsPanel"]
 layout_mode = 2
