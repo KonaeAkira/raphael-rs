@@ -1,7 +1,8 @@
 # Raphael
 
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/KonaeAkira/raphael-rs/total?logo=github&color=blue)
-![GitHub commits since latest release](https://img.shields.io/github/commits-since/KonaeAkira/raphael-rs/latest?include_prereleases&color=yellow)
+[<img src="https://img.shields.io/github/downloads/KonaeAkira/raphael-rs/total?logo=github&color=blue"/>](#)
+[<img src="https://img.shields.io/github/commits-since/KonaeAkira/raphael-rs/latest?include_prereleases&color=yellow"/>](#)
+[<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.gg/Qd9u9CtaYj)
 
 ![GUI Preview](resources/gui-preview.png)
 
