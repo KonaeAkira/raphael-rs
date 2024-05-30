@@ -34,7 +34,9 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
     for recipe_record in recipes_csv.deserialize::<RecipeRecord>() {
         let recipe_record = recipe_record?;
 
-        if !recipe_record.can_hq || items_with_recipe.contains(&recipe_record.resulting_item) {
+        // skip if a recipe for this item already exists
+        // might be a problem if an item has multiple recipes with different ingredients
+        if items_with_recipe.contains(&recipe_record.resulting_item) {
             continue;
         }
 
@@ -136,9 +138,6 @@ struct RecipeRecord {
     quality_factor: u32,
     #[serde(rename = "DurabilityFactor")]
     durability_factor: u32,
-    #[serde(rename = "CanHq")]
-    #[serde(deserialize_with = "bool_string")]
-    can_hq: bool,
     #[serde(rename = "MaterialQualityFactor")]
     material_quality_factor: u32,
 
