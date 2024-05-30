@@ -173,10 +173,13 @@ impl MacroSolverInterface {
                 selected_ilvl += item.item_level as i64 * selected_amount;
             }
         }
-        self.simulation_initial_quality =
+        self.simulation_initial_quality = if total_ilvl == 0 {
+            0
+        } else {
             self.simulation_max_quality * recipe.material_quality_factor as i64 * selected_ilvl
                 / total_ilvl
-                / 100;
+                / 100
+        };
 
         self.simulation_progress = 0;
         self.simulation_max_progress = recipe.progress as i64;
