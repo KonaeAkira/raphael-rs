@@ -2,7 +2,7 @@ use crate::{Condition, Effects};
 
 use super::Settings;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Action {
     BasicSynthesis,
     BasicTouch,

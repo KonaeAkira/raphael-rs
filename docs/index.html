@@ -14,9 +14,9 @@
 
         <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
         
-<script type="module" nonce="70k2ptGew9IwBvZaZceTMw==">
-import init, * as bindings from '/raphael-gui-fd35864da645d425.js';
-const wasm = await init('/raphael-gui-fd35864da645d425_bg.wasm');
+<script type="module" nonce="lTag7gWjkJpB/yjwnEvMUg==">
+import init, * as bindings from '/raphael-gui-6c7890582085a429.js';
+const wasm = await init('/raphael-gui-6c7890582085a429_bg.wasm');
 
 
 window.wasmBindings = bindings;
@@ -25,12 +25,12 @@ window.wasmBindings = bindings;
 dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script>
+        
         <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
         <base href="/" />
 
         <link rel="icon" href="/favicon-f402c8741ce815ec.ico" integrity="sha384&#x2D;jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
 
-        
         
         
         
@@ -136,27 +136,13 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         </style>
     
-<link rel="modulepreload" href="/raphael-gui-fd35864da645d425.js" crossorigin=anonymous integrity="sha384-wqwM3rNotvBav9yGklDjjL6SLfF2yCOtnhX6yHdCerJ68Mln3iwBWvgWjzhS2hTm">
-<link rel="preload" href="/raphael-gui-fd35864da645d425_bg.wasm" crossorigin=anonymous integrity="sha384-W71KzzOdex1CVKJAvbVU5BVPZKG1jsYmNL5WXq8wq15TtnqUMbKAfwZeTTWqWkgK" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/raphael-gui-6c7890582085a429.js" crossorigin=anonymous integrity="sha384-khXwJEYzP2gZqCUlzbjPaPzZKWqet06EWnSQrCSY1EAn/36THYhGIJeNnFzU9Ome">
+<link rel="preload" href="/raphael-gui-6c7890582085a429_bg.wasm" crossorigin=anonymous integrity="sha384-4V8eFjV1AMd3wIG6XfiqtTR75LEOZZQU/buDtrJjU25hASgsnwq1Lwr2aJ3xU4TW" as="fetch" type="application/wasm"></head>
 
     <body>
         <!-- The WASM code will resize the canvas dynamically -->
         <!-- the id is hardcoded in main.rs . so, make sure both match. -->
         <canvas id="the_canvas_id"></canvas>
-
-        <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
-        <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
-        <script>
-            // We disable caching during development so that we always view the latest version.
-            if (
-                "serviceWorker" in navigator &&
-                window.location.hash !== "#dev"
-            ) {
-                window.addEventListener("load", function () {
-                    navigator.serviceWorker.register("sw.js");
-                });
-            }
-        </script>
     </body>
 </html>
 

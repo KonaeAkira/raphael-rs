@@ -15,6 +15,7 @@ eframe = { version = "0.27.0", default-features = false, features = [
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
 log = "0.4"
+gloo-worker = { version = "0.5.0", features = ["futures"] }
 serde = { version = "1.0.203", features = ["derive"] }
 
 # native:
@@ -24,3 +25,7 @@ env_logger = "0.10"
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4"
+
+[[bin]]
+name = "dummy_worker"
+path = "src/dummy_worker.rs"
