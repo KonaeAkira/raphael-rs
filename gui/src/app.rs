@@ -1,19 +1,39 @@
-use std::ops::RangeInclusive;
+use std::cell::Cell;
+use std::rc::Rc;
 
 use egui::Rounding;
 use egui_extras::Column;
 use game_data::{CrafterConfiguration, RecipeConfiguration};
-use simulator::{Action, State};
+use simulator::{Action, Settings, State};
+
+type MacroResult = Option<Vec<Action>>;
 
 pub struct MacroSolverApp {
-    game_actions: Vec<Action>,
+    actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
     crafter_config: CrafterConfiguration,
     recipe_search_text: String,
+
+    solver_pending: bool,
+    bridge: gloo_worker::WorkerBridge<WebWorker>,
+    data_update: Rc<Cell<Option<MacroResult>>>,
 }
 
-impl Default for MacroSolverApp {
-    fn default() -> Self {
+impl MacroSolverApp {
+    /// Called once before the first frame.
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let ctx = cc.egui_ctx.clone();
+        let data_update = Rc::new(Cell::new(None));
+        let sender = data_update.clone();
+        let bridge = <WebWorker as gloo_worker::Spawnable>::spawner()
+            .callback(move |response| {
+                sender.set(Some(response));
+                ctx.request_repaint();
+            })
+            .spawn("./dummy_worker.js");
+
+        cc.egui_ctx.set_pixels_per_point(1.2);
+
         let item_id = *game_data::ITEM_IDS.get("Indagator's Saw").unwrap();
         let recipe_config = RecipeConfiguration {
             item_id,
@@ -28,19 +48,14 @@ impl Default for MacroSolverApp {
             manipulation: true,
         };
         Self {
-            game_actions: Vec::new(),
+            actions: Vec::new(),
             recipe_config,
             crafter_config,
             recipe_search_text: String::new(),
+            solver_pending: false,
+            data_update,
+            bridge,
         }
-    }
-}
-
-impl MacroSolverApp {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        cc.egui_ctx.set_pixels_per_point(1.2);
-        Default::default()
     }
 }
 
@@ -50,8 +65,11 @@ impl eframe::App for MacroSolverApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        if let Some(update) = self.data_update.take() {
+            log::debug!("Received update: {update:?}");
+            self.actions = update.unwrap_or(Vec::new());
+            self.solver_pending = false;
+        }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -63,6 +81,7 @@ impl eframe::App for MacroSolverApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal_top(|ui| {
+                ui.set_enabled(!self.solver_pending);
                 ui.vertical(|ui| {
                     ui.group(|ui| self.draw_simulator_widget(ui));
                     ui.add_space(6.0);
@@ -100,7 +119,7 @@ impl MacroSolverApp {
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
         let game_settings = game_data::get_game_settings(self.recipe_config, self.crafter_config);
         let game_state = State::new(&game_settings).use_actions(
-            &self.game_actions,
+            &self.actions,
             simulator::Condition::Normal,
             &game_settings,
         );
@@ -174,7 +193,7 @@ impl MacroSolverApp {
 
     fn draw_macro_widget(&mut self, ui: &mut egui::Ui) {
         let macro_lines: Vec<String> = self
-            .game_actions
+            .actions
             .iter()
             .map(|action| {
                 format!(
@@ -295,22 +314,47 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label("Job Level");
                 ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.job_level)
-                        .clamp_range(RangeInclusive::new(1, 90)),
+                    egui::DragValue::new(&mut self.crafter_config.job_level).clamp_range(1..=90),
                 );
             });
             ui.checkbox(
                 &mut self.crafter_config.manipulation,
                 "Manipulation unlocked",
             );
-            if ui.button("Solve").clicked() {
-                let game_settings =
-                    game_data::get_game_settings(self.recipe_config, self.crafter_config);
-                let mut macro_solver = solvers::MacroSolver::new(game_settings);
-                self.game_actions = macro_solver
-                    .solve(State::new(&game_settings))
-                    .unwrap_or(Vec::new());
-            }
+
+            ui.horizontal(|ui| {
+                if ui.button("Solve").clicked() {
+                    self.solver_pending = true;
+                    let game_settings =
+                        game_data::get_game_settings(self.recipe_config, self.crafter_config);
+                    self.bridge.send(game_settings);
+                    log::debug!("Message send {game_settings:?}");
+                }
+                ui.add_visible(self.solver_pending, egui::Spinner::new());
+            });
         });
+    }
+}
+
+pub struct WebWorker {}
+
+impl gloo_worker::Worker for WebWorker {
+    type Message = u64;
+    type Input = Settings;
+    type Output = MacroResult;
+
+    fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
+        Self {}
+    }
+
+    fn update(&mut self, _scope: &gloo_worker::WorkerScope<Self>, _msg: Self::Message) {}
+
+    fn received(
+        &mut self,
+        scope: &gloo_worker::WorkerScope<Self>,
+        msg: Self::Input,
+        _id: gloo_worker::HandlerId,
+    ) {
+        scope.respond(_id, solvers::MacroSolver::new(msg).solve(State::new(&msg)));
     }
 }

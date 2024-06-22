@@ -10,3 +10,6 @@ crate-type = ["rlib"]
 [dev-dependencies]
 more-asserts = "0.3.1"
 rand = "0.8.5"
+
+[dependencies]
+serde = { version = "1.0.203", features = ["derive"] }
