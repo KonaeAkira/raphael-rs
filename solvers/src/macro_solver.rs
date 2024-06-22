@@ -5,6 +5,7 @@ use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALIT
 use crate::{FinishSolver, UpperBoundSolver};
 use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, State};
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 use std::vec::Vec;
 
@@ -36,11 +37,14 @@ impl MacroSolver {
     pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
         match state {
             State::InProgress(state) => {
+                #[cfg(not(target_arch = "wasm32"))]
                 let timer = Instant::now();
                 if !self.finish_solver.can_finish(&state) {
                     return None;
                 }
+                #[cfg(not(target_arch = "wasm32"))]
                 let seconds = timer.elapsed().as_secs_f32();
+                #[cfg(not(target_arch = "wasm32"))]
                 dbg!(seconds);
                 match self.do_solve(state) {
                     Some(actions) => Some(actions),
@@ -52,6 +56,7 @@ impl MacroSolver {
     }
 
     fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
+        #[cfg(not(target_arch = "wasm32"))]
         let timer = Instant::now();
 
         let mut finish_solver_rejected_node: usize = 0;
@@ -145,7 +150,9 @@ impl MacroSolver {
             None => None,
         };
 
+        #[cfg(not(target_arch = "wasm32"))]
         let seconds = timer.elapsed().as_secs_f32();
+        #[cfg(not(target_arch = "wasm32"))]
         dbg!(seconds);
 
         dbg!(

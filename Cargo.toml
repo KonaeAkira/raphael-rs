@@ -1,11 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-    "simulator",
-    "solvers",
-    "game_data",
-    "godot_extension"
-]
+members = ["simulator", "solvers", "game_data", "godot_extension", "gui"]
 
 [profile.release]
 lto = "fat"
