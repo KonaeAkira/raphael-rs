@@ -8,6 +8,7 @@ edition = "2021"
 crate-type = ["rlib"]
 
 [dependencies]
+simulator = { path = "../simulator" }
 phf = "0.10.0"
 
 [build-dependencies]
