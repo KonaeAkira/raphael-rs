@@ -8,11 +8,29 @@ use simulator::{Action, Settings, State};
 
 type MacroResult = Option<Vec<Action>>;
 
+struct MacroViewConfig {
+    split: bool,
+    split_length: usize,
+    delay: bool,
+}
+
+impl Default for MacroViewConfig {
+    fn default() -> Self {
+        Self {
+            split: false,
+            split_length: 15,
+            delay: true,
+        }
+    }
+}
+
 pub struct MacroSolverApp {
     actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
     crafter_config: CrafterConfiguration,
     recipe_search_text: String,
+
+    macro_view_config: MacroViewConfig,
 
     solver_pending: bool,
     bridge: gloo_worker::WorkerBridge<WebWorker>,
@@ -55,6 +73,7 @@ impl MacroSolverApp {
             recipe_config,
             crafter_config,
             recipe_search_text: String::new(),
+            macro_view_config: Default::default(),
             solver_pending: false,
             data_update,
             bridge,
@@ -98,11 +117,11 @@ impl eframe::App for MacroSolverApp {
                 // ui.image(&texture);
                 ui.set_enabled(!self.solver_pending);
                 ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
-                    ui.set_max_width(800.0);
+                    ui.set_max_width(785.0);
                     ui.group(|ui| self.draw_simulator_widget(ui));
                     ui.add_space(5.5);
                     ui.group(|ui| {
-                        ui.set_width(788.0);
+                        ui.set_width(773.0);
                         ui.set_height(30.0);
                         self.draw_actions_widget(ui);
                     });
@@ -218,15 +237,46 @@ impl MacroSolverApp {
     }
 
     fn draw_macro_widget(&mut self, ui: &mut egui::Ui) {
+        let macro_steps = self.actions.len();
+        let macro_duration: i32 = self.actions.iter().map(|action| action.time_cost()).sum();
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new("Macro").strong());
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Macro").strong());
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.label(format!(
+                        "{} steps | {} seconds",
+                        macro_steps, macro_duration
+                    ));
+                });
+            });
             ui.separator();
-            for action in self.actions.iter() {
-                ui.label(format!(
-                    "/ac \"{}\" <wait.{}>",
-                    action.display_name(),
-                    action.time_cost()
+            ui.horizontal(|ui| {
+                ui.add(egui::Checkbox::new(
+                    &mut self.macro_view_config.delay,
+                    "Include delay",
                 ));
+                ui.add(egui::Checkbox::new(
+                    &mut self.macro_view_config.split,
+                    "Split macro",
+                ));
+            });
+            ui.separator();
+            for (index, action) in self.actions.iter().enumerate() {
+                if index != 0
+                    && self.macro_view_config.split
+                    && index % self.macro_view_config.split_length == 0
+                {
+                    ui.separator();
+                }
+                if self.macro_view_config.delay {
+                    ui.monospace(format!(
+                        "/ac \"{}\" <wait.{}>",
+                        action.display_name(),
+                        action.time_cost()
+                    ));
+                } else {
+                    ui.monospace(format!("/ac \"{}\"", action.display_name()));
+                }
             }
         });
     }
@@ -344,10 +394,18 @@ impl MacroSolverApp {
                     egui::DragValue::new(&mut self.crafter_config.job_level).clamp_range(1..=90),
                 );
             });
-            ui.checkbox(
-                &mut self.crafter_config.manipulation,
-                "Manipulation unlocked",
-            );
+
+            if self.crafter_config.job_level as u32 >= Action::Manipulation.level_requirement() {
+                ui.add(egui::Checkbox::new(
+                    &mut self.crafter_config.manipulation,
+                    "Manipulation unlocked",
+                ));
+            } else {
+                ui.add_enabled(
+                    false,
+                    egui::Checkbox::new(&mut false, "Manipulation unlocked"),
+                );
+            }
 
             ui.horizontal(|ui| {
                 if ui.button("Solve").clicked() {
