@@ -1,6 +1,30 @@
 [workspace]
 resolver = "2"
-members = ["simulator", "solvers", "game_data", "gui"]
+members = ["simulator", "solvers", "game_data"]
+
+[package]
+name = "raphael-xiv"
+version = "0.6.0"
+edition = "2021"
+
+[dependencies]
+simulator = { path = "simulator" }
+solvers = { path = "solvers" }
+game-data = { path = "game_data" }
+
+egui = "0.27.0"
+egui_extras = { version = "0.27.2", features = ["default", "all_loaders"] }
+eframe = { version = "0.27.0", features = ["default_fonts", "glow"] }
+image = { version = "0.25.1", features = ["webp"] }
+wasm-bindgen-futures = "0.4"
+gloo-worker = { version = "0.5.0", features = ["futures"] }
+serde = { version = "1.0.203", features = ["derive"] }
+log = "0.4"
+
+
+[[bin]]
+name = "dummy_worker"
+path = "src/dummy_worker.rs"
 
 [profile.release]
 lto = "fat"
