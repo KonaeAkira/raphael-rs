@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use egui::Rounding;
+use egui::{Align, CursorIcon, Layout, Rounding};
 use egui_extras::Column;
 use game_data::{CrafterConfiguration, RecipeConfiguration};
 use simulator::{Action, Settings, State};
@@ -79,23 +79,37 @@ impl eframe::App for MacroSolverApp {
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.horizontal_top(|ui| {
-                ui.set_enabled(!self.solver_pending);
-                ui.vertical(|ui| {
-                    ui.group(|ui| self.draw_simulator_widget(ui));
-                    ui.add_space(6.0);
-                    ui.horizontal_top(|ui| {
-                        ui.group(|ui| self.draw_recipe_select_widget(ui));
-                        ui.group(|ui| self.draw_configuration_widget(ui));
-                    });
-                });
-                ui.group(|ui| self.draw_macro_widget(ui));
+        egui::TopBottomPanel::bottom("bottom_panel")
+            .show_separator_line(false)
+            .show(ctx, |ui| {
+                egui::warn_if_debug_build(ui);
+                powered_by_egui_and_eframe(ui);
             });
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
-                egui::warn_if_debug_build(ui);
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.set_enabled(!self.solver_pending);
+                ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
+                    ui.set_max_width(800.0);
+                    ui.group(|ui| self.draw_simulator_widget(ui));
+                    ui.add_space(6.0);
+                    ui.horizontal(|ui| {
+                        ui.group(|ui| {
+                            ui.set_max_width(500.0);
+                            ui.set_height(400.0);
+                            self.draw_recipe_select_widget(ui);
+                        });
+                        ui.group(|ui| {
+                            ui.set_height(400.0);
+                            self.draw_configuration_widget(ui)
+                        });
+                    });
+                });
+                ui.group(|ui| {
+                    ui.set_width(320.0);
+                    ui.set_height(507.0);
+                    self.draw_macro_widget(ui);
+                });
             });
         });
     }
@@ -123,8 +137,6 @@ impl MacroSolverApp {
             simulator::Condition::Normal,
             &game_settings,
         );
-
-        ui.set_width(800.0);
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Simulation").strong());
             ui.separator();
@@ -192,31 +204,20 @@ impl MacroSolverApp {
     }
 
     fn draw_macro_widget(&mut self, ui: &mut egui::Ui) {
-        let macro_lines: Vec<String> = self
-            .actions
-            .iter()
-            .map(|action| {
-                format!(
-                    "/ac \"{}\" <wait.{}>",
-                    action.display_name(),
-                    action.time_cost()
-                )
-            })
-            .collect();
-        ui.set_width(300.0);
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Macro").strong());
             ui.separator();
-            ui.add(
-                egui::TextEdit::multiline(&mut macro_lines.join("\n"))
-                    .desired_width(f32::INFINITY)
-                    .desired_rows(24),
-            );
+            for action in self.actions.iter() {
+                ui.label(format!(
+                    "/ac \"{}\" <wait.{}>",
+                    action.display_name(),
+                    action.time_cost()
+                ));
+            }
         });
     }
 
     fn draw_recipe_select_widget(&mut self, ui: &mut egui::Ui) {
-        ui.set_width(500.0);
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Recipe Selection").strong());
             ui.separator();
@@ -262,8 +263,7 @@ impl MacroSolverApp {
                 .column(Column::auto())
                 .column(Column::remainder())
                 .drag_to_scroll(false)
-                .min_scrolled_height(0.0)
-                .max_scroll_height(240.0);
+                .min_scrolled_height(0.0);
             table
                 .header(text_height, |mut header| {
                     header.col(|ui| {
@@ -278,7 +278,11 @@ impl MacroSolverApp {
                         let item_id = search_result[row.index()];
                         let item = game_data::ITEMS.get(&item_id).unwrap();
                         row.col(|ui| {
-                            if ui.button(item_id.to_string()).clicked() {
+                            if ui
+                                .button(item_id.to_string())
+                                .on_hover_cursor(CursorIcon::PointingHand)
+                                .clicked()
+                            {
                                 self.recipe_config = RecipeConfiguration {
                                     item_id,
                                     recipe: *game_data::RECIPES.get(&item_id).unwrap(),
@@ -295,7 +299,6 @@ impl MacroSolverApp {
     }
 
     fn draw_configuration_widget(&mut self, ui: &mut egui::Ui) {
-        ui.set_width(280.0);
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Configuration").strong());
             ui.separator();

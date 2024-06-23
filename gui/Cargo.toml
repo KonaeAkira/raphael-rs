@@ -1,5 +1,6 @@
 [package]
 name = "raphael-gui"
+version = "0.6.0"
 edition = "2021"
 
 [dependencies]
