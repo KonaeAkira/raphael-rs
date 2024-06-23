@@ -13,7 +13,10 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(raphael_gui::MacroSolverApp::new(cc))),
+                Box::new(|cc| {
+                    egui_extras::install_image_loaders(&cc.egui_ctx);
+                    Box::new(raphael_gui::MacroSolverApp::new(cc))
+                }),
             )
             .await
             .expect("failed to start eframe");

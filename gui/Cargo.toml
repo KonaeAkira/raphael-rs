@@ -8,7 +8,8 @@ simulator = { path = "../simulator" }
 solvers = { path = "../solvers" }
 game-data = { path = "../game_data" }
 egui = "0.27.0"
-egui_extras = "0.27.2"
+image = { version = "0.25.1", features = ["webp", "png", "jpeg"] }
+egui_extras = { version = "0.27.2", features = ["default", "all_loaders"] }
 eframe = { version = "0.27.0", default-features = false, features = [
     "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.

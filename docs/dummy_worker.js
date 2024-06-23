@@ -82,7 +82,7 @@ function makeClosure(arg0, arg1, dtor, f) {
     return real;
 }
 function __wbg_adapter_16(arg0, arg1, arg2) {
-    wasm._dyn_core__ops__function__Fn__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__ha3fe9fc95a950110(arg0, arg1, addHeapObject(arg2));
+    wasm._dyn_core__ops__function__Fn__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h935e585732cb3566(arg0, arg1, addHeapObject(arg2));
 }
 
 function makeMutClosure(arg0, arg1, dtor, f) {
@@ -110,7 +110,7 @@ function makeMutClosure(arg0, arg1, dtor, f) {
     return real;
 }
 function __wbg_adapter_19(arg0, arg1, arg2) {
-    wasm._dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h2fc73745cd841f55(arg0, arg1, addHeapObject(arg2));
+    wasm._dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h497926b8a74ee817(arg0, arg1, addHeapObject(arg2));
 }
 
 function handleError(f, args) {
@@ -120,6 +120,26 @@ function handleError(f, args) {
         wasm.__wbindgen_exn_store(addHeapObject(e));
     }
 }
+/**
+* Chroma subsampling format
+*/
+__exports.ChromaSampling = Object.freeze({
+/**
+* Both vertically and horizontally subsampled.
+*/
+Cs420:0,"0":"Cs420",
+/**
+* Horizontally subsampled.
+*/
+Cs422:1,"1":"Cs422",
+/**
+* Not subsampled.
+*/
+Cs444:2,"2":"Cs444",
+/**
+* Monochrome.
+*/
+Cs400:3,"3":"Cs400", });
 
 async function __wbg_load(module, imports) {
     if (typeof Response === 'function' && module instanceof Response) {
@@ -257,7 +277,7 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_queueMicrotask_481971b0d87f3dd4 = function(arg0) {
         queueMicrotask(getObject(arg0));
     };
-    imports.wbg.__wbindgen_closure_wrapper142 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper139 = function(arg0, arg1, arg2) {
         const ret = makeClosure(arg0, arg1, 34, __wbg_adapter_16);
         return addHeapObject(ret);
     };
