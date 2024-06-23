@@ -4,8 +4,6 @@
 [<img src="https://img.shields.io/github/commits-since/KonaeAkira/raphael-rs/latest?include_prereleases&color=yellow"/>](#)
 [<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.gg/Qd9u9CtaYj)
 
-![GUI Preview](resources/gui-preview.png)
-
 Raphael is a standalone crafting macro solver for the online game Final Fantasy XIV.
 
 **Features:**
