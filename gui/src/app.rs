@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use egui::{Align, CursorIcon, Layout, Rounding};
+use egui::{Align, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
 use egui_extras::Column;
 use game_data::{CrafterConfiguration, RecipeConfiguration};
 use simulator::{Action, Settings, State};
@@ -17,6 +17,8 @@ pub struct MacroSolverApp {
     solver_pending: bool,
     bridge: gloo_worker::WorkerBridge<WebWorker>,
     data_update: Rc<Cell<Option<MacroResult>>>,
+
+    action_icons: std::collections::HashMap<Action, TextureHandle>,
 }
 
 impl MacroSolverApp {
@@ -47,6 +49,7 @@ impl MacroSolverApp {
             job_level: 90,
             manipulation: true,
         };
+
         Self {
             actions: Vec::new(),
             recipe_config,
@@ -55,6 +58,7 @@ impl MacroSolverApp {
             solver_pending: false,
             data_update,
             bridge,
+            action_icons: Self::load_action_icons(&cc.egui_ctx),
         }
     }
 }
@@ -70,6 +74,8 @@ impl eframe::App for MacroSolverApp {
             self.actions = update.unwrap_or(Vec::new());
             self.solver_pending = false;
         }
+
+        egui_extras::install_image_loaders(ctx);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -88,11 +94,19 @@ impl eframe::App for MacroSolverApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
+                // ui.add(egui::Image::new(&texture).rounding(4.0));
+                // ui.image(&texture);
                 ui.set_enabled(!self.solver_pending);
                 ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
                     ui.set_max_width(800.0);
                     ui.group(|ui| self.draw_simulator_widget(ui));
-                    ui.add_space(6.0);
+                    ui.add_space(5.5);
+                    ui.group(|ui| {
+                        ui.set_width(788.0);
+                        ui.set_height(30.0);
+                        self.draw_actions_widget(ui);
+                    });
+                    ui.add_space(5.5);
                     ui.horizontal(|ui| {
                         ui.group(|ui| {
                             ui.set_max_width(500.0);
@@ -107,7 +121,7 @@ impl eframe::App for MacroSolverApp {
                 });
                 ui.group(|ui| {
                     ui.set_width(320.0);
-                    ui.set_height(507.0);
+                    ui.set_height(557.0);
                     self.draw_macro_widget(ui);
                 });
             });
@@ -214,6 +228,16 @@ impl MacroSolverApp {
                     action.time_cost()
                 ));
             }
+        });
+    }
+
+    fn draw_actions_widget(&mut self, ui: &mut egui::Ui) {
+        egui::ScrollArea::horizontal().show(ui, |ui| {
+            ui.horizontal(|ui| {
+                for action in self.actions.iter() {
+                    ui.add(egui::Image::new(self.action_icons.get(action).unwrap()).rounding(4.0));
+                }
+            });
         });
     }
 
@@ -336,6 +360,20 @@ impl MacroSolverApp {
                 ui.add_visible(self.solver_pending, egui::Spinner::new());
             });
         });
+    }
+
+    fn load_action_icons(ctx: &egui::Context) -> std::collections::HashMap<Action, TextureHandle> {
+        crate::assets::get_action_icons()
+            .into_iter()
+            .map(|(action, image)| {
+                let texture = ctx.load_texture(
+                    action.display_name(),
+                    egui::ColorImage::from_rgb([30, 30], image.as_flat_samples().as_slice()),
+                    TextureOptions::LINEAR,
+                );
+                (action, texture)
+            })
+            .collect()
     }
 }
 

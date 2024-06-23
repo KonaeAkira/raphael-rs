@@ -2,3 +2,5 @@
 
 mod app;
 pub use app::{MacroSolverApp, WebWorker};
+
+mod assets;
