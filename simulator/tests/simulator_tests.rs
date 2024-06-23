@@ -1,30 +1,24 @@
-use simulator::{Action, ActionMask, Condition, Settings, State};
+use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
 
-fn simulate(settings: &Settings, steps: impl Iterator<Item = (Action, Condition)>) -> Vec<State> {
-    let mut state: State = State::new(&settings);
+fn simulate(
+    settings: &Settings,
+    steps: impl Iterator<Item = (Action, Condition)>,
+) -> Result<Vec<SimulationState>, &'static str> {
+    let mut state = SimulationState::new(&settings);
     let mut result = Vec::new();
     for (action, condition) in steps {
-        state = state
-            .as_in_progress()
-            .unwrap()
-            .use_action(action, condition, &settings);
+        let in_progress: InProgress = state.try_into()?;
+        state = in_progress.use_action(action, condition, &settings)?;
         result.push(state);
     }
-    result
+    Ok(result)
 }
 
-fn progress_quality_pair(settings: &Settings, state: State) -> (u32, u32) {
-    match state {
-        State::InProgress(state) => (
-            settings.max_progress - state.missing_progress,
-            settings.max_quality - state.missing_quality,
-        ),
-        State::Completed { missing_quality } => (
-            settings.max_progress,
-            settings.max_quality - missing_quality,
-        ),
-        _ => panic!("unsupported"),
-    }
+fn progress_quality_pair(settings: &Settings, state: SimulationState) -> (u32, u32) {
+    (
+        settings.max_progress - state.missing_progress,
+        settings.max_quality - state.missing_quality,
+    )
 }
 
 #[test]
@@ -46,22 +40,18 @@ fn test_random_926ae85b() {
         Action::BasicTouch,
         Action::BasicTouch,
     ];
-    let states = simulate(
+    let simulation = simulate(
         &settings,
         actions
             .into_iter()
             .zip(std::iter::repeat(Condition::Normal)),
     );
-    match states.last().unwrap() {
-        State::InProgress(state) => {
-            assert_eq!(state.cp, 14);
-            assert_eq!(state.durability, 30);
-            assert_eq!(settings.max_progress - state.missing_progress, 4);
-            assert_eq!(settings.max_quality - state.missing_quality, 76);
-            assert_eq!(state.effects.inner_quiet, 0);
-        }
-        _ => panic!(),
-    }
+    let state = simulation.unwrap().last().copied().unwrap();
+    assert_eq!(state.cp, 14);
+    assert_eq!(state.durability, 30);
+    assert_eq!(settings.max_progress - state.missing_progress, 4);
+    assert_eq!(settings.max_quality - state.missing_quality, 76);
+    assert_eq!(state.effects.inner_quiet, 0);
 }
 
 #[test]
@@ -88,21 +78,17 @@ fn test_random_3c721e47() {
         Action::PreparatoryTouch,
         Action::PrudentTouch,
     ];
-    let states = simulate(
+    let simulation = simulate(
         &settings,
         actions
             .into_iter()
             .zip(std::iter::repeat(Condition::Normal)),
     );
-    match states.last().unwrap() {
-        State::InProgress(state) => {
-            assert_eq!(state.cp, 223);
-            assert_eq!(state.durability, 60);
-            assert_eq!(settings.max_progress - state.missing_progress, 2520);
-            assert_eq!(settings.max_quality - state.missing_quality, 1473);
-        }
-        _ => panic!(),
-    }
+    let state = simulation.unwrap().last().copied().unwrap();
+    assert_eq!(state.cp, 223);
+    assert_eq!(state.durability, 60);
+    assert_eq!(settings.max_progress - state.missing_progress, 2520);
+    assert_eq!(settings.max_quality - state.missing_quality, 1473);
 }
 
 #[test]
@@ -130,23 +116,19 @@ fn test_random_3ba90d3a() {
         Action::BasicTouch,
         Action::ComboStandardTouch,
     ];
-    let states = simulate(
+    let simulation = simulate(
         &settings,
         actions
             .into_iter()
             .zip(std::iter::repeat(Condition::Normal)),
     );
-    match states.last().unwrap() {
-        State::InProgress(state) => {
-            assert_eq!(state.cp, 188);
-            assert_eq!(state.durability, 25);
-            assert_eq!(settings.max_progress - state.missing_progress, 918);
-            assert_eq!(settings.max_quality - state.missing_quality, 2118);
-            assert_eq!(state.effects.inner_quiet, 5);
-            assert_eq!(state.effects.innovation, 1);
-        }
-        _ => panic!(),
-    }
+    let state = simulation.unwrap().last().copied().unwrap();
+    assert_eq!(state.cp, 188);
+    assert_eq!(state.durability, 25);
+    assert_eq!(settings.max_progress - state.missing_progress, 918);
+    assert_eq!(settings.max_quality - state.missing_quality, 2118);
+    assert_eq!(state.effects.inner_quiet, 5);
+    assert_eq!(state.effects.innovation, 1);
 }
 
 #[test]
@@ -191,21 +173,17 @@ fn test_random_bce2650c() {
         Action::GreatStrides,
         Action::ByregotsBlessing,
     ];
-    let states = simulate(
+    let simulation = simulate(
         &settings,
         actions
             .into_iter()
             .zip(std::iter::repeat(Condition::Normal)),
     );
-    match states.last().unwrap() {
-        State::InProgress(state) => {
-            assert_eq!(state.cp, 1);
-            assert_eq!(state.durability, 5);
-            assert_eq!(settings.max_progress - state.missing_progress, 6323);
-            assert_eq!(settings.max_quality - state.missing_quality, 11475);
-        }
-        _ => panic!(),
-    }
+    let state = simulation.unwrap().last().copied().unwrap();
+    assert_eq!(state.cp, 1);
+    assert_eq!(state.durability, 5);
+    assert_eq!(settings.max_progress - state.missing_progress, 6323);
+    assert_eq!(settings.max_quality - state.missing_quality, 11475);
 }
 
 #[test]
@@ -247,6 +225,7 @@ fn test_ingame_be9fc5c2() {
         ]
         .into_iter(),
     )
+    .unwrap()
     .into_iter()
     .map(|state| progress_quality_pair(&settings, state))
     .collect();

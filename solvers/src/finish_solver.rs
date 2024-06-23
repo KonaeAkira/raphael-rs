@@ -1,5 +1,6 @@
 use simulator::{
-    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings, State,
+    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+    SimulationState,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -54,22 +55,23 @@ struct ReducedState {
 impl ReducedState {
     pub fn from_state(state: &InProgress) -> ReducedState {
         ReducedState {
-            durability: state.durability,
-            cp: state.cp,
-            effects: ReducedEffects::from_effects(&state.effects),
-            combo: state.combo,
+            durability: state.raw_state().durability,
+            cp: state.raw_state().cp,
+            effects: ReducedEffects::from_effects(&state.raw_state().effects),
+            combo: state.raw_state().combo,
         }
     }
 
     pub fn to_state(self) -> InProgress {
-        InProgress {
+        let raw_state = SimulationState {
             durability: self.durability,
             cp: self.cp,
             missing_progress: INF_PROGRESS,
             missing_quality: 0,
             effects: self.effects.to_effects(),
             combo: self.combo,
-        }
+        };
+        raw_state.try_into().unwrap()
     }
 }
 
@@ -106,39 +108,37 @@ impl FinishSolver {
                 .intersection(self.settings.allowed_actions)
                 .actions_iter()
             {
-                let new_state = state.use_action(action, Condition::Normal, &self.settings);
-                match new_state {
-                    State::InProgress(new_state) => {
+                if let Ok(new_state) = state.use_action(action, Condition::Normal, &self.settings) {
+                    if let Ok(new_state) = new_state.try_into() {
                         let time = self.time_to_finish(&new_state);
                         if time.is_some() && time.unwrap() + action.time_cost() < best_time {
                             best_time = time.unwrap() + action.time_cost();
                             best_action = action;
                         }
-                    }
-                    State::Completed { .. } => {
+                    } else if new_state.missing_progress == 0 {
                         if action.time_cost() < best_time {
                             best_time = action.time_cost();
                             best_action = action;
                         }
                     }
-                    _ => (),
                 }
             }
 
             finish_sequence.push(best_action);
-
-            let new_state = state.use_action(best_action, Condition::Normal, &self.settings);
-            match new_state {
-                State::InProgress(new_state) => state = new_state,
-                State::Completed { .. } => return Some(finish_sequence),
-                _ => (),
+            let new_state = state
+                .use_action(best_action, Condition::Normal, &self.settings)
+                .unwrap();
+            if let Ok(new_state) = new_state.try_into() {
+                state = new_state;
+            } else {
+                return Some(finish_sequence);
             }
         }
     }
 
     pub fn can_finish(&mut self, state: &InProgress) -> bool {
         let max_progress = self.solve_max_progress(ReducedState::from_state(state));
-        max_progress >= state.missing_progress
+        max_progress >= state.raw_state().missing_progress
     }
 
     pub fn time_to_finish(&mut self, state: &InProgress) -> Option<i32> {
@@ -153,7 +153,7 @@ impl FinishSolver {
             second: time,
         } in result.iter().rev()
         {
-            if *progress >= state.missing_progress {
+            if *progress >= state.raw_state().missing_progress {
                 return Some(-*time);
             }
         }
@@ -169,23 +169,22 @@ impl FinishSolver {
                     .intersection(self.settings.allowed_actions)
                     .actions_iter()
                 {
-                    let new_state =
+                    if let Ok(new_state) =
                         state
                             .to_state()
-                            .use_action(action, Condition::Normal, &self.settings);
-                    match new_state {
-                        State::InProgress(new_state) => {
-                            let action_progress = INF_PROGRESS - new_state.missing_progress;
+                            .use_action(action, Condition::Normal, &self.settings)
+                    {
+                        if let Ok(in_progress) = new_state.try_into() {
                             let child_progress =
-                                self.solve_max_progress(ReducedState::from_state(&new_state));
+                                self.solve_max_progress(ReducedState::from_state(&in_progress));
+                            let action_progress =
+                                INF_PROGRESS - in_progress.raw_state().missing_progress;
                             max_progress =
                                 std::cmp::max(max_progress, child_progress + action_progress);
-                        }
-                        State::Failed { missing_progress } => {
-                            let progress = INF_PROGRESS - missing_progress;
+                        } else {
+                            let progress = INF_PROGRESS - new_state.missing_progress;
                             max_progress = std::cmp::max(max_progress, progress);
                         }
-                        _ => (),
                     }
                 }
                 self.max_progress.insert(state, max_progress);
@@ -200,29 +199,28 @@ impl FinishSolver {
             .intersection(self.settings.allowed_actions)
             .actions_iter()
         {
-            let new_state = state
-                .to_state()
-                .use_action(action, Condition::Normal, &self.settings);
-            match new_state {
-                State::InProgress(new_state) => {
+            if let Ok(new_state) =
+                state
+                    .to_state()
+                    .use_action(action, Condition::Normal, &self.settings)
+            {
+                if let Ok(in_progress) = new_state.try_into() {
                     let progress = INF_PROGRESS - new_state.missing_progress;
                     match self
                         .pareto_fronts
-                        .get(&ReducedState::from_state(&new_state))
+                        .get(&ReducedState::from_state(&in_progress))
                     {
                         Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
-                        None => self.solve_pareto_front(ReducedState::from_state(&new_state)),
+                        None => self.solve_pareto_front(ReducedState::from_state(&in_progress)),
                     }
                     self.pareto_front_builder.add(progress, -action.time_cost());
                     self.pareto_front_builder.merge();
-                }
-                State::Failed { missing_progress } => {
-                    let progress = INF_PROGRESS - missing_progress;
+                } else {
+                    let progress = INF_PROGRESS - new_state.missing_progress;
                     self.pareto_front_builder
                         .push(&[ParetoValue::new(progress, -action.time_cost())]);
                     self.pareto_front_builder.merge();
                 }
-                _ => (),
             }
         }
         let pareto_front = self.pareto_front_builder.peek().unwrap();
@@ -243,9 +241,9 @@ mod tests {
     use super::*;
 
     fn solve(settings: Settings, actions: &[Action]) -> Vec<Action> {
-        let state = State::new(&settings).use_actions(actions, Condition::Normal, &settings);
+        let state = SimulationState::from_macro(&settings, actions).unwrap();
         let result = FinishSolver::new(settings)
-            .get_finish_sequence(state.as_in_progress().unwrap())
+            .get_finish_sequence(state.try_into().unwrap())
             .unwrap();
         dbg!(&result);
         result

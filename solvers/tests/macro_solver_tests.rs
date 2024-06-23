@@ -1,25 +1,20 @@
-use simulator::{Action, ActionMask, Condition, Settings, State};
+use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
 use solvers::MacroSolver;
 
 fn solve(settings: &Settings) -> Option<Vec<Action>> {
-    MacroSolver::new(settings.clone()).solve(State::new(settings))
+    MacroSolver::new(settings.clone()).solve(InProgress::new(settings))
 }
 
 fn get_quality(settings: &Settings, actions: &[Action]) -> u32 {
-    let mut state: State = State::new(&settings);
+    let mut state = SimulationState::new(&settings);
     for action in actions {
-        state = state.as_in_progress().unwrap().use_action(
-            action.clone(),
-            Condition::Normal,
-            &settings,
-        );
+        state = InProgress::try_from(state)
+            .unwrap()
+            .use_action(action.clone(), Condition::Normal, &settings)
+            .unwrap();
     }
-    match state {
-        State::Completed { missing_quality } => {
-            settings.max_quality.saturating_sub(missing_quality)
-        }
-        _ => 0,
-    }
+    assert_eq!(state.missing_progress, 0);
+    settings.max_quality - state.missing_quality
 }
 
 #[test]

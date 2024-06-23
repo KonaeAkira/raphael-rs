@@ -1,46 +1,7 @@
 use crate::{Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum State {
-    InProgress(InProgress),
-    Completed { missing_quality: u32 },
-    Failed { missing_progress: u32 },
-    Invalid,
-}
-
-impl State {
-    pub fn new(settings: &Settings) -> State {
-        State::InProgress(InProgress::new(settings))
-    }
-
-    pub fn use_actions(
-        self,
-        actions: &[Action],
-        condition: Condition,
-        settings: &Settings,
-    ) -> State {
-        let mut current_state = self;
-        for action in actions {
-            match current_state {
-                State::InProgress(in_progress) => {
-                    current_state = in_progress.use_action(*action, condition, settings);
-                }
-                _ => return State::Invalid,
-            }
-        }
-        current_state
-    }
-
-    pub fn as_in_progress(self) -> Option<InProgress> {
-        match self {
-            State::InProgress(in_progress) => Some(in_progress),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct InProgress {
+pub struct SimulationState {
     pub cp: i16,
     pub durability: i16,
     pub missing_progress: u32,
@@ -49,9 +10,9 @@ pub struct InProgress {
     pub combo: Option<ComboAction>,
 }
 
-impl InProgress {
-    pub fn new(settings: &Settings) -> InProgress {
-        InProgress {
+impl SimulationState {
+    pub fn new(settings: &Settings) -> Self {
+        Self {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
@@ -61,106 +22,151 @@ impl InProgress {
         }
     }
 
-    fn can_use_action(&self, action: Action, condition: Condition) -> bool {
-        if action.cp_cost(&self.effects, condition) > self.cp {
-            return false;
+    pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, &'static str> {
+        let mut state = Self::new(settings);
+        for action in actions {
+            let in_progress: InProgress = state.try_into()?;
+            state = in_progress.use_action(*action, Condition::Normal, settings)?;
         }
-        if action.required_combo().is_some() && self.combo != action.required_combo() {
-            return false;
+        Ok(state)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct InProgress {
+    state: SimulationState,
+}
+
+impl TryFrom<SimulationState> for InProgress {
+    type Error = &'static str;
+
+    fn try_from(value: SimulationState) -> Result<Self, Self::Error> {
+        if value.missing_progress == 0 {
+            return Err("Progress already at 100%");
         }
-        match action {
-            Action::ByregotsBlessing => self.effects.inner_quiet != 0,
-            Action::PrudentSynthesis | Action::PrudentTouch => self.effects.waste_not == 0,
-            Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade => {
-                condition == Condition::Good || condition == Condition::Excellent
-            }
-            Action::Groundwork => {
-                self.durability >= action.durability_cost(&self.effects, condition)
-            }
-            Action::TrainedFinesse => self.effects.inner_quiet == 10,
-            _ => true,
+        if value.durability <= 0 {
+            return Err("No remaining durability");
+        }
+        Ok(Self { state: value })
+    }
+}
+
+impl InProgress {
+    pub fn new(settings: &Settings) -> Self {
+        Self {
+            state: SimulationState::new(settings),
         }
     }
 
-    pub fn use_action(&self, action: Action, condition: Condition, settings: &Settings) -> State {
-        if !self.can_use_action(action, condition) {
-            return State::Invalid;
+    pub fn raw_state(&self) -> &SimulationState {
+        &self.state
+    }
+
+    pub fn can_use_action(&self, action: Action, condition: Condition) -> Result<(), &'static str> {
+        if action.cp_cost(&self.state.effects, condition) > self.state.cp {
+            return Err("Not enough CP");
         }
+        if action.required_combo().is_some() && self.state.combo != action.required_combo() {
+            return Err("Combo requirement not fulfilled");
+        }
+        match action {
+            Action::ByregotsBlessing if self.state.effects.inner_quiet == 0 => {
+                Err("Need Inner Quiet to use Byregot's Blessing")
+            }
+            Action::PrudentSynthesis | Action::PrudentTouch
+                if self.state.effects.waste_not != 0 =>
+            {
+                Err("Action cannot be used during Waste Not")
+            }
+            Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade
+                if condition != Condition::Good && condition != Condition::Excellent =>
+            {
+                Err("Requires condition to be Good or Excellent")
+            }
+            Action::Groundwork
+                if self.state.durability
+                    < action.durability_cost(&self.state.effects, condition) =>
+            {
+                Err("Not enough durability")
+            }
+            Action::TrainedFinesse if self.state.effects.inner_quiet < 10 => {
+                Err("Requires 10 Inner Quiet")
+            }
+            _ => Ok(()),
+        }
+    }
 
-        let cp_cost = action.cp_cost(&self.effects, condition);
-        let durability_cost = action.durability_cost(&self.effects, condition);
-        let progress_increase = action.progress_increase(settings, &self.effects, condition);
-        let quality_increase = action.quality_increase(settings, &self.effects, condition);
+    pub fn use_action(
+        self,
+        action: Action,
+        condition: Condition,
+        settings: &Settings,
+    ) -> Result<SimulationState, &'static str> {
+        self.can_use_action(action, condition)?;
+        let mut state = self.state;
 
-        let mut new_state = *self;
-        new_state.combo = action.to_combo();
-        new_state.cp -= cp_cost;
-        new_state.durability -= durability_cost;
+        let cp_cost = action.cp_cost(&state.effects, condition);
+        let durability_cost = action.durability_cost(&state.effects, condition);
+        let progress_increase = action.progress_increase(settings, &state.effects, condition);
+        let quality_increase = action.quality_increase(settings, &state.effects, condition);
+
+        state.combo = action.to_combo();
+        state.cp -= cp_cost;
+        state.durability -= durability_cost;
 
         // reset muscle memory if progress increased
         if progress_increase != 0 {
-            new_state.missing_progress =
-                new_state.missing_progress.saturating_sub(progress_increase);
-            new_state.effects.muscle_memory = 0;
+            state.missing_progress = state.missing_progress.saturating_sub(progress_increase);
+            state.effects.muscle_memory = 0;
         }
 
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            new_state.missing_quality = new_state.missing_quality.saturating_sub(quality_increase);
-            new_state.effects.great_strides = 0;
+            state.missing_quality = state.missing_quality.saturating_sub(quality_increase);
+            state.effects.great_strides = 0;
             if settings.job_level >= 11 {
-                new_state.effects.inner_quiet += match action {
+                state.effects.inner_quiet += match action {
                     Action::Reflect => 2,
                     Action::PreciseTouch => 2,
                     Action::PreparatoryTouch => 2,
                     _ => 1,
                 };
-                new_state.effects.inner_quiet = std::cmp::min(10, new_state.effects.inner_quiet);
+                state.effects.inner_quiet = std::cmp::min(10, state.effects.inner_quiet);
             }
         }
 
-        if new_state.missing_progress == 0 {
-            return State::Completed {
-                missing_quality: new_state.missing_quality,
-            };
-        }
-        if new_state.durability <= 0 {
-            return State::Failed {
-                missing_progress: new_state.missing_progress,
-            };
+        if state.missing_progress == 0 || state.durability <= 0 {
+            return Ok(state);
         }
 
         // remove manipulation before it is triggered
         if action == Action::Manipulation {
-            new_state.effects.manipulation = 0;
+            state.effects.manipulation = 0;
         }
 
-        if new_state.effects.manipulation > 0 {
-            new_state.durability = std::cmp::min(new_state.durability + 5, settings.max_durability);
+        if state.effects.manipulation > 0 {
+            state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
-        new_state.effects.tick_down();
+        state.effects.tick_down();
 
         // trigger special action effects
         let duration_bonus = if condition == Condition::Pliant { 2 } else { 0 };
         match action {
-            Action::MuscleMemory => new_state.effects.muscle_memory = 5 + duration_bonus,
-            Action::GreatStrides => new_state.effects.great_strides = 3 + duration_bonus,
-            Action::Veneration => new_state.effects.veneration = 4 + duration_bonus,
-            Action::Innovation => new_state.effects.innovation = 4 + duration_bonus,
-            Action::WasteNot => new_state.effects.waste_not = 4 + duration_bonus,
-            Action::WasteNot2 => new_state.effects.waste_not = 8 + duration_bonus,
-            Action::Manipulation => new_state.effects.manipulation = 8 + duration_bonus,
+            Action::MuscleMemory => state.effects.muscle_memory = 5 + duration_bonus,
+            Action::GreatStrides => state.effects.great_strides = 3 + duration_bonus,
+            Action::Veneration => state.effects.veneration = 4 + duration_bonus,
+            Action::Innovation => state.effects.innovation = 4 + duration_bonus,
+            Action::WasteNot => state.effects.waste_not = 4 + duration_bonus,
+            Action::WasteNot2 => state.effects.waste_not = 8 + duration_bonus,
+            Action::Manipulation => state.effects.manipulation = 8 + duration_bonus,
             Action::MasterMend => {
-                new_state.durability =
-                    std::cmp::min(settings.max_durability, new_state.durability + 30)
+                state.durability = std::cmp::min(settings.max_durability, state.durability + 30)
             }
-            Action::ByregotsBlessing => new_state.effects.inner_quiet = 0,
-            Action::TricksOfTheTrade => {
-                new_state.cp = std::cmp::min(settings.max_cp, new_state.cp + 20)
-            }
+            Action::ByregotsBlessing => state.effects.inner_quiet = 0,
+            Action::TricksOfTheTrade => state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
             _ => (),
         }
 
-        State::InProgress(new_state)
+        Ok(state)
     }
 }

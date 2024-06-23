@@ -4,7 +4,7 @@ use std::rc::Rc;
 use egui::{Align, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
 use egui_extras::Column;
 use game_data::{CrafterConfiguration, RecipeConfiguration};
-use simulator::{Action, Settings, State};
+use simulator::{state::InProgress, Action, Settings, SimulationState};
 
 type MacroResult = Option<Vec<Action>>;
 
@@ -101,6 +101,13 @@ impl eframe::App for MacroSolverApp {
                 ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                 ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
                 egui::widgets::global_dark_light_mode_buttons(ui);
+                ui.hyperlink_to(
+                    egui::RichText::new(format!(
+                        "{} View source on GitHub",
+                        egui::special_emojis::GITHUB
+                    )),
+                    "https://github.com/KonaeAkira/raphael-rs",
+                );
             });
         });
 
@@ -165,23 +172,17 @@ fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
 impl MacroSolverApp {
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
         let game_settings = game_data::get_game_settings(self.recipe_config, self.crafter_config);
-        let game_state = State::new(&game_settings).use_actions(
-            &self.actions,
-            simulator::Condition::Normal,
-            &game_settings,
-        );
+        let game_state = match SimulationState::from_macro(&game_settings, &self.actions) {
+            Ok(state) => state,
+            Err(_) => SimulationState::new(&game_settings),
+        };
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Simulation").strong());
             ui.separator();
             ui.horizontal(|ui| {
                 ui.label("Progress");
                 let max_progress = game_settings.max_progress;
-                let progress = match game_state {
-                    State::InProgress(state) => max_progress - state.missing_progress,
-                    State::Completed { .. } => max_progress,
-                    State::Failed { missing_progress } => max_progress - missing_progress,
-                    State::Invalid => 0,
-                };
+                let progress = game_settings.max_progress - game_state.missing_progress;
                 ui.add(
                     egui::ProgressBar::new(progress as f32 / max_progress as f32)
                         .text(format!("{} / {}", progress, max_progress))
@@ -191,12 +192,7 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label("Quality");
                 let max_quality = game_settings.max_quality;
-                let quality = match game_state {
-                    State::InProgress(state) => max_quality - state.missing_quality,
-                    State::Completed { missing_quality } => max_quality - missing_quality,
-                    State::Failed { .. } => 0,
-                    State::Invalid => 0,
-                };
+                let quality = game_settings.max_quality - game_state.missing_quality;
                 ui.add(
                     egui::ProgressBar::new(quality as f32 / max_quality as f32)
                         .text(format!("{} / {}", quality, max_quality))
@@ -206,12 +202,7 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label("Durability");
                 let max_durability = game_settings.max_durability;
-                let durability = match game_state {
-                    State::InProgress(state) => state.durability,
-                    State::Completed { .. } => 0,
-                    State::Failed { .. } => 0,
-                    State::Invalid => 0,
-                };
+                let durability = game_state.durability;
                 ui.add(
                     egui::ProgressBar::new(durability as f32 / max_durability as f32)
                         .text(format!("{} / {}", durability, max_durability))
@@ -220,12 +211,7 @@ impl MacroSolverApp {
                 );
                 ui.label("CP");
                 let max_cp = game_settings.max_cp;
-                let cp = match game_state {
-                    State::InProgress(state) => state.cp,
-                    State::Completed { .. } => 0,
-                    State::Failed { .. } => 0,
-                    State::Invalid => 0,
-                };
+                let cp = game_state.cp;
                 ui.add(
                     egui::ProgressBar::new(cp as f32 / max_cp as f32)
                         .text(format!("{} / {}", cp, max_cp))
@@ -454,6 +440,9 @@ impl gloo_worker::Worker for WebWorker {
         msg: Self::Input,
         _id: gloo_worker::HandlerId,
     ) {
-        scope.respond(_id, solvers::MacroSolver::new(msg).solve(State::new(&msg)));
+        scope.respond(
+            _id,
+            solvers::MacroSolver::new(msg).solve(InProgress::new(&msg)),
+        );
     }
 }

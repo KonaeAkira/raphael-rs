@@ -1,4 +1,4 @@
-use simulator::{ActionMask, Settings, State};
+use simulator::{state::InProgress, ActionMask, Settings};
 use solvers::MacroSolver;
 
 fn main() {
@@ -13,7 +13,7 @@ fn main() {
         allowed_actions: ActionMask::from_level(90, true),
     };
 
-    let state = State::new(&settings);
+    let state = InProgress::new(&settings);
     let mut solver = MacroSolver::new(settings);
     solver.solve(state);
 }

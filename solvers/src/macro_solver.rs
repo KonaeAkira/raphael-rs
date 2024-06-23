@@ -1,9 +1,10 @@
 use radix_heap::RadixHeapMap;
 use rustc_hash::FxHashMap;
+use simulator::state::InProgress;
 
 use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::{FinishSolver, UpperBoundSolver};
-use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, State};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
@@ -34,24 +35,19 @@ impl MacroSolver {
     /// Returns a list of Actions that maximizes Quality of the completed state.
     /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
     /// The solver makes an effort to produce a short solution, but it is not (yet) guaranteed to be the shortest solution.
-    pub fn solve(&mut self, state: State) -> Option<Vec<Action>> {
-        match state {
-            State::InProgress(state) => {
-                #[cfg(not(target_arch = "wasm32"))]
-                let timer = Instant::now();
-                if !self.finish_solver.can_finish(&state) {
-                    return None;
-                }
-                #[cfg(not(target_arch = "wasm32"))]
-                let seconds = timer.elapsed().as_secs_f32();
-                #[cfg(not(target_arch = "wasm32"))]
-                dbg!(seconds);
-                match self.do_solve(state) {
-                    Some(actions) => Some(actions),
-                    None => Some(self.finish_solver.get_finish_sequence(state).unwrap()),
-                }
-            }
-            _ => None,
+    pub fn solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
+        #[cfg(not(target_arch = "wasm32"))]
+        let timer = Instant::now();
+        if !self.finish_solver.can_finish(&state) {
+            return None;
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        let seconds = timer.elapsed().as_secs_f32();
+        #[cfg(not(target_arch = "wasm32"))]
+        dbg!(seconds);
+        match self.do_solve(state) {
+            Some(actions) => Some(actions),
+            None => Some(self.finish_solver.get_finish_sequence(state).unwrap()),
         }
     }
 
@@ -76,7 +72,10 @@ impl MacroSolver {
         let mut best_state = None;
         let mut best_trace = 0;
 
-        visited_states.insert(hash_key(state), state.missing_quality);
+        visited_states.insert(
+            hash_key(*state.raw_state()),
+            state.raw_state().missing_quality,
+        );
         search_queue.push(
             self.bound_solver.quality_upper_bound(state),
             SearchNode {
@@ -94,48 +93,48 @@ impl MacroSolver {
                 .intersection(self.settings.allowed_actions)
                 .actions_iter()
             {
-                let state = node
+                if let Ok(state) = node
                     .state
-                    .use_action(action, Condition::Normal, &self.settings);
-                if let State::InProgress(state) = state {
-                    // skip this state if we already visited the same state but with equal or more Quality
-                    if let Some(missing_quality) = visited_states.get(&hash_key(state)) {
-                        if *missing_quality <= state.missing_quality {
+                    .use_action(action, Condition::Normal, &self.settings)
+                {
+                    if let Ok(in_progress) = InProgress::try_from(state) {
+                        // skip this state if we already visited the same state but with equal or more Quality
+                        if let Some(missing_quality) = visited_states.get(&hash_key(state)) {
+                            if *missing_quality <= state.missing_quality {
+                                continue;
+                            }
+                        }
+                        // skip this state if it is impossible to max out Progress
+                        if !self.finish_solver.can_finish(&in_progress) {
+                            finish_solver_rejected_node += 1;
                             continue;
                         }
-                    }
+                        // skip this state if its Quality upper bound is not greater than the current best Quality
+                        let quality_bound = self.bound_solver.quality_upper_bound(in_progress);
+                        if quality_bound <= best_quality {
+                            upper_bound_solver_rejected_nodes += 1;
+                            continue;
+                        }
 
-                    // skip this state if it is impossible to max out Progress
-                    if !self.finish_solver.can_finish(&state) {
-                        finish_solver_rejected_node += 1;
-                        continue;
-                    }
+                        visited_states.insert(hash_key(state), state.missing_quality);
+                        search_queue.push(
+                            quality_bound,
+                            SearchNode {
+                                state: in_progress,
+                                backtrack_index: traces.len(),
+                            },
+                        );
+                        traces.push(Some(SearchTrace {
+                            parent: node.backtrack_index,
+                            action,
+                        }));
 
-                    // skip this state if its Quality upper bound is not greater than the current best Quality
-                    let quality_bound = self.bound_solver.quality_upper_bound(state);
-                    if quality_bound <= best_quality {
-                        upper_bound_solver_rejected_nodes += 1;
-                        continue;
-                    }
-
-                    visited_states.insert(hash_key(state), state.missing_quality);
-                    search_queue.push(
-                        quality_bound,
-                        SearchNode {
-                            state,
-                            backtrack_index: traces.len(),
-                        },
-                    );
-                    traces.push(Some(SearchTrace {
-                        parent: node.backtrack_index,
-                        action,
-                    }));
-
-                    let quality = self.settings.max_quality - state.missing_quality;
-                    if quality > best_quality {
-                        best_quality = quality;
-                        best_state = Some(state);
-                        best_trace = traces.len() - 1;
+                        let quality = self.settings.max_quality - state.missing_quality;
+                        if quality > best_quality {
+                            best_quality = quality;
+                            best_state = Some(state);
+                            best_trace = traces.len() - 1;
+                        }
                     }
                 }
             }
@@ -144,7 +143,10 @@ impl MacroSolver {
         let best_actions = match best_state {
             Some(best_state) => {
                 let trace_actions = get_actions(&traces, best_trace);
-                let finish_actions = self.finish_solver.get_finish_sequence(best_state).unwrap();
+                let finish_actions = self
+                    .finish_solver
+                    .get_finish_sequence(best_state.try_into().unwrap())
+                    .unwrap();
                 Some(trace_actions.chain(finish_actions).collect())
             }
             None => None,
@@ -187,8 +189,8 @@ fn get_actions(traces: &[Option<SearchTrace>], mut index: usize) -> impl Iterato
     actions.into_iter().rev()
 }
 
-fn hash_key(state: InProgress) -> InProgress {
-    InProgress {
+fn hash_key(state: SimulationState) -> SimulationState {
+    SimulationState {
         missing_quality: 0,
         ..state
     }

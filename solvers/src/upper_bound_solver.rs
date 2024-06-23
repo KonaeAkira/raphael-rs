@@ -1,6 +1,7 @@
 use crate::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use simulator::{
-    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings, State,
+    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+    SimulationState,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -31,6 +32,7 @@ struct ReducedState {
 
 impl ReducedState {
     fn from_state(state: InProgress, base_durability_cost: i16, waste_not_cost: i16) -> Self {
+        let state = *state.raw_state();
         let used_durability = (INF_DURABILITY - state.durability) / 5;
         let durability_cost = std::cmp::min(
             used_durability * base_durability_cost,
@@ -52,7 +54,7 @@ impl ReducedState {
 
 impl std::convert::From<ReducedState> for InProgress {
     fn from(state: ReducedState) -> Self {
-        Self {
+        SimulationState {
             durability: INF_DURABILITY,
             cp: state.cp,
             missing_progress: INF_PROGRESS,
@@ -68,6 +70,8 @@ impl std::convert::From<ReducedState> for InProgress {
             },
             combo: state.combo,
         }
+        .try_into()
+        .unwrap()
     }
 }
 
@@ -105,7 +109,8 @@ impl UpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// The returned upper-bound is NOT clamped to settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, mut state: InProgress) -> u32 {
+    pub fn quality_upper_bound(&mut self, state: InProgress) -> u32 {
+        let mut state = *state.raw_state();
         let current_quality = self.settings.max_quality - state.missing_quality;
 
         // refund effects and durability
@@ -114,8 +119,11 @@ impl UpperBoundSolver {
         state.cp += state.durability / 5 * self.base_durability_cost;
         state.durability = INF_DURABILITY;
 
-        let reduced_state =
-            ReducedState::from_state(state, self.base_durability_cost, self.waste_not_cost);
+        let reduced_state = ReducedState::from_state(
+            InProgress::try_from(state).unwrap(),
+            self.base_durability_cost,
+            self.waste_not_cost,
+        );
 
         if !self.solved_states.contains_key(&reduced_state) {
             self.solve_state(reduced_state);
@@ -188,14 +196,14 @@ impl UpperBoundSolver {
     }
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {
-        let new_state =
-            InProgress::from(state).use_action(action, Condition::Normal, &self.settings);
-        match new_state {
-            State::InProgress(new_state) => {
+        if let Ok(new_state) =
+            InProgress::from(state).use_action(action, Condition::Normal, &self.settings)
+        {
+            if let Ok(in_progress) = InProgress::try_from(new_state) {
                 let action_progress = INF_PROGRESS - new_state.missing_progress;
                 let action_quality = INF_QUALITY - new_state.missing_quality;
                 let new_state = ReducedState::from_state(
-                    new_state,
+                    in_progress,
                     self.base_durability_cost,
                     self.waste_not_cost,
                 );
@@ -216,8 +224,6 @@ impl UpperBoundSolver {
                     self.pareto_front_builder.merge();
                 }
             }
-            State::Invalid => (),
-            _ => unreachable!("INF_PROGRESS or INF_DURABILITY not high enough"),
         }
     }
 }
@@ -228,9 +234,8 @@ mod tests {
     use more_asserts::*;
 
     fn solve(settings: Settings, actions: &[Action]) -> u32 {
-        let state = State::new(&settings).use_actions(actions, Condition::Normal, &settings);
-        let result =
-            UpperBoundSolver::new(settings).quality_upper_bound(state.as_in_progress().unwrap());
+        let state = SimulationState::from_macro(&settings, actions).unwrap();
+        let result = UpperBoundSolver::new(settings).quality_upper_bound(state.try_into().unwrap());
         dbg!(result);
         result
     }
