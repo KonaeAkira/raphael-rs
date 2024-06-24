@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use egui::{Align, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
 use egui_extras::Column;
-use game_data::{functions::hq_percentage, CrafterConfiguration, RecipeConfiguration};
+use game_data::{CrafterConfiguration, Item, RecipeConfiguration};
 use simulator::{state::InProgress, Action, Settings, SimulationState};
 
 type MacroResult = Option<Vec<Action>>;
@@ -224,7 +224,7 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     let quality = game_settings.max_quality - game_state.missing_quality;
                     let hq = match game_state.missing_progress {
-                        0 => hq_percentage(quality, game_settings.max_quality),
+                        0 => game_data::hq_percentage(quality, game_settings.max_quality),
                         _ => 0,
                     };
                     ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
@@ -390,6 +390,40 @@ impl MacroSolverApp {
                     egui::DragValue::new(&mut self.crafter_config.job_level).clamp_range(1..=90),
                 );
             });
+            ui.separator();
+
+            ui.label(egui::RichText::new("HQ ingredients").strong());
+            let ingredients: Vec<(Item, u32)> = self
+                .recipe_config
+                .recipe
+                .ingredients
+                .iter()
+                .filter_map(|ingredient| match ingredient.item_id {
+                    0 => None,
+                    id => Some((*game_data::ITEMS.get(&id).unwrap(), ingredient.amount)),
+                })
+                .collect();
+            let mut has_hq_ingredient = false;
+            for (index, (item, max_amount)) in ingredients.iter().enumerate() {
+                if item.can_be_hq {
+                    has_hq_ingredient = true;
+                    ui.horizontal(|ui| {
+                        ui.label(item.name);
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            let mut max_placeholder = *max_amount;
+                            ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
+                            ui.label("/");
+                            ui.add(
+                                egui::DragValue::new(&mut self.recipe_config.hq_ingredients[index])
+                                    .clamp_range(0..=*max_amount),
+                            );
+                        });
+                    });
+                }
+            }
+            if !has_hq_ingredient {
+                ui.label("None");
+            }
             ui.separator();
 
             ui.label(egui::RichText::new("Actions").strong());

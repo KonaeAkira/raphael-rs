@@ -249,6 +249,7 @@ mod tests {
             max_quality: 20000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -279,6 +280,7 @@ mod tests {
             max_quality: 5000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -306,6 +308,7 @@ mod tests {
             max_quality: 5000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -338,6 +341,7 @@ mod tests {
             max_quality: 5000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -355,6 +359,7 @@ mod tests {
             max_quality: 2000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -372,6 +377,7 @@ mod tests {
             max_quality: 8000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -389,6 +395,7 @@ mod tests {
             max_quality: 8000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -406,6 +413,7 @@ mod tests {
             max_quality: 20000,
             base_progress: 10000,
             base_quality: 10000,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true),
         };
@@ -423,6 +431,7 @@ mod tests {
             max_quality: 40000,
             base_progress: 100,
             base_quality: 100,
+            initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, false),
         };

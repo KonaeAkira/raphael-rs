@@ -32,6 +32,7 @@ fn test_random_926ae85b() {
         max_quality: 150,
         base_progress: 4,
         base_quality: 38,
+        initial_quality: 0,
         job_level: 10,
         allowed_actions: ActionMask::none(),
     };
@@ -65,6 +66,7 @@ fn test_random_3c721e47() {
         max_quality: 6800,
         base_progress: 240,
         base_quality: 307,
+        initial_quality: 0,
         job_level: 85,
         allowed_actions: ActionMask::none(),
     };
@@ -102,6 +104,7 @@ fn test_random_3ba90d3a() {
         max_quality: 9900,
         base_progress: 204,
         base_quality: 253,
+        initial_quality: 0,
         job_level: 81,
         allowed_actions: ActionMask::none(),
     };
@@ -142,6 +145,7 @@ fn test_random_bce2650c() {
         max_quality: 14040,
         base_progress: 248,
         base_quality: 270,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, false),
     };
@@ -197,6 +201,7 @@ fn test_ingame_be9fc5c2() {
         max_quality: 10920,
         base_progress: 247,
         base_quality: 265,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
