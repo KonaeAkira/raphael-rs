@@ -374,15 +374,20 @@ impl MacroSolverApp {
             ui.label(egui::RichText::new("Crafter stats").strong());
             ui.horizontal(|ui| {
                 ui.label("Craftsmanship");
-                ui.add(egui::DragValue::new(&mut self.crafter_config.craftsmanship));
+                ui.add(
+                    egui::DragValue::new(&mut self.crafter_config.craftsmanship)
+                        .clamp_range(0..=9999),
+                );
             });
             ui.horizontal(|ui| {
                 ui.label("Control");
-                ui.add(egui::DragValue::new(&mut self.crafter_config.control));
+                ui.add(
+                    egui::DragValue::new(&mut self.crafter_config.control).clamp_range(0..=9999),
+                );
             });
             ui.horizontal(|ui| {
                 ui.label("CP");
-                ui.add(egui::DragValue::new(&mut self.crafter_config.cp));
+                ui.add(egui::DragValue::new(&mut self.crafter_config.cp).clamp_range(0..=9999));
             });
             ui.horizontal(|ui| {
                 ui.label("Job Level");
