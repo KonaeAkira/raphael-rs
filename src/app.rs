@@ -57,9 +57,9 @@ impl MacroSolverApp {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
         });
 
-        let item_id = *game_data::ITEM_IDS.get("Indagator's Saw").unwrap();
+        let item_id: u32 = 38890;
         let recipe_config = RecipeConfiguration {
-            item_id,
+            item_id, // Indagator's Saw
             recipe: *game_data::RECIPES.get(&item_id).unwrap(),
             hq_ingredients: [0; 6],
         };

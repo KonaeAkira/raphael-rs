@@ -51,24 +51,9 @@ pub const LEVELS: [u32; 90] = [
     555, 560,
 ];
 
-pub static ITEM_IDS: phf::OrderedMap<&'static str, u32> =
-    include!(concat!(env!("OUT_DIR"), "/item_ids.rs"));
 pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
 pub static RECIPES: phf::OrderedMap<u32, Recipe> =
     include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
-
-pub fn get_craftable_item_names() -> impl Iterator<Item = &'static str> {
-    RECIPES
-        .keys()
-        .into_iter()
-        .map(|item_id| ITEMS.get(item_id).unwrap().name)
-}
-
-pub fn get_ingredients(item_name: String) -> [Ingredient; 6] {
-    let item_id = ITEM_IDS.get(&item_name).unwrap();
-    let recipe = RECIPES.get(item_id).unwrap();
-    recipe.ingredients
-}
 
 pub fn get_game_settings(
     recipe_config: RecipeConfiguration,

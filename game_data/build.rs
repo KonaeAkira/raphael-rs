@@ -84,18 +84,10 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
     writeln!(writer, "{}", recipes.build())?;
 
-    let mut item_ids = phf_codegen::OrderedMap::new();
     let mut items = phf_codegen::OrderedMap::new();
-
-    let mut seen_item_ids = HashSet::new();
 
     for item_record in items_csv.deserialize::<ItemRecord>() {
         let item_record = item_record?;
-
-        if !seen_item_ids.contains(&item_record.name) {
-            seen_item_ids.insert(item_record.name.clone());
-            item_ids.entry(item_record.name.clone(), &format!("{}", item_record.id));
-        }
         items.entry(
             item_record.id,
             &format!(
@@ -106,10 +98,6 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
             ),
         );
     }
-
-    let out_path = Path::new(&env::var("OUT_DIR")?).join("item_ids.rs");
-    let mut writer = BufWriter::new(File::create(out_path).unwrap());
-    writeln!(writer, "{}", item_ids.build())?;
 
     let out_path = Path::new(&env::var("OUT_DIR")?).join("items.rs");
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
