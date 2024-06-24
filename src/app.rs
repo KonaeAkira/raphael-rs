@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use egui::{Align, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
 use egui_extras::Column;
-use game_data::{CrafterConfiguration, RecipeConfiguration};
+use game_data::{functions::hq_percentage, CrafterConfiguration, RecipeConfiguration};
 use simulator::{state::InProgress, Action, Settings, SimulationState};
 
 type MacroResult = Option<Vec<Action>>;
@@ -53,6 +53,9 @@ impl MacroSolverApp {
             .spawn("./dummy_worker.js");
 
         cc.egui_ctx.set_pixels_per_point(1.2);
+        cc.egui_ctx.style_mut(|style| {
+            style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
+        });
 
         let item_id = *game_data::ITEM_IDS.get("Indagator's Saw").unwrap();
         let recipe_config = RecipeConfiguration {
@@ -180,7 +183,7 @@ impl MacroSolverApp {
             ui.label(egui::RichText::new("Simulation").strong());
             ui.separator();
             ui.horizontal(|ui| {
-                ui.label("Progress");
+                ui.label("Progress:");
                 let max_progress = game_settings.max_progress;
                 let progress = game_settings.max_progress - game_state.missing_progress;
                 ui.add(
@@ -190,7 +193,7 @@ impl MacroSolverApp {
                 );
             });
             ui.horizontal(|ui| {
-                ui.label("Quality");
+                ui.label("Quality:");
                 let max_quality = game_settings.max_quality;
                 let quality = game_settings.max_quality - game_state.missing_quality;
                 ui.add(
@@ -200,7 +203,7 @@ impl MacroSolverApp {
                 );
             });
             ui.horizontal(|ui| {
-                ui.label("Durability");
+                ui.label("Durability:");
                 let max_durability = game_settings.max_durability;
                 let durability = game_state.durability;
                 ui.add(
@@ -209,7 +212,7 @@ impl MacroSolverApp {
                         .rounding(Rounding::ZERO)
                         .desired_width(120.0),
                 );
-                ui.label("CP");
+                ui.label("CP:");
                 let max_cp = game_settings.max_cp;
                 let cp = game_state.cp;
                 ui.add(
@@ -218,6 +221,14 @@ impl MacroSolverApp {
                         .rounding(Rounding::ZERO)
                         .desired_width(120.0),
                 );
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    let quality = game_settings.max_quality - game_state.missing_quality;
+                    let hq = match game_state.missing_progress {
+                        0 => hq_percentage(quality, game_settings.max_quality),
+                        _ => 0,
+                    };
+                    ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
+                });
             });
         });
     }
@@ -271,7 +282,8 @@ impl MacroSolverApp {
         egui::ScrollArea::horizontal().show(ui, |ui| {
             ui.horizontal(|ui| {
                 for action in self.actions.iter() {
-                    ui.add(egui::Image::new(self.action_icons.get(action).unwrap()).rounding(4.0));
+                    ui.add(egui::Image::new(self.action_icons.get(action).unwrap()).rounding(4.0))
+                        .on_hover_text(action.display_name());
                 }
             });
         });
@@ -282,7 +294,7 @@ impl MacroSolverApp {
             ui.label(egui::RichText::new("Recipe Selection").strong());
             ui.separator();
             ui.horizontal(|ui| {
-                ui.label("Selected Recipe");
+                ui.label("Selected Recipe:");
                 ui.label(
                     egui::RichText::new(
                         game_data::ITEMS
@@ -293,11 +305,11 @@ impl MacroSolverApp {
                     .strong(),
                 );
             });
-
             ui.horizontal(|ui| {
                 ui.label("Search:");
                 ui.text_edit_singleline(&mut self.recipe_search_text);
             });
+            ui.separator();
 
             let mut search_result: Vec<u32> = game_data::RECIPES
                 .keys()
@@ -338,11 +350,7 @@ impl MacroSolverApp {
                         let item_id = search_result[row.index()];
                         let item = game_data::ITEMS.get(&item_id).unwrap();
                         row.col(|ui| {
-                            if ui
-                                .button(item_id.to_string())
-                                .on_hover_cursor(CursorIcon::PointingHand)
-                                .clicked()
-                            {
+                            if ui.button(item_id.to_string()).clicked() {
                                 self.recipe_config = RecipeConfiguration {
                                     item_id,
                                     recipe: *game_data::RECIPES.get(&item_id).unwrap(),
@@ -362,6 +370,8 @@ impl MacroSolverApp {
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Configuration").strong());
             ui.separator();
+
+            ui.label(egui::RichText::new("Crafter stats").strong());
             ui.horizontal(|ui| {
                 ui.label("Craftsmanship");
                 ui.add(egui::DragValue::new(&mut self.crafter_config.craftsmanship));
@@ -380,20 +390,26 @@ impl MacroSolverApp {
                     egui::DragValue::new(&mut self.crafter_config.job_level).clamp_range(1..=90),
                 );
             });
+            ui.separator();
 
+            ui.label(egui::RichText::new("Actions").strong());
             if self.crafter_config.job_level as u32 >= Action::Manipulation.level_requirement() {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.manipulation,
-                    "Manipulation unlocked",
+                    "Enable Manipulation",
                 ));
             } else {
                 ui.add_enabled(
                     false,
-                    egui::Checkbox::new(&mut false, "Manipulation unlocked"),
+                    egui::Checkbox::new(&mut false, "Enable Manipulation"),
                 );
             }
+            ui.add_enabled(
+                false,
+                egui::Checkbox::new(&mut false, "Enable specialist actions"),
+            );
 
-            ui.horizontal(|ui| {
+            ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                 if ui.button("Solve").clicked() {
                     self.solver_pending = true;
                     let game_settings =
