@@ -6,6 +6,7 @@ pub struct Settings {
     pub max_quality: u32,
     pub base_progress: u32,
     pub base_quality: u32,
+    pub initial_quality: u32,
     pub job_level: u8,
     pub allowed_actions: ActionMask,
 }

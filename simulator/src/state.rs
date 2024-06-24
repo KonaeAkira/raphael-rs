@@ -16,7 +16,9 @@ impl SimulationState {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
-            missing_quality: settings.max_quality,
+            missing_quality: settings
+                .max_quality
+                .saturating_sub(settings.initial_quality),
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
         }

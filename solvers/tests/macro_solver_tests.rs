@@ -26,6 +26,7 @@ fn test_random_0f93c79f() {
         max_quality: 40000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -42,6 +43,7 @@ fn test_random_1e281667() {
         max_quality: 20000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -58,6 +60,7 @@ fn test_random_d0bf2aef() {
         max_quality: 40000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -74,6 +77,7 @@ fn test_unsolvable() {
         max_quality: 1000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -90,6 +94,7 @@ fn test_max_quality() {
         max_quality: 1000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -106,6 +111,7 @@ fn test_zero_quality() {
         max_quality: 1000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -122,6 +128,7 @@ fn test_random_e413e05d() {
         max_quality: 40000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -138,6 +145,7 @@ fn test_random_bb38a037() {
         max_quality: 40000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -154,6 +162,7 @@ fn test_random_a300ca2b() {
         max_quality: 40000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -170,6 +179,7 @@ fn test_random_0f9d7781() {
         max_quality: 6950,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -186,6 +196,7 @@ fn test_random_e451d981() {
         max_quality: 20000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -202,6 +213,7 @@ fn test_random_6799bb1d() {
         max_quality: 20000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -218,6 +230,7 @@ fn test_random_940b4755() {
         max_quality: 20000,
         base_progress: 100,
         base_quality: 100,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -234,6 +247,7 @@ fn test_rinascita_3700_3280() {
         max_quality: 12628,
         base_progress: 229,
         base_quality: 224,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -250,6 +264,7 @@ fn test_pactmaker_3240_3130() {
         max_quality: 12800,
         base_progress: 200,
         base_quality: 215,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -266,6 +281,7 @@ fn test_diadochos_4021_3660() {
         max_quality: 14040,
         base_progress: 249,
         base_quality: 247,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
@@ -282,6 +298,7 @@ fn test_indagator_3858_4057() {
         max_quality: 12900,
         base_progress: 239,
         base_quality: 271,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };

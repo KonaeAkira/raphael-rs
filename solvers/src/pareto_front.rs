@@ -279,6 +279,7 @@ mod tests {
         max_quality: 2000,
         base_progress: 0,
         base_quality: 0,
+        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::none(),
     };
