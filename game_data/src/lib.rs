@@ -1,3 +1,5 @@
+pub mod functions;
+
 use simulator::{ActionMask, Settings};
 
 #[derive(Debug, Clone, Copy)]

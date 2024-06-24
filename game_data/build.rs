@@ -40,6 +40,11 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
 
+        // skip the debug recipe (item id 0)
+        if recipe_record.resulting_item == 0 {
+            continue;
+        }
+
         let rlvl_record = recipe_levels.get(&recipe_record.recipe_level).unwrap();
 
         let ingredients = format!(
