@@ -14,15 +14,19 @@ pub struct Ingredient {
 }
 
 #[derive(Debug, Clone, Copy)]
+struct RecipeLevel {
+    progress_div: u32,
+    quality_div: u32,
+    progress_mod: u32,
+    quality_mod: u32,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct Recipe {
     pub recipe_level: u32,
     pub progress: u32,
     pub quality: u32,
     pub durability: i8,
-    pub progress_div: u32,
-    pub progress_mod: u32,
-    pub quality_div: u32,
-    pub quality_mod: u32,
     pub material_quality_factor: u32,
     pub ingredients: [Ingredient; 6],
 }
@@ -51,6 +55,8 @@ pub const LEVELS: [u32; 90] = [
     555, 560,
 ];
 
+const RLVLS: [RecipeLevel; 651] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));
+
 pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
 pub static RECIPES: phf::OrderedMap<u32, Recipe> =
     include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
@@ -60,14 +66,15 @@ pub fn get_game_settings(
     crafter_config: CrafterConfiguration,
 ) -> Settings {
     let recipe = recipe_config.recipe;
+    let rlvl = &RLVLS[recipe.recipe_level as usize];
 
     let mut base_progress: f64 =
-        crafter_config.craftsmanship as f64 * 10.0 / recipe.progress_div as f64 + 2.0;
+        crafter_config.craftsmanship as f64 * 10.0 / rlvl.progress_div as f64 + 2.0;
     let mut base_quality: f64 =
-        crafter_config.control as f64 * 10.0 / recipe.quality_div as f64 + 35.0;
+        crafter_config.control as f64 * 10.0 / rlvl.quality_div as f64 + 35.0;
     if LEVELS[crafter_config.job_level as usize - 1] <= recipe.recipe_level {
-        base_progress = base_progress * recipe.progress_mod as f64 / 100.0;
-        base_quality = base_quality * recipe.quality_mod as f64 / 100.0;
+        base_progress = base_progress * rlvl.progress_mod as f64 / 100.0;
+        base_quality = base_quality * rlvl.quality_mod as f64 / 100.0;
     }
 
     let hq_ingredients: Vec<(Item, u32)> = recipe
