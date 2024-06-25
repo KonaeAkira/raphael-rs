@@ -1,14 +1,15 @@
-use serde::{de, Deserialize};
+mod records;
+use records::*;
+
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
-use std::{env, process};
 
 fn main() {
     if let Err(error) = import_game_data() {
         println!("{}", error);
-        process::exit(1);
+        std::process::exit(1);
     }
 }
 
@@ -25,8 +26,9 @@ fn import_rlvl_records() -> Result<Vec<RecipeLevelRecord>, Box<dyn std::error::E
         .deserialize::<RecipeLevelRecord>()
         .map(|record| record.unwrap())
         .collect();
-    let mut writer =
-        BufWriter::new(File::create(Path::new(&env::var("OUT_DIR")?).join("rlvls.rs")).unwrap());
+    let mut writer = BufWriter::new(
+        File::create(Path::new(&std::env::var("OUT_DIR")?).join("rlvls.rs")).unwrap(),
+    );
     writeln!(writer, "[")?;
     for record in rlvl_records.iter() {
         writeln!(writer, "RecipeLevel {{ progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {} }},", record.progress_divider, record.quality_divider, record.progress_modifier, record.quality_modifier)?;
@@ -88,7 +90,7 @@ fn import_recipe_records(rlvls: &[RecipeLevelRecord]) -> Result<(), Box<dyn std:
         recipes.entry(recipe_record.resulting_item, &recipe);
     }
 
-    let out_path = Path::new(&env::var("OUT_DIR")?).join("recipes.rs");
+    let out_path = Path::new(&std::env::var("OUT_DIR")?).join("recipes.rs");
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
     writeln!(writer, "{}", recipes.build())?;
 
@@ -111,93 +113,9 @@ fn import_item_records() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let out_path = Path::new(&env::var("OUT_DIR")?).join("items.rs");
+    let out_path = Path::new(&std::env::var("OUT_DIR")?).join("items.rs");
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
     writeln!(writer, "{}", items.build())?;
 
     Ok(())
-}
-
-#[derive(Deserialize)]
-struct ItemRecord {
-    #[serde(rename = "#")]
-    id: u32,
-    #[serde(rename = "Name")]
-    name: String,
-    #[serde(rename = "Level{Item}")]
-    item_level: u32,
-    #[serde(rename = "CanBeHq")]
-    #[serde(deserialize_with = "bool_string")]
-    can_be_hq: bool,
-}
-
-#[derive(Deserialize)]
-struct RecipeRecord {
-    #[serde(rename = "Item{Result}")]
-    resulting_item: u32,
-    #[serde(rename = "RecipeLevelTable")]
-    recipe_level: u32,
-    #[serde(rename = "DifficultyFactor")]
-    progress_factor: u32,
-    #[serde(rename = "QualityFactor")]
-    quality_factor: u32,
-    #[serde(rename = "DurabilityFactor")]
-    durability_factor: u32,
-    #[serde(rename = "MaterialQualityFactor")]
-    material_quality_factor: u32,
-
-    #[serde(rename = "Item{Ingredient}[0]")]
-    ingredient_id_0: u32,
-    #[serde(rename = "Amount{Ingredient}[0]")]
-    ingredient_amount_0: u32,
-    #[serde(rename = "Item{Ingredient}[1]")]
-    ingredient_id_1: u32,
-    #[serde(rename = "Amount{Ingredient}[1]")]
-    ingredient_amount_1: u32,
-    #[serde(rename = "Item{Ingredient}[2]")]
-    ingredient_id_2: u32,
-    #[serde(rename = "Amount{Ingredient}[2]")]
-    ingredient_amount_2: u32,
-    #[serde(rename = "Item{Ingredient}[3]")]
-    ingredient_id_3: u32,
-    #[serde(rename = "Amount{Ingredient}[3]")]
-    ingredient_amount_3: u32,
-    #[serde(rename = "Item{Ingredient}[4]")]
-    ingredient_id_4: u32,
-    #[serde(rename = "Amount{Ingredient}[4]")]
-    ingredient_amount_4: u32,
-    #[serde(rename = "Item{Ingredient}[5]")]
-    ingredient_id_5: u32,
-    #[serde(rename = "Amount{Ingredient}[5]")]
-    ingredient_amount_5: u32,
-}
-
-#[derive(Deserialize)]
-struct RecipeLevelRecord {
-    #[serde(rename = "Durability")]
-    durability: u32,
-    #[serde(rename = "Difficulty")]
-    progress: u32,
-    #[serde(rename = "Quality")]
-    quality: u32,
-    #[serde(rename = "ProgressDivider")]
-    progress_divider: u32,
-    #[serde(rename = "QualityDivider")]
-    quality_divider: u32,
-    #[serde(rename = "ProgressModifier")]
-    progress_modifier: u32,
-    #[serde(rename = "QualityModifier")]
-    quality_modifier: u32,
-}
-
-fn bool_string<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let b = String::deserialize(deserializer)?;
-    match b.trim().to_lowercase().as_str() {
-        "true" => Ok(true),
-        "false" => Ok(false),
-        _ => Err(de::Error::custom("invalid boolean string")),
-    }
 }
