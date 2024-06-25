@@ -1,17 +1,15 @@
-# Raphael XIV
+# Raphael XIV [<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.gg/Qd9u9CtaYj)
 
-[<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.gg/Qd9u9CtaYj)
+:link: [www.raphael-xiv.com](https://raphael-xiv.com/)
 
 Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
-
-**Key Features:**
 * Produces optimal solutions. Achieving higher quality than the solver is impossible.
-* Fast solve-time (5-10 seconds) and reasonable memory usage (300 - 500 MB).
+* Short solve time (5-10 seconds) and reasonable memory usage (300-500 MB).
 
 **How does it work?**
 
 * Short answer: A* search, pareto optimization, dynamic programming.
-* Long answer: coming soon :tm:
+* Long answer: coming soon<sup>tm</sup>
 
 ## Building from source
 
