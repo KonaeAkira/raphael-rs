@@ -1,61 +1,29 @@
-# Raphael
+# Raphael XIV
 
-[<img src="https://img.shields.io/github/downloads/KonaeAkira/raphael-rs/total?logo=github&color=blue"/>](#)
-[<img src="https://img.shields.io/github/commits-since/KonaeAkira/raphael-rs/latest?include_prereleases&color=yellow"/>](#)
 [<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.gg/Qd9u9CtaYj)
 
-Raphael is a standalone crafting macro solver for the online game Final Fantasy XIV.
+Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 
-**Features:**
-* Produces fully-solved macros (i.e. no hand-tuned branch pruning)
-* Uses a reasonable amount of resources:
-    * Time: ~7 seconds (single-threaded)
-    * Memory: ~500 MB
-* Deterministic (i.e. produces the same macro when given the same parameters).
+**Key Features:**
+* Produces optimal solutions. Achieving higher quality than the solver is impossible.
+* Fast solve-time (5-10 seconds) and reasonable memory usage (300 - 500 MB).
 
-## Installing from source
+**How does it work?**
 
-> [!NOTE]
-> Pre-compiled binaries can be found under [Releases](https://github.com/KonaeAkira/raphael-rs/releases).
-> Building the program from source code isn't recommended unless you have a good reason to do so.
+* Short answer: A* search, pareto optimization, dynamic programming.
+* Long answer: coming soon :tm:
 
-### Prerequisites
+## Building from source
 
-The following dependencies need to be installed on your computer:
-
-* [Rust](https://www.rust-lang.org/) is required to build the solver back-end.
-* [Godot 4](https://godotengine.org/) is required to build the graphical front-end.
-
-### Supported platforms
-
-Raphael should work on all platforms that both Rust and Godot support.
-However, only the following platforms have been tested:
-
-* x86-64 Linux
-* x86-64 Windows 10/11
-
-Building for other platforms will require some tweaking.
-
-### Build steps
-
-#### Building the solver back-end
-
-On Linux:
+The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
+[Trunk](https://trunkrs.dev/) is required to bundle and deploy the WASM and can be installed via the Rust toolchain:
 
 ```
-cargo build --release --target x86_64-unknown-linux-gnu
+cargo install --locked trunk
 ```
 
-On Windows:
+To build and host the application locally (optionally use the `--release` flag):
 
 ```
-cargo build --release --target x86_64-pc-windows-gnu
+RUSTFLAGS='--cfg=web_sys_unstable_apis' trunk serve
 ```
-
-#### Building the graphical interface
-
-1. Open Godot 4 and import the project at `godot_application/project.godot`
-2. In the top-left corner, select `Project > Export...`
-3. Select the platform you want to build for (either "Linux/X11" or "Windows Desktop")
-4. Select "Export Project...", uncheck "Export With Debug", and select the directory where the resulting executable should lie.
-5. You're done! Raphael can now be launched using the executable you just created.
