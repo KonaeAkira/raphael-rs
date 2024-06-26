@@ -13,6 +13,61 @@ where
 }
 
 #[derive(Deserialize)]
+pub struct ItemActionRecord {
+    #[serde(rename = "#")]
+    pub id: u32,
+    #[serde(rename = "Type")]
+    pub type_id: u32,
+    #[serde(rename = "Data[1]")]
+    pub data_1: u32,
+}
+
+#[derive(Clone, Copy, Deserialize)]
+pub struct ItemFoodRecord {
+    #[serde(rename = "#")]
+    pub id: u32,
+    #[serde(rename = "BaseParam[0]")]
+    pub param_0: u32,
+    #[serde(rename = "IsRelative[0]")]
+    #[serde(deserialize_with = "bool_string")]
+    pub param_0_relative: bool,
+    #[serde(rename = "Value[0]")]
+    pub param_0_value: i32,
+    #[serde(rename = "Max[0]")]
+    pub param_0_max: u32,
+    #[serde(rename = "Value{HQ}[0]")]
+    pub param_0_hq_value: i32,
+    #[serde(rename = "Max{HQ}[0]")]
+    pub param_0_hq_max: u32,
+    #[serde(rename = "BaseParam[1]")]
+    pub param_1: u32,
+    #[serde(rename = "IsRelative[1]")]
+    #[serde(deserialize_with = "bool_string")]
+    pub param_1_relative: bool,
+    #[serde(rename = "Value[1]")]
+    pub param_1_value: i32,
+    #[serde(rename = "Max[1]")]
+    pub param_1_max: u32,
+    #[serde(rename = "Value{HQ}[1]")]
+    pub param_1_hq_value: i32,
+    #[serde(rename = "Max{HQ}[1]")]
+    pub param_1_hq_max: u32,
+    #[serde(rename = "BaseParam[2]")]
+    pub param_2: u32,
+    #[serde(rename = "IsRelative[2]")]
+    #[serde(deserialize_with = "bool_string")]
+    pub param_2_relative: bool,
+    #[serde(rename = "Value[2]")]
+    pub param_2_value: i32,
+    #[serde(rename = "Max[2]")]
+    pub param_2_max: u32,
+    #[serde(rename = "Value{HQ}[2]")]
+    pub param_2_hq_value: i32,
+    #[serde(rename = "Max{HQ}[2]")]
+    pub param_2_hq_max: u32,
+}
+
+#[derive(Deserialize)]
 pub struct ItemRecord {
     #[serde(rename = "#")]
     pub id: u32,
@@ -20,6 +75,8 @@ pub struct ItemRecord {
     pub name: String,
     #[serde(rename = "Level{Item}")]
     pub item_level: u32,
+    #[serde(rename = "ItemAction")]
+    pub item_action: u32,
     #[serde(rename = "CanBeHq")]
     #[serde(deserialize_with = "bool_string")]
     pub can_be_hq: bool,

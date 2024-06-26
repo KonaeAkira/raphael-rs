@@ -1,5 +1,9 @@
+mod utils;
+
 mod records;
 use records::*;
+
+mod consumables;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -15,6 +19,7 @@ fn main() {
 
 fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
     let rlvls = import_rlvl_records()?;
+    consumables::import_consumable_records()?;
     import_recipe_records(&rlvls)?;
     import_item_records()?;
     Ok(())

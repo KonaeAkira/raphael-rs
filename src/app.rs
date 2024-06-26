@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use egui::{Align, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
 use egui_extras::Column;
-use game_data::{CrafterConfiguration, Item, RecipeConfiguration};
+use game_data::{Consumable, CrafterConfiguration, Item, RecipeConfiguration};
 use simulator::{state::InProgress, Action, Settings, SimulationState};
 
 type MacroResult = Option<Vec<Action>>;
@@ -28,6 +28,9 @@ pub struct MacroSolverApp {
     actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
     crafter_config: CrafterConfiguration,
+    selected_food: Option<Consumable>,
+    selected_potion: Option<Consumable>,
+
     recipe_search_text: String,
 
     macro_view_config: MacroViewConfig,
@@ -75,6 +78,9 @@ impl MacroSolverApp {
             actions: Vec::new(),
             recipe_config,
             crafter_config,
+            selected_food: None,
+            selected_potion: None,
+
             recipe_search_text: String::new(),
             macro_view_config: Default::default(),
             solver_pending: false,
@@ -96,8 +102,6 @@ impl eframe::App for MacroSolverApp {
             self.actions = update.unwrap_or(Vec::new());
             self.solver_pending = false;
         }
-
-        egui_extras::install_image_loaders(ctx);
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -127,30 +131,51 @@ impl eframe::App for MacroSolverApp {
                 // ui.image(&texture);
                 ui.set_enabled(!self.solver_pending);
                 ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
-                    ui.set_max_width(785.0);
+                    ui.set_max_width(885.0);
                     ui.group(|ui| self.draw_simulator_widget(ui));
                     ui.add_space(5.5);
                     ui.group(|ui| {
-                        ui.set_width(773.0);
+                        ui.set_width(873.0);
                         ui.set_height(30.0);
                         self.draw_actions_widget(ui);
                     });
                     ui.add_space(5.5);
                     ui.horizontal(|ui| {
-                        ui.group(|ui| {
-                            ui.set_max_width(500.0);
-                            ui.set_height(400.0);
-                            self.draw_recipe_select_widget(ui);
+                        ui.vertical(|ui| {
+                            ui.push_id("RECIPE_SELECT", |ui| {
+                                ui.group(|ui| {
+                                    ui.set_max_width(600.0);
+                                    ui.set_max_height(200.0);
+                                    self.draw_recipe_select_widget(ui);
+                                    ui.shrink_height_to_current();
+                                });
+                            });
+                            ui.add_space(5.5);
+                            ui.push_id("FOOD_SELECT", |ui| {
+                                ui.group(|ui| {
+                                    ui.set_max_width(600.0);
+                                    ui.set_max_height(160.0);
+                                    self.draw_meal_select_widget(ui);
+                                });
+                            });
+                            ui.add_space(5.5);
+                            ui.push_id("POTION_SELECT", |ui| {
+                                ui.group(|ui| {
+                                    ui.set_max_width(600.0);
+                                    ui.set_max_height(160.0);
+                                    self.draw_potion_select_widget(ui);
+                                });
+                            });
                         });
                         ui.group(|ui| {
-                            ui.set_height(400.0);
+                            ui.set_height(560.0);
                             self.draw_configuration_widget(ui)
                         });
                     });
                 });
                 ui.group(|ui| {
                     ui.set_width(320.0);
-                    ui.set_height(557.0);
+                    ui.set_height(717.0);
                     self.draw_macro_widget(ui);
                 });
             });
@@ -174,7 +199,12 @@ fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
 
 impl MacroSolverApp {
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        let game_settings = game_data::get_game_settings(self.recipe_config, self.crafter_config);
+        let game_settings = game_data::get_game_settings(
+            self.recipe_config,
+            self.crafter_config,
+            self.selected_food,
+            self.selected_potion,
+        );
         let game_state = match SimulationState::from_macro(&game_settings, &self.actions) {
             Ok(state) => state,
             Err(_) => SimulationState::new(&game_settings),
@@ -291,20 +321,16 @@ impl MacroSolverApp {
 
     fn draw_recipe_select_widget(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new("Recipe Selection").strong());
-            ui.separator();
             ui.horizontal(|ui| {
-                ui.label("Selected Recipe:");
-                ui.label(
-                    egui::RichText::new(
-                        game_data::ITEMS
-                            .get(&self.recipe_config.item_id)
-                            .unwrap()
-                            .name,
-                    )
-                    .strong(),
-                );
+                ui.label(egui::RichText::new("Recipe").strong());
+                ui.label(egui::RichText::new(
+                    game_data::ITEMS
+                        .get(&self.recipe_config.item_id)
+                        .unwrap()
+                        .name,
+                ));
             });
+            ui.separator();
             ui.horizontal(|ui| {
                 ui.label("Search:");
                 ui.text_edit_singleline(&mut self.recipe_search_text);
@@ -329,20 +355,18 @@ impl MacroSolverApp {
                 .size
                 .max(ui.spacing().interact_size.y);
             let table = egui_extras::TableBuilder::new(ui)
+                .auto_shrink(false)
                 .striped(true)
                 .resizable(false)
                 .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
                 .column(Column::auto())
                 .column(Column::remainder())
-                .drag_to_scroll(false)
                 .min_scrolled_height(0.0);
             table
                 .header(text_height, |mut header| {
+                    header.col(|_| {});
                     header.col(|ui| {
-                        ui.label("Item ID");
-                    });
-                    header.col(|ui| {
-                        ui.label("Item Name");
+                        ui.label("Item");
                     });
                 })
                 .body(|body| {
@@ -350,7 +374,7 @@ impl MacroSolverApp {
                         let item_id = search_result[row.index()];
                         let item = game_data::ITEMS.get(&item_id).unwrap();
                         row.col(|ui| {
-                            if ui.button(item_id.to_string()).clicked() {
+                            if ui.button("Select").clicked() {
                                 self.recipe_config = RecipeConfiguration {
                                     item_id,
                                     recipe: *game_data::RECIPES.get(&item_id).unwrap(),
@@ -366,6 +390,126 @@ impl MacroSolverApp {
         });
     }
 
+    fn draw_meal_select_widget(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Food").strong());
+                ui.label(match self.selected_food {
+                    Some(food) => food.name,
+                    None => "None",
+                });
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if ui
+                        .add_enabled(self.selected_food.is_some(), egui::Button::new("Clear"))
+                        .clicked()
+                    {
+                        self.selected_food = None;
+                    }
+                });
+            });
+            ui.separator();
+            let text_height = egui::TextStyle::Body
+                .resolve(ui.style())
+                .size
+                .max(ui.spacing().interact_size.y);
+            let table = egui_extras::TableBuilder::new(ui)
+                .auto_shrink(false)
+                .striped(true)
+                .resizable(false)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                .column(Column::auto())
+                .column(Column::exact(240.0))
+                .column(Column::remainder())
+                .min_scrolled_height(0.0);
+            table
+                .header(text_height, |mut header| {
+                    header.col(|_| {});
+                    header.col(|ui| {
+                        ui.label("Item Name");
+                    });
+                    header.col(|ui| {
+                        ui.label("Effect");
+                    });
+                })
+                .body(|body| {
+                    body.rows(text_height, game_data::MEALS.len(), |mut row| {
+                        let item = game_data::MEALS[row.index()];
+                        row.col(|ui| {
+                            if ui.button("Select").clicked() {
+                                self.selected_food = Some(item);
+                            }
+                        });
+                        row.col(|ui| {
+                            ui.label(item.name);
+                        });
+                        row.col(|ui| {
+                            ui.label(item.effect_string());
+                        });
+                    });
+                });
+        });
+    }
+
+    fn draw_potion_select_widget(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Potion").strong());
+                ui.label(match self.selected_potion {
+                    Some(item) => item.name,
+                    None => "None",
+                });
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if ui
+                        .add_enabled(self.selected_potion.is_some(), egui::Button::new("Clear"))
+                        .clicked()
+                    {
+                        self.selected_potion = None;
+                    }
+                });
+            });
+            ui.separator();
+            let text_height = egui::TextStyle::Body
+                .resolve(ui.style())
+                .size
+                .max(ui.spacing().interact_size.y);
+            let table = egui_extras::TableBuilder::new(ui)
+                .auto_shrink(false)
+                .striped(true)
+                .resizable(false)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                .column(Column::auto())
+                .column(Column::exact(240.0))
+                .column(Column::remainder())
+                .min_scrolled_height(0.0);
+            table
+                .header(text_height, |mut header| {
+                    header.col(|_| {});
+                    header.col(|ui| {
+                        ui.label("Item Name");
+                    });
+                    header.col(|ui| {
+                        ui.label("Effect");
+                    });
+                })
+                .body(|body| {
+                    body.rows(text_height, game_data::POTIONS.len(), |mut row| {
+                        let item = game_data::POTIONS[row.index()];
+                        row.col(|ui| {
+                            if ui.button("Select").clicked() {
+                                self.selected_potion = Some(item);
+                            }
+                        });
+                        row.col(|ui| {
+                            ui.label(item.name);
+                        });
+                        row.col(|ui| {
+                            ui.label(item.effect_string());
+                        });
+                    });
+                });
+        });
+    }
+
     fn draw_configuration_widget(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Configuration").strong());
@@ -373,27 +517,64 @@ impl MacroSolverApp {
 
             ui.label(egui::RichText::new("Crafter stats").strong());
             ui.horizontal(|ui| {
-                ui.label("Craftsmanship");
-                ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.craftsmanship)
-                        .clamp_range(0..=9999),
-                );
+                ui.label("Craftsmanship:");
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.add_enabled(
+                        false,
+                        egui::DragValue::new(&mut game_data::get_craftsmanship(
+                            self.crafter_config.craftsmanship,
+                            self.selected_food,
+                            self.selected_potion,
+                        )),
+                    );
+                    ui.monospace(">");
+                    ui.add(
+                        egui::DragValue::new(&mut self.crafter_config.craftsmanship)
+                            .clamp_range(0..=9999),
+                    );
+                });
             });
             ui.horizontal(|ui| {
-                ui.label("Control");
-                ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.control).clamp_range(0..=9999),
-                );
+                ui.label("Control:");
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.add_enabled(
+                        false,
+                        egui::DragValue::new(&mut game_data::get_control(
+                            self.crafter_config.control,
+                            self.selected_food,
+                            self.selected_potion,
+                        )),
+                    );
+                    ui.monospace(">");
+                    ui.add(
+                        egui::DragValue::new(&mut self.crafter_config.control)
+                            .clamp_range(0..=9999),
+                    );
+                });
             });
             ui.horizontal(|ui| {
-                ui.label("CP");
-                ui.add(egui::DragValue::new(&mut self.crafter_config.cp).clamp_range(0..=9999));
+                ui.label("CP:");
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.add_enabled(
+                        false,
+                        egui::DragValue::new(&mut game_data::get_cp(
+                            self.crafter_config.cp,
+                            self.selected_food,
+                            self.selected_potion,
+                        )),
+                    );
+                    ui.monospace(">");
+                    ui.add(egui::DragValue::new(&mut self.crafter_config.cp).clamp_range(0..=9999));
+                });
             });
             ui.horizontal(|ui| {
-                ui.label("Job Level");
-                ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.job_level).clamp_range(1..=90),
-                );
+                ui.label("Job Level:");
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut self.crafter_config.job_level)
+                            .clamp_range(1..=90),
+                    );
+                });
             });
             ui.separator();
 
@@ -417,7 +598,7 @@ impl MacroSolverApp {
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             let mut max_placeholder = *max_amount;
                             ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
-                            ui.label("/");
+                            ui.monospace("/");
                             ui.add(
                                 egui::DragValue::new(&mut self.recipe_config.hq_ingredients[index])
                                     .clamp_range(0..=*max_amount),
@@ -451,8 +632,12 @@ impl MacroSolverApp {
             ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                 if ui.button("Solve").clicked() {
                     self.solver_pending = true;
-                    let game_settings =
-                        game_data::get_game_settings(self.recipe_config, self.crafter_config);
+                    let game_settings = game_data::get_game_settings(
+                        self.recipe_config,
+                        self.crafter_config,
+                        self.selected_food,
+                        self.selected_potion,
+                    );
                     self.bridge.send(game_settings);
                     log::debug!("Message send {game_settings:?}");
                 }

@@ -1,6 +1,42 @@
 use simulator::{ActionMask, Settings};
 
 #[derive(Debug, Clone, Copy)]
+pub struct Consumable {
+    pub item_level: u32,
+    pub name: &'static str,
+    pub craft_rel: u32,
+    pub craft_max: u32,
+    pub control_rel: u32,
+    pub control_max: u32,
+    pub cp_rel: u32,
+    pub cp_max: u32,
+}
+
+impl Consumable {
+    pub fn effect_string(&self) -> String {
+        let mut effect: String = String::new();
+        if self.craft_rel != 0 {
+            effect.push_str(&format!(
+                "Crafts. +{}% ({}), ",
+                self.craft_rel, self.craft_max
+            ));
+        }
+        if self.control_rel != 0 {
+            effect.push_str(&format!(
+                "Control +{}% ({}), ",
+                self.control_rel, self.control_max
+            ));
+        }
+        if self.cp_rel != 0 {
+            effect.push_str(&format!("CP +{}% ({}), ", self.cp_rel, self.cp_max));
+        }
+        effect.pop();
+        effect.pop();
+        effect
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct Item {
     pub name: &'static str,
     pub item_level: u32,
@@ -40,9 +76,9 @@ pub struct RecipeConfiguration {
 
 #[derive(Debug, Clone, Copy)]
 pub struct CrafterConfiguration {
-    pub craftsmanship: u16,
-    pub control: u16,
-    pub cp: u16,
+    pub craftsmanship: u32,
+    pub control: u32,
+    pub cp: u32,
     pub job_level: u8,
     pub manipulation: bool,
 }
@@ -61,17 +97,60 @@ pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"),
 pub static RECIPES: phf::OrderedMap<u32, Recipe> =
     include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
 
+pub const MEALS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/meals.rs"));
+pub const POTIONS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/potions.rs"));
+
+pub fn get_craftsmanship(base: u32, food: Option<Consumable>, potion: Option<Consumable>) -> u32 {
+    let food_bonus = match food {
+        Some(item) => std::cmp::min(item.craft_max, base * item.craft_rel / 100),
+        None => 0,
+    };
+    let potion_bonus = match potion {
+        Some(item) => std::cmp::min(item.craft_max, base * item.craft_rel / 100),
+        None => 0,
+    };
+    base + food_bonus + potion_bonus
+}
+
+pub fn get_control(base: u32, food: Option<Consumable>, potion: Option<Consumable>) -> u32 {
+    let food_bonus = match food {
+        Some(item) => std::cmp::min(item.control_max, base * item.control_rel / 100),
+        None => 0,
+    };
+    let potion_bonus = match potion {
+        Some(item) => std::cmp::min(item.control_max, base * item.control_rel / 100),
+        None => 0,
+    };
+    base + food_bonus + potion_bonus
+}
+
+pub fn get_cp(base: u32, food: Option<Consumable>, potion: Option<Consumable>) -> u32 {
+    let food_bonus = match food {
+        Some(item) => std::cmp::min(item.cp_max, base * item.cp_rel / 100),
+        None => 0,
+    };
+    let potion_bonus = match potion {
+        Some(item) => std::cmp::min(item.cp_max, base * item.cp_rel / 100),
+        None => 0,
+    };
+    base + food_bonus + potion_bonus
+}
+
 pub fn get_game_settings(
     recipe_config: RecipeConfiguration,
     crafter_config: CrafterConfiguration,
+    food: Option<Consumable>,
+    potion: Option<Consumable>,
 ) -> Settings {
     let recipe = recipe_config.recipe;
     let rlvl = &RLVLS[recipe.recipe_level as usize];
 
-    let mut base_progress: f64 =
-        crafter_config.craftsmanship as f64 * 10.0 / rlvl.progress_div as f64 + 2.0;
-    let mut base_quality: f64 =
-        crafter_config.control as f64 * 10.0 / rlvl.quality_div as f64 + 35.0;
+    let craftsmanship = get_craftsmanship(crafter_config.craftsmanship, food, potion);
+    let control = get_control(crafter_config.control, food, potion);
+    let cp = get_cp(crafter_config.cp, food, potion);
+
+    let mut base_progress: f64 = craftsmanship as f64 * 10.0 / rlvl.progress_div as f64 + 2.0;
+    let mut base_quality: f64 = control as f64 * 10.0 / rlvl.quality_div as f64 + 35.0;
     if LEVELS[crafter_config.job_level as usize - 1] <= recipe.recipe_level {
         base_progress = base_progress * rlvl.progress_mod as f64 / 100.0;
         base_quality = base_quality * rlvl.quality_mod as f64 / 100.0;
@@ -109,16 +188,16 @@ pub fn get_game_settings(
     };
 
     Settings {
-        max_cp: crafter_config.cp as i16,
-        max_durability: recipe.durability as i16,
+        max_cp: cp as _,
+        max_durability: recipe.durability as _,
         max_progress: recipe.progress,
         max_quality: recipe.quality,
-        base_progress: base_progress.floor() as u32,
-        base_quality: base_quality.floor() as u32,
+        base_progress: base_progress.floor() as _,
+        base_quality: base_quality.floor() as _,
         initial_quality,
         job_level: crafter_config.job_level,
         allowed_actions: ActionMask::from_level(
-            crafter_config.job_level as u32,
+            crafter_config.job_level as _,
             crafter_config.manipulation,
         ),
     }
