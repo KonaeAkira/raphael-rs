@@ -6,9 +6,9 @@ Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 * Produces optimal solutions. Achieving higher quality than the solver is impossible.
 * Short solve time (5-10 seconds) and reasonable memory usage (300-500 MB).
 
-**How does it work?**
+## How does it work?
 
-* Short answer: A* search, pareto optimization, dynamic programming.
+* Short answer: [A* search](https://en.wikipedia.org/wiki/A*_search_algorithm) + [Pareto optimization](https://en.wikipedia.org/wiki/Multi-objective_optimization) + [Dynamic programming](https://en.wikipedia.org/wiki/Dynamic_programming).
 * Long answer: coming soon<sup>tm</sup>
 
 ## Building from source
