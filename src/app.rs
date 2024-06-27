@@ -443,7 +443,11 @@ impl MacroSolverApp {
                             ui.label(item.name);
                         });
                         row.col(|ui| {
-                            ui.label(item.effect_string());
+                            ui.label(item.effect_string(
+                                self.crafter_config.craftsmanship,
+                                self.crafter_config.control,
+                                self.crafter_config.cp,
+                            ));
                         });
                     });
                 });
@@ -503,7 +507,11 @@ impl MacroSolverApp {
                             ui.label(item.name);
                         });
                         row.col(|ui| {
-                            ui.label(item.effect_string());
+                            ui.label(item.effect_string(
+                                self.crafter_config.craftsmanship,
+                                self.crafter_config.control,
+                                self.crafter_config.cp,
+                            ));
                         });
                     });
                 });
@@ -521,13 +529,12 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_enabled(
                         false,
-                        egui::DragValue::new(&mut game_data::get_craftsmanship(
+                        egui::DragValue::new(&mut game_data::craftsmanship_bonus(
                             self.crafter_config.craftsmanship,
-                            self.selected_food,
-                            self.selected_potion,
+                            &[self.selected_food, self.selected_potion],
                         )),
                     );
-                    ui.monospace(">");
+                    ui.monospace("+");
                     ui.add(
                         egui::DragValue::new(&mut self.crafter_config.craftsmanship)
                             .clamp_range(0..=9999),
@@ -539,13 +546,12 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_enabled(
                         false,
-                        egui::DragValue::new(&mut game_data::get_control(
+                        egui::DragValue::new(&mut game_data::control_bonus(
                             self.crafter_config.control,
-                            self.selected_food,
-                            self.selected_potion,
+                            &[self.selected_food, self.selected_potion],
                         )),
                     );
-                    ui.monospace(">");
+                    ui.monospace("+");
                     ui.add(
                         egui::DragValue::new(&mut self.crafter_config.control)
                             .clamp_range(0..=9999),
@@ -557,13 +563,12 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_enabled(
                         false,
-                        egui::DragValue::new(&mut game_data::get_cp(
+                        egui::DragValue::new(&mut game_data::cp_bonus(
                             self.crafter_config.cp,
-                            self.selected_food,
-                            self.selected_potion,
+                            &[self.selected_food, self.selected_potion],
                         )),
                     );
-                    ui.monospace(">");
+                    ui.monospace("+");
                     ui.add(egui::DragValue::new(&mut self.crafter_config.cp).clamp_range(0..=9999));
                 });
             });
