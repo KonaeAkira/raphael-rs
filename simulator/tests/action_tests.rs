@@ -114,3 +114,57 @@ fn test_trained_finesse() {
     );
     assert!(matches!(state, Err("Requires 10 Inner Quiet")));
 }
+
+#[test]
+fn test_refined_touch() {
+    let state =
+        SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::ComboRefinedTouch]);
+    match state {
+        Ok(state) => {
+            assert_eq!(state.effects.inner_quiet, 3);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    assert!(matches!(state, Ok(_)));
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::ComboRefinedTouch]);
+    assert!(matches!(state, Err("Combo requirement not fulfilled")));
+}
+
+#[test]
+fn test_immaculate_mend() {
+    let state = SimulationState::from_macro(
+        &SETTINGS,
+        &[
+            Action::BasicTouch,
+            Action::Groundwork,
+            Action::Groundwork,
+            Action::ImmaculateMend,
+        ],
+    );
+    match state {
+        Ok(state) => {
+            assert_eq!(state.durability, SETTINGS.max_durability);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+}
+
+#[test]
+fn test_trained_perfection() {
+    let state =
+        SimulationState::from_macro(&SETTINGS, &[Action::TrainedPerfection, Action::Groundwork]);
+    match state {
+        Ok(state) => {
+            assert_eq!(state.durability, SETTINGS.max_durability);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    };
+    let state = SimulationState::from_macro(
+        &SETTINGS,
+        &[Action::TrainedPerfection, Action::TrainedPerfection],
+    );
+    assert!(matches!(
+        state,
+        Err("Action can only be used once per synthesis")
+    ));
+}

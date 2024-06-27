@@ -8,6 +8,8 @@ pub struct SimulationState {
     pub missing_quality: u32,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
+    pub trained_perfection_used: bool,
+    pub trained_perfection_active: bool,
 }
 
 impl SimulationState {
@@ -21,6 +23,8 @@ impl SimulationState {
                 .saturating_sub(settings.initial_quality),
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
+            trained_perfection_used: false,
+            trained_perfection_active: false,
         }
     }
 
@@ -94,6 +98,9 @@ impl InProgress {
             Action::TrainedFinesse if self.state.effects.inner_quiet < 10 => {
                 Err("Requires 10 Inner Quiet")
             }
+            Action::TrainedPerfection if self.state.trained_perfection_used => {
+                Err("Action can only be used once per synthesis")
+            }
             _ => Ok(()),
         }
     }
@@ -108,13 +115,18 @@ impl InProgress {
         let mut state = self.state;
 
         let cp_cost = action.cp_cost(&state.effects, condition);
-        let durability_cost = action.durability_cost(&state.effects, condition);
+        let durability_cost = match state.trained_perfection_active {
+            true => 0,
+            false => action.durability_cost(&state.effects, condition),
+        };
         let progress_increase = action.progress_increase(settings, &state.effects, condition);
         let quality_increase = action.quality_increase(settings, &state.effects, condition);
 
         state.combo = action.to_combo();
         state.cp -= cp_cost;
         state.durability -= durability_cost;
+        state.trained_perfection_used |= matches!(action, Action::TrainedPerfection);
+        state.trained_perfection_active = matches!(action, Action::TrainedPerfection);
 
         // reset muscle memory if progress increased
         if progress_increase != 0 {
@@ -131,6 +143,7 @@ impl InProgress {
                     Action::Reflect => 2,
                     Action::PreciseTouch => 2,
                     Action::PreparatoryTouch => 2,
+                    Action::ComboRefinedTouch => 2,
                     _ => 1,
                 };
                 state.effects.inner_quiet = std::cmp::min(10, state.effects.inner_quiet);
@@ -166,6 +179,7 @@ impl InProgress {
             }
             Action::ByregotsBlessing => state.effects.inner_quiet = 0,
             Action::TricksOfTheTrade => state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
+            Action::ImmaculateMend => state.durability = settings.max_durability,
             _ => (),
         }
 

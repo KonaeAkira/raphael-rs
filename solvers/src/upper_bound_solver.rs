@@ -15,12 +15,12 @@ const INF_QUALITY: u32 = 1_000_000;
 const INF_DURABILITY: i16 = 100;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
-pub struct ReducedEffects {
-    pub inner_quiet: u8,
-    pub innovation: u8,
-    pub veneration: u8,
-    pub great_strides: u8,
-    pub muscle_memory: u8,
+struct ReducedEffects {
+    inner_quiet: u8,
+    innovation: u8,
+    veneration: u8,
+    great_strides: u8,
+    muscle_memory: u8,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -28,6 +28,8 @@ struct ReducedState {
     cp: i16,
     combo: Option<ComboAction>,
     effects: ReducedEffects,
+    trained_perfection_used: bool,
+    trained_perfection_active: bool,
 }
 
 impl ReducedState {
@@ -48,6 +50,8 @@ impl ReducedState {
                 great_strides: state.effects.great_strides,
                 muscle_memory: state.effects.muscle_memory,
             },
+            trained_perfection_used: state.trained_perfection_used,
+            trained_perfection_active: state.trained_perfection_active,
         }
     }
 }
@@ -69,6 +73,8 @@ impl std::convert::From<ReducedState> for InProgress {
                 manipulation: 0,
             },
             combo: state.combo,
+            trained_perfection_used: state.trained_perfection_used,
+            trained_perfection_active: state.trained_perfection_active,
         }
         .try_into()
         .unwrap()
