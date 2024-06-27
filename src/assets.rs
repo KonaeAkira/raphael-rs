@@ -90,14 +90,6 @@ pub fn get_action_icons() -> HashMap<Action, image::RgbImage> {
         include_bytes!("../assets/actions/Prudent Touch-BSM.webp"),
     );
     load_icon(
-        Action::FocusedSynthesis,
-        include_bytes!("../assets/actions/Focused Synthesis-BSM.webp"),
-    );
-    load_icon(
-        Action::FocusedTouch,
-        include_bytes!("../assets/actions/Focused Touch-BSM.webp"),
-    );
-    load_icon(
         Action::Reflect,
         include_bytes!("../assets/actions/Reflect.webp"),
     );

@@ -31,7 +31,7 @@ fn test_random_0f93c79f() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1682);
+    assert_eq!(get_quality(&settings, &actions), 1802);
 }
 
 #[test]
@@ -48,7 +48,7 @@ fn test_random_1e281667() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3352);
+    assert_eq!(get_quality(&settings, &actions), 3525);
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn test_random_d0bf2aef() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3407);
+    assert_eq!(get_quality(&settings, &actions), 3540);
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn test_random_e413e05d() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2018);
+    assert_eq!(get_quality(&settings, &actions), 2085);
 }
 
 #[test]
@@ -150,7 +150,7 @@ fn test_random_bb38a037() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2752);
+    assert_eq!(get_quality(&settings, &actions), 2985);
 }
 
 #[test]
@@ -184,7 +184,7 @@ fn test_random_0f9d7781() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2839);
+    assert_eq!(get_quality(&settings, &actions), 2939);
 }
 
 #[test]
@@ -201,7 +201,7 @@ fn test_random_e451d981() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 5212);
+    assert_eq!(get_quality(&settings, &actions), 5369);
 }
 
 #[test]
@@ -218,7 +218,7 @@ fn test_random_6799bb1d() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 3261);
+    assert_eq!(get_quality(&settings, &actions), 3532);
 }
 
 #[test]
@@ -235,7 +235,7 @@ fn test_random_940b4755() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 4403);
+    assert_eq!(get_quality(&settings, &actions), 4513);
 }
 
 #[test]
@@ -252,7 +252,7 @@ fn test_rinascita_3700_3280() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 10514);
+    assert_eq!(get_quality(&settings, &actions), 10716);
 }
 
 #[test]
@@ -269,7 +269,7 @@ fn test_pactmaker_3240_3130() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 8758);
+    assert_eq!(get_quality(&settings, &actions), 8938);
 }
 
 #[test]
@@ -286,7 +286,7 @@ fn test_diadochos_4021_3660() {
         allowed_actions: ActionMask::from_level(90, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 9688);
+    assert_eq!(get_quality(&settings, &actions), 9961);
 }
 
 #[test]

@@ -22,15 +22,13 @@ pub enum Action {
     CarefulSynthesis,
     Manipulation,
     PrudentTouch,
-    FocusedSynthesis,
-    FocusedTouch,
+    AdvancedTouch, // out-of-combo version
+    ComboAdvancedTouch,
     Reflect,
     PreparatoryTouch,
     Groundwork,
     DelicateSynthesis,
     IntensiveSynthesis,
-    AdvancedTouch, // out-of-combo version
-    ComboAdvancedTouch,
     PrudentSynthesis,
     TrainedFinesse,
 }
@@ -64,15 +62,13 @@ impl Action {
             Action::CarefulSynthesis => 62,
             Action::Manipulation => 65,
             Action::PrudentTouch => 66,
-            Action::FocusedSynthesis => 67,
-            Action::FocusedTouch => 68,
+            Action::AdvancedTouch => 68,
+            Action::ComboAdvancedTouch => 68,
             Action::Reflect => 69,
             Action::PreparatoryTouch => 71,
             Action::Groundwork => 72,
             Action::DelicateSynthesis => 76,
             Action::IntensiveSynthesis => 78,
-            Action::AdvancedTouch => 84,
-            Action::ComboAdvancedTouch => 84,
             Action::PrudentSynthesis => 88,
             Action::TrainedFinesse => 90,
         }
@@ -98,8 +94,6 @@ impl Action {
             Action::CarefulSynthesis => 3,
             Action::Manipulation => 2,
             Action::PrudentTouch => 3,
-            Action::FocusedSynthesis => 3,
-            Action::FocusedTouch => 3,
             Action::Reflect => 3,
             Action::PreparatoryTouch => 3,
             Action::Groundwork => 3,
@@ -132,8 +126,6 @@ impl Action {
             Action::CarefulSynthesis => 7,
             Action::Manipulation => 96,
             Action::PrudentTouch => 25,
-            Action::FocusedSynthesis => 5,
-            Action::FocusedTouch => 18,
             Action::Reflect => 6,
             Action::PreparatoryTouch => 40,
             Action::Groundwork => 18,
@@ -173,8 +165,6 @@ impl Action {
             Action::CarefulSynthesis => 10,
             Action::Manipulation => 0,
             Action::PrudentTouch => 5,
-            Action::FocusedSynthesis => 10,
-            Action::FocusedTouch => 10,
             Action::Reflect => 10,
             Action::PreparatoryTouch => 20,
             Action::Groundwork => 20,
@@ -216,7 +206,6 @@ impl Action {
                     180
                 }
             }
-            Action::FocusedSynthesis => 200,
             Action::Groundwork => {
                 if job_level < 86 {
                     300
@@ -224,7 +213,7 @@ impl Action {
                     360
                 }
             }
-            Action::DelicateSynthesis => 100,
+            Action::DelicateSynthesis => 150,
             Action::IntensiveSynthesis => 400,
             Action::PrudentSynthesis => 180,
             _ => 0,
@@ -260,8 +249,7 @@ impl Action {
             Action::ComboStandardTouch => 125,
             Action::PreciseTouch => 150,
             Action::PrudentTouch => 100,
-            Action::FocusedTouch => 150,
-            Action::Reflect => 100,
+            Action::Reflect => 300,
             Action::PreparatoryTouch => 200,
             Action::DelicateSynthesis => 100,
             Action::AdvancedTouch => 150,
@@ -301,15 +289,19 @@ impl Action {
             / 100000000) as u32
     }
 
-    pub const fn required_combo(self) -> Option<ComboAction> {
+    pub const fn combo_fulfilled(self, combo: Option<ComboAction>) -> bool {
         match self {
-            Action::Reflect => Some(ComboAction::SynthesisBegin),
-            Action::MuscleMemory => Some(ComboAction::SynthesisBegin),
-            Action::ComboStandardTouch => Some(ComboAction::BasicTouch),
-            Action::ComboAdvancedTouch => Some(ComboAction::StandardTouch),
-            Action::FocusedSynthesis => Some(ComboAction::Observe),
-            Action::FocusedTouch => Some(ComboAction::Observe),
-            _ => None,
+            Action::Reflect | Action::MuscleMemory => {
+                matches!(combo, Some(ComboAction::SynthesisBegin))
+            }
+            Action::ComboStandardTouch => matches!(combo, Some(ComboAction::BasicTouch)),
+            Action::ComboAdvancedTouch => {
+                matches!(
+                    combo,
+                    Some(ComboAction::StandardTouch | ComboAction::Observe)
+                )
+            }
+            _ => true,
         }
     }
 
@@ -341,8 +333,6 @@ impl Action {
             Action::CarefulSynthesis => "Careful Synthesis",
             Action::Manipulation => "Manipulation",
             Action::PrudentTouch => "Prudent Touch",
-            Action::FocusedSynthesis => "Focused Synthesis",
-            Action::FocusedTouch => "Focused Touch",
             Action::Reflect => "Reflect",
             Action::PreparatoryTouch => "Preparatory Touch",
             Action::Groundwork => "Groundwork",
