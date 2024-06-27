@@ -116,6 +116,11 @@ impl MacroSolver {
                             continue;
                         }
 
+                        if quality_bound > search_queue.top().unwrap() {
+                            dbg!(quality_bound, search_queue.top().unwrap());
+                            dbg!(&node, &in_progress);
+                        }
+
                         visited_states.insert(hash_key(state), state.missing_quality);
                         search_queue.push(
                             quality_bound,

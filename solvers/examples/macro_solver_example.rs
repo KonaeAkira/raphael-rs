@@ -10,8 +10,8 @@ fn main() {
         base_progress: 200,
         base_quality: 215,
         initial_quality: 0,
-        job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true),
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true),
     };
 
     let state = InProgress::new(&settings);

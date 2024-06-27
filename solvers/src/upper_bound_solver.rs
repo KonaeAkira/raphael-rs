@@ -8,7 +8,10 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::pareto_front::{ParetoFrontBuilder, ParetoValue};
 
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS).union(MIXED_ACTIONS);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+    .union(QUALITY_ACTIONS)
+    .union(MIXED_ACTIONS)
+    .add(Action::TrainedPerfection);
 
 const INF_PROGRESS: u32 = 1_000_000;
 const INF_QUALITY: u32 = 1_000_000;
@@ -93,13 +96,20 @@ impl UpperBoundSolver {
     pub fn new(settings: Settings) -> Self {
         dbg!(std::mem::size_of::<ReducedState>());
         dbg!(std::mem::align_of::<ReducedState>());
+        let mut durability_cost = Action::MasterMend.base_cp_cost() / 6;
+        if settings.allowed_actions.has(Action::Manipulation) {
+            durability_cost =
+                std::cmp::min(durability_cost, Action::Manipulation.base_cp_cost() / 8);
+        }
+        if settings.allowed_actions.has(Action::ImmaculateMend) {
+            durability_cost = std::cmp::min(
+                durability_cost,
+                Action::ImmaculateMend.base_cp_cost() / (settings.max_durability / 5 - 1),
+            );
+        }
         UpperBoundSolver {
             settings,
-            base_durability_cost: if settings.allowed_actions.has(Action::Manipulation) {
-                Action::Manipulation.base_cp_cost() / 8
-            } else {
-                Action::MasterMend.base_cp_cost() / 6
-            },
+            base_durability_cost: durability_cost,
             waste_not_cost: if settings.allowed_actions.has(Action::WasteNot2) {
                 Action::WasteNot2.base_cp_cost() / 8
             } else if settings.allowed_actions.has(Action::WasteNot) {
@@ -173,7 +183,9 @@ impl UpperBoundSolver {
                 }
                 let combo_actions: &[Action] = match combo {
                     ComboAction::SynthesisBegin => &[Action::MuscleMemory, Action::Reflect],
-                    ComboAction::BasicTouch => &[Action::ComboStandardTouch],
+                    ComboAction::BasicTouch => {
+                        &[Action::ComboStandardTouch, Action::ComboRefinedTouch]
+                    }
                     ComboAction::StandardTouch => &[Action::ComboAdvancedTouch],
                     ComboAction::Observe => &[Action::ComboAdvancedTouch],
                 };
