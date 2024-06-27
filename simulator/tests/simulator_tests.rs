@@ -173,7 +173,7 @@ fn test_random_bce2650c() {
         Action::GreatStrides,
         Action::Innovation,
         Action::Observe,
-        Action::FocusedTouch,
+        Action::ComboAdvancedTouch,
         Action::GreatStrides,
         Action::ByregotsBlessing,
     ];
@@ -208,25 +208,25 @@ fn test_ingame_be9fc5c2() {
     let states: Vec<(u32, u32)> = simulate(
         &settings,
         [
-            (Action::Reflect, Condition::Normal), // 0, 265
+            (Action::Reflect, Condition::Normal), // 0, 795
             (Action::Manipulation, Condition::Normal),
-            (Action::PreciseTouch, Condition::Excellent), // 0, 2173
+            (Action::PreciseTouch, Condition::Excellent), // 0, 2703
             (Action::WasteNot, Condition::Poor),
-            (Action::PreparatoryTouch, Condition::Normal), // 0, 2915
+            (Action::PreparatoryTouch, Condition::Normal), // 0, 3445
             (Action::MasterMend, Condition::Normal),
-            (Action::PreparatoryTouch, Condition::Normal), // 0, 3763
+            (Action::PreparatoryTouch, Condition::Normal), // 0, 4293
             (Action::Innovation, Condition::Normal),
-            (Action::BasicTouch, Condition::Normal), // 0, 4478
-            (Action::ComboStandardTouch, Condition::Normal), // 0, 5422
-            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 6614
-            (Action::PrudentTouch, Condition::Normal), // 0, 7409
+            (Action::BasicTouch, Condition::Normal), // 0, 5008
+            (Action::ComboStandardTouch, Condition::Normal), // 0, 5952
+            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 7144
+            (Action::PrudentTouch, Condition::Normal), // 0, 7939
             (Action::GreatStrides, Condition::Normal),
             (Action::Innovation, Condition::Normal),
             (Action::Observe, Condition::Normal),
-            (Action::FocusedTouch, Condition::Normal), // 0, 9396
+            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 9926
             (Action::Veneration, Condition::Normal),
-            (Action::Groundwork, Condition::Normal), // 1333, 9396
-            (Action::DelicateSynthesis, Condition::Normal), // 1703, 9926
+            (Action::Groundwork, Condition::Normal), // 1333, 9926
+            (Action::DelicateSynthesis, Condition::Normal), // 1703, 10456
         ]
         .into_iter(),
     )
@@ -235,25 +235,25 @@ fn test_ingame_be9fc5c2() {
     .map(|state| progress_quality_pair(&settings, state))
     .collect();
     let expected = [
-        (0, 265),
-        (0, 265),
-        (0, 2173),
-        (0, 2173),
-        (0, 2915),
-        (0, 2915),
-        (0, 3763),
-        (0, 3763),
-        (0, 4478),
-        (0, 5422),
-        (0, 6614),
-        (0, 7409),
-        (0, 7409),
-        (0, 7409),
-        (0, 7409),
-        (0, 9396),
-        (0, 9396),
-        (1333, 9396),
-        (1703, 9926),
+        (0, 795),
+        (0, 795),
+        (0, 2703),
+        (0, 2703),
+        (0, 3445),
+        (0, 3445),
+        (0, 4293),
+        (0, 4293),
+        (0, 5008),
+        (0, 5952),
+        (0, 7144),
+        (0, 7939),
+        (0, 7939),
+        (0, 7939),
+        (0, 7939),
+        (0, 9926),
+        (0, 9926),
+        (1333, 9926),
+        (1888, 10456),
     ];
     assert_eq!(states, expected);
 }

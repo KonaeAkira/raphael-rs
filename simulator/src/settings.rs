@@ -114,8 +114,6 @@ const ALL_ACTIONS: &[Action] = &[
     Action::CarefulSynthesis,
     Action::Manipulation,
     Action::PrudentTouch,
-    Action::FocusedSynthesis,
-    Action::FocusedTouch,
     Action::Reflect,
     Action::PreparatoryTouch,
     Action::Groundwork,

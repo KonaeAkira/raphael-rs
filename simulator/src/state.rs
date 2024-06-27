@@ -68,7 +68,7 @@ impl InProgress {
         if action.cp_cost(&self.state.effects, condition) > self.state.cp {
             return Err("Not enough CP");
         }
-        if action.required_combo().is_some() && self.state.combo != action.required_combo() {
+        if !action.combo_fulfilled(self.state.combo) {
             return Err("Combo requirement not fulfilled");
         }
         match action {

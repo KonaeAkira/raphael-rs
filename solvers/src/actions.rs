@@ -6,7 +6,6 @@ pub const PROGRESS_ACTIONS: ActionMask = action_mask!(
     Action::Veneration,
     Action::MuscleMemory,
     Action::CarefulSynthesis,
-    Action::FocusedSynthesis,
     Action::Groundwork,
     // Action::IntensiveSynthesis,
     Action::PrudentSynthesis
@@ -22,7 +21,6 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::ByregotsBlessing,
     // Action::PreciseTouch,
     Action::PrudentTouch,
-    Action::FocusedTouch,
     Action::Reflect,
     Action::PreparatoryTouch,
     Action::AdvancedTouch,
