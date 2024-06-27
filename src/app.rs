@@ -127,8 +127,6 @@ impl eframe::App for MacroSolverApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
-                // ui.add(egui::Image::new(&texture).rounding(4.0));
-                // ui.image(&texture);
                 ui.set_enabled(!self.solver_pending);
                 ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
                     ui.set_max_width(885.0);
@@ -312,8 +310,12 @@ impl MacroSolverApp {
         egui::ScrollArea::horizontal().show(ui, |ui| {
             ui.horizontal(|ui| {
                 for action in self.actions.iter() {
-                    ui.add(egui::Image::new(self.action_icons.get(action).unwrap()).rounding(4.0))
-                        .on_hover_text(action.display_name());
+                    ui.add(
+                        egui::Image::new(self.action_icons.get(action).unwrap())
+                            .max_height(30.0)
+                            .rounding(4.0),
+                    )
+                    .on_hover_text(action.display_name());
                 }
             });
         });
@@ -657,7 +659,7 @@ impl MacroSolverApp {
             .map(|(action, image)| {
                 let texture = ctx.load_texture(
                     action.display_name(),
-                    egui::ColorImage::from_rgb([30, 30], image.as_flat_samples().as_slice()),
+                    egui::ColorImage::from_rgb([64, 64], image.as_flat_samples().as_slice()),
                     TextureOptions::LINEAR,
                 );
                 (action, texture)

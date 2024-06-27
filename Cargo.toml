@@ -15,7 +15,7 @@ game-data = { path = "game_data" }
 egui = "0.27.0"
 egui_extras = { version = "0.27.2", features = ["default", "all_loaders"] }
 eframe = { version = "0.27.0", features = ["default_fonts", "glow"] }
-image = { version = "0.25.1", features = ["webp"] }
+image = { version = "0.25.1", default-features = false, features = ["png"] }
 wasm-bindgen-futures = "0.4"
 gloo-worker = { version = "0.5.0", features = ["futures"] }
 serde = { version = "1.0.203", features = ["derive"] }
