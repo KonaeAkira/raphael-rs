@@ -123,4 +123,7 @@ const ALL_ACTIONS: &[Action] = &[
     Action::ComboAdvancedTouch,
     Action::PrudentSynthesis,
     Action::TrainedFinesse,
+    Action::ComboRefinedTouch,
+    Action::ImmaculateMend,
+    Action::TrainedPerfection,
 ];

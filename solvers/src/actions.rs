@@ -25,7 +25,8 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::PreparatoryTouch,
     Action::AdvancedTouch,
     Action::ComboAdvancedTouch,
-    Action::TrainedFinesse
+    Action::TrainedFinesse,
+    Action::ComboRefinedTouch
 );
 
 pub const MIXED_ACTIONS: ActionMask = action_mask!(Action::DelicateSynthesis);
@@ -34,5 +35,7 @@ pub const DURABILITY_ACTIONS: ActionMask = action_mask!(
     Action::MasterMend,
     Action::WasteNot,
     Action::WasteNot2,
-    Action::Manipulation
+    Action::Manipulation,
+    Action::ImmaculateMend,
+    Action::TrainedPerfection
 );

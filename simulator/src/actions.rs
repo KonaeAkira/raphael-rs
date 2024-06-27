@@ -31,6 +31,9 @@ pub enum Action {
     IntensiveSynthesis,
     PrudentSynthesis,
     TrainedFinesse,
+    ComboRefinedTouch,
+    ImmaculateMend,
+    TrainedPerfection,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -71,6 +74,9 @@ impl Action {
             Action::IntensiveSynthesis => 78,
             Action::PrudentSynthesis => 88,
             Action::TrainedFinesse => 90,
+            Action::ComboRefinedTouch => 92,
+            Action::ImmaculateMend => 98,
+            Action::TrainedPerfection => 100,
         }
     }
 
@@ -103,6 +109,9 @@ impl Action {
             Action::ComboAdvancedTouch => 3,
             Action::PrudentSynthesis => 3,
             Action::TrainedFinesse => 3,
+            Action::ComboRefinedTouch => 3,
+            Action::ImmaculateMend => 3,
+            Action::TrainedPerfection => 2,
         }
     }
 
@@ -135,6 +144,9 @@ impl Action {
             Action::ComboAdvancedTouch => 18,
             Action::PrudentSynthesis => 18,
             Action::TrainedFinesse => 32,
+            Action::ComboRefinedTouch => 24,
+            Action::ImmaculateMend => 112,
+            Action::TrainedPerfection => 0,
         }
     }
 
@@ -174,6 +186,9 @@ impl Action {
             Action::ComboAdvancedTouch => 10,
             Action::PrudentSynthesis => 5,
             Action::TrainedFinesse => 0,
+            Action::ComboRefinedTouch => 10,
+            Action::ImmaculateMend => 0,
+            Action::TrainedPerfection => 0,
         }
     }
 
@@ -255,6 +270,7 @@ impl Action {
             Action::AdvancedTouch => 150,
             Action::ComboAdvancedTouch => 150,
             Action::TrainedFinesse => 100,
+            Action::ComboRefinedTouch => 100,
             Action::ByregotsBlessing => 100 + 20 * inner_quiet as u64,
             _ => 0,
         }
@@ -301,6 +317,7 @@ impl Action {
                     Some(ComboAction::StandardTouch | ComboAction::Observe)
                 )
             }
+            Action::ComboRefinedTouch => matches!(combo, Some(ComboAction::BasicTouch)),
             _ => true,
         }
     }
@@ -314,7 +331,7 @@ impl Action {
         }
     }
 
-    pub fn display_name(self) -> String {
+    pub const fn display_name(self) -> &'static str {
         match self {
             Action::BasicSynthesis => "Basic Synthesis",
             Action::BasicTouch => "Basic Touch",
@@ -341,8 +358,10 @@ impl Action {
             Action::AdvancedTouch | Action::ComboAdvancedTouch => "Advanced Touch",
             Action::PrudentSynthesis => "Prudent Synthesis",
             Action::TrainedFinesse => "Trained Finesse",
+            Action::ComboRefinedTouch => "Refined Touch",
+            Action::ImmaculateMend => "Immaculate Mend",
+            Action::TrainedPerfection => "Trained Perfection",
         }
-        .to_string()
     }
 }
 
