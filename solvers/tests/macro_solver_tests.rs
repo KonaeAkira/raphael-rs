@@ -17,6 +17,10 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> u32 {
     settings.max_quality - state.missing_quality
 }
 
+fn get_duration(actions: &[Action]) -> i32 {
+    actions.into_iter().map(|action| action.time_cost()).sum()
+}
+
 #[test]
 fn test_random_0f93c79f() {
     let settings = Settings {
@@ -32,6 +36,7 @@ fn test_random_0f93c79f() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1802);
+    assert_eq!(get_duration(&actions), 44);
 }
 
 #[test]
@@ -49,6 +54,7 @@ fn test_random_1e281667() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3525);
+    assert_eq!(get_duration(&actions), 53);
 }
 
 #[test]
@@ -66,6 +72,7 @@ fn test_random_d0bf2aef() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3540);
+    assert_eq!(get_duration(&actions), 51);
 }
 
 #[test]
@@ -100,6 +107,7 @@ fn test_max_quality() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1000);
+    assert_eq!(get_duration(&actions), 35);
 }
 
 #[test]
@@ -117,6 +125,7 @@ fn test_zero_quality() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 0);
+    assert_eq!(get_duration(&actions), 14);
 }
 
 #[test]
@@ -134,6 +143,7 @@ fn test_random_e413e05d() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2085);
+    assert_eq!(get_duration(&actions), 44);
 }
 
 #[test]
@@ -151,6 +161,7 @@ fn test_random_bb38a037() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2985);
+    assert_eq!(get_duration(&actions), 50);
 }
 
 #[test]
@@ -168,6 +179,7 @@ fn test_random_a300ca2b() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4683);
+    assert_eq!(get_duration(&actions), 69);
 }
 
 #[test]
@@ -185,6 +197,7 @@ fn test_random_0f9d7781() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2939);
+    assert_eq!(get_duration(&actions), 64);
 }
 
 #[test]
@@ -202,6 +215,7 @@ fn test_random_e451d981() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 5369);
+    assert_eq!(get_duration(&actions), 70);
 }
 
 #[test]
@@ -219,6 +233,7 @@ fn test_random_6799bb1d() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3532);
+    assert_eq!(get_duration(&actions), 51);
 }
 
 #[test]
@@ -236,6 +251,7 @@ fn test_random_940b4755() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4513);
+    assert_eq!(get_duration(&actions), 64);
 }
 
 #[test]
@@ -253,6 +269,7 @@ fn test_rinascita_3700_3280() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10716);
+    assert_eq!(get_duration(&actions), 72);
 }
 
 #[test]
@@ -270,6 +287,7 @@ fn test_pactmaker_3240_3130() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 8938);
+    assert_eq!(get_duration(&actions), 62);
 }
 
 #[test]
@@ -287,6 +305,7 @@ fn test_diadochos_4021_3660() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 9961);
+    assert_eq!(get_duration(&actions), 66);
 }
 
 #[test]
@@ -304,4 +323,5 @@ fn test_indagator_3858_4057() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12793);
+    assert_eq!(get_duration(&actions), 72);
 }
