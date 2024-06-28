@@ -228,7 +228,13 @@ impl Action {
                     360
                 }
             }
-            Action::DelicateSynthesis => 150,
+            Action::DelicateSynthesis => {
+                if job_level < 94 {
+                    100
+                } else {
+                    150
+                }
+            }
             Action::IntensiveSynthesis => 400,
             Action::PrudentSynthesis => 180,
             _ => 0,
