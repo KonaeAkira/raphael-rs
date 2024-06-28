@@ -8,7 +8,7 @@ const SETTINGS: Settings = Settings {
     base_progress: 100,
     base_quality: 100,
     initial_quality: 0,
-    job_level: 90,
+    job_level: 100,
     allowed_actions: ActionMask::none(),
 };
 
@@ -167,4 +167,32 @@ fn test_trained_perfection() {
         state,
         Err("Action can only be used once per synthesis")
     ));
+}
+
+#[test]
+fn test_delicate_synthesis() {
+    let settings = Settings {
+        job_level: 93,
+        ..SETTINGS
+    };
+    let state = SimulationState::from_macro(&settings, &[Action::DelicateSynthesis]);
+    match state {
+        Ok(state) => {
+            assert_eq!(settings.max_progress - state.missing_progress, 100);
+            assert_eq!(settings.max_quality - state.missing_quality, 100);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let settings = Settings {
+        job_level: 94,
+        ..SETTINGS
+    };
+    let state = SimulationState::from_macro(&settings, &[Action::DelicateSynthesis]);
+    match state {
+        Ok(state) => {
+            assert_eq!(settings.max_progress - state.missing_progress, 150);
+            assert_eq!(settings.max_quality - state.missing_quality, 100);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
 }
