@@ -4,7 +4,7 @@ use crate::{Action, ComboAction, Condition, Effects, Settings};
 pub enum TrainedPerfectionState {
     Available,
     Active,
-    Used,
+    Unavailable,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -29,7 +29,11 @@ impl SimulationState {
                 .saturating_sub(settings.initial_quality),
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
-            trained_perfection: TrainedPerfectionState::Available,
+            trained_perfection: if settings.allowed_actions.has(Action::TrainedPerfection) {
+                TrainedPerfectionState::Available
+            } else {
+                TrainedPerfectionState::Unavailable
+            },
         }
     }
 
@@ -137,7 +141,7 @@ impl InProgress {
         state.durability -= durability_cost;
         match state.trained_perfection {
             TrainedPerfectionState::Active => {
-                state.trained_perfection = TrainedPerfectionState::Used
+                state.trained_perfection = TrainedPerfectionState::Unavailable
             }
             TrainedPerfectionState::Available if action == Action::TrainedPerfection => {
                 state.trained_perfection = TrainedPerfectionState::Active

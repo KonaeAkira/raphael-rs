@@ -23,6 +23,10 @@ impl ActionMask {
         Self { mask: 0 }
     }
 
+    pub const fn all() -> Self {
+        Self { mask: u64::MAX }
+    }
+
     pub fn from_level(level: u32, manipulation: bool) -> Self {
         let mut result = Self::none();
         for action in ALL_ACTIONS {
