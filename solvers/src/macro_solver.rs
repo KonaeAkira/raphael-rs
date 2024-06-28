@@ -119,11 +119,11 @@ impl MacroSolver {
                             quality_bound,
                             SearchNode {
                                 state: in_progress,
-                                backtrack_index: traces.len(),
+                                backtrack_index: traces.len() as _,
                             },
                         );
                         traces.push(Some(SearchTrace {
-                            parent: node.backtrack_index,
+                            parent: node.backtrack_index as _,
                             action,
                         }));
 
@@ -164,12 +164,12 @@ impl MacroSolver {
 #[derive(Debug, Clone)]
 struct SearchNode {
     pub state: InProgress,
-    pub backtrack_index: usize,
+    pub backtrack_index: u32,
 }
 
 #[derive(Debug, Clone, Copy)]
 struct SearchTrace {
-    pub parent: usize,
+    pub parent: u32,
     pub action: Action,
 }
 
@@ -177,7 +177,7 @@ fn get_actions(traces: &[Option<SearchTrace>], mut index: usize) -> impl Iterato
     let mut actions = Vec::new();
     while let Some(trace) = traces[index] {
         actions.push(trace.action);
-        index = trace.parent;
+        index = trace.parent as usize;
     }
     actions.into_iter().rev()
 }
