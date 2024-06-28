@@ -1,3 +1,25 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+pub enum SingleUse {
+    Available,
+    Active,
+    Unavailable,
+}
+
+impl SingleUse {
+    const fn into_bits(self) -> u8 {
+        self as _
+    }
+
+    const fn from_bits(value: u8) -> Self {
+        match value {
+            0 => Self::Available,
+            1 => Self::Active,
+            _ => Self::Unavailable,
+        }
+    }
+}
+
 #[bitfield_struct::bitfield(u32)]
 #[derive(PartialEq, Eq, Hash)]
 pub struct Effects {
@@ -15,7 +37,9 @@ pub struct Effects {
     pub muscle_memory: u8,
     #[bits(4)]
     pub manipulation: u8,
-    #[bits(4)]
+    #[bits(2, default=SingleUse::Available)]
+    pub trained_perfection: SingleUse,
+    #[bits(2)]
     _padding: u8,
 }
 
@@ -27,5 +51,8 @@ impl Effects {
         self.set_great_strides(self.great_strides().saturating_sub(1));
         self.set_muscle_memory(self.muscle_memory().saturating_sub(1));
         self.set_manipulation(self.manipulation().saturating_sub(1));
+        if self.trained_perfection() == SingleUse::Active {
+            self.set_trained_perfection(SingleUse::Unavailable);
+        }
     }
 }

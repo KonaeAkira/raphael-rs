@@ -5,7 +5,7 @@ mod conditions;
 pub use conditions::Condition;
 
 mod effects;
-pub use effects::Effects;
+pub use effects::{Effects, SingleUse};
 
 pub mod state;
 pub use state::SimulationState;
