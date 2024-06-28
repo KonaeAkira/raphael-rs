@@ -80,7 +80,7 @@ impl Action {
         }
     }
 
-    pub const fn time_cost(self) -> i32 {
+    pub const fn time_cost(self) -> i16 {
         match self {
             Action::BasicSynthesis => 3,
             Action::BasicTouch => 3,
@@ -157,7 +157,7 @@ impl Action {
         }
     }
 
-    pub const fn base_durability_cost(self) -> i16 {
+    pub const fn base_durability_cost(self) -> i8 {
         match self {
             Action::BasicSynthesis => 10,
             Action::BasicTouch => 10,
@@ -192,7 +192,7 @@ impl Action {
         }
     }
 
-    pub const fn durability_cost(self, effects: &Effects, condition: Condition) -> i16 {
+    pub const fn durability_cost(self, effects: &Effects, condition: Condition) -> i8 {
         let base_cost = match condition {
             Condition::Sturdy => (self.base_durability_cost() + 1) / 2,
             _ => self.base_durability_cost(),
@@ -240,7 +240,7 @@ impl Action {
         settings: &Settings,
         effects: &Effects,
         condition: Condition,
-    ) -> u32 {
+    ) -> u16 {
         let efficiency_mod = self.progress_efficiency(settings.job_level);
         let condition_mod = match condition {
             Condition::Malleable => 150,
@@ -254,7 +254,7 @@ impl Action {
             effect_mod += 50;
         }
         (settings.base_progress as u64 * efficiency_mod * condition_mod * effect_mod / 1000000)
-            as u32
+            as u16
     }
 
     pub const fn quality_efficiency(self, inner_quiet: u8) -> u64 {
@@ -281,7 +281,7 @@ impl Action {
         settings: &Settings,
         effects: &Effects,
         condition: Condition,
-    ) -> u32 {
+    ) -> u16 {
         let efficieny_mod = self.quality_efficiency(effects.inner_quiet);
         let condition_mod = match condition {
             Condition::Good => 150,
@@ -302,7 +302,7 @@ impl Action {
             * condition_mod
             * effect_mod
             * inner_quiet_mod
-            / 100000000) as u32
+            / 100000000) as u16
     }
 
     pub const fn combo_fulfilled(self, combo: Option<ComboAction>) -> bool {

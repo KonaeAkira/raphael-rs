@@ -263,7 +263,7 @@ impl MacroSolverApp {
 
     fn draw_macro_widget(&mut self, ui: &mut egui::Ui) {
         let macro_steps = self.actions.len();
-        let macro_duration: i32 = self.actions.iter().map(|action| action.time_cost()).sum();
+        let macro_duration: i16 = self.actions.iter().map(|action| action.time_cost()).sum();
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Macro").strong());

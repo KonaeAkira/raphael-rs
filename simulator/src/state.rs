@@ -3,9 +3,9 @@ use crate::{Action, ComboAction, Condition, Effects, Settings};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
     pub cp: i16,
-    pub durability: i16,
-    pub missing_progress: u32,
-    pub missing_quality: u32,
+    pub durability: i8,
+    pub missing_progress: u16,
+    pub missing_quality: u16,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
     pub trained_perfection_used: bool,

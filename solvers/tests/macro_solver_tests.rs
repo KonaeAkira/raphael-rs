@@ -5,7 +5,7 @@ fn solve(settings: &Settings) -> Option<Vec<Action>> {
     MacroSolver::new(settings.clone()).solve(InProgress::new(settings))
 }
 
-fn get_quality(settings: &Settings, actions: &[Action]) -> u32 {
+fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
     let mut state = SimulationState::new(&settings);
     for action in actions {
         state = InProgress::try_from(state)
@@ -17,7 +17,7 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> u32 {
     settings.max_quality - state.missing_quality
 }
 
-fn get_duration(actions: &[Action]) -> i32 {
+fn get_duration(actions: &[Action]) -> i16 {
     actions.into_iter().map(|action| action.time_cost()).sum()
 }
 

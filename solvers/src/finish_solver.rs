@@ -10,7 +10,6 @@ use super::{
     pareto_front::{ParetoFrontBuilder, ParetoValue},
 };
 
-const INF_PROGRESS: u32 = 1_000_000;
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -46,7 +45,7 @@ impl ReducedEffects {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
-    durability: i16,
+    durability: i8,
     cp: i16,
     effects: ReducedEffects,
     combo: Option<ComboAction>,
@@ -70,7 +69,7 @@ impl ReducedState {
         let raw_state = SimulationState {
             durability: self.durability,
             cp: self.cp,
-            missing_progress: INF_PROGRESS,
+            missing_progress: u16::MAX,
             missing_quality: 0,
             effects: self.effects.to_effects(),
             combo: self.combo,
@@ -84,10 +83,10 @@ impl ReducedState {
 pub struct FinishSolver {
     settings: Settings,
     // maximum attainable progress for each state
-    max_progress: HashMap<ReducedState, u32>,
+    max_progress: HashMap<ReducedState, u16>,
     // pareto-optimal set of (progress, duration) for each state
-    pareto_fronts: HashMap<ReducedState, Box<[ParetoValue<u32, i32>]>>,
-    pareto_front_builder: ParetoFrontBuilder<u32, i32>,
+    pareto_fronts: HashMap<ReducedState, Box<[ParetoValue<u16, i16>]>>,
+    pareto_front_builder: ParetoFrontBuilder<u16, i16>,
 }
 
 impl FinishSolver {
@@ -108,7 +107,7 @@ impl FinishSolver {
         }
         let mut finish_sequence: Vec<Action> = Vec::new();
         loop {
-            let mut best_time = i32::MAX;
+            let mut best_time = i16::MAX;
             let mut best_action = Action::BasicSynthesis;
             for action in SEARCH_ACTIONS
                 .intersection(self.settings.allowed_actions)
@@ -147,13 +146,13 @@ impl FinishSolver {
         max_progress >= state.raw_state().missing_progress
     }
 
-    pub fn time_to_finish(&mut self, state: &InProgress) -> Option<i32> {
+    pub fn time_to_finish(&mut self, state: &InProgress) -> Option<i16> {
         let reduced_state = ReducedState::from_state(state);
         if !self.pareto_fronts.contains_key(&reduced_state) {
             self.solve_pareto_front(reduced_state);
             self.pareto_front_builder.clear();
         }
-        let result: &[ParetoValue<u32, i32>] = self.pareto_fronts.get(&reduced_state).unwrap();
+        let result: &[ParetoValue<u16, i16>] = self.pareto_fronts.get(&reduced_state).unwrap();
         for ParetoValue {
             first: progress,
             second: time,
@@ -166,7 +165,7 @@ impl FinishSolver {
         None
     }
 
-    fn solve_max_progress(&mut self, state: ReducedState) -> u32 {
+    fn solve_max_progress(&mut self, state: ReducedState) -> u16 {
         match self.max_progress.get(&state) {
             Some(max_progress) => *max_progress,
             None => {
@@ -184,11 +183,11 @@ impl FinishSolver {
                             let child_progress =
                                 self.solve_max_progress(ReducedState::from_state(&in_progress));
                             let action_progress =
-                                INF_PROGRESS - in_progress.raw_state().missing_progress;
+                                u16::MAX - in_progress.raw_state().missing_progress;
                             max_progress =
                                 std::cmp::max(max_progress, child_progress + action_progress);
                         } else {
-                            let progress = INF_PROGRESS - new_state.missing_progress;
+                            let progress = u16::MAX - new_state.missing_progress;
                             max_progress = std::cmp::max(max_progress, progress);
                         }
                     }
@@ -211,7 +210,7 @@ impl FinishSolver {
                     .use_action(action, Condition::Normal, &self.settings)
             {
                 if let Ok(in_progress) = new_state.try_into() {
-                    let progress = INF_PROGRESS - new_state.missing_progress;
+                    let progress = u16::MAX - new_state.missing_progress;
                     match self
                         .pareto_fronts
                         .get(&ReducedState::from_state(&in_progress))
@@ -222,7 +221,7 @@ impl FinishSolver {
                     self.pareto_front_builder.add(progress, -action.time_cost());
                     self.pareto_front_builder.merge();
                 } else {
-                    let progress = INF_PROGRESS - new_state.missing_progress;
+                    let progress = u16::MAX - new_state.missing_progress;
                     self.pareto_front_builder
                         .push(&[ParetoValue::new(progress, -action.time_cost())]);
                     self.pareto_front_builder.merge();
