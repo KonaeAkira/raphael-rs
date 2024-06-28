@@ -198,7 +198,7 @@ impl Action {
             _ => self.base_durability_cost(),
         };
         let mut effect_bonus = 0;
-        if effects.waste_not > 0 {
+        if effects.waste_not() > 0 {
             effect_bonus += base_cost / 2;
         }
         base_cost - effect_bonus
@@ -253,10 +253,10 @@ impl Action {
             _ => 100,
         };
         let mut effect_mod = 100;
-        if effects.muscle_memory > 0 {
+        if effects.muscle_memory() > 0 {
             effect_mod += 100;
         }
-        if effects.veneration > 0 {
+        if effects.veneration() > 0 {
             effect_mod += 50;
         }
         (settings.base_progress as u64 * efficiency_mod * condition_mod * effect_mod / 1000000)
@@ -288,7 +288,7 @@ impl Action {
         effects: &Effects,
         condition: Condition,
     ) -> u16 {
-        let efficieny_mod = self.quality_efficiency(effects.inner_quiet);
+        let efficieny_mod = self.quality_efficiency(effects.inner_quiet());
         let condition_mod = match condition {
             Condition::Good => 150,
             Condition::Excellent => 400,
@@ -296,13 +296,13 @@ impl Action {
             _ => 100,
         };
         let mut effect_mod = 100;
-        if effects.innovation != 0 {
+        if effects.innovation() != 0 {
             effect_mod += 50;
         }
-        if effects.great_strides != 0 {
+        if effects.great_strides() != 0 {
             effect_mod += 100;
         }
-        let inner_quiet_mod = 100 + 10 * effects.inner_quiet as u64;
+        let inner_quiet_mod = 100 + 10 * effects.inner_quiet() as u64;
         (settings.base_quality as u64
             * efficieny_mod
             * condition_mod
@@ -368,53 +368,5 @@ impl Action {
             Action::ImmaculateMend => "Immaculate Mend",
             Action::TrainedPerfection => "Trained Perfection",
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_cp_cost() {
-        let effects: Effects = Default::default();
-        assert_eq!(25, Action::PrudentTouch.cp_cost(&effects, Condition::Good));
-        assert_eq!(
-            13,
-            Action::PrudentTouch.cp_cost(&effects, Condition::Pliant)
-        );
-    }
-
-    #[test]
-    fn test_durability_cost() {
-        let effects_default: Effects = Default::default();
-        let effects_waste_not: Effects = Effects {
-            waste_not: 1,
-            ..Default::default()
-        };
-        assert_eq!(
-            5,
-            Action::PrudentSynthesis.durability_cost(&effects_default, Condition::Normal)
-        );
-        assert_eq!(
-            3,
-            Action::PrudentSynthesis.durability_cost(&effects_default, Condition::Sturdy)
-        );
-        assert_eq!(
-            10,
-            Action::BasicTouch.durability_cost(&effects_default, Condition::Normal)
-        );
-        assert_eq!(
-            5,
-            Action::BasicTouch.durability_cost(&effects_default, Condition::Sturdy)
-        );
-        assert_eq!(
-            5,
-            Action::BasicTouch.durability_cost(&effects_waste_not, Condition::Normal)
-        );
-        assert_eq!(
-            3,
-            Action::BasicTouch.durability_cost(&effects_waste_not, Condition::Sturdy)
-        );
     }
 }

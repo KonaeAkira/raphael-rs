@@ -41,11 +41,11 @@ impl ReducedState {
             cp: state.cp - durability_cost,
             combo: state.combo,
             effects: ReducedEffects {
-                inner_quiet: state.effects.inner_quiet,
-                innovation: state.effects.innovation,
-                veneration: state.effects.veneration,
-                great_strides: state.effects.great_strides,
-                muscle_memory: state.effects.muscle_memory,
+                inner_quiet: state.effects.inner_quiet(),
+                innovation: state.effects.innovation(),
+                veneration: state.effects.veneration(),
+                great_strides: state.effects.great_strides(),
+                muscle_memory: state.effects.muscle_memory(),
             },
         }
     }
@@ -58,15 +58,12 @@ impl std::convert::From<ReducedState> for InProgress {
             cp: state.cp,
             missing_progress: u16::MAX,
             missing_quality: u16::MAX,
-            effects: Effects {
-                inner_quiet: state.effects.inner_quiet,
-                waste_not: 0,
-                innovation: state.effects.innovation,
-                veneration: state.effects.veneration,
-                great_strides: state.effects.great_strides,
-                muscle_memory: state.effects.muscle_memory,
-                manipulation: 0,
-            },
+            effects: Effects::new()
+                .with_inner_quiet(state.effects.inner_quiet)
+                .with_innovation(state.effects.innovation)
+                .with_veneration(state.effects.veneration)
+                .with_great_strides(state.effects.great_strides)
+                .with_muscle_memory(state.effects.muscle_memory),
             combo: state.combo,
             trained_perfection: TrainedPerfectionState::Unavailable,
         }
@@ -121,8 +118,8 @@ impl UpperBoundSolver {
         let current_quality = self.settings.max_quality - state.missing_quality;
 
         // refund effects and durability
-        state.cp += state.effects.manipulation as i16 * (Action::Manipulation.base_cp_cost() / 8);
-        state.cp += state.effects.waste_not as i16 * self.waste_not_cost;
+        state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.base_cp_cost() / 8);
+        state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
         state.durability = i8::MAX;
 
