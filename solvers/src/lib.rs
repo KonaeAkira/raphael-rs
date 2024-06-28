@@ -1,5 +1,6 @@
 mod actions;
 mod pareto_front;
+mod utils;
 
 mod finish_solver;
 use finish_solver::FinishSolver;

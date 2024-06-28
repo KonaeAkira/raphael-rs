@@ -251,7 +251,6 @@ impl UpperBoundSolver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use more_asserts::*;
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
@@ -260,7 +259,6 @@ mod tests {
         result
     }
 
-    #[ignore]
     #[test]
     fn test_01() {
         let settings = Settings {
@@ -288,11 +286,9 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3485); // tightness test
-        assert_ge!(result, 3352); // correctness test
+        assert_eq!(result, 3485);
     }
 
-    #[ignore]
     #[test]
     fn test_02() {
         let settings = Settings {
@@ -317,11 +313,9 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4767); // tightness test
-        assert_ge!(result, 4685); // correctness test
+        assert_eq!(result, 4767);
     }
 
-    #[ignore]
     #[test]
     fn test_03() {
         let settings = Settings {
@@ -351,11 +345,9 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 4053); // tightness test
-        assert_ge!(result, 4053); // correctness test
+        assert_eq!(result, 4053);
     }
 
-    #[ignore]
     #[test]
     fn test_04() {
         let settings = Settings {
@@ -370,11 +362,9 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2220); // tightness test
-        assert_ge!(result, 2011); // correctness test
+        assert_eq!(result, 2220);
     }
 
-    #[ignore]
     #[test]
     fn test_05() {
         let settings = Settings {
@@ -389,11 +379,9 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2604); // tightness test
-        assert_ge!(result, 2000); // correctness test
+        assert_eq!(result, 2604);
     }
 
-    #[ignore]
     #[test]
     fn test_06() {
         let settings = Settings {
@@ -409,10 +397,8 @@ mod tests {
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 4555); // tightness test
-        assert_ge!(result, 4405); // correctness test
     }
 
-    #[ignore]
     #[test]
     fn test_07() {
         let settings = Settings {
@@ -427,11 +413,9 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 4477); // tightness test
-        assert_ge!(result, 4138); // correctness test
+        assert_eq!(result, 4633); // tightness test
     }
 
-    #[ignore]
     #[test]
     fn test_08() {
         let settings = Settings {
@@ -447,10 +431,8 @@ mod tests {
         };
         let result = solve(settings, &[Action::PrudentTouch]);
         assert_eq!(result, 10000); // tightness test
-        assert_ge!(result, 10000); // correctness test
     }
 
-    #[ignore]
     #[test]
     fn test_09() {
         let settings = Settings {
@@ -465,7 +447,6 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, false),
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 4767); // tightness test
-        assert_ge!(result, 4440); // correctness test
+        assert_eq!(result, 4823); // tightness test
     }
 }

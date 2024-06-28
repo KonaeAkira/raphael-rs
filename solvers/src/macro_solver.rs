@@ -3,11 +3,10 @@ use rustc_hash::FxHashMap;
 use simulator::state::InProgress;
 
 use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
+use crate::utils::NamedTimer;
 use crate::{FinishSolver, UpperBoundSolver};
 use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Instant;
 use std::vec::Vec;
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
@@ -36,25 +35,19 @@ impl MacroSolver {
     /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
     /// The solver makes an effort to produce a short solution, but it is not (yet) guaranteed to be the shortest solution.
     pub fn solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
-        #[cfg(not(target_arch = "wasm32"))]
-        let timer = Instant::now();
+        let timer = NamedTimer::new("Finish solver");
         if !self.finish_solver.can_finish(&state) {
             return None;
         }
-        #[cfg(not(target_arch = "wasm32"))]
-        let seconds = timer.elapsed().as_secs_f32();
-        #[cfg(not(target_arch = "wasm32"))]
-        dbg!(seconds);
+        drop(timer);
+        let _timer = NamedTimer::new("Full solve");
         match self.do_solve(state) {
-            Some(actions) => Some(actions),
-            None => Some(self.finish_solver.get_finish_sequence(state).unwrap()),
+            Some(solution) => Some(solution),
+            None => self.finish_solver.get_finish_sequence(state),
         }
     }
 
     fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
-        #[cfg(not(target_arch = "wasm32"))]
-        let timer = Instant::now();
-
         let mut finish_solver_rejected_node: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
@@ -156,11 +149,6 @@ impl MacroSolver {
             }
             None => None,
         };
-
-        #[cfg(not(target_arch = "wasm32"))]
-        let seconds = timer.elapsed().as_secs_f32();
-        #[cfg(not(target_arch = "wasm32"))]
-        dbg!(seconds);
 
         dbg!(
             traces.len(),

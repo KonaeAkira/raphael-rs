@@ -14,5 +14,4 @@ radix-heap = "0.4.2"
 rustc-hash = "1.1.0"
 
 [dev-dependencies]
-more-asserts = "0.3.1"
 rand = "0.8.5"
