@@ -14,7 +14,7 @@ fn simulate(
     Ok(result)
 }
 
-fn progress_quality_pair(settings: &Settings, state: SimulationState) -> (u32, u32) {
+fn progress_quality_pair(settings: &Settings, state: SimulationState) -> (u16, u16) {
     (
         settings.max_progress - state.missing_progress,
         settings.max_quality - state.missing_quality,
@@ -205,7 +205,7 @@ fn test_ingame_be9fc5c2() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let states: Vec<(u32, u32)> = simulate(
+    let states: Vec<(u16, u16)> = simulate(
         &settings,
         [
             (Action::Reflect, Condition::Normal), // 0, 795

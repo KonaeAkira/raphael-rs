@@ -13,10 +13,6 @@ const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(MIXED_ACTIONS)
     .add(Action::TrainedPerfection);
 
-const INF_PROGRESS: u32 = 1_000_000;
-const INF_QUALITY: u32 = 1_000_000;
-const INF_DURABILITY: i16 = 100;
-
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct ReducedEffects {
     inner_quiet: u8,
@@ -38,10 +34,10 @@ struct ReducedState {
 impl ReducedState {
     fn from_state(state: InProgress, base_durability_cost: i16, waste_not_cost: i16) -> Self {
         let state = *state.raw_state();
-        let used_durability = (INF_DURABILITY - state.durability) / 5;
+        let used_durability = (i8::MAX - state.durability) / 5;
         let durability_cost = std::cmp::min(
-            used_durability * base_durability_cost,
-            (used_durability + 1) / 2 * base_durability_cost + waste_not_cost,
+            used_durability as i16 * base_durability_cost,
+            (used_durability as i16 + 1) / 2 * base_durability_cost + waste_not_cost,
         );
         Self {
             cp: state.cp - durability_cost,
@@ -62,10 +58,10 @@ impl ReducedState {
 impl std::convert::From<ReducedState> for InProgress {
     fn from(state: ReducedState) -> Self {
         SimulationState {
-            durability: INF_DURABILITY,
+            durability: i8::MAX,
             cp: state.cp,
-            missing_progress: INF_PROGRESS,
-            missing_quality: INF_QUALITY,
+            missing_progress: u16::MAX,
+            missing_quality: u16::MAX,
             effects: Effects {
                 inner_quiet: state.effects.inner_quiet,
                 waste_not: 0,
@@ -88,8 +84,8 @@ pub struct UpperBoundSolver {
     settings: Settings,
     base_durability_cost: i16,
     waste_not_cost: i16,
-    solved_states: HashMap<ReducedState, Box<[ParetoValue<u32, u32>]>>,
-    pareto_front_builder: ParetoFrontBuilder<u32, u32>,
+    solved_states: HashMap<ReducedState, Box<[ParetoValue<u16, u16>]>>,
+    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
 impl UpperBoundSolver {
@@ -104,7 +100,7 @@ impl UpperBoundSolver {
         if settings.allowed_actions.has(Action::ImmaculateMend) {
             durability_cost = std::cmp::min(
                 durability_cost,
-                Action::ImmaculateMend.base_cp_cost() / (settings.max_durability / 5 - 1),
+                Action::ImmaculateMend.base_cp_cost() / (settings.max_durability as i16 / 5 - 1),
             );
         }
         UpperBoundSolver {
@@ -125,15 +121,15 @@ impl UpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// The returned upper-bound is NOT clamped to settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: InProgress) -> u32 {
+    pub fn quality_upper_bound(&mut self, state: InProgress) -> u16 {
         let mut state = *state.raw_state();
         let current_quality = self.settings.max_quality - state.missing_quality;
 
         // refund effects and durability
         state.cp += state.effects.manipulation as i16 * (Action::Manipulation.base_cp_cost() / 8);
         state.cp += state.effects.waste_not as i16 * self.waste_not_cost;
-        state.cp += state.durability / 5 * self.base_durability_cost;
-        state.durability = INF_DURABILITY;
+        state.cp += state.durability as i16 / 5 * self.base_durability_cost;
+        state.durability = i8::MAX;
 
         let reduced_state = ReducedState::from_state(
             InProgress::try_from(state).unwrap(),
@@ -218,8 +214,8 @@ impl UpperBoundSolver {
             InProgress::from(state).use_action(action, Condition::Normal, &self.settings)
         {
             if let Ok(in_progress) = InProgress::try_from(new_state) {
-                let action_progress = INF_PROGRESS - new_state.missing_progress;
-                let action_quality = INF_QUALITY - new_state.missing_quality;
+                let action_progress = u16::MAX - new_state.missing_progress;
+                let action_quality = u16::MAX - new_state.missing_quality;
                 let new_state = ReducedState::from_state(
                     in_progress,
                     self.base_durability_cost,
@@ -251,7 +247,7 @@ mod tests {
     use super::*;
     use more_asserts::*;
 
-    fn solve(settings: Settings, actions: &[Action]) -> u32 {
+    fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
         let result = UpperBoundSolver::new(settings).quality_upper_bound(state.try_into().unwrap());
         dbg!(result);

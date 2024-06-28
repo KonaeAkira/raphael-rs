@@ -27,8 +27,8 @@ struct RecipeLevel {
 #[derive(Debug, Clone, Copy)]
 pub struct Recipe {
     pub recipe_level: u32,
-    pub progress: u32,
-    pub quality: u32,
+    pub progress: u16,
+    pub quality: u16,
     pub durability: i8,
     pub material_quality_factor: u32,
     pub ingredients: [Ingredient; 6],
@@ -112,7 +112,7 @@ pub fn get_game_settings(
             }
             (recipe.quality as u64 * recipe.material_quality_factor as u64 * provided_ilvl
                 / max_ilvl
-                / 100) as u32
+                / 100) as u16
         }
     };
 
@@ -139,7 +139,7 @@ const HQ_LOOKUP: [u8; 101] = [
     71, 74, 76, 78, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 94, 96, 98, 100,
 ];
 
-pub fn hq_percentage(quality: u32, max_quality: u32) -> u8 {
+pub fn hq_percentage(quality: u16, max_quality: u16) -> u8 {
     // TODO: switch to std::num::NonZeroU32 at some point
     assert!(max_quality != 0, "max_quality must be non-zero");
     let ratio = quality as f64 / max_quality as f64;

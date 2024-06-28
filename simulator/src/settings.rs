@@ -1,12 +1,12 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Settings {
     pub max_cp: i16,
-    pub max_durability: i16,
-    pub max_progress: u32,
-    pub max_quality: u32,
-    pub base_progress: u32,
-    pub base_quality: u32,
-    pub initial_quality: u32,
+    pub max_durability: i8,
+    pub max_progress: u16,
+    pub max_quality: u16,
+    pub base_progress: u16,
+    pub base_quality: u16,
+    pub initial_quality: u16,
     pub job_level: u8,
     pub allowed_actions: ActionMask,
 }

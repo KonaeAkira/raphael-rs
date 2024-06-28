@@ -284,13 +284,13 @@ mod tests {
         allowed_actions: ActionMask::none(),
     };
 
-    const SAMPLE_FRONT_1: &[ParetoValue<u32, u32>] = &[
+    const SAMPLE_FRONT_1: &[ParetoValue<u16, u16>] = &[
         ParetoValue::new(300, 100),
         ParetoValue::new(200, 200),
         ParetoValue::new(100, 300),
     ];
 
-    const SAMPLE_FRONT_2: &[ParetoValue<u32, u32>] = &[
+    const SAMPLE_FRONT_2: &[ParetoValue<u16, u16>] = &[
         ParetoValue::new(300, 50),
         ParetoValue::new(250, 150),
         ParetoValue::new(150, 250),
@@ -299,7 +299,7 @@ mod tests {
 
     #[test]
     fn test_merge_empty() {
-        let mut builder: ParetoFrontBuilder<u32, u32> =
+        let mut builder: ParetoFrontBuilder<u16, u16> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push_empty();
         builder.push_empty();
@@ -311,7 +311,7 @@ mod tests {
 
     #[test]
     fn test_value_shift() {
-        let mut builder: ParetoFrontBuilder<u32, u32> =
+        let mut builder: ParetoFrontBuilder<u16, u16> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.add(100, 100);
@@ -329,7 +329,7 @@ mod tests {
 
     #[test]
     fn test_merge() {
-        let mut builder: ParetoFrontBuilder<u32, u32> =
+        let mut builder: ParetoFrontBuilder<u16, u16> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.push(SAMPLE_FRONT_2);
@@ -350,7 +350,7 @@ mod tests {
 
     #[test]
     fn test_merge_truncated() {
-        let mut builder: ParetoFrontBuilder<u32, u32> =
+        let mut builder: ParetoFrontBuilder<u16, u16> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         builder.push(SAMPLE_FRONT_1);
         builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
@@ -365,15 +365,15 @@ mod tests {
     #[test]
     fn test_random_simulation() {
         let mut rng = rand::thread_rng();
-        let mut builder: ParetoFrontBuilder<u32, u32> =
+        let mut builder: ParetoFrontBuilder<u16, u16> =
             ParetoFrontBuilder::new(SETTINGS.max_progress);
         let mut lut = [0; 5000];
 
         for _ in 0..200 {
             let cnt = rng.gen_range(1..200);
             for _ in 0..cnt {
-                let progress: u32 = rng.gen_range(0..5000);
-                let quality: u32 = rng.gen_range(0..10000);
+                let progress: u16 = rng.gen_range(0..5000);
+                let quality: u16 = rng.gen_range(0..10000);
                 for i in 0..=progress as usize {
                     lut[i] = std::cmp::max(lut[i], quality);
                 }
