@@ -1,11 +1,4 @@
-use crate::{Action, ComboAction, Condition, Effects, Settings};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum TrainedPerfectionState {
-    Available,
-    Active,
-    Unavailable,
-}
+use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
@@ -15,7 +8,6 @@ pub struct SimulationState {
     pub missing_quality: u16,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
-    pub trained_perfection: TrainedPerfectionState,
 }
 
 impl SimulationState {
@@ -29,11 +21,6 @@ impl SimulationState {
                 .saturating_sub(settings.initial_quality),
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
-            trained_perfection: if settings.allowed_actions.has(Action::TrainedPerfection) {
-                TrainedPerfectionState::Available
-            } else {
-                TrainedPerfectionState::Unavailable
-            },
         }
     }
 
@@ -109,8 +96,8 @@ impl InProgress {
             }
             Action::TrainedPerfection
                 if !matches!(
-                    self.state.trained_perfection,
-                    TrainedPerfectionState::Available
+                    self.state.effects.trained_perfection(),
+                    SingleUse::Available
                 ) =>
             {
                 Err("Action can only be used once per synthesis")
@@ -129,8 +116,8 @@ impl InProgress {
         let mut state = self.state;
 
         let cp_cost = action.cp_cost(&state.effects, condition);
-        let durability_cost = match state.trained_perfection {
-            TrainedPerfectionState::Active => 0,
+        let durability_cost = match state.effects.trained_perfection() {
+            SingleUse::Active => 0,
             _ => action.durability_cost(&state.effects, condition),
         };
         let progress_increase = action.progress_increase(settings, &state.effects, condition);
@@ -139,15 +126,6 @@ impl InProgress {
         state.combo = action.to_combo();
         state.cp -= cp_cost;
         state.durability -= durability_cost;
-        match state.trained_perfection {
-            TrainedPerfectionState::Active => {
-                state.trained_perfection = TrainedPerfectionState::Unavailable
-            }
-            TrainedPerfectionState::Available if action == Action::TrainedPerfection => {
-                state.trained_perfection = TrainedPerfectionState::Active
-            }
-            _ => (),
-        };
 
         // reset muscle memory if progress increased
         if progress_increase != 0 {
@@ -204,6 +182,7 @@ impl InProgress {
             Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
             Action::TricksOfTheTrade => state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
             Action::ImmaculateMend => state.durability = settings.max_durability,
+            Action::TrainedPerfection => state.effects.set_trained_perfection(SingleUse::Active),
             _ => (),
         }
 

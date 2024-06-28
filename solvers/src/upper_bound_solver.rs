@@ -1,17 +1,14 @@
 use crate::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use simulator::{
-    state::{InProgress, TrainedPerfectionState},
-    Action, ActionMask, ComboAction, Condition, Effects, Settings, SimulationState,
+    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+    SimulationState, SingleUse,
 };
 
 use rustc_hash::FxHashMap as HashMap;
 
 use super::pareto_front::{ParetoFrontBuilder, ParetoValue};
 
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(QUALITY_ACTIONS)
-    .union(MIXED_ACTIONS)
-    .add(Action::TrainedPerfection);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS).union(MIXED_ACTIONS);
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct ReducedEffects {
@@ -65,7 +62,6 @@ impl std::convert::From<ReducedState> for InProgress {
                 .with_great_strides(state.effects.great_strides)
                 .with_muscle_memory(state.effects.muscle_memory),
             combo: state.combo,
-            trained_perfection: TrainedPerfectionState::Unavailable,
         }
         .try_into()
         .unwrap()
@@ -126,12 +122,11 @@ impl UpperBoundSolver {
         // assume Trained Perfection can be used to its fullest potential (20 durability)
         if self.settings.allowed_actions.has(Action::TrainedPerfection)
             && matches!(
-                state.trained_perfection,
-                TrainedPerfectionState::Available | TrainedPerfectionState::Active
+                state.effects.trained_perfection(),
+                SingleUse::Available | SingleUse::Active
             )
         {
             state.cp += self.base_durability_cost * 4;
-            state.trained_perfection = TrainedPerfectionState::Unavailable;
         }
 
         let reduced_state = ReducedState::from_state(

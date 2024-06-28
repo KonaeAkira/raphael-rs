@@ -1,6 +1,6 @@
 use simulator::{
-    state::{InProgress, TrainedPerfectionState},
-    Action, ActionMask, ComboAction, Condition, Effects, Settings, SimulationState,
+    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+    SimulationState, SingleUse,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -45,7 +45,7 @@ struct ReducedState {
     cp: i16,
     effects: ReducedEffects,
     combo: Option<ComboAction>,
-    trained_perfection: TrainedPerfectionState,
+    trained_perfection: SingleUse,
 }
 
 impl ReducedState {
@@ -55,7 +55,7 @@ impl ReducedState {
             cp: state.raw_state().cp,
             effects: ReducedEffects::from_effects(&state.raw_state().effects),
             combo: state.raw_state().combo,
-            trained_perfection: state.raw_state().trained_perfection,
+            trained_perfection: state.raw_state().effects.trained_perfection(),
         }
     }
 
@@ -65,9 +65,11 @@ impl ReducedState {
             cp: self.cp,
             missing_progress: u16::MAX,
             missing_quality: 0,
-            effects: self.effects.to_effects(),
+            effects: self
+                .effects
+                .to_effects()
+                .with_trained_perfection(self.trained_perfection),
             combo: self.combo,
-            trained_perfection: self.trained_perfection,
         };
         raw_state.try_into().unwrap()
     }
