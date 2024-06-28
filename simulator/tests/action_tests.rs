@@ -121,7 +121,7 @@ fn test_refined_touch() {
         SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::ComboRefinedTouch]);
     match state {
         Ok(state) => {
-            assert_eq!(state.effects.inner_quiet, 3);
+            assert_eq!(state.effects.inner_quiet(), 3);
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }

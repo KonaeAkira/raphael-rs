@@ -23,23 +23,19 @@ struct ReducedEffects {
 impl ReducedEffects {
     pub fn from_effects(effects: &Effects) -> ReducedEffects {
         ReducedEffects {
-            muscle_memory: effects.muscle_memory,
-            waste_not: effects.waste_not,
-            veneration: effects.veneration,
-            manipulation: effects.manipulation,
+            muscle_memory: effects.muscle_memory(),
+            waste_not: effects.waste_not(),
+            veneration: effects.veneration(),
+            manipulation: effects.manipulation(),
         }
     }
 
     pub fn to_effects(self) -> Effects {
-        Effects {
-            inner_quiet: 0,
-            waste_not: self.waste_not,
-            innovation: 0,
-            veneration: self.veneration,
-            great_strides: 0,
-            muscle_memory: self.muscle_memory,
-            manipulation: self.manipulation,
-        }
+        Effects::new()
+            .with_waste_not(self.waste_not)
+            .with_veneration(self.veneration)
+            .with_muscle_memory(self.muscle_memory)
+            .with_manipulation(self.manipulation)
     }
 }
 

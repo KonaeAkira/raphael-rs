@@ -85,11 +85,11 @@ impl InProgress {
             return Err("Combo requirement not fulfilled");
         }
         match action {
-            Action::ByregotsBlessing if self.state.effects.inner_quiet == 0 => {
+            Action::ByregotsBlessing if self.state.effects.inner_quiet() == 0 => {
                 Err("Need Inner Quiet to use Byregot's Blessing")
             }
             Action::PrudentSynthesis | Action::PrudentTouch
-                if self.state.effects.waste_not != 0 =>
+                if self.state.effects.waste_not() != 0 =>
             {
                 Err("Action cannot be used during Waste Not")
             }
@@ -104,7 +104,7 @@ impl InProgress {
             {
                 Err("Not enough durability")
             }
-            Action::TrainedFinesse if self.state.effects.inner_quiet < 10 => {
+            Action::TrainedFinesse if self.state.effects.inner_quiet() < 10 => {
                 Err("Requires 10 Inner Quiet")
             }
             Action::TrainedPerfection
@@ -152,22 +152,25 @@ impl InProgress {
         // reset muscle memory if progress increased
         if progress_increase != 0 {
             state.missing_progress = state.missing_progress.saturating_sub(progress_increase);
-            state.effects.muscle_memory = 0;
+            state.effects.set_muscle_memory(0);
         }
 
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
             state.missing_quality = state.missing_quality.saturating_sub(quality_increase);
-            state.effects.great_strides = 0;
+            state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
-                state.effects.inner_quiet += match action {
+                let inner_quiet_bonus = match action {
                     Action::Reflect => 2,
                     Action::PreciseTouch => 2,
                     Action::PreparatoryTouch => 2,
                     Action::ComboRefinedTouch => 2,
                     _ => 1,
                 };
-                state.effects.inner_quiet = std::cmp::min(10, state.effects.inner_quiet);
+                state.effects.set_inner_quiet(std::cmp::min(
+                    10,
+                    state.effects.inner_quiet() + inner_quiet_bonus,
+                ));
             }
         }
 
@@ -177,10 +180,10 @@ impl InProgress {
 
         // remove manipulation before it is triggered
         if action == Action::Manipulation {
-            state.effects.manipulation = 0;
+            state.effects.set_manipulation(0);
         }
 
-        if state.effects.manipulation > 0 {
+        if state.effects.manipulation() > 0 {
             state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
         state.effects.tick_down();
@@ -188,17 +191,17 @@ impl InProgress {
         // trigger special action effects
         let duration_bonus = if condition == Condition::Pliant { 2 } else { 0 };
         match action {
-            Action::MuscleMemory => state.effects.muscle_memory = 5 + duration_bonus,
-            Action::GreatStrides => state.effects.great_strides = 3 + duration_bonus,
-            Action::Veneration => state.effects.veneration = 4 + duration_bonus,
-            Action::Innovation => state.effects.innovation = 4 + duration_bonus,
-            Action::WasteNot => state.effects.waste_not = 4 + duration_bonus,
-            Action::WasteNot2 => state.effects.waste_not = 8 + duration_bonus,
-            Action::Manipulation => state.effects.manipulation = 8 + duration_bonus,
+            Action::MuscleMemory => state.effects.set_muscle_memory(5 + duration_bonus),
+            Action::GreatStrides => state.effects.set_great_strides(3 + duration_bonus),
+            Action::Veneration => state.effects.set_veneration(4 + duration_bonus),
+            Action::Innovation => state.effects.set_innovation(4 + duration_bonus),
+            Action::WasteNot => state.effects.set_waste_not(4 + duration_bonus),
+            Action::WasteNot2 => state.effects.set_waste_not(8 + duration_bonus),
+            Action::Manipulation => state.effects.set_manipulation(8 + duration_bonus),
             Action::MasterMend => {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 30)
             }
-            Action::ByregotsBlessing => state.effects.inner_quiet = 0,
+            Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
             Action::TricksOfTheTrade => state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
             Action::ImmaculateMend => state.durability = settings.max_durability,
             _ => (),

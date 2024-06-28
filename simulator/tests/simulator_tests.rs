@@ -52,7 +52,7 @@ fn test_random_926ae85b() {
     assert_eq!(state.durability, 30);
     assert_eq!(settings.max_progress - state.missing_progress, 4);
     assert_eq!(settings.max_quality - state.missing_quality, 76);
-    assert_eq!(state.effects.inner_quiet, 0);
+    assert_eq!(state.effects.inner_quiet(), 0);
 }
 
 #[test]
@@ -130,8 +130,8 @@ fn test_random_3ba90d3a() {
     assert_eq!(state.durability, 25);
     assert_eq!(settings.max_progress - state.missing_progress, 918);
     assert_eq!(settings.max_quality - state.missing_quality, 2118);
-    assert_eq!(state.effects.inner_quiet, 5);
-    assert_eq!(state.effects.innovation, 1);
+    assert_eq!(state.effects.inner_quiet(), 5);
+    assert_eq!(state.effects.innovation(), 1);
 }
 
 #[test]
