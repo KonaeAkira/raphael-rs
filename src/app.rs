@@ -579,7 +579,7 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add(
                         egui::DragValue::new(&mut self.crafter_config.job_level)
-                            .clamp_range(1..=90),
+                            .clamp_range(1..=100),
                     );
                 });
             });
