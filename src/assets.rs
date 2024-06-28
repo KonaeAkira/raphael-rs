@@ -122,5 +122,17 @@ pub fn get_action_icons() -> HashMap<Action, image::RgbImage> {
         Action::TrainedFinesse,
         include_bytes!("../assets/actions/Trained Finesse.png"),
     );
+    load_icon(
+        Action::ComboRefinedTouch,
+        include_bytes!("../assets/actions/Refined Touch.png"),
+    );
+    load_icon(
+        Action::ImmaculateMend,
+        include_bytes!("../assets/actions/Immaculate Mend.png"),
+    );
+    load_icon(
+        Action::TrainedPerfection,
+        include_bytes!("../assets/actions/Trained Perfection.png"),
+    );
     images
 }
