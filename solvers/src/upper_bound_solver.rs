@@ -1,7 +1,7 @@
 use crate::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use simulator::{
-    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
-    SimulationState,
+    state::{InProgress, TrainedPerfectionState},
+    Action, ActionMask, ComboAction, Condition, Effects, Settings, SimulationState,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -27,8 +27,7 @@ struct ReducedState {
     cp: i16,
     combo: Option<ComboAction>,
     effects: ReducedEffects,
-    trained_perfection_used: bool,
-    trained_perfection_active: bool,
+    trained_perfection: TrainedPerfectionState,
 }
 
 impl ReducedState {
@@ -49,8 +48,7 @@ impl ReducedState {
                 great_strides: state.effects.great_strides,
                 muscle_memory: state.effects.muscle_memory,
             },
-            trained_perfection_used: state.trained_perfection_used,
-            trained_perfection_active: state.trained_perfection_active,
+            trained_perfection: state.trained_perfection,
         }
     }
 }
@@ -72,8 +70,7 @@ impl std::convert::From<ReducedState> for InProgress {
                 manipulation: 0,
             },
             combo: state.combo,
-            trained_perfection_used: state.trained_perfection_used,
-            trained_perfection_active: state.trained_perfection_active,
+            trained_perfection: state.trained_perfection,
         }
         .try_into()
         .unwrap()

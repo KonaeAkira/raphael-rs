@@ -1,7 +1,10 @@
-use simulator::{state::InProgress, ActionMask, Settings};
+use simulator::{state::InProgress, ActionMask, Settings, SimulationState};
 use solvers::MacroSolver;
 
 fn main() {
+    dbg!(std::mem::size_of::<SimulationState>());
+    dbg!(std::mem::align_of::<SimulationState>());
+
     let settings = Settings {
         max_cp: 720,
         max_durability: 80,
