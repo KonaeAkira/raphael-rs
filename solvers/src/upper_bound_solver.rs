@@ -165,39 +165,6 @@ impl UpperBoundSolver {
     }
 
     fn solve_state(&mut self, state: ReducedState) {
-        match state.combo {
-            Some(combo) => {
-                let non_combo_state = ReducedState {
-                    combo: None,
-                    ..state
-                };
-                match self.solved_states.get(&non_combo_state) {
-                    Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
-                    None => self.solve_non_combo_state(non_combo_state),
-                }
-                let combo_actions: &[Action] = match combo {
-                    ComboAction::SynthesisBegin => &[Action::MuscleMemory, Action::Reflect],
-                    ComboAction::BasicTouch => {
-                        &[Action::ComboStandardTouch, Action::ComboRefinedTouch]
-                    }
-                    ComboAction::StandardTouch => &[Action::ComboAdvancedTouch],
-                    ComboAction::Observe => &[Action::ComboAdvancedTouch],
-                };
-                for action in combo_actions {
-                    if self.settings.allowed_actions.has(*action) {
-                        self.build_child_front(state, *action);
-                    }
-                }
-            }
-            None => {
-                self.solve_non_combo_state(state);
-            }
-        }
-        let pareto_front = self.pareto_front_builder.peek().unwrap();
-        self.solved_states.insert(state, pareto_front);
-    }
-
-    fn solve_non_combo_state(&mut self, state: ReducedState) {
         self.pareto_front_builder.push_empty();
         for action in SEARCH_ACTIONS
             .intersection(self.settings.allowed_actions)
@@ -205,6 +172,8 @@ impl UpperBoundSolver {
         {
             self.build_child_front(state, action);
         }
+        let pareto_front = self.pareto_front_builder.peek().unwrap();
+        self.solved_states.insert(state, pareto_front);
     }
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {

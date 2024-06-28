@@ -39,7 +39,6 @@ pub enum Action {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum ComboAction {
     SynthesisBegin,
-    Observe,
     BasicTouch,
     StandardTouch,
 }
@@ -318,10 +317,7 @@ impl Action {
             }
             Action::ComboStandardTouch => matches!(combo, Some(ComboAction::BasicTouch)),
             Action::ComboAdvancedTouch => {
-                matches!(
-                    combo,
-                    Some(ComboAction::StandardTouch | ComboAction::Observe)
-                )
+                matches!(combo, Some(ComboAction::StandardTouch))
             }
             Action::ComboRefinedTouch => matches!(combo, Some(ComboAction::BasicTouch)),
             _ => true,
@@ -332,7 +328,8 @@ impl Action {
         match self {
             Action::BasicTouch => Some(ComboAction::BasicTouch),
             Action::ComboStandardTouch => Some(ComboAction::StandardTouch),
-            Action::Observe => Some(ComboAction::Observe),
+            // Observe and StandardTouch unlock the same action (ComboAdvancedTouch)
+            Action::Observe => Some(ComboAction::StandardTouch),
             _ => None,
         }
     }
