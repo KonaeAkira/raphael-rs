@@ -325,3 +325,21 @@ fn test_indagator_3858_4057() {
     assert_eq!(get_quality(&settings, &actions), 12793);
     assert_eq!(get_duration(&actions), 72);
 }
+
+#[test]
+fn test_random_2ea6c001() {
+    let settings = Settings {
+        max_cp: 720,
+        max_durability: 80,
+        max_progress: 5700,
+        max_quality: 10600,
+        base_progress: 241,
+        base_quality: 322,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 10600);
+    assert_eq!(get_duration(&actions), 57);
+}

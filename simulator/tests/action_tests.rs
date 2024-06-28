@@ -9,7 +9,7 @@ const SETTINGS: Settings = Settings {
     base_quality: 100,
     initial_quality: 0,
     job_level: 100,
-    allowed_actions: ActionMask::none(),
+    allowed_actions: ActionMask::all(),
 };
 
 #[test]

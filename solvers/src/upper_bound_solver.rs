@@ -27,7 +27,6 @@ struct ReducedState {
     cp: i16,
     combo: Option<ComboAction>,
     effects: ReducedEffects,
-    trained_perfection: TrainedPerfectionState,
 }
 
 impl ReducedState {
@@ -48,7 +47,6 @@ impl ReducedState {
                 great_strides: state.effects.great_strides,
                 muscle_memory: state.effects.muscle_memory,
             },
-            trained_perfection: state.trained_perfection,
         }
     }
 }
@@ -70,7 +68,7 @@ impl std::convert::From<ReducedState> for InProgress {
                 manipulation: 0,
             },
             combo: state.combo,
-            trained_perfection: state.trained_perfection,
+            trained_perfection: TrainedPerfectionState::Unavailable,
         }
         .try_into()
         .unwrap()
@@ -127,6 +125,17 @@ impl UpperBoundSolver {
         state.cp += state.effects.waste_not as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
         state.durability = i8::MAX;
+
+        // assume Trained Perfection can be used to its fullest potential (20 durability)
+        if self.settings.allowed_actions.has(Action::TrainedPerfection)
+            && matches!(
+                state.trained_perfection,
+                TrainedPerfectionState::Available | TrainedPerfectionState::Active
+            )
+        {
+            state.cp += self.base_durability_cost * 4;
+            state.trained_perfection = TrainedPerfectionState::Unavailable;
+        }
 
         let reduced_state = ReducedState::from_state(
             InProgress::try_from(state).unwrap(),
