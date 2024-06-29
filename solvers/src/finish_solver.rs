@@ -12,30 +12,34 @@ use super::{
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[bitfield_struct::bitfield(u16)]
+#[derive(PartialEq, Eq, Hash)]
 struct ReducedEffects {
+    #[bits(4)]
     pub muscle_memory: u8,
+    #[bits(4)]
     pub waste_not: u8,
+    #[bits(4)]
     pub veneration: u8,
+    #[bits(4)]
     pub manipulation: u8,
 }
 
 impl ReducedEffects {
     pub fn from_effects(effects: &Effects) -> ReducedEffects {
-        ReducedEffects {
-            muscle_memory: effects.muscle_memory(),
-            waste_not: effects.waste_not(),
-            veneration: effects.veneration(),
-            manipulation: effects.manipulation(),
-        }
+        Self::new()
+            .with_muscle_memory(effects.muscle_memory())
+            .with_waste_not(effects.waste_not())
+            .with_veneration(effects.veneration())
+            .with_manipulation(effects.manipulation())
     }
 
     pub fn to_effects(self) -> Effects {
         Effects::new()
-            .with_waste_not(self.waste_not)
-            .with_veneration(self.veneration)
-            .with_muscle_memory(self.muscle_memory)
-            .with_manipulation(self.manipulation)
+            .with_waste_not(self.waste_not())
+            .with_veneration(self.veneration())
+            .with_muscle_memory(self.muscle_memory())
+            .with_manipulation(self.manipulation())
     }
 }
 
