@@ -58,6 +58,8 @@ impl MacroSolverApp {
         cc.egui_ctx.set_pixels_per_point(1.2);
         cc.egui_ctx.style_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
+            style.url_in_tooltip = true;
+            style.always_scroll_the_only_direction = true;
         });
 
         let item_id: u32 = 38890;
@@ -108,12 +110,23 @@ impl eframe::App for MacroSolverApp {
                 ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                 ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
                 egui::widgets::global_dark_light_mode_buttons(ui);
-                ui.hyperlink_to(
-                    egui::RichText::new(format!(
-                        "{} View source on GitHub",
-                        egui::special_emojis::GITHUB
-                    )),
-                    "https://github.com/KonaeAkira/raphael-rs",
+                ui.add(
+                    egui::Hyperlink::from_label_and_url(
+                        egui::RichText::new(format!(
+                            "{} View source on GitHub",
+                            egui::special_emojis::GITHUB
+                        )),
+                        "https://github.com/KonaeAkira/raphael-rs",
+                    )
+                    .open_in_new_tab(true),
+                );
+                ui.label("/");
+                ui.add(
+                    egui::Hyperlink::from_label_and_url(
+                        "Join Discord",
+                        "https://discord.gg/Qd9u9CtaYj",
+                    )
+                    .open_in_new_tab(true),
                 );
             });
         });
