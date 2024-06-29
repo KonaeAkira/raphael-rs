@@ -13,6 +13,36 @@ const SETTINGS: Settings = Settings {
 };
 
 #[test]
+fn test_redundant_half_efficiency_groundwork() {
+    // Groundwork's efficiency is halved when the remaining durability is lower than the durability cost
+    // Careful Synthesis is a strictly better action in case Groundwork's efficiency is halved
+    // This enables the simulator to simplify things by simply not allowing Groundwork when there isn't enough durability
+    for level in 1..=100 {
+        let settings = Settings {
+            job_level: level,
+            allowed_actions: ActionMask::from_level(level as _, true),
+            ..SETTINGS
+        };
+        match (
+            settings.allowed_actions.has(Action::CarefulSynthesis),
+            settings.allowed_actions.has(Action::Groundwork),
+        ) {
+            (false, true) => panic!("Cannot replace half-efficiency Groundwork because CarefulSynthesis is not available at level {}", level),
+            (true, true) => {
+                let state_1 = SimulationState::from_macro(&settings, &[Action::CarefulSynthesis]).unwrap();
+                let state_2 = SimulationState::from_macro(&settings, &[Action::Groundwork]).unwrap();
+                let progress_1 = settings.max_progress - state_1.missing_progress;
+                let progress_2 = settings.max_progress - state_2.missing_progress;
+                assert!(progress_1 * 2 >= progress_2);
+                assert!(state_1.durability >= state_2.durability);
+                assert!(state_1.cp >= state_2.cp);
+            }
+            _ => ()
+        }
+    }
+}
+
+#[test]
 fn test_standard_touch_combo() {
     let state =
         SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::ComboStandardTouch]);
@@ -80,16 +110,22 @@ fn test_prudent_touch() {
 
 #[test]
 fn test_groundwork() {
-    let state = SimulationState::from_macro(
-        &SETTINGS,
-        &[
-            Action::PreparatoryTouch,
-            Action::PreparatoryTouch,
-            Action::BasicSynthesis,
-            Action::Groundwork,
-        ],
-    );
+    let settings = Settings {
+        job_level: 100,
+        max_durability: 10,
+        ..SETTINGS
+    };
+    let state = SimulationState::from_macro(&settings, &[Action::Groundwork]);
     assert!(matches!(state, Err("Not enough durability")));
+    let state =
+        SimulationState::from_macro(&settings, &[Action::TrainedPerfection, Action::Groundwork]);
+    match state {
+        Ok(state) => {
+            assert_eq!(settings.max_progress - state.missing_progress, 360);
+            assert_eq!(state.durability, 10);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
 }
 
 #[test]

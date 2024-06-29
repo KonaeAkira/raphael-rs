@@ -116,10 +116,7 @@ impl InProgress {
         let mut state = self.state;
 
         let cp_cost = action.cp_cost(&state.effects, condition);
-        let durability_cost = match state.effects.trained_perfection() {
-            SingleUse::Active => 0,
-            _ => action.durability_cost(&state.effects, condition),
-        };
+        let durability_cost = action.durability_cost(&state.effects, condition);
         let progress_increase = action.progress_increase(settings, &state.effects, condition);
         let quality_increase = action.quality_increase(settings, &state.effects, condition);
 

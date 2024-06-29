@@ -1,4 +1,4 @@
-use crate::{Condition, Effects};
+use crate::{Condition, Effects, SingleUse};
 
 use super::Settings;
 
@@ -192,6 +192,9 @@ impl Action {
     }
 
     pub const fn durability_cost(self, effects: &Effects, condition: Condition) -> i8 {
+        if matches!(effects.trained_perfection(), SingleUse::Active) {
+            return 0;
+        }
         let base_cost = match condition {
             Condition::Sturdy => (self.base_durability_cost() + 1) / 2,
             _ => self.base_durability_cost(),
