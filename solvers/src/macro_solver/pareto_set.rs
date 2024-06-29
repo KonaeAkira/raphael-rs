@@ -31,9 +31,18 @@ pub struct ParetoSet {
 
 impl ParetoSet {
     pub fn insert(&mut self, state: SimulationState) -> bool {
+        let effects = match state.missing_quality == 0 {
+            // Ignore effects that are only relevant for Quality when Quality is already maxed out
+            true => state
+                .effects
+                .with_inner_quiet(0)
+                .with_innovation(0)
+                .with_great_strides(0),
+            false => state.effects,
+        };
         let hash_key = HashKey {
             durability: state.durability,
-            effects: state.effects,
+            effects,
             combo: state.combo,
         };
         let value = Value {

@@ -113,6 +113,10 @@ impl UpperBoundSolver {
         let mut state = *state.raw_state();
         let current_quality = self.settings.max_quality - state.missing_quality;
 
+        if current_quality == self.settings.max_quality {
+            return current_quality;
+        }
+
         // refund effects and durability
         state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.base_cp_cost() / 8);
         state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;

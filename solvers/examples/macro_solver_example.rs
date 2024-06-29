@@ -5,28 +5,16 @@ fn main() {
     dbg!(std::mem::size_of::<SimulationState>());
     dbg!(std::mem::align_of::<SimulationState>());
 
-    // let settings = Settings {
-    //     max_cp: 600,
-    //     max_durability: 40,
-    //     max_progress: 2400,
-    //     max_quality: 9400,
-    //     base_progress: 266,
-    //     base_quality: 331,
-    //     initial_quality: 0,
-    //     job_level: 94,
-    //     allowed_actions: ActionMask::from_level(90, true),
-    // };
-
     let settings = Settings {
-        max_cp: 687,
-        max_durability: 70,
-        max_progress: 5720,
-        max_quality: 12900,
-        base_progress: 239,
-        base_quality: 271,
+        max_cp: 720,
+        max_durability: 80,
+        max_progress: 5700,
+        max_quality: 10600,
+        base_progress: 241,
+        base_quality: 322,
         initial_quality: 0,
-        job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true),
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true),
     };
 
     let state = InProgress::new(&settings);
