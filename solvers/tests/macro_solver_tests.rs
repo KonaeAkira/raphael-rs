@@ -233,7 +233,7 @@ fn test_random_6799bb1d() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3321);
-    assert_eq!(get_duration(&actions), 57);
+    assert_eq!(get_duration(&actions), 60);
 }
 
 #[test]

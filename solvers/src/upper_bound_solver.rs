@@ -6,7 +6,7 @@ use simulator::{
 
 use rustc_hash::FxHashMap as HashMap;
 
-use super::pareto_front::{ParetoFrontBuilder, ParetoValue};
+use super::pareto_front_builder::{ParetoFrontBuilder, ParetoValue};
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS).union(MIXED_ACTIONS);
 
