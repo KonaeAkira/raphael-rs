@@ -107,7 +107,7 @@ impl UpperBoundSolver {
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
-    /// The returned upper-bound is NOT clamped to settings.max_quality.
+    /// The returned upper-bound is clamped to settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: InProgress) -> u16 {
         let mut state = *state.raw_state();
@@ -161,7 +161,10 @@ impl UpperBoundSolver {
             }
         }
 
-        pareto_front[lo].second + current_quality
+        std::cmp::min(
+            self.settings.max_quality,
+            pareto_front[lo].second + current_quality,
+        )
     }
 
     fn solve_state(&mut self, state: ReducedState) {
@@ -340,7 +343,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(90, true),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2604);
+        assert_eq!(result, 2000); // clamped to max_quality
     }
 
     #[test]

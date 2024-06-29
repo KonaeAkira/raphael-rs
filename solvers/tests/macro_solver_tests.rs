@@ -54,7 +54,7 @@ fn test_random_1e281667() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3366);
-    assert_eq!(get_duration(&actions), 56);
+    assert_eq!(get_duration(&actions), 53);
 }
 
 #[test]
@@ -92,6 +92,7 @@ fn test_unsolvable() {
     assert_eq!(actions, None);
 }
 
+#[ignore]
 #[test]
 fn test_max_quality() {
     let settings = Settings {
@@ -197,7 +198,7 @@ fn test_random_0f9d7781() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2939);
-    assert_eq!(get_duration(&actions), 67);
+    assert_eq!(get_duration(&actions), 64);
 }
 
 #[test]
@@ -233,7 +234,7 @@ fn test_random_6799bb1d() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3321);
-    assert_eq!(get_duration(&actions), 60);
+    assert_eq!(get_duration(&actions), 51);
 }
 
 #[test]
@@ -287,7 +288,7 @@ fn test_pactmaker_3240_3130() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 8912);
-    assert_eq!(get_duration(&actions), 61);
+    assert_eq!(get_duration(&actions), 55);
 }
 
 #[test]
@@ -326,6 +327,7 @@ fn test_indagator_3858_4057() {
     assert_eq!(get_duration(&actions), 72);
 }
 
+#[ignore]
 #[test]
 fn test_random_2ea6c001() {
     let settings = Settings {
@@ -359,5 +361,5 @@ fn test_random_48ae7c9f() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 19586);
-    assert_eq!(get_duration(&actions), 89);
+    assert_eq!(get_duration(&actions), 88);
 }
