@@ -343,3 +343,21 @@ fn test_random_2ea6c001() {
     assert_eq!(get_quality(&settings, &actions), 10600);
     assert_eq!(get_duration(&actions), 57);
 }
+
+#[test]
+fn test_random_48ae7c9f() {
+    let settings = Settings {
+        max_cp: 699,
+        max_durability: 80,
+        max_progress: 5700,
+        max_quality: 20000,
+        base_progress: 295,
+        base_quality: 310,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 19512);
+    assert_eq!(get_duration(&actions), 81);
+}
