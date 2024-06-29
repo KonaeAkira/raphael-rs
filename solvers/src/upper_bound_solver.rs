@@ -1,4 +1,4 @@
-use crate::actions::{MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
+use crate::actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use simulator::{
     state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
     SimulationState, SingleUse,
@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::pareto_front_builder::{ParetoFrontBuilder, ParetoValue};
 
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS).union(MIXED_ACTIONS);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS);
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct ReducedEffects {

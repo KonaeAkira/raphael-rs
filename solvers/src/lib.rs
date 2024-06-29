@@ -1,6 +1,5 @@
 mod actions;
 mod pareto_front_builder;
-mod pareto_set;
 mod utils;
 
 mod finish_solver;

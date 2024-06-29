@@ -1,17 +1,16 @@
 use radix_heap::RadixHeapMap;
 use simulator::state::InProgress;
+use simulator::{Action, ActionMask, Condition, Settings};
 
-use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
-use crate::pareto_set::ParetoSet;
+use super::pareto_set::ParetoSet;
+use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::utils::NamedTimer;
 use crate::{FinishSolver, UpperBoundSolver};
-use simulator::{Action, ActionMask, Condition, Settings};
 
 use std::vec::Vec;
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
-    .union(MIXED_ACTIONS)
     .union(DURABILITY_ACTIONS);
 
 pub struct MacroSolver {

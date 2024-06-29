@@ -7,6 +7,7 @@ pub const PROGRESS_ACTIONS: ActionMask = action_mask!(
     Action::MuscleMemory,
     Action::CarefulSynthesis,
     Action::Groundwork,
+    Action::DelicateSynthesis,
     // Action::IntensiveSynthesis,
     Action::PrudentSynthesis
 );
@@ -23,13 +24,12 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::PrudentTouch,
     Action::Reflect,
     Action::PreparatoryTouch,
+    Action::DelicateSynthesis,
     Action::AdvancedTouch,
     Action::ComboAdvancedTouch,
     Action::TrainedFinesse,
     Action::ComboRefinedTouch
 );
-
-pub const MIXED_ACTIONS: ActionMask = action_mask!(Action::DelicateSynthesis);
 
 pub const DURABILITY_ACTIONS: ActionMask = action_mask!(
     Action::MasterMend,
