@@ -1,3 +1,4 @@
+use pareto_front::{Dominate, ParetoFront};
 use radix_heap::RadixHeapMap;
 use rustc_hash::FxHashMap;
 use simulator::state::InProgress;
@@ -5,7 +6,7 @@ use simulator::state::InProgress;
 use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::utils::NamedTimer;
 use crate::{FinishSolver, UpperBoundSolver};
-use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, ComboAction, Condition, Effects, Settings, SimulationState};
 
 use std::vec::Vec;
 
@@ -40,7 +41,6 @@ impl MacroSolver {
             return None;
         }
         drop(timer);
-        let _timer = NamedTimer::new("Full solve");
         match self.do_solve(state) {
             Some(solution) => Some(solution),
             None => self.finish_solver.get_finish_sequence(state),
@@ -48,12 +48,11 @@ impl MacroSolver {
     }
 
     fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
-        let mut finish_solver_rejected_node: usize = 0;
+        let mut pareto_dominated_nodes: usize = 0;
+        let mut finish_solver_rejected_nodes: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
-        // key: State::InProgress (with missing_quality set to 0)
-        // value: min missing_quality seen for the key
-        let mut visited_states = FxHashMap::default();
+        let mut pareto_fronts = FxHashMap::default();
 
         // priority queue based on quality upper bound
         let mut search_queue = RadixHeapMap::new();
@@ -65,18 +64,23 @@ impl MacroSolver {
         let mut best_state = None;
         let mut best_trace = 0;
 
-        visited_states.insert(
-            hash_key(*state.raw_state()),
-            state.raw_state().missing_quality,
-        );
+        pareto_fronts
+            .entry(ParetoKey::from(*state.raw_state()))
+            .or_insert(ParetoFront::new())
+            .push(ParetoValue::from(*state.raw_state()));
         search_queue.push(
-            self.bound_solver.quality_upper_bound(state),
+            {
+                let _timer = NamedTimer::new("Quality upper bound");
+                self.bound_solver.quality_upper_bound(state)
+            },
             SearchNode {
                 state,
                 backtrack_index: 0,
             },
         );
         traces.push(None);
+
+        let _timer = NamedTimer::new("A* search");
 
         while let Some((quality_bound, node)) = search_queue.pop() {
             if best_quality == self.settings.max_quality || quality_bound <= best_quality {
@@ -91,15 +95,9 @@ impl MacroSolver {
                     .use_action(action, Condition::Normal, &self.settings)
                 {
                     if let Ok(in_progress) = InProgress::try_from(state) {
-                        // skip this state if we already visited the same state but with equal or more Quality
-                        if let Some(missing_quality) = visited_states.get(&hash_key(state)) {
-                            if *missing_quality <= state.missing_quality {
-                                continue;
-                            }
-                        }
                         // skip this state if it is impossible to max out Progress
                         if !self.finish_solver.can_finish(&in_progress) {
-                            finish_solver_rejected_node += 1;
+                            finish_solver_rejected_nodes += 1;
                             continue;
                         }
                         // skip this state if its Quality upper bound is not greater than the current best Quality
@@ -108,13 +106,21 @@ impl MacroSolver {
                             upper_bound_solver_rejected_nodes += 1;
                             continue;
                         }
+                        // skip this state if it is Pareto-dominated
+                        if !pareto_fronts
+                            .entry(ParetoKey::from(state))
+                            .or_insert(ParetoFront::new())
+                            .push(ParetoValue::from(state))
+                        {
+                            pareto_dominated_nodes += 1;
+                            continue;
+                        }
 
                         if quality_bound > search_queue.top().unwrap() {
                             dbg!(quality_bound, search_queue.top().unwrap());
                             dbg!(&node, &in_progress);
                         }
 
-                        visited_states.insert(hash_key(state), state.missing_quality);
                         search_queue.push(
                             quality_bound,
                             SearchNode {
@@ -152,8 +158,9 @@ impl MacroSolver {
 
         dbg!(
             traces.len(),
-            finish_solver_rejected_node,
-            upper_bound_solver_rejected_nodes
+            finish_solver_rejected_nodes,
+            upper_bound_solver_rejected_nodes,
+            pareto_dominated_nodes,
         );
 
         dbg!(best_quality, &best_actions);
@@ -182,9 +189,44 @@ fn get_actions(traces: &[Option<SearchTrace>], mut index: usize) -> impl Iterato
     actions.into_iter().rev()
 }
 
-fn hash_key(state: SimulationState) -> SimulationState {
-    SimulationState {
-        missing_quality: 0,
-        ..state
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct ParetoKey {
+    durability: i8,
+    effects: Effects,
+    combo: Option<ComboAction>,
+}
+
+impl std::convert::From<SimulationState> for ParetoKey {
+    fn from(state: SimulationState) -> Self {
+        Self {
+            durability: state.durability,
+            effects: state.effects,
+            combo: state.combo,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ParetoValue {
+    cp: i16,
+    missing_progress: u16,
+    missing_quality: u16,
+}
+
+impl std::convert::From<SimulationState> for ParetoValue {
+    fn from(state: SimulationState) -> Self {
+        Self {
+            cp: state.cp,
+            missing_progress: state.missing_progress,
+            missing_quality: state.missing_quality,
+        }
+    }
+}
+
+impl Dominate for ParetoValue {
+    fn dominate(&self, x: &Self) -> bool {
+        self.cp >= x.cp
+            && self.missing_progress <= x.missing_progress
+            && self.missing_quality <= x.missing_quality
     }
 }

@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::{
     actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS},
-    pareto_front::{ParetoFrontBuilder, ParetoValue},
+    pareto_front_builder::{ParetoFrontBuilder, ParetoValue},
 };
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
