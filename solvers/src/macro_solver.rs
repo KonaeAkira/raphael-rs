@@ -1,12 +1,11 @@
-use pareto_front::{Dominate, ParetoFront};
 use radix_heap::RadixHeapMap;
-use rustc_hash::FxHashMap;
 use simulator::state::InProgress;
 
 use crate::actions::{DURABILITY_ACTIONS, MIXED_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
+use crate::pareto_set::ParetoSet;
 use crate::utils::NamedTimer;
 use crate::{FinishSolver, UpperBoundSolver};
-use simulator::{Action, ActionMask, ComboAction, Condition, Effects, Settings, SimulationState};
+use simulator::{Action, ActionMask, Condition, Settings};
 
 use std::vec::Vec;
 
@@ -52,7 +51,7 @@ impl MacroSolver {
         let mut finish_solver_rejected_nodes: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
-        let mut pareto_fronts = FxHashMap::default();
+        let mut pareto_set = ParetoSet::default();
 
         // priority queue based on quality upper bound
         let mut search_queue: RadixHeapMap<Score, SearchNode> = RadixHeapMap::new();
@@ -63,10 +62,7 @@ impl MacroSolver {
         let mut quality_lower_bound = 0;
         let mut solution: Option<(Score, u32)> = None; // (quality, trace_index)
 
-        pareto_fronts
-            .entry(ParetoKey::from(*state.raw_state()))
-            .or_insert(ParetoFront::new())
-            .push(ParetoValue::from(*state.raw_state()));
+        pareto_set.insert(*state.raw_state());
         search_queue.push(
             {
                 let _timer = NamedTimer::new("Quality upper bound");
@@ -110,11 +106,7 @@ impl MacroSolver {
                             continue;
                         }
                         // skip this state if it is Pareto-dominated
-                        if !pareto_fronts
-                            .entry(ParetoKey::from(state))
-                            .or_insert(ParetoFront::new())
-                            .push(ParetoValue::from(state))
-                        {
+                        if !pareto_set.insert(state) {
                             pareto_dominated_nodes += 1;
                             continue;
                         }
@@ -235,46 +227,4 @@ fn get_actions(traces: &[Option<SearchTrace>], mut index: usize) -> impl Iterato
         index = trace.parent as usize;
     }
     actions.into_iter().rev()
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct ParetoKey {
-    durability: i8,
-    effects: Effects,
-    combo: Option<ComboAction>,
-}
-
-impl std::convert::From<SimulationState> for ParetoKey {
-    fn from(state: SimulationState) -> Self {
-        Self {
-            durability: state.durability,
-            effects: state.effects,
-            combo: state.combo,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-struct ParetoValue {
-    cp: i16,
-    missing_progress: u16,
-    missing_quality: u16,
-}
-
-impl std::convert::From<SimulationState> for ParetoValue {
-    fn from(state: SimulationState) -> Self {
-        Self {
-            cp: state.cp,
-            missing_progress: state.missing_progress,
-            missing_quality: state.missing_quality,
-        }
-    }
-}
-
-impl Dominate for ParetoValue {
-    fn dominate(&self, x: &Self) -> bool {
-        self.cp >= x.cp
-            && self.missing_progress <= x.missing_progress
-            && self.missing_quality <= x.missing_quality
-    }
 }
