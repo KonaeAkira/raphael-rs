@@ -3,15 +3,22 @@ use simulator::state::InProgress;
 use simulator::{Action, ActionMask, Condition, Settings};
 
 use super::pareto_set::ParetoSet;
+use super::quick_search::quick_search;
 use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
-use crate::utils::NamedTimer;
+use crate::utils::{Backtracking, NamedTimer};
 use crate::{FinishSolver, UpperBoundSolver};
 
 use std::vec::Vec;
 
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
     .union(DURABILITY_ACTIONS);
+
+#[derive(Debug, Clone, Copy)]
+struct SearchNode {
+    state: InProgress,
+    backtrack_index: u32,
+}
 
 pub struct MacroSolver {
     settings: Settings,
@@ -39,6 +46,17 @@ impl MacroSolver {
             return None;
         }
         drop(timer);
+
+        if let Some(actions) = quick_search(
+            state,
+            &self.settings,
+            &mut self.finish_solver,
+            &mut self.bound_solver,
+        ) {
+            return Some(actions);
+        }
+
+        let _timer = NamedTimer::new("Full search");
         match self.do_solve(state) {
             Some(solution) => Some(solution),
             None => self.finish_solver.get_finish_sequence(state),
@@ -52,29 +70,20 @@ impl MacroSolver {
 
         let mut pareto_set = ParetoSet::default();
 
-        // priority queue based on quality upper bound
         let mut search_queue: RadixHeapMap<Score, SearchNode> = RadixHeapMap::new();
-
-        // backtracking data
-        let mut traces: Vec<Option<SearchTrace>> = Vec::new();
+        let mut backtracking: Backtracking<Action> = Backtracking::new();
 
         let mut quality_lower_bound = 0;
         let mut solution: Option<(Score, u32)> = None; // (quality, trace_index)
 
         pareto_set.insert(*state.raw_state());
         search_queue.push(
-            {
-                let _timer = NamedTimer::new("Quality upper bound");
-                Score::new(self.bound_solver.quality_upper_bound(state), 0)
-            },
+            Score::new(self.bound_solver.quality_upper_bound(state), 0),
             SearchNode {
                 state,
-                backtrack_index: 0,
+                backtrack_index: Backtracking::<Action>::SENTINEL,
             },
         );
-        traces.push(None);
-
-        let _timer = NamedTimer::new("A* search");
 
         while let Some((score, node)) = search_queue.pop() {
             if score.quality < quality_lower_bound {
@@ -83,7 +92,7 @@ impl MacroSolver {
             if solution.is_some() && score <= solution.unwrap().0 {
                 break;
             }
-            for action in SEARCH_ACTIONS
+            for action in FULL_SEARCH_ACTIONS
                 .intersection(self.settings.allowed_actions)
                 .actions_iter()
             {
@@ -110,6 +119,7 @@ impl MacroSolver {
                             continue;
                         }
 
+                        let backtrack_index = backtracking.push(action, node.backtrack_index);
                         search_queue.push(
                             Score::new(
                                 quality_upper_bound,
@@ -117,13 +127,9 @@ impl MacroSolver {
                             ),
                             SearchNode {
                                 state: in_progress,
-                                backtrack_index: traces.len() as _,
+                                backtrack_index,
                             },
                         );
-                        traces.push(Some(SearchTrace {
-                            parent: node.backtrack_index as _,
-                            action,
-                        }));
 
                         let quality = self.settings.max_quality - state.missing_quality;
                         if quality > quality_lower_bound {
@@ -135,11 +141,8 @@ impl MacroSolver {
                             score.duration + action.time_cost() as u8,
                         );
                         if solution.is_none() || solution.unwrap().0 < final_score {
-                            traces.push(Some(SearchTrace {
-                                parent: node.backtrack_index as _,
-                                action,
-                            }));
-                            solution = Some((final_score, traces.len() as u32 - 1));
+                            let backtrack_index = backtracking.push(action, node.backtrack_index);
+                            solution = Some((final_score, backtrack_index));
                         }
                     }
                 }
@@ -149,13 +152,12 @@ impl MacroSolver {
         let actions = match solution {
             Some((score, trace_index)) => {
                 dbg!(score);
-                Some(get_actions(&traces, trace_index as _).collect())
+                Some(backtracking.get(trace_index).collect())
             }
             None => None,
         };
 
         dbg!(
-            traces.len(),
             finish_solver_rejected_nodes,
             upper_bound_solver_rejected_nodes,
             pareto_dominated_nodes,
@@ -205,25 +207,4 @@ impl radix_heap::Radix for Score {
             self.duration.radix_similarity(&other.duration) + 16
         }
     }
-}
-
-#[derive(Debug, Clone)]
-struct SearchNode {
-    state: InProgress,
-    backtrack_index: u32,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct SearchTrace {
-    parent: u32,
-    action: Action,
-}
-
-fn get_actions(traces: &[Option<SearchTrace>], mut index: usize) -> impl Iterator<Item = Action> {
-    let mut actions = Vec::new();
-    while let Some(trace) = traces[index] {
-        actions.push(trace.action);
-        index = trace.parent as usize;
-    }
-    actions.into_iter().rev()
 }

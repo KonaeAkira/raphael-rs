@@ -92,7 +92,6 @@ fn test_unsolvable() {
     assert_eq!(actions, None);
 }
 
-#[ignore]
 #[test]
 fn test_max_quality() {
     let settings = Settings {
@@ -108,7 +107,7 @@ fn test_max_quality() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1000);
-    assert_eq!(get_duration(&actions), 35);
+    assert_eq!(get_duration(&actions), 29);
 }
 
 #[test]
@@ -327,7 +326,6 @@ fn test_indagator_3858_4057() {
     assert_eq!(get_duration(&actions), 72);
 }
 
-#[ignore]
 #[test]
 fn test_random_2ea6c001() {
     let settings = Settings {
@@ -343,7 +341,7 @@ fn test_random_2ea6c001() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10600);
-    assert_eq!(get_duration(&actions), 57);
+    assert_eq!(get_duration(&actions), 44);
 }
 
 #[test]
