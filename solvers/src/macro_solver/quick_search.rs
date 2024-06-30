@@ -14,7 +14,6 @@ use super::pareto_set::ParetoSet;
 
 const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
-    .remove(Action::PrudentSynthesis)
     .remove(Action::DelicateSynthesis)
     .remove(Action::MasterMend);
 
@@ -22,8 +21,6 @@ const QUALITY_SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::StandardTouch) // non-combo version
     .remove(Action::AdvancedTouch) // non-combo version
-    .remove(Action::PrudentTouch)
-    .remove(Action::Observe)
     .remove(Action::DelicateSynthesis)
     .remove(Action::MasterMend);
 

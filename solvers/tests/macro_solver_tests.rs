@@ -361,3 +361,45 @@ fn test_random_48ae7c9f() {
     assert_eq!(get_quality(&settings, &actions), 19586);
     assert_eq!(get_duration(&actions), 89);
 }
+
+#[test]
+fn test_max_quality_indagator_3858_4057() {
+    let settings = Settings {
+        max_cp: 714,
+        max_durability: 70,
+        max_progress: 5720,
+        max_quality: 12900,
+        base_progress: 239,
+        base_quality: 271,
+        initial_quality: 0,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90, true),
+    };
+    let actions = solve(&settings).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 12900);
+    assert_eq!(get_duration(&actions), 72);
+    // 62 seconds is possible, but takes very long to solve using the main solver:
+    // /ac "Reflect" <wait.3>
+    // /ac "Manipulation" <wait.2>
+    // /ac "Innovation" <wait.2>
+    // /ac "Waste Not II" <wait.2>
+    // /ac "Preparatory Touch" <wait.3>
+    // /ac "Preparatory Touch" <wait.3>
+    // /ac "Preparatory Touch" <wait.3>
+    // /ac "Veneration" <wait.2>
+    // /ac "Groundwork" <wait.3>
+    // /ac "Groundwork" <wait.3>
+    // /ac "Groundwork" <wait.3>
+    // /ac "Groundwork" <wait.3>
+    // /ac "Innovation" <wait.2>
+    // /ac "Delicate Synthesis" <wait.3>
+    // /ac "Prudent Touch" <wait.3>
+    // /ac "Trained Finesse" <wait.3>
+    // /ac "Trained Finesse" <wait.3>
+    // /ac "Innovation" <wait.2>
+    // /ac "Trained Finesse" <wait.3>
+    // /ac "Trained Finesse" <wait.3>
+    // /ac "Great Strides" <wait.2>
+    // /ac "Byregot's Blessing" <wait.3>
+    // /ac "Careful Synthesis" <wait.3>
+}
