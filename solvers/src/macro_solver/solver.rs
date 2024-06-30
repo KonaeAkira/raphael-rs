@@ -57,10 +57,7 @@ impl MacroSolver {
         }
 
         let _timer = NamedTimer::new("Full search");
-        match self.do_solve(state) {
-            Some(solution) => Some(solution),
-            None => self.finish_solver.get_finish_sequence(state),
-        }
+        self.do_solve(state)
     }
 
     fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
