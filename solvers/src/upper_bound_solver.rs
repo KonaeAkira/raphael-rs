@@ -8,15 +8,18 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::pareto_front_builder::{ParetoFrontBuilder, ParetoValue};
 
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+    .union(QUALITY_ACTIONS)
+    .add(Action::TrainedPerfection);
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedEffects {
     inner_quiet: u8,
     innovation: u8,
     veneration: u8,
     great_strides: u8,
     muscle_memory: u8,
+    trained_perfection: SingleUse,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -43,6 +46,7 @@ impl ReducedState {
                 veneration: state.effects.veneration(),
                 great_strides: state.effects.great_strides(),
                 muscle_memory: state.effects.muscle_memory(),
+                trained_perfection: state.effects.trained_perfection(),
             },
         }
     }
@@ -60,7 +64,8 @@ impl std::convert::From<ReducedState> for InProgress {
                 .with_innovation(state.effects.innovation)
                 .with_veneration(state.effects.veneration)
                 .with_great_strides(state.effects.great_strides)
-                .with_muscle_memory(state.effects.muscle_memory),
+                .with_muscle_memory(state.effects.muscle_memory)
+                .with_trained_perfection(state.effects.trained_perfection),
             combo: state.combo,
         }
         .try_into()
@@ -96,10 +101,8 @@ impl UpperBoundSolver {
             base_durability_cost: durability_cost,
             waste_not_cost: if settings.allowed_actions.has(Action::WasteNot2) {
                 Action::WasteNot2.base_cp_cost() / 8
-            } else if settings.allowed_actions.has(Action::WasteNot) {
-                Action::WasteNot.base_cp_cost() / 4
             } else {
-                1000 // inf
+                Action::WasteNot.base_cp_cost() / 4
             },
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(settings.max_progress),
@@ -122,16 +125,6 @@ impl UpperBoundSolver {
         state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
         state.durability = i8::MAX;
-
-        // assume Trained Perfection can be used to its fullest potential (20 durability)
-        if self.settings.allowed_actions.has(Action::TrainedPerfection)
-            && matches!(
-                state.effects.trained_perfection(),
-                SingleUse::Available | SingleUse::Active
-            )
-        {
-            state.cp += self.base_durability_cost * 4;
-        }
 
         let reduced_state = ReducedState::from_state(
             InProgress::try_from(state).unwrap(),
@@ -203,7 +196,8 @@ impl UpperBoundSolver {
                     self.pareto_front_builder
                         .add(action_progress, action_quality);
                     self.pareto_front_builder.merge();
-                } else if new_state.cp + self.base_durability_cost >= 0 && action_progress != 0 {
+                }
+                if new_state.cp + self.base_durability_cost >= 0 && action_progress != 0 {
                     // "durability" must not go lower than -5
                     // last action must be a progress increase
                     self.pareto_front_builder.push(&[ParetoValue::new(0, 0)]);
@@ -225,6 +219,51 @@ mod tests {
         let result = UpperBoundSolver::new(settings).quality_upper_bound(state.try_into().unwrap());
         dbg!(result);
         result
+    }
+
+    #[test]
+    fn sanity_test() {
+        let settings = Settings {
+            max_cp: 699,
+            max_durability: 80,
+            max_progress: 5700,
+            max_quality: 20000,
+            base_progress: 295,
+            base_quality: 310,
+            initial_quality: 0,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100, true),
+        };
+        let mut solver = UpperBoundSolver::new(settings);
+
+        let state_a = InProgress::try_from(SimulationState {
+            cp: 625,
+            durability: 5,
+            missing_progress: 1011,
+            missing_quality: 19070,
+            effects: Effects::new()
+                .with_inner_quiet(2)
+                .with_trained_perfection(SingleUse::Available),
+            combo: None,
+        })
+        .unwrap();
+
+        let state_c = InProgress::try_from(SimulationState {
+            cp: 623,
+            durability: 5,
+            missing_progress: 1011,
+            missing_quality: 19070,
+            effects: Effects::new()
+                .with_inner_quiet(2)
+                .with_trained_perfection(SingleUse::Available),
+            combo: None,
+        })
+        .unwrap();
+
+        let score_a = solver.quality_upper_bound(state_a);
+        let score_b = solver.quality_upper_bound(state_c);
+        dbg!(score_a, score_b);
+        assert!(score_a >= score_b);
     }
 
     #[test]
