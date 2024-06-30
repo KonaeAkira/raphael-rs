@@ -110,7 +110,7 @@ impl Action {
             Action::TrainedFinesse => 3,
             Action::ComboRefinedTouch => 3,
             Action::ImmaculateMend => 3,
-            Action::TrainedPerfection => 2,
+            Action::TrainedPerfection => 3,
         }
     }
 

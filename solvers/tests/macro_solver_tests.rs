@@ -359,5 +359,5 @@ fn test_random_48ae7c9f() {
     };
     let actions = solve(&settings).unwrap();
     assert_eq!(get_quality(&settings, &actions), 19586);
-    assert_eq!(get_duration(&actions), 88);
+    assert_eq!(get_duration(&actions), 89);
 }
