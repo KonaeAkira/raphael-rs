@@ -125,6 +125,10 @@ impl FinishSolver {
                             max_progress = std::cmp::max(max_progress, progress);
                         }
                     }
+                    if max_progress >= self.settings.max_progress {
+                        max_progress = self.settings.max_progress;
+                        break;
+                    }
                 }
                 self.max_progress.insert(state, max_progress);
                 max_progress
