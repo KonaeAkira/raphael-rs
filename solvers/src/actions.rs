@@ -2,7 +2,6 @@ use simulator::{action_mask, Action, ActionMask};
 
 pub const PROGRESS_ACTIONS: ActionMask = action_mask!(
     Action::BasicSynthesis,
-    Action::Observe,
     Action::Veneration,
     Action::MuscleMemory,
     Action::CarefulSynthesis,

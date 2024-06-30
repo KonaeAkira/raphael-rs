@@ -10,7 +10,9 @@ use super::{
     pareto_front_builder::{ParetoFrontBuilder, ParetoValue},
 };
 
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(DURABILITY_ACTIONS);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+    .union(DURABILITY_ACTIONS)
+    .remove(Action::DelicateSynthesis);
 
 #[bitfield_struct::bitfield(u16)]
 #[derive(PartialEq, Eq, Hash)]
