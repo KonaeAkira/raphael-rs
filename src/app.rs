@@ -312,12 +312,29 @@ impl MacroSolverApp {
                         .desired_width(120.0),
                 );
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    let quality = game_settings.max_quality - game_state.missing_quality;
-                    let hq = match game_state.missing_progress {
-                        0 => game_data::hq_percentage(quality, game_settings.max_quality),
-                        _ => 0,
-                    };
-                    ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
+                    let item = game_data::ITEMS.get(&self.recipe_config.item_id).unwrap();
+                    if item.can_be_hq {
+                        let quality = game_settings.max_quality - game_state.missing_quality;
+                        let hq = match game_state.missing_progress {
+                            0 => game_data::hq_percentage(quality, game_settings.max_quality),
+                            _ => 0,
+                        };
+                        ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
+                    } else if item.is_collectable {
+                        let quality = game_settings.max_quality - game_state.missing_quality;
+                        let t1 = QualityTarget::CollectableT1.get_target(game_settings.max_quality);
+                        let t2 = QualityTarget::CollectableT2.get_target(game_settings.max_quality);
+                        let t3 = QualityTarget::CollectableT3.get_target(game_settings.max_quality);
+                        let tier = match quality {
+                            quality if quality >= t3 => 3,
+                            quality if quality >= t2 => 2,
+                            quality if quality >= t1 => 1,
+                            _ => 0,
+                        };
+                        ui.label(egui::RichText::new(format!("Collectable tier {tier}")).strong());
+                    } else {
+                        ui.label("Item cannot be HQ");
+                    }
                 });
             });
         });
@@ -735,6 +752,7 @@ impl MacroSolverApp {
                 });
             });
 
+            ui.add_space(5.5);
             ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                 if ui.button("Solve").clicked() {
                     self.solver_pending = true;

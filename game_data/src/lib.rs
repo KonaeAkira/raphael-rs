@@ -8,6 +8,7 @@ pub struct Item {
     pub name: &'static str,
     pub item_level: u32,
     pub can_be_hq: bool,
+    pub is_collectable: bool,
 }
 
 #[derive(Debug, Clone, Copy)]

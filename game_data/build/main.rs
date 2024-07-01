@@ -110,10 +110,11 @@ fn import_item_records() -> Result<(), Box<dyn std::error::Error>> {
         items.entry(
             item_record.id,
             &format!(
-                "Item {{ name: \"{name}\", item_level: {item_level}, can_be_hq: {can_be_hq} }}",
+                "Item {{ name: \"{name}\", item_level: {item_level}, can_be_hq: {can_be_hq}, is_collectable: {is_collectable} }}",
                 name = item_record.name,
                 item_level = item_record.item_level,
-                can_be_hq = item_record.can_be_hq
+                can_be_hq = item_record.can_be_hq,
+                is_collectable = item_record.is_collectable,
             ),
         );
     }
