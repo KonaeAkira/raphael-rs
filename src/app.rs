@@ -24,10 +24,54 @@ impl Default for MacroViewConfig {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum QualityTarget {
+    Zero,
+    CollectableT1,
+    CollectableT2,
+    CollectableT3,
+    Full,
+}
+
+impl QualityTarget {
+    pub fn get_target(self, max_quality: u16) -> u16 {
+        (max_quality as f64
+            * match self {
+                Self::Zero => 0.0,
+                Self::CollectableT1 => 0.55,
+                Self::CollectableT2 => 0.75,
+                Self::CollectableT3 => 0.95,
+                Self::Full => 1.00,
+            })
+        .ceil() as u16
+    }
+}
+
+impl std::fmt::Display for QualityTarget {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Zero => "0% quality",
+                Self::CollectableT1 => "55% quality",
+                Self::CollectableT2 => "75% quality",
+                Self::CollectableT3 => "95% quality",
+                Self::Full => "100% quality",
+            }
+        )
+    }
+}
+
+struct SolverConfig {
+    quality_target: QualityTarget,
+}
+
 pub struct MacroSolverApp {
     actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
     crafter_config: CrafterConfiguration,
+    solver_config: SolverConfig,
     selected_food: Option<Consumable>,
     selected_potion: Option<Consumable>,
 
@@ -76,10 +120,15 @@ impl MacroSolverApp {
             manipulation: true,
         };
 
+        let solver_config = SolverConfig {
+            quality_target: QualityTarget::Full,
+        };
+
         Self {
             actions: Vec::new(),
             recipe_config,
             crafter_config,
+            solver_config,
             selected_food: None,
             selected_potion: None,
 
@@ -648,16 +697,59 @@ impl MacroSolverApp {
                 false,
                 egui::Checkbox::new(&mut false, "Enable specialist actions"),
             );
+            ui.separator();
+
+            ui.label(egui::RichText::new("Solver settings").strong());
+            ui.horizontal(|ui| {
+                ui.label("Target quality");
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    egui::ComboBox::from_id_source("TARGET_QUALITY")
+                        .selected_text(format!("{}", self.solver_config.quality_target))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(
+                                &mut self.solver_config.quality_target,
+                                QualityTarget::Zero,
+                                format!("{}", QualityTarget::Zero),
+                            );
+                            ui.selectable_value(
+                                &mut self.solver_config.quality_target,
+                                QualityTarget::CollectableT1,
+                                format!("{}", QualityTarget::CollectableT1),
+                            );
+                            ui.selectable_value(
+                                &mut self.solver_config.quality_target,
+                                QualityTarget::CollectableT2,
+                                format!("{}", QualityTarget::CollectableT2),
+                            );
+                            ui.selectable_value(
+                                &mut self.solver_config.quality_target,
+                                QualityTarget::CollectableT3,
+                                format!("{}", QualityTarget::CollectableT3),
+                            );
+                            ui.selectable_value(
+                                &mut self.solver_config.quality_target,
+                                QualityTarget::Full,
+                                format!("{}", QualityTarget::Full),
+                            );
+                        });
+                });
+            });
 
             ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                 if ui.button("Solve").clicked() {
                     self.solver_pending = true;
-                    let game_settings = game_data::get_game_settings(
+                    let mut game_settings = game_data::get_game_settings(
                         self.recipe_config,
                         self.crafter_config,
                         self.selected_food,
                         self.selected_potion,
                     );
+                    let target_quality = self
+                        .solver_config
+                        .quality_target
+                        .get_target(game_settings.max_quality);
+                    game_settings.max_quality =
+                        std::cmp::max(game_settings.initial_quality, target_quality);
                     self.bridge.send(game_settings);
                     log::debug!("Message send {game_settings:?}");
                 }
