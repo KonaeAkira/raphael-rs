@@ -5,6 +5,7 @@ use simulator::{Action, ActionMask, Condition, Settings};
 use super::pareto_set::ParetoSet;
 use super::quick_search::quick_search;
 use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
+use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::utils::{Backtracking, NamedTimer};
 use crate::{FinishSolver, UpperBoundSolver};
 
@@ -70,7 +71,12 @@ impl MacroSolver {
         let mut search_queue: RadixHeapMap<Score, SearchNode> = RadixHeapMap::new();
         let mut backtracking: Backtracking<Action> = Backtracking::new();
 
-        let mut quality_lower_bound = 0;
+        let mut quality_lower_bound = fast_lower_bound(
+            state,
+            &self.settings,
+            &mut self.finish_solver,
+            &mut self.bound_solver,
+        );
         let mut solution: Option<(Score, u32)> = None; // (quality, trace_index)
 
         search_queue.push(

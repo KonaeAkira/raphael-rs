@@ -257,12 +257,12 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_queueMicrotask_481971b0d87f3dd4 = function(arg0) {
         queueMicrotask(getObject(arg0));
     };
-    imports.wbg.__wbindgen_closure_wrapper133 = function(arg0, arg1, arg2) {
-        const ret = makeClosure(arg0, arg1, 35, __wbg_adapter_16);
+    imports.wbg.__wbindgen_closure_wrapper134 = function(arg0, arg1, arg2) {
+        const ret = makeClosure(arg0, arg1, 37, __wbg_adapter_16);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper742 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 35, __wbg_adapter_19);
+    imports.wbg.__wbindgen_closure_wrapper743 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 37, __wbg_adapter_19);
         return addHeapObject(ret);
     };
 
