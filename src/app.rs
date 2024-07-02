@@ -331,7 +331,10 @@ impl MacroSolverApp {
                             quality if quality >= t1 => 1,
                             _ => 0,
                         };
-                        ui.label(egui::RichText::new(format!("Collectable tier {tier}")).strong());
+                        ui.label(
+                            egui::RichText::new(format!("Tier {tier} collectable reached"))
+                                .strong(),
+                        );
                     } else {
                         ui.label("Item cannot be HQ");
                     }

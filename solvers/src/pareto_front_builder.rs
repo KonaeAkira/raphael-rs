@@ -27,7 +27,9 @@ where
     buffer_head: usize,
     buffer_capacity: usize,
     segments: Vec<Segment>,
+    // cut-off values
     max_first: T,
+    max_second: U,
     // variables used for profiling
     fronts_generated: usize,
     values_generated: usize,
@@ -38,7 +40,7 @@ where
     T: num_traits::int::PrimInt,
     U: num_traits::int::PrimInt,
 {
-    pub fn new(max_first: T) -> Self {
+    pub fn new(max_first: T, max_second: U) -> Self {
         const INITIAL_CAPACITY: usize = 1024;
         unsafe {
             let layout = alloc::Layout::from_size_align_unchecked(
@@ -51,6 +53,7 @@ where
                 buffer_capacity: INITIAL_CAPACITY,
                 segments: Vec::new(),
                 max_first,
+                max_second,
                 fronts_generated: 0,
                 values_generated: 0,
             }
@@ -195,6 +198,11 @@ where
             head_c += 1;
         }
 
+        // cut out values that are over max_second
+        while head_c + 1 < tail_c && slice_c[tail_c - 2].second >= self.max_second {
+            tail_c -= 1;
+        }
+
         let segment_c = Segment {
             offset: offset_c + head_c,
             length: tail_c - head_c,
@@ -300,7 +308,7 @@ mod tests {
     #[test]
     fn test_merge_empty() {
         let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress);
+            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
         builder.push_empty();
         builder.push_empty();
         builder.merge();
@@ -312,7 +320,7 @@ mod tests {
     #[test]
     fn test_value_shift() {
         let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress);
+            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
         builder.push(SAMPLE_FRONT_1);
         builder.add(100, 100);
         let front = builder.peek().unwrap();
@@ -330,7 +338,7 @@ mod tests {
     #[test]
     fn test_merge() {
         let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress);
+            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
         builder.push(SAMPLE_FRONT_1);
         builder.push(SAMPLE_FRONT_2);
         builder.merge();
@@ -351,7 +359,7 @@ mod tests {
     #[test]
     fn test_merge_truncated() {
         let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress);
+            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
         builder.push(SAMPLE_FRONT_1);
         builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
         builder.push(SAMPLE_FRONT_2);
@@ -366,7 +374,7 @@ mod tests {
     fn test_random_simulation() {
         let mut rng = rand::thread_rng();
         let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress);
+            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
         let mut lut = [0; 5000];
 
         for _ in 0..200 {

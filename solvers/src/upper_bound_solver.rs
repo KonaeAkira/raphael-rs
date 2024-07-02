@@ -105,7 +105,10 @@ impl UpperBoundSolver {
                 Action::WasteNot.base_cp_cost() / 4
             },
             solved_states: HashMap::default(),
-            pareto_front_builder: ParetoFrontBuilder::new(settings.max_progress),
+            pareto_front_builder: ParetoFrontBuilder::new(
+                settings.max_progress,
+                settings.max_quality,
+            ),
         }
     }
 
