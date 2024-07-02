@@ -73,7 +73,6 @@ impl MacroSolver {
         let mut quality_lower_bound = 0;
         let mut solution: Option<(Score, u32)> = None; // (quality, trace_index)
 
-        pareto_set.insert(*state.raw_state());
         search_queue.push(
             Score::new(self.bound_solver.quality_upper_bound(state), 0),
             SearchNode {
@@ -116,12 +115,10 @@ impl MacroSolver {
                             continue;
                         }
 
+                        let duration = score.duration + action.time_cost() as u8;
                         let backtrack_index = backtracking.push(action, node.backtrack_index);
                         search_queue.push(
-                            Score::new(
-                                quality_upper_bound,
-                                score.duration + action.time_cost() as u8,
-                            ),
+                            Score::new(quality_upper_bound, duration),
                             SearchNode {
                                 state: in_progress,
                                 backtrack_index,
