@@ -53,3 +53,10 @@ impl ParetoSet {
         self.buckets.entry(hash_key).or_default().push(value)
     }
 }
+
+impl Drop for ParetoSet {
+    fn drop(&mut self) {
+        let pareto_entries: usize = self.buckets.iter().map(|bucket| bucket.1.len()).sum();
+        dbg!(self.buckets.len(), pareto_entries);
+    }
+}
