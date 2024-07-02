@@ -1,3 +1,6 @@
+mod pareto_front_builder;
+pub use pareto_front_builder::{ParetoFrontBuilder, ParetoValue};
+
 pub struct NamedTimer {
     name: &'static str,
     #[cfg(not(target_arch = "wasm32"))]
