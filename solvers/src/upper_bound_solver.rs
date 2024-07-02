@@ -459,4 +459,38 @@ mod tests {
         let result = solve(settings, &[]);
         assert_eq!(result, 4823); // tightness test
     }
+
+    #[test]
+    fn test_10() {
+        let settings = Settings {
+            max_cp: 400,
+            max_durability: 80,
+            max_progress: 1200,
+            max_quality: 24000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100, false),
+        };
+        let result = solve(settings, &[]);
+        assert_eq!(result, 4239);
+    }
+
+    #[test]
+    fn test_11() {
+        let settings = Settings {
+            max_cp: 320,
+            max_durability: 80,
+            max_progress: 1600,
+            max_quality: 24000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100, false),
+        };
+        let result = solve(settings, &[]);
+        assert_eq!(result, 2986);
+    }
 }
