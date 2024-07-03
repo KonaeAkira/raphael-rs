@@ -1,6 +1,9 @@
 mod consumables;
 pub use consumables::*;
 
+mod config;
+pub use config::*;
+
 use simulator::{ActionMask, Settings};
 
 #[derive(Debug, Clone, Copy)]
@@ -42,15 +45,6 @@ pub struct RecipeConfiguration {
     pub hq_ingredients: [u8; 6],
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct CrafterConfiguration {
-    pub craftsmanship: u32,
-    pub control: u32,
-    pub cp: u32,
-    pub job_level: u8,
-    pub manipulation: bool,
-}
-
 pub const LEVELS: [u32; 100] = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
@@ -67,7 +61,7 @@ pub static RECIPES: phf::OrderedMap<u32, Recipe> =
 
 pub fn get_game_settings(
     recipe_config: RecipeConfiguration,
-    crafter_config: CrafterConfiguration,
+    crafter_config: CrafterStats,
     food: Option<Consumable>,
     potion: Option<Consumable>,
 ) -> Settings {
@@ -81,7 +75,7 @@ pub fn get_game_settings(
 
     let mut base_progress: f64 = craftsmanship as f64 * 10.0 / rlvl.progress_div as f64 + 2.0;
     let mut base_quality: f64 = control as f64 * 10.0 / rlvl.quality_div as f64 + 35.0;
-    if LEVELS[crafter_config.job_level as usize - 1] <= recipe.recipe_level {
+    if LEVELS[crafter_config.level as usize - 1] <= recipe.recipe_level {
         base_progress = base_progress * rlvl.progress_mod as f64 / 100.0;
         base_quality = base_quality * rlvl.quality_mod as f64 / 100.0;
     }
@@ -125,9 +119,9 @@ pub fn get_game_settings(
         base_progress: base_progress.floor() as _,
         base_quality: base_quality.floor() as _,
         initial_quality,
-        job_level: crafter_config.job_level,
+        job_level: crafter_config.level,
         allowed_actions: ActionMask::from_level(
-            crafter_config.job_level as _,
+            crafter_config.level as _,
             crafter_config.manipulation,
         ),
     }

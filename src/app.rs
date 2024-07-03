@@ -3,8 +3,10 @@ use std::rc::Rc;
 
 use egui::{Align, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
 use egui_extras::Column;
-use game_data::{Consumable, CrafterConfiguration, Item, RecipeConfiguration};
+use game_data::{Consumable, Item, RecipeConfiguration};
 use simulator::{state::InProgress, Action, Settings, SimulationState};
+
+use crate::config::{CrafterConfig, JOB_NAMES};
 
 type MacroResult = Option<Vec<Action>>;
 
@@ -70,7 +72,10 @@ struct SolverConfig {
 pub struct MacroSolverApp {
     actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
-    crafter_config: CrafterConfiguration,
+
+    crafter_config: CrafterConfig,
+    saved_crafter_config: CrafterConfig,
+
     solver_config: SolverConfig,
     selected_food: Option<Consumable>,
     selected_potion: Option<Consumable>,
@@ -112,12 +117,10 @@ impl MacroSolverApp {
             recipe: *game_data::RECIPES.get(&item_id).unwrap(),
             hq_ingredients: [0; 6],
         };
-        let crafter_config = CrafterConfiguration {
-            craftsmanship: 3858,
-            control: 4057,
-            cp: 687,
-            job_level: 90,
-            manipulation: true,
+
+        let crafter_config: CrafterConfig = match cc.storage {
+            Some(storage) => eframe::get_value(storage, "CRAFTER_CONFIG").unwrap_or_default(),
+            None => Default::default(),
         };
 
         let solver_config = SolverConfig {
@@ -127,7 +130,10 @@ impl MacroSolverApp {
         Self {
             actions: Vec::new(),
             recipe_config,
+
             crafter_config,
+            saved_crafter_config: crafter_config,
+
             solver_config,
             selected_food: None,
             selected_potion: None,
@@ -143,8 +149,17 @@ impl MacroSolverApp {
 }
 
 impl eframe::App for MacroSolverApp {
-    /// Called by the frame work to save state before shutdown.
-    fn save(&mut self, _storage: &mut dyn eframe::Storage) {}
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        if self.saved_crafter_config != self.crafter_config {
+            eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
+            self.saved_crafter_config = self.crafter_config;
+            log::debug!("Saved crafter config: {:?}", self.crafter_config);
+        }
+    }
+
+    fn auto_save_interval(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(5)
+    }
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -261,7 +276,7 @@ impl MacroSolverApp {
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
         let game_settings = game_data::get_game_settings(
             self.recipe_config,
-            self.crafter_config,
+            self.crafter_config.stats(),
             self.selected_food,
             self.selected_potion,
         );
@@ -528,9 +543,9 @@ impl MacroSolverApp {
                         });
                         row.col(|ui| {
                             ui.label(item.effect_string(
-                                self.crafter_config.craftsmanship,
-                                self.crafter_config.control,
-                                self.crafter_config.cp,
+                                self.crafter_config.craftsmanship(),
+                                self.crafter_config.control(),
+                                self.crafter_config.cp(),
                             ));
                         });
                     });
@@ -592,9 +607,9 @@ impl MacroSolverApp {
                         });
                         row.col(|ui| {
                             ui.label(item.effect_string(
-                                self.crafter_config.craftsmanship,
-                                self.crafter_config.control,
-                                self.crafter_config.cp,
+                                self.crafter_config.craftsmanship(),
+                                self.crafter_config.control(),
+                                self.crafter_config.cp(),
                             ));
                         });
                     });
@@ -607,20 +622,34 @@ impl MacroSolverApp {
             ui.label(egui::RichText::new("Configuration").strong());
             ui.separator();
 
-            ui.label(egui::RichText::new("Crafter stats").strong());
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Crafter stats").strong());
+                egui::ComboBox::from_id_source("SELECTED_JOB")
+                    .width(20.0)
+                    .selected_text(JOB_NAMES[self.crafter_config.selected_job])
+                    .show_ui(ui, |ui| {
+                        for i in 0..8 {
+                            ui.selectable_value(
+                                &mut self.crafter_config.selected_job,
+                                i,
+                                JOB_NAMES[i],
+                            );
+                        }
+                    });
+            });
             ui.horizontal(|ui| {
                 ui.label("Craftsmanship:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_enabled(
                         false,
                         egui::DragValue::new(&mut game_data::craftsmanship_bonus(
-                            self.crafter_config.craftsmanship,
+                            self.crafter_config.craftsmanship(),
                             &[self.selected_food, self.selected_potion],
                         )),
                     );
                     ui.monospace("+");
                     ui.add(
-                        egui::DragValue::new(&mut self.crafter_config.craftsmanship)
+                        egui::DragValue::new(self.crafter_config.craftsmanship_mut())
                             .clamp_range(0..=9999),
                     );
                 });
@@ -631,13 +660,13 @@ impl MacroSolverApp {
                     ui.add_enabled(
                         false,
                         egui::DragValue::new(&mut game_data::control_bonus(
-                            self.crafter_config.control,
+                            self.crafter_config.control(),
                             &[self.selected_food, self.selected_potion],
                         )),
                     );
                     ui.monospace("+");
                     ui.add(
-                        egui::DragValue::new(&mut self.crafter_config.control)
+                        egui::DragValue::new(self.crafter_config.control_mut())
                             .clamp_range(0..=9999),
                     );
                 });
@@ -648,20 +677,21 @@ impl MacroSolverApp {
                     ui.add_enabled(
                         false,
                         egui::DragValue::new(&mut game_data::cp_bonus(
-                            self.crafter_config.cp,
+                            self.crafter_config.cp(),
                             &[self.selected_food, self.selected_potion],
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(&mut self.crafter_config.cp).clamp_range(0..=9999));
+                    ui.add(
+                        egui::DragValue::new(self.crafter_config.cp_mut()).clamp_range(0..=9999),
+                    );
                 });
             });
             ui.horizontal(|ui| {
                 ui.label("Job Level:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add(
-                        egui::DragValue::new(&mut self.crafter_config.job_level)
-                            .clamp_range(1..=100),
+                        egui::DragValue::new(self.crafter_config.level_mut()).clamp_range(1..=100),
                     );
                 });
             });
@@ -702,9 +732,9 @@ impl MacroSolverApp {
             ui.separator();
 
             ui.label(egui::RichText::new("Actions").strong());
-            if self.crafter_config.job_level as u32 >= Action::Manipulation.level_requirement() {
+            if self.crafter_config.level() as u32 >= Action::Manipulation.level_requirement() {
                 ui.add(egui::Checkbox::new(
-                    &mut self.crafter_config.manipulation,
+                    self.crafter_config.manipulation_mut(),
                     "Enable Manipulation",
                 ));
             } else {
@@ -761,7 +791,7 @@ impl MacroSolverApp {
                     self.solver_pending = true;
                     let mut game_settings = game_data::get_game_settings(
                         self.recipe_config,
-                        self.crafter_config,
+                        self.crafter_config.crafter_stats[self.crafter_config.selected_job],
                         self.selected_food,
                         self.selected_potion,
                     );
