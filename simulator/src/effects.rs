@@ -51,8 +51,5 @@ impl Effects {
         self.set_great_strides(self.great_strides().saturating_sub(1));
         self.set_muscle_memory(self.muscle_memory().saturating_sub(1));
         self.set_manipulation(self.manipulation().saturating_sub(1));
-        if self.trained_perfection() == SingleUse::Active {
-            self.set_trained_perfection(SingleUse::Unavailable);
-        }
     }
 }
