@@ -6,7 +6,10 @@ use egui_extras::Column;
 use game_data::{Consumable, Item, RecipeConfiguration};
 use simulator::{state::InProgress, Action, Settings, SimulationState};
 
-use crate::config::{CrafterConfig, JOB_NAMES};
+use crate::{
+    config::{CrafterConfig, JOB_NAMES},
+    widgets::MacroTextView,
+};
 
 type MacroResult = Option<Vec<Action>>;
 
@@ -383,22 +386,12 @@ impl MacroSolverApp {
                 ));
             });
             ui.separator();
-            for (index, action) in self.actions.iter().enumerate() {
-                if index != 0
-                    && self.macro_view_config.split
-                    && index % self.macro_view_config.split_length == 0
-                {
-                    ui.separator();
-                }
-                if self.macro_view_config.delay {
-                    ui.monospace(format!(
-                        "/ac \"{}\" <wait.{}>",
-                        action.display_name(),
-                        action.time_cost()
-                    ));
-                } else {
-                    ui.monospace(format!("/ac \"{}\"", action.display_name()));
-                }
+            let chunk_size = match self.macro_view_config.split {
+                true => self.macro_view_config.split_length,
+                false => usize::MAX,
+            };
+            for actions in self.actions.chunks(chunk_size) {
+                ui.add(MacroTextView::new(actions, self.macro_view_config.delay));
             }
         });
     }
