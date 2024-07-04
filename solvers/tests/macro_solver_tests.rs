@@ -358,8 +358,8 @@ fn test_random_48ae7c9f() {
         allowed_actions: ActionMask::from_level(100, true),
     };
     let actions = solve(&settings).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 19586);
-    assert_eq!(get_duration(&actions), 89);
+    assert_eq!(get_quality(&settings, &actions), 19621);
+    assert_eq!(get_duration(&actions), 84);
 }
 
 #[test]

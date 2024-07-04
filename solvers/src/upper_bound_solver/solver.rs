@@ -415,7 +415,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(100, false),
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 4239);
+        assert_eq!(result, 4269);
     }
 
     #[test]

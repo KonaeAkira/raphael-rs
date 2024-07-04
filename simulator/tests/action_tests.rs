@@ -187,8 +187,14 @@ fn test_immaculate_mend() {
 
 #[test]
 fn test_trained_perfection() {
-    let state =
-        SimulationState::from_macro(&SETTINGS, &[Action::TrainedPerfection, Action::Groundwork]);
+    let state = SimulationState::from_macro(
+        &SETTINGS,
+        &[
+            Action::TrainedPerfection,
+            Action::Observe, // 0-durability actions don't proc Trained Perfection
+            Action::Groundwork,
+        ],
+    );
     match state {
         Ok(state) => {
             assert_eq!(state.durability, SETTINGS.max_durability);

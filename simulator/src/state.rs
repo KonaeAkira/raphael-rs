@@ -124,6 +124,12 @@ impl InProgress {
         state.cp -= cp_cost;
         state.durability -= durability_cost;
 
+        if action.base_durability_cost() != 0
+            && state.effects.trained_perfection() == SingleUse::Active
+        {
+            state.effects.set_trained_perfection(SingleUse::Unavailable);
+        }
+
         // reset muscle memory if progress increased
         if progress_increase != 0 {
             state.missing_progress = state.missing_progress.saturating_sub(progress_increase);
