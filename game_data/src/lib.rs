@@ -80,34 +80,30 @@ pub fn get_game_settings(
         base_quality = base_quality * rlvl.quality_mod as f64 / 100.0;
     }
 
-    let hq_ingredients: Vec<(Item, u32)> = recipe
+    let ingredients: Vec<(Item, u32)> = recipe
         .ingredients
         .iter()
         .filter_map(|ingredient| match ingredient.item_id {
             0 => None,
-            id => {
-                let item = *ITEMS.get(&id).unwrap();
-                match item.can_be_hq {
-                    true => Some((item, ingredient.amount)),
-                    false => None,
-                }
-            }
+            id => Some((*ITEMS.get(&id).unwrap(), ingredient.amount)),
         })
         .collect();
-    let initial_quality = match hq_ingredients.is_empty() {
-        true => 0,
-        false => {
-            // let total_ilvl: u32 = hq_ingredients.iter().map(|(item, max_amount)| item.item_level * max_amount).sum();
-            let mut max_ilvl: u64 = 0;
-            let mut provided_ilvl: u64 = 0;
-            for (index, (item, max_amount)) in hq_ingredients.into_iter().enumerate() {
+    let initial_quality = {
+        let mut max_ilvl: u64 = 0;
+        let mut provided_ilvl: u64 = 0;
+        for (index, (item, max_amount)) in ingredients.into_iter().enumerate() {
+            if item.can_be_hq {
                 max_ilvl += max_amount as u64 * item.item_level as u64;
                 provided_ilvl +=
                     recipe_config.hq_ingredients[index] as u64 * item.item_level as u64;
             }
+        }
+        if max_ilvl != 0 {
             (recipe.quality as u64 * recipe.material_quality_factor as u64 * provided_ilvl
                 / max_ilvl
                 / 100) as u16
+        } else {
+            0
         }
     };
 
