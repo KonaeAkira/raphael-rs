@@ -34,7 +34,7 @@ fn test_random_926ae85b() {
         base_quality: 38,
         initial_quality: 0,
         job_level: 10,
-        allowed_actions: ActionMask::none(),
+        allowed_actions: ActionMask::all(),
     };
     let actions = [
         Action::BasicSynthesis,
@@ -68,7 +68,7 @@ fn test_random_3c721e47() {
         base_quality: 307,
         initial_quality: 0,
         job_level: 85,
-        allowed_actions: ActionMask::none(),
+        allowed_actions: ActionMask::all(),
     };
     let actions = [
         Action::MuscleMemory,
@@ -106,7 +106,7 @@ fn test_random_3ba90d3a() {
         base_quality: 253,
         initial_quality: 0,
         job_level: 81,
-        allowed_actions: ActionMask::none(),
+        allowed_actions: ActionMask::all(),
     };
     let actions = [
         Action::Veneration,

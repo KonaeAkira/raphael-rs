@@ -93,7 +93,15 @@ impl InProgress {
         &self.state
     }
 
-    pub fn can_use_action(&self, action: Action, condition: Condition) -> Result<(), &'static str> {
+    pub fn can_use_action(
+        &self,
+        action: Action,
+        condition: Condition,
+        settings: &Settings,
+    ) -> Result<(), &'static str> {
+        if !settings.allowed_actions.has(action) {
+            return Err("Action not enabled");
+        }
         if action.cp_cost(&self.state.effects, condition) > self.state.cp {
             return Err("Not enough CP");
         }
@@ -141,7 +149,7 @@ impl InProgress {
         condition: Condition,
         settings: &Settings,
     ) -> Result<SimulationState, &'static str> {
-        self.can_use_action(action, condition)?;
+        self.can_use_action(action, condition, settings)?;
         let mut state = self.state;
 
         let cp_cost = action.cp_cost(&state.effects, condition);
