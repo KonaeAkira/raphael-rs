@@ -32,6 +32,35 @@ impl SimulationState {
         }
         Ok(state)
     }
+
+    pub fn from_macro_continue_on_error(
+        settings: &Settings,
+        actions: &[Action],
+    ) -> (Self, Vec<Result<(), &'static str>>) {
+        let mut state = Self::new(settings);
+        let mut errors = Vec::new();
+        for action in actions {
+            state = match InProgress::try_from(state) {
+                Ok(in_progress) => {
+                    match in_progress.use_action(*action, Condition::Normal, settings) {
+                        Ok(new_state) => {
+                            errors.push(Ok(()));
+                            new_state
+                        }
+                        Err(err) => {
+                            errors.push(Err(err));
+                            state
+                        }
+                    }
+                }
+                Err(err) => {
+                    errors.push(Err(err));
+                    state
+                }
+            };
+        }
+        (state, errors)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -1,7 +1,7 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use egui::{Align, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
+use egui::{Align, Color32, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
 use egui_extras::Column;
 use game_data::{Consumable, Item, RecipeConfiguration};
 use simulator::{state::InProgress, Action, Settings, SimulationState};
@@ -285,10 +285,8 @@ impl MacroSolverApp {
             self.selected_food,
             self.selected_potion,
         );
-        let game_state = match SimulationState::from_macro(&game_settings, &self.actions) {
-            Ok(state) => state,
-            Err(_) => SimulationState::new(&game_settings),
-        };
+        let (game_state, _errors) =
+            SimulationState::from_macro_continue_on_error(&game_settings, &self.actions);
         ui.vertical(|ui| {
             ui.label(egui::RichText::new("Simulation").strong());
             ui.separator();
@@ -405,13 +403,25 @@ impl MacroSolverApp {
     }
 
     fn draw_actions_widget(&mut self, ui: &mut egui::Ui) {
+        let game_settings = game_data::get_game_settings(
+            self.recipe_config,
+            self.crafter_config.stats(),
+            self.selected_food,
+            self.selected_potion,
+        );
+        let (_game_state, errors) =
+            SimulationState::from_macro_continue_on_error(&game_settings, &self.actions);
         egui::ScrollArea::horizontal().show(ui, |ui| {
             ui.horizontal(|ui| {
-                for action in self.actions.iter() {
+                for (action, error) in self.actions.iter().zip(errors.into_iter()) {
                     ui.add(
                         egui::Image::new(self.action_icons.get(action).unwrap())
                             .max_height(30.0)
-                            .rounding(4.0),
+                            .rounding(4.0)
+                            .tint(match error {
+                                Ok(_) => Color32::WHITE,
+                                Err(_) => Color32::from_rgb(255, 96, 96),
+                            }),
                     )
                     .on_hover_text(action.display_name());
                 }
