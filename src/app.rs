@@ -370,6 +370,12 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Macro").strong());
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if ui
+                        .add_enabled(!self.actions.is_empty(), egui::Button::new("Clear"))
+                        .clicked()
+                    {
+                        self.actions.clear();
+                    }
                     ui.label(format!(
                         "{} steps | {} seconds",
                         macro_steps, macro_duration
@@ -614,24 +620,26 @@ impl MacroSolverApp {
 
     fn draw_configuration_widget(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new("Configuration").strong());
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Configuration").strong());
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    egui::ComboBox::from_id_source("SELECTED_JOB")
+                        .width(20.0)
+                        .selected_text(JOB_NAMES[self.crafter_config.selected_job])
+                        .show_ui(ui, |ui| {
+                            for i in 0..8 {
+                                ui.selectable_value(
+                                    &mut self.crafter_config.selected_job,
+                                    i,
+                                    JOB_NAMES[i],
+                                );
+                            }
+                        });
+                });
+            });
             ui.separator();
 
-            ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Crafter stats").strong());
-                egui::ComboBox::from_id_source("SELECTED_JOB")
-                    .width(20.0)
-                    .selected_text(JOB_NAMES[self.crafter_config.selected_job])
-                    .show_ui(ui, |ui| {
-                        for i in 0..8 {
-                            ui.selectable_value(
-                                &mut self.crafter_config.selected_job,
-                                i,
-                                JOB_NAMES[i],
-                            );
-                        }
-                    });
-            });
+            ui.label(egui::RichText::new("Crafter stats").strong());
             ui.horizontal(|ui| {
                 ui.label("Craftsmanship:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -785,7 +793,7 @@ impl MacroSolverApp {
             );
             if self.solver_config.backload_progress {
                 ui.label(
-                    egui::RichText::new("⚠ Backloading progress may decrease achievable Quality.")
+                    egui::RichText::new("⚠ Backloading progress may decrease achievable quality.")
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
