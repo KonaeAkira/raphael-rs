@@ -19,7 +19,7 @@ eframe = { version = "0.27.0", features = [
     "glow",
     "persistence",
 ] }
-image = { version = "0.25.1", default-features = false, features = ["png"] }
+image = { version = "0.24.9", default-features = false, features = ["png"] }
 wasm-bindgen-futures = "0.4"
 gloo-worker = { version = "0.5.0", features = ["futures"] }
 serde = { version = "1.0.203", features = ["derive"] }
