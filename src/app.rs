@@ -70,6 +70,7 @@ impl std::fmt::Display for QualityTarget {
 
 struct SolverConfig {
     quality_target: QualityTarget,
+    backload_progress: bool,
 }
 
 pub struct MacroSolverApp {
@@ -128,6 +129,7 @@ impl MacroSolverApp {
 
         let solver_config = SolverConfig {
             quality_target: QualityTarget::Full,
+            backload_progress: false,
         };
 
         Self {
@@ -777,6 +779,17 @@ impl MacroSolverApp {
                         });
                 });
             });
+            ui.checkbox(
+                &mut self.solver_config.backload_progress,
+                "Backload progress actions",
+            );
+            if self.solver_config.backload_progress {
+                ui.label(
+                    egui::RichText::new("⚠ Backloading progress may decrease achievable Quality.")
+                        .small()
+                        .color(ui.visuals().warn_fg_color),
+                );
+            }
 
             ui.add_space(5.5);
             ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
@@ -794,7 +807,8 @@ impl MacroSolverApp {
                         .get_target(game_settings.max_quality);
                     game_settings.max_quality =
                         std::cmp::max(game_settings.initial_quality, target_quality);
-                    self.bridge.send(game_settings);
+                    self.bridge
+                        .send((game_settings, self.solver_config.backload_progress));
                     log::debug!("Message send {game_settings:?}");
                 }
                 ui.add_visible(self.solver_pending, egui::Spinner::new());
@@ -821,7 +835,7 @@ pub struct WebWorker {}
 
 impl gloo_worker::Worker for WebWorker {
     type Message = u64;
-    type Input = Settings;
+    type Input = (Settings, bool);
     type Output = MacroResult;
 
     fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
@@ -836,9 +850,12 @@ impl gloo_worker::Worker for WebWorker {
         msg: Self::Input,
         _id: gloo_worker::HandlerId,
     ) {
+        let settings = msg.0;
+        let backload_progress = msg.1;
         scope.respond(
             _id,
-            solvers::MacroSolver::new(msg).solve(InProgress::new(&msg)),
+            solvers::MacroSolver::new(settings)
+                .solve(InProgress::new(&settings), backload_progress),
         );
     }
 }

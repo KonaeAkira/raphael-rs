@@ -1,8 +1,8 @@
 use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
 use solvers::MacroSolver;
 
-fn solve(settings: &Settings) -> Option<Vec<Action>> {
-    MacroSolver::new(settings.clone()).solve(InProgress::new(settings))
+fn solve(settings: &Settings, backload_progress: bool) -> Option<Vec<Action>> {
+    MacroSolver::new(settings.clone()).solve(InProgress::new(settings), backload_progress)
 }
 
 fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
@@ -21,6 +21,18 @@ fn get_duration(actions: &[Action]) -> i16 {
     actions.into_iter().map(|action| action.time_cost()).sum()
 }
 
+fn is_progress_backloaded(actions: &[Action]) -> bool {
+    let first_progress_action = actions
+        .iter()
+        .position(|action| action.progress_efficiency(1) != 0)
+        .unwrap();
+    // there musn't be any Quality-increasing actions after the first Progress-increasing action
+    !actions
+        .into_iter()
+        .skip(first_progress_action)
+        .any(|action| action.quality_efficiency(10) != 0)
+}
+
 #[test]
 fn test_random_0f93c79f() {
     let settings = Settings {
@@ -34,7 +46,7 @@ fn test_random_0f93c79f() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1802);
     assert_eq!(get_duration(&actions), 44);
 }
@@ -52,7 +64,7 @@ fn test_random_1e281667() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3366);
     assert_eq!(get_duration(&actions), 53);
 }
@@ -70,7 +82,7 @@ fn test_random_d0bf2aef() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3434);
     assert_eq!(get_duration(&actions), 67);
 }
@@ -88,7 +100,7 @@ fn test_unsolvable() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings);
+    let actions = solve(&settings, false);
     assert_eq!(actions, None);
 }
 
@@ -105,7 +117,7 @@ fn test_max_quality() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1000);
     assert_eq!(get_duration(&actions), 29);
 }
@@ -123,7 +135,7 @@ fn test_zero_quality() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 0);
     assert_eq!(get_duration(&actions), 14);
 }
@@ -141,7 +153,7 @@ fn test_random_e413e05d() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2018);
     assert_eq!(get_duration(&actions), 52);
 }
@@ -159,9 +171,28 @@ fn test_random_bb38a037() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2942);
     assert_eq!(get_duration(&actions), 56);
+}
+
+#[test]
+fn test_backload_random_bb38a037() {
+    let settings = Settings {
+        max_cp: 540,
+        max_durability: 70,
+        max_progress: 2700,
+        max_quality: 40000,
+        base_progress: 100,
+        base_quality: 100,
+        initial_quality: 0,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90, true),
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 2842);
+    assert_eq!(get_duration(&actions), 62);
 }
 
 #[test]
@@ -177,7 +208,7 @@ fn test_random_a300ca2b() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4683);
     assert_eq!(get_duration(&actions), 69);
 }
@@ -195,7 +226,7 @@ fn test_random_0f9d7781() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2939);
     assert_eq!(get_duration(&actions), 64);
 }
@@ -213,7 +244,7 @@ fn test_random_e451d981() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 5364);
     assert_eq!(get_duration(&actions), 74);
 }
@@ -231,7 +262,7 @@ fn test_random_6799bb1d() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3321);
     assert_eq!(get_duration(&actions), 51);
 }
@@ -249,7 +280,7 @@ fn test_random_940b4755() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4483);
     assert_eq!(get_duration(&actions), 67);
 }
@@ -267,7 +298,7 @@ fn test_rinascita_3700_3280() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10623);
     assert_eq!(get_duration(&actions), 70);
 }
@@ -285,9 +316,28 @@ fn test_pactmaker_3240_3130() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 8912);
     assert_eq!(get_duration(&actions), 55);
+}
+
+#[test]
+fn test_backload_pactmaker_3240_3130() {
+    let settings = Settings {
+        max_cp: 600,
+        max_durability: 70,
+        max_progress: 4300,
+        max_quality: 12800,
+        base_progress: 200,
+        base_quality: 215,
+        initial_quality: 0,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90, true),
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 8801);
+    assert_eq!(get_duration(&actions), 65);
 }
 
 #[test]
@@ -303,7 +353,7 @@ fn test_diadochos_4021_3660() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 9688);
     assert_eq!(get_duration(&actions), 68);
 }
@@ -321,7 +371,7 @@ fn test_indagator_3858_4057() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12793);
     assert_eq!(get_duration(&actions), 72);
 }
@@ -339,7 +389,7 @@ fn test_random_2ea6c001() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(100, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10600);
     assert_eq!(get_duration(&actions), 44);
 }
@@ -357,9 +407,28 @@ fn test_random_48ae7c9f() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(100, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 19621);
     assert_eq!(get_duration(&actions), 84);
+}
+
+#[test]
+fn test_backload_random_48ae7c9f() {
+    let settings = Settings {
+        max_cp: 699,
+        max_durability: 80,
+        max_progress: 5700,
+        max_quality: 20000,
+        base_progress: 295,
+        base_quality: 310,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true),
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 19445);
+    assert_eq!(get_duration(&actions), 98);
 }
 
 #[test]
@@ -375,7 +444,7 @@ fn test_max_quality_indagator_3858_4057() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true),
     };
-    let actions = solve(&settings).unwrap();
+    let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12900);
     assert_eq!(get_duration(&actions), 72);
     // 62 seconds is possible, but takes very long to solve using the main solver:
@@ -402,4 +471,41 @@ fn test_max_quality_indagator_3858_4057() {
     // /ac "Great Strides" <wait.2>
     // /ac "Byregot's Blessing" <wait.3>
     // /ac "Careful Synthesis" <wait.3>
+}
+
+#[test]
+fn test_random_4ecd54c4() {
+    let settings = Settings {
+        max_cp: 456,
+        max_durability: 80,
+        max_progress: 2024,
+        max_quality: 40000,
+        base_progress: 100,
+        base_quality: 100,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(90, true),
+    };
+    let actions = solve(&settings, false).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 3080);
+    assert_eq!(get_duration(&actions), 51);
+}
+
+#[test]
+fn test_backload_random_4ecd54c4() {
+    let settings = Settings {
+        max_cp: 456,
+        max_durability: 80,
+        max_progress: 2024,
+        max_quality: 40000,
+        base_progress: 100,
+        base_quality: 100,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(90, true),
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 3002);
+    assert_eq!(get_duration(&actions), 51);
 }

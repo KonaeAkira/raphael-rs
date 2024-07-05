@@ -15,6 +15,10 @@ const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
     .union(DURABILITY_ACTIONS);
 
+const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+    .union(DURABILITY_ACTIONS)
+    .remove(Action::DelicateSynthesis);
+
 #[derive(Debug, Clone, Copy)]
 struct SearchNode {
     state: InProgress,
@@ -41,7 +45,7 @@ impl MacroSolver {
     /// Returns a list of Actions that maximizes Quality of the completed state.
     /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
     /// The solver makes an effort to produce a short solution, but it is not (yet) guaranteed to be the shortest solution.
-    pub fn solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
+    pub fn solve(&mut self, state: InProgress, backload_progress: bool) -> Option<Vec<Action>> {
         let timer = NamedTimer::new("Finish solver");
         if !self.finish_solver.can_finish(&state) {
             return None;
@@ -58,10 +62,10 @@ impl MacroSolver {
         }
 
         let _timer = NamedTimer::new("Full search");
-        self.do_solve(state)
+        self.do_solve(state, backload_progress)
     }
 
-    fn do_solve(&mut self, state: InProgress) -> Option<Vec<Action>> {
+    fn do_solve(&mut self, state: InProgress, backload_progress: bool) -> Option<Vec<Action>> {
         let mut pareto_dominated_nodes: usize = 0;
         let mut finish_solver_rejected_nodes: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
@@ -94,10 +98,13 @@ impl MacroSolver {
             if solution.is_some() && score <= solution.unwrap().0 {
                 break;
             }
-            for action in FULL_SEARCH_ACTIONS
-                .intersection(self.settings.allowed_actions)
-                .actions_iter()
+            let search_actions = match backload_progress
+                && node.state.raw_state().missing_progress != self.settings.max_progress
             {
+                true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
+                false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
+            };
+            for action in search_actions.actions_iter() {
                 if let Ok(state) = node
                     .state
                     .use_action(action, Condition::Normal, &self.settings)
