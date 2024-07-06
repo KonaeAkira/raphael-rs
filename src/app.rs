@@ -439,7 +439,7 @@ impl MacroSolverApp {
                 .header(text_height, |mut header| {
                     header.col(|_| {});
                     header.col(|ui| {
-                        ui.label("Item");
+                        ui.label("Item Name");
                     });
                 })
                 .body(|body| {

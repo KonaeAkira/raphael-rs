@@ -20,8 +20,8 @@ The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver
 cargo install --locked trunk
 ```
 
-To build and host the application locally (optionally use the `--release` flag):
+To build and host the application locally):
 
 ```
-RUSTFLAGS='--cfg=web_sys_unstable_apis' trunk serve
+RUSTFLAGS='--cfg=web_sys_unstable_apis' trunk serve --release --dist docs
 ```
