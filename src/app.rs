@@ -8,26 +8,10 @@ use simulator::{state::InProgress, Action, Settings, SimulationState};
 
 use crate::{
     config::{CrafterConfig, JOB_NAMES},
-    widgets::MacroTextView,
+    widgets::{MacroView, MacroViewConfig},
 };
 
 type MacroResult = Option<Vec<Action>>;
-
-struct MacroViewConfig {
-    split: bool,
-    split_length: usize,
-    delay: bool,
-}
-
-impl Default for MacroViewConfig {
-    fn default() -> Self {
-        Self {
-            split: false,
-            split_length: 15,
-            delay: true,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum QualityTarget {
@@ -87,6 +71,7 @@ pub struct MacroSolverApp {
     recipe_search_text: String,
 
     macro_view_config: MacroViewConfig,
+    saved_macro_view_config: MacroViewConfig,
 
     solver_pending: bool,
     bridge: gloo_worker::WorkerBridge<WebWorker>,
@@ -127,6 +112,11 @@ impl MacroSolverApp {
             None => Default::default(),
         };
 
+        let macro_view_config: MacroViewConfig = match cc.storage {
+            Some(storage) => eframe::get_value(storage, "MACRO_VIEW_CONFIG").unwrap_or_default(),
+            None => Default::default(),
+        };
+
         let solver_config = SolverConfig {
             quality_target: QualityTarget::Full,
             backload_progress: false,
@@ -139,12 +129,14 @@ impl MacroSolverApp {
             crafter_config,
             saved_crafter_config: crafter_config,
 
+            macro_view_config,
+            saved_macro_view_config: macro_view_config,
+
             solver_config,
             selected_food: None,
             selected_potion: None,
 
             recipe_search_text: String::new(),
-            macro_view_config: Default::default(),
             solver_pending: false,
             data_update,
             bridge,
@@ -160,10 +152,15 @@ impl eframe::App for MacroSolverApp {
             self.saved_crafter_config = self.crafter_config;
             log::debug!("Saved crafter config: {:?}", self.crafter_config);
         }
+        if self.saved_macro_view_config != self.macro_view_config {
+            eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
+            self.saved_macro_view_config = self.macro_view_config;
+            log::debug!("Saved macro view config: {:?}", self.macro_view_config);
+        }
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
-        std::time::Duration::from_secs(5)
+        std::time::Duration::from_secs(3)
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -253,11 +250,10 @@ impl eframe::App for MacroSolverApp {
                         });
                     });
                 });
-                ui.group(|ui| {
-                    ui.set_width(320.0);
-                    ui.set_height(717.0);
-                    self.draw_macro_widget(ui);
-                });
+                ui.add_sized(
+                    [320.0, 730.0],
+                    MacroView::new(&mut self.actions, &mut self.macro_view_config),
+                );
             });
         });
     }
@@ -358,47 +354,6 @@ impl MacroSolverApp {
                     }
                 });
             });
-        });
-    }
-
-    fn draw_macro_widget(&mut self, ui: &mut egui::Ui) {
-        let macro_steps = self.actions.len();
-        let macro_duration: i16 = self.actions.iter().map(|action| action.time_cost()).sum();
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Macro").strong());
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .add_enabled(!self.actions.is_empty(), egui::Button::new("Clear"))
-                        .clicked()
-                    {
-                        self.actions.clear();
-                    }
-                    ui.label(format!(
-                        "{} steps | {} seconds",
-                        macro_steps, macro_duration
-                    ));
-                });
-            });
-            ui.separator();
-            ui.horizontal(|ui| {
-                ui.add(egui::Checkbox::new(
-                    &mut self.macro_view_config.delay,
-                    "Include delay",
-                ));
-                ui.add(egui::Checkbox::new(
-                    &mut self.macro_view_config.split,
-                    "Split macro",
-                ));
-            });
-            ui.separator();
-            let chunk_size = match self.macro_view_config.split {
-                true => self.macro_view_config.split_length,
-                false => usize::MAX,
-            };
-            for actions in self.actions.chunks(chunk_size) {
-                ui.add(MacroTextView::new(actions, self.macro_view_config.delay));
-            }
         });
     }
 
