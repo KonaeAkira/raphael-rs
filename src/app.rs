@@ -194,6 +194,14 @@ impl eframe::App for MacroSolverApp {
                     )
                     .open_in_new_tab(true),
                 );
+                ui.label("/");
+                ui.add(
+                    egui::Hyperlink::from_label_and_url(
+                        "Support me on Ko-fi",
+                        "https://ko-fi.com/konaeakira",
+                    )
+                    .open_in_new_tab(true),
+                );
             });
         });
 
@@ -713,7 +721,7 @@ impl MacroSolverApp {
             }
             ui.add_enabled(
                 false,
-                egui::Checkbox::new(&mut false, "Enable specialist actions"),
+                egui::Checkbox::new(&mut false, "Enable specialist actions (WIP)"),
             );
             ui.separator();
 
