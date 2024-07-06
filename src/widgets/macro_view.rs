@@ -32,6 +32,7 @@ impl MacroTextBox {
         max_index: usize,
         actions: &[Action],
         config: &MacroViewConfig,
+        newline: &'static str,
     ) -> Self {
         let mut lines: Vec<_> = actions
             .into_iter()
@@ -54,7 +55,7 @@ impl MacroTextBox {
             ));
         }
         Self {
-            text: lines.join("\r\n"),
+            text: lines.join(newline),
         }
     }
 }
@@ -146,8 +147,18 @@ impl<'a> Widget for MacroView<'a> {
                     false => usize::MAX,
                 };
                 let count = self.actions.chunks(chunk_size).count();
+                let newline = match ui.ctx().os() {
+                    egui::os::OperatingSystem::Mac => "\n",
+                    _ => "\r\n",
+                };
                 for (index, actions) in self.actions.chunks(chunk_size).enumerate() {
-                    ui.add(MacroTextBox::new(index + 1, count, actions, &self.config));
+                    ui.add(MacroTextBox::new(
+                        index + 1,
+                        count,
+                        actions,
+                        &self.config,
+                        newline,
+                    ));
                 }
                 // fill the remaining space
                 ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
