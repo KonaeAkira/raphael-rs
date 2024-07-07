@@ -8,7 +8,7 @@ use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
     config::{CrafterConfig, QualityTarget, JOB_NAMES},
-    widgets::{MacroView, MacroViewConfig, Simulator},
+    widgets::{ConsumableSelect, MacroView, MacroViewConfig, Simulator},
 };
 
 type MacroResult = Option<Vec<Action>>;
@@ -204,19 +204,27 @@ impl eframe::App for MacroSolverApp {
                             });
                             ui.add_space(5.5);
                             ui.push_id("FOOD_SELECT", |ui| {
-                                ui.group(|ui| {
-                                    ui.set_max_width(600.0);
-                                    ui.set_max_height(160.0);
-                                    self.draw_meal_select_widget(ui);
-                                });
+                                ui.set_max_width(612.0);
+                                ui.set_max_height(172.0);
+                                ui.add(ConsumableSelect::new(
+                                    "Food",
+                                    self.crafter_config.crafter_stats
+                                        [self.crafter_config.selected_job],
+                                    game_data::MEALS,
+                                    &mut self.selected_food,
+                                ));
                             });
                             ui.add_space(5.5);
                             ui.push_id("POTION_SELECT", |ui| {
-                                ui.group(|ui| {
-                                    ui.set_max_width(600.0);
-                                    ui.set_max_height(160.0);
-                                    self.draw_potion_select_widget(ui);
-                                });
+                                ui.set_max_width(612.0);
+                                ui.set_max_height(172.0);
+                                ui.add(ConsumableSelect::new(
+                                    "Potion",
+                                    self.crafter_config.crafter_stats
+                                        [self.crafter_config.selected_job],
+                                    game_data::POTIONS,
+                                    &mut self.selected_potion,
+                                ));
                             });
                         });
                         ui.group(|ui| {
@@ -314,134 +322,6 @@ impl MacroSolverApp {
                         });
                         row.col(|ui| {
                             ui.label(item.name);
-                        });
-                    });
-                });
-        });
-    }
-
-    fn draw_meal_select_widget(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Food").strong());
-                ui.label(match self.selected_food {
-                    Some(food) => food.name,
-                    None => "None",
-                });
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .add_enabled(self.selected_food.is_some(), egui::Button::new("Clear"))
-                        .clicked()
-                    {
-                        self.selected_food = None;
-                    }
-                });
-            });
-            ui.separator();
-            let text_height = egui::TextStyle::Body
-                .resolve(ui.style())
-                .size
-                .max(ui.spacing().interact_size.y);
-            let table = egui_extras::TableBuilder::new(ui)
-                .auto_shrink(false)
-                .striped(true)
-                .resizable(false)
-                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-                .column(Column::auto())
-                .column(Column::exact(240.0))
-                .column(Column::remainder())
-                .min_scrolled_height(0.0);
-            table
-                .header(text_height, |mut header| {
-                    header.col(|_| {});
-                    header.col(|ui| {
-                        ui.label("Item Name");
-                    });
-                    header.col(|ui| {
-                        ui.label("Effect");
-                    });
-                })
-                .body(|body| {
-                    body.rows(text_height, game_data::MEALS.len(), |mut row| {
-                        let item = game_data::MEALS[row.index()];
-                        row.col(|ui| {
-                            if ui.button("Select").clicked() {
-                                self.selected_food = Some(item);
-                            }
-                        });
-                        row.col(|ui| {
-                            ui.label(item.name);
-                        });
-                        row.col(|ui| {
-                            ui.label(item.effect_string(
-                                self.crafter_config.craftsmanship(),
-                                self.crafter_config.control(),
-                                self.crafter_config.cp(),
-                            ));
-                        });
-                    });
-                });
-        });
-    }
-
-    fn draw_potion_select_widget(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Potion").strong());
-                ui.label(match self.selected_potion {
-                    Some(item) => item.name,
-                    None => "None",
-                });
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .add_enabled(self.selected_potion.is_some(), egui::Button::new("Clear"))
-                        .clicked()
-                    {
-                        self.selected_potion = None;
-                    }
-                });
-            });
-            ui.separator();
-            let text_height = egui::TextStyle::Body
-                .resolve(ui.style())
-                .size
-                .max(ui.spacing().interact_size.y);
-            let table = egui_extras::TableBuilder::new(ui)
-                .auto_shrink(false)
-                .striped(true)
-                .resizable(false)
-                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-                .column(Column::auto())
-                .column(Column::exact(240.0))
-                .column(Column::remainder())
-                .min_scrolled_height(0.0);
-            table
-                .header(text_height, |mut header| {
-                    header.col(|_| {});
-                    header.col(|ui| {
-                        ui.label("Item Name");
-                    });
-                    header.col(|ui| {
-                        ui.label("Effect");
-                    });
-                })
-                .body(|body| {
-                    body.rows(text_height, game_data::POTIONS.len(), |mut row| {
-                        let item = game_data::POTIONS[row.index()];
-                        row.col(|ui| {
-                            if ui.button("Select").clicked() {
-                                self.selected_potion = Some(item);
-                            }
-                        });
-                        row.col(|ui| {
-                            ui.label(item.name);
-                        });
-                        row.col(|ui| {
-                            ui.label(item.effect_string(
-                                self.crafter_config.craftsmanship(),
-                                self.crafter_config.control(),
-                                self.crafter_config.cp(),
-                            ));
                         });
                     });
                 });
