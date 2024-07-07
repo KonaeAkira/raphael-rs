@@ -52,7 +52,7 @@ impl MacroSolverApp {
                 sender.set(Some(response));
                 ctx.request_repaint();
             })
-            .spawn("./dummy_worker.js");
+            .spawn("./webworker.js");
 
         cc.egui_ctx.set_pixels_per_point(1.2);
         cc.egui_ctx.style_mut(|style| {

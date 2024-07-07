@@ -27,8 +27,8 @@ log = "0.4"
 
 
 [[bin]]
-name = "dummy_worker"
-path = "src/dummy_worker.rs"
+name = "webworker"
+path = "src/webworker.rs"
 
 [profile.release]
 lto = "fat"
