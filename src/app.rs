@@ -163,15 +163,12 @@ impl eframe::App for MacroSolverApp {
                     )
                     .open_in_new_tab(true),
                 );
+                ui.with_layout(
+                    Layout::right_to_left(Align::Center),
+                    egui::warn_if_debug_build,
+                );
             });
         });
-
-        egui::TopBottomPanel::bottom("bottom_panel")
-            .show_separator_line(false)
-            .show(ctx, |ui| {
-                egui::warn_if_debug_build(ui);
-                powered_by_egui_and_eframe(ui);
-            });
 
         let game_settings = game_data::get_game_settings(
             self.recipe_config,
@@ -181,79 +178,71 @@ impl eframe::App for MacroSolverApp {
         );
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.set_enabled(!self.solver_pending);
-                ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
-                    ui.set_max_width(885.0);
-                    ui.add(Simulator::new(
-                        &game_settings,
-                        &self.actions,
-                        game_data::ITEMS.get(&self.recipe_config.item_id).unwrap(),
-                        &self.action_icons,
-                    ));
-                    ui.add_space(5.5);
-                    ui.horizontal(|ui| {
-                        ui.vertical(|ui| {
-                            ui.push_id("RECIPE_SELECT", |ui| {
-                                ui.group(|ui| {
-                                    ui.set_max_width(600.0);
-                                    ui.set_max_height(200.0);
-                                    self.draw_recipe_select_widget(ui);
-                                    ui.shrink_height_to_current();
+            egui::ScrollArea::both().show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.set_enabled(!self.solver_pending);
+                    ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
+                        ui.set_max_width(885.0);
+                        ui.add(Simulator::new(
+                            &game_settings,
+                            &self.actions,
+                            game_data::ITEMS.get(&self.recipe_config.item_id).unwrap(),
+                            &self.action_icons,
+                        ));
+                        ui.add_space(5.5);
+                        ui.horizontal(|ui| {
+                            ui.vertical(|ui| {
+                                ui.push_id("RECIPE_SELECT", |ui| {
+                                    ui.group(|ui| {
+                                        ui.set_max_width(600.0);
+                                        ui.set_max_height(200.0);
+                                        self.draw_recipe_select_widget(ui);
+                                        ui.shrink_height_to_current();
+                                    });
+                                });
+                                ui.add_space(5.5);
+                                ui.push_id("FOOD_SELECT", |ui| {
+                                    ui.set_max_width(612.0);
+                                    ui.set_max_height(172.0);
+                                    ui.add(ConsumableSelect::new(
+                                        "Food",
+                                        self.crafter_config.crafter_stats
+                                            [self.crafter_config.selected_job],
+                                        game_data::MEALS,
+                                        &mut self.selected_food,
+                                    ));
+                                });
+                                ui.add_space(5.5);
+                                ui.push_id("POTION_SELECT", |ui| {
+                                    ui.set_max_width(612.0);
+                                    ui.set_max_height(172.0);
+                                    ui.add(ConsumableSelect::new(
+                                        "Potion",
+                                        self.crafter_config.crafter_stats
+                                            [self.crafter_config.selected_job],
+                                        game_data::POTIONS,
+                                        &mut self.selected_potion,
+                                    ));
                                 });
                             });
-                            ui.add_space(5.5);
-                            ui.push_id("FOOD_SELECT", |ui| {
-                                ui.set_max_width(612.0);
-                                ui.set_max_height(172.0);
-                                ui.add(ConsumableSelect::new(
-                                    "Food",
-                                    self.crafter_config.crafter_stats
-                                        [self.crafter_config.selected_job],
-                                    game_data::MEALS,
-                                    &mut self.selected_food,
-                                ));
+                            ui.group(|ui| {
+                                ui.set_height(560.0);
+                                self.draw_configuration_widget(ui)
                             });
-                            ui.add_space(5.5);
-                            ui.push_id("POTION_SELECT", |ui| {
-                                ui.set_max_width(612.0);
-                                ui.set_max_height(172.0);
-                                ui.add(ConsumableSelect::new(
-                                    "Potion",
-                                    self.crafter_config.crafter_stats
-                                        [self.crafter_config.selected_job],
-                                    game_data::POTIONS,
-                                    &mut self.selected_potion,
-                                ));
-                            });
-                        });
-                        ui.group(|ui| {
-                            ui.set_height(560.0);
-                            self.draw_configuration_widget(ui)
                         });
                     });
+                    ui.add_sized(
+                        [320.0, 730.0],
+                        MacroView::new(&mut self.actions, &mut self.macro_view_config),
+                    );
+                    // fill remaining horizontal space
+                    ui.with_layout(Layout::right_to_left(Align::Center), |_| {});
                 });
-                ui.add_sized(
-                    [320.0, 730.0],
-                    MacroView::new(&mut self.actions, &mut self.macro_view_config),
-                );
+                // fill remaining vertical space
+                ui.with_layout(Layout::bottom_up(Align::Center), |_| {});
             });
         });
     }
-}
-
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
 }
 
 impl MacroSolverApp {
