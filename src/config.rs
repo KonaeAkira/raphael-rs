@@ -63,3 +63,42 @@ impl Default for CrafterConfig {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QualityTarget {
+    Zero,
+    CollectableT1,
+    CollectableT2,
+    CollectableT3,
+    Full,
+}
+
+impl QualityTarget {
+    pub fn get_target(self, max_quality: u16) -> u16 {
+        (max_quality as f64
+            * match self {
+                Self::Zero => 0.0,
+                Self::CollectableT1 => 0.55,
+                Self::CollectableT2 => 0.75,
+                Self::CollectableT3 => 0.95,
+                Self::Full => 1.00,
+            })
+        .ceil() as u16
+    }
+}
+
+impl std::fmt::Display for QualityTarget {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Zero => "0% quality",
+                Self::CollectableT1 => "55% quality",
+                Self::CollectableT2 => "75% quality",
+                Self::CollectableT3 => "95% quality",
+                Self::Full => "100% quality",
+            }
+        )
+    }
+}

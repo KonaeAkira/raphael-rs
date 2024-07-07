@@ -1,56 +1,17 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use egui::{Align, Color32, CursorIcon, Layout, Rounding, TextureHandle, TextureOptions};
+use egui::{Align, CursorIcon, Layout, TextureHandle, TextureOptions};
 use egui_extras::Column;
 use game_data::{Consumable, Item, RecipeConfiguration};
-use simulator::{state::InProgress, Action, Settings, SimulationState};
+use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
-    config::{CrafterConfig, JOB_NAMES},
-    widgets::{MacroView, MacroViewConfig},
+    config::{CrafterConfig, QualityTarget, JOB_NAMES},
+    widgets::{MacroView, MacroViewConfig, Simulator},
 };
 
 type MacroResult = Option<Vec<Action>>;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum QualityTarget {
-    Zero,
-    CollectableT1,
-    CollectableT2,
-    CollectableT3,
-    Full,
-}
-
-impl QualityTarget {
-    pub fn get_target(self, max_quality: u16) -> u16 {
-        (max_quality as f64
-            * match self {
-                Self::Zero => 0.0,
-                Self::CollectableT1 => 0.55,
-                Self::CollectableT2 => 0.75,
-                Self::CollectableT3 => 0.95,
-                Self::Full => 1.00,
-            })
-        .ceil() as u16
-    }
-}
-
-impl std::fmt::Display for QualityTarget {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Zero => "0% quality",
-                Self::CollectableT1 => "55% quality",
-                Self::CollectableT2 => "75% quality",
-                Self::CollectableT3 => "95% quality",
-                Self::Full => "100% quality",
-            }
-        )
-    }
-}
 
 struct SolverConfig {
     quality_target: QualityTarget,
@@ -212,18 +173,24 @@ impl eframe::App for MacroSolverApp {
                 powered_by_egui_and_eframe(ui);
             });
 
+        let game_settings = game_data::get_game_settings(
+            self.recipe_config,
+            self.crafter_config.stats(),
+            self.selected_food,
+            self.selected_potion,
+        );
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.set_enabled(!self.solver_pending);
                 ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
                     ui.set_max_width(885.0);
-                    ui.group(|ui| self.draw_simulator_widget(ui));
-                    ui.add_space(5.5);
-                    ui.group(|ui| {
-                        ui.set_width(873.0);
-                        ui.set_height(30.0);
-                        self.draw_actions_widget(ui);
-                    });
+                    ui.add(Simulator::new(
+                        &game_settings,
+                        &self.actions,
+                        game_data::ITEMS.get(&self.recipe_config.item_id).unwrap(),
+                        &self.action_icons,
+                    ));
                     ui.add_space(5.5);
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
@@ -282,116 +249,6 @@ fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
 }
 
 impl MacroSolverApp {
-    fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        let game_settings = game_data::get_game_settings(
-            self.recipe_config,
-            self.crafter_config.stats(),
-            self.selected_food,
-            self.selected_potion,
-        );
-        let (game_state, _errors) =
-            SimulationState::from_macro_continue_on_error(&game_settings, &self.actions);
-        ui.vertical(|ui| {
-            ui.label(egui::RichText::new("Simulation").strong());
-            ui.separator();
-            ui.horizontal(|ui| {
-                ui.label("Progress:");
-                let max_progress = game_settings.max_progress;
-                let progress = game_settings.max_progress - game_state.missing_progress;
-                ui.add(
-                    egui::ProgressBar::new(progress as f32 / max_progress as f32)
-                        .text(format!("{} / {}", progress, max_progress))
-                        .rounding(Rounding::ZERO),
-                );
-            });
-            ui.horizontal(|ui| {
-                ui.label("Quality:");
-                let max_quality = game_settings.max_quality;
-                let quality = game_settings.max_quality - game_state.missing_quality;
-                ui.add(
-                    egui::ProgressBar::new(quality as f32 / max_quality as f32)
-                        .text(format!("{} / {}", quality, max_quality))
-                        .rounding(Rounding::ZERO),
-                );
-            });
-            ui.horizontal(|ui| {
-                ui.label("Durability:");
-                let max_durability = game_settings.max_durability;
-                let durability = game_state.durability;
-                ui.add(
-                    egui::ProgressBar::new(durability as f32 / max_durability as f32)
-                        .text(format!("{} / {}", durability, max_durability))
-                        .rounding(Rounding::ZERO)
-                        .desired_width(120.0),
-                );
-                ui.label("CP:");
-                let max_cp = game_settings.max_cp;
-                let cp = game_state.cp;
-                ui.add(
-                    egui::ProgressBar::new(cp as f32 / max_cp as f32)
-                        .text(format!("{} / {}", cp, max_cp))
-                        .rounding(Rounding::ZERO)
-                        .desired_width(120.0),
-                );
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    let item = game_data::ITEMS.get(&self.recipe_config.item_id).unwrap();
-                    if item.can_be_hq {
-                        let quality = game_settings.max_quality - game_state.missing_quality;
-                        let hq = match game_state.missing_progress {
-                            0 => game_data::hq_percentage(quality, game_settings.max_quality),
-                            _ => 0,
-                        };
-                        ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
-                    } else if item.is_collectable {
-                        let quality = game_settings.max_quality - game_state.missing_quality;
-                        let t1 = QualityTarget::CollectableT1.get_target(game_settings.max_quality);
-                        let t2 = QualityTarget::CollectableT2.get_target(game_settings.max_quality);
-                        let t3 = QualityTarget::CollectableT3.get_target(game_settings.max_quality);
-                        let tier = match quality {
-                            quality if quality >= t3 => 3,
-                            quality if quality >= t2 => 2,
-                            quality if quality >= t1 => 1,
-                            _ => 0,
-                        };
-                        ui.label(
-                            egui::RichText::new(format!("Tier {tier} collectable reached"))
-                                .strong(),
-                        );
-                    } else {
-                        ui.label("Item cannot be HQ");
-                    }
-                });
-            });
-        });
-    }
-
-    fn draw_actions_widget(&mut self, ui: &mut egui::Ui) {
-        let game_settings = game_data::get_game_settings(
-            self.recipe_config,
-            self.crafter_config.stats(),
-            self.selected_food,
-            self.selected_potion,
-        );
-        let (_game_state, errors) =
-            SimulationState::from_macro_continue_on_error(&game_settings, &self.actions);
-        egui::ScrollArea::horizontal().show(ui, |ui| {
-            ui.horizontal(|ui| {
-                for (action, error) in self.actions.iter().zip(errors.into_iter()) {
-                    ui.add(
-                        egui::Image::new(self.action_icons.get(action).unwrap())
-                            .max_height(30.0)
-                            .rounding(4.0)
-                            .tint(match error {
-                                Ok(_) => Color32::WHITE,
-                                Err(_) => Color32::from_rgb(255, 96, 96),
-                            }),
-                    )
-                    .on_hover_text(action.display_name());
-                }
-            });
-        });
-    }
-
     fn draw_recipe_select_widget(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
