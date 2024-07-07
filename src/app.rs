@@ -47,12 +47,13 @@ impl MacroSolverApp {
         let ctx = cc.egui_ctx.clone();
         let data_update = Rc::new(Cell::new(None));
         let sender = data_update.clone();
+
         let bridge = <WebWorker as gloo_worker::Spawnable>::spawner()
             .callback(move |response| {
                 sender.set(Some(response));
                 ctx.request_repaint();
             })
-            .spawn("./webworker.js");
+            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"));
 
         cc.egui_ctx.set_pixels_per_point(1.2);
         cc.egui_ctx.style_mut(|style| {

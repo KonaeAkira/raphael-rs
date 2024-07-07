@@ -23,5 +23,7 @@ cargo install --locked trunk
 To build and host the application locally):
 
 ```
-RUSTFLAGS='--cfg=web_sys_unstable_apis' trunk serve --release --dist docs
+export RANDOM_SUFFIX=""
+export RUSTFLAGS="--cfg=web_sys_unstable_apis"
+trunk serve --release --dist docs
 ```
