@@ -1,4 +1,4 @@
-use egui::{Align, Layout, Widget};
+use egui::{Align, Id, Layout, Widget};
 use egui_extras::Column;
 use game_data::{Consumable, CrafterStats};
 
@@ -27,6 +27,8 @@ impl<'a> ConsumableSelect<'a> {
 
 impl<'a> Widget for ConsumableSelect<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let id = Id::new(self.title);
+        let mut search_text: String = ui.ctx().data(|data| data.get_temp(id).unwrap_or_default());
         ui.group(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -48,6 +50,22 @@ impl<'a> Widget for ConsumableSelect<'a> {
                     });
                 });
                 ui.separator();
+                ui.horizontal(|ui| {
+                    ui.label("Search:");
+                    if ui.text_edit_singleline(&mut search_text).changed() {
+                        ui.ctx()
+                            .data_mut(|data| data.insert_temp(id, search_text.clone()));
+                    }
+                });
+                ui.separator();
+
+                let search_pattern = search_text.to_lowercase();
+                let search_result: Vec<&Consumable> = self
+                    .consumables
+                    .iter()
+                    .filter(|item| item.name.to_lowercase().contains(&search_pattern))
+                    .collect();
+
                 let text_height = egui::TextStyle::Body
                     .resolve(ui.style())
                     .size
@@ -61,36 +79,26 @@ impl<'a> Widget for ConsumableSelect<'a> {
                     .column(Column::exact(240.0))
                     .column(Column::remainder())
                     .min_scrolled_height(0.0);
-                table
-                    .header(text_height, |mut header| {
-                        header.col(|_| {});
-                        header.col(|ui| {
-                            ui.label("Item Name");
+                table.body(|body| {
+                    body.rows(text_height, search_result.len(), |mut row| {
+                        let item = search_result[row.index()];
+                        row.col(|ui| {
+                            if ui.button("Select").clicked() {
+                                *self.selected_consumable = Some(*item);
+                            }
                         });
-                        header.col(|ui| {
-                            ui.label("Effect");
+                        row.col(|ui| {
+                            ui.label(item.name);
                         });
-                    })
-                    .body(|body| {
-                        body.rows(text_height, self.consumables.len(), |mut row| {
-                            let item = self.consumables[row.index()];
-                            row.col(|ui| {
-                                if ui.button("Select").clicked() {
-                                    *self.selected_consumable = Some(item);
-                                }
-                            });
-                            row.col(|ui| {
-                                ui.label(item.name);
-                            });
-                            row.col(|ui| {
-                                ui.label(item.effect_string(
-                                    self.crafter_stats.craftsmanship,
-                                    self.crafter_stats.control,
-                                    self.crafter_stats.cp,
-                                ));
-                            });
+                        row.col(|ui| {
+                            ui.label(item.effect_string(
+                                self.crafter_stats.craftsmanship,
+                                self.crafter_stats.control,
+                                self.crafter_stats.cp,
+                            ));
                         });
                     });
+                });
             });
         })
         .response

@@ -300,31 +300,24 @@ impl MacroSolverApp {
                 .column(Column::auto())
                 .column(Column::remainder())
                 .min_scrolled_height(0.0);
-            table
-                .header(text_height, |mut header| {
-                    header.col(|_| {});
-                    header.col(|ui| {
-                        ui.label("Item Name");
+            table.body(|body| {
+                body.rows(text_height, search_result.len(), |mut row| {
+                    let item_id = search_result[row.index()];
+                    let item = game_data::ITEMS.get(&item_id).unwrap();
+                    row.col(|ui| {
+                        if ui.button("Select").clicked() {
+                            self.recipe_config = RecipeConfiguration {
+                                item_id,
+                                recipe: *game_data::RECIPES.get(&item_id).unwrap(),
+                                hq_ingredients: [0; 6],
+                            }
+                        };
                     });
-                })
-                .body(|body| {
-                    body.rows(text_height, search_result.len(), |mut row| {
-                        let item_id = search_result[row.index()];
-                        let item = game_data::ITEMS.get(&item_id).unwrap();
-                        row.col(|ui| {
-                            if ui.button("Select").clicked() {
-                                self.recipe_config = RecipeConfiguration {
-                                    item_id,
-                                    recipe: *game_data::RECIPES.get(&item_id).unwrap(),
-                                    hq_ingredients: [0; 6],
-                                }
-                            };
-                        });
-                        row.col(|ui| {
-                            ui.label(item.name);
-                        });
+                    row.col(|ui| {
+                        ui.label(item.name);
                     });
                 });
+            });
         });
     }
 
