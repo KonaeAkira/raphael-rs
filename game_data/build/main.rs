@@ -1,9 +1,9 @@
-mod utils;
-
 mod records;
 use records::*;
 
 mod consumables;
+mod items;
+mod utils;
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -21,7 +21,7 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
     let rlvls = import_rlvl_records()?;
     consumables::import_consumable_records()?;
     import_recipe_records(&rlvls)?;
-    import_item_records()?;
+    items::import_item_records()?;
     Ok(())
 }
 
@@ -98,30 +98,6 @@ fn import_recipe_records(rlvls: &[RecipeLevelRecord]) -> Result<(), Box<dyn std:
     let out_path = Path::new(&std::env::var("OUT_DIR")?).join("recipes.rs");
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
     writeln!(writer, "{}", recipes.build())?;
-
-    Ok(())
-}
-
-fn import_item_records() -> Result<(), Box<dyn std::error::Error>> {
-    let mut items_csv = csv::Reader::from_path("data/Item.csv")?;
-    let mut items = phf_codegen::OrderedMap::new();
-    for item_record in items_csv.deserialize::<ItemRecord>() {
-        let item_record = item_record?;
-        items.entry(
-            item_record.id,
-            &format!(
-                "Item {{ name: \"{name}\", item_level: {item_level}, can_be_hq: {can_be_hq}, is_collectable: {is_collectable} }}",
-                name = item_record.name,
-                item_level = item_record.item_level,
-                can_be_hq = item_record.can_be_hq,
-                is_collectable = item_record.is_collectable,
-            ),
-        );
-    }
-
-    let out_path = Path::new(&std::env::var("OUT_DIR")?).join("items.rs");
-    let mut writer = BufWriter::new(File::create(out_path).unwrap());
-    writeln!(writer, "{}", items.build())?;
 
     Ok(())
 }

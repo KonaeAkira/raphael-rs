@@ -4,11 +4,13 @@ pub use consumables::*;
 mod config;
 pub use config::*;
 
+mod locales;
+pub use locales::*;
+
 use simulator::{ActionMask, Settings};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Item {
-    pub name: &'static str,
     pub item_level: u32,
     pub can_be_hq: bool,
     pub is_collectable: bool,

@@ -23,8 +23,6 @@ const CP_PARAM_ID: u32 = 11;
 const VALID_PARAMS: &[u32] = &[CRAFTSMANSHIP_PARAM_ID, CONTROL_PARAM_ID, CP_PARAM_ID];
 
 pub fn import_consumable_records() -> Result<(), Box<dyn std::error::Error>> {
-    let mut relevant_items = HashMap::new();
-
     let mut item_food_by_id = HashMap::new();
 
     for item_food in read_csv_data::<ItemFoodRecord>("data/ItemFood.csv") {
@@ -54,10 +52,8 @@ pub fn import_consumable_records() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut meals = vec![];
     let mut potions = vec![];
-    for item in read_csv_data::<ItemRecord>("data/Item.csv") {
+    for item in read_csv_data::<ItemRecord>("data/en/Item.csv") {
         if let Some(consumable) = consumable_by_item_action_id.get(&item.item_action) {
-            relevant_items.insert(item.id, item.name.clone());
-
             let Consumable {
                 is_potion,
                 item_food,
@@ -66,8 +62,8 @@ pub fn import_consumable_records() -> Result<(), Box<dyn std::error::Error>> {
             let (craftsmanship, control, cp) = get_stats(item_food);
 
             let consumable = ConsumableOutput {
+                item_id: item.id,
                 item_level: item.item_level,
-                name: item.name,
                 craftsmanship,
                 control,
                 cp,
@@ -154,8 +150,8 @@ struct Consumable {
 
 #[derive(Debug)]
 struct ConsumableOutput {
+    item_id: u32,
     item_level: u32,
-    name: String,
     craftsmanship: [u32; 4],
     control: [u32; 4],
     cp: [u32; 4],
@@ -164,8 +160,8 @@ struct ConsumableOutput {
 impl ConsumableOutput {
     fn export(&self, hq: bool) -> String {
         match hq {
-            true => format!("Consumable {{ item_level: {}, name: \"{} (HQ)\", craft_rel: {}, craft_max: {}, control_rel: {}, control_max: {}, cp_rel: {}, cp_max: {} }}", self.item_level, self.name, self.craftsmanship[2], self.craftsmanship[3], self.control[2], self.control[3], self.cp[2], self.cp[3]),
-            false => format!("Consumable {{ item_level: {}, name: \"{}\", craft_rel: {}, craft_max: {}, control_rel: {}, control_max: {}, cp_rel: {}, cp_max: {} }}", self.item_level, self.name, self.craftsmanship[0], self.craftsmanship[1], self.control[0], self.control[1], self.cp[0], self.cp[1])
+            true => format!("Consumable {{ item_id: {}, item_level: {}, hq: true, craft_rel: {}, craft_max: {}, control_rel: {}, control_max: {}, cp_rel: {}, cp_max: {} }}", self.item_id, self.item_level, self.craftsmanship[2], self.craftsmanship[3], self.control[2], self.control[3], self.cp[2], self.cp[3]),
+            false => format!("Consumable {{ item_id: {}, item_level: {}, hq: false, craft_rel: {}, craft_max: {}, control_rel: {}, control_max: {}, cp_rel: {}, cp_max: {} }}", self.item_id, self.item_level, self.craftsmanship[0], self.craftsmanship[1], self.control[0], self.control[1], self.cp[0], self.cp[1])
         }
     }
 }
