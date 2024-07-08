@@ -22,6 +22,7 @@ struct SolverConfig {
 
 pub struct MacroSolverApp {
     locale: Locale,
+    saved_locale: Locale,
 
     actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
@@ -83,6 +84,11 @@ impl MacroSolverApp {
             None => Default::default(),
         };
 
+        let locale: Locale = match cc.storage {
+            Some(storage) => eframe::get_value(storage, "LOCALE").unwrap_or(Locale::EN),
+            None => Locale::EN,
+        };
+
         let solver_config = SolverConfig {
             quality_target: QualityTarget::Full,
             backload_progress: false,
@@ -91,7 +97,8 @@ impl MacroSolverApp {
         Self::load_fonts(&cc.egui_ctx);
 
         Self {
-            locale: Locale::EN,
+            locale,
+            saved_locale: locale,
 
             actions: Vec::new(),
             recipe_config,
@@ -127,10 +134,15 @@ impl eframe::App for MacroSolverApp {
             self.saved_macro_view_config = self.macro_view_config;
             log::debug!("Saved macro view config: {:?}", self.macro_view_config);
         }
+        if self.saved_locale != self.locale {
+            eframe::set_value(storage, "LOCALE", &self.locale);
+            self.saved_locale = self.locale;
+            log::debug!("Saved locale: {:?}", self.locale);
+        }
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
-        std::time::Duration::from_secs(3)
+        std::time::Duration::from_secs(1)
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
