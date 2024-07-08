@@ -3,13 +3,13 @@ use game_data::{
 };
 use simulator::{ActionMask, Settings};
 
-fn ingredient_names(recipe: Recipe) -> Vec<&'static str> {
+fn ingredient_names(recipe: Recipe) -> Vec<String> {
     recipe
         .ingredients
         .into_iter()
         .filter_map(|ingr| match ingr.item_id {
             0 => None,
-            item_id => Some(get_item_name(item_id, Locale::EN)),
+            item_id => Some(get_item_name(item_id, false, Locale::EN)),
         })
         .collect()
 }
@@ -18,7 +18,7 @@ fn ingredient_names(recipe: Recipe) -> Vec<&'static str> {
 fn test_turali_pineapple_ponzecake() {
     let item_id = 44099;
     assert_eq!(
-        get_item_name(item_id, Locale::EN),
+        get_item_name(item_id, false, Locale::EN),
         "Turali Pineapple Ponzecake"
     );
     let recipe = *RECIPES.get(&item_id).unwrap();

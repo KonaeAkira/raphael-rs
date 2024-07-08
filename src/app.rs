@@ -1,7 +1,9 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use egui::{Align, CursorIcon, Layout, TextureHandle, TextureOptions};
+use egui::{
+    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions,
+};
 use egui_extras::Column;
 use game_data::{get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
 use simulator::{state::InProgress, Action, Settings};
@@ -19,6 +21,8 @@ struct SolverConfig {
 }
 
 pub struct MacroSolverApp {
+    locale: Locale,
+
     actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
 
@@ -84,7 +88,11 @@ impl MacroSolverApp {
             backload_progress: false,
         };
 
+        Self::load_fonts(&cc.egui_ctx);
+
         Self {
+            locale: Locale::EN,
+
             actions: Vec::new(),
             recipe_config,
 
@@ -137,6 +145,32 @@ impl eframe::App for MacroSolverApp {
             egui::menu::bar(ui, |ui| {
                 ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                 ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+
+                egui::ComboBox::from_id_source("LOCALE")
+                    .selected_text(format!("{}", self.locale))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut self.locale,
+                            Locale::EN,
+                            format!("{}", Locale::EN),
+                        );
+                        ui.selectable_value(
+                            &mut self.locale,
+                            Locale::DE,
+                            format!("{}", Locale::DE),
+                        );
+                        ui.selectable_value(
+                            &mut self.locale,
+                            Locale::FR,
+                            format!("{}", Locale::FR),
+                        );
+                        ui.selectable_value(
+                            &mut self.locale,
+                            Locale::JP,
+                            format!("{}", Locale::JP),
+                        );
+                    });
+
                 egui::widgets::global_dark_light_mode_buttons(ui);
                 ui.add(
                     egui::Hyperlink::from_label_and_url(
@@ -211,6 +245,7 @@ impl eframe::App for MacroSolverApp {
                                             [self.crafter_config.selected_job],
                                         game_data::MEALS,
                                         &mut self.selected_food,
+                                        self.locale,
                                     ));
                                 });
                                 ui.add_space(5.5);
@@ -223,6 +258,7 @@ impl eframe::App for MacroSolverApp {
                                             [self.crafter_config.selected_job],
                                         game_data::POTIONS,
                                         &mut self.selected_potion,
+                                        self.locale,
                                     ));
                                 });
                             });
@@ -253,7 +289,8 @@ impl MacroSolverApp {
                 ui.label(egui::RichText::new("Recipe").strong());
                 ui.label(egui::RichText::new(get_item_name(
                     self.recipe_config.item_id,
-                    Locale::EN,
+                    false,
+                    self.locale,
                 )));
             });
             ui.separator();
@@ -268,7 +305,7 @@ impl MacroSolverApp {
                 .keys()
                 .copied()
                 .filter(|item_id| {
-                    let item_name = get_item_name(*item_id, Locale::EN);
+                    let item_name = get_item_name(*item_id, false, self.locale);
                     item_name.to_lowercase().contains(search_pattern)
                 })
                 .collect();
@@ -291,6 +328,7 @@ impl MacroSolverApp {
                     let item_id = search_result[row.index()];
                     row.col(|ui| {
                         if ui.button("Select").clicked() {
+                            log::debug!("{}", get_item_name(item_id, false, self.locale));
                             self.recipe_config = RecipeConfiguration {
                                 item_id,
                                 recipe: *game_data::RECIPES.get(&item_id).unwrap(),
@@ -299,7 +337,11 @@ impl MacroSolverApp {
                         };
                     });
                     row.col(|ui| {
-                        ui.label(get_item_name(item_id, Locale::EN));
+                        ui.label(egui::RichText::new(get_item_name(
+                            item_id,
+                            false,
+                            self.locale,
+                        )));
                     });
                 });
             });
@@ -396,7 +438,7 @@ impl MacroSolverApp {
                     Some(item) if item.can_be_hq => {
                         has_hq_ingredient = true;
                         ui.horizontal(|ui| {
-                            ui.label(get_item_name(ingredient.item_id, Locale::EN));
+                            ui.label(get_item_name(ingredient.item_id, false, self.locale));
                             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                                 let mut max_placeholder = ingredient.amount;
                                 ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
@@ -506,6 +548,22 @@ impl MacroSolverApp {
                 ui.add_visible(self.solver_pending, egui::Spinner::new());
             });
         });
+    }
+
+    fn load_fonts(ctx: &egui::Context) {
+        let mut fonts = FontDefinitions::default();
+        fonts.font_data.insert(
+            String::from("japanese_fallback"),
+            FontData::from_static(include_bytes!(
+                "../assets/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
+            )),
+        );
+        fonts
+            .families
+            .get_mut(&FontFamily::Proportional)
+            .unwrap()
+            .push("japanese_fallback".to_owned());
+        ctx.set_fonts(fonts);
     }
 
     fn load_action_icons(ctx: &egui::Context) -> std::collections::HashMap<Action, TextureHandle> {
