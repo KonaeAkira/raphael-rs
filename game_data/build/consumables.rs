@@ -61,7 +61,7 @@ pub fn import_consumable_records(
                 item_food,
             } = *consumable;
 
-            relevant_items.insert(item_food.id);
+            relevant_items.insert(item.id);
 
             let (craftsmanship, control, cp) = get_stats(item_food);
 
