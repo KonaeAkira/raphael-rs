@@ -5,7 +5,7 @@ use egui::{
     Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions,
 };
 use egui_extras::Column;
-use game_data::{get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
+use game_data::{action_name, get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
@@ -235,6 +235,7 @@ impl eframe::App for MacroSolverApp {
                             &self.actions,
                             game_data::ITEMS.get(&self.recipe_config.item_id).unwrap(),
                             &self.action_icons,
+                            self.locale,
                         ));
                         ui.add_space(5.5);
                         ui.horizontal(|ui| {
@@ -282,7 +283,7 @@ impl eframe::App for MacroSolverApp {
                     });
                     ui.add_sized(
                         [320.0, 730.0],
-                        MacroView::new(&mut self.actions, &mut self.macro_view_config),
+                        MacroView::new(&mut self.actions, &mut self.macro_view_config, self.locale),
                     );
                     // fill remaining horizontal space
                     ui.with_layout(Layout::right_to_left(Align::Center), |_| {});
@@ -583,7 +584,7 @@ impl MacroSolverApp {
             .into_iter()
             .map(|(action, image)| {
                 let texture = ctx.load_texture(
-                    action.display_name(),
+                    action_name(action, Locale::EN),
                     egui::ColorImage::from_rgb([64, 64], image.as_flat_samples().as_slice()),
                     TextureOptions::LINEAR,
                 );

@@ -1,4 +1,5 @@
 use egui::{Align, Id, Layout, Widget};
+use game_data::{action_name, Locale};
 use serde::{Deserialize, Serialize};
 use simulator::Action;
 
@@ -33,6 +34,7 @@ impl MacroTextBox {
         actions: &[Action],
         config: &MacroViewConfig,
         newline: &'static str,
+        locale: Locale,
     ) -> Self {
         let mut lines: Vec<_> = actions
             .into_iter()
@@ -40,11 +42,11 @@ impl MacroTextBox {
                 if config.include_delay {
                     format!(
                         "/ac \"{}\" <wait.{}>",
-                        action.display_name(),
+                        action_name(*action, locale),
                         action.time_cost()
                     )
                 } else {
-                    format!("/ac \"{}\"", action.display_name())
+                    format!("/ac \"{}\"", action_name(*action, locale))
                 }
             })
             .collect();
@@ -85,11 +87,20 @@ impl Widget for MacroTextBox {
 pub struct MacroView<'a> {
     actions: &'a mut Vec<Action>,
     config: &'a mut MacroViewConfig,
+    locale: Locale,
 }
 
 impl<'a> MacroView<'a> {
-    pub fn new(actions: &'a mut Vec<Action>, config: &'a mut MacroViewConfig) -> Self {
-        Self { actions, config }
+    pub fn new(
+        actions: &'a mut Vec<Action>,
+        config: &'a mut MacroViewConfig,
+        locale: Locale,
+    ) -> Self {
+        Self {
+            actions,
+            config,
+            locale,
+        }
     }
 }
 
@@ -158,6 +169,7 @@ impl<'a> Widget for MacroView<'a> {
                         actions,
                         &self.config,
                         newline,
+                        self.locale,
                     ));
                 }
                 // fill the remaining space

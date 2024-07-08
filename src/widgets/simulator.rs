@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use egui::{Align, Color32, Layout, Rounding, TextureHandle, Widget};
-use game_data::Item;
+use game_data::{action_name, Item, Locale};
 use simulator::{Action, Settings, SimulationState};
 
 use crate::config::QualityTarget;
@@ -11,6 +11,7 @@ pub struct Simulator<'a> {
     actions: &'a [Action],
     item: &'a Item,
     action_icons: &'a HashMap<Action, TextureHandle>,
+    locale: Locale,
 }
 
 impl<'a> Simulator<'a> {
@@ -19,12 +20,14 @@ impl<'a> Simulator<'a> {
         actions: &'a [Action],
         item: &'a Item,
         action_icons: &'a HashMap<Action, TextureHandle>,
+        locale: Locale,
     ) -> Self {
         Self {
             settings,
             actions,
             item,
             action_icons,
+            locale,
         }
     }
 }
@@ -130,7 +133,7 @@ impl<'a> Widget for Simulator<'a> {
                                         Err(_) => Color32::from_rgb(255, 96, 96),
                                     }),
                             )
-                            .on_hover_text(action.display_name());
+                            .on_hover_text(action_name(*action, self.locale));
                         }
                     });
                 });
