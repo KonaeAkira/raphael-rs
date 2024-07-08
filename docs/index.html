@@ -9,14 +9,11 @@
             content="Raphael is a crafting rotation optimizer and macro generator for Final Fantasy XIV. Updated for Dawntrail (patch 7.0)."
         />
 
-        <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
-        <base href="https://www.raphael-xiv.com/" />
-
         <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
         
-<script type="module" nonce="WGhydr7iwyGc84AoFsFCHQ==">
-import init, * as bindings from 'https://www.raphael-xiv.com/raphael-xiv-288f19718bcf90b9.js';
-const wasm = await init('https://www.raphael-xiv.com/raphael-xiv-288f19718bcf90b9_bg.wasm');
+<script type="module" nonce="PHbZqj1CksSPhYOCmYBueA==">
+import init, * as bindings from '/raphael-xiv-35aae419dd090341.js';
+const wasm = await init('/raphael-xiv-35aae419dd090341_bg.wasm');
 
 
 window.wasmBindings = bindings;
@@ -124,8 +121,8 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         </style>
     
-<link rel="modulepreload" href="https://www.raphael-xiv.com/raphael-xiv-288f19718bcf90b9.js" crossorigin=anonymous integrity="sha384-kKfLIyZjNqH4GjEUCfL6kuuS+Mbh4dce1dUk0RIEYI6JPCxfCzMm6JsFaodrVWsq">
-<link rel="preload" href="https://www.raphael-xiv.com/raphael-xiv-288f19718bcf90b9_bg.wasm" crossorigin=anonymous integrity="sha384-2+kZEy/tvJccArutk4ChmRAlVHldff8a/KAtCRwHLGFt6hTduoHDbwVyTvv0uqNG" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/raphael-xiv-35aae419dd090341.js" crossorigin=anonymous integrity="sha384-kKfLIyZjNqH4GjEUCfL6kuuS+Mbh4dce1dUk0RIEYI6JPCxfCzMm6JsFaodrVWsq">
+<link rel="preload" href="/raphael-xiv-35aae419dd090341_bg.wasm" crossorigin=anonymous integrity="sha384-qex3nFQLhNaPbnrxxulFpnT1xNV6zFvCCNbcxG7DMga2dseGOgw0NpUwlWR8FgWS" as="fetch" type="application/wasm"></head>
 
     <body>
         <!-- The WASM code will resize the canvas dynamically -->
