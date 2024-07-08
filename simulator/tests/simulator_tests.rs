@@ -257,3 +257,60 @@ fn test_ingame_be9fc5c2() {
     ];
     assert_eq!(states, expected);
 }
+
+#[test]
+fn test_ingame_d11d9c68() {
+    // Black Star Mask of Casting
+    // Lv. 94, 3957 Craftsmanship, 3896 Control
+    // Verified in-game (patch 7.0)
+    let settings = Settings {
+        max_cp: 601,
+        max_durability: 80,
+        max_progress: 6300,
+        max_quality: 11400,
+        base_progress: 238,
+        base_quality: 300,
+        initial_quality: 0,
+        job_level: 94,
+        allowed_actions: ActionMask::all(),
+    };
+    let actions = [
+        Action::Reflect,
+        Action::Innovation,
+        Action::PreparatoryTouch,
+        Action::PrudentTouch,
+        Action::GreatStrides,
+        Action::PreparatoryTouch,
+        Action::GreatStrides,
+        Action::Innovation,
+        Action::PreparatoryTouch,
+        Action::MasterMend,
+        Action::GreatStrides,
+        Action::ByregotsBlessing,
+    ];
+    let states: Vec<(u16, u16)> = simulate(
+        &settings,
+        actions
+            .into_iter()
+            .zip(std::iter::repeat(Condition::Normal)),
+    )
+    .unwrap()
+    .into_iter()
+    .map(|state| progress_quality_pair(&settings, state))
+    .collect();
+    let expected = [
+        (0, 900),
+        (0, 900),
+        (0, 1980),
+        (0, 2610),
+        (0, 2610),
+        (0, 4860),
+        (0, 4860),
+        (0, 4860),
+        (0, 7410),
+        (0, 7410),
+        (0, 7410),
+        (0, 11400),
+    ];
+    assert_eq!(states, expected);
+}
