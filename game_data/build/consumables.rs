@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
@@ -22,7 +22,9 @@ const CONTROL_PARAM_ID: u32 = 71;
 const CP_PARAM_ID: u32 = 11;
 const VALID_PARAMS: &[u32] = &[CRAFTSMANSHIP_PARAM_ID, CONTROL_PARAM_ID, CP_PARAM_ID];
 
-pub fn import_consumable_records() -> Result<(), Box<dyn std::error::Error>> {
+pub fn import_consumable_records(
+    relevant_items: &mut HashSet<u32>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut item_food_by_id = HashMap::new();
 
     for item_food in read_csv_data::<ItemFoodRecord>("data/ItemFood.csv") {
@@ -58,6 +60,8 @@ pub fn import_consumable_records() -> Result<(), Box<dyn std::error::Error>> {
                 is_potion,
                 item_food,
             } = *consumable;
+
+            relevant_items.insert(item_food.id);
 
             let (craftsmanship, control, cp) = get_stats(item_food);
 
