@@ -571,11 +571,22 @@ impl MacroSolverApp {
                 "../assets/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
             )),
         );
+        fonts.font_data.insert(
+            String::from("japanese_monospace_fallback"),
+            FontData::from_static(include_bytes!(
+                "../assets/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
+            )),
+        );
         fonts
             .families
             .get_mut(&FontFamily::Proportional)
             .unwrap()
             .push("japanese_fallback".to_owned());
+        fonts
+            .families
+            .get_mut(&FontFamily::Monospace)
+            .unwrap()
+            .push("japanese_monospace_fallback".to_owned());
         ctx.set_fonts(fonts);
     }
 
