@@ -1,6 +1,6 @@
-# Raphael XIV [<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.gg/Qd9u9CtaYj)
+# Raphael XIV [<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.com/invite/m2aCy3y8he)
 
-:link: [www.raphael-xiv.com](https://raphael-xiv.com/)
+:link: [www.raphael-xiv.com](https://www.raphael-xiv.com/)
 
 Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 * Produces optimal solutions. Achieving higher quality than the solver is impossible.
