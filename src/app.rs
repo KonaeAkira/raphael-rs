@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use egui::{Align, CursorIcon, Layout, TextureHandle, TextureOptions};
 use egui_extras::Column;
-use game_data::{Consumable, Item, RecipeConfiguration};
+use game_data::{get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
@@ -251,12 +251,10 @@ impl MacroSolverApp {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Recipe").strong());
-                ui.label(egui::RichText::new(
-                    game_data::ITEMS
-                        .get(&self.recipe_config.item_id)
-                        .unwrap()
-                        .name,
-                ));
+                ui.label(egui::RichText::new(get_item_name(
+                    self.recipe_config.item_id,
+                    Locale::EN,
+                )));
             });
             ui.separator();
             ui.horizontal(|ui| {
@@ -265,15 +263,13 @@ impl MacroSolverApp {
             });
             ui.separator();
 
+            let search_pattern = &self.recipe_search_text.to_lowercase();
             let mut search_result: Vec<u32> = game_data::RECIPES
                 .keys()
                 .copied()
-                .filter(|item_id| match game_data::ITEMS.get(item_id) {
-                    Some(item) => item
-                        .name
-                        .to_lowercase()
-                        .contains(&self.recipe_search_text.to_lowercase()),
-                    _ => false,
+                .filter(|item_id| {
+                    let item_name = get_item_name(*item_id, Locale::EN);
+                    item_name.to_lowercase().contains(search_pattern)
                 })
                 .collect();
             search_result.sort();
@@ -293,7 +289,6 @@ impl MacroSolverApp {
             table.body(|body| {
                 body.rows(text_height, search_result.len(), |mut row| {
                     let item_id = search_result[row.index()];
-                    let item = game_data::ITEMS.get(&item_id).unwrap();
                     row.col(|ui| {
                         if ui.button("Select").clicked() {
                             self.recipe_config = RecipeConfiguration {
@@ -304,7 +299,7 @@ impl MacroSolverApp {
                         };
                     });
                     row.col(|ui| {
-                        ui.label(item.name);
+                        ui.label(get_item_name(item_id, Locale::EN));
                     });
                 });
             });
@@ -394,32 +389,28 @@ impl MacroSolverApp {
             ui.separator();
 
             ui.label(egui::RichText::new("HQ ingredients").strong());
-            let ingredients: Vec<(Item, u32)> = self
-                .recipe_config
-                .recipe
-                .ingredients
-                .iter()
-                .filter_map(|ingredient| match ingredient.item_id {
-                    0 => None,
-                    id => Some((*game_data::ITEMS.get(&id).unwrap(), ingredient.amount)),
-                })
-                .collect();
             let mut has_hq_ingredient = false;
-            for (index, (item, max_amount)) in ingredients.iter().enumerate() {
-                if item.can_be_hq {
-                    has_hq_ingredient = true;
-                    ui.horizontal(|ui| {
-                        ui.label(item.name);
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            let mut max_placeholder = *max_amount;
-                            ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
-                            ui.monospace("/");
-                            ui.add(
-                                egui::DragValue::new(&mut self.recipe_config.hq_ingredients[index])
-                                    .clamp_range(0..=*max_amount),
-                            );
+            let ingredients = self.recipe_config.recipe.ingredients;
+            for (index, ingredient) in ingredients.into_iter().enumerate() {
+                match ITEMS.get(&ingredient.item_id) {
+                    Some(item) if item.can_be_hq => {
+                        has_hq_ingredient = true;
+                        ui.horizontal(|ui| {
+                            ui.label(get_item_name(ingredient.item_id, Locale::EN));
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                let mut max_placeholder = ingredient.amount;
+                                ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
+                                ui.monospace("/");
+                                ui.add(
+                                    egui::DragValue::new(
+                                        &mut self.recipe_config.hq_ingredients[index],
+                                    )
+                                    .clamp_range(0..=ingredient.amount),
+                                );
+                            });
                         });
-                    });
+                    }
+                    _ => (),
                 }
             }
             if !has_hq_ingredient {

@@ -1,6 +1,6 @@
 use egui::{Align, Id, Layout, Widget};
 use egui_extras::Column;
-use game_data::{Consumable, CrafterStats};
+use game_data::{get_item_name, Consumable, CrafterStats, Locale};
 
 pub struct ConsumableSelect<'a> {
     title: &'static str,
@@ -34,7 +34,7 @@ impl<'a> Widget for ConsumableSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new(self.title).strong());
                     ui.label(match self.selected_consumable {
-                        Some(item) => item.name,
+                        Some(item) => get_item_name(item.item_id, Locale::EN),
                         None => "None",
                     });
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -63,7 +63,10 @@ impl<'a> Widget for ConsumableSelect<'a> {
                 let search_result: Vec<&Consumable> = self
                     .consumables
                     .iter()
-                    .filter(|item| item.name.to_lowercase().contains(&search_pattern))
+                    .filter(|item| {
+                        let item_name = get_item_name(item.item_id, Locale::EN);
+                        item_name.to_lowercase().contains(&search_pattern)
+                    })
                     .collect();
 
                 let text_height = egui::TextStyle::Body
@@ -88,7 +91,7 @@ impl<'a> Widget for ConsumableSelect<'a> {
                             }
                         });
                         row.col(|ui| {
-                            ui.label(item.name);
+                            ui.label(get_item_name(item.item_id, Locale::EN));
                         });
                         row.col(|ui| {
                             ui.label(item.effect_string(

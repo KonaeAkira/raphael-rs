@@ -3,8 +3,9 @@ pub const POTIONS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/potions.r
 
 #[derive(Debug, Clone, Copy)]
 pub struct Consumable {
+    pub item_id: u32,
     pub item_level: u32,
-    pub name: &'static str,
+    pub hq: bool,
     pub craft_rel: u32,
     pub craft_max: u32,
     pub control_rel: u32,
