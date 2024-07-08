@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Locale {
     EN,
     DE,
@@ -26,8 +26,8 @@ static ITEM_NAMES_FR: phf::Map<u32, &'static str> =
 static ITEM_NAMES_JP: phf::Map<u32, &'static str> =
     include!(concat!(env!("OUT_DIR"), "/item_names_jp.rs"));
 
-pub fn get_item_name(item_id: u32, locale: Locale) -> &'static str {
-    match locale {
+pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> String {
+    let item_name = match locale {
         Locale::EN => ITEM_NAMES_EN
             .get(&item_id)
             .copied()
@@ -44,5 +44,9 @@ pub fn get_item_name(item_id: u32, locale: Locale) -> &'static str {
             .get(&item_id)
             .copied()
             .unwrap_or("Unknown item"),
+    };
+    match hq {
+        true => format!("{} (HQ)", item_name),
+        false => item_name.to_string(),
     }
 }

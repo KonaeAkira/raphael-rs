@@ -7,6 +7,7 @@ pub struct ConsumableSelect<'a> {
     crafter_stats: CrafterStats,
     consumables: &'a [Consumable],
     selected_consumable: &'a mut Option<Consumable>,
+    locale: Locale,
 }
 
 impl<'a> ConsumableSelect<'a> {
@@ -15,12 +16,14 @@ impl<'a> ConsumableSelect<'a> {
         crafter_stats: CrafterStats,
         consumables: &'a [Consumable],
         selected_consumable: &'a mut Option<Consumable>,
+        locale: Locale,
     ) -> Self {
         Self {
             title,
             crafter_stats,
             consumables,
             selected_consumable,
+            locale,
         }
     }
 }
@@ -34,8 +37,8 @@ impl<'a> Widget for ConsumableSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new(self.title).strong());
                     ui.label(match self.selected_consumable {
-                        Some(item) => get_item_name(item.item_id, Locale::EN),
-                        None => "None",
+                        Some(item) => get_item_name(item.item_id, item.hq, self.locale),
+                        None => "None".to_string(),
                     });
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
@@ -64,7 +67,7 @@ impl<'a> Widget for ConsumableSelect<'a> {
                     .consumables
                     .iter()
                     .filter(|item| {
-                        let item_name = get_item_name(item.item_id, Locale::EN);
+                        let item_name = get_item_name(item.item_id, item.hq, self.locale);
                         item_name.to_lowercase().contains(&search_pattern)
                     })
                     .collect();
@@ -91,7 +94,7 @@ impl<'a> Widget for ConsumableSelect<'a> {
                             }
                         });
                         row.col(|ui| {
-                            ui.label(get_item_name(item.item_id, Locale::EN));
+                            ui.label(get_item_name(item.item_id, item.hq, self.locale));
                         });
                         row.col(|ui| {
                             ui.label(item.effect_string(
