@@ -336,37 +336,4 @@ impl Action {
             _ => None,
         }
     }
-
-    pub const fn display_name(self) -> &'static str {
-        match self {
-            Action::BasicSynthesis => "Basic Synthesis",
-            Action::BasicTouch => "Basic Touch",
-            Action::MasterMend => "Master's Mend",
-            Action::Observe => "Observe",
-            Action::TricksOfTheTrade => "Tricks of the Trade",
-            Action::WasteNot => "Waste Not",
-            Action::Veneration => "Veneration",
-            Action::StandardTouch | Action::ComboStandardTouch => "Standard Touch",
-            Action::GreatStrides => "Great Strides",
-            Action::Innovation => "Innovation",
-            Action::WasteNot2 => "Waste Not II",
-            Action::ByregotsBlessing => "Byregot's Blessing",
-            Action::PreciseTouch => "Precise Touch",
-            Action::MuscleMemory => "Muscle Memory",
-            Action::CarefulSynthesis => "Careful Synthesis",
-            Action::Manipulation => "Manipulation",
-            Action::PrudentTouch => "Prudent Touch",
-            Action::Reflect => "Reflect",
-            Action::PreparatoryTouch => "Preparatory Touch",
-            Action::Groundwork => "Groundwork",
-            Action::DelicateSynthesis => "Delicate Synthesis",
-            Action::IntensiveSynthesis => "Intensive Synthesis",
-            Action::AdvancedTouch | Action::ComboAdvancedTouch => "Advanced Touch",
-            Action::PrudentSynthesis => "Prudent Synthesis",
-            Action::TrainedFinesse => "Trained Finesse",
-            Action::ComboRefinedTouch => "Refined Touch",
-            Action::ImmaculateMend => "Immaculate Mend",
-            Action::TrainedPerfection => "Trained Perfection",
-        }
-    }
 }
