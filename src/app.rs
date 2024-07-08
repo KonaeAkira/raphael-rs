@@ -152,7 +152,7 @@ impl eframe::App for MacroSolverApp {
                 ui.add(
                     egui::Hyperlink::from_label_and_url(
                         "Join Discord",
-                        "https://discord.gg/Qd9u9CtaYj",
+                        "https://discord.com/invite/m2aCy3y8he",
                     )
                     .open_in_new_tab(true),
                 );
