@@ -91,8 +91,8 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
         }
         Some(ComboAction::SynthesisBegin) => {
             let combo_available =
-                allowed_actions.has(Action::Reflect) || allowed_actions.has(Action::MuscleMemory);
-            return !combo_available || matches!(action, Action::Reflect | Action::MuscleMemory);
+                allowed_actions.has(Action::Reflect) || allowed_actions.has(Action::MuscleMemory) || allowed_actions.has(Action::TrainedEye);
+            return !combo_available || matches!(action, Action::Reflect | Action::MuscleMemory | Action::TrainedEye);
         }
     }
 
