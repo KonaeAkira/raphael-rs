@@ -495,6 +495,25 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label("Target quality");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
+                    let game_settings = game_data::get_game_settings(
+                        self.recipe_config,
+                        self.crafter_config.crafter_stats[self.crafter_config.selected_job],
+                        self.selected_food,
+                        self.selected_potion,
+                    );
+                    let mut current_value = self
+                        .solver_config
+                        .quality_target
+                        .get_target(game_settings.max_quality);
+                    match &mut self.solver_config.quality_target {
+                        QualityTarget::Custom(value) => {
+                            ui.add(egui::DragValue::new(value));
+                        }
+                        _ => {
+                            ui.add_enabled(false, egui::DragValue::new(&mut current_value));
+                        }
+                    };
                     egui::ComboBox::from_id_source("TARGET_QUALITY")
                         .selected_text(format!("{}", self.solver_config.quality_target))
                         .show_ui(ui, |ui| {
@@ -523,6 +542,11 @@ impl MacroSolverApp {
                                 QualityTarget::Full,
                                 format!("{}", QualityTarget::Full),
                             );
+                            ui.selectable_value(
+                                &mut self.solver_config.quality_target,
+                                QualityTarget::Custom(current_value),
+                                format!("{}", QualityTarget::Custom(0)),
+                            )
                         });
                 });
             });

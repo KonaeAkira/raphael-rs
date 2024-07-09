@@ -71,19 +71,19 @@ pub enum QualityTarget {
     CollectableT2,
     CollectableT3,
     Full,
+    Custom(u16),
 }
 
 impl QualityTarget {
     pub fn get_target(self, max_quality: u16) -> u16 {
-        (max_quality as f64
-            * match self {
-                Self::Zero => 0.0,
-                Self::CollectableT1 => 0.55,
-                Self::CollectableT2 => 0.75,
-                Self::CollectableT3 => 0.95,
-                Self::Full => 1.00,
-            })
-        .ceil() as u16
+        match self {
+            Self::Zero => 0,
+            Self::CollectableT1 => (max_quality as f64 * 0.55).ceil() as u16,
+            Self::CollectableT2 => (max_quality as f64 * 0.75).ceil() as u16,
+            Self::CollectableT3 => (max_quality as f64 * 0.95).ceil() as u16,
+            Self::Full => max_quality,
+            Self::Custom(quality) => quality,
+        }
     }
 }
 
@@ -98,6 +98,7 @@ impl std::fmt::Display for QualityTarget {
                 Self::CollectableT2 => "75% quality",
                 Self::CollectableT3 => "95% quality",
                 Self::Full => "100% quality",
+                Self::Custom(_) => "Custom",
             }
         )
     }
