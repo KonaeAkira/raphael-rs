@@ -95,7 +95,8 @@ fn import_recipe_records(
             );
 
         let rlvl_record = &rlvls[recipe_record.recipe_level as usize];
-        let recipe = format!("Recipe {{ recipe_level: {recipe_level}, progress: {progress}, quality: {quality}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients} }}",
+        let recipe = format!("Recipe {{ level: {level}, recipe_level: {recipe_level}, progress: {progress}, quality: {quality}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients} }}",
+                level = rlvl_record.level,
                 recipe_level = recipe_record.recipe_level,
                 progress = apply_factor(rlvl_record.progress, recipe_record.progress_factor),
                 quality = apply_factor(rlvl_record.quality, recipe_record.quality_factor),

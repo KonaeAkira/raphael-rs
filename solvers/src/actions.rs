@@ -27,7 +27,8 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::AdvancedTouch,
     Action::ComboAdvancedTouch,
     Action::TrainedFinesse,
-    Action::ComboRefinedTouch
+    Action::ComboRefinedTouch,
+    Action::TrainedEye
 );
 
 pub const DURABILITY_ACTIONS: ActionMask = action_mask!(
