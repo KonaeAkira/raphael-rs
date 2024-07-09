@@ -128,6 +128,8 @@ pub struct RecipeRecord {
 
 #[derive(Deserialize)]
 pub struct RecipeLevelRecord {
+    #[serde(rename = "ClassJobLevel")]
+    pub level: u8,
     #[serde(rename = "Durability")]
     pub durability: u32,
     #[serde(rename = "Difficulty")]

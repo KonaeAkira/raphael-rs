@@ -32,6 +32,7 @@ struct RecipeLevel {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Recipe {
+    pub level: u8,
     pub recipe_level: u32,
     pub progress: u16,
     pub quality: u16,
@@ -119,6 +120,7 @@ pub fn get_game_settings(
         initial_quality,
         job_level: crafter_config.level,
         allowed_actions: ActionMask::from_level(
+            recipe.level as _,
             crafter_config.level as _,
             crafter_config.manipulation,
         ),

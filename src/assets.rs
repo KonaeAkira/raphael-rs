@@ -134,5 +134,9 @@ pub fn get_action_icons() -> HashMap<Action, image::RgbImage> {
         Action::TrainedPerfection,
         include_bytes!("../assets/actions/Trained Perfection.png"),
     );
+    load_icon(
+        Action::TrainedEye,
+        include_bytes!("../assets/actions/Trained Eye.png"),
+    );
     images
 }

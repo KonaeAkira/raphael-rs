@@ -1,7 +1,7 @@
 use simulator::{Action, ActionMask, Settings, SimulationState};
 
 const SETTINGS: Settings = Settings {
-    max_cp: 200,
+    max_cp: 250,
     max_durability: 60,
     max_progress: 2000,
     max_quality: 40000,
@@ -20,7 +20,7 @@ fn test_redundant_half_efficiency_groundwork() {
     for level in 1..=100 {
         let settings = Settings {
             job_level: level,
-            allowed_actions: ActionMask::from_level(level as _, true),
+            allowed_actions: ActionMask::from_level(level as _, level as _, true),
             ..SETTINGS
         };
         match (
@@ -82,6 +82,16 @@ fn test_muscle_memory_opener() {
     let state = SimulationState::from_macro(&SETTINGS, &[Action::MuscleMemory]);
     assert!(matches!(state, Ok(_)));
     let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::MuscleMemory]);
+    assert!(matches!(state, Err("Combo requirement not fulfilled")));
+}
+
+#[test]
+fn test_trained_eye_opener() {
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::TrainedEye]);
+    assert!(matches!(state, Ok(_)));
+    let state = state.unwrap();
+    assert_eq!(state.missing_quality, 0);
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
     assert!(matches!(state, Err("Combo requirement not fulfilled")));
 }
 

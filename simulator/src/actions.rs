@@ -34,6 +34,7 @@ pub enum Action {
     ComboRefinedTouch,
     ImmaculateMend,
     TrainedPerfection,
+    TrainedEye,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -76,6 +77,7 @@ impl Action {
             Action::ComboRefinedTouch => 92,
             Action::ImmaculateMend => 98,
             Action::TrainedPerfection => 100,
+            Action::TrainedEye => 90,
         }
     }
 
@@ -111,6 +113,7 @@ impl Action {
             Action::ComboRefinedTouch => 3,
             Action::ImmaculateMend => 3,
             Action::TrainedPerfection => 3,
+            Action::TrainedEye => 3,
         }
     }
 
@@ -146,6 +149,7 @@ impl Action {
             Action::ComboRefinedTouch => 24,
             Action::ImmaculateMend => 112,
             Action::TrainedPerfection => 0,
+            Action::TrainedEye => 250,
         }
     }
 
@@ -188,6 +192,7 @@ impl Action {
             Action::ComboRefinedTouch => 10,
             Action::ImmaculateMend => 0,
             Action::TrainedPerfection => 0,
+            Action::TrainedEye => 0,
         }
     }
 
@@ -290,6 +295,10 @@ impl Action {
         effects: &Effects,
         condition: Condition,
     ) -> u16 {
+        match self { // This is ugly and I hate it.
+            Action::TrainedEye => {return settings.max_quality}
+            _ => {}
+        };
         let efficieny_mod = self.quality_efficiency(effects.inner_quiet());
         let condition_mod = match condition {
             Condition::Good => 150,
@@ -315,7 +324,7 @@ impl Action {
 
     pub const fn combo_fulfilled(self, combo: Option<ComboAction>) -> bool {
         match self {
-            Action::Reflect | Action::MuscleMemory => {
+            Action::Reflect | Action::MuscleMemory | Action::TrainedEye => {
                 matches!(combo, Some(ComboAction::SynthesisBegin))
             }
             Action::ComboStandardTouch => matches!(combo, Some(ComboAction::BasicTouch)),

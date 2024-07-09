@@ -93,6 +93,7 @@ const fn action_name_en(action: Action) -> &'static str {
         Action::ComboRefinedTouch => "Refined Touch",
         Action::ImmaculateMend => "Immaculate Mend",
         Action::TrainedPerfection => "Trained Perfection",
+        Action::TrainedEye => "Trained Eye",
     }
 }
 
@@ -126,6 +127,7 @@ const fn action_name_de(action: Action) -> &'static str {
         Action::ComboRefinedTouch => "Raffinierte Veredelung",
         Action::ImmaculateMend => "Winkelzug",
         Action::TrainedPerfection => "Meisters Beitrag",
+        Action::TrainedEye => "Flinke Hand",
     }
 }
 
@@ -159,6 +161,7 @@ const fn action_name_fr(action: Action) -> &'static str {
         Action::ComboRefinedTouch => "Ouvrage raffiné",
         Action::ImmaculateMend => "Réparation totale",
         Action::TrainedPerfection => "Main suprême",
+        Action::TrainedEye => "Main preste",
     }
 }
 
@@ -192,5 +195,6 @@ const fn action_name_jp(action: Action) -> &'static str {
         Action::ComboRefinedTouch => "洗練加工",
         Action::ImmaculateMend => "パーフェクトメンド",
         Action::TrainedPerfection => "匠の絶技",
+        Action::TrainedEye => "匠の早業",
     }
 }
