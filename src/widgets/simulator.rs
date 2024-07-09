@@ -34,8 +34,21 @@ impl<'a> Simulator<'a> {
 
 impl<'a> Widget for Simulator<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let (game_state, errors) =
-            SimulationState::from_macro_continue_on_error(self.settings, self.actions);
+        let (game_state, errors) = SimulationState::from_macro_continue_on_error(
+            &Settings {
+                max_quality: u16::MAX,
+                ..*self.settings
+            },
+            self.actions,
+        );
+
+        let max_progress = self.settings.max_progress;
+        let clamped_progress = self.settings.max_progress - game_state.missing_progress;
+
+        let max_quality = self.settings.max_quality;
+        let quality = u16::MAX - game_state.missing_quality;
+        let clamped_quality = std::cmp::min(max_quality, quality);
+
         ui.vertical(|ui| {
             ui.group(|ui| {
                 ui.vertical(|ui| {
@@ -43,21 +56,22 @@ impl<'a> Widget for Simulator<'a> {
                     ui.separator();
                     ui.horizontal(|ui| {
                         ui.label("Progress:");
-                        let max_progress = self.settings.max_progress;
-                        let progress = self.settings.max_progress - game_state.missing_progress;
                         ui.add(
-                            egui::ProgressBar::new(progress as f32 / max_progress as f32)
-                                .text(format!("{} / {}", progress, max_progress))
+                            egui::ProgressBar::new(clamped_progress as f32 / max_progress as f32)
+                                .text(format!("{} / {}", clamped_progress, max_progress))
                                 .rounding(Rounding::ZERO),
                         );
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
-                        let max_quality = self.settings.max_quality;
-                        let quality = self.settings.max_quality - game_state.missing_quality;
                         ui.add(
-                            egui::ProgressBar::new(quality as f32 / max_quality as f32)
-                                .text(format!("{} / {}", quality, max_quality))
+                            egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
+                                .text(format!(
+                                    "{} / {}  (+{} overflow)",
+                                    clamped_quality,
+                                    max_quality,
+                                    quality.saturating_sub(max_quality)
+                                ))
                                 .rounding(Rounding::ZERO),
                         );
                     });
@@ -82,18 +96,12 @@ impl<'a> Widget for Simulator<'a> {
                         );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             if self.item.can_be_hq {
-                                let quality =
-                                    self.settings.max_quality - game_state.missing_quality;
                                 let hq = match game_state.missing_progress {
-                                    0 => {
-                                        game_data::hq_percentage(quality, self.settings.max_quality)
-                                    }
+                                    0 => game_data::hq_percentage(clamped_quality, max_quality),
                                     _ => 0,
                                 };
                                 ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
                             } else if self.item.is_collectable {
-                                let quality =
-                                    self.settings.max_quality - game_state.missing_quality;
                                 let t1 = QualityTarget::CollectableT1
                                     .get_target(self.settings.max_quality);
                                 let t2 = QualityTarget::CollectableT2
