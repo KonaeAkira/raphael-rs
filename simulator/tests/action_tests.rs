@@ -91,7 +91,9 @@ fn test_trained_eye_opener() {
     assert!(matches!(state, Ok(_)));
     let state = state.unwrap();
     assert_eq!(state.missing_quality, 0);
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
+    assert_eq!(state.effects.inner_quiet(), 1);
+    let state =
+        SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
     assert!(matches!(state, Err("Combo requirement not fulfilled")));
 }
 

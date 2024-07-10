@@ -61,7 +61,6 @@ fn test_turali_pineapple_ponzecake() {
     )
 }
 
-// One of these two tests should break if Trained Eye logic breaks.
 #[test]
 fn test_smaller_water_otter_hardware() {
     let item_id = 39243;
@@ -107,7 +106,6 @@ fn test_smaller_water_otter_hardware() {
     )
 }
 
-
 #[test]
 fn test_grade_8_tincture() {
     let item_id = 39730;
@@ -152,4 +150,3 @@ fn test_grade_8_tincture() {
         }
     )
 }
-

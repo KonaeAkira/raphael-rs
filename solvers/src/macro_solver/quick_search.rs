@@ -30,6 +30,10 @@ struct SearchNode {
     backtrack_index: u32,
 }
 
+/// Check if a rotation that maxes out Quality can easily be found
+/// This solve function is fast because it doesn't consider all search branches:
+/// - Always increases Quality first, then finishes off Progress
+/// - Has some manually-coded branch pruning
 pub fn quick_search(
     state: InProgress,
     settings: &Settings,
@@ -114,9 +118,14 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
             return !combo_available || matches!(action, Action::ComboAdvancedTouch);
         }
         Some(ComboAction::SynthesisBegin) => {
-            let combo_available =
-                allowed_actions.has(Action::Reflect) || allowed_actions.has(Action::MuscleMemory) || allowed_actions.has(Action::TrainedEye);
-            return !combo_available || matches!(action, Action::Reflect | Action::MuscleMemory | Action::TrainedEye);
+            let combo_available = allowed_actions.has(Action::Reflect)
+                || allowed_actions.has(Action::MuscleMemory)
+                || allowed_actions.has(Action::TrainedEye);
+            return !combo_available
+                || matches!(
+                    action,
+                    Action::Reflect | Action::MuscleMemory | Action::TrainedEye
+                );
         }
     }
 

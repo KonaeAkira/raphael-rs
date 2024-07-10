@@ -64,16 +64,29 @@ impl<'a> Widget for Simulator<'a> {
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
-                        ui.add(
-                            egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
-                                .text(format!(
-                                    "{} / {}  (+{} overflow)",
-                                    clamped_quality,
-                                    max_quality,
-                                    quality.saturating_sub(max_quality)
-                                ))
-                                .rounding(Rounding::ZERO),
-                        );
+                        if quality == u16::MAX {
+                            // don't display quality overflow when quality is u16::MAX
+                            // this is to hide odd overflow values when Trained Eye is involved
+                            ui.add(
+                                egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
+                                    .text(format!(
+                                        "{} / {}  (max quality guaranteed)",
+                                        clamped_quality, max_quality,
+                                    ))
+                                    .rounding(Rounding::ZERO),
+                            );
+                        } else {
+                            ui.add(
+                                egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
+                                    .text(format!(
+                                        "{} / {}  (+{} overflow)",
+                                        clamped_quality,
+                                        max_quality,
+                                        quality.saturating_sub(max_quality)
+                                    ))
+                                    .rounding(Rounding::ZERO),
+                            );
+                        }
                     });
                     ui.horizontal(|ui| {
                         ui.label("Durability:");
