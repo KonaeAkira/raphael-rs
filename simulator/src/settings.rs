@@ -121,6 +121,7 @@ const ALL_ACTIONS: &[Action] = &[
     Action::CarefulSynthesis,
     Action::Manipulation,
     Action::PrudentTouch,
+    Action::TrainedEye,
     Action::Reflect,
     Action::PreparatoryTouch,
     Action::Groundwork,
@@ -133,5 +134,4 @@ const ALL_ACTIONS: &[Action] = &[
     Action::ComboRefinedTouch,
     Action::ImmaculateMend,
     Action::TrainedPerfection,
-    Action::TrainedEye,
 ];

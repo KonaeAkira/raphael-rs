@@ -39,6 +39,7 @@ pub struct Recipe {
     pub durability: i8,
     pub material_quality_factor: u32,
     pub ingredients: [Ingredient; 6],
+    pub is_expert: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -120,9 +121,9 @@ pub fn get_game_settings(
         initial_quality,
         job_level: crafter_config.level,
         allowed_actions: ActionMask::from_level(
-            recipe.level as _,
             crafter_config.level as _,
             crafter_config.manipulation,
+            !recipe.is_expert && crafter_config.level >= recipe.level + 10, // Trained Eye condition
         ),
     }
 }
