@@ -176,7 +176,7 @@ mod tests {
             base_quality: 310,
             initial_quality: 0,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, 100, true),
+            allowed_actions: ActionMask::from_level(100, true, false),
         };
         let mut solver = UpperBoundSolver::new(settings);
 
@@ -221,7 +221,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(
             settings,
@@ -251,7 +251,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(
             settings,
@@ -278,7 +278,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(
             settings,
@@ -310,7 +310,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 2220);
@@ -327,7 +327,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 2000); // clamped to max_quality
@@ -344,7 +344,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 4555); // tightness test
@@ -361,7 +361,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(settings, &[Action::Reflect]);
         assert_eq!(result, 4633); // tightness test
@@ -378,7 +378,7 @@ mod tests {
             base_quality: 10000,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, true),
+            allowed_actions: ActionMask::from_level(90, true, false),
         };
         let result = solve(settings, &[Action::PrudentTouch]);
         assert_eq!(result, 10000); // tightness test
@@ -395,7 +395,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, 90, false),
+            allowed_actions: ActionMask::from_level(90, false, false),
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 4823); // tightness test
@@ -412,7 +412,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, 100, false),
+            allowed_actions: ActionMask::from_level(100, false, false),
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 4269);
@@ -429,7 +429,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, 100, false),
+            allowed_actions: ActionMask::from_level(100, false, false),
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 3266);
@@ -446,7 +446,7 @@ mod tests {
             base_quality: 100,
             initial_quality: 0,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(90, 100, false),
+            allowed_actions: ActionMask::from_level(100, false, true),
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 24000);
