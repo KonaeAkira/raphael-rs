@@ -60,3 +60,96 @@ fn test_turali_pineapple_ponzecake() {
         }
     )
 }
+
+// One of these two tests should break if Trained Eye logic breaks.
+#[test]
+fn test_smaller_water_otter_hardware() {
+    let item_id = 39243;
+    assert_eq!(
+        get_item_name(item_id, false, Locale::EN),
+        "Smaller Water Otter Fountain Hardware"
+    );
+    let recipe = *RECIPES.get(&item_id).unwrap();
+    assert_eq!(
+        ingredient_names(recipe),
+        [
+            "Pure Igneous Glioaether",
+            "Manganese Ore",
+            "Raw Blue Zircon"
+        ]
+    );
+    let recipe_config = RecipeConfiguration {
+        item_id,
+        recipe,
+        hq_ingredients: [0, 0, 0, 0, 0, 0],
+    };
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3858,
+        control: 4057,
+        cp: 687,
+        level: 100,
+        manipulation: true,
+    };
+    let settings = get_game_settings(recipe_config, crafter_stats, None, None);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 687,
+            max_durability: 60,
+            max_progress: 7920,
+            max_quality: 17240,
+            base_progress: 216,
+            base_quality: 260,
+            initial_quality: 0,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100, true, false),
+        }
+    )
+}
+
+
+#[test]
+fn test_grade_8_tincture() {
+    let item_id = 39730;
+    assert_eq!(
+        get_item_name(item_id, false, Locale::EN),
+        "Grade 8 Tincture of Intelligence"
+    );
+    let recipe = *RECIPES.get(&item_id).unwrap();
+    assert_eq!(
+        ingredient_names(recipe),
+        [
+            "Alche-mist",
+            "Grade 5 Intelligence Alkahest",
+            "Earthbreak Aethersand"
+        ]
+    );
+    let recipe_config = RecipeConfiguration {
+        item_id,
+        recipe,
+        hq_ingredients: [0, 0, 0, 0, 0, 0],
+    };
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3858,
+        control: 4057,
+        cp: 687,
+        level: 100,
+        manipulation: true,
+    };
+    let settings = get_game_settings(recipe_config, crafter_stats, None, None);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 687,
+            max_durability: 70,
+            max_progress: 6600,
+            max_quality: 14040,
+            base_progress: 298,
+            base_quality: 387,
+            initial_quality: 0,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100, true, true),
+        }
+    )
+}
+
