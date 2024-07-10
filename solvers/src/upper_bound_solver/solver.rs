@@ -421,7 +421,7 @@ mod tests {
     #[test]
     fn test_11() {
         let settings = Settings {
-            max_cp: 340,
+            max_cp: 320,
             max_durability: 80,
             max_progress: 1600,
             max_quality: 24000,
@@ -432,13 +432,13 @@ mod tests {
             allowed_actions: ActionMask::from_level(100, false, false),
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 3266);
+        assert_eq!(result, 2986);
     }
 
     #[test]
     fn test_12() {
         let settings = Settings {
-            max_cp: 340,
+            max_cp: 320,
             max_durability: 80,
             max_progress: 1600,
             max_quality: 24000,
