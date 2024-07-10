@@ -124,6 +124,10 @@ pub struct RecipeRecord {
     pub ingredient_id_5: u32,
     #[serde(rename = "Amount{Ingredient}[5]")]
     pub ingredient_amount_5: u32,
+
+    #[serde(rename = "IsExpert")]
+    #[serde(deserialize_with = "bool_string")]
+    pub is_expert: bool,
 }
 
 #[derive(Deserialize)]
