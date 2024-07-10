@@ -36,7 +36,6 @@ pub struct MacroSolverApp {
     selected_potion: Option<Consumable>,
 
     recipe_search_text: String,
-    allow_noncontiguous: bool,
 
     macro_view_config: MacroViewConfig,
     saved_macro_view_config: MacroViewConfig,
@@ -116,7 +115,6 @@ impl MacroSolverApp {
             selected_potion: None,
 
             recipe_search_text: String::new(),
-            allow_noncontiguous: false,
             solver_pending: false,
             data_update,
             bridge,
@@ -261,7 +259,7 @@ impl eframe::App for MacroSolverApp {
                                             [self.crafter_config.selected_job],
                                         game_data::MEALS,
                                         &mut self.selected_food,
-                                        self.locale, &self.allow_noncontiguous,
+                                        self.locale,
                                     ));
                                 });
                                 ui.add_space(5.5);
@@ -274,7 +272,7 @@ impl eframe::App for MacroSolverApp {
                                             [self.crafter_config.selected_job],
                                         game_data::POTIONS,
                                         &mut self.selected_potion,
-                                        self.locale, &self.allow_noncontiguous,
+                                        self.locale,
                                     ));
                                 });
                             });
@@ -313,7 +311,6 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label("Search:");
                 ui.text_edit_singleline(&mut self.recipe_search_text);
-                ui.checkbox(&mut self.allow_noncontiguous, "Allow non-contiguous matches");
             });
             ui.separator();
 
@@ -323,10 +320,7 @@ impl MacroSolverApp {
                 .copied()
                 .filter(|item_id| {
                     let item_name = get_item_name(*item_id, false, self.locale);
-                    match self.allow_noncontiguous {
-                        false => {item_name.to_lowercase().contains(search_pattern)}
-                        true => {contains_noncontiguous(&item_name.to_lowercase(), search_pattern)}
-                    }
+                    contains_noncontiguous(&item_name.to_lowercase(), search_pattern)
                 })
                 .collect();
             search_result.sort();

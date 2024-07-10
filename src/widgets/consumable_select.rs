@@ -10,7 +10,6 @@ pub struct ConsumableSelect<'a> {
     consumables: &'a [Consumable],
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
-    allow_noncontiguous: &'a bool,
 }
 
 impl<'a> ConsumableSelect<'a> {
@@ -20,7 +19,6 @@ impl<'a> ConsumableSelect<'a> {
         consumables: &'a [Consumable],
         selected_consumable: &'a mut Option<Consumable>,
         locale: Locale,
-        allow_noncontiguous: &'a bool
     ) -> Self {
         Self {
             title,
@@ -28,7 +26,6 @@ impl<'a> ConsumableSelect<'a> {
             consumables,
             selected_consumable,
             locale,
-            allow_noncontiguous,
         }
     }
 }
@@ -73,10 +70,7 @@ impl<'a> Widget for ConsumableSelect<'a> {
                     .iter()
                     .filter(|item| {
                         let item_name = get_item_name(item.item_id, item.hq, self.locale);
-                        match self.allow_noncontiguous {
-                            false => {item_name.to_lowercase().contains(&search_pattern)}
-                            true => {contains_noncontiguous(&item_name.to_lowercase(), &search_pattern)}
-                        }
+                        contains_noncontiguous(&item_name.to_lowercase(), &search_pattern)
                     })
                     .collect();
 
