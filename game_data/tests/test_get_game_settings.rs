@@ -56,7 +56,7 @@ fn test_turali_pineapple_ponzecake() {
             base_quality: 355,
             initial_quality: 2180,
             job_level: 94,
-            allowed_actions: ActionMask::from_level(95, 94, true),
+            allowed_actions: ActionMask::from_level(94, true, false),
         }
     )
 }
