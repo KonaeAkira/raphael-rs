@@ -27,7 +27,7 @@ impl ActionMask {
         Self { mask: u64::MAX }
     }
 
-    pub fn from_level(recipe_raw_level: u32, level: u32, manipulation: bool) -> Self {
+    pub fn from_level(level: u32, manipulation: bool, trained_eye: bool) -> Self {
         let mut result = Self::none();
         for action in ALL_ACTIONS {
             if action.level_requirement() <= level {
@@ -37,7 +37,7 @@ impl ActionMask {
         if !manipulation {
             result = result.remove(Action::Manipulation);
         }
-        if level < recipe_raw_level + 10 {
+        if !trained_eye {
             result = result.remove(Action::TrainedEye);
         }
         result
