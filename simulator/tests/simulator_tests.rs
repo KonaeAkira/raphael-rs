@@ -147,7 +147,7 @@ fn test_random_bce2650c() {
         base_quality: 270,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, false),
+        allowed_actions: ActionMask::from_level(90, false, false),
     };
     let actions = [
         Action::MuscleMemory,
@@ -203,7 +203,7 @@ fn test_ingame_be9fc5c2() {
         base_quality: 265,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let states: Vec<(u16, u16)> = simulate(
         &settings,

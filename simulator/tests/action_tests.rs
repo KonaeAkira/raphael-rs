@@ -20,7 +20,7 @@ fn test_redundant_half_efficiency_groundwork() {
     for level in 1..=100 {
         let settings = Settings {
             job_level: level,
-            allowed_actions: ActionMask::from_level(level as _, level as _, true),
+            allowed_actions: ActionMask::from_level(level as _, true, false),
             ..SETTINGS
         };
         match (

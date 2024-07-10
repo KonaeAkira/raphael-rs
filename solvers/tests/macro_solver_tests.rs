@@ -44,7 +44,7 @@ fn test_random_0f93c79f() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1802);
@@ -62,7 +62,7 @@ fn test_random_1e281667() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3366);
@@ -80,7 +80,7 @@ fn test_random_d0bf2aef() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3434);
@@ -98,7 +98,7 @@ fn test_unsolvable() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false);
     assert_eq!(actions, None);
@@ -115,7 +115,7 @@ fn test_max_quality() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1000);
@@ -133,7 +133,7 @@ fn test_zero_quality() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 0);
@@ -151,7 +151,7 @@ fn test_random_e413e05d() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2018);
@@ -169,7 +169,7 @@ fn test_random_bb38a037() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2942);
@@ -187,7 +187,7 @@ fn test_backload_random_bb38a037() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
@@ -206,7 +206,7 @@ fn test_random_a300ca2b() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4683);
@@ -224,7 +224,7 @@ fn test_random_0f9d7781() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2939);
@@ -242,7 +242,7 @@ fn test_random_e451d981() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 5364);
@@ -260,7 +260,7 @@ fn test_random_6799bb1d() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3321);
@@ -278,7 +278,7 @@ fn test_random_940b4755() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4483);
@@ -296,7 +296,7 @@ fn test_rinascita_3700_3280() {
         base_quality: 224,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10623);
@@ -314,7 +314,7 @@ fn test_pactmaker_3240_3130() {
         base_quality: 215,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 8912);
@@ -332,7 +332,7 @@ fn test_backload_pactmaker_3240_3130() {
         base_quality: 215,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
@@ -351,7 +351,7 @@ fn test_diadochos_4021_3660() {
         base_quality: 247,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 9688);
@@ -369,7 +369,7 @@ fn test_indagator_3858_4057() {
         base_quality: 271,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12793);
@@ -387,7 +387,7 @@ fn test_random_2ea6c001() {
         base_quality: 322,
         initial_quality: 0,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, 100, true),
+        allowed_actions: ActionMask::from_level(100, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10600);
@@ -405,7 +405,7 @@ fn test_random_48ae7c9f() {
         base_quality: 310,
         initial_quality: 0,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, 100, true),
+        allowed_actions: ActionMask::from_level(100, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 19621);
@@ -423,7 +423,7 @@ fn test_backload_random_48ae7c9f() {
         base_quality: 310,
         initial_quality: 0,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, 100, true),
+        allowed_actions: ActionMask::from_level(100, true, false),
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
@@ -442,7 +442,7 @@ fn test_max_quality_indagator_3858_4057() {
         base_quality: 271,
         initial_quality: 0,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12900);
@@ -484,7 +484,7 @@ fn test_random_4ecd54c4() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3080);
@@ -502,7 +502,7 @@ fn test_backload_random_4ecd54c4() {
         base_quality: 100,
         initial_quality: 0,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(90, 90, true),
+        allowed_actions: ActionMask::from_level(90, true, false),
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
