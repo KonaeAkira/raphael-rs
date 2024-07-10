@@ -295,10 +295,9 @@ impl Action {
         effects: &Effects,
         condition: Condition,
     ) -> u16 {
-        match self { // This is ugly and I hate it.
-            Action::TrainedEye => {return settings.max_quality}
-            _ => {}
-        };
+        if matches!(self, Action::TrainedEye) {
+            return settings.max_quality;
+        }
         let efficieny_mod = self.quality_efficiency(effects.inner_quiet());
         let condition_mod = match condition {
             Condition::Good => 150,

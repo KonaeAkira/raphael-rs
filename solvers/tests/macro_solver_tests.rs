@@ -509,3 +509,24 @@ fn test_backload_random_4ecd54c4() {
     assert_eq!(get_quality(&settings, &actions), 3002);
     assert_eq!(get_duration(&actions), 51);
 }
+
+#[test]
+fn test_trained_eye() {
+    // Grade 8 Vitality Alkahest
+    // 4005 Craftsmanship, 3961 Control, Level 100
+    let settings = Settings {
+        max_cp: 604,
+        max_durability: 35,
+        max_progress: 4488,
+        max_quality: 9090,
+        base_progress: 310,
+        base_quality: 379,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true, true),
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 9090);
+    assert_eq!(get_duration(&actions), 16);
+}
