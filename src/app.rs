@@ -13,8 +13,8 @@ use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
     config::{CrafterConfig, QualityTarget, JOB_NAMES},
-    widgets::{ConsumableSelect, MacroView, MacroViewConfig, Simulator},
     utils::contains_noncontiguous,
+    widgets::{ConsumableSelect, MacroView, MacroViewConfig, Simulator},
 };
 
 type MacroResult = Option<Vec<Action>>;
@@ -26,13 +26,11 @@ struct SolverConfig {
 
 pub struct MacroSolverApp {
     locale: Locale,
-    saved_locale: Locale,
 
     actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
 
     crafter_config: CrafterConfig,
-    saved_crafter_config: CrafterConfig,
 
     solver_config: SolverConfig,
     selected_food: Option<Consumable>,
@@ -41,7 +39,6 @@ pub struct MacroSolverApp {
     recipe_search_text: String,
 
     macro_view_config: MacroViewConfig,
-    saved_macro_view_config: MacroViewConfig,
 
     solver_pending: bool,
     start_time: Option<Instant>,
@@ -84,12 +81,10 @@ impl MacroSolverApp {
             Some(storage) => eframe::get_value(storage, "CRAFTER_CONFIG").unwrap_or_default(),
             None => Default::default(),
         };
-
         let macro_view_config: MacroViewConfig = match cc.storage {
             Some(storage) => eframe::get_value(storage, "MACRO_VIEW_CONFIG").unwrap_or_default(),
             None => Default::default(),
         };
-
         let locale: Locale = match cc.storage {
             Some(storage) => eframe::get_value(storage, "LOCALE").unwrap_or(Locale::EN),
             None => Locale::EN,
@@ -104,21 +99,13 @@ impl MacroSolverApp {
 
         Self {
             locale,
-            saved_locale: locale,
-
             actions: Vec::new(),
             recipe_config,
-
             crafter_config,
-            saved_crafter_config: crafter_config,
-
             macro_view_config,
-            saved_macro_view_config: macro_view_config,
-
             solver_config,
             selected_food: None,
             selected_potion: None,
-
             recipe_search_text: String::new(),
             solver_pending: false,
             start_time: None,
@@ -132,25 +119,13 @@ impl MacroSolverApp {
 
 impl eframe::App for MacroSolverApp {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        if self.saved_crafter_config != self.crafter_config {
-            eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
-            self.saved_crafter_config = self.crafter_config;
-            log::debug!("Saved crafter config: {:?}", self.crafter_config);
-        }
-        if self.saved_macro_view_config != self.macro_view_config {
-            eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
-            self.saved_macro_view_config = self.macro_view_config;
-            log::debug!("Saved macro view config: {:?}", self.macro_view_config);
-        }
-        if self.saved_locale != self.locale {
-            eframe::set_value(storage, "LOCALE", &self.locale);
-            self.saved_locale = self.locale;
-            log::debug!("Saved locale: {:?}", self.locale);
-        }
+        eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
+        eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
+        eframe::set_value(storage, "LOCALE", &self.locale);
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
-        std::time::Duration::from_secs(1)
+        std::time::Duration::from_secs(2)
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
