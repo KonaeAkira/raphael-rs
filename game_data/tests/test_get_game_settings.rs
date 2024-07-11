@@ -146,7 +146,49 @@ fn test_grade_8_tincture() {
             base_quality: 387,
             initial_quality: 0,
             job_level: 100,
+            // Trained Eye is available
             allowed_actions: ActionMask::from_level(100, true, true),
+        }
+    )
+}
+
+#[test]
+fn test_claro_walnut_spinning_wheel() {
+    let item_id = 43279;
+    assert_eq!(
+        get_item_name(item_id, false, Locale::EN),
+        "Claro Walnut Spinning Wheel"
+    );
+    let recipe = *RECIPES.get(&item_id).unwrap();
+    assert_eq!(
+        ingredient_names(recipe),
+        ["Claro Walnut Lumber", "Black Star", "Magnesia Whetstone"]
+    );
+    let recipe_config = RecipeConfiguration {
+        item_id,
+        recipe,
+        hq_ingredients: [0, 0, 0, 0, 0, 0],
+    };
+    let crafter_stats = CrafterStats {
+        craftsmanship: 4000,
+        control: 3962,
+        cp: 594,
+        level: 99,
+        manipulation: true,
+    };
+    let settings = get_game_settings(recipe_config, crafter_stats, None, None);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 594,
+            max_durability: 80,
+            max_progress: 6300,
+            max_quality: 11400,
+            base_progress: 241,
+            base_quality: 304,
+            initial_quality: 0,
+            job_level: 99,
+            allowed_actions: ActionMask::from_level(99, true, false),
         }
     )
 }

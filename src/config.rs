@@ -14,27 +14,27 @@ impl CrafterConfig {
         self.crafter_stats[self.selected_job]
     }
 
-    pub fn craftsmanship(&self) -> u32 {
+    pub fn craftsmanship(&self) -> u16 {
         self.crafter_stats[self.selected_job].craftsmanship
     }
 
-    pub fn craftsmanship_mut(&mut self) -> &mut u32 {
+    pub fn craftsmanship_mut(&mut self) -> &mut u16 {
         &mut self.crafter_stats[self.selected_job].craftsmanship
     }
 
-    pub fn control(&self) -> u32 {
+    pub fn control(&self) -> u16 {
         self.crafter_stats[self.selected_job].control
     }
 
-    pub fn control_mut(&mut self) -> &mut u32 {
+    pub fn control_mut(&mut self) -> &mut u16 {
         &mut self.crafter_stats[self.selected_job].control
     }
 
-    pub fn cp(&self) -> u32 {
+    pub fn cp(&self) -> u16 {
         self.crafter_stats[self.selected_job].cp
     }
 
-    pub fn cp_mut(&mut self) -> &mut u32 {
+    pub fn cp_mut(&mut self) -> &mut u16 {
         &mut self.crafter_stats[self.selected_job].cp
     }
 
