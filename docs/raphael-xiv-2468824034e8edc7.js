@@ -1391,6 +1391,7 @@ function __wbg_get_imports() {
         const ret = new Function(getStringFromWasm0(arg0, arg1));
         return addHeapObject(ret);
     };
+<<<<<<<< HEAD:docs/raphael-xiv-2468824034e8edc7.js
     imports.wbg.__wbg_length_c20a40f15020d68a = function(arg0) {
         const ret = getObject(arg0).length;
         return ret;
@@ -1398,6 +1399,15 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_set_a47bac70306a19a7 = function(arg0, arg1, arg2) {
         getObject(arg0).set(getObject(arg1), arg2 >>> 0);
     };
+========
+    imports.wbg.__wbg_data_3ce7c145ca4fbcdc = function(arg0) {
+        const ret = getObject(arg0).data;
+        return addHeapObject(ret);
+    };
+    imports.wbg.__wbg_postMessage_7380d10e8b8269df = function() { return handleError(function (arg0, arg1) {
+        getObject(arg0).postMessage(getObject(arg1));
+    }, arguments) };
+>>>>>>>> 54696e0 (Remove auto-save config change check - now always writes to localStorage):docs/raphael-xiv-242dbadacae2130e.js
     imports.wbg.__wbg_newwithbase_6aabbfb1b2e6a1cb = function() { return handleError(function (arg0, arg1, arg2, arg3) {
         const ret = new URL(getStringFromWasm0(arg0, arg1), getStringFromWasm0(arg2, arg3));
         return addHeapObject(ret);
@@ -1436,6 +1446,7 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_setonmessage_503809e5bb51bd33 = function(arg0, arg1) {
         getObject(arg0).onmessage = getObject(arg1);
     };
+<<<<<<<< HEAD:docs/raphael-xiv-2468824034e8edc7.js
     imports.wbg.__wbg_data_3ce7c145ca4fbcdc = function(arg0) {
         const ret = getObject(arg0).data;
         return addHeapObject(ret);
@@ -1443,6 +1454,8 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_postMessage_7380d10e8b8269df = function() { return handleError(function (arg0, arg1) {
         getObject(arg0).postMessage(getObject(arg1));
     }, arguments) };
+========
+>>>>>>>> 54696e0 (Remove auto-save config change check - now always writes to localStorage):docs/raphael-xiv-242dbadacae2130e.js
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {
         const ret = debugString(getObject(arg1));
         const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -1508,12 +1521,21 @@ function __wbg_get_imports() {
         const ret = makeMutClosure(arg0, arg1, 72, __wbg_adapter_34);
         return addHeapObject(ret);
     };
+<<<<<<<< HEAD:docs/raphael-xiv-2468824034e8edc7.js
     imports.wbg.__wbindgen_closure_wrapper2330 = function(arg0, arg1, arg2) {
         const ret = makeClosure(arg0, arg1, 72, __wbg_adapter_37);
         return addHeapObject(ret);
     };
     imports.wbg.__wbindgen_closure_wrapper3262 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 72, __wbg_adapter_28);
+========
+    imports.wbg.__wbindgen_closure_wrapper2399 = function(arg0, arg1, arg2) {
+        const ret = makeClosure(arg0, arg1, 77, __wbg_adapter_37);
+        return addHeapObject(ret);
+    };
+    imports.wbg.__wbindgen_closure_wrapper3218 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 77, __wbg_adapter_28);
+>>>>>>>> 54696e0 (Remove auto-save config change check - now always writes to localStorage):docs/raphael-xiv-242dbadacae2130e.js
         return addHeapObject(ret);
     };
 

@@ -11,9 +11,15 @@
 
         <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
         
+<<<<<<< HEAD
 <script type="module" nonce="7RpvfIX4o7vXlxoq1k69ZQ==">
 import init, * as bindings from '/raphael-xiv-2468824034e8edc7.js';
 const wasm = await init('/raphael-xiv-2468824034e8edc7_bg.wasm');
+=======
+<script type="module" nonce="XAavQ7DA/Xirx/kP7WgMBw==">
+import init, * as bindings from '/raphael-xiv-242dbadacae2130e.js';
+const wasm = await init('/raphael-xiv-242dbadacae2130e_bg.wasm');
+>>>>>>> 54696e0 (Remove auto-save config change check - now always writes to localStorage)
 
 
 window.wasmBindings = bindings;
@@ -121,8 +127,13 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         </style>
     
+<<<<<<< HEAD
 <link rel="modulepreload" href="/raphael-xiv-2468824034e8edc7.js" crossorigin=anonymous integrity="sha384-NsCQvdqc4YctJdXCCRoKFZc6Xr6B3LQx/o1uYFSPfoInC9YogemrWE5BgswXqRE7">
 <link rel="preload" href="/raphael-xiv-2468824034e8edc7_bg.wasm" crossorigin=anonymous integrity="sha384-Ue7CbemGH7c1rRmQNbSu1pWhjm5fj2e7DSyP5gZWk0OQVBoO8sYT8YAldEaLuAi4" as="fetch" type="application/wasm"></head>
+=======
+<link rel="modulepreload" href="/raphael-xiv-242dbadacae2130e.js" crossorigin=anonymous integrity="sha384-FvvnMXdg64hCTAfCko9/P5ms6ErNT3pdw+PDXnSCUgFLGwJgFhwTiLaNc8eHmEoB">
+<link rel="preload" href="/raphael-xiv-242dbadacae2130e_bg.wasm" crossorigin=anonymous integrity="sha384-r2wwyS9pds50SH24DH+A5EU8LFeoIWYR7tgEV9ON1N4OPAjjdJr5F96Gvllkjs75" as="fetch" type="application/wasm"></head>
+>>>>>>> 54696e0 (Remove auto-save config change check - now always writes to localStorage)
 
     <body>
         <!-- The WASM code will resize the canvas dynamically -->
