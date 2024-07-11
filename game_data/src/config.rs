@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 pub struct CrafterStats {
-    pub craftsmanship: u32,
-    pub control: u32,
-    pub cp: u32,
+    pub craftsmanship: u16,
+    pub control: u16,
+    pub cp: u16,
     pub level: u8,
     pub manipulation: bool,
 }

@@ -6,16 +6,16 @@ pub struct Consumable {
     pub item_id: u32,
     pub item_level: u32,
     pub hq: bool,
-    pub craft_rel: u32,
-    pub craft_max: u32,
-    pub control_rel: u32,
-    pub control_max: u32,
-    pub cp_rel: u32,
-    pub cp_max: u32,
+    pub craft_rel: u16,
+    pub craft_max: u16,
+    pub control_rel: u16,
+    pub control_max: u16,
+    pub cp_rel: u16,
+    pub cp_max: u16,
 }
 
 impl Consumable {
-    pub fn effect_string(self, craftsmanship: u32, control: u32, cp: u32) -> String {
+    pub fn effect_string(self, craftsmanship: u16, control: u16, cp: u16) -> String {
         let mut effect: String = String::new();
         if self.craft_rel != 0 {
             effect.push_str(&format!(
@@ -44,7 +44,7 @@ impl Consumable {
     }
 }
 
-pub fn craftsmanship_bonus(base: u32, consumables: &[Option<Consumable>]) -> u32 {
+pub fn craftsmanship_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
         .map(|item| match item {
@@ -54,7 +54,7 @@ pub fn craftsmanship_bonus(base: u32, consumables: &[Option<Consumable>]) -> u32
         .sum()
 }
 
-pub fn control_bonus(base: u32, consumables: &[Option<Consumable>]) -> u32 {
+pub fn control_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
         .map(|item| match item {
@@ -64,7 +64,7 @@ pub fn control_bonus(base: u32, consumables: &[Option<Consumable>]) -> u32 {
         .sum()
 }
 
-pub fn cp_bonus(base: u32, consumables: &[Option<Consumable>]) -> u32 {
+pub fn cp_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
         .map(|item| match item {
