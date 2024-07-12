@@ -49,6 +49,7 @@ fn test_random_0f93c79f() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1802);
     assert_eq!(get_duration(&actions), 44);
+    assert_eq!(actions.len(), 16);
 }
 
 #[test]
@@ -67,6 +68,7 @@ fn test_random_1e281667() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3366);
     assert_eq!(get_duration(&actions), 53);
+    assert_eq!(actions.len(), 20);
 }
 
 #[test]
@@ -85,6 +87,7 @@ fn test_random_d0bf2aef() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3434);
     assert_eq!(get_duration(&actions), 67);
+    assert_eq!(actions.len(), 25);
 }
 
 #[test]
@@ -120,6 +123,7 @@ fn test_max_quality() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1000);
     assert_eq!(get_duration(&actions), 29);
+    assert_eq!(actions.len(), 11);
 }
 
 #[test]
@@ -138,6 +142,7 @@ fn test_zero_quality() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 0);
     assert_eq!(get_duration(&actions), 14);
+    assert_eq!(actions.len(), 5);
 }
 
 #[test]
@@ -156,6 +161,7 @@ fn test_random_e413e05d() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2018);
     assert_eq!(get_duration(&actions), 52);
+    assert_eq!(actions.len(), 19);
 }
 
 #[test]
@@ -174,6 +180,7 @@ fn test_random_bb38a037() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2942);
     assert_eq!(get_duration(&actions), 56);
+    assert_eq!(actions.len(), 21);
 }
 
 #[test]
@@ -193,6 +200,7 @@ fn test_backload_random_bb38a037() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 2842);
     assert_eq!(get_duration(&actions), 62);
+    assert_eq!(actions.len(), 23);
 }
 
 #[test]
@@ -211,6 +219,7 @@ fn test_random_a300ca2b() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4683);
     assert_eq!(get_duration(&actions), 69);
+    assert_eq!(actions.len(), 26);
 }
 
 #[test]
@@ -229,6 +238,7 @@ fn test_random_0f9d7781() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2939);
     assert_eq!(get_duration(&actions), 64);
+    assert_eq!(actions.len(), 24);
 }
 
 #[test]
@@ -247,6 +257,7 @@ fn test_random_e451d981() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 5364);
     assert_eq!(get_duration(&actions), 74);
+    assert_eq!(actions.len(), 27);
 }
 
 #[test]
@@ -265,6 +276,7 @@ fn test_random_6799bb1d() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3321);
     assert_eq!(get_duration(&actions), 51);
+    assert_eq!(actions.len(), 19);
 }
 
 #[test]
@@ -283,6 +295,7 @@ fn test_random_940b4755() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4483);
     assert_eq!(get_duration(&actions), 67);
+    assert_eq!(actions.len(), 25);
 }
 
 #[test]
@@ -301,6 +314,7 @@ fn test_rinascita_3700_3280() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10623);
     assert_eq!(get_duration(&actions), 70);
+    assert_eq!(actions.len(), 26);
 }
 
 #[test]
@@ -319,6 +333,7 @@ fn test_pactmaker_3240_3130() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 8912);
     assert_eq!(get_duration(&actions), 55);
+    assert_eq!(actions.len(), 21);
 }
 
 #[test]
@@ -338,6 +353,7 @@ fn test_backload_pactmaker_3240_3130() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 8801);
     assert_eq!(get_duration(&actions), 65);
+    assert_eq!(actions.len(), 24);
 }
 
 #[test]
@@ -356,6 +372,7 @@ fn test_diadochos_4021_3660() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 9688);
     assert_eq!(get_duration(&actions), 68);
+    assert_eq!(actions.len(), 25);
 }
 
 #[test]
@@ -374,6 +391,7 @@ fn test_indagator_3858_4057() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12793);
     assert_eq!(get_duration(&actions), 72);
+    assert_eq!(actions.len(), 27);
 }
 
 #[test]
@@ -392,6 +410,7 @@ fn test_random_2ea6c001() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10600);
     assert_eq!(get_duration(&actions), 44);
+    assert_eq!(actions.len(), 16);
 }
 
 #[test]
@@ -410,6 +429,7 @@ fn test_random_48ae7c9f() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 19621);
     assert_eq!(get_duration(&actions), 84);
+    assert_eq!(actions.len(), 31);
 }
 
 #[test]
@@ -429,6 +449,7 @@ fn test_backload_random_48ae7c9f() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 19445);
     assert_eq!(get_duration(&actions), 98);
+    assert_eq!(actions.len(), 35);
 }
 
 #[test]
@@ -447,6 +468,7 @@ fn test_max_quality_indagator_3858_4057() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12900);
     assert_eq!(get_duration(&actions), 72);
+    assert_eq!(actions.len(), 27);
     // 62 seconds is possible, but takes very long to solve using the main solver:
     // /ac "Reflect" <wait.3>
     // /ac "Manipulation" <wait.2>
@@ -489,6 +511,7 @@ fn test_random_4ecd54c4() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3080);
     assert_eq!(get_duration(&actions), 51);
+    assert_eq!(actions.len(), 19);
 }
 
 #[test]
@@ -508,6 +531,7 @@ fn test_backload_random_4ecd54c4() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 3002);
     assert_eq!(get_duration(&actions), 51);
+    assert_eq!(actions.len(), 19);
 }
 
 #[test]
@@ -529,4 +553,27 @@ fn test_trained_eye() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 9090);
     assert_eq!(get_duration(&actions), 16);
+    assert_eq!(actions.len(), 6);
+}
+
+#[test]
+fn test_rare_tacos() {
+    // Rarefied Tacos de Carne Asada
+    // 4694 Craftsmanship, 4327 Control, Level 100, HQ Jhinga Biryani, 2/2 HQ mats
+    let settings = Settings {
+        max_cp: 663,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 11400,
+        base_progress: 250,
+        base_quality: 246,
+        initial_quality: 6000,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true, false),
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 11400);
+    assert_eq!(get_duration(&actions), 41);
+    assert_eq!(actions.len(), 16);
 }
