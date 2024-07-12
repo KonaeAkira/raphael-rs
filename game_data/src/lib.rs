@@ -23,11 +23,11 @@ pub struct Ingredient {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct RecipeLevel {
-    progress_div: u16,
-    quality_div: u16,
-    progress_mod: u16,
-    quality_mod: u16,
+pub struct RecipeLevel {
+    pub progress_div: u16,
+    pub quality_div: u16,
+    pub progress_mod: u16,
+    pub quality_mod: u16,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -49,7 +49,7 @@ pub struct RecipeConfiguration {
     pub hq_ingredients: [u8; 6],
 }
 
-const RLVLS: [RecipeLevel; 800] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));
+pub const RLVLS: [RecipeLevel; 800] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));
 
 pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
 pub static RECIPES: phf::OrderedMap<u32, Recipe> =

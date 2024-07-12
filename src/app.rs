@@ -34,6 +34,7 @@ pub struct MacroSolverApp {
     selected_food: Option<Consumable>,
     selected_potion: Option<Consumable>,
 
+    custom_recipe: bool,
     recipe_search_text: String,
 
     macro_view_config: MacroViewConfig,
@@ -104,6 +105,7 @@ impl MacroSolverApp {
             solver_config,
             selected_food: None,
             selected_potion: None,
+            custom_recipe: false,
             recipe_search_text: String::new(),
             solver_pending: false,
             start_time: None,
@@ -229,12 +231,13 @@ impl eframe::App for MacroSolverApp {
                                     ui.set_max_height(212.0);
                                     ui.add(RecipeSelect::new(
                                         &mut self.recipe_config,
+                                        &mut self.custom_recipe,
                                         &mut self.recipe_search_text,
                                         self.locale,
                                     ));
                                     // ui.shrink_height_to_current();
                                 });
-                                ui.add_space(5.5);
+                                ui.add_space(5.0);
                                 ui.push_id("FOOD_SELECT", |ui| {
                                     ui.set_max_width(612.0);
                                     ui.set_max_height(172.0);
@@ -247,7 +250,7 @@ impl eframe::App for MacroSolverApp {
                                         self.locale,
                                     ));
                                 });
-                                ui.add_space(5.5);
+                                ui.add_space(5.0);
                                 ui.push_id("POTION_SELECT", |ui| {
                                     ui.set_max_width(612.0);
                                     ui.set_max_height(172.0);
@@ -477,31 +480,33 @@ impl MacroSolverApp {
             }
 
             ui.add_space(5.5);
-            ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-                if ui.button("Solve").clicked() {
-                    self.solver_pending = true;
-                    self.start_time = Some(Instant::now());
-                    let mut game_settings = game_data::get_game_settings(
-                        self.recipe_config,
-                        self.crafter_config.crafter_stats[self.crafter_config.selected_job],
-                        self.selected_food,
-                        self.selected_potion,
-                    );
-                    let target_quality = self
-                        .solver_config
-                        .quality_target
-                        .get_target(game_settings.max_quality);
-                    game_settings.max_quality =
-                        std::cmp::max(game_settings.initial_quality, target_quality);
-                    self.bridge
-                        .send((game_settings, self.solver_config.backload_progress));
-                    log::debug!("Message send {game_settings:?}");
-                }
-                if self.solver_pending {
-                    ui.spinner();
-                } else if let Some(duration) = self.duration {
-                    ui.label(format!("Time: {:.3}s", duration.as_secs_f64()));
-                }
+            ui.horizontal(|ui| {
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if ui.button("Solve").clicked() {
+                        self.solver_pending = true;
+                        self.start_time = Some(Instant::now());
+                        let mut game_settings = game_data::get_game_settings(
+                            self.recipe_config,
+                            self.crafter_config.crafter_stats[self.crafter_config.selected_job],
+                            self.selected_food,
+                            self.selected_potion,
+                        );
+                        let target_quality = self
+                            .solver_config
+                            .quality_target
+                            .get_target(game_settings.max_quality);
+                        game_settings.max_quality =
+                            std::cmp::max(game_settings.initial_quality, target_quality);
+                        self.bridge
+                            .send((game_settings, self.solver_config.backload_progress));
+                        log::debug!("Message send {game_settings:?}");
+                    }
+                    if self.solver_pending {
+                        ui.spinner();
+                    } else if let Some(duration) = self.duration {
+                        ui.label(format!("Time: {:.3}s", duration.as_secs_f64()));
+                    }
+                });
             });
         });
     }
