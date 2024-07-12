@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 pub const MEALS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/meals.rs"));
 pub const POTIONS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/potions.rs"));
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Consumable {
     pub item_id: u32,
     pub item_level: u32,

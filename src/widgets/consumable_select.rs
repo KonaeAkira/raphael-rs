@@ -1,4 +1,4 @@
-use egui::{Align, Id, Layout, Widget};
+use egui::{Align, Layout, Widget};
 use egui_extras::Column;
 use game_data::{get_item_name, Consumable, CrafterStats, Locale};
 
@@ -8,6 +8,7 @@ pub struct ConsumableSelect<'a> {
     title: &'static str,
     crafter_stats: CrafterStats,
     consumables: &'a [Consumable],
+    search_text: &'a mut String,
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
 }
@@ -17,6 +18,7 @@ impl<'a> ConsumableSelect<'a> {
         title: &'static str,
         crafter_stats: CrafterStats,
         consumables: &'a [Consumable],
+        search_text: &'a mut String,
         selected_consumable: &'a mut Option<Consumable>,
         locale: Locale,
     ) -> Self {
@@ -24,6 +26,7 @@ impl<'a> ConsumableSelect<'a> {
             title,
             crafter_stats,
             consumables,
+            search_text,
             selected_consumable,
             locale,
         }
@@ -32,8 +35,6 @@ impl<'a> ConsumableSelect<'a> {
 
 impl<'a> Widget for ConsumableSelect<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let id = Id::new(self.title);
-        let mut search_text: String = ui.ctx().data(|data| data.get_temp(id).unwrap_or_default());
         ui.group(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -57,14 +58,11 @@ impl<'a> Widget for ConsumableSelect<'a> {
                 ui.separator();
                 ui.horizontal(|ui| {
                     ui.label("Search:");
-                    if ui.text_edit_singleline(&mut search_text).changed() {
-                        ui.ctx()
-                            .data_mut(|data| data.insert_temp(id, search_text.clone()));
-                    }
+                    ui.text_edit_singleline(self.search_text);
                 });
                 ui.separator();
 
-                let search_pattern = search_text.to_lowercase();
+                let search_pattern = self.search_text.to_lowercase();
                 let search_result: Vec<&Consumable> = self
                     .consumables
                     .iter()

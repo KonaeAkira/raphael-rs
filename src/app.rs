@@ -2,6 +2,7 @@ use std::cell::Cell;
 use std::rc::Rc;
 use std::time::Duration;
 
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
 
 use egui::{
@@ -15,8 +16,16 @@ use crate::{
     widgets::{ConsumableSelect, MacroView, MacroViewConfig, RecipeSelect, Simulator},
 };
 
+fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
+    match cc.storage {
+        Some(storage) => eframe::get_value(storage, key).unwrap_or(default),
+        None => default,
+    }
+}
+
 type MacroResult = Option<Vec<Action>>;
 
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 struct SolverConfig {
     quality_target: QualityTarget,
     backload_progress: bool,
@@ -24,21 +33,19 @@ struct SolverConfig {
 
 pub struct MacroSolverApp {
     locale: Locale,
-
-    actions: Vec<Action>,
     recipe_config: RecipeConfiguration,
-
-    crafter_config: CrafterConfig,
-
-    solver_config: SolverConfig,
     selected_food: Option<Consumable>,
     selected_potion: Option<Consumable>,
+    crafter_config: CrafterConfig,
+    solver_config: SolverConfig,
+    macro_view_config: MacroViewConfig,
 
     custom_recipe: bool,
     recipe_search_text: String,
+    food_search_text: String,
+    potion_search_text: String,
 
-    macro_view_config: MacroViewConfig,
-
+    actions: Vec<Action>,
     solver_pending: bool,
     start_time: Option<Instant>,
     duration: Option<Duration>,
@@ -69,44 +76,29 @@ impl MacroSolverApp {
             style.always_scroll_the_only_direction = true;
         });
 
-        let item_id: u32 = 38890;
-        let recipe_config = RecipeConfiguration {
-            item_id, // Indagator's Saw
-            recipe: *game_data::RECIPES.get(&item_id).unwrap(),
+        Self::load_fonts(&cc.egui_ctx);
+
+        let default_recipe_config = RecipeConfiguration {
+            item_id: 38890, // Indagator's Saw
+            recipe: *game_data::RECIPES.get(&38890).unwrap(),
             hq_ingredients: [0; 6],
         };
 
-        let crafter_config: CrafterConfig = match cc.storage {
-            Some(storage) => eframe::get_value(storage, "CRAFTER_CONFIG").unwrap_or_default(),
-            None => Default::default(),
-        };
-        let macro_view_config: MacroViewConfig = match cc.storage {
-            Some(storage) => eframe::get_value(storage, "MACRO_VIEW_CONFIG").unwrap_or_default(),
-            None => Default::default(),
-        };
-        let locale: Locale = match cc.storage {
-            Some(storage) => eframe::get_value(storage, "LOCALE").unwrap_or(Locale::EN),
-            None => Locale::EN,
-        };
-
-        let solver_config = SolverConfig {
-            quality_target: QualityTarget::Full,
-            backload_progress: false,
-        };
-
-        Self::load_fonts(&cc.egui_ctx);
-
         Self {
-            locale,
+            locale: load(cc, "LOCALE", Locale::EN),
+            recipe_config: load(cc, "RECIPE_CONFIG", default_recipe_config),
+            selected_food: load(cc, "SELECTED_FOOD", None),
+            selected_potion: load(cc, "SELECTED_POTION", None),
+            crafter_config: load(cc, "CRAFTER_CONFIG", Default::default()),
+            solver_config: load(cc, "SOLVER_CONFIG", Default::default()),
+            macro_view_config: load(cc, "MACRO_VIEW_CONFIG", Default::default()),
+
+            custom_recipe: load(cc, "CUSTOM_RECIPE", false),
+            recipe_search_text: load(cc, "RECIPE_SEARCH_TEXT", Default::default()),
+            food_search_text: load(cc, "FOOD_SEARCH_TEXT", Default::default()),
+            potion_search_text: load(cc, "POTION_SEARCH_TEXT", Default::default()),
+
             actions: Vec::new(),
-            recipe_config,
-            crafter_config,
-            macro_view_config,
-            solver_config,
-            selected_food: None,
-            selected_potion: None,
-            custom_recipe: false,
-            recipe_search_text: String::new(),
             solver_pending: false,
             start_time: None,
             duration: None,
@@ -119,13 +111,22 @@ impl MacroSolverApp {
 
 impl eframe::App for MacroSolverApp {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
-        eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
         eframe::set_value(storage, "LOCALE", &self.locale);
+        eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
+        eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
+        eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
+        eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
+        eframe::set_value(storage, "SOLVER_CONFIG", &self.solver_config);
+        eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
+
+        eframe::set_value(storage, "CUSTOM_RECIPE", &self.custom_recipe);
+        eframe::set_value(storage, "RECIPE_SEARCH_TEXT", &self.recipe_search_text);
+        eframe::set_value(storage, "FOOD_SEARCH_TEXT", &self.food_search_text);
+        eframe::set_value(storage, "POTION_SEARCH_TEXT", &self.potion_search_text);
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
-        std::time::Duration::from_secs(2)
+        std::time::Duration::from_secs(1)
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -246,6 +247,7 @@ impl eframe::App for MacroSolverApp {
                                         self.crafter_config.crafter_stats
                                             [self.crafter_config.selected_job],
                                         game_data::MEALS,
+                                        &mut self.food_search_text,
                                         &mut self.selected_food,
                                         self.locale,
                                     ));
@@ -259,6 +261,7 @@ impl eframe::App for MacroSolverApp {
                                         self.crafter_config.crafter_stats
                                             [self.crafter_config.selected_job],
                                         game_data::POTIONS,
+                                        &mut self.potion_search_text,
                                         &mut self.selected_potion,
                                         self.locale,
                                     ));
