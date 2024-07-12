@@ -84,7 +84,7 @@ impl MacroSolver {
         let mut solution: Option<(Score, u32)> = None; // (quality, trace_index)
 
         search_queue.push(
-            Score::new(self.bound_solver.quality_upper_bound(state), 0),
+            Score::new(self.bound_solver.quality_upper_bound(state), 0, 0),
             SearchNode {
                 state,
                 backtrack_index: Backtracking::<Action>::SENTINEL,
@@ -131,7 +131,7 @@ impl MacroSolver {
                         let duration = score.duration + action.time_cost() as u8;
                         let backtrack_index = backtracking.push(action, node.backtrack_index);
                         search_queue.push(
-                            Score::new(quality_upper_bound, duration),
+                            Score::new(quality_upper_bound, duration, score.steps + 1),
                             SearchNode {
                                 state: in_progress,
                                 backtrack_index,
@@ -146,6 +146,7 @@ impl MacroSolver {
                         let final_score = Score::new(
                             self.settings.max_quality - state.missing_quality,
                             score.duration + action.time_cost() as u8,
+                            score.steps + 1,
                         );
                         if solution.is_none() || solution.unwrap().0 < final_score {
                             let backtrack_index = backtracking.push(action, node.backtrack_index);
@@ -179,11 +180,16 @@ impl MacroSolver {
 struct Score {
     quality: u16,
     duration: u8,
+    steps: u8,
 }
 
 impl Score {
-    fn new(quality: u16, duration: u8) -> Self {
-        Self { quality, duration }
+    fn new(quality: u16, duration: u8, steps: u8) -> Self {
+        Self {
+            quality,
+            duration,
+            steps,
+        }
     }
 }
 
@@ -192,7 +198,8 @@ impl std::cmp::PartialOrd for Score {
         Some(
             self.quality
                 .cmp(&other.quality)
-                .then(other.duration.cmp(&self.duration)),
+                .then(other.duration.cmp(&self.duration))
+                .then(other.steps.cmp(&self.steps)),
         )
     }
 }
@@ -202,16 +209,19 @@ impl std::cmp::Ord for Score {
         self.quality
             .cmp(&other.quality)
             .then(other.duration.cmp(&self.duration))
+            .then(other.steps.cmp(&self.steps))
     }
 }
 
 impl radix_heap::Radix for Score {
-    const RADIX_BITS: u32 = 24;
+    const RADIX_BITS: u32 = 32;
     fn radix_similarity(&self, other: &Self) -> u32 {
         if self.quality != other.quality {
             self.quality.radix_similarity(&other.quality)
-        } else {
+        } else if self.duration != other.duration {
             self.duration.radix_similarity(&other.duration) + 16
+        } else {
+            self.steps.radix_similarity(&other.steps) + 24
         }
     }
 }

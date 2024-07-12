@@ -575,5 +575,6 @@ fn test_rare_tacos() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 11400);
     assert_eq!(get_duration(&actions), 41);
-    assert_eq!(actions.len(), 16);
+    // solver should prefer rotation with fewer steps when duration is the same (#39)
+    assert_eq!(actions.len(), 15);
 }
