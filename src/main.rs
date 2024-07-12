@@ -15,7 +15,7 @@ fn main() {
                 web_options,
                 Box::new(|cc| {
                     egui_extras::install_image_loaders(&cc.egui_ctx);
-                    Box::new(raphael_xiv::MacroSolverApp::new(cc))
+                    Ok(Box::new(raphael_xiv::MacroSolverApp::new(cc)))
                 }),
             )
             .await
