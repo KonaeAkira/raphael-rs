@@ -24,6 +24,7 @@ wasm-bindgen-futures = "0.4"
 gloo-worker = { version = "0.5.0", features = ["futures"] }
 serde = { version = "1.0.203", features = ["derive"] }
 log = "0.4"
+web-time = "1.1.0"
 
 
 [[bin]]

@@ -1,5 +1,8 @@
+use std::time::Duration;
 use std::cell::Cell;
 use std::rc::Rc;
+
+use web_time::Instant;
 
 use egui::{
     Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions,
@@ -41,6 +44,8 @@ pub struct MacroSolverApp {
     saved_macro_view_config: MacroViewConfig,
 
     solver_pending: bool,
+    start_time: Option<Instant>,
+    duration: Option<Duration>,
     bridge: gloo_worker::WorkerBridge<WebWorker>,
     data_update: Rc<Cell<Option<MacroResult>>>,
 
@@ -116,6 +121,8 @@ impl MacroSolverApp {
 
             recipe_search_text: String::new(),
             solver_pending: false,
+            start_time: None,
+            duration: None,
             data_update,
             bridge,
             action_icons: Self::load_action_icons(&cc.egui_ctx),
@@ -152,6 +159,7 @@ impl eframe::App for MacroSolverApp {
             log::debug!("Received update: {update:?}");
             self.actions = update.unwrap_or(Vec::new());
             self.solver_pending = false;
+            self.duration = Some(Instant::now() - self.start_time.unwrap());
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -567,6 +575,7 @@ impl MacroSolverApp {
             ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                 if ui.button("Solve").clicked() {
                     self.solver_pending = true;
+                    self.start_time = Some(Instant::now());
                     let mut game_settings = game_data::get_game_settings(
                         self.recipe_config,
                         self.crafter_config.crafter_stats[self.crafter_config.selected_job],
@@ -584,6 +593,14 @@ impl MacroSolverApp {
                     log::debug!("Message send {game_settings:?}");
                 }
                 ui.add_visible(self.solver_pending, egui::Spinner::new());
+                ui.add_visible(!self.solver_pending && self.duration != None, 
+                    egui::Label::new(egui::RichText::new(
+                        if let Some(dur) = self.duration {
+                            format!("Time: {:.3}s", self.duration.unwrap().as_secs_f64())
+                        } else {
+                            "".to_string()
+                        }
+                )));
             });
         });
     }
