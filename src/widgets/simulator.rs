@@ -131,8 +131,6 @@ impl<'a> Widget for Simulator<'a> {
                                     egui::RichText::new(format!("Tier {tier} collectable reached"))
                                         .strong(),
                                 );
-                            } else {
-                                ui.label("Item cannot be HQ");
                             }
                         });
                     });

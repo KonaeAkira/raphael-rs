@@ -101,6 +101,7 @@ fn test_smaller_water_otter_hardware() {
             base_quality: 260,
             initial_quality: 0,
             job_level: 100,
+            // Trained Eye is not available for expert recipes
             allowed_actions: ActionMask::from_level(100, true, false),
         }
     )

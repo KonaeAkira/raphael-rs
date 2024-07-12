@@ -6,7 +6,9 @@ use std::path::Path;
 use crate::records::ItemRecord;
 use crate::utils::read_csv_data;
 
-pub fn import_item_records(relevant_items: HashSet<u32>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn import_item_records(
+    mut relevant_items: HashSet<u32>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut item_stats = phf_codegen::OrderedMap::new();
     for item in read_csv_data::<ItemRecord>("data/en/Item.csv")
         .filter(|item| relevant_items.contains(&item.id))
@@ -22,6 +24,7 @@ pub fn import_item_records(relevant_items: HashSet<u32>) -> Result<(), Box<dyn s
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
     writeln!(writer, "{}", item_stats.build())?;
 
+    relevant_items.remove(&0);
     import_item_names(&relevant_items, "en")?;
     import_item_names(&relevant_items, "de")?;
     import_item_names(&relevant_items, "fr")?;
