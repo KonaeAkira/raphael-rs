@@ -126,6 +126,8 @@ impl FinishSolver {
                         }
                     }
                     if max_progress >= self.settings.max_progress {
+                        // stop early if progress is already maxed out
+                        // this optimization would work better with a better action ordering
                         max_progress = self.settings.max_progress;
                         break;
                     }

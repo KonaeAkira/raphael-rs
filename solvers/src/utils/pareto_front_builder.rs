@@ -120,8 +120,8 @@ where
             slice = std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length);
         }
         for x in slice.iter_mut() {
-            x.first = x.first + first;
-            x.second = x.second + second;
+            x.first = x.first.saturating_add(first);
+            x.second = x.second.saturating_add(second);
         }
     }
 
@@ -223,6 +223,16 @@ where
                 }
             }
             None => None,
+        }
+    }
+
+    pub fn is_max(&self) -> bool {
+        match self.segments.last() {
+            Some(segment) if segment.length == 1 => unsafe {
+                let element = self.buffer.add(segment.offset);
+                (*element).first >= self.max_first && (*element).second >= self.max_second
+            },
+            _ => false,
         }
     }
 
