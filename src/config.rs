@@ -64,7 +64,7 @@ impl Default for CrafterConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum QualityTarget {
     Zero,
     CollectableT1,
@@ -84,6 +84,12 @@ impl QualityTarget {
             Self::Full => max_quality,
             Self::Custom(quality) => quality,
         }
+    }
+}
+
+impl Default for QualityTarget {
+    fn default() -> Self {
+        Self::Full
     }
 }
 

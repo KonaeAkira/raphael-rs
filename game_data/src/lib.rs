@@ -7,6 +7,7 @@ pub use config::*;
 mod locales;
 pub use locales::*;
 
+use serde::{Deserialize, Serialize};
 use simulator::{ActionMask, Settings};
 
 #[derive(Debug, Clone, Copy)]
@@ -16,7 +17,7 @@ pub struct Item {
     pub is_collectable: bool,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Ingredient {
     pub item_id: u32,
     pub amount: u32,
@@ -30,7 +31,7 @@ pub struct RecipeLevel {
     pub quality_mod: u16,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Recipe {
     pub level: u8,
     pub recipe_level: u16,
@@ -42,7 +43,7 @@ pub struct Recipe {
     pub is_expert: bool,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct RecipeConfiguration {
     pub item_id: u32,
     pub recipe: Recipe,
