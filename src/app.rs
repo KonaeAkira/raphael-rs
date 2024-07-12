@@ -1,20 +1,18 @@
-use std::time::Duration;
 use std::cell::Cell;
 use std::rc::Rc;
+use std::time::Duration;
 
 use web_time::Instant;
 
 use egui::{
     Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions,
 };
-use egui_extras::Column;
 use game_data::{action_name, get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
     config::{CrafterConfig, QualityTarget, JOB_NAMES},
-    utils::contains_noncontiguous,
-    widgets::{ConsumableSelect, MacroView, MacroViewConfig, Simulator},
+    widgets::{ConsumableSelect, MacroView, MacroViewConfig, RecipeSelect, Simulator},
 };
 
 type MacroResult = Option<Vec<Action>>;
@@ -211,7 +209,9 @@ impl eframe::App for MacroSolverApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.set_enabled(!self.solver_pending);
+                    if self.solver_pending {
+                        ui.disable();
+                    }
                     ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
                         ui.set_max_width(885.0);
                         ui.add(Simulator::new(
@@ -225,12 +225,14 @@ impl eframe::App for MacroSolverApp {
                         ui.horizontal(|ui| {
                             ui.vertical(|ui| {
                                 ui.push_id("RECIPE_SELECT", |ui| {
-                                    ui.group(|ui| {
-                                        ui.set_max_width(600.0);
-                                        ui.set_max_height(200.0);
-                                        self.draw_recipe_select_widget(ui);
-                                        ui.shrink_height_to_current();
-                                    });
+                                    ui.set_max_width(612.0);
+                                    ui.set_max_height(212.0);
+                                    ui.add(RecipeSelect::new(
+                                        &mut self.recipe_config,
+                                        &mut self.recipe_search_text,
+                                        self.locale,
+                                    ));
+                                    // ui.shrink_height_to_current();
                                 });
                                 ui.add_space(5.5);
                                 ui.push_id("FOOD_SELECT", |ui| {
@@ -280,71 +282,6 @@ impl eframe::App for MacroSolverApp {
 }
 
 impl MacroSolverApp {
-    fn draw_recipe_select_widget(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Recipe").strong());
-                ui.label(egui::RichText::new(get_item_name(
-                    self.recipe_config.item_id,
-                    false,
-                    self.locale,
-                )));
-            });
-            ui.separator();
-            ui.horizontal(|ui| {
-                ui.label("Search:");
-                ui.text_edit_singleline(&mut self.recipe_search_text);
-            });
-            ui.separator();
-
-            let search_pattern = &self.recipe_search_text.to_lowercase();
-            let mut search_result: Vec<u32> = game_data::RECIPES
-                .keys()
-                .copied()
-                .filter(|item_id| {
-                    let item_name = get_item_name(*item_id, false, self.locale);
-                    contains_noncontiguous(&item_name.to_lowercase(), search_pattern)
-                })
-                .collect();
-            search_result.sort();
-
-            let text_height = egui::TextStyle::Body
-                .resolve(ui.style())
-                .size
-                .max(ui.spacing().interact_size.y);
-            let table = egui_extras::TableBuilder::new(ui)
-                .auto_shrink(false)
-                .striped(true)
-                .resizable(false)
-                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-                .column(Column::auto())
-                .column(Column::remainder())
-                .min_scrolled_height(0.0);
-            table.body(|body| {
-                body.rows(text_height, search_result.len(), |mut row| {
-                    let item_id = search_result[row.index()];
-                    row.col(|ui| {
-                        if ui.button("Select").clicked() {
-                            log::debug!("{}", get_item_name(item_id, false, self.locale));
-                            self.recipe_config = RecipeConfiguration {
-                                item_id,
-                                recipe: *game_data::RECIPES.get(&item_id).unwrap(),
-                                hq_ingredients: [0; 6],
-                            }
-                        };
-                    });
-                    row.col(|ui| {
-                        ui.label(egui::RichText::new(get_item_name(
-                            item_id,
-                            false,
-                            self.locale,
-                        )));
-                    });
-                });
-            });
-        });
-    }
-
     fn draw_configuration_widget(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
@@ -380,7 +317,7 @@ impl MacroSolverApp {
                     ui.monospace("+");
                     ui.add(
                         egui::DragValue::new(self.crafter_config.craftsmanship_mut())
-                            .clamp_range(0..=9999),
+                            .range(0..=9999),
                     );
                 });
             });
@@ -395,10 +332,7 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(
-                        egui::DragValue::new(self.crafter_config.control_mut())
-                            .clamp_range(0..=9999),
-                    );
+                    ui.add(egui::DragValue::new(self.crafter_config.control_mut()).range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
@@ -412,17 +346,13 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(
-                        egui::DragValue::new(self.crafter_config.cp_mut()).clamp_range(0..=9999),
-                    );
+                    ui.add(egui::DragValue::new(self.crafter_config.cp_mut()).range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
                 ui.label("Job Level:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(
-                        egui::DragValue::new(self.crafter_config.level_mut()).clamp_range(1..=100),
-                    );
+                    ui.add(egui::DragValue::new(self.crafter_config.level_mut()).range(1..=100));
                 });
             });
             ui.separator();
@@ -444,7 +374,7 @@ impl MacroSolverApp {
                                     egui::DragValue::new(
                                         &mut self.recipe_config.hq_ingredients[index],
                                     )
-                                    .clamp_range(0..=ingredient.amount),
+                                    .range(0..=ingredient.amount),
                                 );
                             });
                         });
@@ -567,15 +497,11 @@ impl MacroSolverApp {
                         .send((game_settings, self.solver_config.backload_progress));
                     log::debug!("Message send {game_settings:?}");
                 }
-                ui.add_visible(self.solver_pending, egui::Spinner::new());
-                ui.add_visible(!self.solver_pending && self.duration != None, 
-                    egui::Label::new(egui::RichText::new(
-                        if let Some(dur) = self.duration {
-                            format!("Time: {:.3}s", self.duration.unwrap().as_secs_f64())
-                        } else {
-                            "".to_string()
-                        }
-                )));
+                if self.solver_pending {
+                    ui.spinner();
+                } else if let Some(duration) = self.duration {
+                    ui.label(format!("Time: {:.3}s", duration.as_secs_f64()));
+                }
             });
         });
     }

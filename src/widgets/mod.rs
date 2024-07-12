@@ -6,3 +6,6 @@ pub use simulator::Simulator;
 
 mod consumable_select;
 pub use consumable_select::ConsumableSelect;
+
+mod recipe_select;
+pub use recipe_select::RecipeSelect;
