@@ -42,12 +42,12 @@ pub fn quick_search(
 ) -> Option<Vec<Action>> {
     let _timer = NamedTimer::new("Quick search");
 
-    let mut search_queue: RadixHeapMap<u8, SearchNode> = RadixHeapMap::default();
+    let mut search_queue: RadixHeapMap<Score, SearchNode> = RadixHeapMap::default();
     let mut backtracking: Backtracking<Action> = Backtracking::new();
     let mut pareto_set = ParetoSet::default();
 
     search_queue.push(
-        u8::MAX,
+        Score::new(0, 0),
         SearchNode {
             state,
             backtrack_index: Backtracking::<Action>::SENTINEL,
@@ -79,7 +79,7 @@ pub fn quick_search(
                     }
                     let backtrack_index = backtracking.push(action, node.backtrack_index);
                     search_queue.push(
-                        score - action.time_cost() as u8,
+                        score.add(action.time_cost() as u8, 1),
                         SearchNode {
                             state: in_progress,
                             backtrack_index,
@@ -138,5 +138,55 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
         Action::GreatStrides => state.effects.great_strides() == 0,
         Action::TrainedPerfection => state.effects.waste_not() == 0,
         _ => true,
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Score {
+    duration: u8,
+    steps: u8,
+}
+
+impl Score {
+    fn new(duration: u8, steps: u8) -> Self {
+        Self { duration, steps }
+    }
+
+    fn add(self, duration: u8, steps: u8) -> Self {
+        Self {
+            duration: self.duration + duration,
+            steps: self.steps + steps,
+        }
+    }
+}
+
+impl std::cmp::PartialOrd for Score {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(
+            other
+                .duration
+                .cmp(&self.duration)
+                .then(other.steps.cmp(&self.steps)),
+        )
+    }
+}
+
+impl std::cmp::Ord for Score {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other
+            .duration
+            .cmp(&self.duration)
+            .then(other.steps.cmp(&self.steps))
+    }
+}
+
+impl radix_heap::Radix for Score {
+    const RADIX_BITS: u32 = 16;
+    fn radix_similarity(&self, other: &Self) -> u32 {
+        if self.duration != other.duration {
+            self.duration.radix_similarity(&other.duration)
+        } else {
+            self.steps.radix_similarity(&other.steps) + 8
+        }
     }
 }
