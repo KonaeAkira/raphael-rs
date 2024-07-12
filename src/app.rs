@@ -509,13 +509,7 @@ impl MacroSolverApp {
     fn load_fonts(ctx: &egui::Context) {
         let mut fonts = FontDefinitions::default();
         fonts.font_data.insert(
-            String::from("japanese_fallback"),
-            FontData::from_static(include_bytes!(
-                "../assets/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
-            )),
-        );
-        fonts.font_data.insert(
-            String::from("japanese_monospace_fallback"),
+            String::from("japanese_monospace"),
             FontData::from_static(include_bytes!(
                 "../assets/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
             )),
@@ -524,12 +518,12 @@ impl MacroSolverApp {
             .families
             .get_mut(&FontFamily::Proportional)
             .unwrap()
-            .push("japanese_fallback".to_owned());
+            .push("japanese_monospace".to_owned());
         fonts
             .families
             .get_mut(&FontFamily::Monospace)
             .unwrap()
-            .push("japanese_monospace_fallback".to_owned());
+            .push("japanese_monospace".to_owned());
         ctx.set_fonts(fonts);
     }
 
