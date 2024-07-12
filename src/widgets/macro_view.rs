@@ -5,11 +5,16 @@ use simulator::Action;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MacroViewConfig {
+    #[serde(default)]
     split_macro: bool,
+    #[serde(default)]
     include_delay: bool,
-    // end-of-macro notification
+    #[serde(default)]
     notification_enabled: bool,
+    #[serde(default)]
     notification_sound: u8,
+    #[serde(default)]
+    macro_lock: bool,
 }
 
 impl Default for MacroViewConfig {
@@ -19,6 +24,7 @@ impl Default for MacroViewConfig {
             include_delay: true,
             notification_enabled: false,
             notification_sound: 1,
+            macro_lock: false,
         }
     }
 }
@@ -36,20 +42,21 @@ impl MacroTextBox {
         newline: &'static str,
         locale: Locale,
     ) -> Self {
-        let mut lines: Vec<_> = actions
-            .into_iter()
-            .map(|action| {
-                if config.include_delay {
-                    format!(
-                        "/ac \"{}\" <wait.{}>",
-                        action_name(*action, locale),
-                        action.time_cost()
-                    )
-                } else {
-                    format!("/ac \"{}\"", action_name(*action, locale))
-                }
-            })
-            .collect();
+        let mut lines: Vec<String> = Vec::new();
+        if config.macro_lock {
+            lines.push("/macrolock ".to_string());
+        }
+        lines.extend(actions.into_iter().map(|action| {
+            if config.include_delay {
+                format!(
+                    "/ac \"{}\" <wait.{}>",
+                    action_name(*action, locale),
+                    action.time_cost()
+                )
+            } else {
+                format!("/ac \"{}\"", action_name(*action, locale))
+            }
+        }));
         if config.notification_enabled {
             lines.push(format!(
                 "/echo Macro finished ({}/{}) <se.{}>",
@@ -131,6 +138,7 @@ impl<'a> Widget for MacroView<'a> {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.config.include_delay, "Include delay");
                     ui.checkbox(&mut self.config.split_macro, "Split macro");
+                    ui.checkbox(&mut self.config.macro_lock, "Macro lock");
                 });
                 ui.horizontal(|ui| {
                     ui.add(egui::Checkbox::new(
@@ -153,8 +161,16 @@ impl<'a> Widget for MacroView<'a> {
                 });
                 ui.separator();
                 let chunk_size = match self.config.split_macro {
-                    true if self.config.notification_enabled => 14,
-                    true => 15,
+                    true => {
+                        let mut chunk_size = 15;
+                        if self.config.notification_enabled {
+                            chunk_size -= 1;
+                        }
+                        if self.config.macro_lock {
+                            chunk_size -= 1;
+                        }
+                        chunk_size
+                    }
                     false => usize::MAX,
                 };
                 let count = self.actions.chunks(chunk_size).count();
