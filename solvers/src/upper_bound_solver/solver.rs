@@ -102,7 +102,7 @@ impl UpperBoundSolver {
 
         std::cmp::min(
             self.settings.max_quality,
-            pareto_front[lo].second + current_quality,
+            pareto_front[lo].second.saturating_add(current_quality),
         )
     }
 
@@ -113,6 +113,12 @@ impl UpperBoundSolver {
             .actions_iter()
         {
             self.build_child_front(state, action);
+            if self.pareto_front_builder.is_max() {
+                // stop early if both Progress and Quality are maxed out
+                // this optimization would work even better with better action ordering
+                // (i.e. if better actions are visited first)
+                break;
+            }
         }
         let pareto_front = self.pareto_front_builder.peek().unwrap();
         self.solved_states.insert(state, pareto_front);
