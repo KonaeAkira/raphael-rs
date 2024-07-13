@@ -50,7 +50,10 @@ pub fn craftsmanship_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16
     consumables
         .iter()
         .map(|item| match item {
-            Some(item) => std::cmp::min(item.craft_max, base * item.craft_rel / 100),
+            Some(item) => {
+                let rel_bonus = (base as u32 * item.craft_rel as u32 / 100) as u16;
+                std::cmp::min(item.craft_max, rel_bonus)
+            }
             None => 0,
         })
         .sum()
@@ -60,7 +63,10 @@ pub fn control_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
         .map(|item| match item {
-            Some(item) => std::cmp::min(item.control_max, base * item.control_rel / 100),
+            Some(item) => {
+                let rel_bonus = (base as u32 * item.control_rel as u32 / 100) as u16;
+                std::cmp::min(item.control_max, rel_bonus)
+            }
             None => 0,
         })
         .sum()
@@ -70,7 +76,10 @@ pub fn cp_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
         .map(|item| match item {
-            Some(item) => std::cmp::min(item.cp_max, base * item.cp_rel / 100),
+            Some(item) => {
+                let rel_bonus = (base as u32 * item.cp_rel as u32 / 100) as u16;
+                std::cmp::min(item.cp_max, rel_bonus)
+            }
             None => 0,
         })
         .sum()
