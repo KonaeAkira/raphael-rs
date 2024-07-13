@@ -322,10 +322,11 @@ fn test_ingame_d11d9c68() {
 }
 
 #[test]
-fn test_ingame_querymark() {
+fn test_ingame_f9f0dac7() {
     // Rarefied Tacos de Carne Asada
     // Lv. 100, 4900 Craftsmanship, 4313 Control
-    // Not verified.
+    // Yes, this is just my own gear.
+    // Requires in-game verification
     let settings = Settings {
         max_cp: 697,
         max_durability: 80,

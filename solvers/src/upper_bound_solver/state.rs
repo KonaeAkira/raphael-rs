@@ -1,4 +1,4 @@
-use simulator::{state::{InProgress, PrevActionDelta}, ComboAction, Effects, SimulationState, SingleUse};
+use simulator::{state::InProgress, ComboAction, Effects, SimulationState, SingleUse};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedEffects {
@@ -46,8 +46,10 @@ impl std::convert::From<ReducedState> for InProgress {
             durability: i8::MAX,
             cp: state.cp,
             missing_progress: u16::MAX,
-            missing_quality: [u16::MAX, 0, 0],
-            prev_deltas: [PrevActionDelta::default(); 2],
+            missing_quality: u16::MAX,
+            unreliable_quality: 0,
+            unreliable_diff: 0,
+            prev_was_guarded: false,
             effects: Effects::new()
                 .with_inner_quiet(state.effects.inner_quiet)
                 .with_innovation(state.effects.innovation)

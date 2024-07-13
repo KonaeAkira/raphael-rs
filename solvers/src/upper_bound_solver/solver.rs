@@ -160,7 +160,7 @@ impl UpperBoundSolver {
 
 #[cfg(test)]
 mod tests {
-    use simulator::{state::PrevActionDelta, Effects, SimulationState, SingleUse};
+    use simulator::{Effects, SimulationState, SingleUse};
 
     use super::*;
 
@@ -191,8 +191,10 @@ mod tests {
             cp: 625,
             durability: 5,
             missing_progress: 1011,
-            missing_quality: [19070; 3],
-            prev_deltas: [PrevActionDelta::default(); 2],
+            missing_quality: 19070,
+            unreliable_quality: 0,
+            unreliable_diff: 0,
+            prev_was_guarded: false,
             effects: Effects::new()
                 .with_inner_quiet(2)
                 .with_trained_perfection(SingleUse::Available),
@@ -204,8 +206,10 @@ mod tests {
             cp: 623,
             durability: 5,
             missing_progress: 1011,
-            missing_quality: [19070; 3],
-            prev_deltas: [PrevActionDelta::default(); 2],
+            missing_quality: 19070,
+            unreliable_quality: 0,
+            unreliable_diff: 0,
+            prev_was_guarded: false,
             effects: Effects::new()
                 .with_inner_quiet(2)
                 .with_trained_perfection(SingleUse::Available),

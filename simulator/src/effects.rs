@@ -39,8 +39,10 @@ pub struct Effects {
     pub manipulation: u8,
     #[bits(2, default=SingleUse::Available)]
     pub trained_perfection: SingleUse,
-    #[bits(2)]
-    _padding: u8,
+    #[bits(1)]
+    pub tricks: bool,
+    #[bits(1, default=true)]
+    pub guard: bool,
 }
 
 impl Effects {

@@ -1,29 +1,14 @@
-use std::cmp::max;
-
 use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct PrevActionDelta {
-    pub to_excellent: u16,
-    pub to_poor: u16,
-}
-
-impl Default for PrevActionDelta {
-    fn default() -> Self {
-        PrevActionDelta {
-            to_excellent: 0, to_poor: 0
-        }
-    }
-}
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
     pub cp: i16,
     pub durability: i8,
     pub missing_progress: u16,
-    pub missing_quality: [u16; 3],
-    pub prev_deltas: [PrevActionDelta; 2],
+    pub missing_quality: u16,
+    pub unreliable_quality: u16,
+    pub unreliable_diff: i16,
+    pub prev_was_guarded: bool,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
 }
@@ -34,10 +19,12 @@ impl SimulationState {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
-            missing_quality: [settings
+            missing_quality: settings
                 .max_quality
-                .saturating_sub(settings.initial_quality), 0, 0],
-            prev_deltas: [PrevActionDelta::default(); 2],
+                .saturating_sub(settings.initial_quality),
+            unreliable_quality: 0,
+            unreliable_diff: 0,
+            prev_was_guarded: false,
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
         }
@@ -80,9 +67,10 @@ impl SimulationState {
         }
         (state, errors)
     }
-
+    
     pub fn get_missing_quality(&self) -> u16 {
-        max(self.missing_quality[0], self.missing_quality[2].saturating_sub(self.prev_deltas[1].to_excellent).saturating_sub(self.prev_deltas[0].to_poor))
+        assert!((self.unreliable_quality - self.unreliable_diff.unsigned_abs()) & 1 == 0);
+        self.missing_quality.saturating_sub((self.unreliable_quality - self.unreliable_diff.unsigned_abs()) / 2)
     }
 }
 
@@ -140,7 +128,7 @@ impl InProgress {
             {
                 Err("Action cannot be used during Waste Not")
             }
-            Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade
+            Action::IntensiveSynthesis | Action::PreciseTouch// | Action::TricksOfTheTrade
                 if condition != Condition::Good && condition != Condition::Excellent =>
             {
                 Err("Requires condition to be Good or Excellent")
@@ -178,8 +166,17 @@ impl InProgress {
         let cp_cost = action.cp_cost(&state.effects, condition);
         let durability_cost = action.durability_cost(&state.effects, condition);
         let progress_increase = action.progress_increase(settings, &state.effects, condition);
-        let quality_increase = action.quality_increase(settings, &state.effects, condition);
-
+        let quality_increase = if settings.adversarial && !state.effects.guard() {
+            action.quality_increase(settings, &state.effects, Condition::Poor)
+        } else {
+            action.quality_increase(settings, &state.effects, condition)
+        };
+        let quality_delta = if settings.adversarial && !state.effects.guard() {
+            action.quality_increase(settings, &state.effects, condition) - action.quality_increase(settings, &state.effects, Condition::Poor)
+        } else {
+            0
+        };
+        
         state.combo = action.to_combo();
         state.cp -= cp_cost;
         state.durability -= durability_cost;
@@ -196,21 +193,9 @@ impl InProgress {
             state.effects.set_muscle_memory(0);
         }
 
-        if settings.adversarial {
-            let saved = state.missing_quality[2];
-            state.missing_quality[2] = state.missing_quality[1];
-            state.missing_quality[1] = state.missing_quality[0];
-            state.missing_quality[0] = max(
-                state.missing_quality[0], 
-                saved.saturating_sub(state.prev_deltas[0].to_poor).saturating_sub(state.prev_deltas[1].to_excellent));
-            state.prev_deltas[1] = state.prev_deltas[0];
-            state.prev_deltas[0].to_excellent = action.quality_increase(settings, &state.effects, Condition::Excellent);
-            state.prev_deltas[0].to_poor = action.quality_increase(settings, &state.effects, Condition::Poor);
-        }
-
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            state.missing_quality[0] = state.missing_quality[0].saturating_sub(quality_increase);
+            state.missing_quality = state.missing_quality.saturating_sub(quality_increase);
             state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
                 let inner_quiet_bonus = match action {
@@ -229,6 +214,26 @@ impl InProgress {
 
         if state.missing_progress == 0 || state.durability <= 0 {
             return Ok(state);
+        }
+        // calculate guard effects
+        if settings.adversarial {
+            if (!state.effects.guard() && quality_increase == 0) || 
+                (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded) {
+                // commit the current value
+                state.missing_quality = state.get_missing_quality();
+                state.unreliable_diff = 0;
+                state.unreliable_quality = 0;
+            } else if quality_delta != 0 {
+                // append new info
+                state.unreliable_quality += quality_delta;
+                state.unreliable_diff = quality_delta as i16 - state.unreliable_diff;
+            }
+            dbg!(state.unreliable_quality, state.unreliable_diff);
+            if state.effects.guard() {
+                state.prev_was_guarded = true;
+            }
+            state.effects.set_guard(quality_increase != 0 || state.effects.tricks());
+            state.effects.set_tricks(action == Action::TricksOfTheTrade);
         }
 
         // remove manipulation before it is triggered
