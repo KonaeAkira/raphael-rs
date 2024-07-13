@@ -13,7 +13,8 @@ use std::vec::Vec;
 
 const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
-    .union(DURABILITY_ACTIONS);
+    .union(DURABILITY_ACTIONS)
+    .add(Action::TricksOfTheTrade);
 
 const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)

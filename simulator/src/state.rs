@@ -150,6 +150,9 @@ impl InProgress {
             {
                 Err("Action can only be used once per synthesis")
             }
+            Action::TricksOfTheTrade if !settings.adversarial || self.state.effects.tricks() => {
+                Err("cannot use tricks when tricks is active")
+            }
             _ => Ok(()),
         }
     }
@@ -228,7 +231,6 @@ impl InProgress {
                 state.unreliable_quality += quality_delta;
                 state.unreliable_diff = quality_delta as i16 - state.unreliable_diff;
             }
-            dbg!(state.unreliable_quality, state.unreliable_diff);
             if state.effects.guard() {
                 state.prev_was_guarded = true;
             }
@@ -241,7 +243,8 @@ impl InProgress {
             state.effects.set_manipulation(0);
         }
 
-        if state.effects.manipulation() > 0 {
+        if state.effects.manipulation() > 0 && action != Action::TricksOfTheTrade { 
+            // tricks doesn't tick manip, since it cannot assume a step has passed
             state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
         state.effects.tick_down();
@@ -260,7 +263,7 @@ impl InProgress {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 30)
             }
             Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
-            Action::TricksOfTheTrade => state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
+            Action::TricksOfTheTrade => {} //state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
             Action::ImmaculateMend => state.durability = settings.max_durability,
             Action::TrainedPerfection => state.effects.set_trained_perfection(SingleUse::Active),
             _ => (),
