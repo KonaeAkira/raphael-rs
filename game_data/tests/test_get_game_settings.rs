@@ -180,7 +180,7 @@ fn test_claro_walnut_spinning_wheel() {
         level: 99,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None);
+    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -193,6 +193,7 @@ fn test_claro_walnut_spinning_wheel() {
             initial_quality: 0,
             job_level: 99,
             allowed_actions: ActionMask::from_level(99, true, false),
+            adversarial: false,
         }
     )
 }

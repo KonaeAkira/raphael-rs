@@ -596,6 +596,7 @@ fn test_rare_tacos() {
         initial_quality: 6000,
         job_level: 100,
         allowed_actions: ActionMask::from_level(100, true, false),
+        adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
