@@ -20,6 +20,15 @@ impl std::fmt::Display for Locale {
     }
 }
 
+static JOB_NAMES_EN: [&'static str; 8] = ["CRP", "BSM", "ARM", "GSM", "LTW", "WVR", "ALC", "CUL"];
+
+pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
+    match locale {
+        // TODO: Add translations
+        _ => JOB_NAMES_EN[job_id as usize],
+    }
+}
+
 static ITEM_NAMES_EN: phf::Map<u32, &'static str> =
     include!(concat!(env!("OUT_DIR"), "/item_names_en.rs"));
 static ITEM_NAMES_DE: phf::Map<u32, &'static str> =
