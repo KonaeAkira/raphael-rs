@@ -3,6 +3,15 @@ use game_data::{
 };
 use simulator::{ActionMask, Settings};
 
+fn find_recipe(item_name: &'static str) -> Option<Recipe> {
+    for recipe in RECIPES.iter() {
+        if get_item_name(recipe.item_id, false, Locale::EN) == item_name {
+            return Some(*recipe);
+        }
+    }
+    None
+}
+
 fn ingredient_names(recipe: Recipe) -> Vec<String> {
     recipe
         .ingredients
@@ -16,12 +25,7 @@ fn ingredient_names(recipe: Recipe) -> Vec<String> {
 
 #[test]
 fn test_turali_pineapple_ponzecake() {
-    let item_id = 44099;
-    assert_eq!(
-        get_item_name(item_id, false, Locale::EN),
-        "Turali Pineapple Ponzecake"
-    );
-    let recipe = *RECIPES.get(&item_id).unwrap();
+    let recipe = find_recipe("Turali Pineapple Ponzecake").unwrap();
     assert_eq!(
         ingredient_names(recipe),
         [
@@ -33,7 +37,6 @@ fn test_turali_pineapple_ponzecake() {
         ]
     );
     let recipe_config = RecipeConfiguration {
-        item_id,
         recipe,
         hq_ingredients: [0, 0, 1, 0, 0, 0],
     };
@@ -63,12 +66,7 @@ fn test_turali_pineapple_ponzecake() {
 
 #[test]
 fn test_smaller_water_otter_hardware() {
-    let item_id = 39243;
-    assert_eq!(
-        get_item_name(item_id, false, Locale::EN),
-        "Smaller Water Otter Fountain Hardware"
-    );
-    let recipe = *RECIPES.get(&item_id).unwrap();
+    let recipe = find_recipe("Smaller Water Otter Fountain Hardware").unwrap();
     assert_eq!(
         ingredient_names(recipe),
         [
@@ -78,7 +76,6 @@ fn test_smaller_water_otter_hardware() {
         ]
     );
     let recipe_config = RecipeConfiguration {
-        item_id,
         recipe,
         hq_ingredients: [0, 0, 0, 0, 0, 0],
     };
@@ -109,12 +106,7 @@ fn test_smaller_water_otter_hardware() {
 
 #[test]
 fn test_grade_8_tincture() {
-    let item_id = 39730;
-    assert_eq!(
-        get_item_name(item_id, false, Locale::EN),
-        "Grade 8 Tincture of Intelligence"
-    );
-    let recipe = *RECIPES.get(&item_id).unwrap();
+    let recipe = find_recipe("Grade 8 Tincture of Intelligence").unwrap();
     assert_eq!(
         ingredient_names(recipe),
         [
@@ -124,7 +116,6 @@ fn test_grade_8_tincture() {
         ]
     );
     let recipe_config = RecipeConfiguration {
-        item_id,
         recipe,
         hq_ingredients: [0, 0, 0, 0, 0, 0],
     };
@@ -155,18 +146,12 @@ fn test_grade_8_tincture() {
 
 #[test]
 fn test_claro_walnut_spinning_wheel() {
-    let item_id = 43279;
-    assert_eq!(
-        get_item_name(item_id, false, Locale::EN),
-        "Claro Walnut Spinning Wheel"
-    );
-    let recipe = *RECIPES.get(&item_id).unwrap();
+    let recipe = find_recipe("Claro Walnut Spinning Wheel").unwrap();
     assert_eq!(
         ingredient_names(recipe),
         ["Claro Walnut Lumber", "Black Star", "Magnesia Whetstone"]
     );
     let recipe_config = RecipeConfiguration {
-        item_id,
         recipe,
         hq_ingredients: [0, 0, 0, 0, 0, 0],
     };

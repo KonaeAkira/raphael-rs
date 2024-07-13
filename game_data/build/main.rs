@@ -52,19 +52,12 @@ fn import_recipe_records(
     rlvls: &[RecipeLevelRecord],
 ) -> Result<(), Box<dyn std::error::Error>> {
     fn apply_factor(base: u32, factor: u32) -> u32 {
-        ((base * factor) as f64 / 100.0).floor() as u32
+        base * factor / 100
     }
 
-    let mut items_with_recipe = HashSet::new();
-    let mut recipes = phf_codegen::OrderedMap::new();
+    let mut recipes = Vec::new();
 
     for recipe_record in read_csv_data::<RecipeRecord>("data/Recipe.csv") {
-        // skip if a recipe for this item already exists
-        // might be a problem if an item has multiple recipes with different ingredients
-        if items_with_recipe.contains(&recipe_record.resulting_item) {
-            continue;
-        }
-
         // skip the debug recipe (item id 0)
         if recipe_record.resulting_item == 0 {
             continue;
@@ -95,7 +88,9 @@ fn import_recipe_records(
             );
 
         let rlvl_record = &rlvls[recipe_record.recipe_level as usize];
-        let recipe = format!("Recipe {{ level: {level}, recipe_level: {recipe_level}, progress: {progress}, quality: {quality}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients}, is_expert: {is_expert} }}",
+        let recipe = format!("Recipe {{ job_id: {job_id}, item_id: {item_id}, level: {level}, recipe_level: {recipe_level}, progress: {progress}, quality: {quality}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients}, is_expert: {is_expert} }}",
+                job_id = recipe_record.job_id,
+                item_id = recipe_record.resulting_item,
                 level = rlvl_record.level,
                 recipe_level = recipe_record.recipe_level,
                 progress = apply_factor(rlvl_record.progress, recipe_record.progress_factor),
@@ -106,13 +101,16 @@ fn import_recipe_records(
                 is_expert = recipe_record.is_expert
         );
 
-        items_with_recipe.insert(recipe_record.resulting_item);
-        recipes.entry(recipe_record.resulting_item, &recipe);
+        recipes.push(recipe);
     }
 
     let out_path = Path::new(&std::env::var("OUT_DIR")?).join("recipes.rs");
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
-    writeln!(writer, "{}", recipes.build())?;
+    writeln!(writer, "&[")?;
+    for recipe in recipes {
+        writeln!(writer, "{},", recipe)?;
+    }
+    writeln!(writer, "]")?;
 
     Ok(())
 }

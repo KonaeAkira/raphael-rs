@@ -1,10 +1,11 @@
 use egui::{Align, Layout, Widget};
 use egui_extras::Column;
-use game_data::{get_item_name, Ingredient, Locale, RecipeConfiguration, RLVLS};
+use game_data::{get_item_name, get_job_name, Ingredient, Locale, RecipeConfiguration, RLVLS};
 
 use crate::utils::contains_noncontiguous;
 
 pub struct RecipeSelect<'a> {
+    selected_job: &'a mut u8,
     recipe_config: &'a mut RecipeConfiguration,
     custom_recipe: &'a mut bool,
     search_text: &'a mut String,
@@ -13,12 +14,14 @@ pub struct RecipeSelect<'a> {
 
 impl<'a> RecipeSelect<'a> {
     pub fn new(
+        selected_job: &'a mut u8,
         recipe_config: &'a mut RecipeConfiguration,
         custom_recipe: &'a mut bool,
         search_text: &'a mut String,
         locale: Locale,
     ) -> Self {
         Self {
+            selected_job,
             recipe_config,
             custom_recipe,
             search_text,
@@ -34,15 +37,17 @@ impl<'a> RecipeSelect<'a> {
         ui.separator();
 
         let search_pattern = self.search_text.to_lowercase();
-        let mut search_result: Vec<u32> = game_data::RECIPES
-            .keys()
-            .copied()
-            .filter(|item_id| {
-                let item_name = get_item_name(*item_id, false, self.locale);
-                contains_noncontiguous(&item_name.to_lowercase(), &search_pattern)
+        let search_result: Vec<usize> = game_data::RECIPES
+            .iter()
+            .enumerate()
+            .filter_map(|(index, recipe)| {
+                let item_name = get_item_name(recipe.item_id, false, self.locale);
+                match contains_noncontiguous(&item_name.to_lowercase(), &search_pattern) {
+                    true => Some(index),
+                    false => None,
+                }
             })
             .collect();
-        search_result.sort();
 
         let text_height = egui::TextStyle::Body
             .resolve(ui.style())
@@ -58,31 +63,33 @@ impl<'a> RecipeSelect<'a> {
             .min_scrolled_height(0.0);
         table.body(|body| {
             body.rows(text_height, search_result.len(), |mut row| {
-                let item_id = search_result[row.index()];
+                let recipe = game_data::RECIPES[search_result[row.index()]];
                 row.col(|ui| {
-                    if ui.button("Select").clicked() {
-                        log::debug!("{}", get_item_name(item_id, false, self.locale));
+                    let job_label =
+                        egui::RichText::new(get_job_name(recipe.job_id, self.locale)).monospace();
+                    if ui.button(job_label).clicked() {
+                        *self.selected_job = recipe.job_id;
                         *self.recipe_config = RecipeConfiguration {
-                            item_id,
-                            recipe: *game_data::RECIPES.get(&item_id).unwrap(),
+                            recipe,
                             hq_ingredients: [0; 6],
                         }
                     };
                 });
                 row.col(|ui| {
-                    ui.label(get_item_name(item_id, false, self.locale));
+                    ui.label(get_item_name(recipe.item_id, false, self.locale));
                 });
             });
         });
     }
 
     fn draw_custom_recipe_select(self, ui: &mut egui::Ui) {
-        self.recipe_config.item_id = 0;
+        self.recipe_config.recipe.item_id = 0;
         self.recipe_config.recipe.material_quality_factor = 0;
         self.recipe_config.recipe.ingredients = [Ingredient {
             item_id: 0,
             amount: 0,
         }; 6];
+        self.recipe_config.hq_ingredients = [0; 6];
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -148,7 +155,7 @@ impl<'a> Widget for RecipeSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new("Recipe").strong());
                     ui.label(egui::RichText::new(get_item_name(
-                        self.recipe_config.item_id,
+                        self.recipe_config.recipe.item_id,
                         false,
                         self.locale,
                     )));

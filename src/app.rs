@@ -8,11 +8,13 @@ use web_time::Instant;
 use egui::{
     Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions,
 };
-use game_data::{action_name, get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
+use game_data::{
+    action_name, get_item_name, get_job_name, Consumable, Locale, RecipeConfiguration, ITEMS,
+};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
-    config::{CrafterConfig, QualityTarget, JOB_NAMES},
+    config::{CrafterConfig, QualityTarget},
     widgets::{ConsumableSelect, MacroView, MacroViewConfig, RecipeSelect, Simulator},
 };
 
@@ -79,8 +81,7 @@ impl MacroSolverApp {
         Self::load_fonts(&cc.egui_ctx);
 
         let default_recipe_config = RecipeConfiguration {
-            item_id: 38890, // Indagator's Saw
-            recipe: *game_data::RECIPES.get(&38890).unwrap(),
+            recipe: *game_data::RECIPES.last().unwrap(),
             hq_ingredients: [0; 6],
         };
 
@@ -220,7 +221,9 @@ impl eframe::App for MacroSolverApp {
                         ui.add(Simulator::new(
                             &game_settings,
                             &self.actions,
-                            game_data::ITEMS.get(&self.recipe_config.item_id).unwrap(),
+                            game_data::ITEMS
+                                .get(&self.recipe_config.recipe.item_id)
+                                .unwrap(),
                             &self.action_icons,
                             self.locale,
                         ));
@@ -231,6 +234,7 @@ impl eframe::App for MacroSolverApp {
                                     ui.set_max_width(612.0);
                                     ui.set_max_height(212.0);
                                     ui.add(RecipeSelect::new(
+                                        &mut self.crafter_config.selected_job,
                                         &mut self.recipe_config,
                                         &mut self.custom_recipe,
                                         &mut self.recipe_search_text,
@@ -245,7 +249,7 @@ impl eframe::App for MacroSolverApp {
                                     ui.add(ConsumableSelect::new(
                                         "Food",
                                         self.crafter_config.crafter_stats
-                                            [self.crafter_config.selected_job],
+                                            [self.crafter_config.selected_job as usize],
                                         game_data::MEALS,
                                         &mut self.food_search_text,
                                         &mut self.selected_food,
@@ -259,7 +263,7 @@ impl eframe::App for MacroSolverApp {
                                     ui.add(ConsumableSelect::new(
                                         "Potion",
                                         self.crafter_config.crafter_stats
-                                            [self.crafter_config.selected_job],
+                                            [self.crafter_config.selected_job as usize],
                                         game_data::POTIONS,
                                         &mut self.potion_search_text,
                                         &mut self.selected_potion,
@@ -295,13 +299,13 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     egui::ComboBox::from_id_source("SELECTED_JOB")
                         .width(20.0)
-                        .selected_text(JOB_NAMES[self.crafter_config.selected_job])
+                        .selected_text(get_job_name(self.crafter_config.selected_job, self.locale))
                         .show_ui(ui, |ui| {
                             for i in 0..8 {
                                 ui.selectable_value(
                                     &mut self.crafter_config.selected_job,
                                     i,
-                                    JOB_NAMES[i],
+                                    get_job_name(i, self.locale),
                                 );
                             }
                         });
@@ -418,7 +422,8 @@ impl MacroSolverApp {
                     ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
                     let game_settings = game_data::get_game_settings(
                         self.recipe_config,
-                        self.crafter_config.crafter_stats[self.crafter_config.selected_job],
+                        self.crafter_config.crafter_stats
+                            [self.crafter_config.selected_job as usize],
                         self.selected_food,
                         self.selected_potion,
                     );
@@ -490,7 +495,8 @@ impl MacroSolverApp {
                         self.start_time = Some(Instant::now());
                         let mut game_settings = game_data::get_game_settings(
                             self.recipe_config,
-                            self.crafter_config.crafter_stats[self.crafter_config.selected_job],
+                            self.crafter_config.crafter_stats
+                                [self.crafter_config.selected_job as usize],
                             self.selected_food,
                             self.selected_potion,
                         );
