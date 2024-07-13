@@ -138,13 +138,13 @@ impl MacroSolver {
                             },
                         );
 
-                        let quality = self.settings.max_quality - state.missing_quality;
+                        let quality = self.settings.max_quality - state.missing_quality[0];
                         if quality > quality_lower_bound {
                             quality_lower_bound = quality;
                         }
                     } else if state.missing_progress == 0 {
                         let final_score = Score::new(
-                            self.settings.max_quality - state.missing_quality,
+                            self.settings.max_quality - state.missing_quality[0],
                             score.duration + action.time_cost() as u8,
                             score.steps + 1,
                         );

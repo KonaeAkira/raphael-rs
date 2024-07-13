@@ -10,6 +10,7 @@ const SETTINGS: Settings = Settings {
     initial_quality: 0,
     job_level: 100,
     allowed_actions: ActionMask::all(),
+    adversarial: false,
 };
 
 #[test]
@@ -90,7 +91,7 @@ fn test_trained_eye_opener() {
     let state = SimulationState::from_macro(&SETTINGS, &[Action::TrainedEye]);
     assert!(matches!(state, Ok(_)));
     let state = state.unwrap();
-    assert_eq!(state.missing_quality, 0);
+    assert_eq!(state.missing_quality[0], 0);
     assert_eq!(state.effects.inner_quiet(), 1);
     let state =
         SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
@@ -233,7 +234,7 @@ fn test_delicate_synthesis() {
     match state {
         Ok(state) => {
             assert_eq!(settings.max_progress - state.missing_progress, 100);
-            assert_eq!(settings.max_quality - state.missing_quality, 100);
+            assert_eq!(settings.max_quality - state.missing_quality[0], 100);
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -245,8 +246,25 @@ fn test_delicate_synthesis() {
     match state {
         Ok(state) => {
             assert_eq!(settings.max_progress - state.missing_progress, 150);
-            assert_eq!(settings.max_quality - state.missing_quality, 100);
+            assert_eq!(settings.max_quality - state.missing_quality[0], 100);
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
+}
+
+#[test]
+fn test_adversarial_calculation() {
+    let settings = Settings {
+        adversarial: true,
+        ..SETTINGS
+    };
+    let state =
+        SimulationState::from_macro(&settings, &[Action::Observe, Action::Observe, Action::PreparatoryTouch, Action::BasicSynthesis]);
+    if let Ok(state) = state {
+        println!("{}", state.missing_quality[0]);
+        assert_eq!(settings.max_quality - state.missing_quality[0], 100);
+    } else {
+        panic!("Unexpected err: {}", state.err().unwrap());
+    }
+    
 }

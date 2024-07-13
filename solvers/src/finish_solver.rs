@@ -1,5 +1,5 @@
 use simulator::{
-    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
+    state::{InProgress, PrevActionDelta}, Action, ActionMask, ComboAction, Condition, Effects, Settings,
     SimulationState, SingleUse,
 };
 
@@ -67,7 +67,8 @@ impl ReducedState {
             durability: self.durability,
             cp: self.cp,
             missing_progress: u16::MAX,
-            missing_quality: 0,
+            missing_quality: [0; 3],
+            prev_deltas: [PrevActionDelta::default(); 2],
             effects: self
                 .effects
                 .to_effects()

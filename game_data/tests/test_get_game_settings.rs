@@ -44,7 +44,7 @@ fn test_turali_pineapple_ponzecake() {
         level: 94,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None);
+    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -57,6 +57,7 @@ fn test_turali_pineapple_ponzecake() {
             initial_quality: 2180,
             job_level: 94,
             allowed_actions: ActionMask::from_level(94, true, false),
+            adversarial: false,
         }
     )
 }
@@ -89,7 +90,7 @@ fn test_smaller_water_otter_hardware() {
         level: 100,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None);
+    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -103,6 +104,7 @@ fn test_smaller_water_otter_hardware() {
             job_level: 100,
             // Trained Eye is not available for expert recipes
             allowed_actions: ActionMask::from_level(100, true, false),
+            adversarial: false,
         }
     )
 }
@@ -135,7 +137,7 @@ fn test_grade_8_tincture() {
         level: 100,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None);
+    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -149,6 +151,7 @@ fn test_grade_8_tincture() {
             job_level: 100,
             // Trained Eye is available
             allowed_actions: ActionMask::from_level(100, true, true),
+            adversarial: false,
         }
     )
 }

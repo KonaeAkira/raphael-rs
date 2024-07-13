@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
 
 use egui::{
-    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions,
+    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions
 };
 use game_data::{action_name, get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
 use simulator::{state::InProgress, Action, Settings};
@@ -29,6 +29,7 @@ type MacroResult = Option<Vec<Action>>;
 struct SolverConfig {
     quality_target: QualityTarget,
     backload_progress: bool,
+    adversarial: bool,
 }
 
 pub struct MacroSolverApp {
@@ -207,6 +208,7 @@ impl eframe::App for MacroSolverApp {
             self.crafter_config.stats(),
             self.selected_food,
             self.selected_potion,
+            self.solver_config.adversarial,
         );
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -421,6 +423,7 @@ impl MacroSolverApp {
                         self.crafter_config.crafter_stats[self.crafter_config.selected_job],
                         self.selected_food,
                         self.selected_potion,
+                        self.solver_config.adversarial,
                     );
                     let mut current_value = self
                         .solver_config
@@ -474,9 +477,20 @@ impl MacroSolverApp {
                 &mut self.solver_config.backload_progress,
                 "Backload progress actions",
             );
+            ui.checkbox(
+                &mut self.solver_config.adversarial, 
+                "Ensure 100% reliability",
+            );
             if self.solver_config.backload_progress {
                 ui.label(
                     egui::RichText::new("⚠ Backloading progress may decrease achievable quality.")
+                        .small()
+                        .color(ui.visuals().warn_fg_color),
+                );
+            }
+            if self.solver_config.adversarial {
+                ui.label(
+                    egui::RichText::new("⚠ Guaranteeing reliability may lead to longer macros and decrease achievable quality.")
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
@@ -493,7 +507,8 @@ impl MacroSolverApp {
                             self.crafter_config.crafter_stats[self.crafter_config.selected_job],
                             self.selected_food,
                             self.selected_potion,
-                        );
+                            self.solver_config.adversarial,
+                    );
                         let target_quality = self
                             .solver_config
                             .quality_target

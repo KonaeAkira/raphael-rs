@@ -9,6 +9,7 @@ pub struct Settings {
     pub initial_quality: u16,
     pub job_level: u8,
     pub allowed_actions: ActionMask,
+    pub adversarial: bool,
 }
 
 use crate::Action;

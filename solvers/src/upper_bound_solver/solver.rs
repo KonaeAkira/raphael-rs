@@ -56,7 +56,7 @@ impl UpperBoundSolver {
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: InProgress) -> u16 {
         let mut state = *state.raw_state();
-        let current_quality = self.settings.max_quality - state.missing_quality;
+        let current_quality = self.settings.max_quality - state.missing_quality[0];
 
         if current_quality == self.settings.max_quality {
             return current_quality;
@@ -130,7 +130,7 @@ impl UpperBoundSolver {
         {
             if let Ok(in_progress) = InProgress::try_from(new_state) {
                 let action_progress = u16::MAX - new_state.missing_progress;
-                let action_quality = u16::MAX - new_state.missing_quality;
+                let action_quality = u16::MAX - new_state.missing_quality[0];
                 let new_state = ReducedState::from_state(
                     in_progress,
                     self.base_durability_cost,
@@ -160,7 +160,7 @@ impl UpperBoundSolver {
 
 #[cfg(test)]
 mod tests {
-    use simulator::{Effects, SimulationState, SingleUse};
+    use simulator::{state::PrevActionDelta, Effects, SimulationState, SingleUse};
 
     use super::*;
 
@@ -183,6 +183,7 @@ mod tests {
             initial_quality: 0,
             job_level: 100,
             allowed_actions: ActionMask::from_level(100, true, false),
+            adversarial: false,
         };
         let mut solver = UpperBoundSolver::new(settings);
 
@@ -190,7 +191,8 @@ mod tests {
             cp: 625,
             durability: 5,
             missing_progress: 1011,
-            missing_quality: 19070,
+            missing_quality: [19070; 3],
+            prev_deltas: [PrevActionDelta::default(); 2],
             effects: Effects::new()
                 .with_inner_quiet(2)
                 .with_trained_perfection(SingleUse::Available),
@@ -202,7 +204,8 @@ mod tests {
             cp: 623,
             durability: 5,
             missing_progress: 1011,
-            missing_quality: 19070,
+            missing_quality: [19070; 3],
+            prev_deltas: [PrevActionDelta::default(); 2],
             effects: Effects::new()
                 .with_inner_quiet(2)
                 .with_trained_perfection(SingleUse::Available),
@@ -228,6 +231,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(
             settings,
@@ -258,6 +262,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(
             settings,
@@ -285,6 +290,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(
             settings,
@@ -317,6 +323,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 2220);
@@ -334,6 +341,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 2000); // clamped to max_quality
@@ -351,6 +359,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 4555); // tightness test
@@ -368,6 +377,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(settings, &[Action::Reflect]);
         assert_eq!(result, 4633); // tightness test
@@ -385,6 +395,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: false,
         };
         let result = solve(settings, &[Action::PrudentTouch]);
         assert_eq!(result, 10000); // tightness test
@@ -402,6 +413,7 @@ mod tests {
             initial_quality: 0,
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, false, false),
+            adversarial: false,
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 4823); // tightness test
@@ -419,6 +431,7 @@ mod tests {
             initial_quality: 0,
             job_level: 100,
             allowed_actions: ActionMask::from_level(100, false, false),
+            adversarial: false,
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 4269);
@@ -436,6 +449,7 @@ mod tests {
             initial_quality: 0,
             job_level: 100,
             allowed_actions: ActionMask::from_level(100, false, false),
+            adversarial: false,
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 2986);
@@ -453,6 +467,7 @@ mod tests {
             initial_quality: 0,
             job_level: 100,
             allowed_actions: ActionMask::from_level(100, false, true),
+            adversarial: false,
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 24000);

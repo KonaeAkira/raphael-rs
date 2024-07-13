@@ -14,7 +14,7 @@ impl Value {
         Self {
             cp: state.cp,
             missing_progress: state.missing_progress,
-            missing_quality: state.missing_quality,
+            missing_quality: state.missing_quality[0],
         }
     }
 }
@@ -36,7 +36,7 @@ struct Key {
 
 impl Key {
     pub fn new(state: SimulationState) -> Self {
-        let effects = match state.missing_quality == 0 {
+        let effects = match state.missing_quality[0] == 0 {
             true => {
                 // Ignore effects that are only relevant for Quality when Quality is already maxed out
                 state

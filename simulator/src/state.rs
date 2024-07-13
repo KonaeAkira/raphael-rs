@@ -1,11 +1,29 @@
+use std::cmp::max;
+
 use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PrevActionDelta {
+    pub to_excellent: u16,
+    pub to_poor: u16,
+}
+
+impl Default for PrevActionDelta {
+    fn default() -> Self {
+        PrevActionDelta {
+            to_excellent: 0, to_poor: 0
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
     pub cp: i16,
     pub durability: i8,
     pub missing_progress: u16,
-    pub missing_quality: u16,
+    pub missing_quality: [u16; 3],
+    pub prev_deltas: [PrevActionDelta; 2],
     pub effects: Effects,
     pub combo: Option<ComboAction>,
 }
@@ -16,9 +34,10 @@ impl SimulationState {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
-            missing_quality: settings
+            missing_quality: [settings
                 .max_quality
-                .saturating_sub(settings.initial_quality),
+                .saturating_sub(settings.initial_quality), 0, 0],
+            prev_deltas: [PrevActionDelta::default(); 2],
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
         }
@@ -173,9 +192,21 @@ impl InProgress {
             state.effects.set_muscle_memory(0);
         }
 
+        if settings.adversarial {
+            let saved = state.missing_quality[2];
+            state.missing_quality[2] = state.missing_quality[1];
+            state.missing_quality[1] = state.missing_quality[0];
+            state.missing_quality[0] = max(
+                state.missing_quality[0], 
+                saved.saturating_sub(state.prev_deltas[0].to_poor).saturating_sub(state.prev_deltas[1].to_excellent));
+            state.prev_deltas[1] = state.prev_deltas[0];
+            state.prev_deltas[0].to_excellent = action.quality_increase(settings, &state.effects, Condition::Excellent);
+            state.prev_deltas[0].to_poor = action.quality_increase(settings, &state.effects, Condition::Poor);
+        }
+
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            state.missing_quality = state.missing_quality.saturating_sub(quality_increase);
+            state.missing_quality[0] = state.missing_quality[0].saturating_sub(quality_increase);
             state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
                 let inner_quiet_bonus = match action {
