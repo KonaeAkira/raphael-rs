@@ -55,7 +55,7 @@ pub fn quick_search(
     );
 
     while let Some((score, node)) = search_queue.pop() {
-        let allowed_actions = match node.state.raw_state().missing_quality[0] == 0 {
+        let allowed_actions = match node.state.raw_state().get_missing_quality() == 0 {
             true => PROGRESS_SEARCH_ACTIONS.intersection(settings.allowed_actions),
             false => QUALITY_SEARCH_ACTIONS.intersection(settings.allowed_actions),
         };
@@ -65,7 +65,7 @@ pub fn quick_search(
             }
             if let Ok(state) = node.state.use_action(action, Condition::Normal, &settings) {
                 if let Ok(in_progress) = InProgress::try_from(state) {
-                    if action == Action::ByregotsBlessing && state.missing_quality[0] != 0 {
+                    if action == Action::ByregotsBlessing && state.get_missing_quality() != 0 {
                         continue;
                     }
                     if !finish_solver.can_finish(&in_progress) {
@@ -85,7 +85,7 @@ pub fn quick_search(
                             backtrack_index,
                         },
                     );
-                } else if state.missing_progress == 0 && state.missing_quality[0] == 0 {
+                } else if state.missing_progress == 0 && state.get_missing_quality() == 0 {
                     let actions = backtracking
                         .get(node.backtrack_index)
                         .chain(std::iter::once(action))

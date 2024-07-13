@@ -46,7 +46,7 @@ impl<'a> Widget for Simulator<'a> {
         let clamped_progress = self.settings.max_progress - game_state.missing_progress;
 
         let max_quality = self.settings.max_quality;
-        let quality = u16::MAX - game_state.missing_quality[0];
+        let quality = u16::MAX - game_state.get_missing_quality();
         let clamped_quality = std::cmp::min(max_quality, quality);
 
         ui.vertical(|ui| {

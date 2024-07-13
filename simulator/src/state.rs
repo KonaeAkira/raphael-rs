@@ -80,6 +80,10 @@ impl SimulationState {
         }
         (state, errors)
     }
+
+    pub fn get_missing_quality(&self) -> u16 {
+        max(self.missing_quality[0], self.missing_quality[2].saturating_sub(self.prev_deltas[1].to_excellent).saturating_sub(self.prev_deltas[0].to_poor))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

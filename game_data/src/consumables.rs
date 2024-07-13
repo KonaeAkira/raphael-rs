@@ -50,7 +50,7 @@ pub fn craftsmanship_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16
     consumables
         .iter()
         .map(|item| match item {
-            Some(item) => std::cmp::min(item.craft_max, base * item.craft_rel / 100),
+            Some(item) => std::cmp::min(item.craft_max, base.saturating_mul(item.craft_rel) / 100),
             None => 0,
         })
         .sum()
@@ -60,7 +60,7 @@ pub fn control_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
         .map(|item| match item {
-            Some(item) => std::cmp::min(item.control_max, base * item.control_rel / 100),
+            Some(item) => std::cmp::min(item.control_max, base.saturating_mul(item.control_rel) / 100),
             None => 0,
         })
         .sum()

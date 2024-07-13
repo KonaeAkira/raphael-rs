@@ -50,7 +50,7 @@ pub fn fast_lower_bound(
                     }
                     quality_lower_bound = std::cmp::max(
                         quality_lower_bound,
-                        settings.max_quality - state.missing_quality[0],
+                        settings.max_quality - state.get_missing_quality(),
                     );
                     if action == Action::ByregotsBlessing {
                         continue;

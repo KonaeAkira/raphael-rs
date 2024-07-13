@@ -46,7 +46,7 @@ impl std::convert::From<ReducedState> for InProgress {
             durability: i8::MAX,
             cp: state.cp,
             missing_progress: u16::MAX,
-            missing_quality: [u16::MAX; 3],
+            missing_quality: [u16::MAX, 0, 0],
             prev_deltas: [PrevActionDelta::default(); 2],
             effects: Effects::new()
                 .with_inner_quiet(state.effects.inner_quiet)

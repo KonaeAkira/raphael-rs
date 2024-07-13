@@ -14,7 +14,7 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
             .unwrap();
     }
     assert_eq!(state.missing_progress, 0);
-    settings.max_quality - state.missing_quality[0]
+    settings.max_quality - state.get_missing_quality()
 }
 
 fn get_duration(actions: &[Action]) -> i16 {

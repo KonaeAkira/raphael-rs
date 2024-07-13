@@ -56,7 +56,7 @@ impl UpperBoundSolver {
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: InProgress) -> u16 {
         let mut state = *state.raw_state();
-        let current_quality = self.settings.max_quality - state.missing_quality[0];
+        let current_quality = self.settings.max_quality - state.get_missing_quality();
 
         if current_quality == self.settings.max_quality {
             return current_quality;
@@ -130,7 +130,7 @@ impl UpperBoundSolver {
         {
             if let Ok(in_progress) = InProgress::try_from(new_state) {
                 let action_progress = u16::MAX - new_state.missing_progress;
-                let action_quality = u16::MAX - new_state.missing_quality[0];
+                let action_quality = u16::MAX - new_state.get_missing_quality();
                 let new_state = ReducedState::from_state(
                     in_progress,
                     self.base_durability_cost,
