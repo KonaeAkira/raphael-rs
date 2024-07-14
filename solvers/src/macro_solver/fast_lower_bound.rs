@@ -16,8 +16,7 @@ const SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::StandardTouch) // non-combo version
     .remove(Action::AdvancedTouch) // non-combo version
-    .remove(Action::DelicateSynthesis)
-    .remove(Action::MasterMend);
+    .remove(Action::DelicateSynthesis);
 
 pub fn fast_lower_bound(
     state: InProgress,
@@ -90,9 +89,14 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
             return !combo_available || matches!(action, Action::ComboAdvancedTouch);
         }
         Some(ComboAction::SynthesisBegin) => {
-            let combo_available =
-                allowed_actions.has(Action::Reflect) || allowed_actions.has(Action::MuscleMemory) || allowed_actions.has(Action::TrainedEye);
-            return !combo_available || matches!(action, Action::Reflect | Action::MuscleMemory | Action::TrainedEye);
+            let combo_available = allowed_actions.has(Action::Reflect)
+                || allowed_actions.has(Action::MuscleMemory)
+                || allowed_actions.has(Action::TrainedEye);
+            return !combo_available
+                || matches!(
+                    action,
+                    Action::Reflect | Action::MuscleMemory | Action::TrainedEye
+                );
         }
     }
 
