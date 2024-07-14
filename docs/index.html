@@ -1,7 +1,10 @@
 <!doctype html>
 <html>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+        name="viewport"
+        content="width=12, initial-scale=1.0, minimum-scale=1.0, user-scalable=no"
+    />
     <head>
         <title>Raphael | FFXIV Crafting Solver</title>
         <meta
@@ -11,9 +14,9 @@
 
         <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
         
-<script type="module" nonce="ixdWLtW/wRhqzuYmm7YlOQ==">
-import init, * as bindings from '/raphael-xiv-8c9db361cb04bd15.js';
-const wasm = await init('/raphael-xiv-8c9db361cb04bd15_bg.wasm');
+<script type="module" nonce="zpNDS4YN9IFlE0nVUXYeIA==">
+import init, * as bindings from '/raphael-xiv-61be49b6ab422f0b.js';
+const wasm = await init('/raphael-xiv-61be49b6ab422f0b_bg.wasm');
 
 
 window.wasmBindings = bindings;
@@ -43,14 +46,14 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
             body {
                 /* Light mode background color for what is not covered by the egui canvas,
-            or where the egui canvas is translucent. */
+                    or where the egui canvas is translucent. */
                 background: #909090;
             }
 
             @media (prefers-color-scheme: dark) {
                 body {
                     /* Dark mode background color for what is not covered by the egui canvas,
-                or where the egui canvas is translucent. */
+                        or where the egui canvas is translucent. */
                     background: #404040;
                 }
             }
@@ -65,66 +68,21 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
                 width: 100%;
             }
 
-            /* Position canvas in center-top: */
+            /* Make canvas fill entire document: */
             canvas {
                 margin-right: auto;
                 margin-left: auto;
                 display: block;
                 position: absolute;
-                top: 0%;
-                left: 50%;
-                transform: translate(-50%, 0%);
+                top: 0;
+                left: 0;
                 width: 100%;
                 height: 100%;
             }
-
-            .centered {
-                margin-right: auto;
-                margin-left: auto;
-                display: block;
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #f0f0f0;
-                font-size: 24px;
-                font-family: Ubuntu-Light, Helvetica, sans-serif;
-                text-align: center;
-            }
-
-            /* ---------------------------------------------- */
-            /* Loading animation from https://loading.io/css/ */
-            .lds-dual-ring {
-                display: inline-block;
-                width: 24px;
-                height: 24px;
-            }
-
-            .lds-dual-ring:after {
-                content: " ";
-                display: block;
-                width: 24px;
-                height: 24px;
-                margin: 0px;
-                border-radius: 50%;
-                border: 3px solid #fff;
-                border-color: #fff transparent #fff transparent;
-                animation: lds-dual-ring 1.2s linear infinite;
-            }
-
-            @keyframes lds-dual-ring {
-                0% {
-                    transform: rotate(0deg);
-                }
-
-                100% {
-                    transform: rotate(360deg);
-                }
-            }
         </style>
     
-<link rel="modulepreload" href="/raphael-xiv-8c9db361cb04bd15.js" crossorigin=anonymous integrity="sha384-h/ldv5/NleY55YLnNpcfW1Cfn6sBS4Fy6S8ZRiDpsEdpmAdKRi0rmBWyYfmO7Xxr">
-<link rel="preload" href="/raphael-xiv-8c9db361cb04bd15_bg.wasm" crossorigin=anonymous integrity="sha384-gW9MdNwu/yDSXXSm419l2gv/B61EUsND62LaKpzfU7kCkQL8xfC9kIrCqlCUDlRv" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/raphael-xiv-61be49b6ab422f0b.js" crossorigin=anonymous integrity="sha384-sMStQU3zxTHboaFpdYaM9/jPkoqvXiI3qtBb7Zke2Azsi8VaWkO/YbDB1EJbP+Kj">
+<link rel="preload" href="/raphael-xiv-61be49b6ab422f0b_bg.wasm" crossorigin=anonymous integrity="sha384-qhCMCYkAUwIB8/4IdWecEtxHoMNqGj1f4Whdea3YnnHcq7lAmj8eT4D7Ep4SAbL9" as="fetch" type="application/wasm"></head>
 
     <body>
         <!-- The WASM code will resize the canvas dynamically -->

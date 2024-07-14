@@ -218,9 +218,7 @@ impl eframe::App for MacroSolverApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    if self.solver_pending {
-                        ui.disable();
-                    }
+                    ui.set_enabled(!self.solver_pending);
                     ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
                         ui.set_max_width(885.0);
                         ui.add(Simulator::new(
@@ -348,7 +346,7 @@ impl MacroSolverApp {
                     ui.monospace("+");
                     ui.add(
                         egui::DragValue::new(self.crafter_config.craftsmanship_mut())
-                            .range(0..=9999),
+                            .clamp_range(0..=9999),
                     );
                 });
             });
@@ -363,7 +361,7 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(self.crafter_config.control_mut()).range(0..=9999));
+                    ui.add(egui::DragValue::new(self.crafter_config.control_mut()).clamp_range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
@@ -377,13 +375,13 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(self.crafter_config.cp_mut()).range(0..=9999));
+                    ui.add(egui::DragValue::new(self.crafter_config.cp_mut()).clamp_range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
                 ui.label("Job Level:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(egui::DragValue::new(self.crafter_config.level_mut()).range(1..=100));
+                    ui.add(egui::DragValue::new(self.crafter_config.level_mut()).clamp_range(1..=100));
                 });
             });
             ui.separator();
@@ -405,7 +403,7 @@ impl MacroSolverApp {
                                     egui::DragValue::new(
                                         &mut self.recipe_config.hq_ingredients[index],
                                     )
-                                    .range(0..=ingredient.amount),
+                                    .clamp_range(0..=ingredient.amount),
                                 );
                             });
                         });
