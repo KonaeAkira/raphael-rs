@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -6,8 +8,10 @@ pub struct SimulationState {
     pub durability: i8,
     pub missing_progress: u16,
     pub missing_quality: u16,
-    pub unreliable_quality: u16,
-    pub unreliable_diff: i16,
+    pub unreliable_quality: [u16; 2], 
+    // This value represents the minimum additional quality achievable by the simulator
+    // 1 while allowing the previous un-Guarded action to be Poor
+    // 0 while forcing the previous un-Guarded action to be Normal
     pub prev_was_guarded: bool,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
@@ -22,8 +26,7 @@ impl SimulationState {
             missing_quality: settings
                 .max_quality
                 .saturating_sub(settings.initial_quality),
-            unreliable_quality: 0,
-            unreliable_diff: 0,
+            unreliable_quality: [0, 0],
             prev_was_guarded: false,
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
@@ -69,8 +72,7 @@ impl SimulationState {
     }
     
     pub fn get_missing_quality(&self) -> u16 {
-        assert!((self.unreliable_quality - self.unreliable_diff.unsigned_abs()) & 1 == 0);
-        self.missing_quality.saturating_sub((self.unreliable_quality - self.unreliable_diff.unsigned_abs()) / 2)
+        self.missing_quality.saturating_sub(min(self.unreliable_quality[0], self.unreliable_quality[1]))
     }
 }
 
@@ -224,20 +226,19 @@ impl InProgress {
         }
         // calculate guard effects
         if settings.adversarial {
+            dbg!(state.effects, state.prev_was_guarded, quality_delta);
             if (!state.effects.guard() && quality_increase == 0) || 
                 (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded) {
                 // commit the current value
                 state.missing_quality = state.get_missing_quality();
-                state.unreliable_diff = 0;
-                state.unreliable_quality = 0;
-            } else if quality_delta != 0 {
+                state.unreliable_quality = [0, 0];
+            } else if quality_increase != 0 {
                 // append new info
-                state.unreliable_quality += quality_delta;
-                state.unreliable_diff = quality_delta as i16 - state.unreliable_diff;
+                let saved = state.unreliable_quality[0];
+                state.unreliable_quality[0] = min(state.unreliable_quality[1], state.unreliable_quality[0]) + quality_delta;
+                state.unreliable_quality[1] = min(saved, state.unreliable_quality[1] + quality_delta);
             }
-            if state.effects.guard() {
-                state.prev_was_guarded = true;
-            }
+            state.prev_was_guarded = state.effects.guard();
             state.effects.set_guard(quality_increase != 0 || state.effects.tricks());
             state.effects.set_tricks(action == Action::TricksOfTheTrade);
         }
