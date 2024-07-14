@@ -33,6 +33,8 @@ pub struct RecipeLevel {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Recipe {
+    pub job_id: u8,
+    pub item_id: u32,
     pub level: u8,
     pub recipe_level: u16,
     pub progress: u16,
@@ -45,16 +47,14 @@ pub struct Recipe {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct RecipeConfiguration {
-    pub item_id: u32,
     pub recipe: Recipe,
     pub hq_ingredients: [u8; 6],
 }
 
 pub const RLVLS: [RecipeLevel; 800] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));
+pub const RECIPES: &[Recipe] = include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
 
 pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
-pub static RECIPES: phf::OrderedMap<u32, Recipe> =
-    include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
 
 pub fn get_game_settings(
     recipe_config: RecipeConfiguration,

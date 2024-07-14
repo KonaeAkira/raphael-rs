@@ -6,14 +6,19 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
 
 use egui::{
-    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions
+    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle, TextureHandle,
+    TextureOptions,
 };
-use game_data::{action_name, get_item_name, Consumable, Locale, RecipeConfiguration, ITEMS};
+use game_data::{
+    action_name, get_item_name, get_job_name, Consumable, Locale, RecipeConfiguration, ITEMS,
+};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
-    config::{CrafterConfig, QualityTarget, JOB_NAMES},
-    widgets::{ConsumableSelect, MacroView, MacroViewConfig, RecipeSelect, Simulator},
+    config::{CrafterConfig, QualityTarget},
+    widgets::{
+        ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
+    },
 };
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
@@ -46,6 +51,7 @@ pub struct MacroSolverApp {
     food_search_text: String,
     potion_search_text: String,
 
+    stats_edit_window_open: bool,
     actions: Vec<Action>,
     solver_pending: bool,
     start_time: Option<Instant>,
@@ -80,8 +86,7 @@ impl MacroSolverApp {
         Self::load_fonts(&cc.egui_ctx);
 
         let default_recipe_config = RecipeConfiguration {
-            item_id: 38890, // Indagator's Saw
-            recipe: *game_data::RECIPES.get(&38890).unwrap(),
+            recipe: *game_data::RECIPES.last().unwrap(),
             hq_ingredients: [0; 6],
         };
 
@@ -99,6 +104,7 @@ impl MacroSolverApp {
             food_search_text: load(cc, "FOOD_SEARCH_TEXT", Default::default()),
             potion_search_text: load(cc, "POTION_SEARCH_TEXT", Default::default()),
 
+            stats_edit_window_open: false,
             actions: Vec::new(),
             solver_pending: false,
             start_time: None,
@@ -214,15 +220,15 @@ impl eframe::App for MacroSolverApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    if self.solver_pending {
-                        ui.disable();
-                    }
+                    ui.set_enabled(!self.solver_pending);
                     ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
                         ui.set_max_width(885.0);
                         ui.add(Simulator::new(
                             &game_settings,
                             &self.actions,
-                            game_data::ITEMS.get(&self.recipe_config.item_id).unwrap(),
+                            game_data::ITEMS
+                                .get(&self.recipe_config.recipe.item_id)
+                                .unwrap(),
                             &self.action_icons,
                             self.locale,
                         ));
@@ -233,6 +239,7 @@ impl eframe::App for MacroSolverApp {
                                     ui.set_max_width(612.0);
                                     ui.set_max_height(212.0);
                                     ui.add(RecipeSelect::new(
+                                        &mut self.crafter_config.selected_job,
                                         &mut self.recipe_config,
                                         &mut self.custom_recipe,
                                         &mut self.recipe_search_text,
@@ -247,7 +254,7 @@ impl eframe::App for MacroSolverApp {
                                     ui.add(ConsumableSelect::new(
                                         "Food",
                                         self.crafter_config.crafter_stats
-                                            [self.crafter_config.selected_job],
+                                            [self.crafter_config.selected_job as usize],
                                         game_data::MEALS,
                                         &mut self.food_search_text,
                                         &mut self.selected_food,
@@ -261,7 +268,7 @@ impl eframe::App for MacroSolverApp {
                                     ui.add(ConsumableSelect::new(
                                         "Potion",
                                         self.crafter_config.crafter_stats
-                                            [self.crafter_config.selected_job],
+                                            [self.crafter_config.selected_job as usize],
                                         game_data::POTIONS,
                                         &mut self.potion_search_text,
                                         &mut self.selected_potion,
@@ -286,6 +293,18 @@ impl eframe::App for MacroSolverApp {
                 ui.with_layout(Layout::bottom_up(Align::Center), |_| {});
             });
         });
+
+        egui::Window::new(
+            egui::RichText::new("Edit crafter stats")
+                .strong()
+                .text_style(TextStyle::Body),
+        )
+        .open(&mut self.stats_edit_window_open)
+        .collapsible(false)
+        .resizable(false)
+        .show(ctx, |ui| {
+            ui.add(StatsEdit::new(self.locale, &mut self.crafter_config));
+        });
     }
 }
 
@@ -295,15 +314,19 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Configuration").strong());
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
+                    if ui.button("Edit").clicked() {
+                        self.stats_edit_window_open = true;
+                    }
                     egui::ComboBox::from_id_source("SELECTED_JOB")
                         .width(20.0)
-                        .selected_text(JOB_NAMES[self.crafter_config.selected_job])
+                        .selected_text(get_job_name(self.crafter_config.selected_job, self.locale))
                         .show_ui(ui, |ui| {
                             for i in 0..8 {
                                 ui.selectable_value(
                                     &mut self.crafter_config.selected_job,
                                     i,
-                                    JOB_NAMES[i],
+                                    get_job_name(i, self.locale),
                                 );
                             }
                         });
@@ -325,7 +348,7 @@ impl MacroSolverApp {
                     ui.monospace("+");
                     ui.add(
                         egui::DragValue::new(self.crafter_config.craftsmanship_mut())
-                            .range(0..=9999),
+                            .clamp_range(0..=9999),
                     );
                 });
             });
@@ -340,7 +363,7 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(self.crafter_config.control_mut()).range(0..=9999));
+                    ui.add(egui::DragValue::new(self.crafter_config.control_mut()).clamp_range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
@@ -354,13 +377,13 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(self.crafter_config.cp_mut()).range(0..=9999));
+                    ui.add(egui::DragValue::new(self.crafter_config.cp_mut()).clamp_range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
                 ui.label("Job Level:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(egui::DragValue::new(self.crafter_config.level_mut()).range(1..=100));
+                    ui.add(egui::DragValue::new(self.crafter_config.level_mut()).clamp_range(1..=100));
                 });
             });
             ui.separator();
@@ -382,7 +405,7 @@ impl MacroSolverApp {
                                     egui::DragValue::new(
                                         &mut self.recipe_config.hq_ingredients[index],
                                     )
-                                    .range(0..=ingredient.amount),
+                                    .clamp_range(0..=ingredient.amount),
                                 );
                             });
                         });
@@ -420,7 +443,8 @@ impl MacroSolverApp {
                     ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
                     let game_settings = game_data::get_game_settings(
                         self.recipe_config,
-                        self.crafter_config.crafter_stats[self.crafter_config.selected_job],
+                        self.crafter_config.crafter_stats
+                            [self.crafter_config.selected_job as usize],
                         self.selected_food,
                         self.selected_potion,
                         self.solver_config.adversarial,
@@ -473,14 +497,20 @@ impl MacroSolverApp {
                         });
                 });
             });
-            ui.checkbox(
-                &mut self.solver_config.backload_progress,
-                "Backload progress actions",
-            );
-            ui.checkbox(
-                &mut self.solver_config.adversarial, 
-                "Ensure 100% reliability",
-            );
+            ui.horizontal(|ui| {
+                ui.checkbox(
+                    &mut self.solver_config.backload_progress,
+                    "Backload progress (Quick solve)",
+                );
+                ui.add(HelpText::new("Forces any action that increases Progress to only be used at the end of the rotation."));
+            });
+            ui.horizontal(|ui| {
+                ui.checkbox(
+                    &mut self.solver_config.adversarial, 
+                    "Ensure 100% reliability",
+                );
+                ui.add(HelpText::new("The simulator will intentionally choose conditions that decrease the quality as much as possible."));  
+            });
             if self.solver_config.backload_progress {
                 ui.label(
                     egui::RichText::new("⚠ Backloading progress may decrease achievable quality.")
@@ -504,7 +534,8 @@ impl MacroSolverApp {
                         self.start_time = Some(Instant::now());
                         let mut game_settings = game_data::get_game_settings(
                             self.recipe_config,
-                            self.crafter_config.crafter_stats[self.crafter_config.selected_job],
+                            self.crafter_config.crafter_stats
+                                [self.crafter_config.selected_job as usize],
                             self.selected_food,
                             self.selected_potion,
                             self.solver_config.adversarial,

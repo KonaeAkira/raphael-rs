@@ -14,15 +14,13 @@ use super::pareto_set::ParetoSet;
 
 const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
-    .remove(Action::DelicateSynthesis)
-    .remove(Action::MasterMend);
+    .remove(Action::DelicateSynthesis);
 
 const QUALITY_SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::StandardTouch) // non-combo version
     .remove(Action::AdvancedTouch) // non-combo version
-    .remove(Action::DelicateSynthesis)
-    .remove(Action::MasterMend);
+    .remove(Action::DelicateSynthesis);
 
 #[derive(Debug, Clone, Copy)]
 struct SearchNode {

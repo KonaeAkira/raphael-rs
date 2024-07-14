@@ -605,3 +605,25 @@ fn test_rare_tacos() {
     // solver should prefer rotation with fewer steps when duration is the same (#39)
     assert_eq!(actions.len(), 15);
 }
+
+#[test]
+fn test_mountain_chromite_ingot_no_manipulation() {
+    // Mountain Chromite Ingot
+    // 3076 Craftsmanship, 3106 Control, Level 90, HQ Tsai Tou Vonou
+    let settings = Settings {
+        max_cp: 616,
+        max_durability: 40,
+        max_progress: 2000,
+        max_quality: 8200,
+        base_progress: 217,
+        base_quality: 293,
+        initial_quality: 0,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90, false, false),
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 8200);
+    assert_eq!(get_duration(&actions), 36);
+    assert_eq!(actions.len(), 13);
+}

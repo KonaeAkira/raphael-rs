@@ -4,7 +4,7 @@ members = ["simulator", "solvers", "game_data"]
 
 [package]
 name = "raphael-xiv"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 
 [dependencies]
@@ -12,9 +12,9 @@ simulator = { path = "simulator" }
 solvers = { path = "solvers" }
 game-data = { path = "game_data" }
 
-egui = "0.28.1"
-egui_extras = { version = "0.28.1", features = ["all_loaders"] }
-eframe = { version = "0.28.1", features = ["persistence"] }
+egui = "0.27.2"
+egui_extras = { version = "0.27.2", features = ["all_loaders"] }
+eframe = { version = "0.27.2", features = ["persistence"] }
 image = { version = "0.25.1", default-features = false, features = ["png"] }
 wasm-bindgen-futures = "0.4"
 gloo-worker = { version = "0.5.0", features = ["futures"] }

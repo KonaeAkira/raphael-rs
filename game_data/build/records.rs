@@ -89,6 +89,9 @@ pub struct ItemRecord {
 pub struct RecipeRecord {
     #[serde(rename = "Item{Result}")]
     pub resulting_item: u32,
+    #[serde(rename = "CraftType")]
+    pub job_id: u8,
+
     #[serde(rename = "RecipeLevelTable")]
     pub recipe_level: u32,
     #[serde(rename = "DifficultyFactor")]
