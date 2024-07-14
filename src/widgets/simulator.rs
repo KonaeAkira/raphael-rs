@@ -6,6 +6,8 @@ use simulator::{Action, Settings, SimulationState};
 
 use crate::config::QualityTarget;
 
+use super::HelpText;
+
 pub struct Simulator<'a> {
     settings: &'a Settings,
     actions: &'a [Action],
@@ -66,7 +68,7 @@ impl<'a> Widget for Simulator<'a> {
                                 .text(format!("{} / {}", clamped_progress, max_progress))
                                 .rounding(Rounding::ZERO),
                         )
-                        .on_hover_text(&prog_qual_dbg_text);
+                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
@@ -90,7 +92,7 @@ impl<'a> Widget for Simulator<'a> {
                                     .rounding(Rounding::ZERO),
                             ),
                         }
-                        .on_hover_text(&prog_qual_dbg_text);
+                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Durability:");
@@ -112,13 +114,10 @@ impl<'a> Widget for Simulator<'a> {
                                 .desired_width(120.0),
                         );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            if self.item.can_be_hq {
-                                let hq = match game_state.missing_progress {
-                                    0 => game_data::hq_percentage(clamped_quality, max_quality),
-                                    _ => 0,
-                                };
-                                ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
-                            } else if self.item.is_collectable {
+                            ui.add(HelpText::new(
+                                "Calculated assuming Normal conditon on every step",
+                            ));
+                            if self.item.is_collectable {
                                 let t1 = QualityTarget::CollectableT1
                                     .get_target(self.settings.max_quality);
                                 let t2 = QualityTarget::CollectableT2
@@ -135,6 +134,12 @@ impl<'a> Widget for Simulator<'a> {
                                     egui::RichText::new(format!("Tier {tier} collectable reached"))
                                         .strong(),
                                 );
+                            } else {
+                                let hq = match game_state.missing_progress {
+                                    0 => game_data::hq_percentage(clamped_quality, max_quality),
+                                    _ => 0,
+                                };
+                                ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
                             }
                         });
                     });

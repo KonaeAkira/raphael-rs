@@ -16,7 +16,9 @@ use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
     config::{CrafterConfig, QualityTarget},
-    widgets::{ConsumableSelect, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit},
+    widgets::{
+        ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
+    },
 };
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
@@ -494,10 +496,13 @@ impl MacroSolverApp {
                         });
                 });
             });
-            ui.checkbox(
-                &mut self.solver_config.backload_progress,
-                "Backload progress (Quick solve)",
-            );
+            ui.horizontal(|ui| {
+                ui.checkbox(
+                    &mut self.solver_config.backload_progress,
+                    "Backload progress (Quick solve)",
+                );
+                ui.add(HelpText::new("Forces any action that increases Progress to only be used at the end of the rotation."));
+            });
             if self.solver_config.backload_progress {
                 ui.label(
                     egui::RichText::new("⚠ Backloading progress may decrease achievable quality.")
