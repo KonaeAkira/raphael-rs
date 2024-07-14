@@ -12,3 +12,6 @@ pub use recipe_select::RecipeSelect;
 
 mod stats_edit;
 pub use stats_edit::StatsEdit;
+
+mod help_text;
+pub use help_text::HelpText;
