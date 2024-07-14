@@ -84,3 +84,44 @@ pub fn cp_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
         })
         .sum()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{get_item_name, Locale};
+
+    use super::*;
+
+    fn find_consumable(item_name: &'static str) -> Option<Consumable> {
+        MEALS
+            .iter()
+            .chain(POTIONS.iter())
+            .find(|consumable| {
+                get_item_name(consumable.item_id, consumable.hq, Locale::EN) == item_name
+            })
+            .copied()
+    }
+
+    #[test]
+    fn test_u16_overflow() {
+        let consumable = find_consumable("Rroneek Steak (HQ)").unwrap();
+        // 13108 * 5 mod 1<<16 = 4
+        // 2521 * 26 mod 1<<16 = 10
+        assert_eq!(
+            consumable.effect_string(4021, 13108, 2521),
+            "Control +5% (97), CP +26% (92)"
+        );
+    }
+
+    #[test]
+    fn test_rroneek_steak_hq() {
+        let consumable = find_consumable("Rroneek Steak (HQ)").unwrap();
+        assert_eq!(
+            consumable.effect_string(4021, 4023, 550),
+            "Control +5% (97), CP +26% (92)"
+        );
+        assert_eq!(
+            consumable.effect_string(1000, 1000, 100),
+            "Control +5% (50), CP +26% (26)"
+        );
+    }
+}
