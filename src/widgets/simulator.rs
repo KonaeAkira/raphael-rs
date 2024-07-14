@@ -49,6 +49,11 @@ impl<'a> Widget for Simulator<'a> {
         let quality = u16::MAX - game_state.missing_quality;
         let clamped_quality = std::cmp::min(max_quality, quality);
 
+        let prog_qual_dbg_text = format!(
+            "Progress per 100% efficiency: {}\nQuality per 100% efficiency: {}",
+            self.settings.base_progress, self.settings.base_quality
+        );
+
         ui.vertical(|ui| {
             ui.group(|ui| {
                 ui.vertical(|ui| {
@@ -60,23 +65,21 @@ impl<'a> Widget for Simulator<'a> {
                             egui::ProgressBar::new(clamped_progress as f32 / max_progress as f32)
                                 .text(format!("{} / {}", clamped_progress, max_progress))
                                 .rounding(Rounding::ZERO),
-                        );
+                        )
+                        .on_hover_text(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
-                        if quality == u16::MAX {
-                            // don't display quality overflow when quality is u16::MAX
-                            // this is to hide odd overflow values when Trained Eye is involved
-                            ui.add(
+                        match quality == u16::MAX {
+                            true => ui.add(
                                 egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
                                     .text(format!(
                                         "{} / {}  (max quality guaranteed)",
                                         clamped_quality, max_quality,
                                     ))
                                     .rounding(Rounding::ZERO),
-                            );
-                        } else {
-                            ui.add(
+                            ),
+                            false => ui.add(
                                 egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
                                     .text(format!(
                                         "{} / {}  (+{} overflow)",
@@ -85,8 +88,9 @@ impl<'a> Widget for Simulator<'a> {
                                         quality.saturating_sub(max_quality)
                                     ))
                                     .rounding(Rounding::ZERO),
-                            );
+                            ),
                         }
+                        .on_hover_text(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Durability:");

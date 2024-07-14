@@ -59,21 +59,23 @@ impl<'a> RecipeSelect<'a> {
             .resizable(false)
             .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
             .column(Column::auto())
+            .column(Column::exact(28.0)) // Column::auto causes jittering when scrolling
             .column(Column::remainder())
             .min_scrolled_height(0.0);
         table.body(|body| {
             body.rows(text_height, search_result.len(), |mut row| {
                 let recipe = game_data::RECIPES[search_result[row.index()]];
                 row.col(|ui| {
-                    let job_label =
-                        egui::RichText::new(get_job_name(recipe.job_id, self.locale)).monospace();
-                    if ui.button(job_label).clicked() {
+                    if ui.button("Select").clicked() {
                         *self.selected_job = recipe.job_id;
                         *self.recipe_config = RecipeConfiguration {
                             recipe,
                             hq_ingredients: [0; 6],
                         }
                     };
+                });
+                row.col(|ui| {
+                    ui.label(get_job_name(recipe.job_id, self.locale));
                 });
                 row.col(|ui| {
                     ui.label(get_item_name(recipe.item_id, false, self.locale));

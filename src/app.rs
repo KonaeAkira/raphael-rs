@@ -477,7 +477,7 @@ impl MacroSolverApp {
             });
             ui.checkbox(
                 &mut self.solver_config.backload_progress,
-                "Backload progress actions",
+                "Backload progress (Quick solve)",
             );
             if self.solver_config.backload_progress {
                 ui.label(
