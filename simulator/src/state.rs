@@ -119,6 +119,10 @@ impl InProgress {
         if !action.combo_fulfilled(self.state.combo) {
             return Err("Combo requirement not fulfilled");
         }
+        if self.state.combo == Some(ComboAction::TricksOfTheTrade) && 
+            !matches!(action, Action::Observe | Action::GreatStrides | Action::Innovation) {
+            return Err("requires quality buff after tricks")
+        }
         match action {
             Action::ByregotsBlessing if self.state.effects.inner_quiet() == 0 => {
                 Err("Need Inner Quiet to use Byregot's Blessing")

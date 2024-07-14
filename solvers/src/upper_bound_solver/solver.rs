@@ -110,6 +110,7 @@ impl UpperBoundSolver {
         self.pareto_front_builder.push_empty();
         for action in SEARCH_ACTIONS
             .intersection(self.settings.allowed_actions)
+            .remove(Action::TricksOfTheTrade) // the upper bound solver uses a non-adversarial version of the sim
             .actions_iter()
         {
             self.build_child_front(state, action);

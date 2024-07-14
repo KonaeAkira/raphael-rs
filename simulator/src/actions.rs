@@ -42,6 +42,7 @@ pub enum ComboAction {
     SynthesisBegin,
     BasicTouch,
     StandardTouch,
+    TricksOfTheTrade,
 }
 
 impl Action {
@@ -341,6 +342,7 @@ impl Action {
             Action::ComboStandardTouch => Some(ComboAction::StandardTouch),
             // Observe and StandardTouch unlock the same action (ComboAdvancedTouch)
             Action::Observe => Some(ComboAction::StandardTouch),
+            Action::TricksOfTheTrade => Some(ComboAction::TricksOfTheTrade),
             _ => None,
         }
     }
