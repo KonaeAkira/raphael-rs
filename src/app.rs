@@ -6,7 +6,8 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
 
 use egui::{
-    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextureHandle, TextureOptions,
+    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle, TextureHandle,
+    TextureOptions,
 };
 use game_data::{
     action_name, get_item_name, get_job_name, Consumable, Locale, RecipeConfiguration, ITEMS,
@@ -15,7 +16,7 @@ use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
     config::{CrafterConfig, QualityTarget},
-    widgets::{ConsumableSelect, MacroView, MacroViewConfig, RecipeSelect, Simulator},
+    widgets::{ConsumableSelect, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit},
 };
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
@@ -47,6 +48,7 @@ pub struct MacroSolverApp {
     food_search_text: String,
     potion_search_text: String,
 
+    stats_edit_window_open: bool,
     actions: Vec<Action>,
     solver_pending: bool,
     start_time: Option<Instant>,
@@ -99,6 +101,7 @@ impl MacroSolverApp {
             food_search_text: load(cc, "FOOD_SEARCH_TEXT", Default::default()),
             potion_search_text: load(cc, "POTION_SEARCH_TEXT", Default::default()),
 
+            stats_edit_window_open: false,
             actions: Vec::new(),
             solver_pending: false,
             start_time: None,
@@ -288,6 +291,18 @@ impl eframe::App for MacroSolverApp {
                 ui.with_layout(Layout::bottom_up(Align::Center), |_| {});
             });
         });
+
+        egui::Window::new(
+            egui::RichText::new("Edit crafter stats")
+                .strong()
+                .text_style(TextStyle::Body),
+        )
+        .open(&mut self.stats_edit_window_open)
+        .collapsible(false)
+        .resizable(false)
+        .show(ctx, |ui| {
+            ui.add(StatsEdit::new(self.locale, &mut self.crafter_config));
+        });
     }
 }
 
@@ -297,6 +312,10 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Configuration").strong());
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
+                    if ui.button("Edit").clicked() {
+                        self.stats_edit_window_open = true;
+                    }
                     egui::ComboBox::from_id_source("SELECTED_JOB")
                         .width(20.0)
                         .selected_text(get_job_name(self.crafter_config.selected_job, self.locale))

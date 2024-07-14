@@ -9,3 +9,6 @@ pub use consumable_select::ConsumableSelect;
 
 mod recipe_select;
 pub use recipe_select::RecipeSelect;
+
+mod stats_edit;
+pub use stats_edit::StatsEdit;
