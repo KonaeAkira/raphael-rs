@@ -121,10 +121,6 @@ impl InProgress {
         if !action.combo_fulfilled(self.state.combo) {
             return Err("Combo requirement not fulfilled");
         }
-        if self.state.combo == Some(ComboAction::TricksOfTheTrade) && 
-            !matches!(action, Action::Observe | Action::GreatStrides | Action::Innovation) {
-            return Err("requires quality buff after tricks")
-        }
         match action {
             Action::ByregotsBlessing if self.state.effects.inner_quiet() == 0 => {
                 Err("Need Inner Quiet to use Byregot's Blessing")
@@ -134,7 +130,7 @@ impl InProgress {
             {
                 Err("Action cannot be used during Waste Not")
             }
-            Action::IntensiveSynthesis | Action::PreciseTouch// | Action::TricksOfTheTrade
+            Action::IntensiveSynthesis | Action::PreciseTouch
                 if condition != Condition::Good && condition != Condition::Excellent =>
             {
                 Err("Requires condition to be Good or Excellent")
@@ -155,9 +151,6 @@ impl InProgress {
                 ) =>
             {
                 Err("Action can only be used once per synthesis")
-            }
-            Action::TricksOfTheTrade if !settings.adversarial || self.state.effects.tricks() => {
-                Err("cannot use tricks when tricks is active")
             }
             _ => Ok(()),
         }
@@ -239,8 +232,7 @@ impl InProgress {
                 state.unreliable_quality[1] = min(saved, state.unreliable_quality[1] + quality_delta);
             }
             state.prev_was_guarded = state.effects.guard();
-            state.effects.set_guard(quality_increase != 0 || state.effects.tricks());
-            state.effects.set_tricks(action == Action::TricksOfTheTrade);
+            state.effects.set_guard(quality_increase != 0);
         }
 
         // remove manipulation before it is triggered
@@ -248,7 +240,7 @@ impl InProgress {
             state.effects.set_manipulation(0);
         }
 
-        if state.effects.manipulation() > 0 && action != Action::TricksOfTheTrade { 
+        if state.effects.manipulation() > 0 { 
             // tricks doesn't tick manip, since it cannot assume a step has passed
             state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
@@ -268,7 +260,6 @@ impl InProgress {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 30)
             }
             Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
-            Action::TricksOfTheTrade => {} //state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
             Action::ImmaculateMend => state.durability = settings.max_durability,
             Action::TrainedPerfection => state.effects.set_trained_perfection(SingleUse::Active),
             _ => (),

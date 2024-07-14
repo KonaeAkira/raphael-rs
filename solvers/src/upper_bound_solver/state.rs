@@ -35,7 +35,7 @@ impl ReducedState {
                 great_strides: state.effects.great_strides(),
                 muscle_memory: state.effects.muscle_memory(),
                 trained_perfection: state.effects.trained_perfection(),
-            },
+            }
         }
     }
 }
@@ -55,9 +55,7 @@ impl std::convert::From<ReducedState> for InProgress {
                 .with_veneration(state.effects.veneration)
                 .with_great_strides(state.effects.great_strides)
                 .with_muscle_memory(state.effects.muscle_memory)
-                .with_trained_perfection(state.effects.trained_perfection)
-                .with_tricks(false)
-                .with_guard(true), // The upper bound solver should assume that all actions are guarded
+                .with_trained_perfection(state.effects.trained_perfection),
             combo: state.combo,
         }
         .try_into()

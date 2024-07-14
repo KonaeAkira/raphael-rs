@@ -98,11 +98,6 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
                     Action::Reflect | Action::MuscleMemory | Action::TrainedEye
                 );
         }
-        Some(ComboAction::TricksOfTheTrade) => {
-            let combo_available =
-                allowed_actions.has(Action::Innovation) || allowed_actions.has(Action::GreatStrides) || allowed_actions.has(Action::Observe);
-            return !combo_available || matches!(action, Action::Innovation | Action::GreatStrides | Action::Observe);
-        } // force a "useful" action after Tricks, bc tricks consumes no resources
     }
 
     // Misc

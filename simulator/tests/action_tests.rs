@@ -270,23 +270,6 @@ fn test_adversarial_calculation() {
 }
 
 #[test]
-fn test_tricks_guard() {
-    let settings = Settings {
-        adversarial: true,
-        ..SETTINGS
-    };
-    let state =
-        SimulationState::from_macro(&settings, &[Action::MuscleMemory, Action::Innovation, Action::BasicTouch, Action::TricksOfTheTrade, Action::GreatStrides, Action::ByregotsBlessing]);
-    if let Ok(state) = state {
-        println!("{}", state.get_missing_quality());
-        assert_eq!(settings.max_quality - state.get_missing_quality(), 75+330);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
-}
-
-
-#[test]
 fn test_flipping() {
     let settings = Settings {
         adversarial: true,

@@ -620,6 +620,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
         initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, false, false),
+        adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));

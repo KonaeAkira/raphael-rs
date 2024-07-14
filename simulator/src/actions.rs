@@ -8,7 +8,6 @@ pub enum Action {
     BasicTouch,
     MasterMend,
     Observe,
-    TricksOfTheTrade,
     WasteNot,
     Veneration,
     StandardTouch, // out-of-combo version
@@ -42,7 +41,6 @@ pub enum ComboAction {
     SynthesisBegin,
     BasicTouch,
     StandardTouch,
-    TricksOfTheTrade,
 }
 
 impl Action {
@@ -52,7 +50,6 @@ impl Action {
             Action::BasicTouch => 5,
             Action::MasterMend => 7,
             Action::Observe => 13,
-            Action::TricksOfTheTrade => 13,
             Action::WasteNot => 15,
             Action::Veneration => 15,
             Action::StandardTouch => 18,
@@ -88,7 +85,6 @@ impl Action {
             Action::BasicTouch => 3,
             Action::MasterMend => 3,
             Action::Observe => 3,
-            Action::TricksOfTheTrade => 2,
             Action::WasteNot => 2,
             Action::Veneration => 2,
             Action::StandardTouch => 3,
@@ -124,7 +120,6 @@ impl Action {
             Action::BasicTouch => 18,
             Action::MasterMend => 88,
             Action::Observe => 7,
-            Action::TricksOfTheTrade => 0,
             Action::WasteNot => 56,
             Action::Veneration => 18,
             Action::StandardTouch => 32,
@@ -167,7 +162,6 @@ impl Action {
             Action::BasicTouch => 10,
             Action::MasterMend => 0,
             Action::Observe => 0,
-            Action::TricksOfTheTrade => 0,
             Action::WasteNot => 0,
             Action::Veneration => 0,
             Action::StandardTouch => 10,
@@ -342,7 +336,6 @@ impl Action {
             Action::ComboStandardTouch => Some(ComboAction::StandardTouch),
             // Observe and StandardTouch unlock the same action (ComboAdvancedTouch)
             Action::Observe => Some(ComboAction::StandardTouch),
-            Action::TricksOfTheTrade => Some(ComboAction::TricksOfTheTrade),
             _ => None,
         }
     }
