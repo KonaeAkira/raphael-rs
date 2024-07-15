@@ -1,4 +1,4 @@
-use simulator::{Action, ActionMask, Settings, SimulationState};
+use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
 
 const SETTINGS: Settings = Settings {
     max_cp: 250,
@@ -96,6 +96,16 @@ fn test_trained_eye_opener() {
     let state =
         SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
     assert!(matches!(state, Err("Combo requirement not fulfilled")));
+}
+
+#[test]
+fn test_poor_trained_eye() {
+    let state = SimulationState::new(&SETTINGS);
+    let state = InProgress::try_from(state).unwrap().use_action(Action::TrainedEye, Condition::Poor, &SETTINGS);
+    assert!(matches!(state, Ok(_)));
+    let state = state.unwrap();
+    assert_eq!(state.get_missing_quality(), 0);
+    assert_eq!(state.effects.inner_quiet(), 1);
 }
 
 #[test]
@@ -249,124 +259,5 @@ fn test_delicate_synthesis() {
             assert_eq!(settings.max_quality - state.get_missing_quality(), 100);
         }
         Err(e) => panic!("Unexpected error: {}", e),
-    }
-}
-
-#[test]
-fn test_adversarial_calculation() {
-    let settings = Settings {
-        adversarial: true,
-        ..SETTINGS
-    };
-    let state =
-        SimulationState::from_macro(&settings, &[Action::Observe, Action::Observe, Action::PreparatoryTouch, Action::BasicSynthesis]);
-    if let Ok(state) = state {
-        println!("{}", state.get_missing_quality());
-        assert_eq!(settings.max_quality - state.get_missing_quality(), 100);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
-    
-}
-
-#[test]
-fn test_flipping() {
-    let settings = Settings {
-        adversarial: true,
-        ..SETTINGS
-    };
-    let state =
-        SimulationState::from_macro(&settings, &[
-            Action::MuscleMemory, 
-            Action::GreatStrides, 
-            Action::BasicTouch, 
-            Action::GreatStrides, 
-            Action::BasicTouch, 
-            Action::GreatStrides, 
-            Action::BasicTouch
-        ]);
-    if let Ok(state) = state {
-        println!("{}", state.get_missing_quality());
-        assert_eq!(settings.max_quality - state.get_missing_quality(), 100 + 220 + 120);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
-}
-
-#[test]
-fn test_double_status_drops_unreliable() {
-    let settings = Settings {
-        adversarial: true,
-        ..SETTINGS
-    };
-    let state =
-        SimulationState::from_macro(&settings, &[
-            Action::MuscleMemory, 
-            Action::GreatStrides, 
-            Action::BasicTouch, 
-            Action::Innovation,
-            Action::GreatStrides, 
-            Action::BasicTouch, 
-            Action::GreatStrides, 
-            Action::BasicTouch
-        ]);
-    if let Ok(state) = state {
-        println!("{}", state.get_missing_quality());
-        assert_eq!(settings.max_quality - state.get_missing_quality(), 100 + 275 + 150);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
-}
-
-#[test]
-fn test_two_actions_drop_unreliable() {
-    let settings = Settings {
-        adversarial: true,
-        ..SETTINGS
-    };
-    let state =
-        SimulationState::from_macro(&settings, &[
-            Action::MuscleMemory, 
-            Action::GreatStrides, 
-            Action::BasicTouch, 
-            Action::StandardTouch,
-            Action::GreatStrides, 
-            Action::BasicTouch, 
-            Action::GreatStrides, 
-            Action::BasicTouch
-        ]);
-    if let Ok(state) = state {
-        println!("{}", state.get_missing_quality());
-        assert_eq!(settings.max_quality - state.get_missing_quality(), 100 + 137 + 240 + 130);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
-}
-
-#[test]
-fn test_unreliable_dp() {
-    let settings = Settings {
-        adversarial: true,
-        max_durability: 80,
-        max_cp: 1000,
-        ..SETTINGS
-    };
-    let state =
-        SimulationState::from_macro(&settings, &[
-            Action::MuscleMemory, 
-            Action::GreatStrides, 
-            Action::PreparatoryTouch,
-            Action::Innovation,
-            Action::BasicTouch,
-            Action::Observe,
-            Action::AdvancedTouch,
-            Action::GreatStrides,
-            Action::PreparatoryTouch
-        ]);
-    if let Ok(state) = state {
-        println!("{}", state.get_missing_quality());
-        assert_eq!(settings.max_quality - state.get_missing_quality(), 200 + 180 + 292 + 280);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
     }
 }

@@ -115,7 +115,11 @@ impl<'a> Widget for Simulator<'a> {
                         );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.add(HelpText::new(
-                                "Calculated assuming Normal conditon on every step",
+                                if self.settings.adversarial {
+                                    "Calculated assuming worst possible sequence of conditions"
+                                } else {
+                                    "Calculated assuming Normal conditon on every step"
+                                }
                             ));
                             if self.item.is_collectable {
                                 let t1 = QualityTarget::CollectableT1

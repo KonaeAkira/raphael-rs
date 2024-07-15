@@ -504,13 +504,6 @@ impl MacroSolverApp {
                 );
                 ui.add(HelpText::new("Forces any action that increases Progress to only be used at the end of the rotation."));
             });
-            ui.horizontal(|ui| {
-                ui.checkbox(
-                    &mut self.solver_config.adversarial, 
-                    "Ensure 100% reliability",
-                );
-                ui.add(HelpText::new("The simulator will intentionally choose conditions that decrease the quality as much as possible."));  
-            });
             if self.solver_config.backload_progress {
                 ui.label(
                     egui::RichText::new("⚠ Backloading progress may decrease achievable quality.")
@@ -518,6 +511,13 @@ impl MacroSolverApp {
                         .color(ui.visuals().warn_fg_color),
                 );
             }
+            ui.horizontal(|ui| {
+                ui.checkbox(
+                    &mut self.solver_config.adversarial, 
+                    "Ensure 100% reliability",
+                );
+                ui.add(HelpText::new("The simulator will intentionally choose conditions that decrease the quality as much as possible."));  
+            });
             if self.solver_config.adversarial {
                 ui.label(
                     egui::RichText::new("⚠ Guaranteeing reliability may lead to longer macros and decrease achievable quality.")

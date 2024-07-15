@@ -219,7 +219,6 @@ impl InProgress {
         }
         // calculate guard effects
         if settings.adversarial {
-            dbg!(state.effects, state.prev_was_guarded, quality_delta);
             if (!state.effects.guard() && quality_increase == 0) || 
                 (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded) {
                 // commit the current value
@@ -241,7 +240,6 @@ impl InProgress {
         }
 
         if state.effects.manipulation() > 0 { 
-            // tricks doesn't tick manip, since it cannot assume a step has passed
             state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
         state.effects.tick_down();
