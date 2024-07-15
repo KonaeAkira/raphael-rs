@@ -2,6 +2,7 @@ use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, Simu
 use solvers::MacroSolver;
 
 fn solve(settings: &Settings, backload_progress: bool) -> Option<Vec<Action>> {
+    assert!(!settings.adversarial); // Ensure that adversarial tests are in a different file.
     MacroSolver::new(settings.clone()).solve(InProgress::new(settings), backload_progress)
 }
 
@@ -627,4 +628,50 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     assert_eq!(get_quality(&settings, &actions), 8200);
     assert_eq!(get_duration(&actions), 36);
     assert_eq!(actions.len(), 13);
+}
+
+#[test]
+fn test_rare_tacos_2() {
+    // lv100 Rarefied Tacos de Carne Asada
+    // 4785 CMS, 4758 Ctrl, 646 CP
+    let settings = Settings {
+        max_cp: 646,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12000,
+        base_progress: 256,
+        base_quality: 265,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true, false),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    dbg!(actions.clone());
+    assert_eq!(get_quality(&settings, &actions), 12000);
+    assert_eq!(get_duration(&actions), 58);
+    assert_eq!(actions.len(), 22);
+}
+
+#[test]
+fn test_stuffed_peppers_2() {
+  // lv99 Rarefied Stuffed Peppers
+  // 4785 CMS, 4758 Ctrl, 646 CP
+    let settings = Settings {
+        max_cp: 646,
+        max_durability: 80,
+        max_progress: 6300,
+        max_quality: 40000,
+        base_progress: 289,
+        base_quality: 360,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true, false),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    dbg!(actions.clone());
+    assert_eq!(get_quality(&settings, &actions), 20177);
+    assert_eq!(get_duration(&actions), 85);
+    assert_eq!(actions.len(), 31);
 }
