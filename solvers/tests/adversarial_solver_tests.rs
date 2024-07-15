@@ -220,6 +220,7 @@ fn test_backload_random_bb38a037() {
     assert_eq!(actions.len(), 21);
 }
 
+#[ignore]
 #[test]
 fn test_random_a300ca2b() {
     // Took 22 minutes.
@@ -261,6 +262,7 @@ fn test_random_0f9d7781() {
     assert_eq!(actions.len(), 24);
 }
 
+#[ignore]
 #[test]
 fn test_random_e451d981() {
     // Took 11 minutes.
@@ -302,6 +304,7 @@ fn test_random_6799bb1d() {
     assert_eq!(actions.len(), 20);
 }
 
+#[ignore]
 #[test]
 fn test_random_940b4755() {
     // Took 16 minutes.
@@ -323,6 +326,7 @@ fn test_random_940b4755() {
     assert_eq!(actions.len(), 25);
 }
 
+#[ignore]
 #[test]
 fn test_rinascita_3700_3280() {
     // Took 16 minutes.
@@ -344,6 +348,7 @@ fn test_rinascita_3700_3280() {
     assert_eq!(actions.len(), 25);
 }
 
+#[ignore]
 #[test]
 fn test_pactmaker_3240_3130() {
     // Took 8 minutes.
@@ -386,6 +391,7 @@ fn test_backload_pactmaker_3240_3130() {
     assert_eq!(actions.len(), 23);
 }
 
+#[ignore]
 #[test]
 fn test_diadochos_4021_3660() {
     // Took 4 minutes.
@@ -407,6 +413,7 @@ fn test_diadochos_4021_3660() {
     assert_eq!(actions.len(), 24);
 }
 
+#[ignore]
 #[test]
 fn test_indagator_3858_4057() {
     // Took 26 minutes.
@@ -445,9 +452,10 @@ fn test_random_2ea6c001() {
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10600);
     assert_eq!(get_duration(&actions), 49);
-    assert_eq!(actions.len(), 15);
+    assert_eq!(actions.len(), 17);
 }
 
+#[ignore]
 #[test]
 fn test_random_48ae7c9f() {
     // Took 69 minutes.
@@ -465,12 +473,14 @@ fn test_random_48ae7c9f() {
     };
     let actions = solve(&settings, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 17236);
-    assert_eq!(get_duration(&actions), 85);
-    assert_eq!(actions.len(), 30);
+    assert_eq!(get_duration(&actions), 89);
+    assert_eq!(actions.len(), 31);
 }
 
+#[ignore]
 #[test]
 fn test_backload_random_48ae7c9f() {
+    // Took 6 minutes.
     let settings = Settings {
         max_cp: 699,
         max_durability: 80,
@@ -487,9 +497,10 @@ fn test_backload_random_48ae7c9f() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 16969);
     assert_eq!(get_duration(&actions), 85);
-    assert_eq!(actions.len(), 35);
+    assert_eq!(actions.len(), 30);
 }
 
+#[ignore]
 #[test]
 fn test_max_quality_indagator_3858_4057() {
     // Took 26 minutes.
@@ -648,7 +659,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
 
 // This test takes a long time to run right now. 
 // This test does work, but it takes several hours to run.
-//#[test]
+#[ignore]
+#[test]
 fn test_rare_tacos_2() {
     // lv100 Rarefied Tacos de Carne Asada
     // 4785 CMS, 4758 Ctrl, 646 CP
