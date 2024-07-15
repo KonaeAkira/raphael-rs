@@ -643,7 +643,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 8200);
     assert_eq!(get_duration(&actions), 38);
-    assert_eq!(actions.len(), 13);
+    assert_eq!(actions.len(), 14);
 }
 
 // This test takes a long time to run right now. 

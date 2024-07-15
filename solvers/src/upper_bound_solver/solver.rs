@@ -191,8 +191,7 @@ mod tests {
             cp: 625,
             durability: 5,
             missing_progress: 1011,
-            missing_quality: 19070,
-            unreliable_quality: [0, 0],
+            unreliable_quality: [19070, 19070],
             prev_was_guarded: false,
             effects: Effects::new()
                 .with_inner_quiet(2)
@@ -205,8 +204,7 @@ mod tests {
             cp: 623,
             durability: 5,
             missing_progress: 1011,
-            missing_quality: 19070,
-            unreliable_quality: [0, 0],
+            unreliable_quality: [19070, 19070],
             prev_was_guarded: false,
             effects: Effects::new()
                 .with_inner_quiet(2)

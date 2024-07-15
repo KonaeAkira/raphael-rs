@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::cmp::max;
 
 use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
 
@@ -7,7 +7,6 @@ pub struct SimulationState {
     pub cp: i16,
     pub durability: i8,
     pub missing_progress: u16,
-    pub missing_quality: u16,
     pub unreliable_quality: [u16; 2], 
     // This value represents the minimum additional quality achievable by the simulator
     // 1 while allowing the previous un-Guarded action to be Poor
@@ -19,14 +18,13 @@ pub struct SimulationState {
 
 impl SimulationState {
     pub fn new(settings: &Settings) -> Self {
+        let initial_missing = settings.max_quality
+            .saturating_sub(settings.initial_quality);
         Self {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
-            missing_quality: settings
-                .max_quality
-                .saturating_sub(settings.initial_quality),
-            unreliable_quality: [0, 0],
+            unreliable_quality: [initial_missing; 2],
             prev_was_guarded: false,
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
@@ -72,7 +70,7 @@ impl SimulationState {
     }
     
     pub fn get_missing_quality(&self) -> u16 {
-        self.missing_quality.saturating_sub(min(self.unreliable_quality[0], self.unreliable_quality[1]))
+        max(self.unreliable_quality[0], self.unreliable_quality[1])
     }
 }
 
@@ -197,7 +195,8 @@ impl InProgress {
 
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            state.missing_quality = state.missing_quality.saturating_sub(quality_increase);
+            state.unreliable_quality[0] = state.unreliable_quality[0].saturating_sub(quality_increase);
+            state.unreliable_quality[1] = state.unreliable_quality[1].saturating_sub(quality_increase);
             state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
                 let inner_quiet_bonus = match action {
@@ -222,13 +221,12 @@ impl InProgress {
             if (!state.effects.guard() && quality_increase == 0) || 
                 (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded) {
                 // commit the current value
-                state.missing_quality = state.get_missing_quality();
-                state.unreliable_quality = [0, 0];
+                state.unreliable_quality = [state.get_missing_quality(); 2];
             } else if quality_increase != 0 {
                 // append new info
                 let saved = state.unreliable_quality[0];
-                state.unreliable_quality[0] = min(state.unreliable_quality[1], state.unreliable_quality[0]) + quality_delta;
-                state.unreliable_quality[1] = min(saved, state.unreliable_quality[1] + quality_delta);
+                state.unreliable_quality[0] = max(state.unreliable_quality[1], state.unreliable_quality[0]).saturating_sub(quality_delta);
+                state.unreliable_quality[1] = max(saved, state.unreliable_quality[1].saturating_sub(quality_delta));
             }
             state.prev_was_guarded = state.effects.guard();
             state.effects.set_guard(quality_increase != 0);

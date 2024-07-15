@@ -67,8 +67,7 @@ impl ReducedState {
             durability: self.durability,
             cp: self.cp,
             missing_progress: u16::MAX,
-            missing_quality: 0,
-            unreliable_quality: [0, 0],
+            unreliable_quality: [u16::MAX; 2],
             prev_was_guarded: false,
             effects: self
                 .effects
