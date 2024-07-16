@@ -61,6 +61,7 @@ pub fn get_game_settings(
     crafter_stats: CrafterStats,
     food: Option<Consumable>,
     potion: Option<Consumable>,
+    adversarial: bool,
 ) -> Settings {
     let recipe = recipe_config.recipe;
     let rlvl = &RLVLS[recipe.recipe_level as usize];
@@ -117,6 +118,7 @@ pub fn get_game_settings(
             crafter_stats.manipulation,
             !recipe.is_expert && crafter_stats.level >= recipe.level + 10, // Trained Eye condition
         ),
+        adversarial,
     }
 }
 

@@ -17,7 +17,7 @@ fn simulate(
 fn progress_quality_pair(settings: &Settings, state: SimulationState) -> (u16, u16) {
     (
         settings.max_progress - state.missing_progress,
-        settings.max_quality - state.missing_quality,
+        settings.max_quality - state.get_missing_quality(),
     )
 }
 
@@ -35,6 +35,7 @@ fn test_random_926ae85b() {
         initial_quality: 0,
         job_level: 10,
         allowed_actions: ActionMask::all(),
+        adversarial: false,
     };
     let actions = [
         Action::BasicSynthesis,
@@ -51,7 +52,7 @@ fn test_random_926ae85b() {
     assert_eq!(state.cp, 14);
     assert_eq!(state.durability, 30);
     assert_eq!(settings.max_progress - state.missing_progress, 4);
-    assert_eq!(settings.max_quality - state.missing_quality, 76);
+    assert_eq!(settings.max_quality - state.get_missing_quality(), 76);
     assert_eq!(state.effects.inner_quiet(), 0);
 }
 
@@ -69,6 +70,7 @@ fn test_random_3c721e47() {
         initial_quality: 0,
         job_level: 85,
         allowed_actions: ActionMask::all(),
+        adversarial: false,
     };
     let actions = [
         Action::MuscleMemory,
@@ -90,7 +92,7 @@ fn test_random_3c721e47() {
     assert_eq!(state.cp, 223);
     assert_eq!(state.durability, 60);
     assert_eq!(settings.max_progress - state.missing_progress, 2520);
-    assert_eq!(settings.max_quality - state.missing_quality, 1473);
+    assert_eq!(settings.max_quality - state.get_missing_quality(), 1473);
 }
 
 #[test]
@@ -107,6 +109,7 @@ fn test_random_3ba90d3a() {
         initial_quality: 0,
         job_level: 81,
         allowed_actions: ActionMask::all(),
+        adversarial: false,
     };
     let actions = [
         Action::Veneration,
@@ -129,7 +132,7 @@ fn test_random_3ba90d3a() {
     assert_eq!(state.cp, 188);
     assert_eq!(state.durability, 25);
     assert_eq!(settings.max_progress - state.missing_progress, 918);
-    assert_eq!(settings.max_quality - state.missing_quality, 2118);
+    assert_eq!(settings.max_quality - state.get_missing_quality(), 2118);
     assert_eq!(state.effects.inner_quiet(), 5);
     assert_eq!(state.effects.innovation(), 1);
 }
@@ -148,6 +151,7 @@ fn test_random_bce2650c() {
         initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, false, false),
+        adversarial: false,
     };
     let actions = [
         Action::MuscleMemory,
@@ -187,7 +191,7 @@ fn test_random_bce2650c() {
     assert_eq!(state.cp, 1);
     assert_eq!(state.durability, 5);
     assert_eq!(settings.max_progress - state.missing_progress, 6323);
-    assert_eq!(settings.max_quality - state.missing_quality, 11475);
+    assert_eq!(settings.max_quality - state.get_missing_quality(), 11475);
 }
 
 #[test]
@@ -204,6 +208,7 @@ fn test_ingame_be9fc5c2() {
         initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true, false),
+        adversarial: false,
     };
     let states: Vec<(u16, u16)> = simulate(
         &settings,
@@ -273,6 +278,7 @@ fn test_ingame_d11d9c68() {
         initial_quality: 0,
         job_level: 94,
         allowed_actions: ActionMask::all(),
+        adversarial: false,
     };
     let actions = [
         Action::Reflect,
@@ -311,6 +317,97 @@ fn test_ingame_d11d9c68() {
         (0, 7410),
         (0, 7410),
         (0, 11400),
+    ];
+    assert_eq!(states, expected);
+}
+
+#[test]
+fn test_ingame_f9f0dac7() {
+    // Rarefied Tacos de Carne Asada
+    // Lv. 100, 4900 Craftsmanship, 4313 Control
+    // Yes, this is just my own gear.
+    // Requires in-game verification
+    let settings = Settings {
+        max_cp: 697,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12000,
+        base_progress: 261,
+        base_quality: 240,
+        initial_quality: 0,
+        job_level: 100,
+        allowed_actions: ActionMask::all(),
+        adversarial: true,
+    };
+    let actions = [
+        Action::Reflect,
+        Action::Observe,
+        Action::ComboAdvancedTouch,
+        Action::Innovation,
+        Action::BasicTouch,
+        Action::ComboStandardTouch,
+        Action::ComboAdvancedTouch,
+        Action::PreparatoryTouch,
+        Action::ImmaculateMend,
+        Action::Innovation,
+        Action::PrudentTouch,
+        Action::BasicTouch,
+        Action::ComboStandardTouch,
+        Action::ComboAdvancedTouch,
+        Action::Innovation,
+        Action::BasicTouch,
+        Action::ComboStandardTouch,
+        Action::ComboAdvancedTouch,
+        Action::ByregotsBlessing,
+        Action::TrainedPerfection,
+        Action::ImmaculateMend,
+        Action::Veneration,
+        Action::Groundwork,
+        Action::Groundwork,
+        Action::Groundwork,
+        Action::Groundwork,
+        Action::Veneration,
+        Action::Groundwork,
+    ];
+    let states: Vec<(u16, u16)> = simulate(
+        &settings,
+        actions
+            .into_iter()
+            .zip(std::iter::repeat(Condition::Normal)),
+    )
+    .unwrap()
+    .into_iter()
+    .map(|state| progress_quality_pair(&settings, state))
+    .collect();
+    let expected = [
+        (0, 720),
+        (0, 720),
+        (0, 936),
+        (0, 936),
+        (0, 1386),
+        (0, 2016),
+        (0, 2826),
+        (0, 3978),
+        (0, 3978),
+        (0, 3978),
+        (0, 4302),
+        (0, 4986),
+        (0, 5886),
+        (0, 6966),
+        (0, 6966),
+        (0, 7326),
+        (0, 8226),
+        (0, 9306),
+        (0, 11466),
+        (0, 11466),
+        (0, 11466),
+        (0, 11466),
+        (1409, 11466),
+        (2818, 11466),
+        (4227, 11466),
+        (5636, 11466),
+        (5636, 11466),
+        (6600, 11466),
     ];
     assert_eq!(states, expected);
 }

@@ -9,6 +9,7 @@ pub struct Settings {
     pub initial_quality: u16,
     pub job_level: u8,
     pub allowed_actions: ActionMask,
+    pub adversarial: bool,
 }
 
 use crate::Action;
@@ -107,7 +108,6 @@ const ALL_ACTIONS: &[Action] = &[
     Action::BasicTouch,
     Action::MasterMend,
     Action::Observe,
-    Action::TricksOfTheTrade,
     Action::WasteNot,
     Action::Veneration,
     Action::StandardTouch,

@@ -15,6 +15,7 @@ fn main() {
         initial_quality: 0,
         job_level: 100,
         allowed_actions: ActionMask::from_level(100, true, false),
+        adversarial: false,
     };
 
     let state = InProgress::new(&settings);

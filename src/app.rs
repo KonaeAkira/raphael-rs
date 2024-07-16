@@ -34,6 +34,7 @@ type MacroResult = Option<Vec<Action>>;
 struct SolverConfig {
     quality_target: QualityTarget,
     backload_progress: bool,
+    adversarial: bool,
 }
 
 pub struct MacroSolverApp {
@@ -213,6 +214,7 @@ impl eframe::App for MacroSolverApp {
             self.crafter_config.stats(),
             self.selected_food,
             self.selected_potion,
+            self.solver_config.adversarial,
         );
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -445,6 +447,7 @@ impl MacroSolverApp {
                             [self.crafter_config.selected_job as usize],
                         self.selected_food,
                         self.selected_potion,
+                        self.solver_config.adversarial,
                     );
                     let mut current_value = self
                         .solver_config
@@ -508,6 +511,20 @@ impl MacroSolverApp {
                         .color(ui.visuals().warn_fg_color),
                 );
             }
+            ui.horizontal(|ui| {
+                ui.checkbox(
+                    &mut self.solver_config.adversarial, 
+                    "Ensure 100% reliability",
+                );
+                ui.add(HelpText::new("The simulator will intentionally choose conditions that decrease the quality as much as possible."));  
+            });
+            if self.solver_config.adversarial {
+                ui.label(
+                    egui::RichText::new("⚠ Guaranteeing reliability may lead to longer macros and decrease achievable quality.")
+                        .small()
+                        .color(ui.visuals().warn_fg_color),
+                );
+            }
 
             ui.add_space(5.5);
             ui.horizontal(|ui| {
@@ -521,7 +538,8 @@ impl MacroSolverApp {
                                 [self.crafter_config.selected_job as usize],
                             self.selected_food,
                             self.selected_potion,
-                        );
+                            self.solver_config.adversarial,
+                    );
                         let target_quality = self
                             .solver_config
                             .quality_target
