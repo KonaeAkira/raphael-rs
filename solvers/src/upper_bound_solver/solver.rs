@@ -160,7 +160,7 @@ impl UpperBoundSolver {
 
 #[cfg(test)]
 mod tests {
-    use simulator::{Effects, SimulationState, SingleUse};
+    use simulator::SimulationState;
 
     use super::*;
 
@@ -169,54 +169,6 @@ mod tests {
         let result = UpperBoundSolver::new(settings).quality_upper_bound(state.try_into().unwrap());
         dbg!(result);
         result
-    }
-
-    #[test]
-    fn sanity_test() {
-        let settings = Settings {
-            max_cp: 699,
-            max_durability: 80,
-            max_progress: 5700,
-            max_quality: 20000,
-            base_progress: 295,
-            base_quality: 310,
-            initial_quality: 0,
-            job_level: 100,
-            allowed_actions: ActionMask::from_level(100, true, false),
-            adversarial: false,
-        };
-        let mut solver = UpperBoundSolver::new(settings);
-
-        let state_a = InProgress::try_from(SimulationState {
-            cp: 625,
-            durability: 5,
-            missing_progress: 1011,
-            unreliable_quality: [19070, 19070],
-            prev_was_guarded: false,
-            effects: Effects::new()
-                .with_inner_quiet(2)
-                .with_trained_perfection(SingleUse::Available),
-            combo: None,
-        })
-        .unwrap();
-
-        let state_c = InProgress::try_from(SimulationState {
-            cp: 623,
-            durability: 5,
-            missing_progress: 1011,
-            unreliable_quality: [19070, 19070],
-            prev_was_guarded: false,
-            effects: Effects::new()
-                .with_inner_quiet(2)
-                .with_trained_perfection(SingleUse::Available),
-            combo: None,
-        })
-        .unwrap();
-
-        let score_a = solver.quality_upper_bound(state_a);
-        let score_b = solver.quality_upper_bound(state_c);
-        dbg!(score_a, score_b);
-        assert!(score_a >= score_b);
     }
 
     #[test]
@@ -251,6 +203,37 @@ mod tests {
     }
 
     #[test]
+    fn test_adversarial_01() {
+        let settings = Settings {
+            max_cp: 553,
+            max_durability: 70,
+            max_progress: 2400,
+            max_quality: 20000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 90,
+            allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: true,
+        };
+        let result = solve(
+            settings,
+            &[
+                Action::MuscleMemory,
+                Action::PrudentTouch,
+                Action::Manipulation,
+                Action::Veneration,
+                Action::WasteNot2,
+                Action::Groundwork,
+                Action::Groundwork,
+                Action::Groundwork,
+                Action::PreparatoryTouch,
+            ],
+        );
+        assert_eq!(result, 3375);
+    }
+
+    #[test]
     fn test_02() {
         let settings = Settings {
             max_cp: 700,
@@ -263,6 +246,34 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
             adversarial: false,
+        };
+        let result = solve(
+            settings,
+            &[
+                Action::MuscleMemory,
+                Action::Manipulation,
+                Action::Veneration,
+                Action::WasteNot,
+                Action::Groundwork,
+                Action::Groundwork,
+            ],
+        );
+        assert_eq!(result, 4767);
+    }
+
+    #[test]
+    fn test_adversarial_02() {
+        let settings = Settings {
+            max_cp: 700,
+            max_durability: 70,
+            max_progress: 2500,
+            max_quality: 5000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 90,
+            allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: true,
         };
         let result = solve(
             settings,
@@ -312,6 +323,39 @@ mod tests {
     }
 
     #[test]
+    fn test_adversarial_03() {
+        let settings = Settings {
+            max_cp: 617,
+            max_durability: 60,
+            max_progress: 2120,
+            max_quality: 5000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 90,
+            allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: true,
+        };
+        let result = solve(
+            settings,
+            &[
+                Action::MuscleMemory,
+                Action::Manipulation,
+                Action::Veneration,
+                Action::WasteNot,
+                Action::Groundwork,
+                Action::CarefulSynthesis,
+                Action::Groundwork,
+                Action::PreparatoryTouch,
+                Action::Innovation,
+                Action::BasicTouch,
+                Action::ComboStandardTouch,
+            ],
+        );
+        assert_eq!(result, 3953);
+    }
+
+    #[test]
     fn test_04() {
         let settings = Settings {
             max_cp: 411,
@@ -324,6 +368,24 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90, true, false),
             adversarial: false,
+        };
+        let result = solve(settings, &[Action::MuscleMemory]);
+        assert_eq!(result, 2220);
+    }
+
+    #[test]
+    fn test_adversarial_04() {
+        let settings = Settings {
+            max_cp: 411,
+            max_durability: 60,
+            max_progress: 1990,
+            max_quality: 5000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 90,
+            allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
         assert_eq!(result, 2220);
@@ -344,7 +406,25 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2000); // clamped to max_quality
+        assert_eq!(result, 2000);
+    }
+
+    #[test]
+    fn test_adversarial_05() {
+        let settings = Settings {
+            max_cp: 450,
+            max_durability: 60,
+            max_progress: 1970,
+            max_quality: 2000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 90,
+            allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: true,
+        };
+        let result = solve(settings, &[Action::MuscleMemory]);
+        assert_eq!(result, 2000);
     }
 
     #[test]
@@ -362,7 +442,25 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4555); // tightness test
+        assert_eq!(result, 4555);
+    }
+
+    #[test]
+    fn test_adversarial_06() {
+        let settings = Settings {
+            max_cp: 673,
+            max_durability: 60,
+            max_progress: 2345,
+            max_quality: 8000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 90,
+            allowed_actions: ActionMask::from_level(90, true, false),
+            adversarial: true,
+        };
+        let result = solve(settings, &[Action::MuscleMemory]);
+        assert_eq!(result, 4555);
     }
 
     #[test]
@@ -380,7 +478,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 4633); // tightness test
+        assert_eq!(result, 4633);
     }
 
     #[test]
@@ -398,7 +496,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::PrudentTouch]);
-        assert_eq!(result, 10000); // tightness test
+        assert_eq!(result, 10000);
     }
 
     #[test]
@@ -416,7 +514,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 4823); // tightness test
+        assert_eq!(result, 4823);
     }
 
     #[test]

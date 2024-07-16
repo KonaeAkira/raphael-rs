@@ -177,7 +177,6 @@ impl InProgress {
             0
         };
 
-        state.combo = action.to_combo();
         state.cp -= cp_cost;
         state.durability -= durability_cost;
 
@@ -237,8 +236,12 @@ impl InProgress {
                 );
             }
             state.prev_was_guarded = state.effects.guard();
-            state.effects.set_guard(quality_increase != 0);
+            state.effects.set_guard(
+                quality_increase != 0 || state.combo == Some(ComboAction::SynthesisBegin),
+            );
         }
+
+        state.combo = action.to_combo();
 
         // remove manipulation before it is triggered
         if action == Action::Manipulation {
