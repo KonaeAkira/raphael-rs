@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -7,7 +5,7 @@ pub struct SimulationState {
     pub cp: i16,
     pub durability: i8,
     pub missing_progress: u16,
-    pub unreliable_quality: [u16; 2], 
+    pub unreliable_quality: [u16; 2],
     // This value represents the minimum additional quality achievable by the simulator
     // 1 while allowing the previous un-Guarded action to be Poor
     // 0 while forcing the previous un-Guarded action to be Normal
@@ -18,7 +16,8 @@ pub struct SimulationState {
 
 impl SimulationState {
     pub fn new(settings: &Settings) -> Self {
-        let initial_missing = settings.max_quality
+        let initial_missing = settings
+            .max_quality
             .saturating_sub(settings.initial_quality);
         Self {
             cp: settings.max_cp,
@@ -68,9 +67,9 @@ impl SimulationState {
         }
         (state, errors)
     }
-    
+
     pub fn get_missing_quality(&self) -> u16 {
-        max(self.unreliable_quality[0], self.unreliable_quality[1])
+        std::cmp::max(self.unreliable_quality[0], self.unreliable_quality[1])
     }
 }
 
@@ -172,11 +171,12 @@ impl InProgress {
             action.quality_increase(settings, &state.effects, condition)
         };
         let quality_delta = if settings.adversarial && !state.effects.guard() {
-            action.quality_increase(settings, &state.effects, condition) - action.quality_increase(settings, &state.effects, Condition::Poor)
+            action.quality_increase(settings, &state.effects, condition)
+                - action.quality_increase(settings, &state.effects, Condition::Poor)
         } else {
             0
         };
-        
+
         state.combo = action.to_combo();
         state.cp -= cp_cost;
         state.durability -= durability_cost;
@@ -195,8 +195,10 @@ impl InProgress {
 
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            state.unreliable_quality[0] = state.unreliable_quality[0].saturating_sub(quality_increase);
-            state.unreliable_quality[1] = state.unreliable_quality[1].saturating_sub(quality_increase);
+            state.unreliable_quality[0] =
+                state.unreliable_quality[0].saturating_sub(quality_increase);
+            state.unreliable_quality[1] =
+                state.unreliable_quality[1].saturating_sub(quality_increase);
             state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
                 let inner_quiet_bonus = match action {
@@ -218,15 +220,21 @@ impl InProgress {
         }
         // calculate guard effects
         if settings.adversarial {
-            if (!state.effects.guard() && quality_increase == 0) || 
-                (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded) {
+            if (!state.effects.guard() && quality_increase == 0)
+                || (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded)
+            {
                 // commit the current value
                 state.unreliable_quality = [state.get_missing_quality(); 2];
             } else if quality_increase != 0 {
                 // append new info
                 let saved = state.unreliable_quality[0];
-                state.unreliable_quality[0] = max(state.unreliable_quality[1], state.unreliable_quality[0]).saturating_sub(quality_delta);
-                state.unreliable_quality[1] = max(saved, state.unreliable_quality[1].saturating_sub(quality_delta));
+                state.unreliable_quality[0] =
+                    std::cmp::max(state.unreliable_quality[1], state.unreliable_quality[0])
+                        .saturating_sub(quality_delta);
+                state.unreliable_quality[1] = std::cmp::max(
+                    saved,
+                    state.unreliable_quality[1].saturating_sub(quality_delta),
+                );
             }
             state.prev_was_guarded = state.effects.guard();
             state.effects.set_guard(quality_increase != 0);
@@ -237,7 +245,7 @@ impl InProgress {
             state.effects.set_manipulation(0);
         }
 
-        if state.effects.manipulation() > 0 { 
+        if state.effects.manipulation() > 0 {
             state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
         state.effects.tick_down();

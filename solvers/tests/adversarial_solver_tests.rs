@@ -19,7 +19,7 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
 }
 
 fn get_duration(actions: &[Action]) -> i16 {
-  actions.into_iter().map(|action| action.time_cost()).sum()
+    actions.into_iter().map(|action| action.time_cost()).sum()
 }
 
 fn is_progress_backloaded(actions: &[Action]) -> bool {
@@ -520,30 +520,6 @@ fn test_max_quality_indagator_3858_4057() {
     assert_eq!(get_quality(&settings, &actions), 11377);
     assert_eq!(get_duration(&actions), 73);
     assert_eq!(actions.len(), 27);
-    // 62 seconds is possible, but takes very long to solve using the main solver:
-    // /ac "Reflect" <wait.3>
-    // /ac "Manipulation" <wait.2>
-    // /ac "Innovation" <wait.2>
-    // /ac "Waste Not II" <wait.2>
-    // /ac "Preparatory Touch" <wait.3>
-    // /ac "Preparatory Touch" <wait.3>
-    // /ac "Preparatory Touch" <wait.3>
-    // /ac "Veneration" <wait.2>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Innovation" <wait.2>
-    // /ac "Delicate Synthesis" <wait.3>
-    // /ac "Prudent Touch" <wait.3>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Innovation" <wait.2>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Great Strides" <wait.2>
-    // /ac "Byregot's Blessing" <wait.3>
-    // /ac "Careful Synthesis" <wait.3>
 }
 
 #[test]
@@ -657,7 +633,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     assert_eq!(actions.len(), 14);
 }
 
-// This test takes a long time to run right now. 
+// This test takes a long time to run right now.
 // This test does work, but it takes several hours to run.
 #[ignore]
 #[test]
@@ -674,7 +650,6 @@ fn test_rare_tacos_2() {
         ..SETTINGS
     };
     let actions = solve(&settings, false).unwrap();
-    dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 2046);
     assert_eq!(get_duration(&actions), 54);
     assert_eq!(actions.len(), 19);
@@ -682,8 +657,8 @@ fn test_rare_tacos_2() {
 
 #[test]
 fn test_stuffed_peppers() {
-  // lv99 Rarefied Stuffed Peppers
-  // 4785 CMS, 4758 Ctrl, 646 CP
+    // lv99 Rarefied Stuffed Peppers
+    // 4785 CMS, 4758 Ctrl, 646 CP
     let settings = Settings {
         max_cp: 646,
         max_durability: 80,
@@ -694,7 +669,6 @@ fn test_stuffed_peppers() {
         ..SETTINGS
     };
     let actions = solve(&settings, false).unwrap();
-    dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 11400);
     assert_eq!(get_duration(&actions), 47);
     assert_eq!(actions.len(), 17);
