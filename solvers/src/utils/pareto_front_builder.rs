@@ -300,6 +300,7 @@ mod tests {
         initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::none(),
+        adversarial: false,
     };
 
     const SAMPLE_FRONT_1: &[ParetoValue<u16, u16>] = &[

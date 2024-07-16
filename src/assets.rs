@@ -31,10 +31,6 @@ pub fn get_action_icons() -> HashMap<Action, image::RgbImage> {
         include_bytes!("../assets/actions/Observe.png"),
     );
     load_icon(
-        Action::TricksOfTheTrade,
-        include_bytes!("../assets/actions/Tricks of the Trade.png"),
-    );
-    load_icon(
         Action::WasteNot,
         include_bytes!("../assets/actions/Waste Not.png"),
     );

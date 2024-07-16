@@ -48,7 +48,7 @@ impl<'a> Widget for Simulator<'a> {
         let clamped_progress = self.settings.max_progress - game_state.missing_progress;
 
         let max_quality = self.settings.max_quality;
-        let quality = u16::MAX - game_state.missing_quality;
+        let quality = u16::MAX - game_state.get_missing_quality();
         let clamped_quality = std::cmp::min(max_quality, quality);
 
         let prog_qual_dbg_text = format!(
@@ -115,7 +115,11 @@ impl<'a> Widget for Simulator<'a> {
                         );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.add(HelpText::new(
-                                "Calculated assuming Normal conditon on every step",
+                                if self.settings.adversarial {
+                                    "Calculated assuming worst possible sequence of conditions"
+                                } else {
+                                    "Calculated assuming Normal conditon on every step"
+                                }
                             ));
                             if self.item.is_collectable {
                                 let t1 = QualityTarget::CollectableT1

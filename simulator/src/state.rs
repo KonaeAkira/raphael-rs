@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -5,20 +7,25 @@ pub struct SimulationState {
     pub cp: i16,
     pub durability: i8,
     pub missing_progress: u16,
-    pub missing_quality: u16,
+    pub unreliable_quality: [u16; 2], 
+    // This value represents the minimum additional quality achievable by the simulator
+    // 1 while allowing the previous un-Guarded action to be Poor
+    // 0 while forcing the previous un-Guarded action to be Normal
+    pub prev_was_guarded: bool,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
 }
 
 impl SimulationState {
     pub fn new(settings: &Settings) -> Self {
+        let initial_missing = settings.max_quality
+            .saturating_sub(settings.initial_quality);
         Self {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
-            missing_quality: settings
-                .max_quality
-                .saturating_sub(settings.initial_quality),
+            unreliable_quality: [initial_missing; 2],
+            prev_was_guarded: false,
             effects: Default::default(),
             combo: Some(ComboAction::SynthesisBegin),
         }
@@ -60,6 +67,10 @@ impl SimulationState {
             };
         }
         (state, errors)
+    }
+    
+    pub fn get_missing_quality(&self) -> u16 {
+        max(self.unreliable_quality[0], self.unreliable_quality[1])
     }
 }
 
@@ -117,7 +128,7 @@ impl InProgress {
             {
                 Err("Action cannot be used during Waste Not")
             }
-            Action::IntensiveSynthesis | Action::PreciseTouch | Action::TricksOfTheTrade
+            Action::IntensiveSynthesis | Action::PreciseTouch
                 if condition != Condition::Good && condition != Condition::Excellent =>
             {
                 Err("Requires condition to be Good or Excellent")
@@ -155,8 +166,17 @@ impl InProgress {
         let cp_cost = action.cp_cost(&state.effects, condition);
         let durability_cost = action.durability_cost(&state.effects, condition);
         let progress_increase = action.progress_increase(settings, &state.effects, condition);
-        let quality_increase = action.quality_increase(settings, &state.effects, condition);
-
+        let quality_increase = if settings.adversarial && !state.effects.guard() {
+            action.quality_increase(settings, &state.effects, Condition::Poor)
+        } else {
+            action.quality_increase(settings, &state.effects, condition)
+        };
+        let quality_delta = if settings.adversarial && !state.effects.guard() {
+            action.quality_increase(settings, &state.effects, condition) - action.quality_increase(settings, &state.effects, Condition::Poor)
+        } else {
+            0
+        };
+        
         state.combo = action.to_combo();
         state.cp -= cp_cost;
         state.durability -= durability_cost;
@@ -175,7 +195,8 @@ impl InProgress {
 
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            state.missing_quality = state.missing_quality.saturating_sub(quality_increase);
+            state.unreliable_quality[0] = state.unreliable_quality[0].saturating_sub(quality_increase);
+            state.unreliable_quality[1] = state.unreliable_quality[1].saturating_sub(quality_increase);
             state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
                 let inner_quiet_bonus = match action {
@@ -195,13 +216,28 @@ impl InProgress {
         if state.missing_progress == 0 || state.durability <= 0 {
             return Ok(state);
         }
+        // calculate guard effects
+        if settings.adversarial {
+            if (!state.effects.guard() && quality_increase == 0) || 
+                (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded) {
+                // commit the current value
+                state.unreliable_quality = [state.get_missing_quality(); 2];
+            } else if quality_increase != 0 {
+                // append new info
+                let saved = state.unreliable_quality[0];
+                state.unreliable_quality[0] = max(state.unreliable_quality[1], state.unreliable_quality[0]).saturating_sub(quality_delta);
+                state.unreliable_quality[1] = max(saved, state.unreliable_quality[1].saturating_sub(quality_delta));
+            }
+            state.prev_was_guarded = state.effects.guard();
+            state.effects.set_guard(quality_increase != 0);
+        }
 
         // remove manipulation before it is triggered
         if action == Action::Manipulation {
             state.effects.set_manipulation(0);
         }
 
-        if state.effects.manipulation() > 0 {
+        if state.effects.manipulation() > 0 { 
             state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
         state.effects.tick_down();
@@ -220,7 +256,6 @@ impl InProgress {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 30)
             }
             Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
-            Action::TricksOfTheTrade => state.cp = std::cmp::min(settings.max_cp, state.cp + 20),
             Action::ImmaculateMend => state.durability = settings.max_durability,
             Action::TrainedPerfection => state.effects.set_trained_perfection(SingleUse::Active),
             _ => (),
