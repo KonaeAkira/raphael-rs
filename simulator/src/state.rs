@@ -214,9 +214,6 @@ impl InProgress {
             }
         }
 
-        if state.missing_progress == 0 || state.durability <= 0 {
-            return Ok(state);
-        }
         // calculate guard effects
         if settings.adversarial {
             if (!state.effects.guard() && quality_increase == 0)
@@ -239,6 +236,10 @@ impl InProgress {
             state.effects.set_guard(
                 quality_increase != 0 || state.combo == Some(ComboAction::SynthesisBegin),
             );
+        }
+
+        if state.missing_progress == 0 || state.durability <= 0 {
+            return Ok(state);
         }
 
         state.combo = action.to_combo();
