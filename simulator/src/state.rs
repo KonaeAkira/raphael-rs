@@ -9,7 +9,6 @@ pub struct SimulationState {
     // This value represents the minimum additional quality achievable by the simulator
     // 1 while allowing the previous un-Guarded action to be Poor
     // 0 while forcing the previous un-Guarded action to be Normal
-    pub prev_was_guarded: bool,
     pub effects: Effects,
     pub combo: Option<ComboAction>,
 }
@@ -24,8 +23,7 @@ impl SimulationState {
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
             unreliable_quality: [initial_missing; 2],
-            prev_was_guarded: false,
-            effects: Default::default(),
+            effects: Effects::default().with_guard(settings.adversarial),
             combo: Some(ComboAction::SynthesisBegin),
         }
     }
@@ -217,7 +215,7 @@ impl InProgress {
         // calculate guard effects
         if settings.adversarial {
             if (!state.effects.guard() && quality_increase == 0)
-                || (state.effects.guard() && quality_increase != 0 && state.prev_was_guarded)
+                || (state.effects.guard() && quality_increase != 0)
             {
                 // commit the current value
                 state.unreliable_quality = [state.get_missing_quality(); 2];
@@ -232,7 +230,6 @@ impl InProgress {
                     state.unreliable_quality[1].saturating_sub(quality_delta),
                 );
             }
-            state.prev_was_guarded = state.effects.guard();
             state.effects.set_guard(
                 quality_increase != 0 || state.combo == Some(ComboAction::SynthesisBegin),
             );
