@@ -160,7 +160,8 @@ impl UpperBoundSolver {
 
 #[cfg(test)]
 mod tests {
-    use simulator::SimulationState;
+    use rand::Rng;
+    use simulator::{Effects, SimulationState};
 
     use super::*;
 
@@ -569,5 +570,95 @@ mod tests {
         };
         let result = solve(settings, &[]);
         assert_eq!(result, 24000);
+    }
+
+    fn random_effects(adversarial: bool) -> Effects {
+        Effects::default()
+            .with_inner_quiet(rand::thread_rng().gen_range(0..=10))
+            .with_great_strides(rand::thread_rng().gen_range(0..=3))
+            .with_innovation(rand::thread_rng().gen_range(0..=4))
+            .with_veneration(rand::thread_rng().gen_range(0..=4))
+            .with_waste_not(rand::thread_rng().gen_range(0..=8))
+            .with_manipulation(rand::thread_rng().gen_range(0..=8))
+            .with_guard(if adversarial { rand::random() } else { false })
+    }
+
+    fn random_state(settings: &Settings) -> InProgress {
+        SimulationState {
+            cp: rand::thread_rng().gen_range(0..=settings.max_cp),
+            durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
+            missing_progress: rand::thread_rng().gen_range(1..=settings.max_progress),
+            unreliable_quality: [settings.max_quality; 2],
+            prev_was_guarded: if settings.adversarial {
+                rand::random()
+            } else {
+                false
+            },
+            effects: random_effects(settings.adversarial),
+            combo: None, // TODO: random combo
+        }
+        .try_into()
+        .unwrap()
+    }
+
+    /// Test that the upper-bound solver is monotonic,
+    /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
+    fn monotonic_fuzz_check(settings: Settings) {
+        let mut solver = UpperBoundSolver::new(settings);
+        for _ in 0..10000 {
+            let state = random_state(&settings);
+            let state_upper_bound = solver.quality_upper_bound(state);
+            for action in settings.allowed_actions.actions_iter() {
+                let child_upper_bound = match state.use_action(action, Condition::Normal, &settings)
+                {
+                    Ok(child) => match InProgress::try_from(child) {
+                        Ok(child) => solver.quality_upper_bound(child),
+                        Err(_) if child.missing_progress == 0 => {
+                            settings.max_quality - child.get_missing_quality()
+                        }
+                        Err(_) => 0,
+                    },
+                    Err(_) => 0,
+                };
+                if state_upper_bound < child_upper_bound {
+                    dbg!(state, action, state_upper_bound, child_upper_bound);
+                    panic!("Parent's upper bound is less than child's upper bound");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_monotonic_normal_sim() {
+        let settings = Settings {
+            max_cp: 360,
+            max_durability: 70,
+            max_progress: 1000,
+            max_quality: 20000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100, true, false),
+            adversarial: false,
+        };
+        monotonic_fuzz_check(settings);
+    }
+
+    #[test]
+    fn test_monotonic_adversarial_sim() {
+        let settings = Settings {
+            max_cp: 360,
+            max_durability: 70,
+            max_progress: 1000,
+            max_quality: 20000,
+            base_progress: 100,
+            base_quality: 100,
+            initial_quality: 0,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100, true, false),
+            adversarial: true,
+        };
+        monotonic_fuzz_check(settings);
     }
 }
