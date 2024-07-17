@@ -35,7 +35,7 @@ impl ReducedState {
                 great_strides: state.effects.great_strides(),
                 muscle_memory: state.effects.muscle_memory(),
                 trained_perfection: state.effects.trained_perfection(),
-            }
+            },
         }
     }
 }
@@ -47,14 +47,14 @@ impl std::convert::From<ReducedState> for InProgress {
             cp: state.cp,
             missing_progress: u16::MAX,
             unreliable_quality: [u16::MAX, u16::MAX],
-            prev_was_guarded: true,
             effects: Effects::new()
                 .with_inner_quiet(state.effects.inner_quiet)
                 .with_innovation(state.effects.innovation)
                 .with_veneration(state.effects.veneration)
                 .with_great_strides(state.effects.great_strides)
                 .with_muscle_memory(state.effects.muscle_memory)
-                .with_trained_perfection(state.effects.trained_perfection),
+                .with_trained_perfection(state.effects.trained_perfection)
+                .with_guard(true),
             combo: state.combo,
         }
         .try_into()

@@ -589,11 +589,6 @@ mod tests {
             durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
             missing_progress: rand::thread_rng().gen_range(1..=settings.max_progress),
             unreliable_quality: [settings.max_quality; 2],
-            prev_was_guarded: if settings.adversarial {
-                rand::random()
-            } else {
-                false
-            },
             effects: random_effects(settings.adversarial),
             combo: None, // TODO: random combo
         }
