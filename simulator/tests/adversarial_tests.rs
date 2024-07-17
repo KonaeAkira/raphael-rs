@@ -220,8 +220,9 @@ fn test_long_sequence() {
 }
 
 #[test]
+/// Test random all possible sequences of Observe and PrudentTouch of a certain length
 fn test_exhaustive() {
-    const STEPS: usize = 8;
+    const STEPS: usize = 10;
     for mask in 0..(1 << STEPS) {
         let actions: Vec<Action> = (0..STEPS)
             .map(|index| match (mask >> index) & 1 {
@@ -238,6 +239,35 @@ fn test_exhaustive() {
             );
         } else {
             panic!("Unexpected err: {}", state.err().unwrap());
+        }
+    }
+}
+
+#[test]
+/// Test random quality action sequences
+fn test_fuzz() {
+    const STEPS: usize = 10;
+    const ACTIONS: [Action; 8] = [
+        Action::BasicTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
+        Action::ByregotsBlessing,
+        Action::Observe,
+        Action::Innovation,
+        Action::GreatStrides,
+        Action::ImmaculateMend,
+    ];
+    for _ in 0..100000 {
+        let actions: Vec<Action> =
+            std::iter::repeat_with(|| ACTIONS[rand::random::<usize>() % ACTIONS.len()])
+                .take(STEPS)
+                .collect();
+        if let Ok(state) = SimulationState::from_macro(&SETTINGS, &actions) {
+            dbg!(&actions);
+            assert_eq!(
+                SETTINGS.max_quality - state.get_missing_quality(),
+                guaranteed_quality(SETTINGS, &actions).unwrap()
+            );
         }
     }
 }
