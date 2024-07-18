@@ -4,10 +4,4 @@ pub enum Condition {
     Good,
     Excellent,
     Poor,
-    Pliant,
-    Centered,
-    Sturdy,
-    Malleable,
-    Primed,
-    GoodOmen,
 }
