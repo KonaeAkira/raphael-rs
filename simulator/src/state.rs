@@ -23,7 +23,7 @@ impl SimulationState {
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
             unreliable_quality: [initial_missing; 2],
-            effects: Effects::default().with_guard(settings.adversarial),
+            effects: Effects::default().with_guard(if settings.adversarial { 2 } else { 0 }),
             combo: Some(ComboAction::SynthesisBegin),
         }
     }
@@ -163,12 +163,12 @@ impl InProgress {
         let cp_cost = action.cp_cost(&state.effects, condition);
         let durability_cost = action.durability_cost(&state.effects, condition);
         let progress_increase = action.progress_increase(settings, &state.effects, condition);
-        let quality_increase = if settings.adversarial && !state.effects.guard() {
+        let quality_increase = if settings.adversarial && state.effects.guard() == 0 {
             action.quality_increase(settings, &state.effects, Condition::Poor)
         } else {
             action.quality_increase(settings, &state.effects, condition)
         };
-        let quality_delta = if settings.adversarial && !state.effects.guard() {
+        let quality_delta = if settings.adversarial && state.effects.guard() == 0 {
             action.quality_increase(settings, &state.effects, condition)
                 - action.quality_increase(settings, &state.effects, Condition::Poor)
         } else {
@@ -214,8 +214,8 @@ impl InProgress {
 
         // calculate guard effects
         if settings.adversarial {
-            if (!state.effects.guard() && quality_increase == 0)
-                || (state.effects.guard() && quality_increase != 0)
+            if (state.effects.guard() == 0 && quality_increase == 0)
+                || (state.effects.guard() != 0 && quality_increase != 0)
             {
                 // commit the current value
                 state.unreliable_quality = [state.get_missing_quality(); 2];
@@ -230,9 +230,6 @@ impl InProgress {
                     state.unreliable_quality[1].saturating_sub(quality_delta),
                 );
             }
-            state.effects.set_guard(
-                quality_increase != 0 || state.combo == Some(ComboAction::SynthesisBegin),
-            );
         }
 
         if state.missing_progress == 0 || state.durability <= 0 {
@@ -249,7 +246,12 @@ impl InProgress {
         if state.effects.manipulation() > 0 {
             state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
         }
+
         state.effects.tick_down();
+
+        if quality_increase != 0 {
+            state.effects.set_guard(1);
+        }
 
         // trigger special action effects
         let duration_bonus = if condition == Condition::Pliant { 2 } else { 0 };

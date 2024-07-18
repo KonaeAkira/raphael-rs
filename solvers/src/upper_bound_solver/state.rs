@@ -54,7 +54,7 @@ impl std::convert::From<ReducedState> for InProgress {
                 .with_great_strides(state.effects.great_strides)
                 .with_muscle_memory(state.effects.muscle_memory)
                 .with_trained_perfection(state.effects.trained_perfection)
-                .with_guard(true),
+                .with_guard(1),
             combo: state.combo,
         }
         .try_into()
