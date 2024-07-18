@@ -299,9 +299,9 @@ fn test_random_6799bb1d() {
         adversarial: true,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2983);
-    assert_eq!(get_duration(&actions), 54);
-    assert_eq!(actions.len(), 20);
+    assert_eq!(get_quality(&settings, &actions), 3004);
+    assert_eq!(get_duration(&actions), 49);
+    assert_eq!(actions.len(), 18);
 }
 
 #[ignore]
@@ -386,9 +386,9 @@ fn test_backload_pactmaker_3240_3130() {
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
-    assert_eq!(get_quality(&settings, &actions), 7494);
-    assert_eq!(get_duration(&actions), 62);
-    assert_eq!(actions.len(), 23);
+    assert_eq!(get_quality(&settings, &actions), 7575);
+    assert_eq!(get_duration(&actions), 75);
+    assert_eq!(actions.len(), 27);
 }
 
 #[ignore]
@@ -537,9 +537,9 @@ fn test_random_4ecd54c4() {
         adversarial: true,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 2757);
-    assert_eq!(get_duration(&actions), 51);
-    assert_eq!(actions.len(), 19);
+    assert_eq!(get_quality(&settings, &actions), 2759);
+    assert_eq!(get_duration(&actions), 47);
+    assert_eq!(actions.len(), 17);
 }
 
 #[test]

@@ -20,7 +20,7 @@ pub struct MacroViewConfig {
 impl Default for MacroViewConfig {
     fn default() -> Self {
         Self {
-            split_macro: false,
+            split_macro: true,
             include_delay: true,
             notification_enabled: false,
             notification_sound: 1,
