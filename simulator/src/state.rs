@@ -110,7 +110,7 @@ impl InProgress {
         if !settings.allowed_actions.has(action) {
             return Err("Action not enabled");
         }
-        if action.cp_cost(&self.state.effects, condition) > self.state.cp {
+        if action.cp_cost() > self.state.cp {
             return Err("Not enough CP");
         }
         if !action.combo_fulfilled(self.state.combo) {
@@ -131,8 +131,7 @@ impl InProgress {
                 Err("Requires condition to be Good or Excellent")
             }
             Action::Groundwork
-                if self.state.durability
-                    < action.durability_cost(&self.state.effects, condition) =>
+                if self.state.durability < action.durability_cost(&self.state.effects) =>
             {
                 Err("Not enough durability")
             }
@@ -160,9 +159,9 @@ impl InProgress {
         self.can_use_action(action, condition, settings)?;
         let mut state = self.state;
 
-        let cp_cost = action.cp_cost(&state.effects, condition);
-        let durability_cost = action.durability_cost(&state.effects, condition);
-        let progress_increase = action.progress_increase(settings, &state.effects, condition);
+        let cp_cost = action.cp_cost();
+        let durability_cost = action.durability_cost(&state.effects);
+        let progress_increase = action.progress_increase(settings, &state.effects);
         let quality_increase = if settings.adversarial && state.effects.guard() == 0 {
             action.quality_increase(settings, &state.effects, Condition::Poor)
         } else {
@@ -254,15 +253,14 @@ impl InProgress {
         }
 
         // trigger special action effects
-        let duration_bonus = if condition == Condition::Pliant { 2 } else { 0 };
         match action {
-            Action::MuscleMemory => state.effects.set_muscle_memory(5 + duration_bonus),
-            Action::GreatStrides => state.effects.set_great_strides(3 + duration_bonus),
-            Action::Veneration => state.effects.set_veneration(4 + duration_bonus),
-            Action::Innovation => state.effects.set_innovation(4 + duration_bonus),
-            Action::WasteNot => state.effects.set_waste_not(4 + duration_bonus),
-            Action::WasteNot2 => state.effects.set_waste_not(8 + duration_bonus),
-            Action::Manipulation => state.effects.set_manipulation(8 + duration_bonus),
+            Action::MuscleMemory => state.effects.set_muscle_memory(5),
+            Action::GreatStrides => state.effects.set_great_strides(3),
+            Action::Veneration => state.effects.set_veneration(4),
+            Action::Innovation => state.effects.set_innovation(4),
+            Action::WasteNot => state.effects.set_waste_not(4),
+            Action::WasteNot2 => state.effects.set_waste_not(8),
+            Action::Manipulation => state.effects.set_manipulation(8),
             Action::MasterMend => {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 30)
             }

@@ -114,7 +114,7 @@ impl Action {
         }
     }
 
-    pub const fn base_cp_cost(self) -> i16 {
+    pub const fn cp_cost(self) -> i16 {
         match self {
             Action::BasicSynthesis => 0,
             Action::BasicTouch => 18,
@@ -146,13 +146,6 @@ impl Action {
             Action::ImmaculateMend => 112,
             Action::TrainedPerfection => 0,
             Action::TrainedEye => 250,
-        }
-    }
-
-    pub const fn cp_cost(self, _: &Effects, condition: Condition) -> i16 {
-        match condition {
-            Condition::Pliant => (self.base_cp_cost() + 1) / 2,
-            _ => self.base_cp_cost(),
         }
     }
 
@@ -191,19 +184,14 @@ impl Action {
         }
     }
 
-    pub const fn durability_cost(self, effects: &Effects, condition: Condition) -> i8 {
+    pub const fn durability_cost(self, effects: &Effects) -> i8 {
         if matches!(effects.trained_perfection(), SingleUse::Active) {
             return 0;
         }
-        let base_cost = match condition {
-            Condition::Sturdy => (self.base_durability_cost() + 1) / 2,
-            _ => self.base_durability_cost(),
-        };
-        let mut effect_bonus = 0;
-        if effects.waste_not() > 0 {
-            effect_bonus += base_cost / 2;
+        match effects.waste_not() {
+            0 => self.base_durability_cost(),
+            _ => (self.base_durability_cost() + 1) / 2,
         }
-        base_cost - effect_bonus
     }
 
     pub const fn progress_efficiency(self, job_level: u8) -> u64 {
@@ -243,17 +231,8 @@ impl Action {
         }
     }
 
-    pub const fn progress_increase(
-        self,
-        settings: &Settings,
-        effects: &Effects,
-        condition: Condition,
-    ) -> u16 {
+    pub const fn progress_increase(self, settings: &Settings, effects: &Effects) -> u16 {
         let efficiency_mod = self.progress_efficiency(settings.job_level);
-        let condition_mod = match condition {
-            Condition::Malleable => 150,
-            _ => 100,
-        };
         let mut effect_mod = 100;
         if effects.muscle_memory() > 0 {
             effect_mod += 100;
@@ -261,8 +240,7 @@ impl Action {
         if effects.veneration() > 0 {
             effect_mod += 50;
         }
-        (settings.base_progress as u64 * efficiency_mod * condition_mod * effect_mod / 1000000)
-            as u16
+        (settings.base_progress as u64 * efficiency_mod * effect_mod / 10000) as u16
     }
 
     pub const fn quality_efficiency(self, inner_quiet: u8) -> u64 {

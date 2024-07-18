@@ -24,24 +24,23 @@ impl UpperBoundSolver {
     pub fn new(settings: Settings) -> Self {
         dbg!(std::mem::size_of::<ReducedState>());
         dbg!(std::mem::align_of::<ReducedState>());
-        let mut durability_cost = Action::MasterMend.base_cp_cost() / 6;
+        let mut durability_cost = Action::MasterMend.cp_cost() / 6;
         if settings.allowed_actions.has(Action::Manipulation) {
-            durability_cost =
-                std::cmp::min(durability_cost, Action::Manipulation.base_cp_cost() / 8);
+            durability_cost = std::cmp::min(durability_cost, Action::Manipulation.cp_cost() / 8);
         }
         if settings.allowed_actions.has(Action::ImmaculateMend) {
             durability_cost = std::cmp::min(
                 durability_cost,
-                Action::ImmaculateMend.base_cp_cost() / (settings.max_durability as i16 / 5 - 1),
+                Action::ImmaculateMend.cp_cost() / (settings.max_durability as i16 / 5 - 1),
             );
         }
         UpperBoundSolver {
             settings,
             base_durability_cost: durability_cost,
             waste_not_cost: if settings.allowed_actions.has(Action::WasteNot2) {
-                Action::WasteNot2.base_cp_cost() / 8
+                Action::WasteNot2.cp_cost() / 8
             } else {
-                Action::WasteNot.base_cp_cost() / 4
+                Action::WasteNot.cp_cost() / 4
             },
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
@@ -63,7 +62,7 @@ impl UpperBoundSolver {
         }
 
         // refund effects and durability
-        state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.base_cp_cost() / 8);
+        state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.cp_cost() / 8);
         state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
         state.durability = i8::MAX;
