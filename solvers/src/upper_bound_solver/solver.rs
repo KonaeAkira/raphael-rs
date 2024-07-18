@@ -580,7 +580,11 @@ mod tests {
             .with_veneration(rand::thread_rng().gen_range(0..=4))
             .with_waste_not(rand::thread_rng().gen_range(0..=8))
             .with_manipulation(rand::thread_rng().gen_range(0..=8))
-            .with_guard(if adversarial { rand::random() } else { false })
+            .with_guard(if adversarial {
+                rand::thread_rng().gen_range(0..=1)
+            } else {
+                0
+            })
     }
 
     fn random_state(settings: &Settings) -> InProgress {

@@ -39,10 +39,8 @@ pub struct Effects {
     pub manipulation: u8,
     #[bits(2, default=SingleUse::Available)]
     pub trained_perfection: SingleUse,
-    #[bits(1)]
-    pub guard: bool,
-    #[bits(1)]
-    pub _padding: u8,
+    #[bits(2)]
+    pub guard: u8,
 }
 
 impl Effects {
@@ -53,5 +51,6 @@ impl Effects {
         self.set_great_strides(self.great_strides().saturating_sub(1));
         self.set_muscle_memory(self.muscle_memory().saturating_sub(1));
         self.set_manipulation(self.manipulation().saturating_sub(1));
+        self.set_guard(self.guard().saturating_sub(1));
     }
 }
