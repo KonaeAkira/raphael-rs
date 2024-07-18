@@ -6,6 +6,7 @@ use simulator::{ComboAction, Effects, SimulationState};
 struct Value {
     cp: i16,
     missing_quality: [u16; 2],
+    inner_quiet: u8,
 }
 
 impl Value {
@@ -13,6 +14,7 @@ impl Value {
         Self {
             cp: state.cp,
             missing_quality: state.unreliable_quality,
+            inner_quiet: state.effects.inner_quiet(),
         }
     }
 }
@@ -22,6 +24,7 @@ impl Dominate for Value {
         self.cp >= other.cp
             && self.missing_quality[0] <= other.missing_quality[0]
             && self.missing_quality[1] <= other.missing_quality[1]
+            && self.inner_quiet >= other.inner_quiet
     }
 }
 
@@ -44,7 +47,7 @@ impl Key {
                     .with_innovation(0)
                     .with_great_strides(0)
             }
-            false => state.effects,
+            false => state.effects.with_inner_quiet(0),
         };
         Self {
             durability: state.durability,
