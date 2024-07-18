@@ -502,7 +502,7 @@ impl MacroSolverApp {
                     &mut self.solver_config.backload_progress,
                     "Backload progress (Quick solve)",
                 );
-                ui.add(HelpText::new("Forces any action that increases Progress to only be used at the end of the rotation."));
+                ui.add(HelpText::new("Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊞ Shorter solve-time."));
             });
             if self.solver_config.backload_progress {
                 ui.label(
@@ -513,12 +513,17 @@ impl MacroSolverApp {
             }
             ui.horizontal(|ui| {
                 ui.checkbox(
-                    &mut self.solver_config.adversarial, 
+                    &mut self.solver_config.adversarial,
                     "Ensure 100% reliability",
                 );
-                ui.add(HelpText::new("The simulator will intentionally choose conditions that decrease the quality as much as possible."));  
+                ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊟ Much longer solve-time."));
             });
             if self.solver_config.adversarial {
+                ui.label(
+                    egui::RichText::new("⚠ Guaranteeing reliability greatly increases memory-usage and solve-time.")
+                        .small()
+                        .color(ui.visuals().warn_fg_color),
+                );
                 ui.label(
                     egui::RichText::new("⚠ Guaranteeing reliability may lead to longer macros and decrease achievable quality.")
                         .small()

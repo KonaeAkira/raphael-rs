@@ -5,16 +5,14 @@ use simulator::{ComboAction, Effects, SimulationState};
 #[derive(Clone, Copy)]
 struct Value {
     cp: i16,
-    missing_progress: u16,
-    missing_quality: u16,
+    missing_quality: [u16; 2],
 }
 
 impl Value {
     pub fn new(state: SimulationState) -> Self {
         Self {
             cp: state.cp,
-            missing_progress: state.missing_progress,
-            missing_quality: state.get_missing_quality(),
+            missing_quality: state.unreliable_quality,
         }
     }
 }
@@ -22,14 +20,15 @@ impl Value {
 impl Dominate for Value {
     fn dominate(&self, other: &Self) -> bool {
         self.cp >= other.cp
-            && self.missing_progress <= other.missing_progress
-            && self.missing_quality <= other.missing_quality
+            && self.missing_quality[0] <= other.missing_quality[0]
+            && self.missing_quality[1] <= other.missing_quality[1]
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Key {
     durability: i8,
+    missing_progress: u16,
     effects: Effects,
     combo: Option<ComboAction>,
 }
@@ -49,6 +48,7 @@ impl Key {
         };
         Self {
             durability: state.durability,
+            missing_progress: state.missing_progress,
             effects,
             combo: state.combo,
         }

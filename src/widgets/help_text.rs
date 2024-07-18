@@ -1,14 +1,14 @@
-pub struct HelpText<'a> {
-    text: &'a str,
+pub struct HelpText {
+    text: egui::WidgetText,
 }
 
-impl<'a> HelpText<'a> {
-    pub fn new(text: &'a str) -> Self {
-        Self { text }
+impl HelpText {
+    pub fn new(text: impl Into<egui::WidgetText>) -> Self {
+        Self { text: text.into() }
     }
 }
 
-impl<'a> egui::Widget for HelpText<'a> {
+impl egui::Widget for HelpText {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.add(egui::Label::new(egui::RichText::new("( ? )")).sense(egui::Sense::hover()))
             .on_hover_cursor(egui::CursorIcon::Help)
