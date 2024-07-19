@@ -9,8 +9,6 @@ use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::utils::{Backtracking, NamedTimer};
 use crate::{FinishSolver, UpperBoundSolver};
 
-use std::time::Duration;
-use web_time::Instant;
 use std::vec::Vec;
 
 const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
@@ -33,7 +31,6 @@ pub struct MacroSolver<'a> {
     finish_solver: FinishSolver,
     bound_solver: UpperBoundSolver,
     progress_callback: Box<ProgressCallback<'a>>,
-    last_update: (Instant, u32),
 }
 
 impl<'a> MacroSolver<'a> {
@@ -46,7 +43,6 @@ impl<'a> MacroSolver<'a> {
             finish_solver: FinishSolver::new(settings),
             bound_solver: UpperBoundSolver::new(settings),
             progress_callback: Box::new(callback),
-            last_update: (Instant::now(), Backtracking::<Action>::SENTINEL),
         }
     }
 
@@ -106,19 +102,6 @@ impl<'a> MacroSolver<'a> {
             if solution.is_some() && score <= solution.unwrap().0 {
                 break;
             }
-            let t = Instant::now();
-            if t - self.last_update.0 > Duration::from_millis(20) {
-                self.last_update.0 = t;
-                let index = match solution {
-                    Some((_, ind)) => ind,
-                    None => node.backtrack_index,
-                };
-                if index != self.last_update.1 {
-                    self.last_update.1 = index;
-                    let actions: Vec<Action> = backtracking.get(index).collect();
-                    (self.progress_callback)(&actions);
-                }
-            }
             let search_actions = match backload_progress
                 && node.state.raw_state().missing_progress != self.settings.max_progress
             {
@@ -172,6 +155,8 @@ impl<'a> MacroSolver<'a> {
                         if solution.is_none() || solution.unwrap().0 < final_score {
                             let backtrack_index = backtracking.push(action, node.backtrack_index);
                             solution = Some((final_score, backtrack_index));
+                            let actions: Vec<Action> = backtracking.get(backtrack_index).collect();
+                            (self.progress_callback)(&actions);
                         }
                     }
                 }
