@@ -34,15 +34,14 @@ pub struct MacroSolver<'a> {
 }
 
 impl<'a> MacroSolver<'a> {
-    pub fn new<F>(settings: Settings, callback: F) -> MacroSolver<'a> 
-    where F: Fn(&[Action]) + 'a {
+    pub fn new(settings: Settings, callback: Box<ProgressCallback<'a>>) -> MacroSolver<'a> {
         dbg!(std::mem::size_of::<SearchNode>());
         dbg!(std::mem::align_of::<SearchNode>());
         MacroSolver {
             settings,
             finish_solver: FinishSolver::new(settings),
             bound_solver: UpperBoundSolver::new(settings),
-            progress_callback: Box::new(callback),
+            progress_callback: callback,
         }
     }
 
