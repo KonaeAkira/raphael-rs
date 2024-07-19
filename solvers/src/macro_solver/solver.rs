@@ -25,20 +25,23 @@ struct SearchNode {
     backtrack_index: u32,
 }
 
-pub struct MacroSolver {
+type ProgressCallback<'a> = dyn Fn(&[Action]) + 'a;
+pub struct MacroSolver<'a> {
     settings: Settings,
     finish_solver: FinishSolver,
     bound_solver: UpperBoundSolver,
+    progress_callback: Box<ProgressCallback<'a>>,
 }
 
-impl MacroSolver {
-    pub fn new(settings: Settings) -> MacroSolver {
+impl<'a> MacroSolver<'a> {
+    pub fn new(settings: Settings, callback: Box<ProgressCallback<'a>>) -> MacroSolver<'a> {
         dbg!(std::mem::size_of::<SearchNode>());
         dbg!(std::mem::align_of::<SearchNode>());
         MacroSolver {
             settings,
             finish_solver: FinishSolver::new(settings),
             bound_solver: UpperBoundSolver::new(settings),
+            progress_callback: callback,
         }
     }
 
@@ -151,6 +154,8 @@ impl MacroSolver {
                         if solution.is_none() || solution.unwrap().0 < final_score {
                             let backtrack_index = backtracking.push(action, node.backtrack_index);
                             solution = Some((final_score, backtrack_index));
+                            let actions: Vec<Action> = backtracking.get(backtrack_index).collect();
+                            (self.progress_callback)(&actions);
                         }
                     }
                 }

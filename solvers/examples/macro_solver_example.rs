@@ -19,6 +19,6 @@ fn main() {
     };
 
     let state = InProgress::new(&settings);
-    let mut solver = MacroSolver::new(settings);
+    let mut solver = MacroSolver::new(settings, Box::new(|_| {}));
     solver.solve(state, false);
 }
