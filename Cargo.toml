@@ -21,6 +21,7 @@ gloo-worker = { version = "0.5.0", features = ["futures"] }
 serde = { version = "1.0.203", features = ["derive"] }
 log = "0.4"
 web-time = "1.1.0"
+console_error_panic_hook = "0.1.7"
 
 
 [[bin]]
