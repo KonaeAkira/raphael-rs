@@ -1,6 +1,7 @@
 use std::cell::Cell;
 use std::rc::Rc;
 use std::time::Duration;
+use std::panic;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
@@ -28,7 +29,7 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
     }
 }
 
-type MacroResult = Option<Vec<Action>>;
+type MacroResult = Option<(Vec<Action>, bool)>;
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 struct SolverConfig {
@@ -140,9 +141,10 @@ impl eframe::App for MacroSolverApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if let Some(update) = self.data_update.take() {
             log::debug!("Received update: {update:?}");
-            self.actions = update.unwrap_or(Vec::new());
-            self.solver_pending = false;
-            self.duration = Some(Instant::now() - self.start_time.unwrap());
+            (self.actions, self.solver_pending) = update.unwrap_or((Vec::new(), true));
+            if !self.solver_pending {
+                self.duration = Some(Instant::now() - self.start_time.unwrap());
+            }
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -609,6 +611,7 @@ impl gloo_worker::Worker for WebWorker {
     type Output = MacroResult;
 
     fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
+        panic::set_hook(Box::new(console_error_panic_hook::hook));
         Self {}
     }
 
@@ -622,10 +625,14 @@ impl gloo_worker::Worker for WebWorker {
     ) {
         let settings = msg.0;
         let backload_progress = msg.1;
+        let callback = |v: &[Action]| {
+            scope.respond(_id, Some((v.to_vec(), true)));
+        };
+
         scope.respond(
             _id,
-            solvers::MacroSolver::new(settings)
-                .solve(InProgress::new(&settings), backload_progress),
+            solvers::MacroSolver::new(settings, Box::new(callback))
+                .solve(InProgress::new(&settings), backload_progress).map(|v| (v, false)),
         );
     }
 }

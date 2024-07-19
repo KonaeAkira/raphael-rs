@@ -3,7 +3,7 @@ use solvers::MacroSolver;
 
 fn solve(settings: &Settings, backload_progress: bool) -> Option<Vec<Action>> {
     assert!(settings.adversarial); // Ensure that non-adversarial tests are in a different file.
-    MacroSolver::new(settings.clone()).solve(InProgress::new(settings), backload_progress)
+    MacroSolver::new(settings.clone(), |_| {}).solve(InProgress::new(settings), backload_progress)
 }
 
 fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
