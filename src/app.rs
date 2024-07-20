@@ -1,7 +1,7 @@
 use std::cell::Cell;
+use std::panic;
 use std::rc::Rc;
 use std::time::Duration;
-use std::panic;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
@@ -222,7 +222,6 @@ impl eframe::App for MacroSolverApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.set_enabled(!self.solver_pending);
                     ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
                         ui.set_max_width(885.0);
                         ui.add(Simulator::new(
@@ -240,47 +239,58 @@ impl eframe::App for MacroSolverApp {
                                 ui.push_id("RECIPE_SELECT", |ui| {
                                     ui.set_max_width(612.0);
                                     ui.set_max_height(212.0);
-                                    ui.add(RecipeSelect::new(
-                                        &mut self.crafter_config.selected_job,
-                                        &mut self.recipe_config,
-                                        &mut self.custom_recipe,
-                                        &mut self.recipe_search_text,
-                                        self.locale,
-                                    ));
+                                    ui.add_enabled(
+                                        !self.solver_pending,
+                                        RecipeSelect::new(
+                                            &mut self.crafter_config.selected_job,
+                                            &mut self.recipe_config,
+                                            &mut self.custom_recipe,
+                                            &mut self.recipe_search_text,
+                                            self.locale,
+                                        ),
+                                    );
                                     // ui.shrink_height_to_current();
                                 });
                                 ui.add_space(5.0);
                                 ui.push_id("FOOD_SELECT", |ui| {
                                     ui.set_max_width(612.0);
                                     ui.set_max_height(172.0);
-                                    ui.add(ConsumableSelect::new(
-                                        "Food",
-                                        self.crafter_config.crafter_stats
-                                            [self.crafter_config.selected_job as usize],
-                                        game_data::MEALS,
-                                        &mut self.food_search_text,
-                                        &mut self.selected_food,
-                                        self.locale,
-                                    ));
+                                    ui.add_enabled(
+                                        !self.solver_pending,
+                                        ConsumableSelect::new(
+                                            "Food",
+                                            self.crafter_config.crafter_stats
+                                                [self.crafter_config.selected_job as usize],
+                                            game_data::MEALS,
+                                            &mut self.food_search_text,
+                                            &mut self.selected_food,
+                                            self.locale,
+                                        ),
+                                    );
                                 });
                                 ui.add_space(5.0);
                                 ui.push_id("POTION_SELECT", |ui| {
                                     ui.set_max_width(612.0);
                                     ui.set_max_height(172.0);
-                                    ui.add(ConsumableSelect::new(
-                                        "Potion",
-                                        self.crafter_config.crafter_stats
-                                            [self.crafter_config.selected_job as usize],
-                                        game_data::POTIONS,
-                                        &mut self.potion_search_text,
-                                        &mut self.selected_potion,
-                                        self.locale,
-                                    ));
+                                    ui.add_enabled(
+                                        !self.solver_pending,
+                                        ConsumableSelect::new(
+                                            "Potion",
+                                            self.crafter_config.crafter_stats
+                                                [self.crafter_config.selected_job as usize],
+                                            game_data::POTIONS,
+                                            &mut self.potion_search_text,
+                                            &mut self.selected_potion,
+                                            self.locale,
+                                        ),
+                                    );
                                 });
                             });
-                            ui.group(|ui| {
-                                ui.set_height(560.0);
-                                self.draw_configuration_widget(ui)
+                            ui.add_enabled_ui(!self.solver_pending, |ui| {
+                                ui.group(|ui| {
+                                    ui.set_height(560.0);
+                                    self.draw_configuration_widget(ui)
+                                });
                             });
                         });
                     });
@@ -632,7 +642,8 @@ impl gloo_worker::Worker for WebWorker {
         scope.respond(
             _id,
             solvers::MacroSolver::new(settings, Box::new(callback))
-                .solve(InProgress::new(&settings), backload_progress).map(|v| (v, false)),
+                .solve(InProgress::new(&settings), backload_progress)
+                .map(|v| (v, false)),
         );
     }
 }
