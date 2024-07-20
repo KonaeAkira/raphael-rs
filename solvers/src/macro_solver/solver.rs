@@ -200,12 +200,7 @@ impl Score {
 
 impl std::cmp::PartialOrd for Score {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(
-            self.quality
-                .cmp(&other.quality)
-                .then(other.duration.cmp(&self.duration))
-                .then(other.steps.cmp(&self.steps)),
-        )
+        Some(std::cmp::Ord::cmp(self, other))
     }
 }
 
