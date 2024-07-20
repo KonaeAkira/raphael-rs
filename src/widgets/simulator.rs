@@ -1,34 +1,32 @@
-use std::collections::HashMap;
-
-use egui::{Align, Color32, Layout, Rounding, TextureHandle, Widget};
-use game_data::{action_name, Item, Locale};
+use egui::{Align, Color32, Layout, Rounding, Widget};
+use game_data::{action_name, get_job_name, Item, Locale};
 use simulator::{Action, Settings, SimulationState};
 
-use crate::config::QualityTarget;
+use crate::config::{CrafterConfig, QualityTarget};
 
 use super::HelpText;
 
 pub struct Simulator<'a> {
     settings: &'a Settings,
+    crafter_config: &'a CrafterConfig,
     actions: &'a [Action],
     item: &'a Item,
-    action_icons: &'a HashMap<Action, TextureHandle>,
     locale: Locale,
 }
 
 impl<'a> Simulator<'a> {
     pub fn new(
         settings: &'a Settings,
+        crafter_config: &'a CrafterConfig,
         actions: &'a [Action],
         item: &'a Item,
-        action_icons: &'a HashMap<Action, TextureHandle>,
         locale: Locale,
     ) -> Self {
         Self {
             settings,
+            crafter_config,
             actions,
             item,
-            action_icons,
             locale,
         }
     }
@@ -114,13 +112,11 @@ impl<'a> Widget for Simulator<'a> {
                                 .desired_width(120.0),
                         );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            ui.add(HelpText::new(
-                                if self.settings.adversarial {
-                                    "Calculated assuming worst possible sequence of conditions"
-                                } else {
-                                    "Calculated assuming Normal conditon on every step"
-                                }
-                            ));
+                            ui.add(HelpText::new(if self.settings.adversarial {
+                                "Calculated assuming worst possible sequence of conditions"
+                            } else {
+                                "Calculated assuming Normal conditon on every step"
+                            }));
                             if self.item.is_collectable {
                                 let t1 = QualityTarget::CollectableT1
                                     .get_target(self.settings.max_quality);
@@ -156,9 +152,15 @@ impl<'a> Widget for Simulator<'a> {
                     ui.set_width(ui.available_width());
                     ui.horizontal(|ui| {
                         for (action, error) in self.actions.iter().zip(errors.into_iter()) {
+                            let image_path = format!(
+                                "{}/action-icons/{}/{}.png",
+                                env!("BASE_URL"),
+                                get_job_name(self.crafter_config.selected_job, Locale::EN),
+                                action_name(*action, Locale::EN)
+                            );
                             ui.add(
-                                egui::Image::new(self.action_icons.get(action).unwrap())
-                                    .max_height(30.0)
+                                egui::Image::new(image_path)
+                                    .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
                                     .rounding(4.0)
                                     .tint(match error {
                                         Ok(_) => Color32::WHITE,
