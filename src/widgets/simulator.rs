@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use egui::{Align, Color32, Layout, Rounding, TextureHandle, Widget};
+use egui::{Align, Color32, Layout, Rounding, Widget};
 use game_data::{action_name, Item, Locale};
 use simulator::{Action, Settings, SimulationState};
 
@@ -12,7 +10,6 @@ pub struct Simulator<'a> {
     settings: &'a Settings,
     actions: &'a [Action],
     item: &'a Item,
-    action_icons: &'a HashMap<Action, TextureHandle>,
     locale: Locale,
 }
 
@@ -21,14 +18,12 @@ impl<'a> Simulator<'a> {
         settings: &'a Settings,
         actions: &'a [Action],
         item: &'a Item,
-        action_icons: &'a HashMap<Action, TextureHandle>,
         locale: Locale,
     ) -> Self {
         Self {
             settings,
             actions,
             item,
-            action_icons,
             locale,
         }
     }
@@ -114,13 +109,11 @@ impl<'a> Widget for Simulator<'a> {
                                 .desired_width(120.0),
                         );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            ui.add(HelpText::new(
-                                if self.settings.adversarial {
-                                    "Calculated assuming worst possible sequence of conditions"
-                                } else {
-                                    "Calculated assuming Normal conditon on every step"
-                                }
-                            ));
+                            ui.add(HelpText::new(if self.settings.adversarial {
+                                "Calculated assuming worst possible sequence of conditions"
+                            } else {
+                                "Calculated assuming Normal conditon on every step"
+                            }));
                             if self.item.is_collectable {
                                 let t1 = QualityTarget::CollectableT1
                                     .get_target(self.settings.max_quality);
@@ -156,9 +149,14 @@ impl<'a> Widget for Simulator<'a> {
                     ui.set_width(ui.available_width());
                     ui.horizontal(|ui| {
                         for (action, error) in self.actions.iter().zip(errors.into_iter()) {
+                            let image_path = format!(
+                                "{}/action-icons/BSM/{}.png",
+                                env!("BASE_URL"),
+                                action_name(*action, Locale::EN)
+                            );
                             ui.add(
-                                egui::Image::new(self.action_icons.get(action).unwrap())
-                                    .max_height(30.0)
+                                egui::Image::new(image_path)
+                                    .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
                                     .rounding(4.0)
                                     .tint(match error {
                                         Ok(_) => Color32::WHITE,

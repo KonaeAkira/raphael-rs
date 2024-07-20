@@ -6,13 +6,8 @@ use std::time::Duration;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
 
-use egui::{
-    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle, TextureHandle,
-    TextureOptions,
-};
-use game_data::{
-    action_name, get_item_name, get_job_name, Consumable, Locale, RecipeConfiguration, ITEMS,
-};
+use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle};
+use game_data::{get_item_name, get_job_name, Consumable, Locale, RecipeConfiguration, ITEMS};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
@@ -59,8 +54,6 @@ pub struct MacroSolverApp {
     duration: Option<Duration>,
     bridge: gloo_worker::WorkerBridge<WebWorker>,
     data_update: Rc<Cell<Option<MacroResult>>>,
-
-    action_icons: std::collections::HashMap<Action, TextureHandle>,
 }
 
 impl MacroSolverApp {
@@ -112,7 +105,6 @@ impl MacroSolverApp {
             duration: None,
             data_update,
             bridge,
-            action_icons: Self::load_action_icons(&cc.egui_ctx),
         }
     }
 }
@@ -230,7 +222,6 @@ impl eframe::App for MacroSolverApp {
                             game_data::ITEMS
                                 .get(&self.recipe_config.recipe.item_id)
                                 .unwrap(),
-                            &self.action_icons,
                             self.locale,
                         ));
                         ui.add_space(5.5);
@@ -596,20 +587,6 @@ impl MacroSolverApp {
             .unwrap()
             .push("japanese_monospace".to_owned());
         ctx.set_fonts(fonts);
-    }
-
-    fn load_action_icons(ctx: &egui::Context) -> std::collections::HashMap<Action, TextureHandle> {
-        crate::assets::get_action_icons()
-            .into_iter()
-            .map(|(action, image)| {
-                let texture = ctx.load_texture(
-                    action_name(action, Locale::EN),
-                    egui::ColorImage::from_rgb([64, 64], image.as_flat_samples().as_slice()),
-                    TextureOptions::LINEAR,
-                );
-                (action, texture)
-            })
-            .collect()
     }
 }
 
