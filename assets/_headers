@@ -3,7 +3,3 @@
 # Prevent crawlers from indexing preview builds
 https://:project.pages.dev/*
   X-Robots-Tag: noindex
-
-# Enable CORS for assets
-/action-icons/*
-    Access-Control-Allow-Origin: *
