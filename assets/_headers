@@ -1,0 +1,5 @@
+# Headers for Cloudflare deployments
+
+# Prevent crawlers from indexing preview builds
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
