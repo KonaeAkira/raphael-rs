@@ -42,7 +42,7 @@ pub fn fast_lower_bound(
             if !should_use_action(action, state.raw_state(), allowed_actions) {
                 continue;
             }
-            if let Ok(state) = state.use_action(action, Condition::Normal, &settings) {
+            if let Ok(state) = state.use_action(action, Condition::Normal, settings) {
                 if let Ok(in_progress) = InProgress::try_from(state) {
                     if !finish_solver.can_finish(&in_progress) {
                         continue;

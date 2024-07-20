@@ -61,7 +61,7 @@ pub fn quick_search(
             if !should_use_action(action, node.state.raw_state(), allowed_actions) {
                 continue;
             }
-            if let Ok(state) = node.state.use_action(action, Condition::Normal, &settings) {
+            if let Ok(state) = node.state.use_action(action, Condition::Normal, settings) {
                 if let Ok(in_progress) = InProgress::try_from(state) {
                     if action == Action::ByregotsBlessing && state.get_missing_quality() != 0 {
                         continue;
@@ -160,12 +160,7 @@ impl Score {
 
 impl std::cmp::PartialOrd for Score {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(
-            other
-                .duration
-                .cmp(&self.duration)
-                .then(other.steps.cmp(&self.steps)),
-        )
+        Some(std::cmp::Ord::cmp(self, other))
     }
 }
 
