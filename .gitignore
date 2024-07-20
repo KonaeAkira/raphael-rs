@@ -19,3 +19,7 @@ Cargo.lock
 
 # Ignore cargo config
 .cargo/
+
+# Ignore build directories
+docs/
+distrib/
