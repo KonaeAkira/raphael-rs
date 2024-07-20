@@ -218,6 +218,7 @@ impl eframe::App for MacroSolverApp {
                         ui.set_max_width(885.0);
                         ui.add(Simulator::new(
                             &game_settings,
+                            &self.crafter_config,
                             &self.actions,
                             game_data::ITEMS
                                 .get(&self.recipe_config.recipe.item_id)

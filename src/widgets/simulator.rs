@@ -1,13 +1,14 @@
 use egui::{Align, Color32, Layout, Rounding, Widget};
-use game_data::{action_name, Item, Locale};
+use game_data::{action_name, get_job_name, Item, Locale};
 use simulator::{Action, Settings, SimulationState};
 
-use crate::config::QualityTarget;
+use crate::config::{CrafterConfig, QualityTarget};
 
 use super::HelpText;
 
 pub struct Simulator<'a> {
     settings: &'a Settings,
+    crafter_config: &'a CrafterConfig,
     actions: &'a [Action],
     item: &'a Item,
     locale: Locale,
@@ -16,12 +17,14 @@ pub struct Simulator<'a> {
 impl<'a> Simulator<'a> {
     pub fn new(
         settings: &'a Settings,
+        crafter_config: &'a CrafterConfig,
         actions: &'a [Action],
         item: &'a Item,
         locale: Locale,
     ) -> Self {
         Self {
             settings,
+            crafter_config,
             actions,
             item,
             locale,
@@ -150,8 +153,9 @@ impl<'a> Widget for Simulator<'a> {
                     ui.horizontal(|ui| {
                         for (action, error) in self.actions.iter().zip(errors.into_iter()) {
                             let image_path = format!(
-                                "{}/action-icons/BSM/{}.png",
+                                "{}/action-icons/{}/{}.png",
                                 env!("BASE_URL"),
+                                get_job_name(self.crafter_config.selected_job, Locale::EN),
                                 action_name(*action, Locale::EN)
                             );
                             ui.add(
