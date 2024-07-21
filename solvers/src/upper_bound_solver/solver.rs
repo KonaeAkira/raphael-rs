@@ -160,7 +160,7 @@ impl UpperBoundSolver {
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use simulator::{Effects, SimulationState};
+    use simulator::{ComboAction, Effects, SimulationState};
 
     use super::*;
 
@@ -587,13 +587,18 @@ mod tests {
     }
 
     fn random_state(settings: &Settings) -> InProgress {
+        const COMBOS: [Option<ComboAction>; 3] = [
+            None,
+            Some(ComboAction::BasicTouch),
+            Some(ComboAction::StandardTouch),
+        ];
         SimulationState {
             cp: rand::thread_rng().gen_range(0..=settings.max_cp),
             durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
             missing_progress: rand::thread_rng().gen_range(1..=settings.max_progress),
             unreliable_quality: [settings.max_quality; 2],
             effects: random_effects(settings.adversarial),
-            combo: None, // TODO: random combo
+            combo: COMBOS[rand::thread_rng().gen_range(0..3)],
         }
         .try_into()
         .unwrap()
