@@ -508,28 +508,19 @@ impl MacroSolverApp {
                 );
                 ui.add(HelpText::new("Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊞ Shorter solve-time."));
             });
-            if self.solver_config.backload_progress {
-                ui.label(
-                    egui::RichText::new("⚠ Backloading progress may decrease achievable quality.")
-                        .small()
-                        .color(ui.visuals().warn_fg_color),
-                );
+            if self.recipe_config.recipe.is_expert {
+                self.solver_config.adversarial = false;
             }
             ui.horizontal(|ui| {
-                ui.checkbox(
+                ui.add_enabled(!self.recipe_config.recipe.is_expert, egui::Checkbox::new(
                     &mut self.solver_config.adversarial,
                     "Ensure 100% reliability",
-                );
+                ));
                 ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊟ Much longer solve-time."));
             });
             if self.solver_config.adversarial {
                 ui.label(
-                    egui::RichText::new("⚠ Guaranteeing reliability greatly increases memory-usage and solve-time.")
-                        .small()
-                        .color(ui.visuals().warn_fg_color),
-                );
-                ui.label(
-                    egui::RichText::new("⚠ Guaranteeing reliability may lead to longer macros and decrease achievable quality.")
+                    egui::RichText::new("⚠ This option may use a RIDICULOUS amount of memory (sometimes well above 8GB) which may cause your system to run out of memory. Use at your own risk.")
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
