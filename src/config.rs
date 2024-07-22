@@ -1,5 +1,11 @@
-use game_data::CrafterStats;
+use game_data::{CrafterStats, Recipe};
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct RecipeConfiguration {
+    pub recipe: Recipe,
+    pub hq_ingredients: [u8; 6],
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 pub struct CrafterConfig {

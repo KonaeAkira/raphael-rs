@@ -15,14 +15,11 @@ pub struct SimulationState {
 
 impl SimulationState {
     pub fn new(settings: &Settings) -> Self {
-        let initial_missing = settings
-            .max_quality
-            .saturating_sub(settings.initial_quality);
         Self {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
-            unreliable_quality: [initial_missing; 2],
+            unreliable_quality: [settings.max_quality; 2],
             effects: Effects::default().with_guard(if settings.adversarial { 2 } else { 0 }),
             combo: Some(ComboAction::SynthesisBegin),
         }

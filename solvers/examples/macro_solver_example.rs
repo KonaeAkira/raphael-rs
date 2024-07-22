@@ -12,7 +12,6 @@ fn main() {
         max_quality: 12000,
         base_progress: 214,
         base_quality: 231,
-        initial_quality: 0,
         job_level: 100,
         allowed_actions: ActionMask::from_level(100, true, false),
         adversarial: false,

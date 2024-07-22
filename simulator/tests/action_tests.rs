@@ -7,7 +7,6 @@ const SETTINGS: Settings = Settings {
     max_quality: 40000,
     base_progress: 100,
     base_quality: 100,
-    initial_quality: 0,
     job_level: 100,
     allowed_actions: ActionMask::all(),
     adversarial: false,
@@ -101,7 +100,11 @@ fn test_trained_eye_opener() {
 #[test]
 fn test_poor_trained_eye() {
     let state = SimulationState::new(&SETTINGS);
-    let state = InProgress::try_from(state).unwrap().use_action(Action::TrainedEye, Condition::Poor, &SETTINGS);
+    let state = InProgress::try_from(state).unwrap().use_action(
+        Action::TrainedEye,
+        Condition::Poor,
+        &SETTINGS,
+    );
     assert!(matches!(state, Ok(_)));
     let state = state.unwrap();
     assert_eq!(state.get_missing_quality(), 0);

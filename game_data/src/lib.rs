@@ -45,25 +45,18 @@ pub struct Recipe {
     pub is_expert: bool,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct RecipeConfiguration {
-    pub recipe: Recipe,
-    pub hq_ingredients: [u8; 6],
-}
-
 pub const RLVLS: [RecipeLevel; 800] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));
 pub const RECIPES: &[Recipe] = include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
 
 pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
 
 pub fn get_game_settings(
-    recipe_config: RecipeConfiguration,
+    recipe: Recipe,
     crafter_stats: CrafterStats,
     food: Option<Consumable>,
     potion: Option<Consumable>,
     adversarial: bool,
 ) -> Settings {
-    let recipe = recipe_config.recipe;
     let rlvl = &RLVLS[recipe.recipe_level as usize];
 
     let craftsmanship = crafter_stats.craftsmanship
@@ -78,6 +71,24 @@ pub fn get_game_settings(
         base_quality = base_quality * rlvl.quality_mod / 100;
     }
 
+    Settings {
+        max_cp: cp as _,
+        max_durability: recipe.durability as _,
+        max_progress: recipe.progress,
+        max_quality: recipe.quality,
+        base_progress,
+        base_quality,
+        job_level: crafter_stats.level,
+        allowed_actions: ActionMask::from_level(
+            crafter_stats.level as _,
+            crafter_stats.manipulation,
+            !recipe.is_expert && crafter_stats.level >= recipe.level + 10, // Trained Eye condition
+        ),
+        adversarial,
+    }
+}
+
+pub fn get_initial_quality(recipe: Recipe, hq_ingredients: [u8; 6]) -> u16 {
     let ingredients: Vec<(Item, u32)> = recipe
         .ingredients
         .iter()
@@ -92,7 +103,7 @@ pub fn get_game_settings(
         for (index, (item, max_amount)) in ingredients.into_iter().enumerate() {
             if item.can_be_hq {
                 max_ilvl += max_amount as u16 * item.item_level;
-                provided_ilvl += recipe_config.hq_ingredients[index] as u16 * item.item_level;
+                provided_ilvl += hq_ingredients[index] as u16 * item.item_level;
             }
         }
         if max_ilvl != 0 {
@@ -103,23 +114,7 @@ pub fn get_game_settings(
             0
         }
     };
-
-    Settings {
-        max_cp: cp as _,
-        max_durability: recipe.durability as _,
-        max_progress: recipe.progress,
-        max_quality: recipe.quality,
-        base_progress,
-        base_quality,
-        initial_quality,
-        job_level: crafter_stats.level,
-        allowed_actions: ActionMask::from_level(
-            crafter_stats.level as _,
-            crafter_stats.manipulation,
-            !recipe.is_expert && crafter_stats.level >= recipe.level + 10, // Trained Eye condition
-        ),
-        adversarial,
-    }
+    initial_quality
 }
 
 const HQ_LOOKUP: [u8; 101] = [

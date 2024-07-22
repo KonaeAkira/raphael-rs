@@ -7,7 +7,6 @@ const SETTINGS: Settings = Settings {
     max_quality: 40000,
     base_progress: 100,
     base_quality: 100,
-    initial_quality: 0,
     job_level: 100,
     allowed_actions: ActionMask::all(),
     adversarial: true,
