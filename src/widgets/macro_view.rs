@@ -46,7 +46,7 @@ impl MacroTextBox {
         if config.macro_lock {
             lines.push("/macrolock ".to_string());
         }
-        lines.extend(actions.into_iter().map(|action| {
+        lines.extend(actions.iter().map(|action| {
             if config.include_delay {
                 format!(
                     "/ac \"{}\" <wait.{}>",
@@ -183,7 +183,7 @@ impl<'a> Widget for MacroView<'a> {
                         index + 1,
                         count,
                         actions,
-                        &self.config,
+                        self.config,
                         newline,
                         self.locale,
                     ));

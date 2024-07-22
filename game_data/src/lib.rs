@@ -97,24 +97,23 @@ pub fn get_initial_quality(recipe: Recipe, hq_ingredients: [u8; 6]) -> u16 {
             id => Some((*ITEMS.get(&id).unwrap(), ingredient.amount)),
         })
         .collect();
-    let initial_quality = {
-        let mut max_ilvl = 0;
-        let mut provided_ilvl = 0;
-        for (index, (item, max_amount)) in ingredients.into_iter().enumerate() {
-            if item.can_be_hq {
-                max_ilvl += max_amount as u16 * item.item_level;
-                provided_ilvl += hq_ingredients[index] as u16 * item.item_level;
-            }
+
+    let mut max_ilvl = 0;
+    let mut provided_ilvl = 0;
+    for (index, (item, max_amount)) in ingredients.into_iter().enumerate() {
+        if item.can_be_hq {
+            max_ilvl += max_amount as u16 * item.item_level;
+            provided_ilvl += hq_ingredients[index] as u16 * item.item_level;
         }
-        if max_ilvl != 0 {
-            (recipe.quality as u64 * recipe.material_quality_factor as u64 * provided_ilvl as u64
-                / max_ilvl as u64
-                / 100) as u16
-        } else {
-            0
-        }
-    };
-    initial_quality
+    }
+
+    if max_ilvl != 0 {
+        (recipe.quality as u64 * recipe.material_quality_factor as u64 * provided_ilvl as u64
+            / max_ilvl as u64
+            / 100) as u16
+    } else {
+        0
+    }
 }
 
 const HQ_LOOKUP: [u8; 101] = [

@@ -38,7 +38,7 @@ impl<'a> Simulator<'a> {
 impl<'a> Widget for Simulator<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let (game_state, errors) =
-            SimulationState::from_macro_continue_on_error(&self.settings, self.actions);
+            SimulationState::from_macro_continue_on_error(self.settings, self.actions);
 
         let max_progress = self.settings.max_progress;
         let clamped_progress = self.settings.max_progress - game_state.missing_progress;
