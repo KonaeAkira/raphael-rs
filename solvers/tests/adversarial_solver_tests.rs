@@ -16,7 +16,7 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
             .unwrap();
     }
     assert_eq!(state.missing_progress, 0);
-    settings.max_quality - state.get_missing_quality()
+    state.get_quality()
 }
 
 fn get_duration(actions: &[Action]) -> i16 {
@@ -130,7 +130,7 @@ fn test_max_quality() {
         adversarial: true,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1000);
+    assert_eq!(get_quality(&settings, &actions), 1052);
     assert_eq!(get_duration(&actions), 30);
     assert_eq!(actions.len(), 11);
 }
@@ -431,7 +431,7 @@ fn test_random_2ea6c001() {
         adversarial: true,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 10600);
+    assert_eq!(get_quality(&settings, &actions), 10768);
     assert_eq!(get_duration(&actions), 49);
     assert_eq!(actions.len(), 17);
 }
@@ -578,7 +578,7 @@ fn test_rare_tacos() {
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
-    assert_eq!(get_quality(&settings, &actions) + 6000, 11400);
+    assert_eq!(get_quality(&settings, &actions) + 6000, 11442);
     assert_eq!(get_duration(&actions), 43);
     // solver should prefer rotation with fewer steps when duration is the same (#39)
     assert_eq!(actions.len(), 16);
@@ -601,7 +601,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
-    assert_eq!(get_quality(&settings, &actions), 8200);
+    assert_eq!(get_quality(&settings, &actions), 8232);
     assert_eq!(get_duration(&actions), 38);
     assert_eq!(actions.len(), 14);
 }
@@ -642,7 +642,7 @@ fn test_stuffed_peppers() {
         ..SETTINGS
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 11400);
+    assert_eq!(get_quality(&settings, &actions), 11448);
     assert_eq!(get_duration(&actions), 47);
     assert_eq!(actions.len(), 17);
 }

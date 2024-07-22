@@ -17,7 +17,7 @@ fn simulate(
 fn progress_quality_pair(settings: &Settings, state: SimulationState) -> (u16, u16) {
     (
         settings.max_progress - state.missing_progress,
-        settings.max_quality - state.get_missing_quality(),
+        state.get_quality(),
     )
 }
 
@@ -51,7 +51,7 @@ fn test_random_926ae85b() {
     assert_eq!(state.cp, 14);
     assert_eq!(state.durability, 30);
     assert_eq!(settings.max_progress - state.missing_progress, 4);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 76);
+    assert_eq!(state.get_quality(), 76);
     assert_eq!(state.effects.inner_quiet(), 0);
 }
 
@@ -90,7 +90,7 @@ fn test_random_3c721e47() {
     assert_eq!(state.cp, 223);
     assert_eq!(state.durability, 60);
     assert_eq!(settings.max_progress - state.missing_progress, 2520);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 1473);
+    assert_eq!(state.get_quality(), 1473);
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn test_random_3ba90d3a() {
     assert_eq!(state.cp, 188);
     assert_eq!(state.durability, 25);
     assert_eq!(settings.max_progress - state.missing_progress, 918);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 2118);
+    assert_eq!(state.get_quality(), 2118);
     assert_eq!(state.effects.inner_quiet(), 5);
     assert_eq!(state.effects.innovation(), 1);
 }
@@ -187,7 +187,7 @@ fn test_random_bce2650c() {
     assert_eq!(state.cp, 1);
     assert_eq!(state.durability, 5);
     assert_eq!(settings.max_progress - state.missing_progress, 6323);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 11475);
+    assert_eq!(state.get_quality(), 11475);
 }
 
 #[test]

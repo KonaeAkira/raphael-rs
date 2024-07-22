@@ -45,21 +45,17 @@ impl UpperBoundSolver {
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
-                settings.max_quality,
+                settings.max_quality.saturating_mul(2),
             ),
         }
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
-    /// The returned upper-bound is clamped to settings.max_quality.
+    /// The returned upper-bound is clamped to 2 times settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: InProgress) -> u16 {
         let mut state = *state.raw_state();
-        let current_quality = self.settings.max_quality - state.get_missing_quality();
-
-        if current_quality == self.settings.max_quality {
-            return current_quality;
-        }
+        let current_quality = state.get_quality();
 
         // refund effects and durability
         state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.cp_cost() / 8);
@@ -100,7 +96,7 @@ impl UpperBoundSolver {
         }
 
         std::cmp::min(
-            self.settings.max_quality,
+            self.settings.max_quality.saturating_mul(2),
             pareto_front[lo].second.saturating_add(current_quality),
         )
     }
@@ -129,7 +125,7 @@ impl UpperBoundSolver {
         {
             if let Ok(in_progress) = InProgress::try_from(new_state) {
                 let action_progress = u16::MAX - new_state.missing_progress;
-                let action_quality = u16::MAX - new_state.get_missing_quality();
+                let action_quality = new_state.get_quality();
                 let new_state = ReducedState::from_state(
                     in_progress,
                     self.base_durability_cost,
@@ -397,7 +393,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2000);
+        assert_eq!(result, 2604);
     }
 
     #[test]
@@ -414,7 +410,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2000);
+        assert_eq!(result, 2604);
     }
 
     #[test]
@@ -550,7 +546,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 24000);
+        assert_eq!(result, 24260);
     }
 
     fn random_effects(adversarial: bool) -> Effects {
@@ -598,9 +594,7 @@ mod tests {
                 {
                     Ok(child) => match InProgress::try_from(child) {
                         Ok(child) => solver.quality_upper_bound(child),
-                        Err(_) if child.missing_progress == 0 => {
-                            settings.max_quality - child.get_missing_quality()
-                        }
+                        Err(_) if child.missing_progress == 0 => child.get_quality(),
                         Err(_) => 0,
                     },
                     Err(_) => 0,

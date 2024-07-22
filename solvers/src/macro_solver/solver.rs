@@ -134,20 +134,25 @@ impl<'a> MacroSolver<'a> {
                         let duration = score.duration + action.time_cost() as u8;
                         let backtrack_index = backtracking.push(action, node.backtrack_index);
                         search_queue.push(
-                            Score::new(quality_upper_bound, duration, score.steps + 1),
+                            Score::new(
+                                std::cmp::min(self.settings.max_quality, quality_upper_bound),
+                                duration,
+                                score.steps + 1,
+                            ),
                             SearchNode {
                                 state: in_progress,
                                 backtrack_index,
                             },
                         );
 
-                        let quality = self.settings.max_quality - state.get_missing_quality();
-                        if quality > quality_lower_bound {
-                            quality_lower_bound = quality;
+                        let clamped_quality =
+                            std::cmp::min(state.get_quality(), self.settings.max_quality);
+                        if clamped_quality > quality_lower_bound {
+                            quality_lower_bound = clamped_quality;
                         }
                     } else if state.missing_progress == 0 {
                         let final_score = Score::new(
-                            self.settings.max_quality - state.get_missing_quality(),
+                            std::cmp::min(state.get_quality(), self.settings.max_quality),
                             score.duration + action.time_cost() as u8,
                             score.steps + 1,
                         );

@@ -16,7 +16,7 @@ fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
             .unwrap();
     }
     assert_eq!(state.missing_progress, 0);
-    settings.max_quality - state.get_missing_quality()
+    state.get_quality()
 }
 
 fn get_duration(actions: &[Action]) -> i16 {
@@ -123,7 +123,7 @@ fn test_max_quality() {
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1000);
+    assert_eq!(get_quality(&settings, &actions), 1044);
     assert_eq!(get_duration(&actions), 29);
     assert_eq!(actions.len(), 11);
 }
@@ -410,7 +410,7 @@ fn test_random_2ea6c001() {
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 10600);
+    assert_eq!(get_quality(&settings, &actions), 10752);
     assert_eq!(get_duration(&actions), 44);
     assert_eq!(actions.len(), 16);
 }
@@ -468,7 +468,7 @@ fn test_max_quality_indagator_3858_4057() {
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 12900);
+    assert_eq!(get_quality(&settings, &actions), 12963);
     assert_eq!(get_duration(&actions), 72);
     assert_eq!(actions.len(), 27);
     // 62 seconds is possible, but takes very long to solve using the main solver:
@@ -575,7 +575,7 @@ fn test_rare_tacos() {
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
-    assert_eq!(get_quality(&settings, &actions) + 6000, 11400);
+    assert_eq!(get_quality(&settings, &actions) + 6000, 11562);
     assert_eq!(get_duration(&actions), 41);
     // solver should prefer rotation with fewer steps when duration is the same (#39)
     assert_eq!(actions.len(), 15);
@@ -598,7 +598,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     };
     let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
-    assert_eq!(get_quality(&settings, &actions), 8200);
+    assert_eq!(get_quality(&settings, &actions), 8437);
     assert_eq!(get_duration(&actions), 36);
     assert_eq!(actions.len(), 13);
 }
@@ -620,7 +620,7 @@ fn test_rare_tacos_2() {
     };
     let actions = solve(&settings, false).unwrap();
     dbg!(actions.clone());
-    assert_eq!(get_quality(&settings, &actions), 12000);
+    assert_eq!(get_quality(&settings, &actions), 12082);
     assert_eq!(get_duration(&actions), 58);
     assert_eq!(actions.len(), 22);
 }
@@ -645,4 +645,48 @@ fn test_stuffed_peppers_2() {
     assert_eq!(get_quality(&settings, &actions), 20177);
     assert_eq!(get_duration(&actions), 85);
     assert_eq!(actions.len(), 31);
+}
+
+#[test]
+fn test_rakaznar_lapidary_hammer() {
+    // Ra'Kaznar Lapidary Hammer
+    // 4462 Craftsmanship, 4391 Control
+    let settings = Settings {
+        max_cp: 569,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 6500, // full HQ mats, 12500 custom target
+        base_progress: 237,
+        base_quality: 245,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100, true, false),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    dbg!(actions.clone());
+    assert_eq!(get_quality(&settings, &actions), 7056);
+    assert_eq!(get_duration(&actions), 45);
+    assert_eq!(actions.len(), 16);
+}
+
+#[test]
+fn test_black_star() {
+    // Black Star
+    // 4068 Craftsmanship, 3997 Control
+    let settings = Settings {
+        max_cp: 596,
+        max_durability: 40,
+        max_progress: 3000,
+        max_quality: 5500, // full HQ mats
+        base_progress: 250,
+        base_quality: 312,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90, true, false),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    dbg!(actions.clone());
+    assert_eq!(get_quality(&settings, &actions), 5739);
+    assert_eq!(get_duration(&actions), 31);
+    assert_eq!(actions.len(), 12);
 }
