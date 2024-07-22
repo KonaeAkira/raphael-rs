@@ -17,7 +17,7 @@ fn simulate(
 fn progress_quality_pair(settings: &Settings, state: SimulationState) -> (u16, u16) {
     (
         settings.max_progress - state.missing_progress,
-        settings.max_quality - state.get_missing_quality(),
+        state.get_quality(),
     )
 }
 
@@ -32,7 +32,6 @@ fn test_random_926ae85b() {
         max_quality: 150,
         base_progress: 4,
         base_quality: 38,
-        initial_quality: 0,
         job_level: 10,
         allowed_actions: ActionMask::all(),
         adversarial: false,
@@ -52,7 +51,7 @@ fn test_random_926ae85b() {
     assert_eq!(state.cp, 14);
     assert_eq!(state.durability, 30);
     assert_eq!(settings.max_progress - state.missing_progress, 4);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 76);
+    assert_eq!(state.get_quality(), 76);
     assert_eq!(state.effects.inner_quiet(), 0);
 }
 
@@ -67,7 +66,6 @@ fn test_random_3c721e47() {
         max_quality: 6800,
         base_progress: 240,
         base_quality: 307,
-        initial_quality: 0,
         job_level: 85,
         allowed_actions: ActionMask::all(),
         adversarial: false,
@@ -92,7 +90,7 @@ fn test_random_3c721e47() {
     assert_eq!(state.cp, 223);
     assert_eq!(state.durability, 60);
     assert_eq!(settings.max_progress - state.missing_progress, 2520);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 1473);
+    assert_eq!(state.get_quality(), 1473);
 }
 
 #[test]
@@ -106,7 +104,6 @@ fn test_random_3ba90d3a() {
         max_quality: 9900,
         base_progress: 204,
         base_quality: 253,
-        initial_quality: 0,
         job_level: 81,
         allowed_actions: ActionMask::all(),
         adversarial: false,
@@ -132,7 +129,7 @@ fn test_random_3ba90d3a() {
     assert_eq!(state.cp, 188);
     assert_eq!(state.durability, 25);
     assert_eq!(settings.max_progress - state.missing_progress, 918);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 2118);
+    assert_eq!(state.get_quality(), 2118);
     assert_eq!(state.effects.inner_quiet(), 5);
     assert_eq!(state.effects.innovation(), 1);
 }
@@ -148,7 +145,6 @@ fn test_random_bce2650c() {
         max_quality: 14040,
         base_progress: 248,
         base_quality: 270,
-        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, false, false),
         adversarial: false,
@@ -191,7 +187,7 @@ fn test_random_bce2650c() {
     assert_eq!(state.cp, 1);
     assert_eq!(state.durability, 5);
     assert_eq!(settings.max_progress - state.missing_progress, 6323);
-    assert_eq!(settings.max_quality - state.get_missing_quality(), 11475);
+    assert_eq!(state.get_quality(), 11475);
 }
 
 #[test]
@@ -205,7 +201,6 @@ fn test_ingame_be9fc5c2() {
         max_quality: 10920,
         base_progress: 247,
         base_quality: 265,
-        initial_quality: 0,
         job_level: 90,
         allowed_actions: ActionMask::from_level(90, true, false),
         adversarial: false,
@@ -275,7 +270,6 @@ fn test_ingame_d11d9c68() {
         max_quality: 11400,
         base_progress: 238,
         base_quality: 300,
-        initial_quality: 0,
         job_level: 94,
         allowed_actions: ActionMask::all(),
         adversarial: false,
@@ -334,7 +328,6 @@ fn test_ingame_f9f0dac7() {
         max_quality: 12000,
         base_progress: 261,
         base_quality: 240,
-        initial_quality: 0,
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: true,

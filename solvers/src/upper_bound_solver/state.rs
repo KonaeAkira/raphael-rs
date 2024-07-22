@@ -46,7 +46,7 @@ impl std::convert::From<ReducedState> for InProgress {
             durability: i8::MAX,
             cp: state.cp,
             missing_progress: u16::MAX,
-            unreliable_quality: [u16::MAX, u16::MAX],
+            unreliable_quality: [0, 0],
             effects: Effects::new()
                 .with_inner_quiet(state.effects.inner_quiet)
                 .with_innovation(state.effects.innovation)

@@ -1,8 +1,8 @@
 use egui::{Align, Layout, Widget};
 use egui_extras::Column;
-use game_data::{get_item_name, get_job_name, Ingredient, Locale, RecipeConfiguration, RLVLS};
+use game_data::{get_item_name, get_job_name, Ingredient, Locale, RLVLS};
 
-use crate::utils::contains_noncontiguous;
+use crate::{config::RecipeConfiguration, utils::contains_noncontiguous};
 
 pub struct RecipeSelect<'a> {
     selected_job: &'a mut u8,

@@ -45,15 +45,26 @@ pub fn quick_search(
     let mut pareto_set = ParetoSet::default();
 
     search_queue.push(
-        Score::new(0, 0),
+        Score::new(
+            upper_bound_solver.quality_upper_bound(state),
+            0,
+            0,
+            settings,
+        ),
         SearchNode {
             state,
             backtrack_index: Backtracking::<Action>::SENTINEL,
         },
     );
 
+    let mut best_score = Score::new(0, u8::MAX, u8::MAX, settings);
+    let mut best_actions = None;
+
     while let Some((score, node)) = search_queue.pop() {
-        let allowed_actions = match node.state.raw_state().get_missing_quality() == 0 {
+        if score <= best_score {
+            break;
+        }
+        let allowed_actions = match node.state.raw_state().get_quality() >= settings.max_quality {
             true => PROGRESS_SEARCH_ACTIONS.intersection(settings.allowed_actions),
             false => QUALITY_SEARCH_ACTIONS.intersection(settings.allowed_actions),
         };
@@ -63,13 +74,16 @@ pub fn quick_search(
             }
             if let Ok(state) = node.state.use_action(action, Condition::Normal, settings) {
                 if let Ok(in_progress) = InProgress::try_from(state) {
-                    if action == Action::ByregotsBlessing && state.get_missing_quality() != 0 {
+                    if action == Action::ByregotsBlessing
+                        && state.get_quality() < settings.max_quality
+                    {
                         continue;
                     }
                     if !finish_solver.can_finish(&in_progress) {
                         continue;
                     }
-                    if upper_bound_solver.quality_upper_bound(in_progress) < settings.max_quality {
+                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(in_progress);
+                    if quality_upper_bound < settings.max_quality {
                         continue;
                     }
                     if !pareto_set.insert(state) {
@@ -77,25 +91,36 @@ pub fn quick_search(
                     }
                     let backtrack_index = backtracking.push(action, node.backtrack_index);
                     search_queue.push(
-                        score.add(action.time_cost() as u8, 1),
+                        Score::new(
+                            quality_upper_bound,
+                            score.duration + action.time_cost() as u8,
+                            score.steps + 1,
+                            settings,
+                        ),
                         SearchNode {
                             state: in_progress,
                             backtrack_index,
                         },
                     );
-                } else if state.missing_progress == 0 && state.get_missing_quality() == 0 {
-                    let actions = backtracking
-                        .get(node.backtrack_index)
-                        .chain(std::iter::once(action))
-                        .collect();
-                    dbg!(&actions);
-                    return Some(actions);
+                } else if state.missing_progress == 0 && state.get_quality() >= settings.max_quality
+                {
+                    let score =
+                        Score::new(state.get_quality(), score.duration, score.steps, settings);
+                    if score > best_score {
+                        let actions = backtracking
+                            .get(node.backtrack_index)
+                            .chain(std::iter::once(action))
+                            .collect();
+                        best_score = score;
+                        best_actions = Some(actions);
+                    }
                 }
             }
         }
     }
 
-    None
+    dbg!(&best_score, &best_actions);
+    best_actions
 }
 
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {
@@ -143,17 +168,15 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
 struct Score {
     duration: u8,
     steps: u8,
+    quality_overflow: u16,
 }
 
 impl Score {
-    fn new(duration: u8, steps: u8) -> Self {
-        Self { duration, steps }
-    }
-
-    fn add(self, duration: u8, steps: u8) -> Self {
+    fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
         Self {
-            duration: self.duration + duration,
-            steps: self.steps + steps,
+            duration,
+            steps,
+            quality_overflow: quality.saturating_sub(settings.max_quality),
         }
     }
 }
@@ -170,16 +193,21 @@ impl std::cmp::Ord for Score {
             .duration
             .cmp(&self.duration)
             .then(other.steps.cmp(&self.steps))
+            .then(self.quality_overflow.cmp(&other.quality_overflow))
     }
 }
 
 impl radix_heap::Radix for Score {
-    const RADIX_BITS: u32 = 16;
+    const RADIX_BITS: u32 = 32;
     fn radix_similarity(&self, other: &Self) -> u32 {
         if self.duration != other.duration {
             self.duration.radix_similarity(&other.duration)
-        } else {
+        } else if self.steps != other.steps {
             self.steps.radix_similarity(&other.steps) + 8
+        } else {
+            self.quality_overflow
+                .radix_similarity(&other.quality_overflow)
+                + 16
         }
     }
 }
