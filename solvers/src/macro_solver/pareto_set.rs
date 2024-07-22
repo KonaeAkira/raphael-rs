@@ -22,8 +22,8 @@ impl Value {
 impl Dominate for Value {
     fn dominate(&self, other: &Self) -> bool {
         self.cp >= other.cp
-            && self.missing_quality[0] <= other.missing_quality[0]
-            && self.missing_quality[1] <= other.missing_quality[1]
+            && self.missing_quality[0] >= other.missing_quality[0]
+            && self.missing_quality[1] >= other.missing_quality[1]
             && self.inner_quiet >= other.inner_quiet
     }
 }
@@ -38,21 +38,10 @@ struct Key {
 
 impl Key {
     pub fn new(state: SimulationState) -> Self {
-        let effects = match state.get_missing_quality() == 0 {
-            true => {
-                // Ignore effects that are only relevant for Quality when Quality is already maxed out
-                state
-                    .effects
-                    .with_inner_quiet(0)
-                    .with_innovation(0)
-                    .with_great_strides(0)
-            }
-            false => state.effects.with_inner_quiet(0),
-        };
         Self {
             durability: state.durability,
             missing_progress: state.missing_progress,
-            effects,
+            effects: state.effects.with_inner_quiet(0),
             combo: state.combo,
         }
     }

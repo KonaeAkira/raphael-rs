@@ -7,7 +7,6 @@ const SETTINGS: Settings = Settings {
     max_quality: 40000,
     base_progress: 100,
     base_quality: 100,
-    initial_quality: 0,
     job_level: 100,
     allowed_actions: ActionMask::all(),
     adversarial: true,
@@ -50,10 +49,7 @@ fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u16,
             };
             state = InProgress::try_from(state)?.use_action(*action, condition, &settings)?;
         }
-        min_quality = std::cmp::min(
-            min_quality,
-            settings.max_quality - state.get_missing_quality(),
-        );
+        min_quality = std::cmp::min(min_quality, state.get_quality());
     }
     Ok(min_quality)
 }
@@ -69,7 +65,7 @@ fn test_simple() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 100);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 100);
+        assert_eq!(state.get_quality(), 100);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -81,7 +77,7 @@ fn test_short_quality_opener() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 300);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 300);
+        assert_eq!(state.get_quality(), 300);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -98,7 +94,7 @@ fn test_long_quality_opener() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 1140);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 1140);
+        assert_eq!(state.get_quality(), 1140);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -118,7 +114,7 @@ fn test_alternating_quality_actions() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 440);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 440);
+        assert_eq!(state.get_quality(), 440);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -139,7 +135,7 @@ fn test_double_status_drops() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 525);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 525);
+        assert_eq!(state.get_quality(), 525);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -160,7 +156,7 @@ fn test_two_action_drops() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 607);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 607);
+        assert_eq!(state.get_quality(), 607);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -182,7 +178,7 @@ fn test_dp() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 952);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 952);
+        assert_eq!(state.get_quality(), 952);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -213,7 +209,7 @@ fn test_long_sequence() {
     let state = SimulationState::from_macro(&SETTINGS, &actions);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 2924);
-        assert_eq!(SETTINGS.max_quality - state.get_missing_quality(), 2924);
+        assert_eq!(state.get_quality(), 2924);
     } else {
         panic!("Unexpected err: {}", state.err().unwrap());
     }
@@ -234,7 +230,7 @@ fn test_exhaustive() {
         if let Ok(state) = state {
             dbg!(&actions);
             assert_eq!(
-                SETTINGS.max_quality - state.get_missing_quality(),
+                state.get_quality(),
                 guaranteed_quality(SETTINGS, &actions).unwrap()
             );
         } else {
@@ -265,7 +261,7 @@ fn test_fuzz() {
         if let Ok(state) = SimulationState::from_macro(&SETTINGS, &actions) {
             dbg!(&actions);
             assert_eq!(
-                SETTINGS.max_quality - state.get_missing_quality(),
+                state.get_quality(),
                 guaranteed_quality(SETTINGS, &actions).unwrap()
             );
         }

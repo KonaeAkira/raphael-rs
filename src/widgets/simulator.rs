@@ -8,6 +8,7 @@ use super::HelpText;
 
 pub struct Simulator<'a> {
     settings: &'a Settings,
+    initial_quality: u16,
     crafter_config: &'a CrafterConfig,
     actions: &'a [Action],
     item: &'a Item,
@@ -17,6 +18,7 @@ pub struct Simulator<'a> {
 impl<'a> Simulator<'a> {
     pub fn new(
         settings: &'a Settings,
+        initial_quality: u16,
         crafter_config: &'a CrafterConfig,
         actions: &'a [Action],
         item: &'a Item,
@@ -24,6 +26,7 @@ impl<'a> Simulator<'a> {
     ) -> Self {
         Self {
             settings,
+            initial_quality,
             crafter_config,
             actions,
             item,
@@ -34,19 +37,14 @@ impl<'a> Simulator<'a> {
 
 impl<'a> Widget for Simulator<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let (game_state, errors) = SimulationState::from_macro_continue_on_error(
-            &Settings {
-                max_quality: u16::MAX,
-                ..*self.settings
-            },
-            self.actions,
-        );
+        let (game_state, errors) =
+            SimulationState::from_macro_continue_on_error(self.settings, self.actions);
 
         let max_progress = self.settings.max_progress;
         let clamped_progress = self.settings.max_progress - game_state.missing_progress;
 
         let max_quality = self.settings.max_quality;
-        let quality = u16::MAX - game_state.get_missing_quality();
+        let quality = game_state.get_quality() + self.initial_quality;
         let clamped_quality = std::cmp::min(max_quality, quality);
 
         let prog_qual_dbg_text = format!(

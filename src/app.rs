@@ -7,11 +7,11 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
 
 use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle};
-use game_data::{get_item_name, get_job_name, Consumable, Locale, RecipeConfiguration, ITEMS};
+use game_data::{get_initial_quality, get_item_name, get_job_name, Consumable, Locale, ITEMS};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
-    config::{CrafterConfig, QualityTarget},
+    config::{CrafterConfig, QualityTarget, RecipeConfiguration},
     widgets::{
         ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
     },
@@ -204,11 +204,15 @@ impl eframe::App for MacroSolverApp {
         });
 
         let game_settings = game_data::get_game_settings(
-            self.recipe_config,
+            self.recipe_config.recipe,
             self.crafter_config.stats(),
             self.selected_food,
             self.selected_potion,
             self.solver_config.adversarial,
+        );
+        let initial_quality = game_data::get_initial_quality(
+            self.recipe_config.recipe,
+            self.recipe_config.hq_ingredients,
         );
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -218,6 +222,7 @@ impl eframe::App for MacroSolverApp {
                         ui.set_max_width(885.0);
                         ui.add(Simulator::new(
                             &game_settings,
+                            initial_quality,
                             &self.crafter_config,
                             &self.actions,
                             game_data::ITEMS
@@ -446,7 +451,7 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
                     let game_settings = game_data::get_game_settings(
-                        self.recipe_config,
+                        self.recipe_config.recipe,
                         self.crafter_config.crafter_stats
                             [self.crafter_config.selected_job as usize],
                         self.selected_food,
@@ -533,19 +538,19 @@ impl MacroSolverApp {
                         self.solver_pending = true;
                         self.start_time = Some(Instant::now());
                         let mut game_settings = game_data::get_game_settings(
-                            self.recipe_config,
+                            self.recipe_config.recipe,
                             self.crafter_config.crafter_stats
                                 [self.crafter_config.selected_job as usize],
                             self.selected_food,
                             self.selected_potion,
                             self.solver_config.adversarial,
-                    );
+                        );
                         let target_quality = self
                             .solver_config
                             .quality_target
                             .get_target(game_settings.max_quality);
-                        game_settings.max_quality =
-                            std::cmp::max(game_settings.initial_quality, target_quality);
+                        let initial_quality = get_initial_quality(self.recipe_config.recipe, self.recipe_config.hq_ingredients);
+                        game_settings.max_quality = target_quality.saturating_sub(initial_quality);
                         self.bridge
                             .send((game_settings, self.solver_config.backload_progress));
                         log::debug!("Message send {game_settings:?}");

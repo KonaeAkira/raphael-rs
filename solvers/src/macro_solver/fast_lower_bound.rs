@@ -47,10 +47,7 @@ pub fn fast_lower_bound(
                     if !finish_solver.can_finish(&in_progress) {
                         continue;
                     }
-                    quality_lower_bound = std::cmp::max(
-                        quality_lower_bound,
-                        settings.max_quality - state.get_missing_quality(),
-                    );
+                    quality_lower_bound = std::cmp::max(quality_lower_bound, state.get_quality());
                     if action == Action::ByregotsBlessing {
                         continue;
                     }
@@ -68,7 +65,7 @@ pub fn fast_lower_bound(
     }
 
     dbg!(quality_lower_bound);
-    quality_lower_bound
+    std::cmp::min(settings.max_quality, quality_lower_bound)
 }
 
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {

@@ -15,14 +15,11 @@ pub struct SimulationState {
 
 impl SimulationState {
     pub fn new(settings: &Settings) -> Self {
-        let initial_missing = settings
-            .max_quality
-            .saturating_sub(settings.initial_quality);
         Self {
             cp: settings.max_cp,
             durability: settings.max_durability,
             missing_progress: settings.max_progress,
-            unreliable_quality: [initial_missing; 2],
+            unreliable_quality: [0; 2],
             effects: Effects::default().with_guard(if settings.adversarial { 2 } else { 0 }),
             combo: Some(ComboAction::SynthesisBegin),
         }
@@ -66,8 +63,8 @@ impl SimulationState {
         (state, errors)
     }
 
-    pub fn get_missing_quality(&self) -> u16 {
-        std::cmp::max(self.unreliable_quality[0], self.unreliable_quality[1])
+    pub fn get_quality(&self) -> u16 {
+        std::cmp::min(self.unreliable_quality[0], self.unreliable_quality[1])
     }
 }
 
@@ -191,10 +188,8 @@ impl InProgress {
 
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            state.unreliable_quality[0] =
-                state.unreliable_quality[0].saturating_sub(quality_increase);
-            state.unreliable_quality[1] =
-                state.unreliable_quality[1].saturating_sub(quality_increase);
+            state.unreliable_quality[0] += quality_increase;
+            state.unreliable_quality[1] += quality_increase;
             state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
                 let inner_quiet_bonus = match action {
@@ -217,17 +212,15 @@ impl InProgress {
                 || (state.effects.guard() != 0 && quality_increase != 0)
             {
                 // commit the current value
-                state.unreliable_quality = [state.get_missing_quality(); 2];
+                state.unreliable_quality = [state.get_quality(); 2];
             } else if quality_increase != 0 {
                 // append new info
                 let saved = state.unreliable_quality[0];
                 state.unreliable_quality[0] =
-                    std::cmp::max(state.unreliable_quality[1], state.unreliable_quality[0])
-                        .saturating_sub(quality_delta);
-                state.unreliable_quality[1] = std::cmp::max(
-                    saved,
-                    state.unreliable_quality[1].saturating_sub(quality_delta),
-                );
+                    std::cmp::min(state.unreliable_quality[1], state.unreliable_quality[0])
+                        + quality_delta;
+                state.unreliable_quality[1] =
+                    std::cmp::min(saved, state.unreliable_quality[1] + quality_delta);
             }
         }
 

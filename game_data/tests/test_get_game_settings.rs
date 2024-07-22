@@ -1,5 +1,5 @@
 use game_data::{
-    get_game_settings, get_item_name, CrafterStats, Locale, Recipe, RecipeConfiguration, RECIPES,
+    get_game_settings, get_initial_quality, get_item_name, CrafterStats, Locale, Recipe, RECIPES,
 };
 use simulator::{ActionMask, Settings};
 
@@ -36,10 +36,6 @@ fn test_turali_pineapple_ponzecake() {
             "Ovibos Milk"
         ]
     );
-    let recipe_config = RecipeConfiguration {
-        recipe,
-        hq_ingredients: [0, 0, 1, 0, 0, 0],
-    };
     let crafter_stats = CrafterStats {
         craftsmanship: 4321,
         control: 4321,
@@ -47,7 +43,7 @@ fn test_turali_pineapple_ponzecake() {
         level: 94,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -57,12 +53,13 @@ fn test_turali_pineapple_ponzecake() {
             max_quality: 9800,
             base_progress: 280,
             base_quality: 355,
-            initial_quality: 2180,
             job_level: 94,
             allowed_actions: ActionMask::from_level(94, true, false),
             adversarial: false,
         }
-    )
+    );
+    let initial_quality = get_initial_quality(recipe, [0, 0, 1, 0, 0, 0]);
+    assert_eq!(initial_quality, 2180);
 }
 
 #[test]
@@ -76,10 +73,6 @@ fn test_smaller_water_otter_hardware() {
             "Raw Blue Zircon"
         ]
     );
-    let recipe_config = RecipeConfiguration {
-        recipe,
-        hq_ingredients: [0, 0, 0, 0, 0, 0],
-    };
     let crafter_stats = CrafterStats {
         craftsmanship: 3858,
         control: 4057,
@@ -87,7 +80,7 @@ fn test_smaller_water_otter_hardware() {
         level: 100,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -97,13 +90,14 @@ fn test_smaller_water_otter_hardware() {
             max_quality: 17240,
             base_progress: 216,
             base_quality: 260,
-            initial_quality: 0,
             job_level: 100,
             // Trained Eye is not available for expert recipes
             allowed_actions: ActionMask::from_level(100, true, false),
             adversarial: false,
         }
-    )
+    );
+    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
+    assert_eq!(initial_quality, 0);
 }
 
 #[test]
@@ -117,10 +111,6 @@ fn test_grade_8_tincture() {
             "Earthbreak Aethersand"
         ]
     );
-    let recipe_config = RecipeConfiguration {
-        recipe,
-        hq_ingredients: [0, 0, 0, 0, 0, 0],
-    };
     let crafter_stats = CrafterStats {
         craftsmanship: 3858,
         control: 4057,
@@ -128,7 +118,7 @@ fn test_grade_8_tincture() {
         level: 100,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -138,13 +128,14 @@ fn test_grade_8_tincture() {
             max_quality: 14040,
             base_progress: 298,
             base_quality: 387,
-            initial_quality: 0,
             job_level: 100,
             // Trained Eye is available
             allowed_actions: ActionMask::from_level(100, true, true),
             adversarial: false,
         }
-    )
+    );
+    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
+    assert_eq!(initial_quality, 0);
 }
 
 #[test]
@@ -154,10 +145,6 @@ fn test_claro_walnut_spinning_wheel() {
         ingredient_names(recipe),
         ["Claro Walnut Lumber", "Black Star", "Magnesia Whetstone"]
     );
-    let recipe_config = RecipeConfiguration {
-        recipe,
-        hq_ingredients: [0, 0, 0, 0, 0, 0],
-    };
     let crafter_stats = CrafterStats {
         craftsmanship: 4000,
         control: 3962,
@@ -165,7 +152,7 @@ fn test_claro_walnut_spinning_wheel() {
         level: 99,
         manipulation: true,
     };
-    let settings = get_game_settings(recipe_config, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -175,10 +162,11 @@ fn test_claro_walnut_spinning_wheel() {
             max_quality: 11400,
             base_progress: 241,
             base_quality: 304,
-            initial_quality: 0,
             job_level: 99,
             allowed_actions: ActionMask::from_level(99, true, false),
             adversarial: false,
         }
-    )
+    );
+    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
+    assert_eq!(initial_quality, 0);
 }
