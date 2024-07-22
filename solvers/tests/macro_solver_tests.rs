@@ -123,7 +123,7 @@ fn test_max_quality() {
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1044);
+    assert_eq!(get_quality(&settings, &actions), 1100);
     assert_eq!(get_duration(&actions), 29);
     assert_eq!(actions.len(), 11);
 }
@@ -686,7 +686,7 @@ fn test_black_star() {
     };
     let actions = solve(&settings, false).unwrap();
     dbg!(actions.clone());
-    assert_eq!(get_quality(&settings, &actions), 5739);
+    assert_eq!(get_quality(&settings, &actions), 6114);
     assert_eq!(get_duration(&actions), 31);
     assert_eq!(actions.len(), 12);
 }

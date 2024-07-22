@@ -87,7 +87,12 @@ impl<'a> MacroSolver<'a> {
         let mut solution: Option<(Score, u32)> = None; // (quality, trace_index)
 
         search_queue.push(
-            Score::new(self.bound_solver.quality_upper_bound(state), 0, 0),
+            Score::new(
+                self.bound_solver.quality_upper_bound(state),
+                0,
+                0,
+                &self.settings,
+            ),
             SearchNode {
                 state,
                 backtrack_index: Backtracking::<Action>::SENTINEL,
@@ -135,9 +140,10 @@ impl<'a> MacroSolver<'a> {
                         let backtrack_index = backtracking.push(action, node.backtrack_index);
                         search_queue.push(
                             Score::new(
-                                std::cmp::min(self.settings.max_quality, quality_upper_bound),
+                                quality_upper_bound,
                                 duration,
                                 score.steps + 1,
+                                &self.settings,
                             ),
                             SearchNode {
                                 state: in_progress,
@@ -152,9 +158,10 @@ impl<'a> MacroSolver<'a> {
                         }
                     } else if state.missing_progress == 0 {
                         let final_score = Score::new(
-                            std::cmp::min(state.get_quality(), self.settings.max_quality),
-                            score.duration + action.time_cost() as u8,
-                            score.steps + 1,
+                            state.get_quality(),
+                            score.duration,
+                            score.steps,
+                            &self.settings,
                         );
                         if solution.is_none() || solution.unwrap().0 < final_score {
                             let backtrack_index = backtracking.push(action, node.backtrack_index);
@@ -191,14 +198,16 @@ struct Score {
     quality: u16,
     duration: u8,
     steps: u8,
+    quality_overflow: u16,
 }
 
 impl Score {
-    fn new(quality: u16, duration: u8, steps: u8) -> Self {
+    fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
         Self {
-            quality,
+            quality: std::cmp::min(settings.max_quality, quality),
             duration,
             steps,
+            quality_overflow: quality.saturating_sub(settings.max_quality),
         }
     }
 }
@@ -215,18 +224,23 @@ impl std::cmp::Ord for Score {
             .cmp(&other.quality)
             .then(other.duration.cmp(&self.duration))
             .then(other.steps.cmp(&self.steps))
+            .then(self.quality_overflow.cmp(&other.quality_overflow))
     }
 }
 
 impl radix_heap::Radix for Score {
-    const RADIX_BITS: u32 = 32;
+    const RADIX_BITS: u32 = 48;
     fn radix_similarity(&self, other: &Self) -> u32 {
         if self.quality != other.quality {
             self.quality.radix_similarity(&other.quality)
         } else if self.duration != other.duration {
             self.duration.radix_similarity(&other.duration) + 16
-        } else {
+        } else if self.steps != other.steps {
             self.steps.radix_similarity(&other.steps) + 24
+        } else {
+            self.quality_overflow
+                .radix_similarity(&other.quality_overflow)
+                + 32
         }
     }
 }

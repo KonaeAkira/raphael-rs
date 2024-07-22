@@ -642,7 +642,7 @@ fn test_stuffed_peppers() {
         ..SETTINGS
     };
     let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 11448);
+    assert_eq!(get_quality(&settings, &actions), 12024);
     assert_eq!(get_duration(&actions), 47);
     assert_eq!(actions.len(), 17);
 }
