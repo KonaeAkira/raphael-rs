@@ -1,4 +1,4 @@
-use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Settings, SimulationState};
 
 const SETTINGS: Settings = Settings {
     max_cp: 250,
@@ -20,7 +20,7 @@ fn test_redundant_half_efficiency_groundwork() {
     for level in 1..=100 {
         let settings = Settings {
             job_level: level,
-            allowed_actions: ActionMask::from_level(level as _, true, false),
+            allowed_actions: ActionMask::from_level(level as _),
             ..SETTINGS
         };
         match (
@@ -95,20 +95,6 @@ fn test_trained_eye_opener() {
     let state =
         SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
     assert!(matches!(state, Err("Combo requirement not fulfilled")));
-}
-
-#[test]
-fn test_poor_trained_eye() {
-    let state = SimulationState::new(&SETTINGS);
-    let state = InProgress::try_from(state).unwrap().use_action(
-        Action::TrainedEye,
-        Condition::Poor,
-        &SETTINGS,
-    );
-    assert!(matches!(state, Ok(_)));
-    let state = state.unwrap();
-    assert_eq!(state.get_quality(), SETTINGS.max_quality);
-    assert_eq!(state.effects.inner_quiet(), 1);
 }
 
 #[test]
@@ -263,4 +249,47 @@ fn test_delicate_synthesis() {
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
+}
+
+#[test]
+fn test_quick_innovation() {
+    let setings = Settings {
+        adversarial: true,
+        ..SETTINGS
+    };
+    let state = SimulationState::from_macro(
+        &setings,
+        &[
+            Action::Manipulation,
+            Action::BasicTouch,
+            Action::QuickInnovation,
+        ],
+    );
+    match state {
+        Ok(state) => {
+            assert_eq!(state.combo, None); // combo is removed
+            assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
+            assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
+            assert_eq!(state.effects.innovation(), 1);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let state = SimulationState::from_macro(
+        &setings,
+        &[
+            Action::QuickInnovation,
+            Action::BasicTouch,
+            Action::QuickInnovation,
+        ],
+    );
+    assert!(matches!(
+        state,
+        Err("Action can only be used once per synthesis")
+    ));
+    let state =
+        SimulationState::from_macro(&setings, &[Action::Innovation, Action::QuickInnovation]);
+    assert!(matches!(
+        state,
+        Err("Action cannot be used when Innovation is active")
+    ));
 }

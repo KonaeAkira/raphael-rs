@@ -8,7 +8,7 @@ mod locales;
 pub use locales::*;
 
 use serde::{Deserialize, Serialize};
-use simulator::{ActionMask, Settings};
+use simulator::{Action, ActionMask, Settings};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Item {
@@ -71,6 +71,15 @@ pub fn get_game_settings(
         base_quality = base_quality * rlvl.quality_mod / 100;
     }
 
+    let mut allowed_actions = ActionMask::from_level(crafter_stats.level as _);
+    if !crafter_stats.manipulation {
+        allowed_actions = allowed_actions.remove(Action::Manipulation);
+    }
+    if recipe.is_expert || crafter_stats.level < recipe.level + 10 {
+        allowed_actions = allowed_actions.remove(Action::TrainedEye);
+    }
+    allowed_actions = allowed_actions.remove(Action::QuickInnovation);
+
     Settings {
         max_cp: cp as _,
         max_durability: recipe.durability as _,
@@ -79,11 +88,7 @@ pub fn get_game_settings(
         base_progress,
         base_quality,
         job_level: crafter_stats.level,
-        allowed_actions: ActionMask::from_level(
-            crafter_stats.level as _,
-            crafter_stats.manipulation,
-            !recipe.is_expert && crafter_stats.level >= recipe.level + 10, // Trained Eye condition
-        ),
+        allowed_actions,
         adversarial,
     }
 }

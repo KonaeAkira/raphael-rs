@@ -30,10 +30,11 @@ pub enum Action {
     IntensiveSynthesis,
     PrudentSynthesis,
     TrainedFinesse,
+    TrainedEye,
     ComboRefinedTouch,
+    QuickInnovation,
     ImmaculateMend,
     TrainedPerfection,
-    TrainedEye,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -72,10 +73,11 @@ impl Action {
             Action::IntensiveSynthesis => 78,
             Action::PrudentSynthesis => 88,
             Action::TrainedFinesse => 90,
+            Action::TrainedEye => 90,
             Action::ComboRefinedTouch => 92,
+            Action::QuickInnovation => 96,
             Action::ImmaculateMend => 98,
             Action::TrainedPerfection => 100,
-            Action::TrainedEye => 90,
         }
     }
 
@@ -111,6 +113,7 @@ impl Action {
             Action::ImmaculateMend => 3,
             Action::TrainedPerfection => 3,
             Action::TrainedEye => 3,
+            Action::QuickInnovation => 3,
         }
     }
 
@@ -146,6 +149,7 @@ impl Action {
             Action::ImmaculateMend => 112,
             Action::TrainedPerfection => 0,
             Action::TrainedEye => 250,
+            Action::QuickInnovation => 0,
         }
     }
 
@@ -181,6 +185,7 @@ impl Action {
             Action::ImmaculateMend => 0,
             Action::TrainedPerfection => 0,
             Action::TrainedEye => 0,
+            Action::QuickInnovation => 0,
         }
     }
 

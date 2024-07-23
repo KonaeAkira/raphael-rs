@@ -1,7 +1,7 @@
 use game_data::{
     get_game_settings, get_initial_quality, get_item_name, CrafterStats, Locale, Recipe, RECIPES,
 };
-use simulator::{ActionMask, Settings};
+use simulator::{Action, ActionMask, Settings};
 
 fn find_recipe(item_name: &'static str) -> Option<Recipe> {
     for recipe in RECIPES.iter() {
@@ -54,7 +54,9 @@ fn test_turali_pineapple_ponzecake() {
             base_progress: 280,
             base_quality: 355,
             job_level: 94,
-            allowed_actions: ActionMask::from_level(94, true, false),
+            allowed_actions: ActionMask::from_level(94)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         }
     );
@@ -92,7 +94,9 @@ fn test_smaller_water_otter_hardware() {
             base_quality: 260,
             job_level: 100,
             // Trained Eye is not available for expert recipes
-            allowed_actions: ActionMask::from_level(100, true, false),
+            allowed_actions: ActionMask::from_level(100)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         }
     );
@@ -130,7 +134,7 @@ fn test_grade_8_tincture() {
             base_quality: 387,
             job_level: 100,
             // Trained Eye is available
-            allowed_actions: ActionMask::from_level(100, true, true),
+            allowed_actions: ActionMask::from_level(100).remove(Action::QuickInnovation),
             adversarial: false,
         }
     );
@@ -163,7 +167,9 @@ fn test_claro_walnut_spinning_wheel() {
             base_progress: 241,
             base_quality: 304,
             job_level: 99,
-            allowed_actions: ActionMask::from_level(99, true, false),
+            allowed_actions: ActionMask::from_level(99)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         }
     );

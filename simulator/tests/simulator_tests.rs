@@ -146,7 +146,7 @@ fn test_random_bce2650c() {
         base_progress: 248,
         base_quality: 270,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, false, false),
+        allowed_actions: ActionMask::all(),
         adversarial: false,
     };
     let actions = [
@@ -202,7 +202,7 @@ fn test_ingame_be9fc5c2() {
         base_progress: 247,
         base_quality: 265,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::all(),
         adversarial: false,
     };
     let states: Vec<(u16, u16)> = simulate(

@@ -1,4 +1,4 @@
-use simulator::{state::InProgress, ActionMask, Settings, SimulationState};
+use simulator::{state::InProgress, Action, ActionMask, Settings, SimulationState};
 use solvers::MacroSolver;
 
 fn main() {
@@ -13,7 +13,9 @@ fn main() {
         base_progress: 214,
         base_quality: 231,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
 
