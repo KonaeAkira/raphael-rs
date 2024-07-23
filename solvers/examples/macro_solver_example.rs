@@ -6,16 +6,14 @@ fn main() {
     dbg!(std::mem::align_of::<SimulationState>());
 
     let settings = Settings {
-        max_cp: 703,
+        max_cp: 699,
         max_durability: 80,
-        max_progress: 6600,
-        max_quality: 12000,
-        base_progress: 214,
-        base_quality: 231,
+        max_progress: 5700,
+        max_quality: 20000,
+        base_progress: 295,
+        base_quality: 310,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
-            .remove(Action::TrainedEye)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::from_level(100).remove(Action::TrainedEye),
         adversarial: false,
     };
 

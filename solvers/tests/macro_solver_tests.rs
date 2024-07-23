@@ -499,6 +499,26 @@ fn test_backload_random_48ae7c9f() {
 }
 
 #[test]
+fn test_backload_random_48ae7c9f_quick_innovation() {
+    let settings = Settings {
+        max_cp: 699,
+        max_durability: 80,
+        max_progress: 5700,
+        max_quality: 20000,
+        base_progress: 295,
+        base_quality: 310,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100).remove(Action::TrainedEye),
+        adversarial: false,
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 19677);
+    assert_eq!(get_duration(&actions), 93);
+    assert_eq!(actions.len(), 33);
+}
+
+#[test]
 fn test_max_quality_indagator_3858_4057() {
     let settings = Settings {
         max_cp: 714,
@@ -704,6 +724,28 @@ fn test_stuffed_peppers_2() {
     assert_eq!(get_quality(&settings, &actions), 20177);
     assert_eq!(get_duration(&actions), 85);
     assert_eq!(actions.len(), 31);
+}
+
+#[test]
+fn test_stuffed_peppers_2_quick_innovation() {
+    // lv99 Rarefied Stuffed Peppers
+    // 4785 CMS, 4758 Ctrl, 646 CP
+    let settings = Settings {
+        max_cp: 646,
+        max_durability: 80,
+        max_progress: 6300,
+        max_quality: 40000,
+        base_progress: 289,
+        base_quality: 360,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100).remove(Action::TrainedEye),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    dbg!(actions.clone());
+    assert_eq!(get_quality(&settings, &actions), 20502);
+    assert_eq!(get_duration(&actions), 77);
+    assert_eq!(actions.len(), 28);
 }
 
 #[test]
