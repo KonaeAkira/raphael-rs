@@ -143,6 +143,12 @@ impl InProgress {
             {
                 Err("Action can only be used once per synthesis")
             }
+            Action::QuickInnovation if self.state.effects.quick_innovation_used() => {
+                Err("Action can only be used once per synthesis")
+            }
+            Action::QuickInnovation if self.state.effects.innovation() != 0 => {
+                Err("Action cannot be used when Innovation is active")
+            }
             _ => Ok(()),
         }
     }
@@ -230,16 +236,16 @@ impl InProgress {
 
         state.combo = action.to_combo();
 
-        // remove manipulation before it is triggered
-        if action == Action::Manipulation {
-            state.effects.set_manipulation(0);
+        // skip processing effects for actions that do not increase turn count
+        if !matches!(action, Action::QuickInnovation) {
+            if action == Action::Manipulation {
+                state.effects.set_manipulation(0);
+            }
+            if state.effects.manipulation() > 0 {
+                state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
+            }
+            state.effects.tick_down();
         }
-
-        if state.effects.manipulation() > 0 {
-            state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
-        }
-
-        state.effects.tick_down();
 
         if quality_increase != 0 {
             state.effects.set_guard(1);
@@ -260,6 +266,10 @@ impl InProgress {
             Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
             Action::ImmaculateMend => state.durability = settings.max_durability,
             Action::TrainedPerfection => state.effects.set_trained_perfection(SingleUse::Active),
+            Action::QuickInnovation => {
+                state.effects.set_innovation(1);
+                state.effects.set_quick_innovation_used(true);
+            }
             _ => (),
         }
 

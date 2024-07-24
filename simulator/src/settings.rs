@@ -27,18 +27,12 @@ impl ActionMask {
         Self { mask: u64::MAX }
     }
 
-    pub fn from_level(level: u32, manipulation: bool, trained_eye: bool) -> Self {
+    pub fn from_level(level: u32) -> Self {
         let mut result = Self::none();
         for action in ALL_ACTIONS {
             if action.level_requirement() <= level {
                 result = result.add(*action);
             }
-        }
-        if !manipulation {
-            result = result.remove(Action::Manipulation);
-        }
-        if !trained_eye {
-            result = result.remove(Action::TrainedEye);
         }
         result
     }
@@ -133,4 +127,5 @@ const ALL_ACTIONS: &[Action] = &[
     Action::ComboRefinedTouch,
     Action::ImmaculateMend,
     Action::TrainedPerfection,
+    Action::QuickInnovation,
 ];

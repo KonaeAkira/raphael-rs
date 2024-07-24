@@ -8,6 +8,7 @@ pub struct ReducedEffects {
     pub great_strides: u8,
     pub muscle_memory: u8,
     pub trained_perfection: SingleUse,
+    pub quick_innovation_used: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -35,6 +36,7 @@ impl ReducedState {
                 great_strides: state.effects.great_strides(),
                 muscle_memory: state.effects.muscle_memory(),
                 trained_perfection: state.effects.trained_perfection(),
+                quick_innovation_used: state.effects.quick_innovation_used(),
             },
         }
     }
@@ -54,6 +56,7 @@ impl std::convert::From<ReducedState> for InProgress {
                 .with_great_strides(state.effects.great_strides)
                 .with_muscle_memory(state.effects.muscle_memory)
                 .with_trained_perfection(state.effects.trained_perfection)
+                .with_quick_innovation_used(state.effects.quick_innovation_used)
                 .with_guard(1),
             combo: state.combo,
         }

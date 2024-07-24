@@ -7,7 +7,9 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use web_time::Instant;
 
 use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle};
-use game_data::{get_initial_quality, get_item_name, get_job_name, Consumable, Locale, ITEMS};
+use game_data::{
+    action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale, ITEMS,
+};
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
@@ -205,7 +207,7 @@ impl eframe::App for MacroSolverApp {
 
         let game_settings = game_data::get_game_settings(
             self.recipe_config.recipe,
-            self.crafter_config.stats(),
+            *self.crafter_config.active_stats(),
             self.selected_food,
             self.selected_potion,
             self.solver_config.adversarial,
@@ -350,13 +352,13 @@ impl MacroSolverApp {
                     ui.add_enabled(
                         false,
                         egui::DragValue::new(&mut game_data::craftsmanship_bonus(
-                            self.crafter_config.craftsmanship(),
+                            self.crafter_config.active_stats().craftsmanship,
                             &[self.selected_food, self.selected_potion],
                         )),
                     );
                     ui.monospace("+");
                     ui.add(
-                        egui::DragValue::new(self.crafter_config.craftsmanship_mut())
+                        egui::DragValue::new(&mut self.crafter_config.active_stats_mut().craftsmanship)
                             .clamp_range(0..=9999),
                     );
                 });
@@ -367,12 +369,12 @@ impl MacroSolverApp {
                     ui.add_enabled(
                         false,
                         egui::DragValue::new(&mut game_data::control_bonus(
-                            self.crafter_config.control(),
+                            self.crafter_config.active_stats().control,
                             &[self.selected_food, self.selected_potion],
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(self.crafter_config.control_mut()).clamp_range(0..=9999));
+                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().control).clamp_range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
@@ -381,18 +383,18 @@ impl MacroSolverApp {
                     ui.add_enabled(
                         false,
                         egui::DragValue::new(&mut game_data::cp_bonus(
-                            self.crafter_config.cp(),
+                            self.crafter_config.active_stats().cp,
                             &[self.selected_food, self.selected_potion],
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(self.crafter_config.cp_mut()).clamp_range(0..=9999));
+                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().cp).clamp_range(0..=9999));
                 });
             });
             ui.horizontal(|ui| {
                 ui.label("Job Level:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(egui::DragValue::new(self.crafter_config.level_mut()).clamp_range(1..=100));
+                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().level).clamp_range(1..=100));
                 });
             });
             ui.separator();
@@ -428,21 +430,25 @@ impl MacroSolverApp {
             ui.separator();
 
             ui.label(egui::RichText::new("Actions").strong());
-            if self.crafter_config.level() as u32 >= Action::Manipulation.level_requirement() {
+            if self.crafter_config.active_stats().level as u32 >= Action::Manipulation.level_requirement() {
                 ui.add(egui::Checkbox::new(
-                    self.crafter_config.manipulation_mut(),
-                    "Enable Manipulation",
+                    &mut self.crafter_config.active_stats_mut().manipulation,
+                    format!("Enable {}", action_name(Action::Manipulation, self.locale)),
                 ));
             } else {
                 ui.add_enabled(
                     false,
-                    egui::Checkbox::new(&mut false, "Enable Manipulation"),
+                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::Manipulation, self.locale))),
                 );
             }
-            ui.add_enabled(
-                false,
-                egui::Checkbox::new(&mut false, "Enable specialist actions (WIP)"),
-            );
+            if self.crafter_config.active_stats().level as u32 >= Action::QuickInnovation.level_requirement() {
+                ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().quick_innovation, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))));
+            } else {
+                ui.add_enabled(
+                    false,
+                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))),
+                );
+            }
             ui.separator();
 
             ui.label(egui::RichText::new("Solver settings").strong());

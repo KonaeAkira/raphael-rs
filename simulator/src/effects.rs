@@ -27,13 +27,13 @@ pub struct Effects {
     pub inner_quiet: u8,
     #[bits(4)]
     pub waste_not: u8,
-    #[bits(4)]
+    #[bits(3)]
     pub innovation: u8,
-    #[bits(4)]
+    #[bits(3)]
     pub veneration: u8,
-    #[bits(4)]
+    #[bits(3)]
     pub great_strides: u8,
-    #[bits(4)]
+    #[bits(3)]
     pub muscle_memory: u8,
     #[bits(4)]
     pub manipulation: u8,
@@ -41,6 +41,10 @@ pub struct Effects {
     pub trained_perfection: SingleUse,
     #[bits(2)]
     pub guard: u8,
+    #[bits(1)]
+    pub quick_innovation_used: bool,
+    #[bits(3)]
+    _padding: u8,
 }
 
 impl Effects {

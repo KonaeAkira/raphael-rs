@@ -177,7 +177,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(
@@ -207,7 +209,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: true,
         };
         let result = solve(
@@ -237,7 +241,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(
@@ -264,7 +270,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: true,
         };
         let result = solve(
@@ -291,7 +299,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(
@@ -323,7 +333,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: true,
         };
         let result = solve(
@@ -355,7 +367,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -372,7 +386,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -389,7 +405,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -406,7 +424,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -423,7 +443,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -440,7 +462,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
@@ -457,7 +481,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[Action::Reflect]);
@@ -474,7 +500,9 @@ mod tests {
             base_progress: 10000,
             base_quality: 10000,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, true, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[Action::PrudentTouch]);
@@ -491,7 +519,10 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90, false, false),
+            allowed_actions: ActionMask::from_level(90)
+                .remove(Action::Manipulation)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[]);
@@ -508,7 +539,10 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, false, false),
+            allowed_actions: ActionMask::from_level(100)
+                .remove(Action::Manipulation)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[]);
@@ -525,7 +559,10 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, false, false),
+            allowed_actions: ActionMask::from_level(100)
+                .remove(Action::Manipulation)
+                .remove(Action::TrainedEye)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[]);
@@ -542,7 +579,9 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, false, true),
+            allowed_actions: ActionMask::from_level(100)
+                .remove(Action::Manipulation)
+                .remove(Action::QuickInnovation),
             adversarial: false,
         };
         let result = solve(settings, &[]);
@@ -617,7 +656,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, true, false),
+            allowed_actions: ActionMask::all(),
             adversarial: false,
         };
         monotonic_fuzz_check(settings);
@@ -633,7 +672,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100, true, false),
+            allowed_actions: ActionMask::all(),
             adversarial: true,
         };
         monotonic_fuzz_check(settings);
