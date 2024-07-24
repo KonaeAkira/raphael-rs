@@ -9,7 +9,6 @@ crate-type = ["rlib"]
 
 [dependencies]
 simulator = { path = "../simulator" }
-num-traits = "0.2.19"
 radix-heap = "0.4.2"
 rustc-hash = "1.1.0"
 pareto_front = "1.0.1"

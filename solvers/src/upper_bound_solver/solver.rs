@@ -75,29 +75,23 @@ impl UpperBoundSolver {
         }
         let pareto_front = self.solved_states.get(&reduced_state).unwrap();
 
-        match pareto_front.first() {
-            Some(first_element) => {
-                if first_element.first < state.missing_progress {
+        match pareto_front.last() {
+            Some(element) => {
+                if element.first < state.missing_progress {
                     return 0;
                 }
             }
             None => return 0,
         }
 
-        let mut lo = 0;
-        let mut hi = pareto_front.len();
-        while lo + 1 != hi {
-            let m = (lo + hi) / 2;
-            if pareto_front[m].first < state.missing_progress {
-                hi = m;
-            } else {
-                lo = m;
-            }
-        }
-
+        let index =
+            match pareto_front.binary_search_by_key(&state.missing_progress, |value| value.first) {
+                Ok(i) => i,
+                Err(i) => i,
+            };
         std::cmp::min(
             self.settings.max_quality.saturating_mul(2),
-            pareto_front[lo].second.saturating_add(current_quality),
+            pareto_front[index].second.saturating_add(current_quality),
         )
     }
 
@@ -136,16 +130,17 @@ impl UpperBoundSolver {
                         Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
                         None => self.solve_state(new_state),
                     }
-                    self.pareto_front_builder
-                        .add(action_progress, action_quality);
+                    self.pareto_front_builder.map(move |value| {
+                        value.first += action_progress;
+                        value.second += action_quality;
+                    });
                     self.pareto_front_builder.merge();
                 }
                 if new_state.cp + self.base_durability_cost >= 0 && action_progress != 0 {
                     // "durability" must not go lower than -5
                     // last action must be a progress increase
-                    self.pareto_front_builder.push(&[ParetoValue::new(0, 0)]);
                     self.pareto_front_builder
-                        .add(action_progress, action_quality);
+                        .push(&[ParetoValue::new(action_progress, action_quality)]);
                     self.pareto_front_builder.merge();
                 }
             }

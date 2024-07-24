@@ -7,7 +7,7 @@ use crate::{
     actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
     finish_solver::FinishSolver,
     upper_bound_solver::UpperBoundSolver,
-    utils::{Backtracking, NamedTimer},
+    utils::{Backtracking, NamedTimer, Score},
 };
 
 use super::pareto_set::ParetoSet;
@@ -57,7 +57,7 @@ pub fn quick_search(
         },
     );
 
-    let mut best_score = Score::new(0, u8::MAX, u8::MAX, settings);
+    let mut best_score = Score::new(settings.max_quality, u8::MAX, u8::MAX, settings);
     let mut best_actions = None;
 
     while let Some((score, node)) = search_queue.pop() {
@@ -82,8 +82,13 @@ pub fn quick_search(
                     if !finish_solver.can_finish(&in_progress) {
                         continue;
                     }
-                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(in_progress);
-                    if quality_upper_bound < settings.max_quality {
+                    let new_score = Score::new(
+                        upper_bound_solver.quality_upper_bound(in_progress),
+                        score.duration + action.time_cost() as u8,
+                        score.steps + 1,
+                        settings,
+                    );
+                    if new_score <= best_score {
                         continue;
                     }
                     if !pareto_set.insert(state) {
@@ -91,12 +96,7 @@ pub fn quick_search(
                     }
                     let backtrack_index = backtracking.push(action, node.backtrack_index);
                     search_queue.push(
-                        Score::new(
-                            quality_upper_bound,
-                            score.duration + action.time_cost() as u8,
-                            score.steps + 1,
-                            settings,
-                        ),
+                        new_score,
                         SearchNode {
                             state: in_progress,
                             backtrack_index,
@@ -161,53 +161,5 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
         Action::GreatStrides => state.effects.great_strides() == 0,
         Action::TrainedPerfection => state.effects.waste_not() == 0,
         _ => true,
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Score {
-    duration: u8,
-    steps: u8,
-    quality_overflow: u16,
-}
-
-impl Score {
-    fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
-        Self {
-            duration,
-            steps,
-            quality_overflow: quality.saturating_sub(settings.max_quality),
-        }
-    }
-}
-
-impl std::cmp::PartialOrd for Score {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(std::cmp::Ord::cmp(self, other))
-    }
-}
-
-impl std::cmp::Ord for Score {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other
-            .duration
-            .cmp(&self.duration)
-            .then(other.steps.cmp(&self.steps))
-            .then(self.quality_overflow.cmp(&other.quality_overflow))
-    }
-}
-
-impl radix_heap::Radix for Score {
-    const RADIX_BITS: u32 = 32;
-    fn radix_similarity(&self, other: &Self) -> u32 {
-        if self.duration != other.duration {
-            self.duration.radix_similarity(&other.duration)
-        } else if self.steps != other.steps {
-            self.steps.radix_similarity(&other.steps) + 8
-        } else {
-            self.quality_overflow
-                .radix_similarity(&other.quality_overflow)
-                + 16
-        }
     }
 }

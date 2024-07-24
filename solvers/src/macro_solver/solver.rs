@@ -6,7 +6,7 @@ use super::pareto_set::ParetoSet;
 use super::quick_search::quick_search;
 use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
-use crate::utils::{Backtracking, NamedTimer};
+use crate::utils::{Backtracking, NamedTimer, Score};
 use crate::{FinishSolver, UpperBoundSolver};
 
 use std::vec::Vec;
@@ -190,57 +190,5 @@ impl<'a> MacroSolver<'a> {
 
         dbg!(&actions);
         actions
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Score {
-    quality: u16,
-    duration: u8,
-    steps: u8,
-    quality_overflow: u16,
-}
-
-impl Score {
-    fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
-        Self {
-            quality: std::cmp::min(settings.max_quality, quality),
-            duration,
-            steps,
-            quality_overflow: quality.saturating_sub(settings.max_quality),
-        }
-    }
-}
-
-impl std::cmp::PartialOrd for Score {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(std::cmp::Ord::cmp(self, other))
-    }
-}
-
-impl std::cmp::Ord for Score {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.quality
-            .cmp(&other.quality)
-            .then(other.duration.cmp(&self.duration))
-            .then(other.steps.cmp(&self.steps))
-            .then(self.quality_overflow.cmp(&other.quality_overflow))
-    }
-}
-
-impl radix_heap::Radix for Score {
-    const RADIX_BITS: u32 = 48;
-    fn radix_similarity(&self, other: &Self) -> u32 {
-        if self.quality != other.quality {
-            self.quality.radix_similarity(&other.quality)
-        } else if self.duration != other.duration {
-            self.duration.radix_similarity(&other.duration) + 16
-        } else if self.steps != other.steps {
-            self.steps.radix_similarity(&other.steps) + 24
-        } else {
-            self.quality_overflow
-                .radix_similarity(&other.quality_overflow)
-                + 32
-        }
     }
 }

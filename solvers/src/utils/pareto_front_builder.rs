@@ -20,8 +20,8 @@ struct Segment {
 
 pub struct ParetoFrontBuilder<T, U>
 where
-    T: num_traits::int::PrimInt,
-    U: num_traits::int::PrimInt,
+    T: Copy + std::cmp::Ord,
+    U: Copy + std::cmp::Ord,
 {
     buffer: *mut ParetoValue<T, U>,
     buffer_head: usize,
@@ -37,8 +37,8 @@ where
 
 impl<T, U> ParetoFrontBuilder<T, U>
 where
-    T: num_traits::int::PrimInt,
-    U: num_traits::int::PrimInt,
+    T: Copy + std::cmp::Ord,
+    U: Copy + std::cmp::Ord,
 {
     pub fn new(max_first: T, max_second: U) -> Self {
         const INITIAL_CAPACITY: usize = 1024;
@@ -113,16 +113,18 @@ where
         self.segments.push(segment);
     }
 
-    pub fn add(&mut self, first: T, second: U) {
+    /// Modify each element of the last segment in-place
+    /// Panics in case the last segment doesn't exist (i.e. there are no segments)
+    pub fn map<F>(&mut self, f: F)
+    where
+        F: Fn(&mut ParetoValue<T, U>) -> (),
+    {
         let segment = self.segments.last().unwrap();
         let slice: &mut [ParetoValue<T, U>];
         unsafe {
             slice = std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length);
         }
-        for x in slice.iter_mut() {
-            x.first = x.first.saturating_add(first);
-            x.second = x.second.saturating_add(second);
-        }
+        slice.iter_mut().for_each(f);
     }
 
     pub fn merge(&mut self) {
@@ -154,24 +156,24 @@ where
         let mut head_c: usize = 0;
         let mut tail_c: usize = 0;
 
-        let mut rolling_max: Option<U> = None;
+        let mut rolling_max: Option<T> = None;
         let mut try_insert = |x: ParetoValue<T, U>| {
-            if rolling_max.is_none() || x.second > rolling_max.unwrap() {
-                rolling_max = Some(x.second);
+            if rolling_max.is_none() || x.first > rolling_max.unwrap() {
+                rolling_max = Some(x.first);
                 slice_c[tail_c] = x;
                 tail_c += 1;
             }
         };
 
         while head_a < slice_a.len() && head_b < slice_b.len() {
-            match slice_a[head_a].first.cmp(&slice_b[head_b].first) {
+            match slice_a[head_a].second.cmp(&slice_b[head_b].second) {
                 std::cmp::Ordering::Less => {
                     try_insert(slice_b[head_b]);
                     head_b += 1;
                 }
                 std::cmp::Ordering::Equal => {
-                    let first = slice_a[head_a].first;
-                    let second = std::cmp::max(slice_a[head_a].second, slice_b[head_b].second);
+                    let first = std::cmp::max(slice_a[head_a].first, slice_b[head_b].first);
+                    let second = slice_a[head_a].second;
                     try_insert(ParetoValue::new(first, second));
                     head_a += 1;
                     head_b += 1;
@@ -193,13 +195,13 @@ where
             head_b += 1;
         }
 
-        // cut out values that are over max_first
-        while head_c + 1 < tail_c && slice_c[head_c + 1].first >= self.max_first {
+        // cut out values in front that are over max_second
+        while head_c + 1 < tail_c && slice_c[head_c + 1].second >= self.max_second {
             head_c += 1;
         }
 
-        // cut out values that are over max_second
-        while head_c + 1 < tail_c && slice_c[tail_c - 2].second >= self.max_second {
+        // cut out values in the back that are over max_first
+        while head_c + 1 < tail_c && slice_c[tail_c - 2].first >= self.max_first {
             tail_c -= 1;
         }
 
@@ -257,8 +259,8 @@ where
                 std::slice::from_raw_parts(self.buffer.add(segment.offset), segment.length)
             };
             for window in slice.windows(2) {
-                assert!(window[0].first > window[1].first);
-                assert!(window[0].second < window[1].second);
+                assert!(window[0].first < window[1].first);
+                assert!(window[0].second > window[1].second);
             }
         }
     }
@@ -266,8 +268,8 @@ where
 
 impl<T, U> Drop for ParetoFrontBuilder<T, U>
 where
-    T: num_traits::int::PrimInt,
-    U: num_traits::int::PrimInt,
+    T: Copy + std::cmp::Ord,
+    U: Copy + std::cmp::Ord,
 {
     fn drop(&mut self) {
         let buffer_byte_size = self.layout().size();
@@ -284,41 +286,25 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use rand::Rng;
 
-    use simulator::{ActionMask, Settings};
-
-    use super::*;
-
-    const SETTINGS: Settings = Settings {
-        max_cp: 500,
-        max_durability: 60,
-        max_progress: 1000,
-        max_quality: 2000,
-        base_progress: 0,
-        base_quality: 0,
-        job_level: 90,
-        allowed_actions: ActionMask::none(),
-        adversarial: false,
-    };
-
     const SAMPLE_FRONT_1: &[ParetoValue<u16, u16>] = &[
-        ParetoValue::new(300, 100),
-        ParetoValue::new(200, 200),
         ParetoValue::new(100, 300),
+        ParetoValue::new(200, 200),
+        ParetoValue::new(300, 100),
     ];
 
     const SAMPLE_FRONT_2: &[ParetoValue<u16, u16>] = &[
-        ParetoValue::new(300, 50),
-        ParetoValue::new(250, 150),
-        ParetoValue::new(150, 250),
         ParetoValue::new(50, 270),
+        ParetoValue::new(150, 250),
+        ParetoValue::new(250, 150),
+        ParetoValue::new(300, 50),
     ];
 
     #[test]
     fn test_merge_empty() {
-        let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
         builder.push_empty();
         builder.push_empty();
         builder.merge();
@@ -329,17 +315,19 @@ mod tests {
 
     #[test]
     fn test_value_shift() {
-        let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
         builder.push(SAMPLE_FRONT_1);
-        builder.add(100, 100);
+        builder.map(move |value| {
+            value.first += 100;
+            value.second += 100;
+        });
         let front = builder.peek().unwrap();
         assert_eq!(
             *front,
             [
-                ParetoValue::new(400, 200),
-                ParetoValue::new(300, 300),
                 ParetoValue::new(200, 400),
+                ParetoValue::new(300, 300),
+                ParetoValue::new(400, 200),
             ]
         );
         builder.check_invariants();
@@ -347,8 +335,7 @@ mod tests {
 
     #[test]
     fn test_merge() {
-        let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
         builder.push(SAMPLE_FRONT_1);
         builder.push(SAMPLE_FRONT_2);
         builder.merge();
@@ -356,11 +343,11 @@ mod tests {
         assert_eq!(
             *front,
             [
-                ParetoValue::new(300, 100),
-                ParetoValue::new(250, 150),
-                ParetoValue::new(200, 200),
-                ParetoValue::new(150, 250),
                 ParetoValue::new(100, 300),
+                ParetoValue::new(150, 250),
+                ParetoValue::new(200, 200),
+                ParetoValue::new(250, 150),
+                ParetoValue::new(300, 100),
             ]
         );
         builder.check_invariants();
@@ -368,23 +355,27 @@ mod tests {
 
     #[test]
     fn test_merge_truncated() {
-        let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
         builder.push(SAMPLE_FRONT_1);
-        builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
+        builder.map(|value| {
+            value.first += 1000;
+            value.second += 2000;
+        });
         builder.push(SAMPLE_FRONT_2);
-        builder.add(SETTINGS.max_progress, SETTINGS.max_quality);
+        builder.map(|value| {
+            value.first += 1000;
+            value.second += 2000;
+        });
         builder.merge();
         let front = builder.peek().unwrap();
-        assert_eq!(*front, [ParetoValue::new(1100, 2300)]);
+        assert_eq!(*front, [ParetoValue::new(1300, 2100)]);
         builder.check_invariants();
     }
 
     #[test]
-    fn test_random_simulation() {
+    fn test_fuzz() {
         let mut rng = rand::thread_rng();
-        let mut builder: ParetoFrontBuilder<u16, u16> =
-            ParetoFrontBuilder::new(SETTINGS.max_progress, SETTINGS.max_quality);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
         let mut lut = [0; 5000];
 
         for _ in 0..200 {
