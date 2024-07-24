@@ -106,6 +106,7 @@ const fn action_name_en(action: Action) -> &'static str {
         Action::ImmaculateMend => "Immaculate Mend",
         Action::TrainedPerfection => "Trained Perfection",
         Action::TrainedEye => "Trained Eye",
+        Action::QuickInnovation => "Quick Innovation",
     }
 }
 
@@ -139,6 +140,7 @@ const fn action_name_de(action: Action) -> &'static str {
         Action::ImmaculateMend => "Winkelzug",
         Action::TrainedPerfection => "Meisters Beitrag",
         Action::TrainedEye => "Flinke Hand",
+        Action::QuickInnovation => "Spontane Innovation",
     }
 }
 
@@ -172,6 +174,7 @@ const fn action_name_fr(action: Action) -> &'static str {
         Action::ImmaculateMend => "Réparation totale",
         Action::TrainedPerfection => "Main suprême",
         Action::TrainedEye => "Main preste",
+        Action::QuickInnovation => "Innovation instantanée",
     }
 }
 
@@ -205,5 +208,6 @@ const fn action_name_jp(action: Action) -> &'static str {
         Action::ImmaculateMend => "パーフェクトメンド",
         Action::TrainedPerfection => "匠の絶技",
         Action::TrainedEye => "匠の早業",
+        Action::QuickInnovation => "クイックイノベーション",
     }
 }

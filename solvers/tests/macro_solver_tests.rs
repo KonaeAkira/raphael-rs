@@ -45,7 +45,9 @@ fn test_random_0f93c79f() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -64,7 +66,9 @@ fn test_random_1e281667() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -83,7 +87,9 @@ fn test_random_d0bf2aef() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -102,7 +108,9 @@ fn test_unsolvable() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false);
@@ -119,7 +127,9 @@ fn test_max_quality() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -138,7 +148,9 @@ fn test_zero_quality() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -157,7 +169,9 @@ fn test_random_e413e05d() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -176,7 +190,9 @@ fn test_random_bb38a037() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -195,7 +211,9 @@ fn test_backload_random_bb38a037() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
@@ -215,7 +233,9 @@ fn test_random_a300ca2b() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -234,7 +254,9 @@ fn test_random_0f9d7781() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -253,7 +275,9 @@ fn test_random_e451d981() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -272,7 +296,9 @@ fn test_random_6799bb1d() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -291,7 +317,9 @@ fn test_random_940b4755() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -310,7 +338,9 @@ fn test_rinascita_3700_3280() {
         base_progress: 229,
         base_quality: 224,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -329,7 +359,9 @@ fn test_pactmaker_3240_3130() {
         base_progress: 200,
         base_quality: 215,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -348,7 +380,9 @@ fn test_backload_pactmaker_3240_3130() {
         base_progress: 200,
         base_quality: 215,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
@@ -368,7 +402,9 @@ fn test_diadochos_4021_3660() {
         base_progress: 249,
         base_quality: 247,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -387,7 +423,9 @@ fn test_indagator_3858_4057() {
         base_progress: 239,
         base_quality: 271,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -406,7 +444,9 @@ fn test_random_2ea6c001() {
         base_progress: 241,
         base_quality: 322,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -425,7 +465,9 @@ fn test_random_48ae7c9f() {
         base_progress: 295,
         base_quality: 310,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -444,7 +486,9 @@ fn test_backload_random_48ae7c9f() {
         base_progress: 295,
         base_quality: 310,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
@@ -452,6 +496,26 @@ fn test_backload_random_48ae7c9f() {
     assert_eq!(get_quality(&settings, &actions), 19445);
     assert_eq!(get_duration(&actions), 98);
     assert_eq!(actions.len(), 35);
+}
+
+#[test]
+fn test_backload_random_48ae7c9f_quick_innovation() {
+    let settings = Settings {
+        max_cp: 699,
+        max_durability: 80,
+        max_progress: 5700,
+        max_quality: 20000,
+        base_progress: 295,
+        base_quality: 310,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100).remove(Action::TrainedEye),
+        adversarial: false,
+    };
+    let actions = solve(&settings, true).unwrap();
+    assert!(is_progress_backloaded(&actions));
+    assert_eq!(get_quality(&settings, &actions), 19677);
+    assert_eq!(get_duration(&actions), 93);
+    assert_eq!(actions.len(), 33);
 }
 
 #[test]
@@ -464,7 +528,9 @@ fn test_max_quality_indagator_3858_4057() {
         base_progress: 239,
         base_quality: 271,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -507,7 +573,9 @@ fn test_random_4ecd54c4() {
         base_progress: 100,
         base_quality: 100,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -526,7 +594,9 @@ fn test_backload_random_4ecd54c4() {
         base_progress: 100,
         base_quality: 100,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
@@ -548,7 +618,7 @@ fn test_trained_eye() {
         base_progress: 310,
         base_quality: 379,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, true),
+        allowed_actions: ActionMask::from_level(100).remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
@@ -570,7 +640,9 @@ fn test_rare_tacos() {
         base_progress: 250,
         base_quality: 246,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
@@ -593,7 +665,10 @@ fn test_mountain_chromite_ingot_no_manipulation() {
         base_progress: 217,
         base_quality: 293,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, false, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::Manipulation)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, true).unwrap();
@@ -615,7 +690,9 @@ fn test_rare_tacos_2() {
         base_progress: 256,
         base_quality: 265,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -637,7 +714,9 @@ fn test_stuffed_peppers_2() {
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -645,6 +724,28 @@ fn test_stuffed_peppers_2() {
     assert_eq!(get_quality(&settings, &actions), 20177);
     assert_eq!(get_duration(&actions), 85);
     assert_eq!(actions.len(), 31);
+}
+
+#[test]
+fn test_stuffed_peppers_2_quick_innovation() {
+    // lv99 Rarefied Stuffed Peppers
+    // 4785 CMS, 4758 Ctrl, 646 CP
+    let settings = Settings {
+        max_cp: 646,
+        max_durability: 80,
+        max_progress: 6300,
+        max_quality: 40000,
+        base_progress: 289,
+        base_quality: 360,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100).remove(Action::TrainedEye),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    dbg!(actions.clone());
+    assert_eq!(get_quality(&settings, &actions), 20502);
+    assert_eq!(get_duration(&actions), 77);
+    assert_eq!(actions.len(), 28);
 }
 
 #[test]
@@ -659,7 +760,9 @@ fn test_rakaznar_lapidary_hammer() {
         base_progress: 237,
         base_quality: 245,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100, true, false),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
@@ -681,7 +784,9 @@ fn test_black_star() {
         base_progress: 250,
         base_quality: 312,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90, true, false),
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
         adversarial: false,
     };
     let actions = solve(&settings, false).unwrap();
