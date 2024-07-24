@@ -42,6 +42,7 @@ fn test_turali_pineapple_ponzecake() {
         cp: 600,
         level: 94,
         manipulation: true,
+        quick_innovation: false,
     };
     let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
@@ -81,6 +82,7 @@ fn test_smaller_water_otter_hardware() {
         cp: 687,
         level: 100,
         manipulation: true,
+        quick_innovation: false,
     };
     let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
@@ -121,6 +123,7 @@ fn test_grade_8_tincture() {
         cp: 687,
         level: 100,
         manipulation: true,
+        quick_innovation: false,
     };
     let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
@@ -155,6 +158,7 @@ fn test_claro_walnut_spinning_wheel() {
         cp: 594,
         level: 99,
         manipulation: true,
+        quick_innovation: true,
     };
     let settings = get_game_settings(recipe, crafter_stats, None, None, false);
     assert_eq!(
@@ -167,9 +171,7 @@ fn test_claro_walnut_spinning_wheel() {
             base_progress: 241,
             base_quality: 304,
             job_level: 99,
-            allowed_actions: ActionMask::from_level(99)
-                .remove(Action::TrainedEye)
-                .remove(Action::QuickInnovation),
+            allowed_actions: ActionMask::from_level(99).remove(Action::TrainedEye),
             adversarial: false,
         }
     );

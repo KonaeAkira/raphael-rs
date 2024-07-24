@@ -14,48 +14,12 @@ pub struct CrafterConfig {
 }
 
 impl CrafterConfig {
-    pub fn stats(&self) -> CrafterStats {
-        self.crafter_stats[self.selected_job as usize]
+    pub fn active_stats(&self) -> &CrafterStats {
+        &self.crafter_stats[self.selected_job as usize]
     }
 
-    pub fn craftsmanship(&self) -> u16 {
-        self.crafter_stats[self.selected_job as usize].craftsmanship
-    }
-
-    pub fn craftsmanship_mut(&mut self) -> &mut u16 {
-        &mut self.crafter_stats[self.selected_job as usize].craftsmanship
-    }
-
-    pub fn control(&self) -> u16 {
-        self.crafter_stats[self.selected_job as usize].control
-    }
-
-    pub fn control_mut(&mut self) -> &mut u16 {
-        &mut self.crafter_stats[self.selected_job as usize].control
-    }
-
-    pub fn cp(&self) -> u16 {
-        self.crafter_stats[self.selected_job as usize].cp
-    }
-
-    pub fn cp_mut(&mut self) -> &mut u16 {
-        &mut self.crafter_stats[self.selected_job as usize].cp
-    }
-
-    pub fn level(&self) -> u8 {
-        self.crafter_stats[self.selected_job as usize].level
-    }
-
-    pub fn level_mut(&mut self) -> &mut u8 {
-        &mut self.crafter_stats[self.selected_job as usize].level
-    }
-
-    pub fn manipulation(&self) -> bool {
-        self.crafter_stats[self.selected_job as usize].manipulation
-    }
-
-    pub fn manipulation_mut(&mut self) -> &mut bool {
-        &mut self.crafter_stats[self.selected_job as usize].manipulation
+    pub fn active_stats_mut(&mut self) -> &mut CrafterStats {
+        &mut self.crafter_stats[self.selected_job as usize]
     }
 }
 

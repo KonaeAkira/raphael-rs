@@ -78,7 +78,9 @@ pub fn get_game_settings(
     if recipe.is_expert || crafter_stats.level < recipe.level + 10 {
         allowed_actions = allowed_actions.remove(Action::TrainedEye);
     }
-    allowed_actions = allowed_actions.remove(Action::QuickInnovation);
+    if !crafter_stats.quick_innovation {
+        allowed_actions = allowed_actions.remove(Action::QuickInnovation);
+    }
 
     Settings {
         max_cp: cp as _,
