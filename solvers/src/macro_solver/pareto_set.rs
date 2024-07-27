@@ -2,7 +2,7 @@ use pareto_front::{Dominate, ParetoFront};
 use rustc_hash::FxHashMap;
 use simulator::{ComboAction, Effects, Settings, SimulationState};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 struct GenericValue {
     cp: i16,
     quality: [u16; 2],
@@ -47,7 +47,7 @@ impl GenericKey {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 struct ProgressValue {
     cp: i16,
     quality: u16,
@@ -115,21 +115,35 @@ impl ParetoSet {
                 .push(ProgressValue::new(state))
         }
     }
-}
 
-impl Drop for ParetoSet {
-    fn drop(&mut self) {
-        let generic_pareto_entries: usize = self
-            .generic_buckets
-            .iter()
-            .map(|(_key, value)| value.len())
-            .sum();
-        dbg!(self.generic_buckets.len(), generic_pareto_entries);
-        let progress_pareto_entries: usize = self
-            .progress_buckets
-            .iter()
-            .map(|(_key, value)| value.len())
-            .sum();
-        dbg!(self.progress_buckets.len(), progress_pareto_entries);
+    pub fn contains(&self, state: SimulationState, settings: &Settings) -> bool {
+        if state.get_quality() < settings.max_quality {
+            match self.generic_buckets.get(&GenericKey::new(state)) {
+                Some(pareto_front) => pareto_front.as_slice().contains(&GenericValue::new(state)),
+                None => false,
+            }
+        } else {
+            match self.progress_buckets.get(&ProgressKey::new(state)) {
+                Some(pareto_front) => pareto_front.as_slice().contains(&ProgressValue::new(state)),
+                None => false,
+            }
+        }
     }
 }
+
+// impl Drop for ParetoSet {
+//     fn drop(&mut self) {
+//         let generic_pareto_entries: usize = self
+//             .generic_buckets
+//             .iter()
+//             .map(|(_key, value)| value.len())
+//             .sum();
+//         dbg!(self.generic_buckets.len(), generic_pareto_entries);
+//         let progress_pareto_entries: usize = self
+//             .progress_buckets
+//             .iter()
+//             .map(|(_key, value)| value.len())
+//             .sum();
+//         dbg!(self.progress_buckets.len(), progress_pareto_entries);
+//     }
+// }

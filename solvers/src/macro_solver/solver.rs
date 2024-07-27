@@ -56,7 +56,6 @@ impl<'a> MacroSolver<'a> {
         drop(timer);
 
         if let Some(actions) = quick_search(
-            state,
             &self.settings,
             &mut self.finish_solver,
             &mut self.bound_solver,
