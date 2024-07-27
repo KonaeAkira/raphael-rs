@@ -20,6 +20,13 @@ const QUALITY_SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .remove(Action::AdvancedTouch) // non-combo version
     .remove(Action::DelicateSynthesis);
 
+#[derive(Clone, Copy)]
+struct Solution {
+    quality: u16,
+    action: Action,
+    backtrack_id: u32,
+}
+
 /// Check if a rotation that maxes out Quality can easily be found
 /// This solve function is fast because it doesn't consider all search branches:
 /// - Always increases Quality first, then finishes off Progress
@@ -31,6 +38,8 @@ pub fn quick_search(
 ) -> Option<Vec<Action>> {
     let _timer = NamedTimer::new("Quick search");
     let mut search_queue = SearchQueue::new(*settings);
+
+    let mut solution: Option<Solution> = None;
 
     while let Some((state, backtrack_id)) = search_queue.pop() {
         let allowed_actions = match state.raw_state().get_quality() >= settings.max_quality {
@@ -57,18 +66,29 @@ pub fn quick_search(
                     search_queue.push(in_progress, action, backtrack_id);
                 } else if state.missing_progress == 0 && state.get_quality() >= settings.max_quality
                 {
-                    let actions: Vec<_> = search_queue
-                        .backtrack(backtrack_id)
-                        .chain(std::iter::once(action))
-                        .collect();
-                    dbg!(&actions);
-                    return Some(actions);
+                    if solution.is_none() || solution.unwrap().quality < state.get_quality() {
+                        search_queue.lock();
+                        solution = Some(Solution {
+                            quality: state.get_quality(),
+                            action,
+                            backtrack_id,
+                        });
+                    }
                 }
             }
         }
     }
 
-    None
+    if let Some(solution) = solution {
+        let actions: Vec<_> = search_queue
+            .backtrack(solution.backtrack_id)
+            .chain(std::iter::once(solution.action))
+            .collect();
+        dbg!(&actions);
+        Some(actions)
+    } else {
+        None
+    }
 }
 
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {

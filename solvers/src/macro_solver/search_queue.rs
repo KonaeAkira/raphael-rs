@@ -69,6 +69,7 @@ pub struct SearchQueue {
     backtracking: Backtracking<Action>,
     current_macro_length: MacroLength,
     current_nodes: Vec<(InProgress, u32)>,
+    locked: bool,
 }
 
 impl SearchQueue {
@@ -81,10 +82,20 @@ impl SearchQueue {
             buckets: Default::default(),
             current_macro_length: Default::default(),
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
+            locked: false,
         }
     }
 
+    /// Clear all remaining buckets and prevent any more nodes from being added
+    pub fn lock(&mut self) {
+        self.buckets.clear();
+        self.locked = true;
+    }
+
     pub fn push(&mut self, state: InProgress, action: Action, parent_id: u32) {
+        if self.locked {
+            return;
+        }
         let key = self.current_macro_length.add(action);
         self.buckets.entry(key).or_default().push(
             SearchNode {
@@ -97,7 +108,7 @@ impl SearchQueue {
     }
 
     pub fn pop(&mut self) -> Option<(InProgress, u32)> {
-        if self.current_nodes.is_empty() {
+        while self.current_nodes.is_empty() {
             if let Some((macro_length, bucket)) = self.buckets.pop_first() {
                 self.current_macro_length = macro_length;
                 self.current_nodes = bucket
