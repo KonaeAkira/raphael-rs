@@ -106,12 +106,15 @@ impl<'a> MacroSolver<'a> {
             if solution.is_some() && score <= solution.unwrap().0 {
                 break;
             }
-            let search_actions = match backload_progress
+            let mut search_actions = match backload_progress
                 && node.state.raw_state().missing_progress != self.settings.max_progress
             {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
             };
+            if node.state.raw_state().get_quality() >= self.settings.max_quality {
+                search_actions = search_actions.minus(QUALITY_ACTIONS);
+            }
             for action in search_actions.actions_iter() {
                 if let Ok(state) = node
                     .state
@@ -123,9 +126,13 @@ impl<'a> MacroSolver<'a> {
                             finish_solver_rejected_nodes += 1;
                             continue;
                         }
-                        // skip this state if its Quality upper bound is not greater than the current best Quality
                         let quality_upper_bound =
-                            self.bound_solver.quality_upper_bound(in_progress);
+                            if state.get_quality() >= self.settings.max_quality {
+                                state.get_quality()
+                            } else {
+                                self.bound_solver.quality_upper_bound(in_progress)
+                            };
+                        // skip this state if its Quality upper bound is less than the current best Quality
                         if quality_upper_bound < quality_lower_bound {
                             upper_bound_solver_rejected_nodes += 1;
                             continue;
