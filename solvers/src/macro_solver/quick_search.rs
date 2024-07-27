@@ -91,7 +91,7 @@ pub fn quick_search(
                     if new_score <= best_score {
                         continue;
                     }
-                    if !pareto_set.insert(state) {
+                    if !pareto_set.insert(state, settings) {
                         continue;
                     }
                     let backtrack_index = backtracking.push(action, node.backtrack_index);

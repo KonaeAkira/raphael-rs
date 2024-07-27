@@ -9,7 +9,7 @@ fn main() {
         max_cp: 699,
         max_durability: 80,
         max_progress: 5700,
-        max_quality: 20000,
+        max_quality: 10000,
         base_progress: 295,
         base_quality: 310,
         job_level: 100,

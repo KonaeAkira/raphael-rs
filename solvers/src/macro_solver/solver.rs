@@ -138,7 +138,7 @@ impl<'a> MacroSolver<'a> {
                             continue;
                         }
                         // skip this state if it is Pareto-dominated
-                        if !pareto_set.insert(state) {
+                        if !pareto_set.insert(state, &self.settings) {
                             pareto_dominated_nodes += 1;
                             continue;
                         }

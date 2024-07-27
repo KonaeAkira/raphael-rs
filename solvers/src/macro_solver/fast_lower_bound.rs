@@ -55,7 +55,7 @@ pub fn fast_lower_bound(
                     if quality_upper_bound <= quality_lower_bound {
                         continue;
                     }
-                    if !pareto_set.insert(state) {
+                    if !pareto_set.insert(state, settings) {
                         continue;
                     }
                     search_queue.push(quality_upper_bound, in_progress);
