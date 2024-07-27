@@ -1,12 +1,12 @@
-use radix_heap::RadixHeapMap;
 use simulator::state::InProgress;
 use simulator::{Action, ActionMask, Condition, Settings};
 
-use super::pareto_set::ParetoSet;
 use super::quick_search::quick_search;
+use super::search_queue::SearchScore;
 use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
-use crate::utils::{Backtracking, NamedTimer, Score};
+use crate::macro_solver::search_queue::SearchQueue;
+use crate::utils::NamedTimer;
 use crate::{FinishSolver, UpperBoundSolver};
 
 use std::vec::Vec;
@@ -19,10 +19,11 @@ const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::DelicateSynthesis);
 
-#[derive(Debug, Clone, Copy)]
-struct SearchNode {
-    state: InProgress,
-    backtrack_index: u32,
+#[derive(Clone, Copy)]
+struct Solution {
+    quality: u16,
+    action: Action,
+    backtrack_id: u32,
 }
 
 type ProgressCallback<'a> = dyn Fn(&[Action]) + 'a;
@@ -35,8 +36,6 @@ pub struct MacroSolver<'a> {
 
 impl<'a> MacroSolver<'a> {
     pub fn new(settings: Settings, callback: Box<ProgressCallback<'a>>) -> MacroSolver<'a> {
-        dbg!(std::mem::size_of::<SearchNode>());
-        dbg!(std::mem::align_of::<SearchNode>());
         MacroSolver {
             settings,
             finish_solver: FinishSolver::new(settings),
@@ -56,6 +55,7 @@ impl<'a> MacroSolver<'a> {
         drop(timer);
 
         if let Some(actions) = quick_search(
+            state,
             &self.settings,
             &mut self.finish_solver,
             &mut self.bound_solver,
@@ -68,14 +68,19 @@ impl<'a> MacroSolver<'a> {
     }
 
     fn do_solve(&mut self, state: InProgress, backload_progress: bool) -> Option<Vec<Action>> {
-        let mut pareto_dominated_nodes: usize = 0;
         let mut finish_solver_rejected_nodes: usize = 0;
         let mut upper_bound_solver_rejected_nodes: usize = 0;
 
-        let mut pareto_set = ParetoSet::default();
-
-        let mut search_queue: RadixHeapMap<Score, SearchNode> = RadixHeapMap::new();
-        let mut backtracking: Backtracking<Action> = Backtracking::new();
+        let mut search_queue = SearchQueue::new(
+            state,
+            SearchScore::new(
+                self.bound_solver.quality_upper_bound(state),
+                0,
+                0,
+                &self.settings,
+            ),
+            self.settings,
+        );
 
         let mut quality_lower_bound = fast_lower_bound(
             state,
@@ -83,42 +88,24 @@ impl<'a> MacroSolver<'a> {
             &mut self.finish_solver,
             &mut self.bound_solver,
         );
-        let mut solution: Option<(Score, u32)> = None; // (quality, trace_index)
+        let mut solution: Option<Solution> = None;
 
-        search_queue.push(
-            Score::new(
-                self.bound_solver.quality_upper_bound(state),
-                0,
-                0,
-                &self.settings,
-            ),
-            SearchNode {
-                state,
-                backtrack_index: Backtracking::<Action>::SENTINEL,
-            },
-        );
-
-        while let Some((score, node)) = search_queue.pop() {
-            if score.quality < quality_lower_bound {
-                break;
-            }
-            if solution.is_some() && score <= solution.unwrap().0 {
-                break;
+        while let Some((state, score, backtrack_id)) = search_queue.pop() {
+            if self.bound_solver.quality_upper_bound(state) < quality_lower_bound {
+                upper_bound_solver_rejected_nodes += 1;
+                continue;
             }
             let mut search_actions = match backload_progress
-                && node.state.raw_state().missing_progress != self.settings.max_progress
+                && state.raw_state().missing_progress != self.settings.max_progress
             {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
             };
-            if node.state.raw_state().get_quality() >= self.settings.max_quality {
+            if state.raw_state().get_quality() >= self.settings.max_quality {
                 search_actions = search_actions.minus(QUALITY_ACTIONS);
             }
             for action in search_actions.actions_iter() {
-                if let Ok(state) = node
-                    .state
-                    .use_action(action, Condition::Normal, &self.settings)
-                {
+                if let Ok(state) = state.use_action(action, Condition::Normal, &self.settings) {
                     if let Ok(in_progress) = InProgress::try_from(state) {
                         // skip this state if it is impossible to max out Progress
                         if !self.finish_solver.can_finish(&in_progress) {
@@ -136,25 +123,17 @@ impl<'a> MacroSolver<'a> {
                             upper_bound_solver_rejected_nodes += 1;
                             continue;
                         }
-                        // skip this state if it is Pareto-dominated
-                        if !pareto_set.insert(state, &self.settings) {
-                            pareto_dominated_nodes += 1;
-                            continue;
-                        }
 
-                        let duration = score.duration + action.time_cost() as u8;
-                        let backtrack_index = backtracking.push(action, node.backtrack_index);
                         search_queue.push(
-                            Score::new(
+                            in_progress,
+                            SearchScore::new(
                                 quality_upper_bound,
-                                duration,
+                                score.duration + action.time_cost() as u8,
                                 score.steps + 1,
                                 &self.settings,
                             ),
-                            SearchNode {
-                                state: in_progress,
-                                backtrack_index,
-                            },
+                            action,
+                            backtrack_id,
                         );
 
                         let clamped_quality =
@@ -163,38 +142,31 @@ impl<'a> MacroSolver<'a> {
                             quality_lower_bound = clamped_quality;
                         }
                     } else if state.missing_progress == 0 {
-                        let final_score = Score::new(
-                            state.get_quality(),
-                            score.duration,
-                            score.steps,
-                            &self.settings,
-                        );
-                        if solution.is_none() || solution.unwrap().0 < final_score {
-                            let backtrack_index = backtracking.push(action, node.backtrack_index);
-                            solution = Some((final_score, backtrack_index));
-                            let actions: Vec<Action> = backtracking.get(backtrack_index).collect();
-                            (self.progress_callback)(&actions);
+                        if solution.is_none() || solution.unwrap().quality < state.get_quality() {
+                            solution = Some(Solution {
+                                quality: state.get_quality(),
+                                action,
+                                backtrack_id,
+                            });
                         }
                     }
                 }
             }
         }
 
-        let actions = match solution {
-            Some((score, trace_index)) => {
-                dbg!(score);
-                Some(backtracking.get(trace_index).collect())
-            }
-            None => None,
-        };
-
-        dbg!(
-            finish_solver_rejected_nodes,
-            upper_bound_solver_rejected_nodes,
-            pareto_dominated_nodes,
-        );
-
-        dbg!(&actions);
-        actions
+        if let Some(solution) = solution {
+            let actions: Vec<_> = search_queue
+                .backtrack(solution.backtrack_id)
+                .chain(std::iter::once(solution.action))
+                .collect();
+            dbg!(
+                &actions,
+                finish_solver_rejected_nodes,
+                upper_bound_solver_rejected_nodes,
+            );
+            Some(actions)
+        } else {
+            None
+        }
     }
 }

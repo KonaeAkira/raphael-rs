@@ -10,6 +10,8 @@ use crate::{
     utils::NamedTimer,
 };
 
+use super::search_queue::SearchScore;
+
 const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::DelicateSynthesis);
@@ -32,16 +34,27 @@ struct Solution {
 /// - Always increases Quality first, then finishes off Progress
 /// - Has some manually-coded branch pruning
 pub fn quick_search(
+    initial_state: InProgress,
     settings: &Settings,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut UpperBoundSolver,
 ) -> Option<Vec<Action>> {
     let _timer = NamedTimer::new("Quick search");
-    let mut search_queue = SearchQueue::new(*settings);
+
+    let mut search_queue = SearchQueue::new(
+        initial_state,
+        SearchScore::new(
+            upper_bound_solver.quality_upper_bound(initial_state),
+            0,
+            0,
+            settings,
+        ),
+        *settings,
+    );
 
     let mut solution: Option<Solution> = None;
 
-    while let Some((state, backtrack_id)) = search_queue.pop() {
+    while let Some((state, score, backtrack_id)) = search_queue.pop() {
         let allowed_actions = match state.raw_state().get_quality() >= settings.max_quality {
             true => PROGRESS_SEARCH_ACTIONS.intersection(settings.allowed_actions),
             false => QUALITY_SEARCH_ACTIONS.intersection(settings.allowed_actions),
@@ -60,10 +73,21 @@ pub fn quick_search(
                     if !finish_solver.can_finish(&in_progress) {
                         continue;
                     }
-                    if upper_bound_solver.quality_upper_bound(in_progress) < settings.max_quality {
+                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(in_progress);
+                    if quality_upper_bound < settings.max_quality {
                         continue;
                     }
-                    search_queue.push(in_progress, action, backtrack_id);
+                    search_queue.push(
+                        in_progress,
+                        SearchScore::new(
+                            quality_upper_bound,
+                            score.duration + action.time_cost() as u8,
+                            score.steps + 1,
+                            settings,
+                        ),
+                        action,
+                        backtrack_id,
+                    );
                 } else if state.missing_progress == 0 && state.get_quality() >= settings.max_quality
                 {
                     if solution.is_none() || solution.unwrap().quality < state.get_quality() {
