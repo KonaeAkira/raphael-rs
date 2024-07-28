@@ -48,23 +48,6 @@ impl std::cmp::Ord for SearchScore {
     }
 }
 
-impl radix_heap::Radix for SearchScore {
-    const RADIX_BITS: u32 = 48;
-    fn radix_similarity(&self, other: &Self) -> u32 {
-        if self.quality != other.quality {
-            self.quality.radix_similarity(&other.quality)
-        } else if self.duration != other.duration {
-            self.duration.radix_similarity(&other.duration) + 16
-        } else if self.steps != other.steps {
-            self.steps.radix_similarity(&other.steps) + 24
-        } else {
-            self.quality_overflow
-                .radix_similarity(&other.quality_overflow)
-                + 32
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 struct SearchNode {
     state: InProgress,

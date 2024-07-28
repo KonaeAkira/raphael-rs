@@ -19,11 +19,10 @@ const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::DelicateSynthesis);
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct Solution {
-    quality: u16,
-    action: Action,
-    backtrack_id: u32,
+    score: SearchScore,
+    actions: Vec<Action>,
 }
 
 type ProgressCallback<'a> = dyn Fn(&[Action]) + 'a;
@@ -140,18 +139,22 @@ impl<'a> MacroSolver<'a> {
                             backtrack_id,
                         );
                     } else if state.missing_progress == 0 {
-                        search_queue.update_min_score(SearchScore::new(
+                        let solution_score = SearchScore::new(
                             state.get_quality(),
                             score.duration,
                             score.steps,
                             &self.settings,
-                        ));
-                        if solution.is_none() || solution.unwrap().quality < state.get_quality() {
+                        );
+                        search_queue.update_min_score(solution_score);
+                        if solution.is_none() || solution.as_ref().unwrap().score < solution_score {
                             solution = Some(Solution {
-                                quality: state.get_quality(),
-                                action,
-                                backtrack_id,
+                                score: solution_score,
+                                actions: search_queue
+                                    .backtrack(backtrack_id)
+                                    .chain(std::iter::once(action))
+                                    .collect(),
                             });
+                            (self.progress_callback)(&solution.as_ref().unwrap().actions);
                         }
                     }
                 }
@@ -159,12 +162,8 @@ impl<'a> MacroSolver<'a> {
         }
 
         if let Some(solution) = solution {
-            let actions: Vec<_> = search_queue
-                .backtrack(solution.backtrack_id)
-                .chain(std::iter::once(solution.action))
-                .collect();
-            dbg!(&actions, finish_solver_rejected_nodes,);
-            Some(actions)
+            dbg!(&solution.actions, finish_solver_rejected_nodes);
+            Some(solution.actions)
         } else {
             None
         }
