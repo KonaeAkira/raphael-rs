@@ -15,19 +15,20 @@ pub struct SearchScore {
 }
 
 impl SearchScore {
-    pub const MIN: Self = Self {
-        quality: u16::MIN,
-        duration: u8::MAX,
-        steps: u8::MAX,
-        quality_overflow: u16::MIN,
-    };
-
     pub fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
         Self {
             quality: std::cmp::min(settings.max_quality, quality),
             duration,
             steps,
             quality_overflow: quality.saturating_sub(settings.max_quality),
+        }
+    }
+
+    fn difference(self, other: &Self) -> f32 {
+        if self.quality != other.quality {
+            self.quality.abs_diff(other.quality) as f32
+        } else {
+            self.duration.abs_diff(other.duration) as f32 / 255.0
         }
     }
 }
@@ -63,10 +64,16 @@ pub struct SearchQueue {
     current_score: SearchScore,
     current_nodes: Vec<(InProgress, u32)>,
     minimum_score: SearchScore,
+    initial_score_difference: f32,
 }
 
 impl SearchQueue {
-    pub fn new(initial_state: InProgress, initial_score: SearchScore, settings: Settings) -> Self {
+    pub fn new(
+        initial_state: InProgress,
+        initial_score: SearchScore,
+        minimum_score: SearchScore,
+        settings: Settings,
+    ) -> Self {
         Self {
             settings,
             pareto_set: Default::default(),
@@ -74,8 +81,13 @@ impl SearchQueue {
             buckets: Default::default(),
             current_score: initial_score,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
-            minimum_score: SearchScore::MIN,
+            minimum_score,
+            initial_score_difference: initial_score.difference(&minimum_score),
         }
+    }
+
+    pub fn progress_estimate(&self) -> f32 {
+        1.0 - self.current_score.difference(&self.minimum_score) / self.initial_score_difference
     }
 
     pub fn update_min_score(&mut self, score: SearchScore) {

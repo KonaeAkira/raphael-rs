@@ -43,22 +43,19 @@ pub fn quick_search(
 ) -> Option<Vec<Action>> {
     let _timer = NamedTimer::new("Quick search");
 
-    let mut search_queue = SearchQueue::new(
-        initial_state,
-        SearchScore::new(
-            upper_bound_solver.quality_upper_bound(initial_state),
-            0,
-            0,
-            settings,
-        ),
-        *settings,
+    let initial_score = SearchScore::new(
+        upper_bound_solver.quality_upper_bound(initial_state),
+        0,
+        0,
+        settings,
     );
-    search_queue.update_min_score(SearchScore {
+    let minimum_score = SearchScore {
         quality: settings.max_quality,
         duration: u8::MAX,
         steps: u8::MAX,
         quality_overflow: 0,
-    });
+    };
+    let mut search_queue = SearchQueue::new(initial_state, initial_score, minimum_score, *settings);
 
     let mut solution: Option<Solution> = None;
 
