@@ -174,6 +174,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -206,6 +207,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: true,
         };
@@ -238,6 +240,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -267,6 +270,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: true,
         };
@@ -296,6 +300,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -330,6 +335,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: true,
         };
@@ -364,6 +370,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -383,6 +390,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: true,
         };
@@ -402,6 +410,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -421,6 +430,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: true,
         };
@@ -440,6 +450,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -459,6 +470,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: true,
         };
@@ -478,6 +490,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -497,6 +510,7 @@ mod tests {
             job_level: 90,
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -517,6 +531,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(90)
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -537,6 +552,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(100)
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -557,6 +573,7 @@ mod tests {
             allowed_actions: ActionMask::from_level(100)
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };
@@ -576,6 +593,7 @@ mod tests {
             job_level: 100,
             allowed_actions: ActionMask::from_level(100)
                 .remove(Action::Manipulation)
+                .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
         };

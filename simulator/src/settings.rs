@@ -128,6 +128,7 @@ const ALL_ACTIONS: &[Action] = &[
     Action::IntensiveSynthesis,
     Action::AdvancedTouch,
     Action::ComboAdvancedTouch,
+    Action::HeartAndSoul,
     Action::PrudentSynthesis,
     Action::TrainedFinesse,
     Action::ComboRefinedTouch,

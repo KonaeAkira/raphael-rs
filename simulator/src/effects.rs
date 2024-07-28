@@ -7,11 +7,11 @@ pub enum SingleUse {
 }
 
 impl SingleUse {
-    const fn into_bits(self) -> u8 {
+    pub const fn into_bits(self) -> u8 {
         self as _
     }
 
-    const fn from_bits(value: u8) -> Self {
+    pub const fn from_bits(value: u8) -> Self {
         match value {
             0 => Self::Available,
             1 => Self::Active,
