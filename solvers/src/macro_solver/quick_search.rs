@@ -1,4 +1,5 @@
-use radix_heap::RadixHeapMap;
+use std::u8;
+
 use simulator::{
     state::InProgress, Action, ActionMask, ComboAction, Condition, Settings, SimulationState,
 };
@@ -6,11 +7,12 @@ use simulator::{
 use crate::{
     actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
     finish_solver::FinishSolver,
+    macro_solver::search_queue::SearchQueue,
     upper_bound_solver::UpperBoundSolver,
-    utils::{Backtracking, NamedTimer, Score},
+    utils::NamedTimer,
 };
 
-use super::pareto_set::ParetoSet;
+use super::search_queue::SearchScore;
 
 const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
@@ -22,10 +24,11 @@ const QUALITY_SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .remove(Action::AdvancedTouch) // non-combo version
     .remove(Action::DelicateSynthesis);
 
-#[derive(Debug, Clone, Copy)]
-struct SearchNode {
-    state: InProgress,
-    backtrack_index: u32,
+#[derive(Clone, Copy)]
+struct Solution {
+    quality: u16,
+    action: Action,
+    backtrack_id: u32,
 }
 
 /// Check if a rotation that maxes out Quality can easily be found
@@ -33,94 +36,96 @@ struct SearchNode {
 /// - Always increases Quality first, then finishes off Progress
 /// - Has some manually-coded branch pruning
 pub fn quick_search(
-    state: InProgress,
+    initial_state: InProgress,
     settings: &Settings,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut UpperBoundSolver,
 ) -> Option<Vec<Action>> {
     let _timer = NamedTimer::new("Quick search");
 
-    let mut search_queue: RadixHeapMap<Score, SearchNode> = RadixHeapMap::default();
-    let mut backtracking: Backtracking<Action> = Backtracking::new();
-    let mut pareto_set = ParetoSet::default();
-
-    search_queue.push(
-        Score::new(
-            upper_bound_solver.quality_upper_bound(state),
+    let mut search_queue = SearchQueue::new(
+        initial_state,
+        SearchScore::new(
+            upper_bound_solver.quality_upper_bound(initial_state),
             0,
             0,
             settings,
         ),
-        SearchNode {
-            state,
-            backtrack_index: Backtracking::<Action>::SENTINEL,
-        },
+        *settings,
     );
+    search_queue.update_min_score(SearchScore {
+        quality: settings.max_quality,
+        duration: u8::MAX,
+        steps: u8::MAX,
+        quality_overflow: 0,
+    });
 
-    let mut best_score = Score::new(settings.max_quality, u8::MAX, u8::MAX, settings);
-    let mut best_actions = None;
+    let mut solution: Option<Solution> = None;
 
-    while let Some((score, node)) = search_queue.pop() {
-        if score <= best_score {
-            break;
-        }
-        let allowed_actions = match node.state.raw_state().get_quality() >= settings.max_quality {
+    while let Some((state, score, backtrack_id)) = search_queue.pop() {
+        let allowed_actions = match state.raw_state().get_quality() >= settings.max_quality {
             true => PROGRESS_SEARCH_ACTIONS.intersection(settings.allowed_actions),
             false => QUALITY_SEARCH_ACTIONS.intersection(settings.allowed_actions),
         };
         for action in allowed_actions.actions_iter() {
-            if !should_use_action(action, node.state.raw_state(), allowed_actions) {
+            if !should_use_action(action, state.raw_state(), allowed_actions) {
                 continue;
             }
-            if let Ok(state) = node.state.use_action(action, Condition::Normal, settings) {
+            if let Ok(state) = state.use_action(action, Condition::Normal, settings) {
+                if action == Action::ByregotsBlessing && state.get_quality() < settings.max_quality
+                {
+                    continue;
+                }
                 if let Ok(in_progress) = InProgress::try_from(state) {
-                    if action == Action::ByregotsBlessing
-                        && state.get_quality() < settings.max_quality
-                    {
-                        continue;
-                    }
                     if !finish_solver.can_finish(&in_progress) {
                         continue;
                     }
-                    let new_score = Score::new(
-                        upper_bound_solver.quality_upper_bound(in_progress),
-                        score.duration + action.time_cost() as u8,
-                        score.steps + 1,
-                        settings,
-                    );
-                    if new_score <= best_score {
-                        continue;
-                    }
-                    if !pareto_set.insert(state) {
-                        continue;
-                    }
-                    let backtrack_index = backtracking.push(action, node.backtrack_index);
+                    let quality_upper_bound = if state.get_quality() >= settings.max_quality {
+                        state.get_quality()
+                    } else {
+                        upper_bound_solver.quality_upper_bound(in_progress)
+                    };
                     search_queue.push(
-                        new_score,
-                        SearchNode {
-                            state: in_progress,
-                            backtrack_index,
-                        },
+                        in_progress,
+                        SearchScore::new(
+                            quality_upper_bound,
+                            score.duration + action.time_cost() as u8,
+                            score.steps + 1,
+                            settings,
+                        ),
+                        action,
+                        backtrack_id,
                     );
                 } else if state.missing_progress == 0 && state.get_quality() >= settings.max_quality
                 {
-                    let score =
-                        Score::new(state.get_quality(), score.duration, score.steps, settings);
-                    if score > best_score {
-                        let actions = backtracking
-                            .get(node.backtrack_index)
-                            .chain(std::iter::once(action))
-                            .collect();
-                        best_score = score;
-                        best_actions = Some(actions);
+                    if solution.is_none() || solution.unwrap().quality < state.get_quality() {
+                        search_queue.update_min_score(SearchScore::new(
+                            state.get_quality(),
+                            score.duration,
+                            score.steps,
+                            settings,
+                        ));
+                        solution = Some(Solution {
+                            quality: state.get_quality(),
+                            action,
+                            backtrack_id,
+                        });
                     }
                 }
             }
         }
     }
 
-    dbg!(&best_score, &best_actions);
-    best_actions
+    if let Some(solution) = solution {
+        let actions: Vec<_> = search_queue
+            .backtrack(solution.backtrack_id)
+            .chain(std::iter::once(solution.action))
+            .collect();
+        dbg!(&actions);
+        Some(actions)
+    } else {
+        None
+    }
 }
 
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {

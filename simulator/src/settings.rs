@@ -67,6 +67,12 @@ impl ActionMask {
         }
     }
 
+    pub const fn minus(self, other: Self) -> Self {
+        Self {
+            mask: self.mask & (!other.mask),
+        }
+    }
+
     pub fn actions(self) -> Box<[Action]> {
         ALL_ACTIONS
             .iter()
