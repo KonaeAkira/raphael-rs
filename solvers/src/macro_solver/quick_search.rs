@@ -1,3 +1,5 @@
+use std::u8;
+
 use simulator::{
     state::InProgress, Action, ActionMask, ComboAction, Condition, Settings, SimulationState,
 };
@@ -51,6 +53,12 @@ pub fn quick_search(
         ),
         *settings,
     );
+    search_queue.update_min_score(SearchScore {
+        quality: settings.max_quality,
+        duration: u8::MAX,
+        steps: u8::MAX,
+        quality_overflow: 0,
+    });
 
     let mut solution: Option<Solution> = None;
 
@@ -64,23 +72,18 @@ pub fn quick_search(
                 continue;
             }
             if let Ok(state) = state.use_action(action, Condition::Normal, settings) {
+                if action == Action::ByregotsBlessing && state.get_quality() < settings.max_quality
+                {
+                    continue;
+                }
                 if let Ok(in_progress) = InProgress::try_from(state) {
-                    if action == Action::ByregotsBlessing
-                        && state.get_quality() < settings.max_quality
-                    {
-                        continue;
-                    }
                     if !finish_solver.can_finish(&in_progress) {
-                        continue;
-                    }
-                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(in_progress);
-                    if quality_upper_bound < settings.max_quality {
                         continue;
                     }
                     search_queue.push(
                         in_progress,
                         SearchScore::new(
-                            quality_upper_bound,
+                            upper_bound_solver.quality_upper_bound(in_progress),
                             score.duration + action.time_cost() as u8,
                             score.steps + 1,
                             settings,
@@ -91,7 +94,12 @@ pub fn quick_search(
                 } else if state.missing_progress == 0 && state.get_quality() >= settings.max_quality
                 {
                     if solution.is_none() || solution.unwrap().quality < state.get_quality() {
-                        search_queue.lock();
+                        search_queue.update_min_score(SearchScore::new(
+                            state.get_quality(),
+                            score.duration,
+                            score.steps,
+                            settings,
+                        ));
                         solution = Some(Solution {
                             quality: state.get_quality(),
                             action,

@@ -69,7 +69,6 @@ impl<'a> MacroSolver<'a> {
 
     fn do_solve(&mut self, state: InProgress, backload_progress: bool) -> Option<Vec<Action>> {
         let mut finish_solver_rejected_nodes: usize = 0;
-        let mut upper_bound_solver_rejected_nodes: usize = 0;
 
         let mut search_queue = SearchQueue::new(
             state,
@@ -82,19 +81,22 @@ impl<'a> MacroSolver<'a> {
             self.settings,
         );
 
-        let mut quality_lower_bound = fast_lower_bound(
+        let quality_lower_bound = fast_lower_bound(
             state,
             &self.settings,
             &mut self.finish_solver,
             &mut self.bound_solver,
         );
+        search_queue.update_min_score(SearchScore::new(
+            quality_lower_bound,
+            u8::MAX,
+            u8::MAX,
+            &self.settings,
+        ));
+
         let mut solution: Option<Solution> = None;
 
         while let Some((state, score, backtrack_id)) = search_queue.pop() {
-            if self.bound_solver.quality_upper_bound(state) < quality_lower_bound {
-                upper_bound_solver_rejected_nodes += 1;
-                continue;
-            }
             let mut search_actions = match backload_progress
                 && state.raw_state().missing_progress != self.settings.max_progress
             {
@@ -107,23 +109,25 @@ impl<'a> MacroSolver<'a> {
             for action in search_actions.actions_iter() {
                 if let Ok(state) = state.use_action(action, Condition::Normal, &self.settings) {
                     if let Ok(in_progress) = InProgress::try_from(state) {
-                        // skip this state if it is impossible to max out Progress
                         if !self.finish_solver.can_finish(&in_progress) {
+                            // skip this state if it is impossible to max out Progress
                             finish_solver_rejected_nodes += 1;
                             continue;
                         }
+
+                        search_queue.update_min_score(SearchScore::new(
+                            state.get_quality(),
+                            u8::MAX,
+                            u8::MAX,
+                            &self.settings,
+                        ));
+
                         let quality_upper_bound =
                             if state.get_quality() >= self.settings.max_quality {
                                 state.get_quality()
                             } else {
                                 self.bound_solver.quality_upper_bound(in_progress)
                             };
-                        // skip this state if its Quality upper bound is less than the current best Quality
-                        if quality_upper_bound < quality_lower_bound {
-                            upper_bound_solver_rejected_nodes += 1;
-                            continue;
-                        }
-
                         search_queue.push(
                             in_progress,
                             SearchScore::new(
@@ -135,13 +139,13 @@ impl<'a> MacroSolver<'a> {
                             action,
                             backtrack_id,
                         );
-
-                        let clamped_quality =
-                            std::cmp::min(state.get_quality(), self.settings.max_quality);
-                        if clamped_quality > quality_lower_bound {
-                            quality_lower_bound = clamped_quality;
-                        }
                     } else if state.missing_progress == 0 {
+                        search_queue.update_min_score(SearchScore::new(
+                            state.get_quality(),
+                            score.duration,
+                            score.steps,
+                            &self.settings,
+                        ));
                         if solution.is_none() || solution.unwrap().quality < state.get_quality() {
                             solution = Some(Solution {
                                 quality: state.get_quality(),
@@ -159,11 +163,7 @@ impl<'a> MacroSolver<'a> {
                 .backtrack(solution.backtrack_id)
                 .chain(std::iter::once(solution.action))
                 .collect();
-            dbg!(
-                &actions,
-                finish_solver_rejected_nodes,
-                upper_bound_solver_rejected_nodes,
-            );
+            dbg!(&actions, finish_solver_rejected_nodes,);
             Some(actions)
         } else {
             None

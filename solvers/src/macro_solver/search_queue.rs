@@ -15,11 +15,11 @@ pub struct SearchScore {
 }
 
 impl SearchScore {
-    pub const MAX: Self = Self {
-        quality: u16::MAX,
-        duration: 0,
-        steps: 0,
-        quality_overflow: u16::MAX,
+    pub const MIN: Self = Self {
+        quality: u16::MIN,
+        duration: u8::MAX,
+        steps: u8::MAX,
+        quality_overflow: u16::MIN,
     };
 
     pub fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
@@ -79,7 +79,7 @@ pub struct SearchQueue {
     backtracking: Backtracking<Action>,
     current_score: SearchScore,
     current_nodes: Vec<(InProgress, u32)>,
-    locked: bool,
+    minimum_score: SearchScore,
 }
 
 impl SearchQueue {
@@ -91,21 +91,28 @@ impl SearchQueue {
             buckets: Default::default(),
             current_score: initial_score,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
-            locked: false,
+            minimum_score: SearchScore::MIN,
         }
     }
 
-    /// Clear all remaining buckets and prevent any more nodes from being added
-    pub fn lock(&mut self) {
-        self.buckets.clear();
-        self.locked = true;
+    pub fn update_min_score(&mut self, score: SearchScore) {
+        if self.minimum_score >= score {
+            return;
+        }
+        self.minimum_score = score;
+        while let Some((bucket_score, _)) = self.buckets.first_key_value() {
+            if *bucket_score >= self.minimum_score {
+                break;
+            }
+            self.buckets.pop_first();
+        }
     }
 
     pub fn push(&mut self, state: InProgress, score: SearchScore, action: Action, parent_id: u32) {
-        if self.locked {
+        assert!(self.current_score > score);
+        if score < self.minimum_score {
             return;
         }
-        assert!(self.current_score > score);
         self.buckets.entry(score).or_default().push(SearchNode {
             state,
             action,
