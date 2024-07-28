@@ -70,13 +70,6 @@ impl ParetoSet {
             .or_default()
             .push(Value::new(state))
     }
-
-    pub fn contains(&self, state: SimulationState, settings: &Settings) -> bool {
-        match self.buckets.get(&Key::new(state, settings)) {
-            Some(pareto_front) => pareto_front.as_slice().contains(&Value::new(state)),
-            None => false,
-        }
-    }
 }
 
 impl Drop for ParetoSet {
