@@ -6,15 +6,17 @@ fn main() {
     dbg!(std::mem::align_of::<SimulationState>());
 
     let settings = Settings {
-        max_cp: 699,
-        max_durability: 80,
-        max_progress: 5700,
+        max_cp: 553,
+        max_durability: 70,
+        max_progress: 2400,
         max_quality: 20000,
-        base_progress: 295,
-        base_quality: 310,
-        job_level: 100,
-        allowed_actions: ActionMask::from_level(100).remove(Action::TrainedEye),
-        adversarial: false,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 90,
+        allowed_actions: ActionMask::from_level(90)
+            .remove(Action::TrainedEye)
+            .remove(Action::QuickInnovation),
+        adversarial: true,
     };
 
     let state = InProgress::new(&settings);
