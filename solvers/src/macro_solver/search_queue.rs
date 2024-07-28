@@ -72,31 +72,10 @@ struct SearchNode {
     parent_id: u32,
 }
 
-#[derive(Default)]
-struct Bucket {
-    nodes: Vec<SearchNode>,
-    pareto_set: ParetoSet,
-}
-
-impl Bucket {
-    fn push(&mut self, node: SearchNode, settings: &Settings) {
-        if self.pareto_set.insert(*node.state.raw_state(), settings) {
-            self.nodes.push(node);
-        }
-    }
-
-    fn into_iter(self, settings: Settings) -> impl Iterator<Item = SearchNode> {
-        let Self { nodes, pareto_set } = self;
-        nodes
-            .into_iter()
-            .filter(move |node| pareto_set.contains(*node.state.raw_state(), &settings))
-    }
-}
-
 pub struct SearchQueue {
     settings: Settings,
     pareto_set: ParetoSet,
-    buckets: BTreeMap<SearchScore, Bucket>,
+    buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<Action>,
     current_score: SearchScore,
     current_nodes: Vec<(InProgress, u32)>,
@@ -127,14 +106,11 @@ impl SearchQueue {
             return;
         }
         assert!(self.current_score > score);
-        self.buckets.entry(score).or_default().push(
-            SearchNode {
-                state,
-                action,
-                parent_id,
-            },
-            &self.settings,
-        );
+        self.buckets.entry(score).or_default().push(SearchNode {
+            state,
+            action,
+            parent_id,
+        });
     }
 
     pub fn pop(&mut self) -> Option<(InProgress, SearchScore, u32)> {
@@ -142,7 +118,7 @@ impl SearchQueue {
             if let Some((score, bucket)) = self.buckets.pop_last() {
                 self.current_score = score;
                 self.current_nodes = bucket
-                    .into_iter(self.settings)
+                    .into_iter()
                     .filter(|node| {
                         self.pareto_set
                             .insert(*node.state.raw_state(), &self.settings)

@@ -5,7 +5,6 @@ use simulator::{ComboAction, Effects, Settings, SimulationState};
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Value {
     cp: i16,
-    missing_progress: u16,
     quality: [u16; 2],
     inner_quiet: u8,
 }
@@ -14,7 +13,6 @@ impl Value {
     pub fn new(state: SimulationState) -> Self {
         Self {
             cp: state.cp,
-            missing_progress: state.missing_progress,
             quality: state.unreliable_quality,
             inner_quiet: state.effects.inner_quiet(),
         }
@@ -24,7 +22,6 @@ impl Value {
 impl Dominate for Value {
     fn dominate(&self, other: &Self) -> bool {
         self.cp >= other.cp
-            && self.missing_progress <= other.missing_progress
             && self.quality[0] >= other.quality[0]
             && self.quality[1] >= other.quality[1]
             && self.inner_quiet >= other.inner_quiet
@@ -33,6 +30,7 @@ impl Dominate for Value {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Key {
+    missing_progress: u16,
     durability: i8,
     effects: Effects,
     combo: Option<ComboAction>,
@@ -53,6 +51,7 @@ impl Key {
         };
         Self {
             durability: state.durability,
+            missing_progress: state.missing_progress,
             effects,
             combo: state.combo,
         }
@@ -80,9 +79,9 @@ impl ParetoSet {
     }
 }
 
-// impl Drop for ParetoSet {
-//     fn drop(&mut self) {
-//         let pareto_entries: usize = self.buckets.iter().map(|(_key, value)| value.len()).sum();
-//         dbg!(self.buckets.len(), pareto_entries);
-//     }
-// }
+impl Drop for ParetoSet {
+    fn drop(&mut self) {
+        let pareto_entries: usize = self.buckets.iter().map(|(_key, value)| value.len()).sum();
+        dbg!(self.buckets.len(), pareto_entries);
+    }
+}
