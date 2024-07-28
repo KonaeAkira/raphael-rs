@@ -78,6 +78,9 @@ pub fn get_game_settings(
     if recipe.is_expert || crafter_stats.level < recipe.level + 10 {
         allowed_actions = allowed_actions.remove(Action::TrainedEye);
     }
+    if !crafter_stats.heart_and_soul {
+        allowed_actions = allowed_actions.remove(Action::HeartAndSoul);
+    }
     if !crafter_stats.quick_innovation {
         allowed_actions = allowed_actions.remove(Action::QuickInnovation);
     }

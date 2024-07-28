@@ -13,6 +13,8 @@ pub struct CrafterStats {
     #[serde(default)]
     pub manipulation: bool,
     #[serde(default)]
+    pub heart_and_soul: bool,
+    #[serde(default)]
     pub quick_innovation: bool,
 }
 
@@ -24,6 +26,7 @@ impl Default for CrafterStats {
             cp: 620,
             level: 100,
             manipulation: true,
+            heart_and_soul: false,
             quick_innovation: false,
         }
     }

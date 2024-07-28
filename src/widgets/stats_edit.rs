@@ -40,10 +40,12 @@ impl<'a> Widget for StatsEdit<'a> {
                     ui.label("CP:");
                     ui.add(egui::DragValue::new(&mut stats.cp));
                     ui.label("Level:");
-                    ui.add(egui::DragValue::new(&mut stats.level));
+                    ui.add(egui::DragValue::new(&mut stats.level).clamp_range(1..=100));
                 });
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut stats.manipulation, "Manipulation");
+                    ui.checkbox(&mut stats.heart_and_soul, "Heart and Soul");
+                    ui.checkbox(&mut stats.quick_innovation, "Quick Innovation");
                 });
             }
         })
