@@ -117,7 +117,7 @@ where
     /// Panics in case the last segment doesn't exist (i.e. there are no segments)
     pub fn map<F>(&mut self, f: F)
     where
-        F: Fn(&mut ParetoValue<T, U>) -> (),
+        F: Fn(&mut ParetoValue<T, U>),
     {
         let segment = self.segments.last().unwrap();
         let slice: &mut [ParetoValue<T, U>];

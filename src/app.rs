@@ -26,7 +26,12 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
     }
 }
 
-type MacroResult = Option<(Vec<Action>, bool)>;
+#[derive(Debug, Serialize, Deserialize)]
+pub enum SolverEvent {
+    Progress(f32),
+    IntermediateSolution(Vec<Action>),
+    FinalSolution(Vec<Action>),
+}
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 struct SolverConfig {
@@ -52,10 +57,11 @@ pub struct MacroSolverApp {
     stats_edit_window_open: bool,
     actions: Vec<Action>,
     solver_pending: bool,
+    solver_progress: f32,
     start_time: Option<Instant>,
     duration: Option<Duration>,
     bridge: gloo_worker::WorkerBridge<WebWorker>,
-    data_update: Rc<Cell<Option<MacroResult>>>,
+    data_update: Rc<Cell<Option<SolverEvent>>>,
 }
 
 impl MacroSolverApp {
@@ -103,6 +109,7 @@ impl MacroSolverApp {
             stats_edit_window_open: false,
             actions: Vec::new(),
             solver_pending: false,
+            solver_progress: 0.0,
             start_time: None,
             duration: None,
             data_update,
@@ -134,10 +141,18 @@ impl eframe::App for MacroSolverApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if let Some(update) = self.data_update.take() {
-            log::debug!("Received update: {update:?}");
-            (self.actions, self.solver_pending) = update.unwrap_or((Vec::new(), true));
-            if !self.solver_pending {
-                self.duration = Some(Instant::now() - self.start_time.unwrap());
+            match update {
+                SolverEvent::Progress(progress) => {
+                    self.solver_progress = progress;
+                }
+                SolverEvent::IntermediateSolution(actions) => {
+                    self.actions = actions;
+                }
+                SolverEvent::FinalSolution(actions) => {
+                    self.actions = actions;
+                    self.duration = Some(Instant::now() - self.start_time.unwrap());
+                    self.solver_pending = false;
+                }
             }
         }
 
@@ -541,7 +556,9 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if ui.button("Solve").clicked() {
+                        self.actions = Vec::new();
                         self.solver_pending = true;
+                        self.solver_progress = 0.0;
                         self.start_time = Some(Instant::now());
                         let mut game_settings = game_data::get_game_settings(
                             self.recipe_config.recipe,
@@ -559,10 +576,13 @@ impl MacroSolverApp {
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
                         self.bridge
                             .send((game_settings, self.solver_config.backload_progress));
-                        log::debug!("Message send {game_settings:?}");
+                        log::debug!("{game_settings:?}");
                     }
                     if self.solver_pending {
                         ui.spinner();
+                        if self.solver_progress != 0.0 {
+                            ui.label(format!("{:.2}%", self.solver_progress * 100.0));
+                        }
                     } else if let Some(duration) = self.duration {
                         ui.label(format!("Time: {:.3}s", duration.as_secs_f64()));
                     }
@@ -598,7 +618,7 @@ pub struct WebWorker {}
 impl gloo_worker::Worker for WebWorker {
     type Message = u64;
     type Input = (Settings, bool);
-    type Output = MacroResult;
+    type Output = SolverEvent;
 
     fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
         panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -611,19 +631,31 @@ impl gloo_worker::Worker for WebWorker {
         &mut self,
         scope: &gloo_worker::WorkerScope<Self>,
         msg: Self::Input,
-        _id: gloo_worker::HandlerId,
+        id: gloo_worker::HandlerId,
     ) {
         let settings = msg.0;
         let backload_progress = msg.1;
-        let callback = |v: &[Action]| {
-            scope.respond(_id, Some((v.to_vec(), true)));
+
+        let solution_callback = move |actions: &[Action]| {
+            scope.respond(id, SolverEvent::IntermediateSolution(actions.to_vec()));
+        };
+        let progress_callback = move |progress: f32| {
+            scope.respond(id, SolverEvent::Progress(progress));
         };
 
-        scope.respond(
-            _id,
-            solvers::MacroSolver::new(settings, Box::new(callback))
-                .solve(InProgress::new(&settings), backload_progress)
-                .map(|v| (v, false)),
-        );
+        let final_solution = solvers::MacroSolver::new(
+            settings,
+            Box::new(solution_callback),
+            Box::new(progress_callback),
+        )
+        .solve(InProgress::new(&settings), backload_progress);
+        match final_solution {
+            Some(actions) => {
+                scope.respond(id, SolverEvent::FinalSolution(actions));
+            }
+            None => {
+                scope.respond(id, SolverEvent::FinalSolution(Vec::new()));
+            }
+        }
     }
 }
