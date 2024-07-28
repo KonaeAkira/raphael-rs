@@ -45,6 +45,7 @@ const SETTINGS: Settings = Settings {
     job_level: 100,
     allowed_actions: ActionMask::all()
         .remove(Action::TrainedEye)
+        .remove(Action::HeartAndSoul)
         .remove(Action::QuickInnovation),
     adversarial: true,
 };
@@ -75,6 +76,7 @@ fn test_random_1e281667() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -96,6 +98,7 @@ fn test_random_d0bf2aef() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -117,6 +120,7 @@ fn test_unsolvable() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -136,6 +140,7 @@ fn test_max_quality() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -157,6 +162,7 @@ fn test_zero_quality() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -178,6 +184,7 @@ fn test_random_e413e05d() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -199,6 +206,7 @@ fn test_random_bb38a037() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -220,6 +228,7 @@ fn test_backload_random_bb38a037() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -244,6 +253,7 @@ fn test_random_a300ca2b() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -265,6 +275,7 @@ fn test_random_0f9d7781() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -288,6 +299,7 @@ fn test_random_e451d981() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -309,6 +321,7 @@ fn test_random_6799bb1d() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -332,6 +345,7 @@ fn test_random_940b4755() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -355,6 +369,7 @@ fn test_rinascita_3700_3280() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -378,6 +393,7 @@ fn test_pactmaker_3240_3130() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -399,6 +415,7 @@ fn test_backload_pactmaker_3240_3130() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -423,6 +440,7 @@ fn test_diadochos_4021_3660() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -446,6 +464,7 @@ fn test_indagator_3858_4057() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -467,6 +486,7 @@ fn test_random_2ea6c001() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(100)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -490,6 +510,7 @@ fn test_random_48ae7c9f() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(100)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -513,6 +534,7 @@ fn test_backload_random_48ae7c9f() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(100)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -537,6 +559,7 @@ fn test_max_quality_indagator_3858_4057() {
         job_level: 90,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -558,6 +581,7 @@ fn test_random_4ecd54c4() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -579,6 +603,7 @@ fn test_backload_random_4ecd54c4() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -601,7 +626,9 @@ fn test_trained_eye() {
         base_progress: 310,
         base_quality: 379,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100).remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
         adversarial: true,
     };
     let actions = solve(&settings, true).unwrap();
@@ -625,6 +652,7 @@ fn test_rare_tacos() {
         job_level: 100,
         allowed_actions: ActionMask::from_level(100)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
@@ -651,6 +679,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
         allowed_actions: ActionMask::from_level(90)
             .remove(Action::Manipulation)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
     };

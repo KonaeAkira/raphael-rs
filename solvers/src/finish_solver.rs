@@ -14,14 +14,16 @@ const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
 #[bitfield_struct::bitfield(u16)]
 #[derive(PartialEq, Eq, Hash)]
 struct ReducedEffects {
-    #[bits(4)]
+    #[bits(3)]
     pub muscle_memory: u8,
     #[bits(4)]
     pub waste_not: u8,
-    #[bits(4)]
+    #[bits(3)]
     pub veneration: u8,
     #[bits(4)]
     pub manipulation: u8,
+    #[bits(2, default=SingleUse::Available)]
+    pub heart_and_soul: SingleUse,
 }
 
 impl ReducedEffects {
@@ -31,6 +33,7 @@ impl ReducedEffects {
             .with_waste_not(effects.waste_not())
             .with_veneration(effects.veneration())
             .with_manipulation(effects.manipulation())
+            .with_heart_and_soul(effects.heart_and_soul())
     }
 
     pub fn to_effects(self) -> Effects {
@@ -39,6 +42,7 @@ impl ReducedEffects {
             .with_veneration(self.veneration())
             .with_muscle_memory(self.muscle_memory())
             .with_manipulation(self.manipulation())
+            .with_heart_and_soul(self.heart_and_soul())
     }
 }
 

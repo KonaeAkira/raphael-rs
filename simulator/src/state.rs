@@ -123,7 +123,9 @@ impl InProgress {
                 Err("Action cannot be used during Waste Not")
             }
             Action::IntensiveSynthesis | Action::PreciseTouch
-                if condition != Condition::Good && condition != Condition::Excellent =>
+                if self.state.effects.heart_and_soul() != SingleUse::Active
+                    && condition != Condition::Good
+                    && condition != Condition::Excellent =>
             {
                 Err("Requires condition to be Good or Excellent")
             }
@@ -141,6 +143,9 @@ impl InProgress {
                     SingleUse::Available
                 ) =>
             {
+                Err("Action can only be used once per synthesis")
+            }
+            Action::HeartAndSoul if self.state.effects.heart_and_soul() != SingleUse::Available => {
                 Err("Action can only be used once per synthesis")
             }
             Action::QuickInnovation if self.state.effects.quick_innovation_used() => {
@@ -237,7 +242,7 @@ impl InProgress {
         state.combo = action.to_combo();
 
         // skip processing effects for actions that do not increase turn count
-        if !matches!(action, Action::QuickInnovation) {
+        if !matches!(action, Action::HeartAndSoul | Action::QuickInnovation) {
             if action == Action::Manipulation {
                 state.effects.set_manipulation(0);
             }
@@ -266,9 +271,15 @@ impl InProgress {
             Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
             Action::ImmaculateMend => state.durability = settings.max_durability,
             Action::TrainedPerfection => state.effects.set_trained_perfection(SingleUse::Active),
+            Action::HeartAndSoul => state.effects.set_heart_and_soul(SingleUse::Active),
             Action::QuickInnovation => {
                 state.effects.set_innovation(1);
                 state.effects.set_quick_innovation_used(true);
+            }
+            Action::IntensiveSynthesis | Action::PreciseTouch
+                if condition != Condition::Good && condition != Condition::Excellent =>
+            {
+                state.effects.set_heart_and_soul(SingleUse::Unavailable)
             }
             _ => (),
         }
