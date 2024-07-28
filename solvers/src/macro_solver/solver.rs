@@ -25,19 +25,22 @@ struct Solution {
     actions: Vec<Action>,
 }
 
+type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
+type ProgressCallback<'a> = dyn Fn(f32) + 'a;
+
 pub struct MacroSolver<'a> {
     settings: Settings,
     finish_solver: FinishSolver,
     bound_solver: UpperBoundSolver,
-    solution_callback: Box<dyn Fn(&[Action]) + 'a>,
-    progress_callback: Box<dyn Fn(f32) + 'a>,
+    solution_callback: Box<SolutionCallback<'a>>,
+    progress_callback: Box<ProgressCallback<'a>>,
 }
 
 impl<'a> MacroSolver<'a> {
     pub fn new(
         settings: Settings,
-        solution_callback: Box<dyn Fn(&[Action]) + 'a>,
-        progress_callback: Box<dyn Fn(f32) + 'a>,
+        solution_callback: Box<SolutionCallback<'a>>,
+        progress_callback: Box<ProgressCallback<'a>>,
     ) -> MacroSolver<'a> {
         MacroSolver {
             settings,

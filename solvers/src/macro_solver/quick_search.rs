@@ -1,5 +1,3 @@
-use std::u8;
-
 use simulator::{
     state::InProgress, Action, ActionMask, ComboAction, Condition, Settings, SimulationState,
 };
@@ -95,13 +93,13 @@ pub fn quick_search(
                     );
                 } else if state.missing_progress == 0 && state.get_quality() >= settings.max_quality
                 {
+                    search_queue.update_min_score(SearchScore::new(
+                        state.get_quality(),
+                        score.duration,
+                        score.steps,
+                        settings,
+                    ));
                     if solution.is_none() || solution.unwrap().quality < state.get_quality() {
-                        search_queue.update_min_score(SearchScore::new(
-                            state.get_quality(),
-                            score.duration,
-                            score.steps,
-                            settings,
-                        ));
                         solution = Some(Solution {
                             quality: state.get_quality(),
                             action,

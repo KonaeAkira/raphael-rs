@@ -74,7 +74,7 @@ impl ParetoSet {
 
 impl Drop for ParetoSet {
     fn drop(&mut self) {
-        let pareto_entries: usize = self.buckets.iter().map(|(_key, value)| value.len()).sum();
+        let pareto_entries: usize = self.buckets.values().map(|value| value.len()).sum();
         dbg!(self.buckets.len(), pareto_entries);
     }
 }
