@@ -7,7 +7,8 @@ pub const PROGRESS_ACTIONS: ActionMask = action_mask!(
     Action::CarefulSynthesis,
     Action::Groundwork,
     Action::DelicateSynthesis,
-    // Action::IntensiveSynthesis,
+    Action::IntensiveSynthesis,
+    Action::HeartAndSoul,
     Action::PrudentSynthesis
 );
 
@@ -19,7 +20,7 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::GreatStrides,
     Action::Innovation,
     Action::ByregotsBlessing,
-    // Action::PreciseTouch,
+    Action::PreciseTouch,
     Action::PrudentTouch,
     Action::Reflect,
     Action::PreparatoryTouch,
@@ -29,6 +30,7 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::TrainedFinesse,
     Action::ComboRefinedTouch,
     Action::TrainedEye,
+    Action::HeartAndSoul,
     Action::QuickInnovation
 );
 

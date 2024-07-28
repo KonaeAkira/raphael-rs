@@ -456,6 +456,14 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::Manipulation, self.locale))),
                 );
             }
+            if self.crafter_config.active_stats().level as u32 >= Action::HeartAndSoul.level_requirement() {
+                ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().heart_and_soul, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))));
+            } else {
+                ui.add_enabled(
+                    false,
+                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))),
+                );
+            }
             if self.crafter_config.active_stats().level as u32 >= Action::QuickInnovation.level_requirement() {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().quick_innovation, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))));
             } else {

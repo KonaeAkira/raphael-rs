@@ -1,4 +1,4 @@
-use simulator::{Action, ActionMask, Settings, SimulationState};
+use simulator::{Action, ActionMask, Settings, SimulationState, SingleUse};
 
 const SETTINGS: Settings = Settings {
     max_cp: 250,
@@ -249,6 +249,114 @@ fn test_delicate_synthesis() {
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
+}
+
+#[test]
+fn test_intensive_synthesis() {
+    let state = SimulationState::from_macro(
+        &SETTINGS,
+        &[Action::HeartAndSoul, Action::IntensiveSynthesis],
+    );
+    match state {
+        Ok(state) => {
+            assert_eq!(SETTINGS.max_progress - state.missing_progress, 400);
+            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::IntensiveSynthesis]);
+    assert!(matches!(
+        state,
+        Err("Requires condition to be Good or Excellent")
+    ));
+}
+
+#[test]
+fn test_precise_touch() {
+    let state =
+        SimulationState::from_macro(&SETTINGS, &[Action::HeartAndSoul, Action::PreciseTouch]);
+    match state {
+        Ok(state) => {
+            assert_eq!(state.get_quality(), 150);
+            assert_eq!(state.effects.inner_quiet(), 2);
+            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::IntensiveSynthesis]);
+    assert!(matches!(
+        state,
+        Err("Requires condition to be Good or Excellent")
+    ));
+}
+
+#[test]
+fn test_heart_and_soul() {
+    let settings = Settings {
+        adversarial: true,
+        ..SETTINGS
+    };
+    let state = SimulationState::from_macro(
+        &settings,
+        &[
+            Action::Manipulation,
+            Action::BasicTouch,
+            Action::HeartAndSoul,
+        ],
+    );
+    match state {
+        Ok(state) => {
+            assert_eq!(state.combo, None); // combo is removed
+            assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
+            assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
+            assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let state = SimulationState::from_macro(
+        &settings,
+        &[
+            Action::HeartAndSoul,
+            Action::PrudentSynthesis,
+            Action::MasterMend,
+        ],
+    );
+    match state {
+        Ok(state) => {
+            assert_eq!(state.effects.heart_and_soul(), SingleUse::Active); // effect stays active until used
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let state = SimulationState::from_macro(
+        &settings,
+        &[Action::HeartAndSoul, Action::IntensiveSynthesis],
+    );
+    match state {
+        Ok(state) => {
+            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable); // effect is used up
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let state =
+        SimulationState::from_macro(&settings, &[Action::HeartAndSoul, Action::PreciseTouch]);
+    match state {
+        Ok(state) => {
+            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable); // effect is used up
+        }
+        Err(e) => panic!("Unexpected error: {}", e),
+    }
+    let state = SimulationState::from_macro(
+        &settings,
+        &[
+            Action::HeartAndSoul,
+            Action::BasicTouch,
+            Action::HeartAndSoul,
+        ],
+    );
+    assert!(matches!(
+        state,
+        Err("Action can only be used once per synthesis")
+    ));
 }
 
 #[test]
