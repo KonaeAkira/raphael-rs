@@ -37,13 +37,15 @@ pub struct Effects {
     pub muscle_memory: u8,
     #[bits(4)]
     pub manipulation: u8,
-    #[bits(2, default=SingleUse::Available)]
-    pub trained_perfection: SingleUse,
     #[bits(2)]
     pub guard: u8,
+    #[bits(2, default=SingleUse::Available)]
+    pub trained_perfection: SingleUse,
+    #[bits(2, default=SingleUse::Available)]
+    pub heart_and_soul: SingleUse,
     #[bits(1)]
     pub quick_innovation_used: bool,
-    #[bits(3)]
+    #[bits(1)]
     _padding: u8,
 }
 
