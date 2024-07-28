@@ -80,10 +80,15 @@ pub fn quick_search(
                     if !finish_solver.can_finish(&in_progress) {
                         continue;
                     }
+                    let quality_upper_bound = if state.get_quality() >= settings.max_quality {
+                        state.get_quality()
+                    } else {
+                        upper_bound_solver.quality_upper_bound(in_progress)
+                    };
                     search_queue.push(
                         in_progress,
                         SearchScore::new(
-                            upper_bound_solver.quality_upper_bound(in_progress),
+                            quality_upper_bound,
                             score.duration + action.time_cost() as u8,
                             score.steps + 1,
                             settings,
