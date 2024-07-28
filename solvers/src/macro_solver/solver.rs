@@ -25,21 +25,29 @@ struct Solution {
     actions: Vec<Action>,
 }
 
-type ProgressCallback<'a> = dyn Fn(&[Action]) + 'a;
+type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
+type ProgressCallback<'a> = dyn Fn(f32) + 'a;
+
 pub struct MacroSolver<'a> {
     settings: Settings,
     finish_solver: FinishSolver,
     bound_solver: UpperBoundSolver,
+    solution_callback: Box<SolutionCallback<'a>>,
     progress_callback: Box<ProgressCallback<'a>>,
 }
 
 impl<'a> MacroSolver<'a> {
-    pub fn new(settings: Settings, callback: Box<ProgressCallback<'a>>) -> MacroSolver<'a> {
+    pub fn new(
+        settings: Settings,
+        solution_callback: Box<SolutionCallback<'a>>,
+        progress_callback: Box<ProgressCallback<'a>>,
+    ) -> MacroSolver<'a> {
         MacroSolver {
             settings,
             finish_solver: FinishSolver::new(settings),
             bound_solver: UpperBoundSolver::new(settings),
-            progress_callback: callback,
+            solution_callback,
+            progress_callback,
         }
     }
 
@@ -69,33 +77,29 @@ impl<'a> MacroSolver<'a> {
     fn do_solve(&mut self, state: InProgress, backload_progress: bool) -> Option<Vec<Action>> {
         let mut finish_solver_rejected_nodes: usize = 0;
 
-        let mut search_queue = SearchQueue::new(
-            state,
-            SearchScore::new(
-                self.bound_solver.quality_upper_bound(state),
-                0,
-                0,
-                &self.settings,
-            ),
-            self.settings,
+        let initial_score = SearchScore::new(
+            self.bound_solver.quality_upper_bound(state),
+            0,
+            0,
+            &self.settings,
         );
-
         let quality_lower_bound = fast_lower_bound(
             state,
             &self.settings,
             &mut self.finish_solver,
             &mut self.bound_solver,
         );
-        search_queue.update_min_score(SearchScore::new(
-            quality_lower_bound,
-            u8::MAX,
-            u8::MAX,
-            &self.settings,
-        ));
+        let minimum_score = SearchScore::new(quality_lower_bound, u8::MAX, u8::MAX, &self.settings);
+        let mut search_queue = SearchQueue::new(state, initial_score, minimum_score, self.settings);
 
         let mut solution: Option<Solution> = None;
 
+        let mut popped = 0;
         while let Some((state, score, backtrack_id)) = search_queue.pop() {
+            popped += 1;
+            if popped % (1 << 16) == 0 {
+                (self.progress_callback)(search_queue.progress_estimate());
+            }
             let mut search_actions = match backload_progress
                 && state.raw_state().missing_progress != self.settings.max_progress
             {
@@ -154,7 +158,8 @@ impl<'a> MacroSolver<'a> {
                                     .chain(std::iter::once(action))
                                     .collect(),
                             });
-                            (self.progress_callback)(&solution.as_ref().unwrap().actions);
+                            (self.solution_callback)(&solution.as_ref().unwrap().actions);
+                            (self.progress_callback)(search_queue.progress_estimate());
                         }
                     }
                 }
