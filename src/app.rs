@@ -258,8 +258,10 @@ impl eframe::App for MacroSolverApp {
                                     ui.add_enabled(
                                         !self.solver_pending,
                                         RecipeSelect::new(
-                                            &mut self.crafter_config.selected_job,
+                                            &mut self.crafter_config,
                                             &mut self.recipe_config,
+                                            self.selected_food,
+                                            self.selected_potion,
                                             &mut self.custom_recipe,
                                             &mut self.recipe_search_text,
                                             self.locale,

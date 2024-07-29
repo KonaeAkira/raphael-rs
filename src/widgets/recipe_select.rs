@@ -1,15 +1,19 @@
 use egui::{Align, Layout, Widget};
 use egui_extras::Column;
-use game_data::{get_item_name, get_job_name, Ingredient, Locale, RLVLS};
+use game_data::{
+    get_game_settings, get_item_name, get_job_name, Consumable, Ingredient, Locale, RLVLS,
+};
 
 use crate::{
-    config::{QualitySource, RecipeConfiguration},
+    config::{CrafterConfig, QualitySource, RecipeConfiguration},
     utils::contains_noncontiguous,
 };
 
 pub struct RecipeSelect<'a> {
-    selected_job: &'a mut u8,
+    crafter_config: &'a mut CrafterConfig,
     recipe_config: &'a mut RecipeConfiguration,
+    selected_food: Option<Consumable>, // used for base prog/qual display
+    selected_potion: Option<Consumable>, // used for base prog/qual display
     custom_recipe: &'a mut bool,
     search_text: &'a mut String,
     locale: Locale,
@@ -17,15 +21,19 @@ pub struct RecipeSelect<'a> {
 
 impl<'a> RecipeSelect<'a> {
     pub fn new(
-        selected_job: &'a mut u8,
+        crafter_config: &'a mut CrafterConfig,
         recipe_config: &'a mut RecipeConfiguration,
+        selected_food: Option<Consumable>,
+        selected_potion: Option<Consumable>,
         custom_recipe: &'a mut bool,
         search_text: &'a mut String,
         locale: Locale,
     ) -> Self {
         Self {
-            selected_job,
+            crafter_config,
             recipe_config,
+            selected_food,
+            selected_potion,
             custom_recipe,
             search_text,
             locale,
@@ -70,7 +78,7 @@ impl<'a> RecipeSelect<'a> {
                 let recipe = game_data::RECIPES[search_result[row.index()]];
                 row.col(|ui| {
                     if ui.button("Select").clicked() {
-                        *self.selected_job = recipe.job_id;
+                        self.crafter_config.selected_job = recipe.job_id;
                         *self.recipe_config = RecipeConfiguration {
                             recipe,
                             quality_source: QualitySource::HqMaterialList([0; 6]),
@@ -94,6 +102,15 @@ impl<'a> RecipeSelect<'a> {
             item_id: 0,
             amount: 0,
         }; 6];
+
+        let game_settings = get_game_settings(
+            self.recipe_config.recipe,
+            *self.crafter_config.active_stats(),
+            self.selected_food,
+            self.selected_potion,
+            false,
+        );
+
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -158,6 +175,14 @@ impl<'a> RecipeSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label("Quality modifier");
                     ui.add_enabled(false, egui::DragValue::new(&mut rlvl.quality_mod));
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Progress per 100% efficiency:");
+                    ui.label(egui::RichText::new(game_settings.base_progress.to_string()).strong());
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Quality per 100% efficiency:");
+                    ui.label(egui::RichText::new(game_settings.base_quality.to_string()).strong());
                 });
             });
         });
