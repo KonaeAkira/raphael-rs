@@ -13,7 +13,7 @@ use game_data::{
 use simulator::{state::InProgress, Action, Settings};
 
 use crate::{
-    config::{CrafterConfig, QualityTarget, RecipeConfiguration},
+    config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
     widgets::{
         ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
     },
@@ -89,7 +89,7 @@ impl MacroSolverApp {
 
         let default_recipe_config = RecipeConfiguration {
             recipe: *game_data::RECIPES.last().unwrap(),
-            hq_ingredients: [0; 6],
+            quality_source: QualitySource::HqMaterialList([0; 6]),
         };
 
         Self {
@@ -227,10 +227,12 @@ impl eframe::App for MacroSolverApp {
             self.selected_potion,
             self.solver_config.adversarial,
         );
-        let initial_quality = game_data::get_initial_quality(
-            self.recipe_config.recipe,
-            self.recipe_config.hq_ingredients,
-        );
+        let initial_quality = match self.recipe_config.quality_source {
+            QualitySource::HqMaterialList(hq_materials) => {
+                game_data::get_initial_quality(self.recipe_config.recipe, hq_materials)
+            }
+            QualitySource::Value(quality) => quality,
+        };
 
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
@@ -416,27 +418,28 @@ impl MacroSolverApp {
 
             ui.label(egui::RichText::new("HQ ingredients").strong());
             let mut has_hq_ingredient = false;
-            let ingredients = self.recipe_config.recipe.ingredients;
-            for (index, ingredient) in ingredients.into_iter().enumerate() {
-                match ITEMS.get(&ingredient.item_id) {
-                    Some(item) if item.can_be_hq => {
-                        has_hq_ingredient = true;
-                        ui.horizontal(|ui| {
-                            ui.label(get_item_name(ingredient.item_id, false, self.locale));
-                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                let mut max_placeholder = ingredient.amount;
-                                ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
-                                ui.monospace("/");
-                                ui.add(
-                                    egui::DragValue::new(
-                                        &mut self.recipe_config.hq_ingredients[index],
-                                    )
-                                    .clamp_range(0..=ingredient.amount),
-                                );
+            let recipe_ingredients = self.recipe_config.recipe.ingredients;
+            if let QualitySource::HqMaterialList(provided_ingredients) = &mut self.recipe_config.quality_source {
+                for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
+                    if let Some(item) =  ITEMS.get(&ingredient.item_id) {
+                        if item.can_be_hq {
+                            has_hq_ingredient = true;
+                            ui.horizontal(|ui| {
+                                ui.label(get_item_name(ingredient.item_id, false, self.locale));
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    let mut max_placeholder = ingredient.amount;
+                                    ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
+                                    ui.monospace("/");
+                                    ui.add(
+                                        egui::DragValue::new(
+                                            &mut provided_ingredients[index],
+                                        )
+                                        .clamp_range(0..=ingredient.amount),
+                                    );
+                                });
                             });
-                        });
+                        }
                     }
-                    _ => (),
                 }
             }
             if !has_hq_ingredient {
@@ -580,7 +583,10 @@ impl MacroSolverApp {
                             .solver_config
                             .quality_target
                             .get_target(game_settings.max_quality);
-                        let initial_quality = get_initial_quality(self.recipe_config.recipe, self.recipe_config.hq_ingredients);
+                        let initial_quality = match self.recipe_config.quality_source {
+                            QualitySource::HqMaterialList(hq_materials) => get_initial_quality(self.recipe_config.recipe, hq_materials),
+                            QualitySource::Value(quality) => quality,
+                        };
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
                         self.bridge
                             .send((game_settings, self.solver_config.backload_progress));

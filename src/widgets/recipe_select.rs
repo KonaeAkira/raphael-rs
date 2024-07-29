@@ -2,7 +2,10 @@ use egui::{Align, Layout, Widget};
 use egui_extras::Column;
 use game_data::{get_item_name, get_job_name, Ingredient, Locale, RLVLS};
 
-use crate::{config::RecipeConfiguration, utils::contains_noncontiguous};
+use crate::{
+    config::{QualitySource, RecipeConfiguration},
+    utils::contains_noncontiguous,
+};
 
 pub struct RecipeSelect<'a> {
     selected_job: &'a mut u8,
@@ -70,7 +73,7 @@ impl<'a> RecipeSelect<'a> {
                         *self.selected_job = recipe.job_id;
                         *self.recipe_config = RecipeConfiguration {
                             recipe,
-                            hq_ingredients: [0; 6],
+                            quality_source: QualitySource::HqMaterialList([0; 6]),
                         }
                     };
                 });
@@ -91,7 +94,6 @@ impl<'a> RecipeSelect<'a> {
             item_id: 0,
             amount: 0,
         }; 6];
-        self.recipe_config.hq_ingredients = [0; 6];
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -118,6 +120,17 @@ impl<'a> RecipeSelect<'a> {
                     ui.label("Quality:");
                     ui.add(egui::DragValue::new(&mut self.recipe_config.recipe.quality));
                 });
+                if let QualitySource::Value(initial_quality) =
+                    &mut self.recipe_config.quality_source
+                {
+                    ui.horizontal(|ui| {
+                        ui.label("Initial quality:");
+                        ui.add(
+                            egui::DragValue::new(initial_quality)
+                                .clamp_range(0..=self.recipe_config.recipe.quality),
+                        );
+                    });
+                }
                 ui.horizontal(|ui| {
                     ui.label("Durability:");
                     ui.add(
@@ -163,7 +176,12 @@ impl<'a> Widget for RecipeSelect<'a> {
                         self.locale,
                     )));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        ui.checkbox(self.custom_recipe, "Custom Recipe");
+                        if ui.checkbox(self.custom_recipe, "Custom Recipe").changed() {
+                            self.recipe_config.quality_source = match self.custom_recipe {
+                                true => QualitySource::Value(0),
+                                false => QualitySource::HqMaterialList([0; 6]),
+                            }
+                        };
                     });
                 });
                 ui.separator();
