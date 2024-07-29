@@ -2,9 +2,15 @@ use game_data::{CrafterStats, Recipe};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum QualitySource {
+    HqMaterialList([u8; 6]),
+    Value(u16),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct RecipeConfiguration {
     pub recipe: Recipe,
-    pub hq_ingredients: [u8; 6],
+    pub quality_source: QualitySource,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
