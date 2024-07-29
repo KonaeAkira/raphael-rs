@@ -141,7 +141,7 @@ impl<'a> RecipeSelect<'a> {
                     &mut self.recipe_config.quality_source
                 {
                     ui.horizontal(|ui| {
-                        ui.label("Initial quality:");
+                        ui.label("Initial Quality:");
                         ui.add(
                             egui::DragValue::new(initial_quality)
                                 .clamp_range(0..=self.recipe_config.recipe.quality),
