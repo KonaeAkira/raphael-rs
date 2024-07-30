@@ -41,7 +41,10 @@ fn import_item_names(
     for item in read_csv_data::<ItemRecord>(format!("data/{}/Item.csv", lang))
         .filter(|item| relevant_items.contains(&item.id))
     {
-        item_names.entry(item.id, &format!("\"{}\"", item.name));
+        item_names.entry(
+            item.id,
+            &format!("\"{}\"", item.name.replace("<SoftHyphen/>", "")),
+        );
     }
     let out_path = Path::new(&std::env::var("OUT_DIR")?).join(format!("item_names_{}.rs", lang));
     let mut writer = BufWriter::new(File::create(out_path).unwrap());
