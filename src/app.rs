@@ -559,7 +559,7 @@ impl MacroSolverApp {
             });
             if self.solver_config.adversarial {
                 ui.label(
-                    egui::RichText::new("⚠ This option may use a RIDICULOUS amount of memory (sometimes well above 8GB) which may cause your system to run out of memory. Use at your own risk.")
+                    egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
