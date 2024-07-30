@@ -1,4 +1,4 @@
-#,ClassJobLevel,Stars,SuggestedCraftsmanship,Difficulty,Quality,ProgressDivider,QualityDivider,ProgressModifier,QualityModifier,Durability,ConditionsFlag
+﻿#,ClassJobLevel,Stars,SuggestedCraftsmanship,Difficulty,Quality,ProgressDivider,QualityDivider,ProgressModifier,QualityModifier,Durability,ConditionsFlag
 0,0,0,10000,100,100,50,30,100,100,100,15
 1,1,0,22,19,100,50,30,100,100,60,15
 2,2,0,22,20,110,50,30,100,100,60,15
