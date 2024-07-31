@@ -30,7 +30,7 @@ impl Dominate for Value {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Key {
-    missing_progress: u16,
+    progress: u16,
     durability: i8,
     effects: Effects,
     combo: Option<ComboAction>,
@@ -51,7 +51,7 @@ impl Key {
         };
         Self {
             durability: state.durability,
-            missing_progress: state.missing_progress,
+            progress: state.progress,
             effects,
             combo: state.combo,
         }

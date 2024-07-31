@@ -41,11 +41,10 @@ impl<'a> Widget for Simulator<'a> {
             SimulationState::from_macro_continue_on_error(self.settings, self.actions);
 
         let max_progress = self.settings.max_progress;
-        let clamped_progress = self.settings.max_progress - game_state.missing_progress;
+        let progress = game_state.progress;
 
         let max_quality = self.settings.max_quality;
         let quality = game_state.get_quality() + self.initial_quality;
-        let clamped_quality = std::cmp::min(max_quality, quality);
 
         let prog_qual_dbg_text = format!(
             "Progress per 100% efficiency: {}\nQuality per 100% efficiency: {}",
@@ -60,34 +59,19 @@ impl<'a> Widget for Simulator<'a> {
                     ui.horizontal(|ui| {
                         ui.label("Progress:");
                         ui.add(
-                            egui::ProgressBar::new(clamped_progress as f32 / max_progress as f32)
-                                .text(format!("{} / {}", clamped_progress, max_progress))
+                            egui::ProgressBar::new(progress as f32 / max_progress as f32)
+                                .text(format!("{} / {}", progress, max_progress))
                                 .rounding(Rounding::ZERO),
                         )
                         .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
-                        match quality == u16::MAX {
-                            true => ui.add(
-                                egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
-                                    .text(format!(
-                                        "{} / {}  (max quality guaranteed)",
-                                        clamped_quality, max_quality,
-                                    ))
-                                    .rounding(Rounding::ZERO),
-                            ),
-                            false => ui.add(
-                                egui::ProgressBar::new(clamped_quality as f32 / max_quality as f32)
-                                    .text(format!(
-                                        "{} / {}  (+{} overflow)",
-                                        clamped_quality,
-                                        max_quality,
-                                        quality.saturating_sub(max_quality)
-                                    ))
-                                    .rounding(Rounding::ZERO),
-                            ),
-                        }
+                        ui.add(
+                            egui::ProgressBar::new(quality as f32 / max_quality as f32)
+                                .text(format!("{} / {}", quality, max_quality,))
+                                .rounding(Rounding::ZERO),
+                        )
                         .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
@@ -133,9 +117,9 @@ impl<'a> Widget for Simulator<'a> {
                                         .strong(),
                                 );
                             } else {
-                                let hq = match game_state.missing_progress {
-                                    0 => game_data::hq_percentage(clamped_quality, max_quality),
-                                    _ => 0,
+                                let hq = match game_state.progress >= self.settings.max_progress {
+                                    true => game_data::hq_percentage(quality, max_quality),
+                                    false => 0,
                                 };
                                 ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
                             }

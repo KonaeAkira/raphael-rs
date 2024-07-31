@@ -1,5 +1,4 @@
-use simulator::state::InProgress;
-use simulator::{Action, ActionMask, Condition, Settings};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
 use super::quick_search::quick_search;
 use super::search_queue::SearchScore;
@@ -54,7 +53,11 @@ impl<'a> MacroSolver<'a> {
     /// Returns a list of Actions that maximizes Quality of the completed state.
     /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
     /// The solver makes an effort to produce a short solution, but it is not (yet) guaranteed to be the shortest solution.
-    pub fn solve(&mut self, state: InProgress, backload_progress: bool) -> Option<Vec<Action>> {
+    pub fn solve(
+        &mut self,
+        state: SimulationState,
+        backload_progress: bool,
+    ) -> Option<Vec<Action>> {
         let timer = NamedTimer::new("Finish solver");
         if !self.finish_solver.can_finish(&state) {
             return None;
@@ -74,7 +77,7 @@ impl<'a> MacroSolver<'a> {
         self.do_solve(state, backload_progress)
     }
 
-    fn do_solve(&mut self, state: InProgress, backload_progress: bool) -> Option<Vec<Action>> {
+    fn do_solve(&mut self, state: SimulationState, backload_progress: bool) -> Option<Vec<Action>> {
         let mut finish_solver_rejected_nodes: usize = 0;
 
         let initial_score = SearchScore::new(
@@ -100,19 +103,17 @@ impl<'a> MacroSolver<'a> {
             if popped % (1 << 16) == 0 {
                 (self.progress_callback)(search_queue.progress_estimate());
             }
-            let mut search_actions = match backload_progress
-                && state.raw_state().missing_progress != self.settings.max_progress
-            {
+            let mut search_actions = match backload_progress && state.progress != 0 {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
             };
-            if state.raw_state().get_quality() >= self.settings.max_quality {
+            if state.get_quality() >= self.settings.max_quality {
                 search_actions = search_actions.minus(QUALITY_ACTIONS);
             }
             for action in search_actions.actions_iter() {
                 if let Ok(state) = state.use_action(action, Condition::Normal, &self.settings) {
-                    if let Ok(in_progress) = InProgress::try_from(state) {
-                        if !self.finish_solver.can_finish(&in_progress) {
+                    if !state.is_final(&self.settings) {
+                        if !self.finish_solver.can_finish(&state) {
                             // skip this state if it is impossible to max out Progress
                             finish_solver_rejected_nodes += 1;
                             continue;
@@ -129,10 +130,10 @@ impl<'a> MacroSolver<'a> {
                             if state.get_quality() >= self.settings.max_quality {
                                 state.get_quality()
                             } else {
-                                self.bound_solver.quality_upper_bound(in_progress)
+                                self.bound_solver.quality_upper_bound(state)
                             };
                         search_queue.push(
-                            in_progress,
+                            state,
                             SearchScore::new(
                                 quality_upper_bound,
                                 score.duration + action.time_cost() as u8,
@@ -142,7 +143,7 @@ impl<'a> MacroSolver<'a> {
                             action,
                             backtrack_id,
                         );
-                    } else if state.missing_progress == 0 {
+                    } else if state.progress >= self.settings.max_progress {
                         let solution_score = SearchScore::new(
                             state.get_quality(),
                             score.duration,
