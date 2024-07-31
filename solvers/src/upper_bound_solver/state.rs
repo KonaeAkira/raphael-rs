@@ -1,4 +1,4 @@
-use simulator::{state::InProgress, ComboAction, Effects, SimulationState, SingleUse};
+use simulator::{ComboAction, Effects, SimulationState, SingleUse};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedEffects {
@@ -20,8 +20,11 @@ pub struct ReducedState {
 }
 
 impl ReducedState {
-    pub fn from_state(state: InProgress, base_durability_cost: i16, waste_not_cost: i16) -> Self {
-        let state = *state.raw_state();
+    pub fn from_state(
+        state: SimulationState,
+        base_durability_cost: i16,
+        waste_not_cost: i16,
+    ) -> Self {
         let used_durability = (i8::MAX - state.durability) / 5;
         let durability_cost = std::cmp::min(
             used_durability as i16 * base_durability_cost,
@@ -44,12 +47,12 @@ impl ReducedState {
     }
 }
 
-impl std::convert::From<ReducedState> for InProgress {
+impl std::convert::From<ReducedState> for SimulationState {
     fn from(state: ReducedState) -> Self {
         SimulationState {
             durability: i8::MAX,
             cp: state.cp,
-            missing_progress: u16::MAX,
+            progress: 0,
             unreliable_quality: [0, 0],
             effects: Effects::new()
                 .with_inner_quiet(state.effects.inner_quiet)

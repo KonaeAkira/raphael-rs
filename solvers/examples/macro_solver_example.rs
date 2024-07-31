@@ -1,4 +1,4 @@
-use simulator::{state::InProgress, Action, ActionMask, Settings, SimulationState};
+use simulator::{Action, ActionMask, Settings, SimulationState};
 use solvers::MacroSolver;
 
 fn main() {
@@ -19,7 +19,7 @@ fn main() {
         adversarial: true,
     };
 
-    let state = InProgress::new(&settings);
+    let state = SimulationState::new(&settings);
     let mut solver = MacroSolver::new(settings, Box::new(|_| {}), Box::new(|_| {}));
     solver.solve(state, false);
 }

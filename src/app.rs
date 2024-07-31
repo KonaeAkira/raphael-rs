@@ -10,7 +10,7 @@ use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, Tex
 use game_data::{
     action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale, ITEMS,
 };
-use simulator::{state::InProgress, Action, Settings};
+use simulator::{Action, Settings, SimulationState};
 
 use crate::{
     config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
@@ -664,7 +664,7 @@ impl gloo_worker::Worker for WebWorker {
             Box::new(solution_callback),
             Box::new(progress_callback),
         )
-        .solve(InProgress::new(&settings), backload_progress);
+        .solve(SimulationState::new(&settings), backload_progress);
         match final_solution {
             Some(actions) => {
                 scope.respond(id, SolverEvent::FinalSolution(actions));

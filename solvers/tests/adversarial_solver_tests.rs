@@ -1,21 +1,21 @@
-use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 use solvers::MacroSolver;
 
 fn solve(settings: &Settings, backload_progress: bool) -> Option<Vec<Action>> {
     assert!(settings.adversarial); // Ensure that non-adversarial tests are in a different file.
     MacroSolver::new(settings.clone(), Box::new(|_| {}), Box::new(|_| {}))
-        .solve(InProgress::new(settings), backload_progress)
+        .solve(SimulationState::new(settings), backload_progress)
 }
 
 fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
     let mut state = SimulationState::new(&settings);
     for action in actions {
-        state = InProgress::try_from(state)
+        state = SimulationState::try_from(state)
             .unwrap()
             .use_action(action.clone(), Condition::Normal, &settings)
             .unwrap();
     }
-    assert_eq!(state.missing_progress, 0);
+    assert!(state.progress >= settings.max_progress);
     state.get_quality()
 }
 

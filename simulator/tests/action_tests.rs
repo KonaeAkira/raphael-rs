@@ -31,9 +31,7 @@ fn test_redundant_half_efficiency_groundwork() {
             (true, true) => {
                 let state_1 = SimulationState::from_macro(&settings, &[Action::CarefulSynthesis]).unwrap();
                 let state_2 = SimulationState::from_macro(&settings, &[Action::Groundwork]).unwrap();
-                let progress_1 = settings.max_progress - state_1.missing_progress;
-                let progress_2 = settings.max_progress - state_2.missing_progress;
-                assert!(progress_1 * 2 >= progress_2);
+                assert!(state_1.progress * 2 >= state_2.progress);
                 assert!(state_1.durability >= state_2.durability);
                 assert!(state_1.cp >= state_2.cp);
             }
@@ -133,7 +131,7 @@ fn test_groundwork() {
         SimulationState::from_macro(&settings, &[Action::TrainedPerfection, Action::Groundwork]);
     match state {
         Ok(state) => {
-            assert_eq!(settings.max_progress - state.missing_progress, 360);
+            assert_eq!(state.progress, 360);
             assert_eq!(state.durability, 10);
         }
         Err(e) => panic!("Unexpected error: {}", e),
@@ -232,7 +230,7 @@ fn test_delicate_synthesis() {
     let state = SimulationState::from_macro(&settings, &[Action::DelicateSynthesis]);
     match state {
         Ok(state) => {
-            assert_eq!(settings.max_progress - state.missing_progress, 100);
+            assert_eq!(state.progress, 100);
             assert_eq!(state.get_quality(), 100);
         }
         Err(e) => panic!("Unexpected error: {}", e),
@@ -244,7 +242,7 @@ fn test_delicate_synthesis() {
     let state = SimulationState::from_macro(&settings, &[Action::DelicateSynthesis]);
     match state {
         Ok(state) => {
-            assert_eq!(settings.max_progress - state.missing_progress, 150);
+            assert_eq!(state.progress, 150);
             assert_eq!(state.get_quality(), 100);
         }
         Err(e) => panic!("Unexpected error: {}", e),
@@ -259,7 +257,7 @@ fn test_intensive_synthesis() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(SETTINGS.max_progress - state.missing_progress, 400);
+            assert_eq!(state.progress, 400);
             assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
         }
         Err(e) => panic!("Unexpected error: {}", e),

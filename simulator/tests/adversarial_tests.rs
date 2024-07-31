@@ -1,4 +1,4 @@
-use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
 const SETTINGS: Settings = Settings {
     max_cp: 1000,
@@ -47,7 +47,7 @@ fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u16,
             } else {
                 Condition::Poor
             };
-            state = InProgress::try_from(state)?.use_action(*action, condition, &settings)?;
+            state = state.use_action(*action, condition, &settings)?;
         }
         min_quality = std::cmp::min(min_quality, state.get_quality());
     }

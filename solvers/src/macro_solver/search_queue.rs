@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use simulator::{state::InProgress, Action, Settings};
+use simulator::{Action, Settings, SimulationState};
 
 use crate::utils::Backtracking;
 
@@ -51,7 +51,7 @@ impl std::cmp::Ord for SearchScore {
 
 #[derive(Debug, Clone, Copy)]
 struct SearchNode {
-    state: InProgress,
+    state: SimulationState,
     action: Action,
     parent_id: u32,
 }
@@ -62,14 +62,14 @@ pub struct SearchQueue {
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<Action>,
     current_score: SearchScore,
-    current_nodes: Vec<(InProgress, u32)>,
+    current_nodes: Vec<(SimulationState, u32)>,
     minimum_score: SearchScore,
     initial_score_difference: f32,
 }
 
 impl SearchQueue {
     pub fn new(
-        initial_state: InProgress,
+        initial_state: SimulationState,
         initial_score: SearchScore,
         minimum_score: SearchScore,
         settings: Settings,
@@ -103,7 +103,13 @@ impl SearchQueue {
         }
     }
 
-    pub fn push(&mut self, state: InProgress, score: SearchScore, action: Action, parent_id: u32) {
+    pub fn push(
+        &mut self,
+        state: SimulationState,
+        score: SearchScore,
+        action: Action,
+        parent_id: u32,
+    ) {
         assert!(self.current_score > score);
         if score < self.minimum_score {
             return;
@@ -115,16 +121,13 @@ impl SearchQueue {
         });
     }
 
-    pub fn pop(&mut self) -> Option<(InProgress, SearchScore, u32)> {
+    pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, u32)> {
         while self.current_nodes.is_empty() {
             if let Some((score, bucket)) = self.buckets.pop_last() {
                 self.current_score = score;
                 self.current_nodes = bucket
                     .into_iter()
-                    .filter(|node| {
-                        self.pareto_set
-                            .insert(*node.state.raw_state(), &self.settings)
-                    })
+                    .filter(|node| self.pareto_set.insert(node.state, &self.settings))
                     .map(|node| {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
                         (node.state, backtrack_id)
