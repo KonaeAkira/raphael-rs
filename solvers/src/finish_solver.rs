@@ -66,7 +66,7 @@ impl ReducedState {
     }
 
     pub fn to_state(self) -> SimulationState {
-        let raw_state = SimulationState {
+        SimulationState {
             durability: self.durability,
             cp: self.cp,
             progress: 0,
@@ -76,8 +76,7 @@ impl ReducedState {
                 .to_effects()
                 .with_trained_perfection(self.trained_perfection),
             combo: self.combo,
-        };
-        raw_state.try_into().unwrap()
+        }
     }
 }
 

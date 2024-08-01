@@ -34,10 +34,11 @@ pub enum SolverEvent {
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-struct SolverConfig {
-    quality_target: QualityTarget,
-    backload_progress: bool,
-    adversarial: bool,
+pub struct SolverConfig {
+    pub quality_target: QualityTarget,
+    pub backload_progress: bool,
+    pub adversarial: bool,
+    pub minimize_steps: bool,
 }
 
 pub struct MacroSolverApp {
@@ -450,7 +451,7 @@ impl MacroSolverApp {
             ui.separator();
 
             ui.label(egui::RichText::new("Actions").strong());
-            if self.crafter_config.active_stats().level as u32 >= Action::Manipulation.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::Manipulation.level_requirement() {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.active_stats_mut().manipulation,
                     format!("Enable {}", action_name(Action::Manipulation, self.locale)),
@@ -461,7 +462,7 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::Manipulation, self.locale))),
                 );
             }
-            if self.crafter_config.active_stats().level as u32 >= Action::HeartAndSoul.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement() {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().heart_and_soul, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))));
             } else {
                 ui.add_enabled(
@@ -469,7 +470,7 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))),
                 );
             }
-            if self.crafter_config.active_stats().level as u32 >= Action::QuickInnovation.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::QuickInnovation.level_requirement() {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().quick_innovation, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))));
             } else {
                 ui.add_enabled(
@@ -540,6 +541,7 @@ impl MacroSolverApp {
                         });
                 });
             });
+
             ui.horizontal(|ui| {
                 ui.checkbox(
                     &mut self.solver_config.backload_progress,
@@ -547,6 +549,7 @@ impl MacroSolverApp {
                 );
                 ui.add(HelpText::new("Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊞ Shorter solve-time."));
             });
+
             if self.recipe_config.recipe.is_expert {
                 self.solver_config.adversarial = false;
             }
@@ -558,6 +561,18 @@ impl MacroSolverApp {
                 ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊟ Much longer solve-time."));
             });
             if self.solver_config.adversarial {
+                ui.label(
+                    egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
+                        .small()
+                        .color(ui.visuals().warn_fg_color),
+                );
+            }
+
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut self.solver_config.minimize_steps, "Minimize steps");
+                ui.add(HelpText::new("Guarantee shortest possible macro.\n  ⊟ Much longer solve-time."));
+            });
+            if self.solver_config.minimize_steps {
                 ui.label(
                     egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
                         .small()
@@ -590,8 +605,7 @@ impl MacroSolverApp {
                             QualitySource::Value(quality) => quality,
                         };
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
-                        self.bridge
-                            .send((game_settings, self.solver_config.backload_progress));
+                        self.bridge.send((game_settings, self.solver_config));
                         log::debug!("{game_settings:?}");
                     }
                     if self.solver_pending {
@@ -633,7 +647,7 @@ pub struct WebWorker {}
 
 impl gloo_worker::Worker for WebWorker {
     type Message = u64;
-    type Input = (Settings, bool);
+    type Input = (Settings, SolverConfig);
     type Output = SolverEvent;
 
     fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
@@ -649,8 +663,7 @@ impl gloo_worker::Worker for WebWorker {
         msg: Self::Input,
         id: gloo_worker::HandlerId,
     ) {
-        let settings = msg.0;
-        let backload_progress = msg.1;
+        let (game_settings, solver_settings) = msg;
 
         let solution_callback = move |actions: &[Action]| {
             scope.respond(id, SolverEvent::IntermediateSolution(actions.to_vec()));
@@ -660,11 +673,15 @@ impl gloo_worker::Worker for WebWorker {
         };
 
         let final_solution = solvers::MacroSolver::new(
-            settings,
+            game_settings,
             Box::new(solution_callback),
             Box::new(progress_callback),
         )
-        .solve(SimulationState::new(&settings), backload_progress);
+        .solve(
+            SimulationState::new(&game_settings),
+            solver_settings.backload_progress,
+            solver_settings.minimize_steps,
+        );
         match final_solution {
             Some(actions) => {
                 scope.respond(id, SolverEvent::FinalSolution(actions));

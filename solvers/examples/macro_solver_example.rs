@@ -21,5 +21,5 @@ fn main() {
 
     let state = SimulationState::new(&settings);
     let mut solver = MacroSolver::new(settings, Box::new(|_| {}), Box::new(|_| {}));
-    solver.solve(state, false);
+    solver.solve(state, false, true);
 }

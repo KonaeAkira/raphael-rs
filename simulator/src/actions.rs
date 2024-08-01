@@ -46,7 +46,7 @@ pub enum ComboAction {
 }
 
 impl Action {
-    pub const fn level_requirement(self) -> u32 {
+    pub const fn level_requirement(self) -> u8 {
         match self {
             Action::BasicSynthesis => 1,
             Action::BasicTouch => 5,

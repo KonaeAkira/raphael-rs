@@ -24,7 +24,7 @@ const QUALITY_SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
 struct Solution {
     quality: u16,
     action: Action,
-    backtrack_id: u32,
+    backtrack_id: usize,
 }
 
 /// Check if a rotation that maxes out Quality can easily be found
