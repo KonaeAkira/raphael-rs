@@ -451,7 +451,7 @@ impl MacroSolverApp {
             ui.separator();
 
             ui.label(egui::RichText::new("Actions").strong());
-            if self.crafter_config.active_stats().level as u32 >= Action::Manipulation.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::Manipulation.level_requirement() {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.active_stats_mut().manipulation,
                     format!("Enable {}", action_name(Action::Manipulation, self.locale)),
@@ -462,7 +462,7 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::Manipulation, self.locale))),
                 );
             }
-            if self.crafter_config.active_stats().level as u32 >= Action::HeartAndSoul.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement() {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().heart_and_soul, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))));
             } else {
                 ui.add_enabled(
@@ -470,7 +470,7 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))),
                 );
             }
-            if self.crafter_config.active_stats().level as u32 >= Action::QuickInnovation.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::QuickInnovation.level_requirement() {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().quick_innovation, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))));
             } else {
                 ui.add_enabled(
