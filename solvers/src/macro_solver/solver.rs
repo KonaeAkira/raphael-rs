@@ -57,7 +57,7 @@ impl<'a> MacroSolver<'a> {
         &mut self,
         state: SimulationState,
         backload_progress: bool,
-        minimize_duration: bool,
+        minimize_steps: bool,
     ) -> Option<Vec<Action>> {
         let timer = NamedTimer::new("Finish solver");
         if !self.finish_solver.can_finish(&state) {
@@ -65,7 +65,7 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        if !minimize_duration {
+        if !minimize_steps {
             if let Some(actions) = quick_search(
                 state,
                 &self.settings,

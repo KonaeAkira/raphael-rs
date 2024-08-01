@@ -28,7 +28,7 @@ impl SearchScore {
         if self.quality != other.quality {
             self.quality.abs_diff(other.quality) as f32
         } else {
-            self.duration.abs_diff(other.duration) as f32 / 255.0
+            self.steps.abs_diff(other.steps) as f32 / 255.0
         }
     }
 }
@@ -43,8 +43,8 @@ impl std::cmp::Ord for SearchScore {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.quality
             .cmp(&other.quality)
-            .then(other.duration.cmp(&self.duration))
             .then(other.steps.cmp(&self.steps))
+            .then(other.duration.cmp(&self.duration))
             .then(self.quality_overflow.cmp(&other.quality_overflow))
     }
 }

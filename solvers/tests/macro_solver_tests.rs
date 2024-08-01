@@ -4,12 +4,12 @@ use solvers::MacroSolver;
 fn solve(
     settings: &Settings,
     backload_progress: bool,
-    minimize_duration: bool,
+    minimize_steps: bool,
 ) -> Option<Vec<Action>> {
     MacroSolver::new(settings.clone(), Box::new(|_| {}), Box::new(|_| {})).solve(
         SimulationState::new(settings),
         backload_progress,
-        minimize_duration,
+        minimize_steps,
     )
 }
 
