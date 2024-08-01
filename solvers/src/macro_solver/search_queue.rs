@@ -53,7 +53,7 @@ impl std::cmp::Ord for SearchScore {
 struct SearchNode {
     state: SimulationState,
     action: Action,
-    parent_id: u32,
+    parent_id: usize,
 }
 
 pub struct SearchQueue {
@@ -62,7 +62,7 @@ pub struct SearchQueue {
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<Action>,
     current_score: SearchScore,
-    current_nodes: Vec<(SimulationState, u32)>,
+    current_nodes: Vec<(SimulationState, usize)>,
     minimum_score: SearchScore,
     initial_score_difference: f32,
 }
@@ -108,7 +108,7 @@ impl SearchQueue {
         state: SimulationState,
         score: SearchScore,
         action: Action,
-        parent_id: u32,
+        parent_id: usize,
     ) {
         assert!(self.current_score > score);
         if score < self.minimum_score {
@@ -121,7 +121,7 @@ impl SearchQueue {
         });
     }
 
-    pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, u32)> {
+    pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {
         while self.current_nodes.is_empty() {
             if let Some((score, bucket)) = self.buckets.pop_last() {
                 self.current_score = score;
@@ -141,7 +141,7 @@ impl SearchQueue {
         Some((state, self.current_score, backtrack_id))
     }
 
-    pub fn backtrack(&self, backtrack_id: u32) -> impl Iterator<Item = Action> {
+    pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = Action> {
         self.backtracking.get(backtrack_id)
     }
 }

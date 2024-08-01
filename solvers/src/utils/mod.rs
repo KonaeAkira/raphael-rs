@@ -31,11 +31,11 @@ impl Drop for NamedTimer {
 }
 
 pub struct Backtracking<T: Copy> {
-    entries: Vec<(T, u32)>,
+    entries: Vec<(T, usize)>,
 }
 
 impl<T: Copy> Backtracking<T> {
-    pub const SENTINEL: u32 = u32::MAX;
+    pub const SENTINEL: usize = usize::MAX;
 
     pub fn new() -> Self {
         Self {
@@ -47,18 +47,18 @@ impl<T: Copy> Backtracking<T> {
         self.entries.len()
     }
 
-    pub fn get(&self, mut index: u32) -> impl Iterator<Item = T> {
+    pub fn get(&self, mut index: usize) -> impl Iterator<Item = T> {
         let mut items = Vec::new();
         while index != Self::SENTINEL {
-            items.push(self.entries[index as usize].0);
-            index = self.entries[index as usize].1;
+            items.push(self.entries[index].0);
+            index = self.entries[index].1;
         }
         items.into_iter().rev()
     }
 
-    pub fn push(&mut self, item: T, parent: u32) -> u32 {
+    pub fn push(&mut self, item: T, parent: usize) -> usize {
         self.entries.push((item, parent));
-        self.entries.len() as u32 - 1
+        self.entries.len() - 1
     }
 }
 
