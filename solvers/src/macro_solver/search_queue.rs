@@ -123,7 +123,10 @@ impl SearchQueue {
 
     pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {
         while self.current_nodes.is_empty() {
-            if let Some((score, bucket)) = self.buckets.pop_last() {
+            if let Some((score, mut bucket)) = self.buckets.pop_last() {
+                // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
+                // sort by cp, because a state that has more cp cannot be dominated by a state with less cp
+                bucket.sort_unstable_by(|lhs, rhs| rhs.state.cp.cmp(&lhs.state.cp));
                 self.current_score = score;
                 self.current_nodes = bucket
                     .into_iter()

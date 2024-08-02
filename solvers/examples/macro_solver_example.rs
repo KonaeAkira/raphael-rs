@@ -5,18 +5,21 @@ fn main() {
     dbg!(std::mem::size_of::<SimulationState>());
     dbg!(std::mem::align_of::<SimulationState>());
 
+    // Ra'Kaznar Lapidary Hammer
+    // 4462 Craftsmanship, 4391 Control
     let settings = Settings {
-        max_cp: 553,
-        max_durability: 70,
-        max_progress: 2400,
-        max_quality: 20000,
-        base_progress: 100,
-        base_quality: 100,
-        job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        max_cp: 569,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 10000,
+        base_progress: 237,
+        base_quality: 245,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100)
             .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
-        adversarial: true,
+        adversarial: false,
     };
 
     let state = SimulationState::new(&settings);

@@ -171,7 +171,11 @@ impl<'a> MacroSolver<'a> {
         }
 
         if let Some(solution) = solution {
-            dbg!(&solution.actions, finish_solver_rejected_nodes);
+            dbg!(
+                minimum_score,
+                &solution.actions,
+                finish_solver_rejected_nodes
+            );
             Some(solution.actions)
         } else {
             None
