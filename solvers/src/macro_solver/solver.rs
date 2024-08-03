@@ -81,8 +81,6 @@ impl<'a> MacroSolver<'a> {
     }
 
     fn do_solve(&mut self, state: SimulationState, backload_progress: bool) -> Option<Vec<Action>> {
-        let mut finish_solver_rejected_nodes: usize = 0;
-
         let initial_score = SearchScore::new(
             self.bound_solver.quality_upper_bound(state),
             0,
@@ -118,7 +116,6 @@ impl<'a> MacroSolver<'a> {
                     if !state.is_final(&self.settings) {
                         if !self.finish_solver.can_finish(&state) {
                             // skip this state if it is impossible to max out Progress
-                            finish_solver_rejected_nodes += 1;
                             continue;
                         }
 
@@ -171,11 +168,7 @@ impl<'a> MacroSolver<'a> {
         }
 
         if let Some(solution) = solution {
-            dbg!(
-                minimum_score,
-                &solution.actions,
-                finish_solver_rejected_nodes
-            );
+            dbg!(minimum_score, &solution.actions);
             Some(solution.actions)
         } else {
             None

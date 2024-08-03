@@ -23,6 +23,14 @@ fn main() {
     };
 
     let state = SimulationState::new(&settings);
-    let mut solver = MacroSolver::new(settings, Box::new(|_| {}), Box::new(|_| {}));
-    solver.solve(state, false, true);
+    let actions = MacroSolver::new(settings, Box::new(|_| {}), Box::new(|_| {}))
+        .solve(state, false, true)
+        .unwrap();
+
+    let quality = SimulationState::from_macro(&settings, &actions)
+        .unwrap()
+        .get_quality();
+    let steps = actions.len();
+    let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
+    dbg!(quality, steps, duration);
 }

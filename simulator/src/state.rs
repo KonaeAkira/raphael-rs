@@ -55,7 +55,9 @@ impl SimulationState {
     }
 
     pub fn get_quality(&self) -> u16 {
-        std::cmp::min(self.unreliable_quality[0], self.unreliable_quality[1])
+        #[cfg(test)]
+        assert!(self.unreliable_quality[0] >= self.unreliable_quality[1]);
+        self.unreliable_quality[1]
     }
 
     pub fn is_final(&self, settings: &Settings) -> bool {

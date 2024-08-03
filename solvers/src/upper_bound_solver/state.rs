@@ -7,7 +7,6 @@ pub struct ReducedEffects {
     pub veneration: u8,
     pub great_strides: u8,
     pub muscle_memory: u8,
-    pub trained_perfection: SingleUse,
     pub heart_and_soul: SingleUse,
     pub quick_innovation_used: bool,
 }
@@ -39,7 +38,6 @@ impl ReducedState {
                 veneration: state.effects.veneration(),
                 great_strides: state.effects.great_strides(),
                 muscle_memory: state.effects.muscle_memory(),
-                trained_perfection: state.effects.trained_perfection(),
                 heart_and_soul: state.effects.heart_and_soul(),
                 quick_innovation_used: state.effects.quick_innovation_used(),
             },
@@ -60,7 +58,7 @@ impl std::convert::From<ReducedState> for SimulationState {
                 .with_veneration(state.effects.veneration)
                 .with_great_strides(state.effects.great_strides)
                 .with_muscle_memory(state.effects.muscle_memory)
-                .with_trained_perfection(state.effects.trained_perfection)
+                .with_trained_perfection(SingleUse::Unavailable)
                 .with_heart_and_soul(state.effects.heart_and_soul)
                 .with_quick_innovation_used(state.effects.quick_innovation_used)
                 .with_guard(1),

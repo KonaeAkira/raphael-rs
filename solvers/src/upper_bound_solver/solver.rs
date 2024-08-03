@@ -2,7 +2,7 @@ use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
     utils::{ParetoFrontBuilder, ParetoValue},
 };
-use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState, SingleUse};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -61,6 +61,12 @@ impl UpperBoundSolver {
         state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.cp_cost() / 8);
         state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
+        if state.effects.trained_perfection() != SingleUse::Unavailable
+            && self.settings.allowed_actions.has(Action::TrainedPerfection)
+        {
+            state.effects.set_trained_perfection(SingleUse::Unavailable);
+            state.cp += 4 * self.base_durability_cost;
+        }
         state.durability = i8::MAX;
 
         let reduced_state =
@@ -570,7 +576,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 2986);
+        assert_eq!(result, 3035);
     }
 
     #[test]
