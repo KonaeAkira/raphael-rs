@@ -8,7 +8,7 @@ use crate::{
     utils::NamedTimer,
 };
 
-use super::pareto_set::ParetoSet;
+use super::quality_pareto_front::QualityParetoFront;
 
 const SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .union(DURABILITY_ACTIONS)
@@ -26,7 +26,7 @@ pub fn fast_lower_bound(
     let allowed_actions = settings.allowed_actions.intersection(SEARCH_ACTIONS);
 
     let mut search_queue: RadixHeapMap<u16, SimulationState> = RadixHeapMap::default();
-    let mut pareto_set = ParetoSet::default();
+    let mut pareto_set = QualityParetoFront::default();
 
     let mut quality_lower_bound = 0;
 

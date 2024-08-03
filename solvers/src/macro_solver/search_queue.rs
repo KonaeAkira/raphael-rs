@@ -4,7 +4,7 @@ use simulator::{Action, Settings, SimulationState};
 
 use crate::utils::Backtracking;
 
-use super::pareto_set::ParetoSet;
+use super::{effect_pareto_front::EffectParetoFront, quality_pareto_front::QualityParetoFront};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
@@ -58,7 +58,8 @@ struct SearchNode {
 
 pub struct SearchQueue {
     settings: Settings,
-    pareto_set: ParetoSet,
+    quality_pareto_front: QualityParetoFront,
+    effect_pareto_front: EffectParetoFront,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<Action>,
     current_score: SearchScore,
@@ -76,7 +77,8 @@ impl SearchQueue {
     ) -> Self {
         Self {
             settings,
-            pareto_set: Default::default(),
+            quality_pareto_front: Default::default(),
+            effect_pareto_front: Default::default(),
             backtracking: Backtracking::new(),
             buckets: Default::default(),
             current_score: initial_score,
@@ -130,7 +132,10 @@ impl SearchQueue {
                 self.current_score = score;
                 self.current_nodes = bucket
                     .into_iter()
-                    .filter(|node| self.pareto_set.insert(node.state, &self.settings))
+                    .filter(|node| {
+                        self.quality_pareto_front.insert(node.state, &self.settings)
+                            && self.effect_pareto_front.insert(node.state, &self.settings)
+                    })
                     .map(|node| {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
                         (node.state, backtrack_id)

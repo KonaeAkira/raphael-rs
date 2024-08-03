@@ -1,5 +1,6 @@
+mod effect_pareto_front;
 mod fast_lower_bound;
-mod pareto_set;
+mod quality_pareto_front;
 mod quick_search;
 mod search_queue;
 mod solver;

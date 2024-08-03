@@ -59,11 +59,11 @@ impl Key {
 }
 
 #[derive(Default)]
-pub struct ParetoSet {
+pub struct QualityParetoFront {
     buckets: FxHashMap<Key, ParetoFront<Value>>,
 }
 
-impl ParetoSet {
+impl QualityParetoFront {
     pub fn insert(&mut self, state: SimulationState, settings: &Settings) -> bool {
         self.buckets
             .entry(Key::new(state, settings))
@@ -72,7 +72,7 @@ impl ParetoSet {
     }
 }
 
-impl Drop for ParetoSet {
+impl Drop for QualityParetoFront {
     fn drop(&mut self) {
         let pareto_entries: usize = self.buckets.values().map(|value| value.len()).sum();
         dbg!(self.buckets.len(), pareto_entries);
