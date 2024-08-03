@@ -12,12 +12,18 @@ use game_data::{
 };
 use simulator::{state::InProgress, Action, Settings};
 
+use crate::worker::{NativeBridge, Worker};
 use crate::{
     config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
     widgets::{
         ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
     },
 };
+
+#[cfg(target_arch = "wasm32")]
+use gloo_worker::WorkerBridge;
+#[cfg(not(target_arch = "wasm32"))]
+use std::sync::mpsc::Receiver;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -60,23 +66,19 @@ pub struct MacroSolverApp {
     solver_progress: f32,
     start_time: Option<Instant>,
     duration: Option<Duration>,
-    bridge: gloo_worker::WorkerBridge<WebWorker>,
     data_update: Rc<Cell<Option<SolverEvent>>>,
+    bridge: BridgeType,
 }
 
-impl MacroSolverApp {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let ctx = cc.egui_ctx.clone();
-        let data_update = Rc::new(Cell::new(None));
-        let sender = data_update.clone();
+#[cfg(target_arch = "wasm32")]
+type BridgeType = WorkerBridge<Worker>;
+#[cfg(not(target_arch = "wasm32"))]
+type BridgeType = NativeBridge;
 
-        let bridge = <WebWorker as gloo_worker::Spawnable>::spawner()
-            .callback(move |response| {
-                sender.set(Some(response));
-                ctx.request_repaint();
-            })
-            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"));
+impl MacroSolverApp {
+    pub fn setup_app(cc: &eframe::CreationContext<'_>) -> MacroSolverApp {
+        let data_update = Rc::new(Cell::new(None));
+        let bridge = Self::initialize_bridge(cc, &data_update);
 
         cc.egui_ctx.set_pixels_per_point(1.2);
         cc.egui_ctx.style_mut(|style| {
@@ -116,45 +118,35 @@ impl MacroSolverApp {
             bridge,
         }
     }
+
+    #[cfg(target_arch = "wasm32")]
+    fn initialize_bridge(cc: &eframe::CreationContext<'_>, data_update: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
+        let ctx = cc.egui_ctx.clone();
+        let sender = data_update.clone();
+
+        <Worker as gloo_worker::Spawnable>::spawner()
+            .callback(move |response| {
+                sender.set(Some(response));
+                ctx.request_repaint();
+            })
+            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn initialize_bridge(_cc: &eframe::CreationContext<'_>, _data_cell: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
+        BridgeType::new()
+    }
+
+    /// Called once before the first frame.
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        MacroSolverApp::setup_app(cc)
+    }
 }
 
 impl eframe::App for MacroSolverApp {
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, "LOCALE", &self.locale);
-        eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
-        eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
-        eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
-        eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
-        eframe::set_value(storage, "SOLVER_CONFIG", &self.solver_config);
-        eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
-
-        eframe::set_value(storage, "CUSTOM_RECIPE", &self.custom_recipe);
-        eframe::set_value(storage, "RECIPE_SEARCH_TEXT", &self.recipe_search_text);
-        eframe::set_value(storage, "FOOD_SEARCH_TEXT", &self.food_search_text);
-        eframe::set_value(storage, "POTION_SEARCH_TEXT", &self.potion_search_text);
-    }
-
-    fn auto_save_interval(&self) -> std::time::Duration {
-        std::time::Duration::from_secs(1)
-    }
-
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if let Some(update) = self.data_update.take() {
-            match update {
-                SolverEvent::Progress(progress) => {
-                    self.solver_progress = progress;
-                }
-                SolverEvent::IntermediateSolution(actions) => {
-                    self.actions = actions;
-                }
-                SolverEvent::FinalSolution(actions) => {
-                    self.actions = actions;
-                    self.duration = Some(Instant::now() - self.start_time.unwrap());
-                    self.solver_pending = false;
-                }
-            }
-        }
+        self.solver_update();
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -336,9 +328,65 @@ impl eframe::App for MacroSolverApp {
             ui.add(StatsEdit::new(self.locale, &mut self.crafter_config));
         });
     }
+
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, "LOCALE", &self.locale);
+        eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
+        eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
+        eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
+        eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
+        eframe::set_value(storage, "SOLVER_CONFIG", &self.solver_config);
+        eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
+
+        eframe::set_value(storage, "CUSTOM_RECIPE", &self.custom_recipe);
+        eframe::set_value(storage, "RECIPE_SEARCH_TEXT", &self.recipe_search_text);
+        eframe::set_value(storage, "FOOD_SEARCH_TEXT", &self.food_search_text);
+        eframe::set_value(storage, "POTION_SEARCH_TEXT", &self.potion_search_text);
+    }
+
+    fn auto_save_interval(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(1)
+    }
 }
 
 impl MacroSolverApp {
+    fn solver_update(&mut self) {
+        if cfg!(not(target_arch = "wasm32")) {
+            self.solver_update_native_hook();
+        }
+
+        if let Some(update) = self.data_update.take() {
+            match update {
+                SolverEvent::Progress(progress) => {
+                    self.solver_progress = progress;
+                }
+                SolverEvent::IntermediateSolution(actions) => {
+                    self.actions = actions;
+                }
+                SolverEvent::FinalSolution(actions) => {
+                    self.actions = actions;
+                    self.duration = Some(Instant::now() - self.start_time.unwrap());
+                    self.solver_pending = false;
+                }
+            }
+        }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn solver_update_native_hook(&mut self) {
+        // This function does nothing on wasm32 targets.
+    }
+
+    // This could be optimized. But for ease of maintainability, this is most likely easier
+    #[cfg(not(target_arch = "wasm32"))]
+    fn solver_update_native_hook(&mut self) {
+        if let Some(bridge_rx) = &self.bridge.rx {
+            if let Ok(update) = bridge_rx.try_recv() {
+                self.data_update.set(Some(update));
+            }
+        }
+    }
+
     fn draw_configuration_widget(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
@@ -590,8 +638,10 @@ impl MacroSolverApp {
                             QualitySource::Value(quality) => quality,
                         };
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
+
                         self.bridge
-                            .send((game_settings, self.solver_config.backload_progress));
+                            .send((game_settings,self.solver_config.backload_progress));
+
                         log::debug!("{game_settings:?}");
                     }
                     if self.solver_pending {
@@ -626,52 +676,5 @@ impl MacroSolverApp {
             .unwrap()
             .push("japanese_monospace".to_owned());
         ctx.set_fonts(fonts);
-    }
-}
-
-pub struct WebWorker {}
-
-impl gloo_worker::Worker for WebWorker {
-    type Message = u64;
-    type Input = (Settings, bool);
-    type Output = SolverEvent;
-
-    fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
-        panic::set_hook(Box::new(console_error_panic_hook::hook));
-        Self {}
-    }
-
-    fn update(&mut self, _scope: &gloo_worker::WorkerScope<Self>, _msg: Self::Message) {}
-
-    fn received(
-        &mut self,
-        scope: &gloo_worker::WorkerScope<Self>,
-        msg: Self::Input,
-        id: gloo_worker::HandlerId,
-    ) {
-        let settings = msg.0;
-        let backload_progress = msg.1;
-
-        let solution_callback = move |actions: &[Action]| {
-            scope.respond(id, SolverEvent::IntermediateSolution(actions.to_vec()));
-        };
-        let progress_callback = move |progress: f32| {
-            scope.respond(id, SolverEvent::Progress(progress));
-        };
-
-        let final_solution = solvers::MacroSolver::new(
-            settings,
-            Box::new(solution_callback),
-            Box::new(progress_callback),
-        )
-        .solve(InProgress::new(&settings), backload_progress);
-        match final_solution {
-            Some(actions) => {
-                scope.respond(id, SolverEvent::FinalSolution(actions));
-            }
-            None => {
-                scope.respond(id, SolverEvent::FinalSolution(Vec::new()));
-            }
-        }
     }
 }

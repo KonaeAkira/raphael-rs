@@ -13,16 +13,16 @@ solvers = { path = "solvers" }
 game-data = { path = "game_data" }
 
 egui = "0.27.2"
-egui_extras = { version = "0.27.2", features = ["all_loaders"] }
+
 eframe = { version = "0.27.2", features = ["persistence"] }
-image = { version = "0.24.9", default-features = false, features = ["png"] }
+egui_extras = { version = "0.27.2", features = ["all_loaders"] }
+image = { version = "0.24", features = ["jpeg", "png"] }
 wasm-bindgen-futures = "0.4"
 gloo-worker = { version = "0.5.0", features = ["futures"] }
 serde = { version = "1.0.203", features = ["derive"] }
 log = "0.4"
 web-time = "1.1.0"
 console_error_panic_hook = "0.1.7"
-
 
 [[bin]]
 name = "webworker"
