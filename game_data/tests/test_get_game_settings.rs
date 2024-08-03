@@ -24,6 +24,50 @@ fn ingredient_names(recipe: Recipe) -> Vec<String> {
 }
 
 #[test]
+/// Verified in-game (patch 7.05)
+fn test_roast_chicken() {
+    let recipe = find_recipe("Roast Chicken").unwrap();
+    assert_eq!(
+        ingredient_names(recipe),
+        [
+            "Rumpless Chicken",
+            "Mountain Salt",
+            "Frantoio Oil",
+            "Yyasulani Garlic",
+            "Lemonette",
+            "Sungilt Aethersand",
+        ]
+    );
+    let crafter_stats = CrafterStats {
+        craftsmanship: 4956,
+        control: 4963,
+        cp: 627,
+        level: 100,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 627,
+            max_durability: 70,
+            max_progress: 7500,
+            max_quality: 16500,
+            base_progress: 264,
+            base_quality: 274,
+            job_level: 100,
+            allowed_actions: ActionMask::from_level(100)
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
 fn test_turali_pineapple_ponzecake() {
     let recipe = find_recipe("Turali Pineapple Ponzecake").unwrap();
     assert_eq!(
