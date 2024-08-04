@@ -32,5 +32,5 @@ trunk serve --release --dist docs
 ## Running/building from source (native)
 
 ```
-cargo run -r --bin raphael-xiv
+cargo run --release --bin raphael-xiv
 ```
