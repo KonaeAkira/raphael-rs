@@ -1,5 +1,5 @@
 mod actions;
-pub use actions::{Action, ComboAction};
+pub use actions::{Action, Combo};
 
 mod conditions;
 pub use conditions::Condition;

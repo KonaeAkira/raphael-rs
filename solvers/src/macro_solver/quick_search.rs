@@ -1,6 +1,4 @@
-use simulator::{
-    state::InProgress, Action, ActionMask, ComboAction, Condition, Settings, SimulationState,
-};
+use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState};
 
 use crate::{
     actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
@@ -26,7 +24,7 @@ const QUALITY_SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
 struct Solution {
     quality: u16,
     action: Action,
-    backtrack_id: u32,
+    backtrack_id: usize,
 }
 
 /// Check if a rotation that maxes out Quality can easily be found
@@ -34,7 +32,7 @@ struct Solution {
 /// - Always increases Quality first, then finishes off Progress
 /// - Has some manually-coded branch pruning
 pub fn quick_search(
-    initial_state: InProgress,
+    initial_state: SimulationState,
     settings: &Settings,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut UpperBoundSolver,
@@ -58,12 +56,12 @@ pub fn quick_search(
     let mut solution: Option<Solution> = None;
 
     while let Some((state, score, backtrack_id)) = search_queue.pop() {
-        let allowed_actions = match state.raw_state().get_quality() >= settings.max_quality {
+        let allowed_actions = match state.get_quality() >= settings.max_quality {
             true => PROGRESS_SEARCH_ACTIONS.intersection(settings.allowed_actions),
             false => QUALITY_SEARCH_ACTIONS.intersection(settings.allowed_actions),
         };
         for action in allowed_actions.actions_iter() {
-            if !should_use_action(action, state.raw_state(), allowed_actions) {
+            if !should_use_action(action, &state, allowed_actions) {
                 continue;
             }
             if let Ok(state) = state.use_action(action, Condition::Normal, settings) {
@@ -71,17 +69,17 @@ pub fn quick_search(
                 {
                     continue;
                 }
-                if let Ok(in_progress) = InProgress::try_from(state) {
-                    if !finish_solver.can_finish(&in_progress) {
+                if !state.is_final(settings) {
+                    if !finish_solver.can_finish(&state) {
                         continue;
                     }
                     let quality_upper_bound = if state.get_quality() >= settings.max_quality {
                         state.get_quality()
                     } else {
-                        upper_bound_solver.quality_upper_bound(in_progress)
+                        upper_bound_solver.quality_upper_bound(state)
                     };
                     search_queue.push(
-                        in_progress,
+                        state,
                         SearchScore::new(
                             quality_upper_bound,
                             score.duration + action.time_cost() as u8,
@@ -91,7 +89,8 @@ pub fn quick_search(
                         action,
                         backtrack_id,
                     );
-                } else if state.missing_progress == 0 && state.get_quality() >= settings.max_quality
+                } else if state.progress >= settings.max_progress
+                    && state.get_quality() >= settings.max_quality
                 {
                     search_queue.update_min_score(SearchScore::new(
                         state.get_quality(),
@@ -126,8 +125,8 @@ pub fn quick_search(
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {
     // Force the use of the next combo action if it is available
     match state.combo {
-        None => (),
-        Some(ComboAction::BasicTouch) => {
+        Combo::None => (),
+        Combo::BasicTouch => {
             let combo_available = allowed_actions.has(Action::ComboStandardTouch)
                 || allowed_actions.has(Action::ComboRefinedTouch);
             return !combo_available
@@ -136,11 +135,11 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
                     Action::ComboStandardTouch | Action::ComboRefinedTouch
                 );
         }
-        Some(ComboAction::StandardTouch) => {
+        Combo::StandardTouch => {
             let combo_available = allowed_actions.has(Action::ComboAdvancedTouch);
             return !combo_available || matches!(action, Action::ComboAdvancedTouch);
         }
-        Some(ComboAction::SynthesisBegin) => {
+        Combo::SynthesisBegin => {
             let combo_available = allowed_actions.has(Action::Reflect)
                 || allowed_actions.has(Action::MuscleMemory)
                 || allowed_actions.has(Action::TrainedEye);

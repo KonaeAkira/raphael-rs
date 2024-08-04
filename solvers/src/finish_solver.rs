@@ -1,6 +1,5 @@
 use simulator::{
-    state::InProgress, Action, ActionMask, ComboAction, Condition, Effects, Settings,
-    SimulationState, SingleUse,
+    Action, ActionMask, Combo, Condition, Effects, Settings, SimulationState, SingleUse,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -51,34 +50,33 @@ struct ReducedState {
     durability: i8,
     cp: i16,
     effects: ReducedEffects,
-    combo: Option<ComboAction>,
+    combo: Combo,
     trained_perfection: SingleUse,
 }
 
 impl ReducedState {
-    pub fn from_state(state: &InProgress) -> ReducedState {
+    pub fn from_state(state: &SimulationState) -> ReducedState {
         ReducedState {
-            durability: state.raw_state().durability,
-            cp: state.raw_state().cp,
-            effects: ReducedEffects::from_effects(&state.raw_state().effects),
-            combo: state.raw_state().combo,
-            trained_perfection: state.raw_state().effects.trained_perfection(),
+            durability: state.durability,
+            cp: state.cp,
+            effects: ReducedEffects::from_effects(&state.effects),
+            combo: state.combo,
+            trained_perfection: state.effects.trained_perfection(),
         }
     }
 
-    pub fn to_state(self) -> InProgress {
-        let raw_state = SimulationState {
+    pub fn to_state(self) -> SimulationState {
+        SimulationState {
             durability: self.durability,
             cp: self.cp,
-            missing_progress: u16::MAX,
-            unreliable_quality: [u16::MAX; 2],
+            progress: 0,
+            unreliable_quality: [0; 2],
             effects: self
                 .effects
                 .to_effects()
                 .with_trained_perfection(self.trained_perfection),
             combo: self.combo,
-        };
-        raw_state.try_into().unwrap()
+        }
     }
 }
 
@@ -98,9 +96,9 @@ impl FinishSolver {
         }
     }
 
-    pub fn can_finish(&mut self, state: &InProgress) -> bool {
+    pub fn can_finish(&mut self, state: &SimulationState) -> bool {
         let max_progress = self.solve_max_progress(ReducedState::from_state(state));
-        max_progress >= state.raw_state().missing_progress
+        state.progress + max_progress >= self.settings.max_progress
     }
 
     fn solve_max_progress(&mut self, state: ReducedState) -> u16 {
@@ -117,16 +115,13 @@ impl FinishSolver {
                             .to_state()
                             .use_action(action, Condition::Normal, &self.settings)
                     {
-                        if let Ok(in_progress) = new_state.try_into() {
+                        if !new_state.is_final(&self.settings) {
                             let child_progress =
-                                self.solve_max_progress(ReducedState::from_state(&in_progress));
-                            let action_progress =
-                                u16::MAX - in_progress.raw_state().missing_progress;
+                                self.solve_max_progress(ReducedState::from_state(&new_state));
                             max_progress =
-                                std::cmp::max(max_progress, child_progress + action_progress);
+                                std::cmp::max(max_progress, child_progress + new_state.progress);
                         } else {
-                            let progress = u16::MAX - new_state.missing_progress;
-                            max_progress = std::cmp::max(max_progress, progress);
+                            max_progress = std::cmp::max(max_progress, new_state.progress);
                         }
                     }
                     if max_progress >= self.settings.max_progress {

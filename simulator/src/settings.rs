@@ -27,7 +27,7 @@ impl ActionMask {
         Self { mask: u64::MAX }
     }
 
-    pub fn from_level(level: u32) -> Self {
+    pub fn from_level(level: u8) -> Self {
         let mut result = Self::none();
         for action in ALL_ACTIONS {
             if action.level_requirement() <= level {

@@ -1,4 +1,4 @@
-use simulator::{state::InProgress, ComboAction, Effects, SimulationState, SingleUse};
+use simulator::{Combo, Effects, SimulationState, SingleUse};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedEffects {
@@ -7,7 +7,6 @@ pub struct ReducedEffects {
     pub veneration: u8,
     pub great_strides: u8,
     pub muscle_memory: u8,
-    pub trained_perfection: SingleUse,
     pub heart_and_soul: SingleUse,
     pub quick_innovation_used: bool,
 }
@@ -15,13 +14,16 @@ pub struct ReducedEffects {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
     pub cp: i16,
-    pub combo: Option<ComboAction>,
+    pub combo: Combo,
     pub effects: ReducedEffects,
 }
 
 impl ReducedState {
-    pub fn from_state(state: InProgress, base_durability_cost: i16, waste_not_cost: i16) -> Self {
-        let state = *state.raw_state();
+    pub fn from_state(
+        state: SimulationState,
+        base_durability_cost: i16,
+        waste_not_cost: i16,
+    ) -> Self {
         let used_durability = (i8::MAX - state.durability) / 5;
         let durability_cost = std::cmp::min(
             used_durability as i16 * base_durability_cost,
@@ -36,7 +38,6 @@ impl ReducedState {
                 veneration: state.effects.veneration(),
                 great_strides: state.effects.great_strides(),
                 muscle_memory: state.effects.muscle_memory(),
-                trained_perfection: state.effects.trained_perfection(),
                 heart_and_soul: state.effects.heart_and_soul(),
                 quick_innovation_used: state.effects.quick_innovation_used(),
             },
@@ -44,12 +45,12 @@ impl ReducedState {
     }
 }
 
-impl std::convert::From<ReducedState> for InProgress {
+impl std::convert::From<ReducedState> for SimulationState {
     fn from(state: ReducedState) -> Self {
         SimulationState {
             durability: i8::MAX,
             cp: state.cp,
-            missing_progress: u16::MAX,
+            progress: 0,
             unreliable_quality: [0, 0],
             effects: Effects::new()
                 .with_inner_quiet(state.effects.inner_quiet)
@@ -57,7 +58,7 @@ impl std::convert::From<ReducedState> for InProgress {
                 .with_veneration(state.effects.veneration)
                 .with_great_strides(state.effects.great_strides)
                 .with_muscle_memory(state.effects.muscle_memory)
-                .with_trained_perfection(state.effects.trained_perfection)
+                .with_trained_perfection(SingleUse::Unavailable)
                 .with_heart_and_soul(state.effects.heart_and_soul)
                 .with_quick_innovation_used(state.effects.quick_innovation_used)
                 .with_guard(1),

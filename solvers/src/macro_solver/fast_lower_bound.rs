@@ -1,7 +1,5 @@
 use radix_heap::RadixHeapMap;
-use simulator::{
-    state::InProgress, Action, ActionMask, ComboAction, Condition, Settings, SimulationState,
-};
+use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState};
 
 use crate::{
     actions::{DURABILITY_ACTIONS, QUALITY_ACTIONS},
@@ -10,7 +8,7 @@ use crate::{
     utils::NamedTimer,
 };
 
-use super::pareto_set::ParetoSet;
+use super::quality_pareto_front::QualityParetoFront;
 
 const SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .union(DURABILITY_ACTIONS)
@@ -19,7 +17,7 @@ const SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .remove(Action::DelicateSynthesis);
 
 pub fn fast_lower_bound(
-    state: InProgress,
+    state: SimulationState,
     settings: &Settings,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut UpperBoundSolver,
@@ -27,8 +25,8 @@ pub fn fast_lower_bound(
     let _timer = NamedTimer::new("Fast lower bound");
     let allowed_actions = settings.allowed_actions.intersection(SEARCH_ACTIONS);
 
-    let mut search_queue: RadixHeapMap<u16, InProgress> = RadixHeapMap::default();
-    let mut pareto_set = ParetoSet::default();
+    let mut search_queue: RadixHeapMap<u16, SimulationState> = RadixHeapMap::default();
+    let mut pareto_set = QualityParetoFront::default();
 
     let mut quality_lower_bound = 0;
 
@@ -39,26 +37,26 @@ pub fn fast_lower_bound(
             break;
         }
         for action in allowed_actions.actions_iter() {
-            if !should_use_action(action, state.raw_state(), allowed_actions) {
+            if !should_use_action(action, &state, allowed_actions) {
                 continue;
             }
             if let Ok(state) = state.use_action(action, Condition::Normal, settings) {
-                if let Ok(in_progress) = InProgress::try_from(state) {
-                    if !finish_solver.can_finish(&in_progress) {
+                if !state.is_final(settings) {
+                    if !finish_solver.can_finish(&state) {
                         continue;
                     }
                     quality_lower_bound = std::cmp::max(quality_lower_bound, state.get_quality());
                     if action == Action::ByregotsBlessing {
                         continue;
                     }
-                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(in_progress);
+                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(state);
                     if quality_upper_bound <= quality_lower_bound {
                         continue;
                     }
                     if !pareto_set.insert(state, settings) {
                         continue;
                     }
-                    search_queue.push(quality_upper_bound, in_progress);
+                    search_queue.push(quality_upper_bound, state);
                 }
             }
         }
@@ -71,8 +69,8 @@ pub fn fast_lower_bound(
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {
     // Force the use of the next combo action if it is available
     match state.combo {
-        None => (),
-        Some(ComboAction::BasicTouch) => {
+        Combo::None => (),
+        Combo::BasicTouch => {
             let combo_available = allowed_actions.has(Action::ComboStandardTouch)
                 || allowed_actions.has(Action::ComboRefinedTouch);
             return !combo_available
@@ -81,11 +79,11 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
                     Action::ComboStandardTouch | Action::ComboRefinedTouch
                 );
         }
-        Some(ComboAction::StandardTouch) => {
+        Combo::StandardTouch => {
             let combo_available = allowed_actions.has(Action::ComboAdvancedTouch);
             return !combo_available || matches!(action, Action::ComboAdvancedTouch);
         }
-        Some(ComboAction::SynthesisBegin) => {
+        Combo::SynthesisBegin => {
             let combo_available = allowed_actions.has(Action::Reflect)
                 || allowed_actions.has(Action::MuscleMemory)
                 || allowed_actions.has(Action::TrainedEye);

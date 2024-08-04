@@ -1,16 +1,16 @@
-use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
+use crate::{effects::SingleUse, Action, Combo, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
     pub cp: i16,
     pub durability: i8,
-    pub missing_progress: u16,
+    pub progress: u16,
     pub unreliable_quality: [u16; 2],
     // This value represents the minimum additional quality achievable by the simulator
     // 1 while allowing the previous un-Guarded action to be Poor
     // 0 while forcing the previous un-Guarded action to be Normal
     pub effects: Effects,
-    pub combo: Option<ComboAction>,
+    pub combo: Combo,
 }
 
 impl SimulationState {
@@ -18,18 +18,17 @@ impl SimulationState {
         Self {
             cp: settings.max_cp,
             durability: settings.max_durability,
-            missing_progress: settings.max_progress,
+            progress: 0,
             unreliable_quality: [0; 2],
             effects: Effects::default().with_guard(if settings.adversarial { 2 } else { 0 }),
-            combo: Some(ComboAction::SynthesisBegin),
+            combo: Combo::SynthesisBegin,
         }
     }
 
     pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, &'static str> {
         let mut state = Self::new(settings);
         for action in actions {
-            let in_progress: InProgress = state.try_into()?;
-            state = in_progress.use_action(*action, Condition::Normal, settings)?;
+            state = state.use_action(*action, Condition::Normal, settings)?;
         }
         Ok(state)
     }
@@ -41,18 +40,10 @@ impl SimulationState {
         let mut state = Self::new(settings);
         let mut errors = Vec::new();
         for action in actions {
-            state = match InProgress::try_from(state) {
-                Ok(in_progress) => {
-                    match in_progress.use_action(*action, Condition::Normal, settings) {
-                        Ok(new_state) => {
-                            errors.push(Ok(()));
-                            new_state
-                        }
-                        Err(err) => {
-                            errors.push(Err(err));
-                            state
-                        }
-                    }
+            state = match state.use_action(*action, Condition::Normal, settings) {
+                Ok(new_state) => {
+                    errors.push(Ok(()));
+                    new_state
                 }
                 Err(err) => {
                     errors.push(Err(err));
@@ -64,38 +55,13 @@ impl SimulationState {
     }
 
     pub fn get_quality(&self) -> u16 {
-        std::cmp::min(self.unreliable_quality[0], self.unreliable_quality[1])
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct InProgress {
-    state: SimulationState,
-}
-
-impl TryFrom<SimulationState> for InProgress {
-    type Error = &'static str;
-
-    fn try_from(value: SimulationState) -> Result<Self, Self::Error> {
-        if value.missing_progress == 0 {
-            return Err("Progress already at 100%");
-        }
-        if value.durability <= 0 {
-            return Err("No remaining durability");
-        }
-        Ok(Self { state: value })
-    }
-}
-
-impl InProgress {
-    pub fn new(settings: &Settings) -> Self {
-        Self {
-            state: SimulationState::new(settings),
-        }
+        #[cfg(test)]
+        assert!(self.unreliable_quality[0] >= self.unreliable_quality[1]);
+        self.unreliable_quality[1]
     }
 
-    pub fn raw_state(&self) -> &SimulationState {
-        &self.state
+    pub fn is_final(&self, settings: &Settings) -> bool {
+        self.durability <= 0 || self.progress >= settings.max_progress
     }
 
     pub fn can_use_action(
@@ -104,54 +70,50 @@ impl InProgress {
         condition: Condition,
         settings: &Settings,
     ) -> Result<(), &'static str> {
+        if self.is_final(settings) {
+            return Err("State is final");
+        }
         if !settings.allowed_actions.has(action) {
             return Err("Action not enabled");
         }
-        if action.cp_cost() > self.state.cp {
+        if action.cp_cost() > self.cp {
             return Err("Not enough CP");
         }
-        if !action.combo_fulfilled(self.state.combo) {
+        if !action.combo_fulfilled(self.combo) {
             return Err("Combo requirement not fulfilled");
         }
         match action {
-            Action::ByregotsBlessing if self.state.effects.inner_quiet() == 0 => {
+            Action::ByregotsBlessing if self.effects.inner_quiet() == 0 => {
                 Err("Need Inner Quiet to use Byregot's Blessing")
             }
-            Action::PrudentSynthesis | Action::PrudentTouch
-                if self.state.effects.waste_not() != 0 =>
-            {
+            Action::PrudentSynthesis | Action::PrudentTouch if self.effects.waste_not() != 0 => {
                 Err("Action cannot be used during Waste Not")
             }
             Action::IntensiveSynthesis | Action::PreciseTouch
-                if self.state.effects.heart_and_soul() != SingleUse::Active
+                if self.effects.heart_and_soul() != SingleUse::Active
                     && condition != Condition::Good
                     && condition != Condition::Excellent =>
             {
                 Err("Requires condition to be Good or Excellent")
             }
-            Action::Groundwork
-                if self.state.durability < action.durability_cost(&self.state.effects) =>
-            {
+            Action::Groundwork if self.durability < action.durability_cost(&self.effects) => {
                 Err("Not enough durability")
             }
-            Action::TrainedFinesse if self.state.effects.inner_quiet() < 10 => {
+            Action::TrainedFinesse if self.effects.inner_quiet() < 10 => {
                 Err("Requires 10 Inner Quiet")
             }
             Action::TrainedPerfection
-                if !matches!(
-                    self.state.effects.trained_perfection(),
-                    SingleUse::Available
-                ) =>
+                if !matches!(self.effects.trained_perfection(), SingleUse::Available) =>
             {
                 Err("Action can only be used once per synthesis")
             }
-            Action::HeartAndSoul if self.state.effects.heart_and_soul() != SingleUse::Available => {
+            Action::HeartAndSoul if self.effects.heart_and_soul() != SingleUse::Available => {
                 Err("Action can only be used once per synthesis")
             }
-            Action::QuickInnovation if self.state.effects.quick_innovation_used() => {
+            Action::QuickInnovation if self.effects.quick_innovation_used() => {
                 Err("Action can only be used once per synthesis")
             }
-            Action::QuickInnovation if self.state.effects.innovation() != 0 => {
+            Action::QuickInnovation if self.effects.innovation() != 0 => {
                 Err("Action cannot be used when Innovation is active")
             }
             _ => Ok(()),
@@ -165,7 +127,7 @@ impl InProgress {
         settings: &Settings,
     ) -> Result<SimulationState, &'static str> {
         self.can_use_action(action, condition, settings)?;
-        let mut state = self.state;
+        let mut state = self;
 
         let cp_cost = action.cp_cost();
         let durability_cost = action.durability_cost(&state.effects);
@@ -193,7 +155,7 @@ impl InProgress {
 
         // reset muscle memory if progress increased
         if progress_increase != 0 {
-            state.missing_progress = state.missing_progress.saturating_sub(progress_increase);
+            state.progress += progress_increase;
             state.effects.set_muscle_memory(0);
         }
 
@@ -235,7 +197,7 @@ impl InProgress {
             }
         }
 
-        if state.missing_progress == 0 || state.durability <= 0 {
+        if state.is_final(settings) {
             return Ok(state);
         }
 

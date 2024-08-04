@@ -1,21 +1,26 @@
-use simulator::{state::InProgress, Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 use solvers::MacroSolver;
 
-fn solve(settings: &Settings, backload_progress: bool) -> Option<Vec<Action>> {
-    assert!(!settings.adversarial); // Ensure that adversarial tests are in a different file.
-    MacroSolver::new(settings.clone(), Box::new(|_| {}), Box::new(|_| {}))
-        .solve(InProgress::new(settings), backload_progress)
+fn solve(
+    settings: &Settings,
+    backload_progress: bool,
+    minimize_steps: bool,
+) -> Option<Vec<Action>> {
+    MacroSolver::new(settings.clone(), Box::new(|_| {}), Box::new(|_| {})).solve(
+        SimulationState::new(settings),
+        backload_progress,
+        minimize_steps,
+    )
 }
 
 fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
     let mut state = SimulationState::new(&settings);
     for action in actions {
-        state = InProgress::try_from(state)
-            .unwrap()
+        state = state
             .use_action(action.clone(), Condition::Normal, &settings)
             .unwrap();
     }
-    assert_eq!(state.missing_progress, 0);
+    assert!(state.progress >= settings.max_progress);
     state.get_quality()
 }
 
@@ -51,7 +56,7 @@ fn test_random_0f93c79f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1802);
     assert_eq!(get_duration(&actions), 44);
     assert_eq!(actions.len(), 16);
@@ -73,7 +78,7 @@ fn test_random_1e281667() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3366);
     assert_eq!(get_duration(&actions), 53);
     assert_eq!(actions.len(), 20);
@@ -95,7 +100,7 @@ fn test_random_d0bf2aef() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3434);
     assert_eq!(get_duration(&actions), 67);
     assert_eq!(actions.len(), 25);
@@ -117,7 +122,7 @@ fn test_unsolvable() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false);
+    let actions = solve(&settings, false, false);
     assert_eq!(actions, None);
 }
 
@@ -137,7 +142,7 @@ fn test_max_quality() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 1100);
     assert_eq!(get_duration(&actions), 29);
     assert_eq!(actions.len(), 11);
@@ -159,7 +164,7 @@ fn test_zero_quality() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 0);
     assert_eq!(get_duration(&actions), 14);
     assert_eq!(actions.len(), 5);
@@ -181,7 +186,7 @@ fn test_random_e413e05d() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2018);
     assert_eq!(get_duration(&actions), 52);
     assert_eq!(actions.len(), 19);
@@ -203,7 +208,7 @@ fn test_random_bb38a037() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2942);
     assert_eq!(get_duration(&actions), 56);
     assert_eq!(actions.len(), 21);
@@ -225,7 +230,7 @@ fn test_backload_random_bb38a037() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 2842);
     assert_eq!(get_duration(&actions), 62);
@@ -248,7 +253,7 @@ fn test_random_a300ca2b() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4683);
     assert_eq!(get_duration(&actions), 69);
     assert_eq!(actions.len(), 26);
@@ -270,7 +275,7 @@ fn test_random_0f9d7781() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 2939);
     assert_eq!(get_duration(&actions), 64);
     assert_eq!(actions.len(), 24);
@@ -292,7 +297,7 @@ fn test_random_e451d981() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 5364);
     assert_eq!(get_duration(&actions), 74);
     assert_eq!(actions.len(), 27);
@@ -314,7 +319,7 @@ fn test_random_6799bb1d() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3321);
     assert_eq!(get_duration(&actions), 51);
     assert_eq!(actions.len(), 19);
@@ -336,7 +341,7 @@ fn test_random_940b4755() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 4483);
     assert_eq!(get_duration(&actions), 67);
     assert_eq!(actions.len(), 25);
@@ -358,7 +363,7 @@ fn test_rinascita_3700_3280() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10623);
     assert_eq!(get_duration(&actions), 70);
     assert_eq!(actions.len(), 26);
@@ -380,7 +385,7 @@ fn test_pactmaker_3240_3130() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 8912);
     assert_eq!(get_duration(&actions), 55);
     assert_eq!(actions.len(), 21);
@@ -401,7 +406,7 @@ fn test_pactmaker_3240_3130_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 9608);
     assert_eq!(get_duration(&actions), 65);
     assert_eq!(actions.len(), 24);
@@ -423,7 +428,7 @@ fn test_backload_pactmaker_3240_3130() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 8801);
     assert_eq!(get_duration(&actions), 65);
@@ -446,7 +451,7 @@ fn test_diadochos_4021_3660() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 9688);
     assert_eq!(get_duration(&actions), 68);
     assert_eq!(actions.len(), 25);
@@ -468,7 +473,7 @@ fn test_indagator_3858_4057() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 12793);
     assert_eq!(get_duration(&actions), 72);
     assert_eq!(actions.len(), 27);
@@ -490,7 +495,7 @@ fn test_random_2ea6c001() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 10752);
     assert_eq!(get_duration(&actions), 44);
     assert_eq!(actions.len(), 16);
@@ -512,7 +517,7 @@ fn test_random_48ae7c9f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 19621);
     assert_eq!(get_duration(&actions), 84);
     assert_eq!(actions.len(), 31);
@@ -534,7 +539,7 @@ fn test_backload_random_48ae7c9f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 19445);
     assert_eq!(get_duration(&actions), 98);
@@ -556,7 +561,7 @@ fn test_backload_random_48ae7c9f_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 19677);
     assert_eq!(get_duration(&actions), 93);
@@ -579,34 +584,10 @@ fn test_max_quality_indagator_3858_4057() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 12963);
-    assert_eq!(get_duration(&actions), 72);
-    assert_eq!(actions.len(), 27);
-    // 62 seconds is possible, but takes very long to solve using the main solver:
-    // /ac "Reflect" <wait.3>
-    // /ac "Manipulation" <wait.2>
-    // /ac "Innovation" <wait.2>
-    // /ac "Waste Not II" <wait.2>
-    // /ac "Preparatory Touch" <wait.3>
-    // /ac "Preparatory Touch" <wait.3>
-    // /ac "Preparatory Touch" <wait.3>
-    // /ac "Veneration" <wait.2>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Groundwork" <wait.3>
-    // /ac "Innovation" <wait.2>
-    // /ac "Delicate Synthesis" <wait.3>
-    // /ac "Prudent Touch" <wait.3>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Innovation" <wait.2>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Trained Finesse" <wait.3>
-    // /ac "Great Strides" <wait.2>
-    // /ac "Byregot's Blessing" <wait.3>
-    // /ac "Careful Synthesis" <wait.3>
+    let actions = solve(&settings, false, true).unwrap();
+    assert_eq!(get_quality(&settings, &actions), 13046);
+    assert_eq!(get_duration(&actions), 62);
+    assert_eq!(actions.len(), 23);
 }
 
 #[test]
@@ -625,7 +606,7 @@ fn test_random_4ecd54c4() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     assert_eq!(get_quality(&settings, &actions), 3080);
     assert_eq!(get_duration(&actions), 51);
     assert_eq!(actions.len(), 19);
@@ -647,7 +628,7 @@ fn test_backload_random_4ecd54c4() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 3002);
     assert_eq!(get_duration(&actions), 51);
@@ -671,7 +652,7 @@ fn test_trained_eye() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 9090);
     assert_eq!(get_duration(&actions), 16);
@@ -696,7 +677,7 @@ fn test_rare_tacos() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions) + 6000, 11562);
     assert_eq!(get_duration(&actions), 41);
@@ -723,7 +704,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true).unwrap();
+    let actions = solve(&settings, true, false).unwrap();
     assert!(is_progress_backloaded(&actions));
     assert_eq!(get_quality(&settings, &actions), 8437);
     assert_eq!(get_duration(&actions), 36);
@@ -748,7 +729,7 @@ fn test_rare_tacos_2() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 12082);
     assert_eq!(get_duration(&actions), 58);
@@ -773,7 +754,7 @@ fn test_stuffed_peppers_2() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 20177);
     assert_eq!(get_duration(&actions), 85);
@@ -797,7 +778,7 @@ fn test_stuffed_peppers_2_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 21536);
     assert_eq!(get_duration(&actions), 83);
@@ -821,7 +802,7 @@ fn test_stuffed_peppers_2_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 20502);
     assert_eq!(get_duration(&actions), 77);
@@ -846,7 +827,7 @@ fn test_rakaznar_lapidary_hammer() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 7056);
     assert_eq!(get_duration(&actions), 45);
@@ -871,7 +852,7 @@ fn test_black_star() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false).unwrap();
+    let actions = solve(&settings, false, false).unwrap();
     dbg!(actions.clone());
     assert_eq!(get_quality(&settings, &actions), 6114);
     assert_eq!(get_duration(&actions), 31);

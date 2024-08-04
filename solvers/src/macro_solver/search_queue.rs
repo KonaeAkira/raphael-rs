@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
 
-use simulator::{state::InProgress, Action, Settings};
+use simulator::{Action, Settings, SimulationState};
 
 use crate::utils::Backtracking;
 
-use super::pareto_set::ParetoSet;
+use super::{effect_pareto_front::EffectParetoFront, quality_pareto_front::QualityParetoFront};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
@@ -28,7 +28,7 @@ impl SearchScore {
         if self.quality != other.quality {
             self.quality.abs_diff(other.quality) as f32
         } else {
-            self.duration.abs_diff(other.duration) as f32 / 255.0
+            self.steps.abs_diff(other.steps) as f32 / 255.0
         }
     }
 }
@@ -43,40 +43,42 @@ impl std::cmp::Ord for SearchScore {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.quality
             .cmp(&other.quality)
-            .then(other.duration.cmp(&self.duration))
             .then(other.steps.cmp(&self.steps))
+            .then(other.duration.cmp(&self.duration))
             .then(self.quality_overflow.cmp(&other.quality_overflow))
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 struct SearchNode {
-    state: InProgress,
+    state: SimulationState,
     action: Action,
-    parent_id: u32,
+    parent_id: usize,
 }
 
 pub struct SearchQueue {
     settings: Settings,
-    pareto_set: ParetoSet,
+    quality_pareto_front: QualityParetoFront,
+    effect_pareto_front: EffectParetoFront,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<Action>,
     current_score: SearchScore,
-    current_nodes: Vec<(InProgress, u32)>,
+    current_nodes: Vec<(SimulationState, usize)>,
     minimum_score: SearchScore,
     initial_score_difference: f32,
 }
 
 impl SearchQueue {
     pub fn new(
-        initial_state: InProgress,
+        initial_state: SimulationState,
         initial_score: SearchScore,
         minimum_score: SearchScore,
         settings: Settings,
     ) -> Self {
         Self {
             settings,
-            pareto_set: Default::default(),
+            quality_pareto_front: Default::default(),
+            effect_pareto_front: Default::default(),
             backtracking: Backtracking::new(),
             buckets: Default::default(),
             current_score: initial_score,
@@ -103,7 +105,13 @@ impl SearchQueue {
         }
     }
 
-    pub fn push(&mut self, state: InProgress, score: SearchScore, action: Action, parent_id: u32) {
+    pub fn push(
+        &mut self,
+        state: SimulationState,
+        score: SearchScore,
+        action: Action,
+        parent_id: usize,
+    ) {
         assert!(self.current_score > score);
         if score < self.minimum_score {
             return;
@@ -115,15 +123,18 @@ impl SearchQueue {
         });
     }
 
-    pub fn pop(&mut self) -> Option<(InProgress, SearchScore, u32)> {
+    pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {
         while self.current_nodes.is_empty() {
-            if let Some((score, bucket)) = self.buckets.pop_last() {
+            if let Some((score, mut bucket)) = self.buckets.pop_last() {
+                // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
+                // sort by cp, because a state that has more cp cannot be dominated by a state with less cp
+                bucket.sort_unstable_by(|lhs, rhs| rhs.state.cp.cmp(&lhs.state.cp));
                 self.current_score = score;
                 self.current_nodes = bucket
                     .into_iter()
                     .filter(|node| {
-                        self.pareto_set
-                            .insert(*node.state.raw_state(), &self.settings)
+                        self.quality_pareto_front.insert(node.state, &self.settings)
+                            && self.effect_pareto_front.insert(node.state, &self.settings)
                     })
                     .map(|node| {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
@@ -138,7 +149,7 @@ impl SearchQueue {
         Some((state, self.current_score, backtrack_id))
     }
 
-    pub fn backtrack(&self, backtrack_id: u32) -> impl Iterator<Item = Action> {
+    pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = Action> {
         self.backtracking.get(backtrack_id)
     }
 }

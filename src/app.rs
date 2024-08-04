@@ -13,6 +13,7 @@ use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, Tex
 use game_data::{
     action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale, ITEMS,
 };
+
 use simulator::Action;
 
 use crate::{config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration}, widgets::{
@@ -43,10 +44,11 @@ pub enum SolverEvent {
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-struct SolverConfig {
-    quality_target: QualityTarget,
-    backload_progress: bool,
-    adversarial: bool,
+pub struct SolverConfig {
+    pub quality_target: QualityTarget,
+    pub backload_progress: bool,
+    pub adversarial: bool,
+    pub minimize_steps: bool,
 }
 
 pub struct MacroSolverApp {
@@ -486,7 +488,7 @@ impl MacroSolverApp {
             ui.separator();
 
             ui.label(egui::RichText::new("Actions").strong());
-            if self.crafter_config.active_stats().level as u32 >= Action::Manipulation.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::Manipulation.level_requirement() {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.active_stats_mut().manipulation,
                     format!("Enable {}", action_name(Action::Manipulation, self.locale)),
@@ -497,7 +499,7 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::Manipulation, self.locale))),
                 );
             }
-            if self.crafter_config.active_stats().level as u32 >= Action::HeartAndSoul.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement() {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().heart_and_soul, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))));
             } else {
                 ui.add_enabled(
@@ -505,7 +507,7 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))),
                 );
             }
-            if self.crafter_config.active_stats().level as u32 >= Action::QuickInnovation.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::QuickInnovation.level_requirement() {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().quick_innovation, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))));
             } else {
                 ui.add_enabled(
@@ -576,6 +578,7 @@ impl MacroSolverApp {
                         });
                 });
             });
+
             ui.horizontal(|ui| {
                 ui.checkbox(
                     &mut self.solver_config.backload_progress,
@@ -583,6 +586,7 @@ impl MacroSolverApp {
                 );
                 ui.add(HelpText::new("Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊞ Shorter solve-time."));
             });
+
             if self.recipe_config.recipe.is_expert {
                 self.solver_config.adversarial = false;
             }
@@ -594,6 +598,18 @@ impl MacroSolverApp {
                 ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊟ Much longer solve-time."));
             });
             if self.solver_config.adversarial {
+                ui.label(
+                    egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
+                        .small()
+                        .color(ui.visuals().warn_fg_color),
+                );
+            }
+
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut self.solver_config.minimize_steps, "Minimize steps");
+                ui.add(HelpText::new("Guarantee shortest possible macro.\n  ⊟ Much longer solve-time."));
+            });
+            if self.solver_config.minimize_steps {
                 ui.label(
                     egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
                         .small()
@@ -627,8 +643,7 @@ impl MacroSolverApp {
                         };
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
 
-                        self.bridge
-                            .send((game_settings, self.solver_config.backload_progress));
+                        self.bridge.send((game_settings, self.solver_config));
 
                         log::debug!("{game_settings:?}");
                     }

@@ -2,7 +2,7 @@ use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
     utils::{ParetoFrontBuilder, ParetoValue},
 };
-use simulator::{state::InProgress, Action, ActionMask, Condition, Settings};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState, SingleUse};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -53,21 +53,24 @@ impl UpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// The returned upper-bound is clamped to 2 times settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: InProgress) -> u16 {
-        let mut state = *state.raw_state();
+    pub fn quality_upper_bound(&mut self, mut state: SimulationState) -> u16 {
         let current_quality = state.get_quality();
+        let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
         // refund effects and durability
         state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.cp_cost() / 8);
         state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
+        if state.effects.trained_perfection() != SingleUse::Unavailable
+            && self.settings.allowed_actions.has(Action::TrainedPerfection)
+        {
+            state.effects.set_trained_perfection(SingleUse::Unavailable);
+            state.cp += 4 * self.base_durability_cost;
+        }
         state.durability = i8::MAX;
 
-        let reduced_state = ReducedState::from_state(
-            InProgress::try_from(state).unwrap(),
-            self.base_durability_cost,
-            self.waste_not_cost,
-        );
+        let reduced_state =
+            ReducedState::from_state(state, self.base_durability_cost, self.waste_not_cost);
 
         if !self.solved_states.contains_key(&reduced_state) {
             self.solve_state(reduced_state);
@@ -77,18 +80,18 @@ impl UpperBoundSolver {
 
         match pareto_front.last() {
             Some(element) => {
-                if element.first < state.missing_progress {
+                if element.first < missing_progress {
                     return 0;
                 }
             }
             None => return 0,
         }
 
-        let index =
-            match pareto_front.binary_search_by_key(&state.missing_progress, |value| value.first) {
-                Ok(i) => i,
-                Err(i) => i,
-            };
+        let index = match pareto_front.binary_search_by_key(&missing_progress, |value| value.first)
+        {
+            Ok(i) => i,
+            Err(i) => i,
+        };
         std::cmp::min(
             self.settings.max_quality.saturating_mul(2),
             pareto_front[index].second.saturating_add(current_quality),
@@ -115,34 +118,29 @@ impl UpperBoundSolver {
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {
         if let Ok(new_state) =
-            InProgress::from(state).use_action(action, Condition::Normal, &self.settings)
+            SimulationState::from(state).use_action(action, Condition::Normal, &self.settings)
         {
-            if let Ok(in_progress) = InProgress::try_from(new_state) {
-                let action_progress = u16::MAX - new_state.missing_progress;
-                let action_quality = new_state.get_quality();
-                let new_state = ReducedState::from_state(
-                    in_progress,
-                    self.base_durability_cost,
-                    self.waste_not_cost,
-                );
-                if new_state.cp > 0 {
-                    match self.solved_states.get(&new_state) {
-                        Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
-                        None => self.solve_state(new_state),
-                    }
-                    self.pareto_front_builder.map(move |value| {
-                        value.first += action_progress;
-                        value.second += action_quality;
-                    });
-                    self.pareto_front_builder.merge();
+            let action_progress = new_state.progress;
+            let action_quality = new_state.get_quality();
+            let new_state =
+                ReducedState::from_state(new_state, self.base_durability_cost, self.waste_not_cost);
+            if new_state.cp > 0 {
+                match self.solved_states.get(&new_state) {
+                    Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
+                    None => self.solve_state(new_state),
                 }
-                if new_state.cp + self.base_durability_cost >= 0 && action_progress != 0 {
-                    // "durability" must not go lower than -5
-                    // last action must be a progress increase
-                    self.pareto_front_builder
-                        .push(&[ParetoValue::new(action_progress, action_quality)]);
-                    self.pareto_front_builder.merge();
-                }
+                self.pareto_front_builder.map(move |value| {
+                    value.first += action_progress;
+                    value.second += action_quality;
+                });
+                self.pareto_front_builder.merge();
+            }
+            if new_state.cp + self.base_durability_cost >= 0 && action_progress != 0 {
+                // "durability" must not go lower than -5
+                // last action must be a progress increase
+                self.pareto_front_builder
+                    .push(&[ParetoValue::new(action_progress, action_quality)]);
+                self.pareto_front_builder.merge();
             }
         }
     }
@@ -151,7 +149,7 @@ impl UpperBoundSolver {
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use simulator::{ComboAction, Effects, SimulationState};
+    use simulator::{Combo, Effects, SimulationState};
 
     use super::*;
 
@@ -578,7 +576,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 2986);
+        assert_eq!(result, 3035);
     }
 
     #[test]
@@ -617,16 +615,12 @@ mod tests {
             })
     }
 
-    fn random_state(settings: &Settings) -> InProgress {
-        const COMBOS: [Option<ComboAction>; 3] = [
-            None,
-            Some(ComboAction::BasicTouch),
-            Some(ComboAction::StandardTouch),
-        ];
+    fn random_state(settings: &Settings) -> SimulationState {
+        const COMBOS: [Combo; 3] = [Combo::None, Combo::BasicTouch, Combo::StandardTouch];
         SimulationState {
             cp: rand::thread_rng().gen_range(0..=settings.max_cp),
             durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
-            missing_progress: rand::thread_rng().gen_range(1..=settings.max_progress),
+            progress: rand::thread_rng().gen_range(0..settings.max_progress),
             unreliable_quality: [settings.max_quality; 2],
             effects: random_effects(settings.adversarial),
             combo: COMBOS[rand::thread_rng().gen_range(0..3)],
@@ -645,10 +639,10 @@ mod tests {
             for action in settings.allowed_actions.actions_iter() {
                 let child_upper_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
-                    Ok(child) => match InProgress::try_from(child) {
-                        Ok(child) => solver.quality_upper_bound(child),
-                        Err(_) if child.missing_progress == 0 => child.get_quality(),
-                        Err(_) => 0,
+                    Ok(child) => match child.is_final(&settings) {
+                        false => solver.quality_upper_bound(child),
+                        true if child.progress >= settings.max_progress => child.get_quality(),
+                        true => 0,
                     },
                     Err(_) => 0,
                 };

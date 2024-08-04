@@ -136,6 +136,6 @@ const HQ_LOOKUP: [u8; 101] = [
 pub fn hq_percentage(quality: u16, max_quality: u16) -> u8 {
     // TODO: switch to std::num::NonZeroU32 at some point
     assert!(max_quality != 0, "max_quality must be non-zero");
-    let ratio = quality as f64 / max_quality as f64;
+    let ratio = std::cmp::min(quality, max_quality) as f64 / max_quality as f64;
     HQ_LOOKUP[(ratio * 100.0).floor() as usize]
 }
