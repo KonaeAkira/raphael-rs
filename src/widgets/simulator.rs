@@ -69,7 +69,7 @@ impl<'a> Widget for Simulator<'a> {
                                 .text(format!("{} / {}", clamped_progress, max_progress))
                                 .rounding(Rounding::ZERO),
                         )
-                            .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
@@ -93,7 +93,7 @@ impl<'a> Widget for Simulator<'a> {
                                     .rounding(Rounding::ZERO),
                             ),
                         }
-                            .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Durability:");
@@ -171,12 +171,12 @@ impl<'a> Widget for Simulator<'a> {
                                         Err(_) => Color32::from_rgb(255, 96, 96),
                                     }),
                             )
-                                .on_hover_text(action_name(*action, self.locale));
+                            .on_hover_text(action_name(*action, self.locale));
                         }
                     });
                 });
             });
         })
-            .response
+        .response
     }
 }
