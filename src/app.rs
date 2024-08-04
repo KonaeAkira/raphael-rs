@@ -73,7 +73,26 @@ type BridgeType = WorkerBridge<Worker>;
 type BridgeType = NativeBridge;
 
 impl MacroSolverApp {
-    pub fn setup_app(cc: &eframe::CreationContext<'_>) -> MacroSolverApp {
+    #[cfg(target_arch = "wasm32")]
+    fn initialize_bridge(cc: &eframe::CreationContext<'_>, data_update: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
+        let ctx = cc.egui_ctx.clone();
+        let sender = data_update.clone();
+
+        <Worker as gloo_worker::Spawnable>::spawner()
+            .callback(move |response| {
+                sender.set(Some(response));
+                ctx.request_repaint();
+            })
+            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn initialize_bridge(_cc: &eframe::CreationContext<'_>, _data_cell: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
+        BridgeType::new()
+    }
+
+    /// Called once before the first frame.
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let data_update = Rc::new(Cell::new(None));
         let bridge = Self::initialize_bridge(cc, &data_update);
 
@@ -114,29 +133,6 @@ impl MacroSolverApp {
             data_update,
             bridge,
         }
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn initialize_bridge(cc: &eframe::CreationContext<'_>, data_update: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
-        let ctx = cc.egui_ctx.clone();
-        let sender = data_update.clone();
-
-        <Worker as gloo_worker::Spawnable>::spawner()
-            .callback(move |response| {
-                sender.set(Some(response));
-                ctx.request_repaint();
-            })
-            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    fn initialize_bridge(_cc: &eframe::CreationContext<'_>, _data_cell: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
-        BridgeType::new()
-    }
-
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        MacroSolverApp::setup_app(cc)
     }
 }
 
