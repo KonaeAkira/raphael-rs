@@ -1,5 +1,4 @@
 use std::cell::Cell;
-use std::panic;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -10,9 +9,9 @@ use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, Tex
 use game_data::{
     action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale, ITEMS,
 };
-use simulator::{state::InProgress, Action, Settings};
+use simulator::Action;
 
-use crate::worker::{NativeBridge, Worker};
+use crate::worker::NativeBridge;
 use crate::{
     config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
     widgets::{
@@ -22,8 +21,6 @@ use crate::{
 
 #[cfg(target_arch = "wasm32")]
 use gloo_worker::WorkerBridge;
-#[cfg(not(target_arch = "wasm32"))]
-use std::sync::mpsc::Receiver;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
