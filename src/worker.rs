@@ -1,18 +1,41 @@
 use crate::app::SolverEvent;
 use simulator::state::InProgress;
 use simulator::{Action, Settings};
-use std::panic;
-use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
 
+#[cfg(not(target_arch = "wasm32"))]
+use std::sync::mpsc::{self, Receiver};
+use std::sync::mpsc::{Sender};
+
+#[cfg(target_arch = "wasm32")]
 type Message = u64;
 type Input = (Settings, bool);
 type Output = SolverEvent;
 
+
+#[cfg(target_arch = "wasm32")]
+type Scope = gloo_worker::WorkerScope<Worker>;
+#[cfg(target_arch = "wasm32")]
+type Id = gloo_worker::HandlerId;
+
+
+#[cfg(not(target_arch = "wasm32"))]
+type Scope = DummyScope;
+#[cfg(not(target_arch = "wasm32"))]
+type Id = ();
+
+#[cfg(not(target_arch = "wasm32"))]
+pub struct DummyScope;
+#[cfg(not(target_arch = "wasm32"))]
+impl DummyScope {
+    pub fn respond(&self, _id: Id, _event: Output){}
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub struct NativeBridge {
     pub(crate) rx: Option<Receiver<Output>>
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl NativeBridge {
     pub fn new() -> Self {
         Self { rx : None }
@@ -36,6 +59,7 @@ pub struct Worker {
 }
 
 impl Worker {
+    #[cfg(not(target_arch = "wasm32"))]
     fn new(input: Input, tx: Sender<Output>) -> Worker {
         Worker {
             input: Some(input),
@@ -45,9 +69,9 @@ impl Worker {
 
     pub fn solver_callback(
         &self,
-        scope: Option<&gloo_worker::WorkerScope<Self>>,
+        scope: Option<&Scope>,
+        id: Option<Id>,
         input: Option<Input>,
-        id: Option<gloo_worker::HandlerId>,
     ) {
         let input = if cfg!(not(target_arch = "wasm32")) {
             self.input.unwrap()
@@ -90,8 +114,8 @@ impl Worker {
     fn send_event(
         &self,
         tx: Option<Sender<SolverEvent>>,
-        scope: Option<&gloo_worker::WorkerScope<Self>>,
-        id: Option<gloo_worker::HandlerId>,
+        scope: Option<&Scope>,
+        id: Option<Id>,
         event: SolverEvent,
     ) {
         if cfg!(target_arch = "wasm32") {
@@ -125,6 +149,6 @@ impl gloo_worker::Worker for Worker {
         msg: Self::Input,
         id: gloo_worker::HandlerId,
     ) {
-        self.solver_callback(Some(scope), Some(msg), Some(id));
+        self.solver_callback(Some(scope), Some(id), Some(msg));
     }
 }
