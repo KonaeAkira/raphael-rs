@@ -39,10 +39,26 @@ pub enum Action {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub enum ComboAction {
+pub enum Combo {
+    None,
     SynthesisBegin,
     BasicTouch,
     StandardTouch,
+}
+
+impl Combo {
+    pub const fn into_bits(self) -> u8 {
+        self as _
+    }
+
+    pub const fn from_bits(value: u8) -> Self {
+        match value {
+            1 => Self::SynthesisBegin,
+            2 => Self::BasicTouch,
+            3 => Self::StandardTouch,
+            _ => Self::None,
+        }
+    }
 }
 
 impl Action {
@@ -304,27 +320,27 @@ impl Action {
             / 100000000) as u16
     }
 
-    pub const fn combo_fulfilled(self, combo: Option<ComboAction>) -> bool {
+    pub const fn combo_fulfilled(self, combo: Combo) -> bool {
         match self {
             Action::Reflect | Action::MuscleMemory | Action::TrainedEye => {
-                matches!(combo, Some(ComboAction::SynthesisBegin))
+                matches!(combo, Combo::SynthesisBegin)
             }
-            Action::ComboStandardTouch => matches!(combo, Some(ComboAction::BasicTouch)),
+            Action::ComboStandardTouch => matches!(combo, Combo::BasicTouch),
             Action::ComboAdvancedTouch => {
-                matches!(combo, Some(ComboAction::StandardTouch))
+                matches!(combo, Combo::StandardTouch)
             }
-            Action::ComboRefinedTouch => matches!(combo, Some(ComboAction::BasicTouch)),
+            Action::ComboRefinedTouch => matches!(combo, Combo::BasicTouch),
             _ => true,
         }
     }
 
-    pub const fn to_combo(self) -> Option<ComboAction> {
+    pub const fn to_combo(self) -> Combo {
         match self {
-            Action::BasicTouch => Some(ComboAction::BasicTouch),
-            Action::ComboStandardTouch => Some(ComboAction::StandardTouch),
+            Action::BasicTouch => Combo::BasicTouch,
+            Action::ComboStandardTouch => Combo::StandardTouch,
             // Observe and StandardTouch unlock the same action (ComboAdvancedTouch)
-            Action::Observe => Some(ComboAction::StandardTouch),
-            _ => None,
+            Action::Observe => Combo::StandardTouch,
+            _ => Combo::None,
         }
     }
 }

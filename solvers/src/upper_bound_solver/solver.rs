@@ -149,7 +149,7 @@ impl UpperBoundSolver {
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use simulator::{ComboAction, Effects, SimulationState};
+    use simulator::{Combo, Effects, SimulationState};
 
     use super::*;
 
@@ -616,11 +616,7 @@ mod tests {
     }
 
     fn random_state(settings: &Settings) -> SimulationState {
-        const COMBOS: [Option<ComboAction>; 3] = [
-            None,
-            Some(ComboAction::BasicTouch),
-            Some(ComboAction::StandardTouch),
-        ];
+        const COMBOS: [Combo; 3] = [Combo::None, Combo::BasicTouch, Combo::StandardTouch];
         SimulationState {
             cp: rand::thread_rng().gen_range(0..=settings.max_cp),
             durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,

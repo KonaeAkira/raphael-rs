@@ -1,5 +1,5 @@
 use radix_heap::RadixHeapMap;
-use simulator::{Action, ActionMask, ComboAction, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState};
 
 use crate::{
     actions::{DURABILITY_ACTIONS, QUALITY_ACTIONS},
@@ -69,8 +69,8 @@ pub fn fast_lower_bound(
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {
     // Force the use of the next combo action if it is available
     match state.combo {
-        None => (),
-        Some(ComboAction::BasicTouch) => {
+        Combo::None => (),
+        Combo::BasicTouch => {
             let combo_available = allowed_actions.has(Action::ComboStandardTouch)
                 || allowed_actions.has(Action::ComboRefinedTouch);
             return !combo_available
@@ -79,11 +79,11 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
                     Action::ComboStandardTouch | Action::ComboRefinedTouch
                 );
         }
-        Some(ComboAction::StandardTouch) => {
+        Combo::StandardTouch => {
             let combo_available = allowed_actions.has(Action::ComboAdvancedTouch);
             return !combo_available || matches!(action, Action::ComboAdvancedTouch);
         }
-        Some(ComboAction::SynthesisBegin) => {
+        Combo::SynthesisBegin => {
             let combo_available = allowed_actions.has(Action::Reflect)
                 || allowed_actions.has(Action::MuscleMemory)
                 || allowed_actions.has(Action::TrainedEye);

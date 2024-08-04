@@ -1,4 +1,4 @@
-use crate::{effects::SingleUse, Action, ComboAction, Condition, Effects, Settings};
+use crate::{effects::SingleUse, Action, Combo, Condition, Effects, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
@@ -10,7 +10,7 @@ pub struct SimulationState {
     // 1 while allowing the previous un-Guarded action to be Poor
     // 0 while forcing the previous un-Guarded action to be Normal
     pub effects: Effects,
-    pub combo: Option<ComboAction>,
+    pub combo: Combo,
 }
 
 impl SimulationState {
@@ -21,7 +21,7 @@ impl SimulationState {
             progress: 0,
             unreliable_quality: [0; 2],
             effects: Effects::default().with_guard(if settings.adversarial { 2 } else { 0 }),
-            combo: Some(ComboAction::SynthesisBegin),
+            combo: Combo::SynthesisBegin,
         }
     }
 

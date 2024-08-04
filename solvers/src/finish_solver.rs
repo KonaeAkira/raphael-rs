@@ -1,5 +1,5 @@
 use simulator::{
-    Action, ActionMask, ComboAction, Condition, Effects, Settings, SimulationState, SingleUse,
+    Action, ActionMask, Combo, Condition, Effects, Settings, SimulationState, SingleUse,
 };
 
 use rustc_hash::FxHashMap as HashMap;
@@ -50,7 +50,7 @@ struct ReducedState {
     durability: i8,
     cp: i16,
     effects: ReducedEffects,
-    combo: Option<ComboAction>,
+    combo: Combo,
     trained_perfection: SingleUse,
 }
 

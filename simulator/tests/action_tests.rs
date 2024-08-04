@@ -1,4 +1,4 @@
-use simulator::{Action, ActionMask, Settings, SimulationState, SingleUse};
+use simulator::{Action, ActionMask, Combo, Settings, SimulationState, SingleUse};
 
 const SETTINGS: Settings = Settings {
     max_cp: 250,
@@ -304,7 +304,7 @@ fn test_heart_and_soul() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.combo, None); // combo is removed
+            assert_eq!(state.combo, Combo::None); // combo is removed
             assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
@@ -373,7 +373,7 @@ fn test_quick_innovation() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.combo, None); // combo is removed
+            assert_eq!(state.combo, Combo::None); // combo is removed
             assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.innovation(), 1);

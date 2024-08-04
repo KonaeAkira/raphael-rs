@@ -1,4 +1,4 @@
-use simulator::{ComboAction, Effects, SimulationState, SingleUse};
+use simulator::{Combo, Effects, SimulationState, SingleUse};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedEffects {
@@ -14,7 +14,7 @@ pub struct ReducedEffects {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
     pub cp: i16,
-    pub combo: Option<ComboAction>,
+    pub combo: Combo,
     pub effects: ReducedEffects,
 }
 

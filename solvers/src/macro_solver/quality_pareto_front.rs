@@ -1,6 +1,6 @@
 use pareto_front::{Dominate, ParetoFront};
 use rustc_hash::FxHashMap;
-use simulator::{ComboAction, Effects, Settings, SimulationState};
+use simulator::{Combo, Effects, Settings, SimulationState};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Value {
@@ -33,7 +33,7 @@ struct Key {
     progress: u16,
     durability: i8,
     effects: Effects,
-    combo: Option<ComboAction>,
+    combo: Combo,
 }
 
 impl Key {
