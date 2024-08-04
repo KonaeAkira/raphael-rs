@@ -633,7 +633,7 @@ impl MacroSolverApp {
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
 
                         self.bridge
-                            .send((game_settings,self.solver_config.backload_progress));
+                            .send((game_settings, self.solver_config.backload_progress));
 
                         log::debug!("{game_settings:?}");
                     }
