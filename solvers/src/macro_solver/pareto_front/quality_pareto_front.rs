@@ -1,6 +1,7 @@
-use pareto_front::{Dominate, ParetoFront};
 use rustc_hash::FxHashMap;
 use simulator::{Combo, Effects, Settings, SimulationState};
+
+use super::{Dominate, ParetoFront};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Value {
@@ -68,7 +69,7 @@ impl QualityParetoFront {
         self.buckets
             .entry(Key::new(state, settings))
             .or_default()
-            .push(Value::new(state))
+            .insert(Value::new(state))
     }
 }
 

@@ -4,11 +4,10 @@ use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState}
 use crate::{
     actions::{DURABILITY_ACTIONS, QUALITY_ACTIONS},
     finish_solver::FinishSolver,
+    macro_solver::pareto_front::QualityParetoFront,
     upper_bound_solver::UpperBoundSolver,
     utils::NamedTimer,
 };
-
-use super::quality_pareto_front::QualityParetoFront;
 
 const SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
     .union(DURABILITY_ACTIONS)

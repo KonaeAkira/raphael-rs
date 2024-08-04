@@ -4,7 +4,7 @@ use simulator::{Action, Settings, SimulationState};
 
 use crate::utils::Backtracking;
 
-use super::{effect_pareto_front::EffectParetoFront, quality_pareto_front::QualityParetoFront};
+use super::pareto_front::{EffectParetoFront, QualityParetoFront};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {

@@ -1,6 +1,7 @@
-use pareto_front::{Dominate, ParetoFront};
 use rustc_hash::FxHashMap;
 use simulator::{Combo, Settings, SimulationState};
+
+use super::{Dominate, ParetoFront};
 
 #[bitfield_struct::bitfield(u32)]
 #[derive(PartialEq, Eq)]
@@ -85,7 +86,7 @@ impl EffectParetoFront {
         self.buckets
             .entry(Key::new(state))
             .or_default()
-            .push(Value::from(state))
+            .insert(Value::from(state))
     }
 }
 
