@@ -21,7 +21,7 @@ impl NativeBridge {
     pub fn send(&mut self, input: Input) {
         let (tx, rx) = mpsc::channel::<Output>();
 
-        let mut worker = Worker::new(input, tx);
+        let worker = Worker::new(input, tx);
         std::thread::spawn(move || {
             worker.solver_callback(None, None, None);
         });
