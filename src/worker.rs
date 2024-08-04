@@ -102,13 +102,15 @@ impl Worker {
     }
 }
 
+
+#[cfg(target_arch = "wasm32")]
 impl gloo_worker::Worker for Worker {
     type Message = Message;
     type Input = Input;
     type Output = Output;
 
     fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
-        panic::set_hook(Box::new(console_error_panic_hook::hook));
+        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
         Self {
             input: None,
             tx: None,

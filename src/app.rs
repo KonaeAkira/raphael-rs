@@ -3,7 +3,11 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
+#[cfg(target_arch = "wasm32")]
 use web_time::Instant;
+#[cfg(not(target_arch = "wasm32"))]
+use std::time::Instant;
 
 use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle};
 use game_data::{
