@@ -351,7 +351,11 @@ impl eframe::App for MacroSolverApp {
 impl MacroSolverApp {
     fn solver_update(&mut self) {
         if cfg!(not(target_arch = "wasm32")) {
-            self.solver_update_native_hook();
+            if let Some(bridge_rx) = &self.bridge.rx {
+                if let Ok(update) = bridge_rx.try_recv() {
+                    self.data_update.set(Some(update));
+                }
+            }
         }
 
         if let Some(update) = self.data_update.take() {
@@ -367,21 +371,6 @@ impl MacroSolverApp {
                     self.duration = Some(Instant::now() - self.start_time.unwrap());
                     self.solver_pending = false;
                 }
-            }
-        }
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn solver_update_native_hook(&mut self) {
-        // This function does nothing on wasm32 targets.
-    }
-
-    // This could be optimized. But for ease of maintainability, this is most likely easier
-    #[cfg(not(target_arch = "wasm32"))]
-    fn solver_update_native_hook(&mut self) {
-        if let Some(bridge_rx) = &self.bridge.rx {
-            if let Ok(update) = bridge_rx.try_recv() {
-                self.data_update.set(Some(update));
             }
         }
     }
