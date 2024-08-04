@@ -6,6 +6,11 @@ use crate::config::{CrafterConfig, QualityTarget};
 
 use super::HelpText;
 
+#[cfg(target_arch = "wasm32")]
+const BASE_ASSET_PATH: &str = env!("BASE_URL");
+#[cfg(not(target_arch = "wasm32"))]
+const BASE_ASSET_PATH: &str = "file://./assets";
+
 pub struct Simulator<'a> {
     settings: &'a Settings,
     initial_quality: u16,
@@ -64,7 +69,7 @@ impl<'a> Widget for Simulator<'a> {
                                 .text(format!("{} / {}", clamped_progress, max_progress))
                                 .rounding(Rounding::ZERO),
                         )
-                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                            .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
@@ -88,7 +93,7 @@ impl<'a> Widget for Simulator<'a> {
                                     .rounding(Rounding::ZERO),
                             ),
                         }
-                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                            .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Durability:");
@@ -150,8 +155,12 @@ impl<'a> Widget for Simulator<'a> {
                     ui.set_width(ui.available_width());
                     ui.horizontal(|ui| {
                         for (action, error) in self.actions.iter().zip(errors.into_iter()) {
-                            let image_path =
-                                get_image_path(self.crafter_config.selected_job, *action);
+                            let image_path = format!(
+                                "{}/action-icons/{}/{}.png",
+                                BASE_ASSET_PATH,
+                                get_job_name(self.crafter_config.selected_job, Locale::EN),
+                                action_name(*action, Locale::EN)
+                            );
 
                             ui.add(
                                 egui::Image::new(image_path)
@@ -162,28 +171,12 @@ impl<'a> Widget for Simulator<'a> {
                                         Err(_) => Color32::from_rgb(255, 96, 96),
                                     }),
                             )
-                            .on_hover_text(action_name(*action, self.locale));
+                                .on_hover_text(action_name(*action, self.locale));
                         }
                     });
                 });
             });
         })
-        .response
+            .response
     }
-}
-
-fn get_image_path(selected_job: u8, action: Action) -> String {
-    let base_url = if cfg!(target_arch = "wasm32") {
-        env!("BASE_URL")
-    } else {
-        // This pathing should change later
-        "file://./assets"
-    };
-
-    format!(
-        "{}/action-icons/{}/{}.png",
-        base_url,
-        get_job_name(selected_job, Locale::EN),
-        action_name(action, Locale::EN)
-    )
 }
