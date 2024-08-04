@@ -64,11 +64,11 @@ pub fn get_game_settings(
     let control = crafter_stats.control + control_bonus(crafter_stats.control, &[food, potion]);
     let cp = crafter_stats.cp + cp_bonus(crafter_stats.cp, &[food, potion]);
 
-    let mut base_progress = craftsmanship * 10 / rlvl.progress_div + 2;
-    let mut base_quality = control * 10 / rlvl.quality_div + 35;
+    let mut base_progress = craftsmanship as f32 * 10.0 / rlvl.progress_div as f32 + 2.0;
+    let mut base_quality = control as f32 * 10.0 / rlvl.quality_div as f32 + 35.0;
     if crafter_stats.level <= recipe.level {
-        base_progress = base_progress * rlvl.progress_mod / 100;
-        base_quality = base_quality * rlvl.quality_mod / 100;
+        base_progress = base_progress * rlvl.progress_mod as f32 / 100.0;
+        base_quality = base_quality * rlvl.quality_mod as f32 / 100.0;
     }
 
     let mut allowed_actions = ActionMask::from_level(crafter_stats.level as _);
@@ -90,8 +90,8 @@ pub fn get_game_settings(
         max_durability: recipe.durability as _,
         max_progress: recipe.progress,
         max_quality: recipe.quality,
-        base_progress,
-        base_quality,
+        base_progress: base_progress as u16,
+        base_quality: base_quality as u16,
         job_level: crafter_stats.level,
         allowed_actions,
         adversarial,
