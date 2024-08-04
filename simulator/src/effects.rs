@@ -1,20 +1,24 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum SingleUse {
+    Unavailable,
     Available,
     Active,
-    Unavailable,
 }
 
 impl SingleUse {
     pub const fn into_bits(self) -> u8 {
-        self as _
+        match self {
+            Self::Unavailable => 0,
+            Self::Available => 1,
+            Self::Active => 2,
+        }
     }
 
     pub const fn from_bits(value: u8) -> Self {
         match value {
-            0 => Self::Available,
-            1 => Self::Active,
+            1 => Self::Available,
+            2 => Self::Active,
             _ => Self::Unavailable,
         }
     }
@@ -23,6 +27,12 @@ impl SingleUse {
 #[bitfield_struct::bitfield(u32)]
 #[derive(PartialEq, Eq, Hash)]
 pub struct Effects {
+    #[bits(2, default=SingleUse::Available)]
+    pub trained_perfection: SingleUse,
+    #[bits(2, default=SingleUse::Available)]
+    pub heart_and_soul: SingleUse,
+    #[bits(1)]
+    pub quick_innovation_used: bool,
     #[bits(4)]
     pub inner_quiet: u8,
     #[bits(4)]
@@ -39,12 +49,6 @@ pub struct Effects {
     pub manipulation: u8,
     #[bits(2)]
     pub guard: u8,
-    #[bits(2, default=SingleUse::Available)]
-    pub trained_perfection: SingleUse,
-    #[bits(2, default=SingleUse::Available)]
-    pub heart_and_soul: SingleUse,
-    #[bits(1)]
-    pub quick_innovation_used: bool,
     #[bits(1)]
     _padding: u8,
 }

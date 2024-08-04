@@ -48,7 +48,12 @@ pub enum Combo {
 
 impl Combo {
     pub const fn into_bits(self) -> u8 {
-        self as _
+        match self {
+            Self::None => 0,
+            Self::SynthesisBegin => 1,
+            Self::BasicTouch => 2,
+            Self::StandardTouch => 3,
+        }
     }
 
     pub const fn from_bits(value: u8) -> Self {

@@ -127,8 +127,9 @@ impl SearchQueue {
         while self.current_nodes.is_empty() {
             if let Some((score, mut bucket)) = self.buckets.pop_last() {
                 // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
-                // sort by cp, because a state that has more cp cannot be dominated by a state with less cp
-                bucket.sort_unstable_by(|lhs, rhs| rhs.state.cp.cmp(&lhs.state.cp));
+                bucket.sort_unstable_by(|lhs, rhs| {
+                    pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
+                });
                 self.current_score = score;
                 self.current_nodes = bucket
                     .into_iter()
@@ -152,4 +153,13 @@ impl SearchQueue {
     pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = Action> {
         self.backtracking.get(backtrack_id)
     }
+}
+
+fn pareto_weight(state: &SimulationState) -> u32 {
+    state.cp as u32
+        + state.durability as u32
+        + state.unreliable_quality[0] as u32
+        + state.unreliable_quality[1] as u32
+        + state.effects.into_bits()
+        + state.combo.into_bits() as u32
 }
