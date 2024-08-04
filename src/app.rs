@@ -11,16 +11,18 @@ use game_data::{
 };
 use simulator::Action;
 
+use crate::{config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration}, widgets::{
+    ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
+}};
+
+#[cfg(not(target_arch = "wasm32"))]
 use crate::worker::NativeBridge;
-use crate::{
-    config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
-    widgets::{
-        ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
-    },
-};
 
 #[cfg(target_arch = "wasm32")]
 use gloo_worker::WorkerBridge;
+
+#[cfg(target_arch = "wasm32")]
+use crate::Worker;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
