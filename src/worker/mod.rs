@@ -1,6 +1,6 @@
-use std::sync::mpsc::Sender;
 use crate::app::{SolverConfig, SolverEvent};
 use simulator::{Action, Settings, SimulationState};
+use std::sync::mpsc::Sender;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod native;
@@ -19,7 +19,6 @@ use crate::worker::web as worker;
 use gloo_worker::WorkerBridge;
 #[cfg(target_arch = "wasm32")]
 pub type BridgeType = WorkerBridge<Worker>;
-
 
 type Input = (Settings, SolverConfig);
 type Output = SolverEvent;
@@ -47,7 +46,12 @@ impl Worker {
 
         let tx = self.tx.clone();
         let solution_callback = move |actions: &[Action]| {
-            self.send_event(tx.clone(), scope, id, SolverEvent::IntermediateSolution(actions.to_vec()));
+            self.send_event(
+                tx.clone(),
+                scope,
+                id,
+                SolverEvent::IntermediateSolution(actions.to_vec()),
+            );
         };
 
         let tx = self.tx.clone();
@@ -60,11 +64,11 @@ impl Worker {
             Box::new(solution_callback),
             Box::new(progress_callback),
         )
-            .solve(
-                SimulationState::new(&settings),
-                config.backload_progress,
-                config.minimize_steps,
-            );
+        .solve(
+            SimulationState::new(&settings),
+            config.backload_progress,
+            config.minimize_steps,
+        );
 
         let tx = self.tx.clone();
         match final_solution {
@@ -72,7 +76,12 @@ impl Worker {
                 self.send_event(tx.clone(), scope, id, SolverEvent::FinalSolution(actions));
             }
             None => {
-                self.send_event(tx.clone(), scope, id, SolverEvent::FinalSolution(Vec::new()));
+                self.send_event(
+                    tx.clone(),
+                    scope,
+                    id,
+                    SolverEvent::FinalSolution(Vec::new()),
+                );
             }
         }
     }

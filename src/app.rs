@@ -4,10 +4,10 @@ use std::time::Duration;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-#[cfg(target_arch = "wasm32")]
-use web_time::Instant;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
+#[cfg(target_arch = "wasm32")]
+use web_time::Instant;
 
 use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle};
 use game_data::{
@@ -16,11 +16,13 @@ use game_data::{
 
 use simulator::Action;
 
-use crate::{config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration}, widgets::{
-    ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
-}};
 use crate::worker::BridgeType;
-
+use crate::{
+    config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
+    widgets::{
+        ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
+    },
+};
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -70,7 +72,10 @@ pub struct MacroSolverApp {
 
 impl MacroSolverApp {
     #[cfg(target_arch = "wasm32")]
-    fn initialize_bridge(cc: &eframe::CreationContext<'_>, data_update: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
+    fn initialize_bridge(
+        cc: &eframe::CreationContext<'_>,
+        data_update: &Rc<Cell<Option<SolverEvent>>>,
+    ) -> BridgeType {
         let ctx = cc.egui_ctx.clone();
         let sender = data_update.clone();
 
@@ -83,7 +88,10 @@ impl MacroSolverApp {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn initialize_bridge(_cc: &eframe::CreationContext<'_>, _data_cell: &Rc<Cell<Option<SolverEvent>>>) -> BridgeType {
+    fn initialize_bridge(
+        _cc: &eframe::CreationContext<'_>,
+        _data_cell: &Rc<Cell<Option<SolverEvent>>>,
+    ) -> BridgeType {
         BridgeType::new()
     }
 

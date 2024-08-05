@@ -1,6 +1,6 @@
-use crate::Worker;
-use crate::worker::Output;
 use crate::worker::Input;
+use crate::worker::Output;
+use crate::Worker;
 
 type Message = u64;
 pub(crate) type Scope = gloo_worker::WorkerScope<Worker>;
