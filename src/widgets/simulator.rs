@@ -6,6 +6,11 @@ use crate::config::{CrafterConfig, QualityTarget};
 
 use super::HelpText;
 
+#[cfg(target_arch = "wasm32")]
+const BASE_ASSET_PATH: &str = env!("BASE_URL");
+#[cfg(not(target_arch = "wasm32"))]
+const BASE_ASSET_PATH: &str = "file://./assets";
+
 pub struct Simulator<'a> {
     settings: &'a Settings,
     initial_quality: u16,
@@ -136,10 +141,11 @@ impl<'a> Widget for Simulator<'a> {
                         for (action, error) in self.actions.iter().zip(errors.into_iter()) {
                             let image_path = format!(
                                 "{}/action-icons/{}/{}.png",
-                                env!("BASE_URL"),
+                                BASE_ASSET_PATH,
                                 get_job_name(self.crafter_config.selected_job, Locale::EN),
                                 action_name(*action, Locale::EN)
                             );
+
                             ui.add(
                                 egui::Image::new(image_path)
                                     .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
