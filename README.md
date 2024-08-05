@@ -4,33 +4,37 @@
 
 Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 * Produces optimal solutions. Achieving higher quality than the solver is impossible.
-* Short solve time (5-20 seconds) and reasonable memory usage (300-500 MB).
+* Short solve time (5-60 seconds) and reasonable memory usage (300-1000 MB).
 
 ## How does it work?
 
 * Short answer: [A* search](https://en.wikipedia.org/wiki/A*_search_algorithm) + [Pareto optimization](https://en.wikipedia.org/wiki/Multi-objective_optimization) + [Dynamic programming](https://en.wikipedia.org/wiki/Dynamic_programming).
 * Long answer: coming soon<sup>tm</sup>
 
-## Building from source (wasm)
+## Building from source
 
 The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
-[Trunk](https://trunkrs.dev/) is required to bundle and deploy the WASM and can be installed via the Rust toolchain:
+
+### Native
+
+To build and run the application:
+
+```
+cargo run --release
+```
+
+### Web (wasm)
+
+[Trunk](https://trunkrs.dev/) is required to bundle and host the website and can be installed via the Rust toolchain:
 
 ```
 cargo install --locked trunk
 ```
 
-To build and host the application locally):
+To build and host the application locally:
 
 ```
 export RANDOM_SUFFIX=""
 export RUSTFLAGS="--cfg=web_sys_unstable_apis"
 trunk serve --release --dist docs
-```
-
-
-## Running/building from source (native)
-
-```
-cargo run --release --bin raphael-xiv
 ```

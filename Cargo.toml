@@ -6,6 +6,7 @@ members = ["simulator", "solvers", "game_data"]
 name = "raphael-xiv"
 version = "0.13.0"
 edition = "2021"
+default-run = "raphael-xiv"
 
 [dependencies]
 simulator = { path = "simulator" }
@@ -25,7 +26,6 @@ wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 gloo-worker = { version = "0.5.0", features = ["futures"] }
 web-time = "1.1.0"
-
 
 [[bin]]
 name = "webworker"
