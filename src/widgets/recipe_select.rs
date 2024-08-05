@@ -1,6 +1,6 @@
 use egui::{
     util::cache::{ComputerMut, FrameCache},
-    Align, Layout, Widget,
+    Align, Id, Layout, Widget,
 };
 use egui_extras::Column;
 use game_data::{
@@ -38,8 +38,6 @@ pub struct RecipeSelect<'a> {
     recipe_config: &'a mut RecipeConfiguration,
     selected_food: Option<Consumable>, // used for base prog/qual display
     selected_potion: Option<Consumable>, // used for base prog/qual display
-    custom_recipe: &'a mut bool,
-    search_text: &'a mut String,
     locale: Locale,
 }
 
@@ -49,8 +47,6 @@ impl<'a> RecipeSelect<'a> {
         recipe_config: &'a mut RecipeConfiguration,
         selected_food: Option<Consumable>,
         selected_potion: Option<Consumable>,
-        custom_recipe: &'a mut bool,
-        search_text: &'a mut String,
         locale: Locale,
     ) -> Self {
         Self {
@@ -58,23 +54,32 @@ impl<'a> RecipeSelect<'a> {
             recipe_config,
             selected_food,
             selected_potion,
-            custom_recipe,
-            search_text,
             locale,
         }
     }
 
     fn draw_normal_recipe_select(self, ui: &mut egui::Ui) {
+        let mut search_text = String::new();
+        ui.ctx().data_mut(|data| {
+            if let Some(text) = data.get_persisted::<String>(Id::new("RECIPE_SEARCH_TEXT")) {
+                search_text = text;
+            }
+        });
+
         ui.horizontal(|ui| {
             ui.label("Search:");
-            ui.text_edit_singleline(self.search_text);
+            ui.text_edit_singleline(&mut search_text);
         });
         ui.separator();
 
         let mut search_result = Vec::new();
         ui.ctx().memory_mut(|mem| {
             let search_cache = mem.caches.cache::<SearchCache<'_>>();
-            search_result = search_cache.get((&self.search_text.to_lowercase(), self.locale));
+            search_result = search_cache.get((&search_text.to_lowercase(), self.locale));
+        });
+
+        ui.ctx().data_mut(|data| {
+            data.insert_persisted(Id::new("RECIPE_SEARCH_TEXT"), search_text);
         });
 
         let text_height = egui::TextStyle::Body
@@ -210,6 +215,13 @@ impl<'a> Widget for RecipeSelect<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
             ui.vertical(|ui| {
+                let mut custom_recipe = false;
+                ui.ctx().data_mut(|data| {
+                    if let Some(value) = data.get_persisted::<bool>(Id::new("CUSTOM_RECIPE")) {
+                        custom_recipe = value;
+                    }
+                });
+
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new("Recipe").strong());
                     ui.label(egui::RichText::new(get_item_name(
@@ -218,8 +230,8 @@ impl<'a> Widget for RecipeSelect<'a> {
                         self.locale,
                     )));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if ui.checkbox(self.custom_recipe, "Custom Recipe").changed() {
-                            self.recipe_config.quality_source = match self.custom_recipe {
+                        if ui.checkbox(&mut custom_recipe, "Custom Recipe").changed() {
+                            self.recipe_config.quality_source = match custom_recipe {
                                 true => QualitySource::Value(0),
                                 false => QualitySource::HqMaterialList([0; 6]),
                             }
@@ -227,11 +239,15 @@ impl<'a> Widget for RecipeSelect<'a> {
                     });
                 });
                 ui.separator();
-                if *self.custom_recipe {
+                if custom_recipe {
                     self.draw_custom_recipe_select(ui);
                 } else {
                     self.draw_normal_recipe_select(ui);
                 }
+
+                ui.ctx().data_mut(|data| {
+                    data.insert_persisted(Id::new("CUSTOM_RECIPE"), custom_recipe);
+                });
             });
         })
         .response

@@ -51,11 +51,6 @@ pub struct MacroSolverApp {
     solver_config: SolverConfig,
     macro_view_config: MacroViewConfig,
 
-    custom_recipe: bool,
-    recipe_search_text: String,
-    food_search_text: String,
-    potion_search_text: String,
-
     stats_edit_window_open: bool,
     actions: Vec<Action>,
     solver_pending: bool,
@@ -118,11 +113,6 @@ impl MacroSolverApp {
             crafter_config: load(cc, "CRAFTER_CONFIG", Default::default()),
             solver_config: load(cc, "SOLVER_CONFIG", Default::default()),
             macro_view_config: load(cc, "MACRO_VIEW_CONFIG", Default::default()),
-
-            custom_recipe: load(cc, "CUSTOM_RECIPE", false),
-            recipe_search_text: load(cc, "RECIPE_SEARCH_TEXT", Default::default()),
-            food_search_text: load(cc, "FOOD_SEARCH_TEXT", Default::default()),
-            potion_search_text: load(cc, "POTION_SEARCH_TEXT", Default::default()),
 
             stats_edit_window_open: false,
             actions: Vec::new(),
@@ -247,8 +237,6 @@ impl eframe::App for MacroSolverApp {
                                             &mut self.recipe_config,
                                             self.selected_food,
                                             self.selected_potion,
-                                            &mut self.custom_recipe,
-                                            &mut self.recipe_search_text,
                                             self.locale,
                                         ),
                                     );
@@ -261,10 +249,8 @@ impl eframe::App for MacroSolverApp {
                                     ui.add_enabled(
                                         !self.solver_pending,
                                         FoodSelect::new(
-                                            "Food",
                                             self.crafter_config.crafter_stats
                                                 [self.crafter_config.selected_job as usize],
-                                            &mut self.food_search_text,
                                             &mut self.selected_food,
                                             self.locale,
                                         ),
@@ -277,10 +263,8 @@ impl eframe::App for MacroSolverApp {
                                     ui.add_enabled(
                                         !self.solver_pending,
                                         PotionSelect::new(
-                                            "Potion",
                                             self.crafter_config.crafter_stats
                                                 [self.crafter_config.selected_job as usize],
-                                            &mut self.potion_search_text,
                                             &mut self.selected_potion,
                                             self.locale,
                                         ),
@@ -328,11 +312,6 @@ impl eframe::App for MacroSolverApp {
         eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
         eframe::set_value(storage, "SOLVER_CONFIG", &self.solver_config);
         eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
-
-        eframe::set_value(storage, "CUSTOM_RECIPE", &self.custom_recipe);
-        eframe::set_value(storage, "RECIPE_SEARCH_TEXT", &self.recipe_search_text);
-        eframe::set_value(storage, "FOOD_SEARCH_TEXT", &self.food_search_text);
-        eframe::set_value(storage, "POTION_SEARCH_TEXT", &self.potion_search_text);
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
