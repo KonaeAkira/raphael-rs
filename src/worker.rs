@@ -1,6 +1,6 @@
-use crate::app::SolverEvent;
-use simulator::state::InProgress;
-use simulator::{Action, Settings};
+
+use crate::app::{SolverConfig, SolverEvent};
+use simulator::{Action, Settings, SimulationState};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::mpsc::{self, Receiver};
@@ -8,7 +8,7 @@ use std::sync::mpsc::{Sender};
 
 #[cfg(target_arch = "wasm32")]
 type Message = u64;
-type Input = (Settings, bool);
+type Input = (Settings, SolverConfig);
 type Output = SolverEvent;
 
 
@@ -80,7 +80,7 @@ impl Worker {
         };
 
         let settings = input.0;
-        let backload_progress = input.1;
+        let config = input.1;
 
         let tx = self.tx.clone();
         let solution_callback = move |actions: &[Action]| {
@@ -97,7 +97,11 @@ impl Worker {
             Box::new(solution_callback),
             Box::new(progress_callback),
         )
-        .solve(InProgress::new(&settings), backload_progress);
+        .solve(
+            SimulationState::new(&settings),
+            config.backload_progress,
+            config.minimize_steps,
+        );
 
         let tx = self.tx.clone();
         match final_solution {
