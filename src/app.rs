@@ -19,15 +19,8 @@ use simulator::Action;
 use crate::{config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration}, widgets::{
     ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
 }};
+use crate::worker::BridgeType;
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::worker::NativeBridge;
-
-#[cfg(target_arch = "wasm32")]
-use gloo_worker::WorkerBridge;
-
-#[cfg(target_arch = "wasm32")]
-use crate::Worker;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -74,11 +67,6 @@ pub struct MacroSolverApp {
     data_update: Rc<Cell<Option<SolverEvent>>>,
     bridge: BridgeType,
 }
-
-#[cfg(target_arch = "wasm32")]
-type BridgeType = WorkerBridge<Worker>;
-#[cfg(not(target_arch = "wasm32"))]
-type BridgeType = NativeBridge;
 
 impl MacroSolverApp {
     #[cfg(target_arch = "wasm32")]
