@@ -74,7 +74,7 @@ impl MacroSolverApp {
         let ctx = cc.egui_ctx.clone();
         let sender = data_update.clone();
 
-        <Worker as gloo_worker::Spawnable>::spawner()
+        <crate::worker::Worker as gloo_worker::Spawnable>::spawner()
             .callback(move |response| {
                 sender.set(Some(response));
                 ctx.request_repaint();
