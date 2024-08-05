@@ -352,11 +352,10 @@ impl eframe::App for MacroSolverApp {
 
 impl MacroSolverApp {
     fn solver_update(&mut self) {
-        if cfg!(not(target_arch = "wasm32")) {
-            if let Some(bridge_rx) = &self.bridge.rx {
-                if let Ok(update) = bridge_rx.try_recv() {
-                    self.data_update.set(Some(update));
-                }
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(bridge_rx) = &self.bridge.rx {
+            if let Ok(update) = bridge_rx.try_recv() {
+                self.data_update.set(Some(update));
             }
         }
 
