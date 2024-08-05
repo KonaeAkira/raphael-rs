@@ -1,4 +1,7 @@
-use egui::{Align, Layout, Widget};
+use egui::{
+    util::cache::{ComputerMut, FrameCache},
+    Align, Layout, Widget,
+};
 use egui_extras::Column;
 use game_data::{
     get_game_settings, get_item_name, get_job_name, Consumable, Ingredient, Locale, RLVLS,
@@ -8,6 +11,27 @@ use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration},
     utils::contains_noncontiguous,
 };
+
+#[derive(Default)]
+struct RecipeFinder {}
+
+impl ComputerMut<(&str, Locale), Vec<usize>> for RecipeFinder {
+    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<usize> {
+        game_data::RECIPES
+            .iter()
+            .enumerate()
+            .filter_map(|(index, recipe)| {
+                let item_name = get_item_name(recipe.item_id, false, locale);
+                match contains_noncontiguous(&item_name.to_lowercase(), text) {
+                    true => Some(index),
+                    false => None,
+                }
+            })
+            .collect()
+    }
+}
+
+type SearchCache<'a> = FrameCache<Vec<usize>, RecipeFinder>;
 
 pub struct RecipeSelect<'a> {
     crafter_config: &'a mut CrafterConfig,
@@ -47,18 +71,11 @@ impl<'a> RecipeSelect<'a> {
         });
         ui.separator();
 
-        let search_pattern = self.search_text.to_lowercase();
-        let search_result: Vec<usize> = game_data::RECIPES
-            .iter()
-            .enumerate()
-            .filter_map(|(index, recipe)| {
-                let item_name = get_item_name(recipe.item_id, false, self.locale);
-                match contains_noncontiguous(&item_name.to_lowercase(), &search_pattern) {
-                    true => Some(index),
-                    false => None,
-                }
-            })
-            .collect();
+        let mut search_result = Vec::new();
+        ui.ctx().memory_mut(|mem| {
+            let search_cache = mem.caches.cache::<SearchCache<'_>>();
+            search_result = search_cache.get((&self.search_text.to_lowercase(), self.locale));
+        });
 
         let text_height = egui::TextStyle::Body
             .resolve(ui.style())

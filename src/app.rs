@@ -11,18 +11,14 @@ use web_time::Instant;
 
 use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle};
 use game_data::{
-    action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale, ITEMS,
+    action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale,
 };
 
 use simulator::Action;
 
+use crate::config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration};
+use crate::widgets::*;
 use crate::worker::BridgeType;
-use crate::{
-    config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
-    widgets::{
-        ConsumableSelect, HelpText, MacroView, MacroViewConfig, RecipeSelect, Simulator, StatsEdit,
-    },
-};
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -264,11 +260,10 @@ impl eframe::App for MacroSolverApp {
                                     ui.set_max_height(172.0);
                                     ui.add_enabled(
                                         !self.solver_pending,
-                                        ConsumableSelect::new(
+                                        FoodSelect::new(
                                             "Food",
                                             self.crafter_config.crafter_stats
                                                 [self.crafter_config.selected_job as usize],
-                                            game_data::MEALS,
                                             &mut self.food_search_text,
                                             &mut self.selected_food,
                                             self.locale,
@@ -281,11 +276,10 @@ impl eframe::App for MacroSolverApp {
                                     ui.set_max_height(172.0);
                                     ui.add_enabled(
                                         !self.solver_pending,
-                                        ConsumableSelect::new(
+                                        PotionSelect::new(
                                             "Potion",
                                             self.crafter_config.crafter_stats
                                                 [self.crafter_config.selected_job as usize],
-                                            game_data::POTIONS,
                                             &mut self.potion_search_text,
                                             &mut self.selected_potion,
                                             self.locale,
@@ -456,7 +450,7 @@ impl MacroSolverApp {
             let recipe_ingredients = self.recipe_config.recipe.ingredients;
             if let QualitySource::HqMaterialList(provided_ingredients) = &mut self.recipe_config.quality_source {
                 for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
-                    if let Some(item) =  ITEMS.get(&ingredient.item_id) {
+                    if let Some(item) = game_data::ITEMS.get(&ingredient.item_id) {
                         if item.can_be_hq {
                             has_hq_ingredient = true;
                             ui.horizontal(|ui| {

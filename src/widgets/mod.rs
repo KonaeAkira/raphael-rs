@@ -4,11 +4,14 @@ pub use macro_view::{MacroView, MacroViewConfig};
 mod simulator;
 pub use simulator::Simulator;
 
-mod consumable_select;
-pub use consumable_select::ConsumableSelect;
-
 mod recipe_select;
 pub use recipe_select::RecipeSelect;
+
+mod food_select;
+pub use food_select::FoodSelect;
+
+mod potion_select;
+pub use potion_select::PotionSelect;
 
 mod stats_edit;
 pub use stats_edit::StatsEdit;

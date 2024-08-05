@@ -1,23 +1,45 @@
-use egui::{Align, Layout, Widget};
+use egui::{
+    util::cache::{ComputerMut, FrameCache},
+    Align, Layout, Widget,
+};
 use egui_extras::Column;
 use game_data::{get_item_name, Consumable, CrafterStats, Locale};
 
 use crate::utils::contains_noncontiguous;
 
-pub struct ConsumableSelect<'a> {
+#[derive(Default)]
+struct FoodFinder {}
+
+impl ComputerMut<(&str, Locale), Vec<usize>> for FoodFinder {
+    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<usize> {
+        game_data::MEALS
+            .iter()
+            .enumerate()
+            .filter_map(|(index, item)| {
+                let item_name = get_item_name(item.item_id, item.hq, locale);
+                match contains_noncontiguous(&item_name.to_lowercase(), text) {
+                    true => Some(index),
+                    false => None,
+                }
+            })
+            .collect()
+    }
+}
+
+type FoodSearchCache<'a> = FrameCache<Vec<usize>, FoodFinder>;
+
+pub struct FoodSelect<'a> {
     title: &'static str,
     crafter_stats: CrafterStats,
-    consumables: &'a [Consumable],
     search_text: &'a mut String,
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
 }
 
-impl<'a> ConsumableSelect<'a> {
+impl<'a> FoodSelect<'a> {
     pub fn new(
         title: &'static str,
         crafter_stats: CrafterStats,
-        consumables: &'a [Consumable],
         search_text: &'a mut String,
         selected_consumable: &'a mut Option<Consumable>,
         locale: Locale,
@@ -25,7 +47,6 @@ impl<'a> ConsumableSelect<'a> {
         Self {
             title,
             crafter_stats,
-            consumables,
             search_text,
             selected_consumable,
             locale,
@@ -33,7 +54,7 @@ impl<'a> ConsumableSelect<'a> {
     }
 }
 
-impl<'a> Widget for ConsumableSelect<'a> {
+impl<'a> Widget for FoodSelect<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
             ui.vertical(|ui| {
@@ -62,15 +83,12 @@ impl<'a> Widget for ConsumableSelect<'a> {
                 });
                 ui.separator();
 
-                let search_pattern = self.search_text.to_lowercase();
-                let search_result: Vec<&Consumable> = self
-                    .consumables
-                    .iter()
-                    .filter(|item| {
-                        let item_name = get_item_name(item.item_id, item.hq, self.locale);
-                        contains_noncontiguous(&item_name.to_lowercase(), &search_pattern)
-                    })
-                    .collect();
+                let mut search_result = Vec::new();
+                ui.ctx().memory_mut(|mem| {
+                    let search_cache = mem.caches.cache::<FoodSearchCache<'_>>();
+                    search_result =
+                        search_cache.get((&self.search_text.to_lowercase(), self.locale));
+                });
 
                 let text_height = egui::TextStyle::Body
                     .resolve(ui.style())
@@ -87,10 +105,10 @@ impl<'a> Widget for ConsumableSelect<'a> {
                     .min_scrolled_height(0.0);
                 table.body(|body| {
                     body.rows(text_height, search_result.len(), |mut row| {
-                        let item = search_result[row.index()];
+                        let item = game_data::MEALS[search_result[row.index()]];
                         row.col(|ui| {
                             if ui.button("Select").clicked() {
-                                *self.selected_consumable = Some(*item);
+                                *self.selected_consumable = Some(item);
                             }
                         });
                         row.col(|ui| {

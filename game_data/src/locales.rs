@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use simulator::Action;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum Locale {
     EN,
     DE,
