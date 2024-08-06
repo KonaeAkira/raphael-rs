@@ -98,18 +98,26 @@ impl<'a> Widget for Simulator<'a> {
                     ui.separator();
                     ui.horizontal(|ui| {
                         ui.label("Progress:");
+                        let mut text = format!("{} / {}", progress, max_progress);
+                        if progress >= max_progress {
+                            text.push_str(&format!("  (+{} overflow)", progress - max_progress));
+                        }
                         ui.add(
                             egui::ProgressBar::new(progress as f32 / max_progress as f32)
-                                .text(format!("{} / {}", progress, max_progress))
+                                .text(text)
                                 .rounding(Rounding::ZERO),
                         )
                         .on_hover_text_at_pointer(&prog_qual_dbg_text);
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
+                        let mut text = format!("{} / {}", quality, max_quality);
+                        if quality >= max_quality {
+                            text.push_str(&format!("  (+{} overflow)", quality - max_quality));
+                        }
                         ui.add(
                             egui::ProgressBar::new(quality as f32 / max_quality as f32)
-                                .text(format!("{} / {}", quality, max_quality,))
+                                .text(text)
                                 .rounding(Rounding::ZERO),
                         )
                         .on_hover_text_at_pointer(&prog_qual_dbg_text);
@@ -133,35 +141,41 @@ impl<'a> Widget for Simulator<'a> {
                                 .rounding(Rounding::ZERO)
                                 .desired_width(120.0),
                         );
+
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.add(HelpText::new(if self.settings.adversarial {
                                 "Calculated assuming worst possible sequence of conditions"
                             } else {
                                 "Calculated assuming Normal conditon on every step"
                             }));
-                            if self.item.is_collectable {
-                                let t1 = QualityTarget::CollectableT1
-                                    .get_target(self.settings.max_quality);
-                                let t2 = QualityTarget::CollectableT2
-                                    .get_target(self.settings.max_quality);
-                                let t3 = QualityTarget::CollectableT3
-                                    .get_target(self.settings.max_quality);
-                                let tier = match quality {
-                                    quality if quality >= t3 => 3,
-                                    quality if quality >= t2 => 2,
-                                    quality if quality >= t1 => 1,
-                                    _ => 0,
-                                };
-                                ui.label(
-                                    egui::RichText::new(format!("Tier {tier} collectable reached"))
+                            if game_state.is_final(self.settings) {
+                                if progress < max_progress {
+                                    ui.label(
+                                        egui::RichText::new(format!("Synthesis failed")).strong(),
+                                    );
+                                } else if self.item.is_collectable {
+                                    let t1 = QualityTarget::CollectableT1
+                                        .get_target(self.settings.max_quality);
+                                    let t2 = QualityTarget::CollectableT2
+                                        .get_target(self.settings.max_quality);
+                                    let t3 = QualityTarget::CollectableT3
+                                        .get_target(self.settings.max_quality);
+                                    let tier = match quality {
+                                        quality if quality >= t3 => 3,
+                                        quality if quality >= t2 => 2,
+                                        quality if quality >= t1 => 1,
+                                        _ => 0,
+                                    };
+                                    ui.label(
+                                        egui::RichText::new(format!(
+                                            "Tier {tier} collectable reached"
+                                        ))
                                         .strong(),
-                                );
-                            } else {
-                                let hq = match game_state.progress >= self.settings.max_progress {
-                                    true => game_data::hq_percentage(quality, max_quality),
-                                    false => 0,
-                                };
-                                ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
+                                    );
+                                } else {
+                                    let hq = game_data::hq_percentage(quality, max_quality);
+                                    ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
+                                }
                             }
                         });
                     });
