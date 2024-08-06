@@ -9,7 +9,7 @@ use std::time::Instant;
 #[cfg(target_arch = "wasm32")]
 use web_time::Instant;
 
-use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Layout, TextStyle};
+use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Id, Layout, TextStyle};
 use game_data::{
     action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale,
 };
@@ -34,7 +34,7 @@ pub enum SolverEvent {
     FinalSolution(Vec<Action>),
 }
 
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SolverConfig {
     pub quality_target: QualityTarget,
     pub backload_progress: bool,
@@ -217,6 +217,7 @@ impl eframe::App for MacroSolverApp {
                         ui.add(Simulator::new(
                             &game_settings,
                             initial_quality,
+                            self.solver_config,
                             &self.crafter_config,
                             &self.actions,
                             game_data::ITEMS
@@ -609,6 +610,11 @@ impl MacroSolverApp {
                             QualitySource::HqMaterialList(hq_materials) => get_initial_quality(self.recipe_config.recipe, hq_materials),
                             QualitySource::Value(quality) => quality,
                         };
+
+                        ui.ctx().data_mut(|data| {
+                            data.insert_temp(Id::new("LAST_SOLVE_PARAMS"), (game_settings, initial_quality, self.solver_config));
+                        });
+
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
 
                         self.bridge.send((game_settings, self.solver_config));

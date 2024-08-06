@@ -1,8 +1,11 @@
-use egui::{Align, Color32, Layout, Rounding, Widget};
+use egui::{Align, Color32, Id, Layout, Rounding, Widget};
 use game_data::{action_name, get_job_name, Item, Locale};
 use simulator::{Action, Settings, SimulationState};
 
-use crate::config::{CrafterConfig, QualityTarget};
+use crate::{
+    app::SolverConfig,
+    config::{CrafterConfig, QualityTarget},
+};
 
 use super::HelpText;
 
@@ -14,6 +17,7 @@ const BASE_ASSET_PATH: &str = "file://./assets";
 pub struct Simulator<'a> {
     settings: &'a Settings,
     initial_quality: u16,
+    solver_config: SolverConfig,
     crafter_config: &'a CrafterConfig,
     actions: &'a [Action],
     item: &'a Item,
@@ -24,6 +28,7 @@ impl<'a> Simulator<'a> {
     pub fn new(
         settings: &'a Settings,
         initial_quality: u16,
+        solver_config: SolverConfig,
         crafter_config: &'a CrafterConfig,
         actions: &'a [Action],
         item: &'a Item,
@@ -32,6 +37,7 @@ impl<'a> Simulator<'a> {
         Self {
             settings,
             initial_quality,
+            solver_config,
             crafter_config,
             actions,
             item,
@@ -56,10 +62,39 @@ impl<'a> Widget for Simulator<'a> {
             self.settings.base_progress, self.settings.base_quality
         );
 
+        let mut config_changed_warning = false;
+        ui.ctx().data(|data| {
+            match data.get_temp::<(Settings, u16, SolverConfig)>(Id::new("LAST_SOLVE_PARAMS")) {
+                Some((settings, initial_quality, solver_config)) => {
+                    config_changed_warning = settings != *self.settings
+                        || initial_quality != self.initial_quality
+                        || solver_config != self.solver_config;
+                }
+                None => (),
+            }
+        });
+        if self.actions.is_empty() {
+            config_changed_warning = false;
+        }
+
         ui.vertical(|ui| {
             ui.group(|ui| {
                 ui.vertical(|ui| {
-                    ui.label(egui::RichText::new("Simulation").strong());
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("Simulation").strong());
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            ui.add_visible(
+                                config_changed_warning,
+                                egui::Label::new(
+                                    egui::RichText::new(
+                                        "⚠ Some parameters have changed since last solve.",
+                                    )
+                                    .small()
+                                    .color(ui.visuals().warn_fg_color),
+                                ),
+                            );
+                        });
+                    });
                     ui.separator();
                     ui.horizontal(|ui| {
                         ui.label("Progress:");
