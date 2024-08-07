@@ -5,8 +5,8 @@ use crate::{
     actions::{DURABILITY_ACTIONS, QUALITY_ACTIONS},
     finish_solver::FinishSolver,
     macro_solver::pareto_front::QualityParetoFront,
-    upper_bound_solver::UpperBoundSolver,
     utils::NamedTimer,
+    QualityUpperBoundSolver,
 };
 
 const SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
@@ -19,7 +19,7 @@ pub fn fast_lower_bound(
     state: SimulationState,
     settings: &Settings,
     finish_solver: &mut FinishSolver,
-    upper_bound_solver: &mut UpperBoundSolver,
+    upper_bound_solver: &mut QualityUpperBoundSolver,
 ) -> u16 {
     let _timer = NamedTimer::new("Fast lower bound");
     let allowed_actions = settings.allowed_actions.intersection(SEARCH_ACTIONS);

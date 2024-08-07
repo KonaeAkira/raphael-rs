@@ -12,7 +12,7 @@ const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
     .add(Action::TrainedPerfection);
 
-pub struct UpperBoundSolver {
+pub struct QualityUpperBoundSolver {
     settings: Settings,
     base_durability_cost: i16,
     waste_not_cost: i16,
@@ -20,7 +20,7 @@ pub struct UpperBoundSolver {
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
-impl UpperBoundSolver {
+impl QualityUpperBoundSolver {
     pub fn new(settings: Settings) -> Self {
         dbg!(std::mem::size_of::<ReducedState>());
         dbg!(std::mem::align_of::<ReducedState>());
@@ -34,7 +34,7 @@ impl UpperBoundSolver {
                 Action::ImmaculateMend.cp_cost() / (settings.max_durability as i16 / 5 - 1),
             );
         }
-        UpperBoundSolver {
+        Self {
             settings,
             base_durability_cost: durability_cost,
             waste_not_cost: if settings.allowed_actions.has(Action::WasteNot2) {
@@ -155,7 +155,8 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result = UpperBoundSolver::new(settings).quality_upper_bound(state.try_into().unwrap());
+        let result =
+            QualityUpperBoundSolver::new(settings).quality_upper_bound(state.try_into().unwrap());
         dbg!(result);
         result
     }
@@ -632,7 +633,7 @@ mod tests {
     /// Test that the upper-bound solver is monotonic,
     /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
     fn monotonic_fuzz_check(settings: Settings) {
-        let mut solver = UpperBoundSolver::new(settings);
+        let mut solver = QualityUpperBoundSolver::new(settings);
         for _ in 0..10000 {
             let state = random_state(&settings);
             let state_upper_bound = solver.quality_upper_bound(state);

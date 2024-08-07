@@ -4,8 +4,8 @@ use crate::{
     actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
     finish_solver::FinishSolver,
     macro_solver::search_queue::SearchQueue,
-    upper_bound_solver::UpperBoundSolver,
     utils::NamedTimer,
+    QualityUpperBoundSolver,
 };
 
 use super::search_queue::SearchScore;
@@ -35,7 +35,7 @@ pub fn quick_search(
     initial_state: SimulationState,
     settings: &Settings,
     finish_solver: &mut FinishSolver,
-    upper_bound_solver: &mut UpperBoundSolver,
+    upper_bound_solver: &mut QualityUpperBoundSolver,
 ) -> Option<Vec<Action>> {
     let _timer = NamedTimer::new("Quick search");
 
