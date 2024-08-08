@@ -1,17 +1,9 @@
-use crate::{
-    actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
-    utils::{ParetoFrontBuilder, ParetoValue},
-};
-use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
+use crate::utils::{ParetoFrontBuilder, ParetoValue};
+use simulator::{Action, Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
 use super::state::{ReducedState, ReducedStateWithDurability, ReducedStateWithoutDurability};
-
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(QUALITY_ACTIONS)
-    .union(DURABILITY_ACTIONS)
-    .remove(Action::Manipulation);
 
 pub struct StepLowerBoundSolver {
     settings: Settings,
@@ -66,7 +58,10 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
         dbg!(std::mem::size_of::<S>());
         dbg!(std::mem::align_of::<S>());
         Self {
-            settings,
+            settings: Settings {
+                allowed_actions: S::optimize_action_mask(settings.allowed_actions),
+                ..settings
+            },
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
@@ -109,10 +104,7 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
 
     fn solve_state(&mut self, state: S) {
         self.pareto_front_builder.push_empty();
-        for action in SEARCH_ACTIONS
-            .intersection(self.settings.allowed_actions)
-            .actions_iter()
-        {
+        for action in self.settings.allowed_actions.actions_iter() {
             self.build_child_front(state, action);
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
@@ -157,7 +149,7 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use simulator::{Combo, Effects, SimulationState};
+    use simulator::{ActionMask, Combo, Effects, SimulationState};
 
     use super::*;
 

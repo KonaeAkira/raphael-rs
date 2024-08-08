@@ -1,6 +1,9 @@
-use simulator::{Combo, Effects, SimulationState, SingleUse};
+use simulator::{Action, ActionMask, Combo, Effects, SimulationState, SingleUse};
+
+use crate::actions::DURABILITY_ACTIONS;
 
 pub trait ReducedState: Clone + Copy + PartialEq + Eq + std::hash::Hash {
+    fn optimize_action_mask(action_mask: ActionMask) -> ActionMask;
     fn steps_budget(&self) -> u8;
     fn from_state(state: SimulationState, steps_budget: u8) -> Self;
     fn to_state(self) -> SimulationState;
@@ -23,6 +26,34 @@ pub struct ReducedStateWithDurability {
 }
 
 impl ReducedState for ReducedStateWithDurability {
+    fn optimize_action_mask(mut action_mask: ActionMask) -> ActionMask {
+        // Manipulation effect isn't part of the state
+        action_mask = action_mask.remove(Action::Manipulation);
+        // No CP cost so Observe is useless
+        action_mask = action_mask.remove(Action::Observe);
+        // Non-combo version is just as good as the combo version because there is no CP cost
+        action_mask = action_mask
+            .remove(Action::ComboStandardTouch)
+            .remove(Action::ComboAdvancedTouch);
+        // ImmaculateMend is always better than MasterMend because there is no CP cost
+        if action_mask.has(Action::ImmaculateMend) {
+            action_mask = action_mask.remove(Action::MasterMend);
+        }
+        // WasteNot2 is always better than WasteNot because there is no CP cost
+        if action_mask.has(Action::WasteNot2) {
+            action_mask = action_mask.remove(Action::WasteNot);
+        }
+        // CarefulSynthesis is always better than BasicSynthesis because there is no CP cost
+        if action_mask.has(Action::CarefulSynthesis) {
+            action_mask = action_mask.remove(Action::BasicSynthesis);
+        }
+        // AdvancedTouch (non-combo) is always better than StandardTouch (non-combo) because there is no CP cost
+        if action_mask.has(Action::AdvancedTouch) {
+            action_mask = action_mask.remove(Action::StandardTouch);
+        }
+        action_mask
+    }
+
     fn steps_budget(&self) -> u8 {
         self.steps_budget
     }
@@ -88,6 +119,11 @@ pub struct ReducedStateWithoutDurability {
 }
 
 impl ReducedState for ReducedStateWithoutDurability {
+    fn optimize_action_mask(action_mask: ActionMask) -> ActionMask {
+        // There are a lot more actions that can be optimized out, but the performance gain is probably not worth the effort because the StepLowerBoundSolver is already so fast for this ReducedState variant.
+        action_mask.minus(DURABILITY_ACTIONS)
+    }
+
     fn steps_budget(&self) -> u8 {
         self.steps_budget
     }
