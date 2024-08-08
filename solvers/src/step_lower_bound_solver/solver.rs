@@ -1,25 +1,70 @@
 use crate::{
-    actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
     utils::{ParetoFrontBuilder, ParetoValue},
 };
 use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
-use super::state::ReducedState;
+use super::state::{ReducedState, ReducedStateWithDurability, ReducedStateWithoutDurability};
 
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS.union(QUALITY_ACTIONS);
+const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+    .union(QUALITY_ACTIONS)
+    .union(DURABILITY_ACTIONS)
+    .remove(Action::Manipulation);
 
 pub struct StepLowerBoundSolver {
     settings: Settings,
-    solved_states: HashMap<ReducedState, Box<[ParetoValue<u16, u16>]>>,
-    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
+    fast_solver: StepLowerBoundSolverImpl<ReducedStateWithoutDurability>,
+    slow_solver: StepLowerBoundSolverImpl<ReducedStateWithDurability>,
 }
 
 impl StepLowerBoundSolver {
     pub fn new(settings: Settings) -> Self {
-        dbg!(std::mem::size_of::<ReducedState>());
-        dbg!(std::mem::align_of::<ReducedState>());
+        Self {
+            settings,
+            fast_solver: StepLowerBoundSolverImpl::new(settings),
+            slow_solver: StepLowerBoundSolverImpl::new(settings),
+        }
+    }
+
+    /// Returns a lower-bound on the additional steps required to max out both Progress and Quality from this state.
+    pub fn step_lower_bound(&mut self, state: SimulationState, fast_mode: bool) -> u8 {
+        let mut lo = 0;
+        let mut hi = 1;
+        while self.fast_solver.quality_upper_bound(state, hi) < self.settings.max_quality {
+            lo = hi;
+            hi *= 2;
+        }
+        while lo + 1 < hi {
+            if self.fast_solver.quality_upper_bound(state, (lo + hi) / 2)
+                < self.settings.max_quality
+            {
+                lo = (lo + hi) / 2;
+            } else {
+                hi = (lo + hi) / 2;
+            }
+        }
+        if fast_mode {
+            return hi;
+        }
+        while self.slow_solver.quality_upper_bound(state, hi) < self.settings.max_quality {
+            hi += 1;
+        }
+        hi
+    }
+}
+
+struct StepLowerBoundSolverImpl<S: ReducedState> {
+    settings: Settings,
+    solved_states: HashMap<S, Box<[ParetoValue<u16, u16>]>>,
+    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
+}
+
+impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
+    pub fn new(settings: Settings) -> Self {
+        dbg!(std::mem::size_of::<S>());
+        dbg!(std::mem::align_of::<S>());
         Self {
             settings,
             solved_states: HashMap::default(),
@@ -30,25 +75,7 @@ impl StepLowerBoundSolver {
         }
     }
 
-    /// Returns a lower-bound on the additional steps required to max out both Progress and Quality from this state.
-    pub fn step_lower_bound(&mut self, state: SimulationState) -> u8 {
-        let mut max_step_budget = 1;
-        while self.quality_upper_bound(state, max_step_budget) < self.settings.max_quality {
-            max_step_budget *= 2;
-        }
-        let mut lo = max_step_budget / 2;
-        let mut hi = max_step_budget;
-        while lo + 1 < hi {
-            if self.quality_upper_bound(state, (lo + hi) / 2) < self.settings.max_quality {
-                lo = (lo + hi) / 2;
-            } else {
-                hi = (lo + hi) / 2;
-            }
-        }
-        hi
-    }
-
-    fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> u16 {
+    pub fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> u16 {
         let current_quality = state.get_quality();
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
@@ -80,7 +107,7 @@ impl StepLowerBoundSolver {
         )
     }
 
-    fn solve_state(&mut self, state: ReducedState) {
+    fn solve_state(&mut self, state: S) {
         self.pareto_front_builder.push_empty();
         for action in SEARCH_ACTIONS
             .intersection(self.settings.allowed_actions)
@@ -98,14 +125,16 @@ impl StepLowerBoundSolver {
         self.solved_states.insert(state, pareto_front);
     }
 
-    fn build_child_front(&mut self, state: ReducedState, action: Action) {
+    fn build_child_front(&mut self, state: S, action: Action) {
         if let Ok(new_state) =
-            SimulationState::from(state).use_action(action, Condition::Normal, &self.settings)
+            state
+                .to_state()
+                .use_action(action, Condition::Normal, &self.settings)
         {
             let action_progress = new_state.progress;
             let action_quality = new_state.get_quality();
-            let new_state = ReducedState::from_state(new_state, state.steps_budget - 1);
-            if new_state.steps_budget != 0 {
+            let new_state = S::from_state(new_state, state.steps_budget() - 1);
+            if new_state.steps_budget() != 0 {
                 match self.solved_states.get(&new_state) {
                     Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
                     None => self.solve_state(new_state),
@@ -134,7 +163,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u8 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result = StepLowerBoundSolver::new(settings).step_lower_bound(state);
+        let result = StepLowerBoundSolver::new(settings).step_lower_bound(state, false);
         dbg!(result);
         result
     }
@@ -232,7 +261,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 14);
+        assert_eq!(result, 15);
     }
 
     #[test]
@@ -262,7 +291,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 14);
+        assert_eq!(result, 15);
     }
 
     #[test]
@@ -297,7 +326,7 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 10);
+        assert_eq!(result, 12);
     }
 
     #[test]
@@ -332,7 +361,7 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 11);
+        assert_eq!(result, 12);
     }
 
     #[test]
@@ -352,7 +381,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 16);
+        assert_eq!(result, 18);
     }
 
     #[test]
@@ -372,7 +401,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 12);
+        assert_eq!(result, 13);
     }
 
     #[test]
@@ -392,7 +421,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 10);
+        assert_eq!(result, 11);
     }
 
     #[test]
@@ -412,7 +441,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 10);
+        assert_eq!(result, 11);
     }
 
     #[test]
@@ -432,7 +461,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 14);
+        assert_eq!(result, 15);
     }
 
     #[test]
@@ -452,7 +481,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 9);
+        assert_eq!(result, 10);
     }
 
     #[test]
@@ -472,7 +501,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 13);
+        assert_eq!(result, 14);
     }
 
     #[test]
@@ -513,7 +542,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 14);
+        assert_eq!(result, 15);
     }
 
     #[test]
@@ -534,7 +563,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 10);
+        assert_eq!(result, 11);
     }
 
     #[test]
@@ -555,7 +584,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 10);
+        assert_eq!(result, 11);
     }
 
     #[test]
@@ -613,13 +642,14 @@ mod tests {
     fn monotonic_fuzz_check(settings: Settings) {
         let mut solver = StepLowerBoundSolver::new(settings);
         for _ in 0..10000 {
+            let fast_mode: bool = rand::random();
             let state = random_state(&settings);
-            let state_lower_bound = solver.step_lower_bound(state);
+            let state_lower_bound = solver.step_lower_bound(state, fast_mode);
             for action in settings.allowed_actions.actions_iter() {
                 let child_lower_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
                     Ok(child) => match child.is_final(&settings) {
-                        false => solver.step_lower_bound(child),
+                        false => solver.step_lower_bound(child, fast_mode),
                         true if child.progress >= settings.max_progress
                             && child.get_quality() >= settings.max_quality =>
                         {
@@ -633,6 +663,15 @@ mod tests {
                     dbg!(state, action, state_lower_bound, child_lower_bound);
                     panic!("Parent's step lower bound is greater than child's step lower bound");
                 }
+            }
+        }
+        for _ in 0..10000 {
+            let state = random_state(&settings);
+            let fast_mode_lower_bound = solver.step_lower_bound(state, true);
+            let slow_mode_lower_bound = solver.step_lower_bound(state, false);
+            if fast_mode_lower_bound > slow_mode_lower_bound {
+                dbg!(state, fast_mode_lower_bound, slow_mode_lower_bound);
+                panic!("Slow mode must be at least as tight as fast mode");
             }
         }
     }

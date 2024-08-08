@@ -151,7 +151,11 @@ impl SearchQueue {
     }
 
     pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = Action> {
-        self.backtracking.get(backtrack_id)
+        self.backtracking.get_items(backtrack_id)
+    }
+
+    pub fn steps(&self, backtrack_id: usize) -> u8 {
+        self.backtracking.get_depth(backtrack_id)
     }
 }
 

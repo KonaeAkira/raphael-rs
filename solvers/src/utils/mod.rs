@@ -30,8 +30,14 @@ impl Drop for NamedTimer {
     }
 }
 
+struct Entry<T> {
+    item: T,
+    depth: u8,
+    parent_index: usize,
+}
+
 pub struct Backtracking<T: Copy> {
-    entries: Vec<(T, usize)>,
+    entries: Vec<Entry<T>>,
 }
 
 impl<T: Copy> Backtracking<T> {
@@ -47,17 +53,34 @@ impl<T: Copy> Backtracking<T> {
         self.entries.len()
     }
 
-    pub fn get(&self, mut index: usize) -> impl Iterator<Item = T> {
+    pub fn get_depth(&self, index: usize) -> u8 {
+        if index == Self::SENTINEL {
+            0
+        } else {
+            self.entries[index].depth
+        }
+    }
+
+    pub fn get_items(&self, mut index: usize) -> impl Iterator<Item = T> {
         let mut items = Vec::new();
         while index != Self::SENTINEL {
-            items.push(self.entries[index].0);
-            index = self.entries[index].1;
+            items.push(self.entries[index].item);
+            index = self.entries[index].parent_index;
         }
         items.into_iter().rev()
     }
 
-    pub fn push(&mut self, item: T, parent: usize) -> usize {
-        self.entries.push((item, parent));
+    pub fn push(&mut self, item: T, parent_index: usize) -> usize {
+        let depth = if parent_index == Self::SENTINEL {
+            1
+        } else {
+            self.entries[parent_index].depth + 1
+        };
+        self.entries.push(Entry {
+            item,
+            depth,
+            parent_index,
+        });
         self.entries.len() - 1
     }
 }

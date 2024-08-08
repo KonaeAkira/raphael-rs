@@ -86,7 +86,7 @@ impl<'a> MacroSolver<'a> {
         let mut search_queue = {
             let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state);
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                self.step_lower_bound_solver.step_lower_bound(state)
+                self.step_lower_bound_solver.step_lower_bound(state, true)
             } else {
                 1 // quality dominates the search score, so no need to query the step solver
             };
@@ -119,11 +119,7 @@ impl<'a> MacroSolver<'a> {
                 search_actions = search_actions.minus(QUALITY_ACTIONS);
             }
 
-            let current_steps = if score.quality >= self.settings.max_quality {
-                score.steps - self.step_lower_bound_solver.step_lower_bound(state)
-            } else {
-                score.steps
-            };
+            let current_steps = search_queue.steps(backtrack_id);
 
             for action in search_actions.actions_iter() {
                 if let Ok(state) = state.use_action(action, Condition::Normal, &self.settings) {
@@ -148,7 +144,12 @@ impl<'a> MacroSolver<'a> {
                             };
 
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                            current_steps + 1 + self.step_lower_bound_solver.step_lower_bound(state)
+                            let fast_mode = popped < 1_000_000;
+                            current_steps
+                                + 1
+                                + self
+                                    .step_lower_bound_solver
+                                    .step_lower_bound(state, fast_mode)
                         } else {
                             current_steps + 1
                         };
