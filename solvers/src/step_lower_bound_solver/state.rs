@@ -76,7 +76,13 @@ impl ReducedState for ReducedStateWithDurability {
             great_strides: state.effects.great_strides(),
             muscle_memory: state.effects.muscle_memory(),
             waste_not: state.effects.waste_not(),
-            trained_perfection: state.effects.trained_perfection(),
+            trained_perfection: match state.effects.trained_perfection() {
+                // Mapping Unavailable to Available makes the state-space smaller.
+                // This theoretically worsens the lower-bound tightness, but in practice, the step lower-bound is rarely affected by this change.
+                SingleUse::Unavailable => SingleUse::Available,
+                SingleUse::Available => SingleUse::Available,
+                SingleUse::Active => SingleUse::Active,
+            },
             heart_and_soul: state.effects.heart_and_soul(),
             quick_innovation_used: state.effects.quick_innovation_used(),
         }
