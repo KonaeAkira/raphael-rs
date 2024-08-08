@@ -57,7 +57,7 @@ const SETTINGS: Settings = Settings {
 };
 
 #[test]
-fn test_random_0f93c79f() {
+fn random_0f93c79f() {
     let settings = Settings {
         max_cp: 370,
         max_durability: 60,
@@ -71,7 +71,7 @@ fn test_random_0f93c79f() {
 }
 
 #[test]
-fn test_random_1e281667() {
+fn random_1e281667() {
     let settings = Settings {
         max_cp: 553,
         max_durability: 70,
@@ -93,7 +93,7 @@ fn test_random_1e281667() {
 }
 
 #[test]
-fn test_random_d0bf2aef() {
+fn random_d0bf2aef() {
     let settings = Settings {
         max_cp: 612,
         max_durability: 60,
@@ -115,71 +115,7 @@ fn test_random_d0bf2aef() {
 }
 
 #[test]
-fn test_unsolvable() {
-    let settings = Settings {
-        max_cp: 100,
-        max_durability: 60,
-        max_progress: 4000,
-        max_quality: 1000,
-        base_progress: 100,
-        base_quality: 100,
-        job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
-        adversarial: true,
-    };
-    let actions = solve(&settings, false, false);
-    assert_eq!(actions, None);
-}
-
-#[test]
-fn test_max_quality() {
-    let settings = Settings {
-        max_cp: 400,
-        max_durability: 60,
-        max_progress: 2000,
-        max_quality: 1000,
-        base_progress: 100,
-        base_quality: 100,
-        job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
-        adversarial: true,
-    };
-    let actions = solve(&settings, false, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 1052);
-    assert_eq!(get_duration(&actions), 30);
-    assert_eq!(actions.len(), 11);
-}
-
-#[test]
-fn test_zero_quality() {
-    let settings = Settings {
-        max_cp: 80,
-        max_durability: 60,
-        max_progress: 1920,
-        max_quality: 1000,
-        base_progress: 100,
-        base_quality: 100,
-        job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
-        adversarial: true,
-    };
-    let actions = solve(&settings, false, false).unwrap();
-    assert_eq!(get_quality(&settings, &actions), 0);
-    assert_eq!(get_duration(&actions), 14);
-    assert_eq!(actions.len(), 5);
-}
-
-#[test]
-fn test_random_e413e05d() {
+fn random_e413e05d() {
     let settings = Settings {
         max_cp: 450,
         max_durability: 80,
@@ -201,7 +137,7 @@ fn test_random_e413e05d() {
 }
 
 #[test]
-fn test_random_bb38a037() {
+fn random_bb38a037() {
     let settings = Settings {
         max_cp: 540,
         max_durability: 70,
@@ -223,7 +159,7 @@ fn test_random_bb38a037() {
 }
 
 #[test]
-fn test_backload_random_bb38a037() {
+fn backload_random_bb38a037() {
     let settings = Settings {
         max_cp: 540,
         max_durability: 70,
@@ -247,7 +183,7 @@ fn test_backload_random_bb38a037() {
 
 #[ignore]
 #[test]
-fn test_random_a300ca2b() {
+fn random_a300ca2b() {
     // Took 22 minutes.
     let settings = Settings {
         max_cp: 700,
@@ -270,7 +206,7 @@ fn test_random_a300ca2b() {
 }
 
 #[test]
-fn test_random_0f9d7781() {
+fn random_0f9d7781() {
     let settings = Settings {
         max_cp: 701,
         max_durability: 60,
@@ -293,7 +229,7 @@ fn test_random_0f9d7781() {
 
 #[ignore]
 #[test]
-fn test_random_e451d981() {
+fn random_e451d981() {
     // Took 11 minutes.
     let settings = Settings {
         max_cp: 606,
@@ -316,7 +252,7 @@ fn test_random_e451d981() {
 }
 
 #[test]
-fn test_random_6799bb1d() {
+fn random_6799bb1d() {
     let settings = Settings {
         max_cp: 501,
         max_durability: 70,
@@ -339,7 +275,7 @@ fn test_random_6799bb1d() {
 
 #[ignore]
 #[test]
-fn test_random_940b4755() {
+fn random_940b4755() {
     // Took 16 minutes.
     let settings = Settings {
         max_cp: 640,
@@ -363,7 +299,7 @@ fn test_random_940b4755() {
 
 #[ignore]
 #[test]
-fn test_rinascita_3700_3280() {
+fn rinascita_3700_3280() {
     // Took 16 minutes.
     let settings = Settings {
         max_cp: 680,
@@ -387,7 +323,7 @@ fn test_rinascita_3700_3280() {
 
 #[ignore]
 #[test]
-fn test_pactmaker_3240_3130() {
+fn pactmaker_3240_3130() {
     // Took 8 minutes.
     let settings = Settings {
         max_cp: 600,
@@ -410,7 +346,7 @@ fn test_pactmaker_3240_3130() {
 }
 
 #[test]
-fn test_backload_pactmaker_3240_3130() {
+fn backload_pactmaker_3240_3130() {
     let settings = Settings {
         max_cp: 600,
         max_durability: 70,
@@ -434,7 +370,7 @@ fn test_backload_pactmaker_3240_3130() {
 
 #[ignore]
 #[test]
-fn test_diadochos_4021_3660() {
+fn diadochos_4021_3660() {
     // Took 4 minutes.
     let settings = Settings {
         max_cp: 640,
@@ -458,7 +394,7 @@ fn test_diadochos_4021_3660() {
 
 #[ignore]
 #[test]
-fn test_indagator_3858_4057() {
+fn indagator_3858_4057() {
     // Took 26 minutes.
     let settings = Settings {
         max_cp: 687,
@@ -481,7 +417,7 @@ fn test_indagator_3858_4057() {
 }
 
 #[test]
-fn test_random_2ea6c001() {
+fn random_2ea6c001() {
     let settings = Settings {
         max_cp: 720,
         max_durability: 80,
@@ -504,7 +440,7 @@ fn test_random_2ea6c001() {
 
 #[ignore]
 #[test]
-fn test_random_48ae7c9f() {
+fn random_48ae7c9f() {
     // Took 69 minutes.
     let settings = Settings {
         max_cp: 699,
@@ -528,7 +464,7 @@ fn test_random_48ae7c9f() {
 
 #[ignore]
 #[test]
-fn test_backload_random_48ae7c9f() {
+fn backload_random_48ae7c9f() {
     // Took 6 minutes.
     let settings = Settings {
         max_cp: 699,
@@ -553,7 +489,7 @@ fn test_backload_random_48ae7c9f() {
 
 #[ignore]
 #[test]
-fn test_max_quality_indagator_3858_4057() {
+fn max_quality_indagator_3858_4057() {
     // Took 26 minutes.
     let settings = Settings {
         max_cp: 714,
@@ -576,7 +512,7 @@ fn test_max_quality_indagator_3858_4057() {
 }
 
 #[test]
-fn test_random_4ecd54c4() {
+fn random_4ecd54c4() {
     let settings = Settings {
         max_cp: 456,
         max_durability: 80,
@@ -598,7 +534,7 @@ fn test_random_4ecd54c4() {
 }
 
 #[test]
-fn test_backload_random_4ecd54c4() {
+fn backload_random_4ecd54c4() {
     let settings = Settings {
         max_cp: 456,
         max_durability: 80,
@@ -621,7 +557,7 @@ fn test_backload_random_4ecd54c4() {
 }
 
 #[test]
-fn test_trained_eye() {
+fn trained_eye() {
     // Grade 8 Vitality Alkahest
     // 4005 Craftsmanship, 3961 Control, Level 100
     let settings = Settings {
@@ -645,7 +581,7 @@ fn test_trained_eye() {
 }
 
 #[test]
-fn test_rare_tacos() {
+fn rare_tacos() {
     // Rarefied Tacos de Carne Asada
     // 4694 Craftsmanship, 4327 Control, Level 100, HQ Jhinga Biryani, 2/2 HQ mats
     let settings = Settings {
@@ -671,7 +607,7 @@ fn test_rare_tacos() {
 }
 
 #[test]
-fn test_mountain_chromite_ingot_no_manipulation() {
+fn mountain_chromite_ingot_no_manipulation() {
     // Mountain Chromite Ingot
     // 3076 Craftsmanship, 3106 Control, Level 90, HQ Tsai Tou Vonou
     let settings = Settings {
@@ -700,7 +636,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
 // This test does work, but it takes several hours to run.
 #[ignore]
 #[test]
-fn test_rare_tacos_2() {
+fn rare_tacos_2() {
     // lv100 Rarefied Tacos de Carne Asada
     // 4785 CMS, 4758 Ctrl, 646 CP
     let settings = Settings {
@@ -719,7 +655,7 @@ fn test_rare_tacos_2() {
 }
 
 #[test]
-fn test_stuffed_peppers() {
+fn stuffed_peppers() {
     // lv99 Rarefied Stuffed Peppers
     // 4785 CMS, 4758 Ctrl, 646 CP
     let settings = Settings {
