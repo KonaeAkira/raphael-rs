@@ -31,7 +31,14 @@ impl ReducedState for ReducedStateWithDurability {
         Self {
             steps_budget,
             durability: state.durability,
-            combo: state.combo,
+            combo: match state.combo {
+                Combo::None => Combo::None,
+                Combo::SynthesisBegin => Combo::SynthesisBegin,
+                // Can't optimize this combo away because there is no replacement for RefinedTouch
+                Combo::BasicTouch => Combo::BasicTouch,
+                // AdvancedTouch replaces ComboAdvancedTouch (no CP cost)
+                Combo::StandardTouch => Combo::None,
+            },
             inner_quiet: state.effects.inner_quiet(),
             innovation: state.effects.innovation(),
             veneration: state.effects.veneration(),
@@ -88,7 +95,15 @@ impl ReducedState for ReducedStateWithoutDurability {
     fn from_state(state: SimulationState, steps_budget: u8) -> Self {
         Self {
             steps_budget,
-            combo: state.combo,
+            combo: match state.combo {
+                Combo::None => Combo::None,
+                Combo::SynthesisBegin => Combo::SynthesisBegin,
+                // StandardTouch replaces ComboStandardTouch (no CP cost, next combo not needed)
+                // PreparatoryTouch replaces RefinedTouch (no CP cost, no durability cost)
+                Combo::BasicTouch => Combo::None,
+                // AdvancedTouch replaces ComboAdvancedTouch (no CP cost)
+                Combo::StandardTouch => Combo::None,
+            },
             inner_quiet: state.effects.inner_quiet(),
             innovation: state.effects.innovation(),
             veneration: state.effects.veneration(),
