@@ -1,5 +1,5 @@
 use crate::utils::{ParetoFrontBuilder, ParetoValue};
-use simulator::{Action, Condition, Settings, SimulationState};
+use simulator::{Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -102,10 +102,35 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
         )
     }
 
-    fn solve_state(&mut self, state: S) {
+    fn solve_state(&mut self, reduced_state: S) {
         self.pareto_front_builder.push_empty();
+        let full_state = reduced_state.to_state();
         for action in self.settings.allowed_actions.actions_iter() {
-            self.build_child_front(state, action);
+            if let Ok(new_full_state) =
+                full_state.use_action(action, Condition::Normal, &self.settings)
+            {
+                let action_progress = new_full_state.progress;
+                let action_quality = new_full_state.get_quality();
+                let new_reduced_state =
+                    S::from_state(new_full_state, reduced_state.steps_budget() - 1);
+                if new_reduced_state.steps_budget() != 0 && !new_full_state.is_final(&self.settings)
+                {
+                    match self.solved_states.get(&new_reduced_state) {
+                        Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
+                        None => self.solve_state(new_reduced_state),
+                    }
+                    self.pareto_front_builder.map(move |value| {
+                        value.first += action_progress;
+                        value.second += action_quality;
+                    });
+                    self.pareto_front_builder.merge();
+                } else if action_progress != 0 {
+                    // last action must be a progress increase
+                    self.pareto_front_builder
+                        .push(&[ParetoValue::new(action_progress, action_quality)]);
+                    self.pareto_front_builder.merge();
+                }
+            }
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -114,42 +139,14 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
             }
         }
         let pareto_front = self.pareto_front_builder.peek().unwrap();
-        self.solved_states.insert(state, pareto_front);
-    }
-
-    fn build_child_front(&mut self, state: S, action: Action) {
-        if let Ok(new_state) =
-            state
-                .to_state()
-                .use_action(action, Condition::Normal, &self.settings)
-        {
-            let action_progress = new_state.progress;
-            let action_quality = new_state.get_quality();
-            let new_state = S::from_state(new_state, state.steps_budget() - 1);
-            if new_state.steps_budget() != 0 {
-                match self.solved_states.get(&new_state) {
-                    Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
-                    None => self.solve_state(new_state),
-                }
-                self.pareto_front_builder.map(move |value| {
-                    value.first += action_progress;
-                    value.second += action_quality;
-                });
-                self.pareto_front_builder.merge();
-            } else if action_progress != 0 {
-                // last action must be a progress increase
-                self.pareto_front_builder
-                    .push(&[ParetoValue::new(action_progress, action_quality)]);
-                self.pareto_front_builder.merge();
-            }
-        }
+        self.solved_states.insert(reduced_state, pareto_front);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use simulator::{ActionMask, Combo, Effects, SimulationState};
+    use simulator::{Action, ActionMask, Combo, Effects, SimulationState};
 
     use super::*;
 
