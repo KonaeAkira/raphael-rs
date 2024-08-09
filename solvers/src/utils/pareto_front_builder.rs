@@ -1,6 +1,4 @@
-use std::alloc::{self, Layout};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ParetoValue<T, U> {
     pub first: T,
     pub second: U,
@@ -20,12 +18,10 @@ struct Segment {
 
 pub struct ParetoFrontBuilder<T, U>
 where
-    T: Copy + std::cmp::Ord,
-    U: Copy + std::cmp::Ord,
+    T: Copy + std::cmp::Ord + std::default::Default,
+    U: Copy + std::cmp::Ord + std::default::Default,
 {
-    buffer: *mut ParetoValue<T, U>,
-    buffer_head: usize,
-    buffer_capacity: usize,
+    buffer: Vec<ParetoValue<T, U>>,
     segments: Vec<Segment>,
     // cut-off values
     max_first: T,
@@ -37,100 +33,61 @@ where
 
 impl<T, U> ParetoFrontBuilder<T, U>
 where
-    T: Copy + std::cmp::Ord,
-    U: Copy + std::cmp::Ord,
+    T: Copy + std::cmp::Ord + std::default::Default,
+    U: Copy + std::cmp::Ord + std::default::Default,
 {
     pub fn new(max_first: T, max_second: U) -> Self {
-        const INITIAL_CAPACITY: usize = 1024;
-        unsafe {
-            let layout = alloc::Layout::from_size_align_unchecked(
-                INITIAL_CAPACITY * std::mem::size_of::<ParetoValue<T, U>>(),
-                std::mem::align_of::<ParetoValue<T, U>>(),
-            );
-            Self {
-                buffer: alloc::alloc(layout) as *mut ParetoValue<T, U>,
-                buffer_head: 0,
-                buffer_capacity: INITIAL_CAPACITY,
-                segments: Vec::new(),
-                max_first,
-                max_second,
-                fronts_generated: 0,
-                values_generated: 0,
-            }
+        Self {
+            buffer: Vec::new(),
+            segments: Vec::new(),
+            max_first,
+            max_second,
+            fronts_generated: 0,
+            values_generated: 0,
         }
     }
 
     pub fn clear(&mut self) {
         self.segments.clear();
-        self.buffer_head = 0;
-    }
-
-    fn buffer_byte_size(&self) -> usize {
-        self.buffer_capacity * std::mem::size_of::<ParetoValue<T, U>>()
-    }
-
-    fn layout(&self) -> Layout {
-        unsafe {
-            alloc::Layout::from_size_align_unchecked(
-                self.buffer_byte_size(),
-                std::mem::align_of::<ParetoValue<T, U>>(),
-            )
-        }
-    }
-
-    fn ensure_buffer_size(&mut self, min_buffer_capacity: usize) {
-        if self.buffer_capacity < min_buffer_capacity {
-            unsafe {
-                let layout = self.layout();
-                while self.buffer_capacity < min_buffer_capacity {
-                    self.buffer_capacity *= 2;
-                }
-                self.buffer =
-                    alloc::realloc(self.buffer as *mut u8, layout, self.buffer_byte_size())
-                        as *mut ParetoValue<T, U>;
-            }
-        }
+        self.buffer.clear();
     }
 
     pub fn push_empty(&mut self) {
         self.segments.push(Segment {
-            offset: self.buffer_head,
+            offset: self.buffer.len(),
             length: 0,
         });
     }
 
     pub fn push(&mut self, values: &[ParetoValue<T, U>]) {
         let segment = Segment {
-            offset: self.buffer_head,
+            offset: self.buffer.len(),
             length: values.len(),
         };
-        self.ensure_buffer_size(segment.offset + segment.length);
-        unsafe {
-            std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length)
-                .copy_from_slice(values);
-        }
-        self.buffer_head += segment.length;
         self.segments.push(segment);
+        self.buffer.extend_from_slice(values);
     }
 
-    /// Modify each element of the last segment in-place
-    /// Panics in case the last segment doesn't exist (i.e. there are no segments)
+    /// Modify each element of the last segment in-place.
+    /// Panics in case there are no segments.
     pub fn map<F>(&mut self, f: F)
     where
         F: Fn(&mut ParetoValue<T, U>),
     {
         let segment = self.segments.last().unwrap();
-        let slice: &mut [ParetoValue<T, U>];
-        unsafe {
-            slice = std::slice::from_raw_parts_mut(self.buffer.add(segment.offset), segment.length);
-        }
+        let slice = &mut self.buffer[segment.offset..segment.offset + segment.length];
         slice.iter_mut().for_each(f);
     }
 
+    /// Merge the last two segments into one.
+    /// Panics in case there are fewer than two segments.
     pub fn merge(&mut self) {
         assert!(self.segments.len() >= 2);
         let segment_b = self.segments.pop().unwrap();
         let segment_a = self.segments.pop().unwrap();
+
+        #[cfg(test)]
+        assert_eq!(self.buffer.len(), segment_b.offset + segment_b.length);
 
         let length_c = segment_a.length + segment_b.length;
         let offset_c = if segment_a.offset + segment_a.length + length_c <= segment_b.offset {
@@ -138,18 +95,20 @@ where
             segment_a.offset + segment_a.length
         } else {
             // allocate C after B
-            self.ensure_buffer_size(self.buffer_head + length_c);
-            self.buffer_head
+            self.buffer
+                .resize(self.buffer.len() + length_c, Default::default());
+            segment_b.offset + segment_b.length
         };
 
-        let slice_a = unsafe {
-            std::slice::from_raw_parts(self.buffer.add(segment_a.offset), segment_a.length)
+        let (slice_l, slice_r) = self.buffer.split_at_mut(offset_c);
+        let (slice_c, slice_r) = slice_r.split_at_mut(length_c);
+        let slice_a = &slice_l[segment_a.offset..segment_a.offset + segment_a.length];
+        let slice_b = if segment_b.offset <= offset_c {
+            &slice_l[segment_b.offset..segment_b.offset + segment_b.length]
+        } else {
+            let offset = segment_b.offset - offset_c - length_c;
+            &slice_r[offset..offset + segment_b.length]
         };
-        let slice_b = unsafe {
-            std::slice::from_raw_parts(self.buffer.add(segment_b.offset), segment_b.length)
-        };
-        let slice_c =
-            unsafe { std::slice::from_raw_parts_mut(self.buffer.add(offset_c), length_c) };
 
         let mut head_a: usize = 0;
         let mut head_b: usize = 0;
@@ -209,8 +168,9 @@ where
             offset: offset_c + head_c,
             length: tail_c - head_c,
         };
-        self.buffer_head = segment_c.offset + segment_c.length;
+
         self.segments.push(segment_c);
+        self.buffer.truncate(segment_c.offset + segment_c.length);
     }
 
     pub fn peek(&mut self) -> Option<Box<[ParetoValue<T, U>]>> {
@@ -218,11 +178,8 @@ where
             Some(segment) => {
                 self.fronts_generated += 1;
                 self.values_generated += segment.length;
-                unsafe {
-                    let slice =
-                        std::slice::from_raw_parts(self.buffer.add(segment.offset), segment.length);
-                    Some(slice.into())
-                }
+                let slice = &self.buffer[segment.offset..segment.offset + segment.length];
+                Some(slice.into())
             }
             None => None,
         }
@@ -230,10 +187,10 @@ where
 
     pub fn is_max(&self) -> bool {
         match self.segments.last() {
-            Some(segment) if segment.length == 1 => unsafe {
-                let element = self.buffer.add(segment.offset);
-                (*element).first >= self.max_first && (*element).second >= self.max_second
-            },
+            Some(segment) if segment.length == 1 => {
+                let element = self.buffer[segment.offset];
+                element.first >= self.max_first && element.second >= self.max_second
+            }
             _ => false,
         }
     }
@@ -244,20 +201,11 @@ where
             // segments musn't overlap and must have left-to-right ordering
             assert!(window[0].offset + window[0].length <= window[1].offset);
         }
-        match self.segments.last() {
-            Some(segment) => {
-                // buffer head must point to the element right after the last segment
-                assert_eq!(segment.offset + segment.length, self.buffer_head);
-                // buffer head must remain within buffer capacity
-                assert!(self.buffer_head <= self.buffer_capacity);
-            }
-            None => assert_eq!(self.buffer_head, 0),
-        };
         for segment in self.segments.iter() {
+            // each segment must lie entirely in the buffer
+            assert!(segment.offset + segment.length <= self.buffer.len());
             // each segment must form a valid pareto front
-            let slice = unsafe {
-                std::slice::from_raw_parts(self.buffer.add(segment.offset), segment.length)
-            };
+            let slice = &self.buffer[segment.offset..segment.offset + segment.length];
             for window in slice.windows(2) {
                 assert!(window[0].first < window[1].first);
                 assert!(window[0].second > window[1].second);
@@ -268,19 +216,15 @@ where
 
 impl<T, U> Drop for ParetoFrontBuilder<T, U>
 where
-    T: Copy + std::cmp::Ord,
-    U: Copy + std::cmp::Ord,
+    T: Copy + std::cmp::Ord + std::default::Default,
+    U: Copy + std::cmp::Ord + std::default::Default,
 {
     fn drop(&mut self) {
-        let buffer_byte_size = self.layout().size();
         dbg!(
-            buffer_byte_size,
+            self.buffer.capacity(),
             self.fronts_generated,
             self.values_generated
         );
-        unsafe {
-            alloc::dealloc(self.buffer as *mut u8, self.layout());
-        }
     }
 }
 
