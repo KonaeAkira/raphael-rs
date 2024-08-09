@@ -144,7 +144,7 @@ impl<'a> MacroSolver<'a> {
                             };
 
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                            let fast_mode = popped < 1_000_000;
+                            let fast_mode = popped < 200_000;
                             current_steps
                                 + 1
                                 + self

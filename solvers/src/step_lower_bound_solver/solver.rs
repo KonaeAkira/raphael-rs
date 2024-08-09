@@ -253,7 +253,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 15);
+        assert_eq!(result, 14);
     }
 
     #[test]
@@ -283,7 +283,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 15);
+        assert_eq!(result, 14);
     }
 
     #[test]
@@ -318,7 +318,7 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 12);
+        assert_eq!(result, 13);
     }
 
     #[test]
@@ -353,7 +353,7 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 12);
+        assert_eq!(result, 13);
     }
 
     #[test]
@@ -393,7 +393,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 13);
+        assert_eq!(result, 14);
     }
 
     #[test]
@@ -413,7 +413,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 11);
+        assert_eq!(result, 12);
     }
 
     #[test]
@@ -433,7 +433,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 11);
+        assert_eq!(result, 12);
     }
 
     #[test]
@@ -453,7 +453,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 15);
+        assert_eq!(result, 16);
     }
 
     #[test]
@@ -473,7 +473,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 10);
+        assert_eq!(result, 11);
     }
 
     #[test]
@@ -493,7 +493,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 14);
+        assert_eq!(result, 15);
     }
 
     #[test]
@@ -534,7 +534,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 15);
+        assert_eq!(result, 16);
     }
 
     #[test]

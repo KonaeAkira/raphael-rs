@@ -17,9 +17,10 @@ pub struct ReducedStateWithDurability {
     inner_quiet: u8,
     innovation: u8,
     veneration: u8,
-    great_strides: u8,
+    great_strides: bool,
     muscle_memory: u8,
-    waste_not: u8,
+    waste_not: bool,
+    manipulation: bool,
     trained_perfection: SingleUse,
     heart_and_soul: SingleUse,
     quick_innovation_used: bool,
@@ -27,8 +28,6 @@ pub struct ReducedStateWithDurability {
 
 impl ReducedState for ReducedStateWithDurability {
     fn optimize_action_mask(mut action_mask: ActionMask) -> ActionMask {
-        // Manipulation effect isn't part of the state
-        action_mask = action_mask.remove(Action::Manipulation);
         // No CP cost so Observe is useless
         action_mask = action_mask.remove(Action::Observe);
         // Non-combo version is just as good as the combo version because there is no CP cost
@@ -73,12 +72,17 @@ impl ReducedState for ReducedStateWithDurability {
             inner_quiet: state.effects.inner_quiet(),
             innovation: state.effects.innovation(),
             veneration: state.effects.veneration(),
-            great_strides: state.effects.great_strides(),
+            // Mapping GreatStrides to a bool makes the state-space smaller.
+            // The trade-off is a slightly less tight step lower-bound
+            great_strides: state.effects.great_strides() != 0,
             muscle_memory: state.effects.muscle_memory(),
-            waste_not: state.effects.waste_not(),
+            // Mapping WasteNot and Manipulation to bools makes the state-space smaller.
+            // The trade-off is a slightly less tight step lower-bound
+            waste_not: state.effects.waste_not() != 0,
+            manipulation: state.effects.manipulation() != 0,
             trained_perfection: match state.effects.trained_perfection() {
                 // Mapping Unavailable to Available makes the state-space smaller.
-                // This theoretically worsens the lower-bound tightness, but in practice, the step lower-bound is rarely affected by this change.
+                // The trade-off is a slightly less tight step lower-bound
                 SingleUse::Unavailable => SingleUse::Available,
                 SingleUse::Available => SingleUse::Available,
                 SingleUse::Active => SingleUse::Active,
@@ -98,10 +102,10 @@ impl ReducedState for ReducedStateWithDurability {
                 .with_inner_quiet(self.inner_quiet)
                 .with_innovation(self.innovation)
                 .with_veneration(self.veneration)
-                .with_great_strides(self.great_strides)
+                .with_great_strides(if self.great_strides { 3 } else { 0 })
                 .with_muscle_memory(self.muscle_memory)
-                .with_waste_not(self.waste_not)
-                .with_manipulation(1) // storing manipulation in the reduced state leads to too many state combinations
+                .with_waste_not(if self.waste_not { 8 } else { 0 })
+                .with_manipulation(if self.manipulation { 8 } else { 0 })
                 .with_trained_perfection(self.trained_perfection)
                 .with_heart_and_soul(self.heart_and_soul)
                 .with_quick_innovation_used(self.quick_innovation_used)
@@ -118,7 +122,7 @@ pub struct ReducedStateWithoutDurability {
     inner_quiet: u8,
     innovation: u8,
     veneration: u8,
-    great_strides: u8,
+    great_strides: bool,
     muscle_memory: u8,
     heart_and_soul: SingleUse,
     quick_innovation_used: bool,
@@ -149,7 +153,7 @@ impl ReducedState for ReducedStateWithoutDurability {
             inner_quiet: state.effects.inner_quiet(),
             innovation: state.effects.innovation(),
             veneration: state.effects.veneration(),
-            great_strides: state.effects.great_strides(),
+            great_strides: state.effects.great_strides() != 0,
             muscle_memory: state.effects.muscle_memory(),
             heart_and_soul: state.effects.heart_and_soul(),
             quick_innovation_used: state.effects.quick_innovation_used(),
@@ -166,7 +170,7 @@ impl ReducedState for ReducedStateWithoutDurability {
                 .with_inner_quiet(self.inner_quiet)
                 .with_innovation(self.innovation)
                 .with_veneration(self.veneration)
-                .with_great_strides(self.great_strides)
+                .with_great_strides(if self.great_strides { 3 } else { 0 })
                 .with_muscle_memory(self.muscle_memory)
                 .with_heart_and_soul(self.heart_and_soul)
                 .with_quick_innovation_used(self.quick_innovation_used)
