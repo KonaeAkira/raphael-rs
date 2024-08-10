@@ -10,12 +10,12 @@ use super::state::ReducedState;
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
-    .add(Action::TrainedPerfection);
+    .add(Action::WasteNot)
+    .add(Action::WasteNot2);
 
 pub struct QualityUpperBoundSolver {
     settings: Settings,
     base_durability_cost: i16,
-    waste_not_cost: i16,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
@@ -37,11 +37,6 @@ impl QualityUpperBoundSolver {
         Self {
             settings,
             base_durability_cost: durability_cost,
-            waste_not_cost: if settings.allowed_actions.has(Action::WasteNot2) {
-                Action::WasteNot2.cp_cost() / 8
-            } else {
-                Action::WasteNot.cp_cost() / 4
-            },
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
@@ -53,26 +48,22 @@ impl QualityUpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// The returned upper-bound is clamped to 2 times settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, mut state: SimulationState, fast_mode: bool) -> u16 {
+    pub fn quality_upper_bound(&mut self, mut state: SimulationState, _fast_mode: bool) -> u16 {
         let current_quality = state.get_quality();
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
         // refund effects and durability
         state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.cp_cost() / 8);
-        state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
-
-        if fast_mode
-            && state.effects.trained_perfection() != SingleUse::Unavailable
+        if state.effects.trained_perfection() != SingleUse::Unavailable
             && self.settings.allowed_actions.has(Action::TrainedPerfection)
         {
-            state.effects.set_trained_perfection(SingleUse::Unavailable);
-            state.cp += 4 * self.base_durability_cost;
+            state.cp += self.base_durability_cost * 4;
         }
+
         state.durability = i8::MAX;
 
-        let reduced_state =
-            ReducedState::from_state(state, self.base_durability_cost, self.waste_not_cost);
+        let reduced_state = ReducedState::from_state(state, self.base_durability_cost);
 
         if !self.solved_states.contains_key(&reduced_state) {
             self.solve_state(reduced_state);
@@ -121,12 +112,13 @@ impl QualityUpperBoundSolver {
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {
         if let Ok(new_state) =
-            SimulationState::from(state).use_action(action, Condition::Normal, &self.settings)
+            state
+                .to_state()
+                .use_action(action, Condition::Normal, &self.settings)
         {
             let action_progress = new_state.progress;
             let action_quality = new_state.get_quality();
-            let new_state =
-                ReducedState::from_state(new_state, self.base_durability_cost, self.waste_not_cost);
+            let new_state = ReducedState::from_state(new_state, self.base_durability_cost);
             if new_state.cp >= self.base_durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
@@ -192,7 +184,7 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3485);
+        assert_eq!(result, 3352);
     }
 
     #[test]
@@ -225,7 +217,7 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3375);
+        assert_eq!(result, 3242);
     }
 
     #[test]
@@ -255,7 +247,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4767);
+        assert_eq!(result, 4693);
     }
 
     #[test]
@@ -285,7 +277,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4767);
+        assert_eq!(result, 4693);
     }
 
     #[test]
@@ -375,7 +367,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2220);
+        assert_eq!(result, 2075);
     }
 
     #[test]
@@ -395,7 +387,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2220);
+        assert_eq!(result, 2075);
     }
 
     #[test]
@@ -415,7 +407,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2604);
+        assert_eq!(result, 2484);
     }
 
     #[test]
@@ -435,7 +427,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2604);
+        assert_eq!(result, 2484);
     }
 
     #[test]
@@ -455,7 +447,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4555);
+        assert_eq!(result, 4438);
     }
 
     #[test]
@@ -475,7 +467,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4555);
+        assert_eq!(result, 4438);
     }
 
     #[test]
@@ -495,7 +487,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::Reflect]);
-        assert_eq!(result, 4633);
+        assert_eq!(result, 4449);
     }
 
     #[test]
@@ -536,7 +528,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 4823);
+        assert_eq!(result, 4510);
     }
 
     #[test]

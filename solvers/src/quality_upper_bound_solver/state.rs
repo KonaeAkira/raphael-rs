@@ -1,4 +1,4 @@
-use simulator::{Combo, Effects, SimulationState};
+use simulator::{Combo, Effects, SimulationState, SingleUse};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
@@ -8,37 +8,28 @@ pub struct ReducedState {
 }
 
 impl ReducedState {
-    pub fn from_state(
-        state: SimulationState,
-        base_durability_cost: i16,
-        waste_not_cost: i16,
-    ) -> Self {
+    pub fn from_state(state: SimulationState, base_durability_cost: i16) -> Self {
         let used_durability = (i8::MAX - state.durability) / 5;
-        let durability_cost = std::cmp::min(
-            used_durability as i16 * base_durability_cost,
-            (used_durability as i16 + 1) / 2 * base_durability_cost + waste_not_cost,
-        );
+        let durability_cost = used_durability as i16 * base_durability_cost;
         Self {
             cp: state.cp - durability_cost,
             combo: state.combo,
             effects: state
                 .effects
-                .with_waste_not(0)
+                .with_trained_perfection(SingleUse::Unavailable)
                 .with_manipulation(0)
                 .with_guard(1),
         }
     }
-}
 
-impl std::convert::From<ReducedState> for SimulationState {
-    fn from(state: ReducedState) -> Self {
+    pub fn to_state(self) -> SimulationState {
         SimulationState {
             durability: i8::MAX,
-            cp: state.cp,
+            cp: self.cp,
             progress: 0,
             unreliable_quality: [0, 0],
-            effects: state.effects,
-            combo: state.combo,
+            effects: self.effects,
+            combo: self.combo,
         }
     }
 }
