@@ -64,7 +64,9 @@ impl<'a> Widget for Simulator<'a> {
 
         let mut config_changed_warning = false;
         ui.ctx().data(|data| {
-            if let Some((settings, initial_quality, solver_config)) = data.get_temp::<(Settings, u16, SolverConfig)>(Id::new("LAST_SOLVE_PARAMS")) {
+            if let Some((settings, initial_quality, solver_config)) =
+                data.get_temp::<(Settings, u16, SolverConfig)>(Id::new("LAST_SOLVE_PARAMS"))
+            {
                 config_changed_warning = settings != *self.settings
                     || initial_quality != self.initial_quality
                     || solver_config != self.solver_config;
@@ -148,7 +150,8 @@ impl<'a> Widget for Simulator<'a> {
                             if game_state.is_final(self.settings) {
                                 if progress < max_progress {
                                     ui.label(
-                                        egui::RichText::new("Synthesis failed".to_string()).strong(),
+                                        egui::RichText::new("Synthesis failed".to_string())
+                                            .strong(),
                                     );
                                 } else if self.item.is_collectable {
                                     let t1 = QualityTarget::CollectableT1
