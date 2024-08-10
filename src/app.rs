@@ -616,9 +616,7 @@ impl MacroSolverApp {
                         });
 
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
-
                         self.bridge.send((game_settings, self.solver_config));
-
                         log::debug!("{game_settings:?}");
                     }
                     if self.solver_pending {

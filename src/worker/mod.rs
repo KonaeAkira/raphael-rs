@@ -29,6 +29,7 @@ pub struct Worker {
 }
 
 impl Worker {
+    #[allow(unused)]
     pub fn solver_callback(
         &self,
         scope: Option<&worker::Scope>,
@@ -87,6 +88,7 @@ impl Worker {
     }
 
     // Adapter to unify both implementations
+    #[allow(unused)]
     fn send_event(
         &self,
         tx: Option<Sender<SolverEvent>>,
@@ -94,11 +96,9 @@ impl Worker {
         id: Option<worker::Id>,
         event: SolverEvent,
     ) {
-        if cfg!(target_arch = "wasm32") {
-            id.unwrap();
-            scope.unwrap().respond((), event);
-        } else {
-            tx.unwrap().send(event).unwrap();
-        }
+        #[cfg(target_arch = "wasm32")]
+        scope.unwrap().respond(id.unwrap(), event);
+        #[cfg(not(target_arch = "wasm32"))]
+        tx.unwrap().send(event).unwrap();
     }
 }
