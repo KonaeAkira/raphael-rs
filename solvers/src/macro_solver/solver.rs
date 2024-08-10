@@ -84,7 +84,9 @@ impl<'a> MacroSolver<'a> {
 
     fn do_solve(&mut self, state: SimulationState, backload_progress: bool) -> Option<Vec<Action>> {
         let mut search_queue = {
-            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state);
+            let quality_upper_bound = self
+                .quality_upper_bound_solver
+                .quality_upper_bound(state, true);
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                 self.step_lower_bound_solver.step_lower_bound(state, true)
             } else {
@@ -140,7 +142,9 @@ impl<'a> MacroSolver<'a> {
                             if state.get_quality() >= self.settings.max_quality {
                                 state.get_quality()
                             } else {
-                                self.quality_upper_bound_solver.quality_upper_bound(state)
+                                let fast_mode = popped < 1_000_000;
+                                self.quality_upper_bound_solver
+                                    .quality_upper_bound(state, fast_mode)
                             };
 
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {

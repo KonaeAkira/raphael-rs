@@ -53,7 +53,7 @@ impl QualityUpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// The returned upper-bound is clamped to 2 times settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, mut state: SimulationState) -> u16 {
+    pub fn quality_upper_bound(&mut self, mut state: SimulationState, fast_mode: bool) -> u16 {
         let current_quality = state.get_quality();
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
@@ -61,7 +61,9 @@ impl QualityUpperBoundSolver {
         state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.cp_cost() / 8);
         state.cp += state.effects.waste_not() as i16 * self.waste_not_cost;
         state.cp += state.durability as i16 / 5 * self.base_durability_cost;
-        if state.effects.trained_perfection() != SingleUse::Unavailable
+
+        if fast_mode
+            && state.effects.trained_perfection() != SingleUse::Unavailable
             && self.settings.allowed_actions.has(Action::TrainedPerfection)
         {
             state.effects.set_trained_perfection(SingleUse::Unavailable);
@@ -156,8 +158,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result =
-            QualityUpperBoundSolver::new(settings).quality_upper_bound(state.try_into().unwrap());
+        let result = QualityUpperBoundSolver::new(settings).quality_upper_bound(state, false);
         dbg!(result);
         result
     }
@@ -578,7 +579,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 3035);
+        assert_eq!(result, 2986);
     }
 
     #[test]
@@ -637,12 +638,13 @@ mod tests {
         let mut solver = QualityUpperBoundSolver::new(settings);
         for _ in 0..10000 {
             let state = random_state(&settings);
-            let state_upper_bound = solver.quality_upper_bound(state);
+            let fast_mode: bool = rand::random();
+            let state_upper_bound = solver.quality_upper_bound(state, fast_mode);
             for action in settings.allowed_actions.actions_iter() {
                 let child_upper_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
                     Ok(child) => match child.is_final(&settings) {
-                        false => solver.quality_upper_bound(child),
+                        false => solver.quality_upper_bound(child, fast_mode),
                         true if child.progress >= settings.max_progress => child.get_quality(),
                         true => 0,
                     },
@@ -653,6 +655,12 @@ mod tests {
                     panic!("Parent's upper bound is less than child's upper bound");
                 }
             }
+        }
+        for _ in 0..10000 {
+            let state = random_state(&settings);
+            let fast_upper_bound = solver.quality_upper_bound(state, true);
+            let slow_upper_bound = solver.quality_upper_bound(state, false);
+            assert!(fast_upper_bound >= slow_upper_bound);
         }
     }
 
