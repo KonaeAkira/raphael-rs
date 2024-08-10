@@ -1,6 +1,4 @@
-use simulator::{
-    Action, ActionMask, Combo, Condition, Effects, Settings, SimulationState, SingleUse,
-};
+use simulator::{Action, ActionMask, Combo, Condition, Effects, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -10,71 +8,37 @@ const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::DelicateSynthesis);
 
-#[bitfield_struct::bitfield(u16)]
-#[derive(PartialEq, Eq, Hash)]
-struct ReducedEffects {
-    #[bits(3)]
-    pub muscle_memory: u8,
-    #[bits(4)]
-    pub waste_not: u8,
-    #[bits(3)]
-    pub veneration: u8,
-    #[bits(4)]
-    pub manipulation: u8,
-    #[bits(2, default=SingleUse::Available)]
-    pub heart_and_soul: SingleUse,
-}
-
-impl ReducedEffects {
-    pub fn from_effects(effects: &Effects) -> ReducedEffects {
-        Self::new()
-            .with_muscle_memory(effects.muscle_memory())
-            .with_waste_not(effects.waste_not())
-            .with_veneration(effects.veneration())
-            .with_manipulation(effects.manipulation())
-            .with_heart_and_soul(effects.heart_and_soul())
-    }
-
-    pub fn to_effects(self) -> Effects {
-        Effects::new()
-            .with_waste_not(self.waste_not())
-            .with_veneration(self.veneration())
-            .with_muscle_memory(self.muscle_memory())
-            .with_manipulation(self.manipulation())
-            .with_heart_and_soul(self.heart_and_soul())
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
     durability: i8,
     cp: i16,
-    effects: ReducedEffects,
+    effects: Effects,
     combo: Combo,
-    trained_perfection: SingleUse,
 }
 
 impl ReducedState {
-    pub fn from_state(state: &SimulationState) -> ReducedState {
+    fn from_state(state: &SimulationState) -> ReducedState {
         ReducedState {
             durability: state.durability,
             cp: state.cp,
-            effects: ReducedEffects::from_effects(&state.effects),
+            effects: state
+                .effects
+                .with_inner_quiet(0)
+                .with_innovation(0)
+                .with_great_strides(0)
+                .with_guard(0)
+                .with_quick_innovation_used(true),
             combo: state.combo,
-            trained_perfection: state.effects.trained_perfection(),
         }
     }
 
-    pub fn to_state(self) -> SimulationState {
+    fn to_state(self) -> SimulationState {
         SimulationState {
             durability: self.durability,
             cp: self.cp,
             progress: 0,
             unreliable_quality: [0; 2],
-            effects: self
-                .effects
-                .to_effects()
-                .with_trained_perfection(self.trained_perfection),
+            effects: self.effects,
             combo: self.combo,
         }
     }
