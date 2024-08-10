@@ -95,7 +95,8 @@ impl Worker {
         event: SolverEvent,
     ) {
         if cfg!(target_arch = "wasm32") {
-            scope.unwrap().respond(id.unwrap(), event);
+            id.unwrap();
+            scope.unwrap().respond((), event);
         } else {
             tx.unwrap().send(event).unwrap();
         }

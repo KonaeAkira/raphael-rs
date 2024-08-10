@@ -23,7 +23,7 @@ pub mod test_utils {
         backload_progress: bool,
         minimize_steps: bool,
     ) -> Option<Vec<Action>> {
-        MacroSolver::new(settings.clone(), Box::new(|_| {}), Box::new(|_| {})).solve(
+        MacroSolver::new(*settings, Box::new(|_| {}), Box::new(|_| {})).solve(
             SimulationState::new(settings),
             backload_progress,
             minimize_steps,
@@ -33,18 +33,15 @@ pub mod test_utils {
     pub fn get_score_triple(settings: &Settings, actions: &[Action]) -> (u16, u8, u8) {
         let quality = get_quality(settings, actions);
         let steps = actions.len() as u8;
-        let duration: u8 = actions
-            .into_iter()
-            .map(|action| action.time_cost() as u8)
-            .sum();
+        let duration: u8 = actions.iter().map(|action| action.time_cost() as u8).sum();
         (quality, steps, duration)
     }
 
     fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
-        let mut state = SimulationState::new(&settings);
+        let mut state = SimulationState::new(settings);
         for action in actions {
             state = state
-                .use_action(action.clone(), Condition::Normal, &settings)
+                .use_action(*action, Condition::Normal, settings)
                 .unwrap();
         }
         assert!(state.progress >= settings.max_progress);

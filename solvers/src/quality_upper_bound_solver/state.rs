@@ -66,7 +66,5 @@ impl std::convert::From<ReducedState> for SimulationState {
                 .with_guard(1),
             combo: state.combo,
         }
-        .try_into()
-        .unwrap()
     }
 }
