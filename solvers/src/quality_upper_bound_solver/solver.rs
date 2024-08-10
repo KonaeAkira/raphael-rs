@@ -127,7 +127,7 @@ impl QualityUpperBoundSolver {
             let action_quality = new_state.get_quality();
             let new_state =
                 ReducedState::from_state(new_state, self.base_durability_cost, self.waste_not_cost);
-            if new_state.cp > 0 {
+            if new_state.cp >= self.base_durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
                     None => self.solve_state(new_state),
@@ -137,8 +137,7 @@ impl QualityUpperBoundSolver {
                     value.second += action_quality;
                 });
                 self.pareto_front_builder.merge();
-            }
-            if new_state.cp + self.base_durability_cost >= 0 && action_progress != 0 {
+            } else if new_state.cp >= -self.base_durability_cost && action_progress != 0 {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
                 self.pareto_front_builder
