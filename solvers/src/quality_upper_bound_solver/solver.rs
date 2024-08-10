@@ -1,6 +1,6 @@
 use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
-    utils::{ParetoFrontBuilder, ParetoValue},
+    utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
 use simulator::{Action, ActionMask, Condition, Settings, SimulationState, SingleUse};
 
@@ -16,7 +16,7 @@ pub struct QualityUpperBoundSolver {
     settings: Settings,
     base_durability_cost: i16,
     waste_not_cost: i16,
-    solved_states: HashMap<ReducedState, Box<[ParetoValue<u16, u16>]>>,
+    solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
@@ -76,7 +76,8 @@ impl QualityUpperBoundSolver {
             self.solve_state(reduced_state);
             self.pareto_front_builder.clear();
         }
-        let pareto_front = self.solved_states.get(&reduced_state).unwrap();
+        let id = *self.solved_states.get(&reduced_state).unwrap();
+        let pareto_front = self.pareto_front_builder.retrieve(id);
 
         match pareto_front.last() {
             Some(element) => {
@@ -112,8 +113,8 @@ impl QualityUpperBoundSolver {
                 break;
             }
         }
-        let pareto_front = self.pareto_front_builder.peek().unwrap();
-        self.solved_states.insert(state, pareto_front);
+        let id = self.pareto_front_builder.save().unwrap();
+        self.solved_states.insert(state, id);
     }
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {
@@ -126,7 +127,7 @@ impl QualityUpperBoundSolver {
                 ReducedState::from_state(new_state, self.base_durability_cost, self.waste_not_cost);
             if new_state.cp > 0 {
                 match self.solved_states.get(&new_state) {
-                    Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
+                    Some(id) => self.pareto_front_builder.push_from_id(*id),
                     None => self.solve_state(new_state),
                 }
                 self.pareto_front_builder.map(move |value| {
@@ -139,7 +140,7 @@ impl QualityUpperBoundSolver {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
                 self.pareto_front_builder
-                    .push(&[ParetoValue::new(action_progress, action_quality)]);
+                    .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
                 self.pareto_front_builder.merge();
             }
         }

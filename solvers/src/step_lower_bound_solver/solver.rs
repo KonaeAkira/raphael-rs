@@ -1,4 +1,4 @@
-use crate::utils::{ParetoFrontBuilder, ParetoValue};
+use crate::utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue};
 use simulator::{Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
@@ -49,7 +49,7 @@ impl StepLowerBoundSolver {
 
 struct StepLowerBoundSolverImpl<S: ReducedState> {
     settings: Settings,
-    solved_states: HashMap<S, Box<[ParetoValue<u16, u16>]>>,
+    solved_states: HashMap<S, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
@@ -80,7 +80,8 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
             self.solve_state(reduced_state);
             self.pareto_front_builder.clear();
         }
-        let pareto_front = self.solved_states.get(&reduced_state).unwrap();
+        let id = *self.solved_states.get(&reduced_state).unwrap();
+        let pareto_front = self.pareto_front_builder.retrieve(id);
 
         match pareto_front.last() {
             Some(element) => {
@@ -116,7 +117,7 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
                 if new_reduced_state.steps_budget() != 0 && !new_full_state.is_final(&self.settings)
                 {
                     match self.solved_states.get(&new_reduced_state) {
-                        Some(pareto_front) => self.pareto_front_builder.push(pareto_front),
+                        Some(id) => self.pareto_front_builder.push_from_id(*id),
                         None => self.solve_state(new_reduced_state),
                     }
                     self.pareto_front_builder.map(move |value| {
@@ -127,7 +128,7 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
                 } else if action_progress != 0 {
                     // last action must be a progress increase
                     self.pareto_front_builder
-                        .push(&[ParetoValue::new(action_progress, action_quality)]);
+                        .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
                     self.pareto_front_builder.merge();
                 }
             }
@@ -138,8 +139,8 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
                 break;
             }
         }
-        let pareto_front = self.pareto_front_builder.peek().unwrap();
-        self.solved_states.insert(reduced_state, pareto_front);
+        let id = self.pareto_front_builder.save().unwrap();
+        self.solved_states.insert(reduced_state, id);
     }
 }
 

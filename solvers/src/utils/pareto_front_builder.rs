@@ -11,24 +11,26 @@ impl<T, U> ParetoValue<T, U> {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct Segment {
-    pub offset: usize,
-    pub length: usize,
+pub struct Segment {
+    offset: usize,
+    length: usize,
 }
+
+pub type ParetoFrontId = Segment;
 
 pub struct ParetoFrontBuilder<T, U>
 where
     T: Copy + std::cmp::Ord + std::default::Default,
     U: Copy + std::cmp::Ord + std::default::Default,
 {
+    storage: Vec<ParetoValue<T, U>>,
     buffer: Vec<ParetoValue<T, U>>,
     segments: Vec<Segment>,
     // cut-off values
     max_first: T,
     max_second: U,
-    // variables used for profiling
+    // used for profiling
     fronts_generated: usize,
-    values_generated: usize,
 }
 
 impl<T, U> ParetoFrontBuilder<T, U>
@@ -38,12 +40,12 @@ where
 {
     pub fn new(max_first: T, max_second: U) -> Self {
         Self {
-            buffer: Vec::new(),
-            segments: Vec::new(),
+            storage: Vec::with_capacity(1 << 18),
+            buffer: Vec::with_capacity(1 << 12),
+            segments: Vec::with_capacity(1 << 12),
             max_first,
             max_second,
             fronts_generated: 0,
-            values_generated: 0,
         }
     }
 
@@ -59,7 +61,7 @@ where
         });
     }
 
-    pub fn push(&mut self, values: &[ParetoValue<T, U>]) {
+    pub fn push_from_slice(&mut self, values: &[ParetoValue<T, U>]) {
         let segment = Segment {
             offset: self.buffer.len(),
             length: values.len(),
@@ -68,7 +70,16 @@ where
         self.buffer.extend_from_slice(values);
     }
 
-    /// Modify each element of the last segment in-place.
+    pub fn push_from_id(&mut self, id: ParetoFrontId) {
+        let slice = &self.storage[id.offset..id.offset + id.length];
+        self.segments.push(Segment {
+            offset: self.buffer.len(),
+            length: id.length,
+        });
+        self.buffer.extend_from_slice(slice);
+    }
+
+    /// Modifies each element of the last segment in-place.
     /// Panics in case there are no segments.
     pub fn map<F>(&mut self, f: F)
     where
@@ -79,15 +90,12 @@ where
         slice.iter_mut().for_each(f);
     }
 
-    /// Merge the last two segments into one.
+    /// Merges the last two segments into one.
     /// Panics in case there are fewer than two segments.
     pub fn merge(&mut self) {
         assert!(self.segments.len() >= 2);
         let segment_b = self.segments.pop().unwrap();
         let segment_a = self.segments.pop().unwrap();
-
-        #[cfg(test)]
-        assert_eq!(self.buffer.len(), segment_b.offset + segment_b.length);
 
         let length_c = segment_a.length + segment_b.length;
         let offset_c = if segment_a.offset + segment_a.length + length_c <= segment_b.offset {
@@ -173,16 +181,26 @@ where
         self.buffer.truncate(segment_c.offset + segment_c.length);
     }
 
-    pub fn peek(&mut self) -> Option<Box<[ParetoValue<T, U>]>> {
+    /// Saves the last segment to storage and returns an identifier to retrieve the segment
+    pub fn save(&mut self) -> Option<ParetoFrontId> {
         match self.segments.last() {
             Some(segment) => {
                 self.fronts_generated += 1;
-                self.values_generated += segment.length;
                 let slice = &self.buffer[segment.offset..segment.offset + segment.length];
-                Some(slice.into())
+                let segment = Segment {
+                    offset: self.storage.len(),
+                    length: segment.length,
+                };
+                self.storage.extend_from_slice(slice);
+                Some(segment)
             }
             None => None,
         }
+    }
+
+    /// Retrieves a Pareto front from storage
+    pub fn retrieve(&self, id: ParetoFrontId) -> &[ParetoValue<T, U>] {
+        &self.storage[id.offset..id.offset + id.length]
     }
 
     pub fn is_max(&self) -> bool {
@@ -204,12 +222,19 @@ where
         for segment in self.segments.iter() {
             // each segment must lie entirely in the buffer
             assert!(segment.offset + segment.length <= self.buffer.len());
-            // each segment must form a valid pareto front
+            // each segment must form a valid pareto front:
+            // - first value strictly increasing
+            // - second value strictly decreasing
             let slice = &self.buffer[segment.offset..segment.offset + segment.length];
             for window in slice.windows(2) {
                 assert!(window[0].first < window[1].first);
                 assert!(window[0].second > window[1].second);
             }
+        }
+        // The buffer must end right after the last segment
+        match self.segments.last() {
+            Some(segment) => assert_eq!(self.buffer.len(), segment.offset + segment.length),
+            None => assert_eq!(self.buffer.len(), 0),
         }
     }
 }
@@ -223,7 +248,7 @@ where
         dbg!(
             self.buffer.capacity(),
             self.fronts_generated,
-            self.values_generated
+            self.storage.len()
         );
     }
 }
@@ -252,7 +277,8 @@ mod tests {
         builder.push_empty();
         builder.push_empty();
         builder.merge();
-        let front = builder.peek().unwrap();
+        let id = builder.save().unwrap();
+        let front = builder.retrieve(id);
         assert!(front.as_ref().is_empty());
         builder.check_invariants();
     }
@@ -260,12 +286,13 @@ mod tests {
     #[test]
     fn test_value_shift() {
         let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
-        builder.push(SAMPLE_FRONT_1);
+        builder.push_from_slice(SAMPLE_FRONT_1);
         builder.map(move |value| {
             value.first += 100;
             value.second += 100;
         });
-        let front = builder.peek().unwrap();
+        let id = builder.save().unwrap();
+        let front = builder.retrieve(id);
         assert_eq!(
             *front,
             [
@@ -280,10 +307,11 @@ mod tests {
     #[test]
     fn test_merge() {
         let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
-        builder.push(SAMPLE_FRONT_1);
-        builder.push(SAMPLE_FRONT_2);
+        builder.push_from_slice(SAMPLE_FRONT_1);
+        builder.push_from_slice(SAMPLE_FRONT_2);
         builder.merge();
-        let front = builder.peek().unwrap();
+        let id = builder.save().unwrap();
+        let front = builder.retrieve(id);
         assert_eq!(
             *front,
             [
@@ -300,18 +328,19 @@ mod tests {
     #[test]
     fn test_merge_truncated() {
         let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
-        builder.push(SAMPLE_FRONT_1);
+        builder.push_from_slice(SAMPLE_FRONT_1);
         builder.map(|value| {
             value.first += 1000;
             value.second += 2000;
         });
-        builder.push(SAMPLE_FRONT_2);
+        builder.push_from_slice(SAMPLE_FRONT_2);
         builder.map(|value| {
             value.first += 1000;
             value.second += 2000;
         });
         builder.merge();
-        let front = builder.peek().unwrap();
+        let id = builder.save().unwrap();
+        let front = builder.retrieve(id);
         assert_eq!(*front, [ParetoValue::new(1300, 2100)]);
         builder.check_invariants();
     }
@@ -330,7 +359,7 @@ mod tests {
                 for i in 0..=progress as usize {
                     lut[i] = std::cmp::max(lut[i], quality);
                 }
-                builder.push(&[ParetoValue::new(progress, quality)]);
+                builder.push_from_slice(&[ParetoValue::new(progress, quality)]);
                 builder.check_invariants();
             }
             for _ in 1..cnt {
@@ -343,7 +372,8 @@ mod tests {
             builder.check_invariants();
         }
 
-        let front = builder.peek().unwrap();
+        let id = builder.save().unwrap();
+        let front = builder.retrieve(id);
         for value in front.iter() {
             assert_eq!(lut[value.first as usize], value.second);
         }

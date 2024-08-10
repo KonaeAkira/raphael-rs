@@ -1,5 +1,5 @@
 mod pareto_front_builder;
-pub use pareto_front_builder::{ParetoFrontBuilder, ParetoValue};
+pub use pareto_front_builder::{ParetoFrontBuilder, ParetoFrontId, ParetoValue};
 
 pub struct NamedTimer {
     name: &'static str,
