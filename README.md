@@ -3,8 +3,8 @@
 :link: [www.raphael-xiv.com](https://www.raphael-xiv.com/)
 
 Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
-* Produces optimal solutions. Achieving higher quality than the solver is impossible.
-* Short solve time (5-60 seconds) and reasonable memory usage (300-1000 MB).
+* Produces optimal solutions.
+* Short solve time (20-60 seconds) and reasonable memory usage (300-1000 MB) for most configurations.
 
 ## How does it work?
 

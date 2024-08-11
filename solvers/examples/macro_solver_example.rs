@@ -24,7 +24,7 @@ fn main() {
 
     let state = SimulationState::new(&settings);
     let actions = MacroSolver::new(settings, Box::new(|_| {}), Box::new(|_| {}))
-        .solve(state, false, true)
+        .solve(state, false)
         .unwrap();
 
     let quality = SimulationState::from_macro(&settings, &actions)

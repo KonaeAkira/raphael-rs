@@ -39,7 +39,6 @@ pub struct SolverConfig {
     pub quality_target: QualityTarget,
     pub backload_progress: bool,
     pub adversarial: bool,
-    pub minimize_steps: bool,
 }
 
 pub struct MacroSolverApp {
@@ -567,18 +566,6 @@ impl MacroSolverApp {
                 ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊟ Much longer solve-time."));
             });
             if self.solver_config.adversarial {
-                ui.label(
-                    egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
-                        .small()
-                        .color(ui.visuals().warn_fg_color),
-                );
-            }
-
-            ui.horizontal(|ui| {
-                ui.checkbox(&mut self.solver_config.minimize_steps, "Minimize steps");
-                ui.add(HelpText::new("Guarantee shortest possible macro.\n  ⊟ Much longer solve-time."));
-            });
-            if self.solver_config.minimize_steps {
                 ui.label(
                     egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
                         .small()

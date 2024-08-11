@@ -21,7 +21,7 @@ impl StepLowerBoundSolver {
     }
 
     /// Returns a lower-bound on the additional steps required to max out both Progress and Quality from this state.
-    pub fn step_lower_bound(&mut self, state: SimulationState, fast_mode: bool) -> u8 {
+    pub fn step_lower_bound(&mut self, state: SimulationState) -> u8 {
         let mut lo = 0;
         let mut hi = 1;
         while self.fast_solver.quality_upper_bound(state, hi) < self.settings.max_quality {
@@ -36,9 +36,6 @@ impl StepLowerBoundSolver {
             } else {
                 hi = (lo + hi) / 2;
             }
-        }
-        if fast_mode {
-            return hi;
         }
         while self.slow_solver.quality_upper_bound(state, hi) < self.settings.max_quality {
             hi += 1;
@@ -153,7 +150,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u8 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result = StepLowerBoundSolver::new(settings).step_lower_bound(state, false);
+        let result = StepLowerBoundSolver::new(settings).step_lower_bound(state);
         dbg!(result);
         result
     }
@@ -632,14 +629,13 @@ mod tests {
     fn monotonic_fuzz_check(settings: Settings) {
         let mut solver = StepLowerBoundSolver::new(settings);
         for _ in 0..10000 {
-            let fast_mode: bool = rand::random();
             let state = random_state(&settings);
-            let state_lower_bound = solver.step_lower_bound(state, fast_mode);
+            let state_lower_bound = solver.step_lower_bound(state);
             for action in settings.allowed_actions.actions_iter() {
                 let child_lower_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
                     Ok(child) => match child.is_final(&settings) {
-                        false => solver.step_lower_bound(child, fast_mode),
+                        false => solver.step_lower_bound(child),
                         true if child.progress >= settings.max_progress
                             && child.get_quality() >= settings.max_quality =>
                         {
@@ -653,15 +649,6 @@ mod tests {
                     dbg!(state, action, state_lower_bound, child_lower_bound);
                     panic!("Parent's step lower bound is greater than child's step lower bound");
                 }
-            }
-        }
-        for _ in 0..10000 {
-            let state = random_state(&settings);
-            let fast_mode_lower_bound = solver.step_lower_bound(state, true);
-            let slow_mode_lower_bound = solver.step_lower_bound(state, false);
-            if fast_mode_lower_bound > slow_mode_lower_bound {
-                dbg!(state, fast_mode_lower_bound, slow_mode_lower_bound);
-                panic!("Slow mode must be at least as tight as fast mode");
             }
         }
     }

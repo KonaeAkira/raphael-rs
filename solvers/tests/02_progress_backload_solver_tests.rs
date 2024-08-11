@@ -29,7 +29,7 @@ fn random_bb38a037() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (2842, 23, 62));
@@ -51,7 +51,7 @@ fn pactmaker_3240_3130() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (8801, 24, 65));
@@ -73,7 +73,7 @@ fn random_48ae7c9f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (19445, 35, 98));
@@ -95,7 +95,7 @@ fn random_4ecd54c4() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3002, 19, 51));
@@ -118,7 +118,7 @@ fn trained_eye() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (9090, 6, 16));
@@ -142,7 +142,7 @@ fn rare_tacos() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (5562, 15, 41));
@@ -167,7 +167,7 @@ fn mountain_chromite_ingot_no_manipulation() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (8437, 13, 36));
@@ -188,7 +188,7 @@ fn random_48ae7c9f_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true).unwrap();
     assert!(is_progress_backloaded(&actions));
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (19677, 33, 93));

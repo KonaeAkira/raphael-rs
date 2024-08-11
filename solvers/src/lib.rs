@@ -18,16 +18,9 @@ pub mod test_utils {
 
     use crate::MacroSolver;
 
-    pub fn solve(
-        settings: &Settings,
-        backload_progress: bool,
-        minimize_steps: bool,
-    ) -> Option<Vec<Action>> {
-        MacroSolver::new(*settings, Box::new(|_| {}), Box::new(|_| {})).solve(
-            SimulationState::new(settings),
-            backload_progress,
-            minimize_steps,
-        )
+    pub fn solve(settings: &Settings, backload_progress: bool) -> Option<Vec<Action>> {
+        MacroSolver::new(*settings, Box::new(|_| {}), Box::new(|_| {}))
+            .solve(SimulationState::new(settings), backload_progress)
     }
 
     pub fn get_score_triple(settings: &Settings, actions: &[Action]) -> (u16, u8, u8) {

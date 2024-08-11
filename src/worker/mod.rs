@@ -65,11 +65,7 @@ impl Worker {
             Box::new(solution_callback),
             Box::new(progress_callback),
         )
-        .solve(
-            SimulationState::new(&settings),
-            config.backload_progress,
-            config.minimize_steps,
-        );
+        .solve(SimulationState::new(&settings), config.backload_progress);
 
         let tx = self.tx.clone();
         match final_solution {

@@ -1,6 +1,5 @@
 use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
-use super::quick_search::quick_search;
 use super::search_queue::SearchScore;
 use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
@@ -54,12 +53,10 @@ impl<'a> MacroSolver<'a> {
 
     /// Returns a list of Actions that maximizes Quality of the completed state.
     /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
-    /// The solver makes an effort to produce a short solution, but it is not (yet) guaranteed to be the shortest solution.
     pub fn solve(
         &mut self,
         state: SimulationState,
         backload_progress: bool,
-        minimize_steps: bool,
     ) -> Option<Vec<Action>> {
         let timer = NamedTimer::new("Finish solver");
         if !self.finish_solver.can_finish(&state) {
@@ -67,33 +64,15 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        if !minimize_steps {
-            if let Some(actions) = quick_search(
-                state,
-                &self.settings,
-                &mut self.finish_solver,
-                &mut self.quality_upper_bound_solver,
-            ) {
-                return Some(actions);
-            }
-        }
-
         let _timer = NamedTimer::new("Full search");
-        let use_fast_pruning = !self.settings.adversarial && !minimize_steps;
-        self.do_solve(state, backload_progress, use_fast_pruning)
+        self.do_solve(state, backload_progress)
     }
 
-    fn do_solve(
-        &mut self,
-        state: SimulationState,
-        backload_progress: bool,
-        fast_pruning: bool,
-    ) -> Option<Vec<Action>> {
+    fn do_solve(&mut self, state: SimulationState, backload_progress: bool) -> Option<Vec<Action>> {
         let mut search_queue = {
             let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state);
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                self.step_lower_bound_solver
-                    .step_lower_bound(state, fast_pruning)
+                self.step_lower_bound_solver.step_lower_bound(state)
             } else {
                 1 // quality dominates the search score, so no need to query the step solver
             };
@@ -151,11 +130,7 @@ impl<'a> MacroSolver<'a> {
                             };
 
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                            current_steps
-                                + 1
-                                + self
-                                    .step_lower_bound_solver
-                                    .step_lower_bound(state, fast_pruning)
+                            current_steps + 1 + self.step_lower_bound_solver.step_lower_bound(state)
                         } else {
                             current_steps + 1
                         };

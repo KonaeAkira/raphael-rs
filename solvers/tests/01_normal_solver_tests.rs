@@ -17,7 +17,7 @@ fn unsolvable() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false);
+    let actions = solve(&settings, false);
     assert_eq!(actions, None);
 }
 
@@ -37,7 +37,7 @@ fn zero_quality() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (0, 5, 14));
 }
@@ -58,9 +58,9 @@ fn max_quality() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (1100, 11, 29));
+    assert_eq!(score, (1100, 11, 28));
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn random_0f93c79f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (1802, 16, 44));
 }
@@ -100,7 +100,7 @@ fn random_1e281667() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3366, 20, 53));
 }
@@ -121,7 +121,7 @@ fn random_d0bf2aef() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3434, 25, 67));
 }
@@ -142,7 +142,7 @@ fn random_e413e05d() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (2018, 19, 52));
 }
@@ -163,7 +163,7 @@ fn random_bb38a037() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (2942, 21, 56));
 }
@@ -184,7 +184,7 @@ fn random_a300ca2b() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (4683, 26, 69));
 }
@@ -205,7 +205,7 @@ fn random_0f9d7781() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (2939, 24, 64));
 }
@@ -226,7 +226,7 @@ fn random_e451d981() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (5364, 27, 74));
 }
@@ -247,7 +247,7 @@ fn random_6799bb1d() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3321, 19, 51));
 }
@@ -268,7 +268,7 @@ fn random_940b4755() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (4483, 25, 67));
 }
@@ -289,7 +289,7 @@ fn rinascita_3700_3280() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (10623, 26, 70));
 }
@@ -310,7 +310,7 @@ fn pactmaker_3240_3130() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (8912, 21, 55));
 }
@@ -330,7 +330,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (9608, 24, 65));
 }
@@ -351,7 +351,7 @@ fn diadochos_4021_3660() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (9688, 25, 68));
 }
@@ -372,7 +372,7 @@ fn indagator_3858_4057() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (12793, 27, 72));
 }
@@ -393,9 +393,9 @@ fn random_2ea6c001() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (10752, 16, 44));
+    assert_eq!(score, (10752, 16, 43));
 }
 
 #[test]
@@ -414,7 +414,7 @@ fn random_48ae7c9f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (19621, 31, 84));
 }
@@ -435,7 +435,7 @@ fn random_4ecd54c4() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3080, 19, 51));
 }
@@ -456,9 +456,9 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (12082, 22, 58));
+    assert_eq!(score, (12123, 21, 56));
 }
 
 #[test]
@@ -479,7 +479,7 @@ fn stuffed_peppers_2() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (20177, 31, 85));
 }
@@ -501,7 +501,7 @@ fn stuffed_peppers_2_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (21536, 30, 83));
 }
@@ -523,7 +523,7 @@ fn stuffed_peppers_2_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (20502, 28, 77));
 }
@@ -544,9 +544,9 @@ fn rakaznar_lapidary_hammer_4462_4391() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (7056, 16, 45));
+    assert_eq!(score, (6869, 16, 43));
 }
 
 #[test]
@@ -565,7 +565,91 @@ fn black_star_4048_3997() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
+    let actions = solve(&settings, false).unwrap();
     let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (6114, 12, 31));
+    assert_eq!(score, (5802, 11, 29));
+}
+
+#[test]
+fn claro_walnut_lumber_4900_4800() {
+    let settings = Settings {
+        max_cp: 620,
+        max_durability: 40,
+        max_progress: 3000,
+        max_quality: 11000,
+        base_progress: 300,
+        base_quality: 368,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    let score = get_score_triple(&settings, &actions);
+    assert_eq!(score, (11627, 13, 35));
+}
+
+#[test]
+fn rakaznar_lapidary_hammer_4900_4800() {
+    let settings = Settings {
+        max_cp: 620,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 6000, // full hq-mats
+        base_progress: 261,
+        base_quality: 266,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    let score = get_score_triple(&settings, &actions);
+    assert_eq!(score, (6455, 14, 40));
+}
+
+#[test]
+fn rarefied_tacos_de_carne_asada_4966_4817() {
+    let settings = Settings {
+        max_cp: 626,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 5400, // full hq-mats, 95% target
+        base_progress: 264,
+        base_quality: 267,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    let score = get_score_triple(&settings, &actions);
+    assert_eq!(score, (6038, 14, 38));
+}
+
+#[test]
+fn archeo_kingdom_broadsword_4966_4914() {
+    let settings = Settings {
+        max_cp: 745,
+        max_durability: 70,
+        max_progress: 7500,
+        max_quality: 8250, // full hq-mats
+        base_progress: 264,
+        base_quality: 271,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+    };
+    let actions = solve(&settings, false).unwrap();
+    let score = get_score_triple(&settings, &actions);
+    assert_eq!(score, (8589, 17, 46));
 }
