@@ -19,7 +19,7 @@ const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
 
 #[derive(Clone)]
 struct Solution {
-    score: SearchScore,
+    score: (SearchScore, u16),
     actions: Vec<Action>,
 }
 
@@ -154,9 +154,12 @@ impl<'a> MacroSolver<'a> {
                             &self.settings,
                         );
                         search_queue.update_min_score(solution_score);
-                        if solution.is_none() || solution.as_ref().unwrap().score < solution_score {
+                        if solution.is_none()
+                            || solution.as_ref().unwrap().score
+                                < (solution_score, state.get_quality())
+                        {
                             solution = Some(Solution {
-                                score: solution_score,
+                                score: (solution_score, state.get_quality()),
                                 actions: search_queue
                                     .backtrack(backtrack_id)
                                     .chain(std::iter::once(action))

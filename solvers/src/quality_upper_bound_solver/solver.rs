@@ -43,7 +43,7 @@ impl QualityUpperBoundSolver {
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
-                settings.max_quality + 9 * settings.base_quality,
+                settings.max_quality,
             ),
             waste_not_1_min_cp: waste_not_min_cp(Action::WasteNot.cp_cost(), 4, durability_cost),
             waste_not_2_min_cp: waste_not_min_cp(Action::WasteNot2.cp_cost(), 8, durability_cost),
@@ -93,7 +93,7 @@ impl QualityUpperBoundSolver {
         };
 
         std::cmp::min(
-            self.settings.max_quality + 9 * self.settings.base_quality,
+            self.settings.max_quality,
             pareto_front[index].second.saturating_add(current_quality),
         )
     }
@@ -485,7 +485,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2484);
+        assert_eq!(result, 2000);
     }
 
     #[test]
@@ -505,7 +505,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2484);
+        assert_eq!(result, 2000);
     }
 
     #[test]
@@ -668,7 +668,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[]);
-        assert_eq!(result, 24260);
+        assert_eq!(result, 24000);
     }
 
     fn random_effects(adversarial: bool) -> Effects {
@@ -713,7 +713,9 @@ mod tests {
                 {
                     Ok(child) => match child.is_final(&settings) {
                         false => solver.quality_upper_bound(child),
-                        true if child.progress >= settings.max_progress => child.get_quality(),
+                        true if child.progress >= settings.max_progress => {
+                            std::cmp::min(settings.max_quality, child.get_quality())
+                        }
                         true => 0,
                     },
                     Err(_) => 0,

@@ -9,18 +9,16 @@ use super::pareto_front::{EffectParetoFront, QualityParetoFront};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
     pub quality: u16,
-    pub duration: u8,
     pub steps: u8,
-    pub quality_overflow: u16,
+    pub duration: u8,
 }
 
 impl SearchScore {
     pub fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
         Self {
             quality: std::cmp::min(settings.max_quality, quality),
-            duration,
             steps,
-            quality_overflow: quality.saturating_sub(settings.max_quality),
+            duration,
         }
     }
 
@@ -45,7 +43,6 @@ impl std::cmp::Ord for SearchScore {
             .cmp(&other.quality)
             .then(other.steps.cmp(&self.steps))
             .then(other.duration.cmp(&self.duration))
-            .then(self.quality_overflow.cmp(&other.quality_overflow))
     }
 }
 
