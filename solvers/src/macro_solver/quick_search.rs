@@ -40,7 +40,7 @@ pub fn quick_search(
     let _timer = NamedTimer::new("Quick search");
 
     let initial_score = SearchScore::new(
-        upper_bound_solver.quality_upper_bound(initial_state, true),
+        upper_bound_solver.quality_upper_bound(initial_state),
         0,
         0,
         settings,
@@ -76,7 +76,7 @@ pub fn quick_search(
                     let quality_upper_bound = if state.get_quality() >= settings.max_quality {
                         state.get_quality()
                     } else {
-                        upper_bound_solver.quality_upper_bound(state, true)
+                        upper_bound_solver.quality_upper_bound(state)
                     };
                     search_queue.push(
                         state,

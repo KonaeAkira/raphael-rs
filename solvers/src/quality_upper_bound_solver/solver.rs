@@ -6,7 +6,7 @@ use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState,
 
 use rustc_hash::FxHashMap as HashMap;
 
-use super::state::{ReducedState, ReducedStateFast, ReducedStateSlow};
+use super::state::ReducedState;
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
@@ -14,40 +14,16 @@ const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .add(Action::WasteNot2);
 
 pub struct QualityUpperBoundSolver {
-    // TODO: Refactor so that only one or the other is initialized
-    fast_solver: SolverImpl<ReducedStateFast>,
-    slow_solver: SolverImpl<ReducedStateSlow>,
+    settings: Settings,
+    durability_cost: i16,
+    solved_states: HashMap<ReducedState, ParetoFrontId>,
+    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
 impl QualityUpperBoundSolver {
     pub fn new(settings: Settings) -> Self {
-        Self {
-            fast_solver: SolverImpl::new(settings),
-            slow_solver: SolverImpl::new(settings),
-        }
-    }
-
-    pub fn quality_upper_bound(&mut self, state: SimulationState, fast_mode: bool) -> u16 {
-        if fast_mode {
-            self.fast_solver.quality_upper_bound(state)
-        } else {
-            self.slow_solver.quality_upper_bound(state)
-        }
-    }
-}
-
-struct SolverImpl<S: ReducedState> {
-    settings: Settings,
-    durability_cost: i16,
-    waste_not_cost: i16,
-    solved_states: HashMap<S, ParetoFrontId>,
-    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-}
-
-impl<S: ReducedState> SolverImpl<S> {
-    pub fn new(settings: Settings) -> Self {
-        dbg!(std::mem::size_of::<S>());
-        dbg!(std::mem::align_of::<S>());
+        dbg!(std::mem::size_of::<ReducedState>());
+        dbg!(std::mem::align_of::<ReducedState>());
         let mut durability_cost = Action::MasterMend.cp_cost() / 6;
         if settings.allowed_actions.has(Action::Manipulation) {
             durability_cost = std::cmp::min(durability_cost, Action::Manipulation.cp_cost() / 8);
@@ -58,15 +34,9 @@ impl<S: ReducedState> SolverImpl<S> {
                 Action::ImmaculateMend.cp_cost() / (settings.max_durability as i16 / 5 - 1),
             );
         }
-        let waste_not_cost = if settings.allowed_actions.has(Action::WasteNot2) {
-            Action::WasteNot2.cp_cost() / 8
-        } else {
-            Action::WasteNot.cp_cost() / 4
-        };
         Self {
             settings,
             durability_cost,
-            waste_not_cost,
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
@@ -93,8 +63,7 @@ impl<S: ReducedState> SolverImpl<S> {
 
         state.durability = i8::MAX;
 
-        let reduced_state =
-            ReducedState::from_state(state, self.durability_cost, self.waste_not_cost);
+        let reduced_state = ReducedState::from_state(state, self.durability_cost);
         let pareto_front = match self.solved_states.get(&reduced_state) {
             Some(id) => self.pareto_front_builder.retrieve(*id),
             None => {
@@ -124,15 +93,15 @@ impl<S: ReducedState> SolverImpl<S> {
         )
     }
 
-    fn solve_state(&mut self, state: S) {
-        if state.combo() == Combo::None {
+    fn solve_state(&mut self, state: ReducedState) {
+        if state.combo == Combo::None {
             self.solve_normal_state(state);
         } else {
             self.solve_combo_state(state)
         }
     }
 
-    fn solve_normal_state(&mut self, state: S) {
+    fn solve_normal_state(&mut self, state: ReducedState) {
         self.pareto_front_builder.push_empty();
         for action in SEARCH_ACTIONS
             .intersection(self.settings.allowed_actions)
@@ -150,12 +119,12 @@ impl<S: ReducedState> SolverImpl<S> {
         self.solved_states.insert(state, id);
     }
 
-    fn solve_combo_state(&mut self, state: S) {
+    fn solve_combo_state(&mut self, state: ReducedState) {
         match self.solved_states.get(&state.to_non_combo()) {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
             None => self.solve_normal_state(state.to_non_combo()),
         }
-        match state.combo() {
+        match state.combo {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
                 for action in [Action::MuscleMemory, Action::Reflect, Action::TrainedEye] {
@@ -183,7 +152,7 @@ impl<S: ReducedState> SolverImpl<S> {
         }
     }
 
-    fn build_child_front(&mut self, state: S, action: Action) {
+    fn build_child_front(&mut self, state: ReducedState, action: Action) {
         if let Ok(new_state) =
             state
                 .to_state()
@@ -191,8 +160,8 @@ impl<S: ReducedState> SolverImpl<S> {
         {
             let action_progress = new_state.progress;
             let action_quality = new_state.get_quality();
-            let new_state = S::from_state(new_state, self.durability_cost, self.waste_not_cost);
-            if new_state.cp() >= self.durability_cost {
+            let new_state = ReducedState::from_state(new_state, self.durability_cost);
+            if new_state.cp >= self.durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
                     None => self.solve_state(new_state),
@@ -202,7 +171,7 @@ impl<S: ReducedState> SolverImpl<S> {
                     value.second += action_quality;
                 });
                 self.pareto_front_builder.merge();
-            } else if new_state.cp() >= -self.durability_cost && action_progress != 0 {
+            } else if new_state.cp >= -self.durability_cost && action_progress != 0 {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
                 self.pareto_front_builder
@@ -222,7 +191,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result = QualityUpperBoundSolver::new(settings).quality_upper_bound(state, false);
+        let result = QualityUpperBoundSolver::new(settings).quality_upper_bound(state);
         dbg!(result);
         result
     }
@@ -702,13 +671,12 @@ mod tests {
         let mut solver = QualityUpperBoundSolver::new(settings);
         for _ in 0..10000 {
             let state = random_state(&settings);
-            let fast_mode: bool = rand::random();
-            let state_upper_bound = solver.quality_upper_bound(state, fast_mode);
+            let state_upper_bound = solver.quality_upper_bound(state);
             for action in settings.allowed_actions.actions_iter() {
                 let child_upper_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
                     Ok(child) => match child.is_final(&settings) {
-                        false => solver.quality_upper_bound(child, fast_mode),
+                        false => solver.quality_upper_bound(child),
                         true if child.progress >= settings.max_progress => child.get_quality(),
                         true => 0,
                     },
@@ -719,12 +687,6 @@ mod tests {
                     panic!("Parent's upper bound is less than child's upper bound");
                 }
             }
-        }
-        for _ in 0..10000 {
-            let state = random_state(&settings);
-            let fast_upper_bound = solver.quality_upper_bound(state, true);
-            let slow_upper_bound = solver.quality_upper_bound(state, false);
-            assert!(fast_upper_bound >= slow_upper_bound);
         }
     }
 

@@ -90,9 +90,7 @@ impl<'a> MacroSolver<'a> {
         fast_pruning: bool,
     ) -> Option<Vec<Action>> {
         let mut search_queue = {
-            let quality_upper_bound = self
-                .quality_upper_bound_solver
-                .quality_upper_bound(state, fast_pruning);
+            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state);
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                 self.step_lower_bound_solver
                     .step_lower_bound(state, fast_pruning)
@@ -106,7 +104,6 @@ impl<'a> MacroSolver<'a> {
                 &self.settings,
                 &mut self.finish_solver,
                 &mut self.quality_upper_bound_solver,
-                fast_pruning,
             );
             let minimum_score =
                 SearchScore::new(quality_lower_bound, u8::MAX, u8::MAX, &self.settings);
@@ -150,8 +147,7 @@ impl<'a> MacroSolver<'a> {
                             if state.get_quality() >= self.settings.max_quality {
                                 state.get_quality()
                             } else {
-                                self.quality_upper_bound_solver
-                                    .quality_upper_bound(state, fast_pruning)
+                                self.quality_upper_bound_solver.quality_upper_bound(state)
                             };
 
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
