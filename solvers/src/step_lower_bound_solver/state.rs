@@ -49,6 +49,8 @@ impl ReducedState for ReducedStateWithDurability {
     }
 
     fn from_state(state: SimulationState, steps_budget: u8) -> Self {
+        let innovation = std::cmp::min(steps_budget, state.effects.innovation());
+        let veneration = std::cmp::min(steps_budget, state.effects.veneration());
         let great_strides = if state.effects.great_strides() != 0 {
             3
         } else {
@@ -78,6 +80,8 @@ impl ReducedState for ReducedStateWithDurability {
             },
             effects: state
                 .effects
+                .with_innovation(innovation)
+                .with_veneration(veneration)
                 .with_great_strides(great_strides)
                 .with_waste_not(waste_not)
                 .with_manipulation(manipulation)
