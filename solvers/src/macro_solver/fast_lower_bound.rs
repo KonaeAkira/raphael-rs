@@ -20,6 +20,7 @@ pub fn fast_lower_bound(
     settings: &Settings,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut QualityUpperBoundSolver,
+    fast_pruning: bool,
 ) -> u16 {
     let _timer = NamedTimer::new("Fast lower bound");
     let allowed_actions = settings.allowed_actions.intersection(SEARCH_ACTIONS);
@@ -29,7 +30,10 @@ pub fn fast_lower_bound(
 
     let mut quality_lower_bound = 0;
 
-    search_queue.push(upper_bound_solver.quality_upper_bound(state, true), state);
+    search_queue.push(
+        upper_bound_solver.quality_upper_bound(state, fast_pruning),
+        state,
+    );
 
     while let Some((score, state)) = search_queue.pop() {
         if score <= quality_lower_bound {
@@ -48,7 +52,8 @@ pub fn fast_lower_bound(
                     if action == Action::ByregotsBlessing {
                         continue;
                     }
-                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(state, true);
+                    let quality_upper_bound =
+                        upper_bound_solver.quality_upper_bound(state, fast_pruning);
                     if quality_upper_bound <= quality_lower_bound {
                         continue;
                     }

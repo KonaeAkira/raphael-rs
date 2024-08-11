@@ -79,16 +79,23 @@ impl<'a> MacroSolver<'a> {
         }
 
         let _timer = NamedTimer::new("Full search");
-        self.do_solve(state, backload_progress)
+        let use_fast_pruning = !self.settings.adversarial && !minimize_steps;
+        self.do_solve(state, backload_progress, use_fast_pruning)
     }
 
-    fn do_solve(&mut self, state: SimulationState, backload_progress: bool) -> Option<Vec<Action>> {
+    fn do_solve(
+        &mut self,
+        state: SimulationState,
+        backload_progress: bool,
+        fast_pruning: bool,
+    ) -> Option<Vec<Action>> {
         let mut search_queue = {
             let quality_upper_bound = self
                 .quality_upper_bound_solver
-                .quality_upper_bound(state, true);
+                .quality_upper_bound(state, fast_pruning);
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                self.step_lower_bound_solver.step_lower_bound(state, true)
+                self.step_lower_bound_solver
+                    .step_lower_bound(state, fast_pruning)
             } else {
                 1 // quality dominates the search score, so no need to query the step solver
             };
@@ -99,6 +106,7 @@ impl<'a> MacroSolver<'a> {
                 &self.settings,
                 &mut self.finish_solver,
                 &mut self.quality_upper_bound_solver,
+                fast_pruning,
             );
             let minimum_score =
                 SearchScore::new(quality_lower_bound, u8::MAX, u8::MAX, &self.settings);
@@ -142,18 +150,16 @@ impl<'a> MacroSolver<'a> {
                             if state.get_quality() >= self.settings.max_quality {
                                 state.get_quality()
                             } else {
-                                let fast_mode = popped < 1_000_000;
                                 self.quality_upper_bound_solver
-                                    .quality_upper_bound(state, fast_mode)
+                                    .quality_upper_bound(state, fast_pruning)
                             };
 
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                            let fast_mode = popped < 200_000;
                             current_steps
                                 + 1
                                 + self
                                     .step_lower_bound_solver
-                                    .step_lower_bound(state, fast_mode)
+                                    .step_lower_bound(state, fast_pruning)
                         } else {
                             current_steps + 1
                         };
