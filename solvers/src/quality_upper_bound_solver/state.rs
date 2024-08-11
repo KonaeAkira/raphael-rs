@@ -4,6 +4,8 @@ pub trait ReducedState: Clone + Copy + PartialEq + Eq + std::hash::Hash {
     fn from_state(state: SimulationState, durability_cost: i16, waste_not_cost: i16) -> Self;
     fn to_state(self) -> SimulationState;
     fn cp(&self) -> i16;
+    fn combo(&self) -> Combo;
+    fn to_non_combo(self) -> Self;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -16,6 +18,17 @@ pub struct ReducedStateFast {
 impl ReducedState for ReducedStateFast {
     fn cp(&self) -> i16 {
         self.cp
+    }
+
+    fn combo(&self) -> Combo {
+        self.combo
+    }
+
+    fn to_non_combo(self) -> Self {
+        Self {
+            combo: Combo::None,
+            ..self
+        }
     }
 
     fn from_state(state: SimulationState, durability_cost: i16, waste_not_cost: i16) -> Self {
@@ -60,6 +73,17 @@ pub struct ReducedStateSlow {
 impl ReducedState for ReducedStateSlow {
     fn cp(&self) -> i16 {
         self.cp
+    }
+
+    fn combo(&self) -> Combo {
+        self.combo
+    }
+
+    fn to_non_combo(self) -> Self {
+        Self {
+            combo: Combo::None,
+            ..self
+        }
     }
 
     fn from_state(state: SimulationState, durability_cost: i16, _waste_not_cost: i16) -> Self {

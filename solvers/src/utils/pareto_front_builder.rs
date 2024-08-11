@@ -198,6 +198,13 @@ where
         }
     }
 
+    pub fn peek(&self) -> Option<&[ParetoValue<T, U>]> {
+        match self.segments.last() {
+            Some(segment) => Some(&self.buffer[segment.offset..segment.offset + segment.length]),
+            None => None,
+        }
+    }
+
     /// Retrieves a Pareto front from storage
     pub fn retrieve(&self, id: ParetoFrontId) -> &[ParetoValue<T, U>] {
         &self.storage[id.offset..id.offset + id.length]

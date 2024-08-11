@@ -2,7 +2,7 @@ use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
-use simulator::{Action, ActionMask, Condition, Settings, SimulationState, SingleUse};
+use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState, SingleUse};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -95,13 +95,14 @@ impl<S: ReducedState> SolverImpl<S> {
 
         let reduced_state =
             ReducedState::from_state(state, self.durability_cost, self.waste_not_cost);
-
-        if !self.solved_states.contains_key(&reduced_state) {
-            self.solve_state(reduced_state);
-            self.pareto_front_builder.clear();
-        }
-        let id = *self.solved_states.get(&reduced_state).unwrap();
-        let pareto_front = self.pareto_front_builder.retrieve(id);
+        let pareto_front = match self.solved_states.get(&reduced_state) {
+            Some(id) => self.pareto_front_builder.retrieve(*id),
+            None => {
+                self.pareto_front_builder.clear();
+                self.solve_state(reduced_state);
+                self.pareto_front_builder.peek().unwrap()
+            }
+        };
 
         match pareto_front.last() {
             Some(element) => {
@@ -124,6 +125,14 @@ impl<S: ReducedState> SolverImpl<S> {
     }
 
     fn solve_state(&mut self, state: S) {
+        if state.combo() == Combo::None {
+            self.solve_normal_state(state);
+        } else {
+            self.solve_combo_state(state)
+        }
+    }
+
+    fn solve_normal_state(&mut self, state: S) {
         self.pareto_front_builder.push_empty();
         for action in SEARCH_ACTIONS
             .intersection(self.settings.allowed_actions)
@@ -139,6 +148,39 @@ impl<S: ReducedState> SolverImpl<S> {
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(state, id);
+    }
+
+    fn solve_combo_state(&mut self, state: S) {
+        match self.solved_states.get(&state.to_non_combo()) {
+            Some(id) => self.pareto_front_builder.push_from_id(*id),
+            None => self.solve_normal_state(state.to_non_combo()),
+        }
+        match state.combo() {
+            Combo::None => unreachable!(),
+            Combo::SynthesisBegin => {
+                for action in [Action::MuscleMemory, Action::Reflect, Action::TrainedEye] {
+                    if self.settings.allowed_actions.has(action) {
+                        self.build_child_front(state, action);
+                    }
+                }
+            }
+            Combo::BasicTouch => {
+                for action in [Action::ComboRefinedTouch, Action::ComboStandardTouch] {
+                    if self.settings.allowed_actions.has(action) {
+                        self.build_child_front(state, action);
+                    }
+                }
+            }
+            Combo::StandardTouch => {
+                if self
+                    .settings
+                    .allowed_actions
+                    .has(Action::ComboAdvancedTouch)
+                {
+                    self.build_child_front(state, Action::ComboAdvancedTouch);
+                }
+            }
+        }
     }
 
     fn build_child_front(&mut self, state: S, action: Action) {
