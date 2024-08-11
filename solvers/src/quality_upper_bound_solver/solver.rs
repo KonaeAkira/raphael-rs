@@ -43,7 +43,7 @@ impl QualityUpperBoundSolver {
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
-                settings.max_quality.saturating_mul(2),
+                settings.max_quality + 9 * settings.base_quality,
             ),
             waste_not_1_min_cp: waste_not_min_cp(Action::WasteNot.cp_cost(), 4, durability_cost),
             waste_not_2_min_cp: waste_not_min_cp(Action::WasteNot2.cp_cost(), 8, durability_cost),
@@ -51,7 +51,6 @@ impl QualityUpperBoundSolver {
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
-    /// The returned upper-bound is clamped to 2 times settings.max_quality.
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, mut state: SimulationState) -> u16 {
         let current_quality = state.get_quality();
@@ -92,8 +91,9 @@ impl QualityUpperBoundSolver {
             Ok(i) => i,
             Err(i) => i,
         };
+
         std::cmp::min(
-            self.settings.max_quality.saturating_mul(2),
+            self.settings.max_quality + 9 * self.settings.base_quality,
             pareto_front[index].second.saturating_add(current_quality),
         )
     }

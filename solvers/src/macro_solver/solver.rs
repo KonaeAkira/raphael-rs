@@ -97,13 +97,13 @@ impl<'a> MacroSolver<'a> {
             if popped % (1 << 16) == 0 {
                 (self.progress_callback)(search_queue.progress_estimate());
             }
-            let mut search_actions = match backload_progress && state.progress != 0 {
+
+            let search_actions = match state.get_quality() >= self.settings.max_quality
+                || (backload_progress && state.progress != 0)
+            {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
             };
-            if state.get_quality() >= self.settings.max_quality {
-                search_actions = search_actions.minus(QUALITY_ACTIONS);
-            }
 
             let current_steps = search_queue.steps(backtrack_id);
 
