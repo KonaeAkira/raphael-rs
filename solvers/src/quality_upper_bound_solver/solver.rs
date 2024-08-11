@@ -18,6 +18,9 @@ pub struct QualityUpperBoundSolver {
     durability_cost: i16,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
+    // pre-computed branch pruning values
+    waste_not_1_min_cp: i16,
+    waste_not_2_min_cp: i16,
 }
 
 impl QualityUpperBoundSolver {
@@ -42,6 +45,8 @@ impl QualityUpperBoundSolver {
                 settings.max_progress,
                 settings.max_quality.saturating_mul(2),
             ),
+            waste_not_1_min_cp: waste_not_min_cp(Action::WasteNot.cp_cost(), 4, durability_cost),
+            waste_not_2_min_cp: waste_not_min_cp(Action::WasteNot2.cp_cost(), 8, durability_cost),
         }
     }
 
@@ -107,6 +112,9 @@ impl QualityUpperBoundSolver {
             .intersection(self.settings.allowed_actions)
             .actions_iter()
         {
+            if !self.should_use_action(state, action) {
+                continue;
+            }
             self.build_child_front(state, action);
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
@@ -180,6 +188,34 @@ impl QualityUpperBoundSolver {
             }
         }
     }
+
+    fn should_use_action(&self, state: ReducedState, action: Action) -> bool {
+        match action {
+            Action::WasteNot => state.cp >= self.waste_not_1_min_cp,
+            Action::WasteNot2 => state.cp >= self.waste_not_2_min_cp,
+            _ => true,
+        }
+    }
+}
+
+/// Calculates the minimum CP a state must have so that using WasteNot is not worse than just restoring durability via CP
+fn waste_not_min_cp(
+    waste_not_action_cp_cost: i16,
+    effect_duration: i16,
+    durability_cost: i16,
+) -> i16 {
+    // how many units of 5-durability does WasteNot have to save to be worth using over magically restoring durability?
+    let min_durability_save = (waste_not_action_cp_cost - 1) / durability_cost + 1;
+    if min_durability_save > effect_duration * 2 {
+        return i16::MAX;
+    }
+    // how many 20-durability actions and how many 10-durability actions are needed?
+    let double_dur_count = min_durability_save.saturating_sub(effect_duration);
+    let single_dur_count = min_durability_save.abs_diff(effect_duration) as i16;
+    // minimum CP required to execute those actions
+    let double_dur_cost = double_dur_count * (Action::Groundwork.cp_cost() + durability_cost * 2);
+    let single_dur_cost = single_dur_count * (Action::BasicSynthesis.cp_cost() + durability_cost);
+    waste_not_action_cp_cost + double_dur_cost + single_dur_cost - durability_cost
 }
 
 #[cfg(test)]
