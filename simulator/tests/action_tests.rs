@@ -88,7 +88,7 @@ fn test_trained_eye_opener() {
     let state = SimulationState::from_macro(&SETTINGS, &[Action::TrainedEye]);
     assert!(matches!(state, Ok(_)));
     let state = state.unwrap();
-    assert_eq!(state.get_quality(), SETTINGS.max_quality);
+    assert_eq!(state.quality, SETTINGS.max_quality);
     assert_eq!(state.effects.inner_quiet(), 1);
     let state =
         SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
@@ -231,7 +231,7 @@ fn test_delicate_synthesis() {
     match state {
         Ok(state) => {
             assert_eq!(state.progress, 100);
-            assert_eq!(state.get_quality(), 100);
+            assert_eq!(state.quality, 100);
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -243,7 +243,7 @@ fn test_delicate_synthesis() {
     match state {
         Ok(state) => {
             assert_eq!(state.progress, 150);
-            assert_eq!(state.get_quality(), 100);
+            assert_eq!(state.quality, 100);
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -275,7 +275,7 @@ fn test_precise_touch() {
         SimulationState::from_macro(&SETTINGS, &[Action::HeartAndSoul, Action::PreciseTouch]);
     match state {
         Ok(state) => {
-            assert_eq!(state.get_quality(), 150);
+            assert_eq!(state.quality, 150);
             assert_eq!(state.effects.inner_quiet(), 2);
             assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
         }

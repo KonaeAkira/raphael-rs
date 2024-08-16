@@ -38,6 +38,6 @@ pub mod test_utils {
                 .unwrap();
         }
         assert!(state.progress >= settings.max_progress);
-        state.get_quality()
+        state.quality
     }
 }

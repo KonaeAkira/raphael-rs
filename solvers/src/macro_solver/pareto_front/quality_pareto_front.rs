@@ -6,7 +6,8 @@ use super::{Dominate, ParetoFront};
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Value {
     cp: i16,
-    quality: [u16; 2],
+    quality: u16,
+    unreliable_quality: u16,
     inner_quiet: u8,
 }
 
@@ -14,7 +15,8 @@ impl Value {
     pub fn new(state: SimulationState) -> Self {
         Self {
             cp: state.cp,
-            quality: state.unreliable_quality,
+            quality: state.quality,
+            unreliable_quality: state.unreliable_quality,
             inner_quiet: state.effects.inner_quiet(),
         }
     }
@@ -23,8 +25,8 @@ impl Value {
 impl Dominate for Value {
     fn dominate(&self, other: &Self) -> bool {
         self.cp >= other.cp
-            && self.quality[0] >= other.quality[0]
-            && self.quality[1] >= other.quality[1]
+            && self.quality >= other.quality
+            && self.unreliable_quality >= other.unreliable_quality
             && self.inner_quiet >= other.inner_quiet
     }
 }
@@ -39,7 +41,7 @@ struct Key {
 
 impl Key {
     pub fn new(state: SimulationState, settings: &Settings) -> Self {
-        let effects = if state.get_quality() >= settings.max_quality {
+        let effects = if state.quality >= settings.max_quality {
             state
                 .effects
                 .with_inner_quiet(0)

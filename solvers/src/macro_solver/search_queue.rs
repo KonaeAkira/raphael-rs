@@ -94,12 +94,14 @@ impl SearchQueue {
             return;
         }
         self.minimum_score = score;
+        let mut dropped = 0;
         while let Some((bucket_score, _)) = self.buckets.first_key_value() {
             if *bucket_score >= self.minimum_score {
                 break;
             }
-            self.buckets.pop_first();
+            dropped += self.buckets.pop_first().unwrap().1.len();
         }
+        dbg!(self.minimum_score, dropped);
     }
 
     pub fn push(
@@ -159,8 +161,8 @@ impl SearchQueue {
 fn pareto_weight(state: &SimulationState) -> u32 {
     state.cp as u32
         + state.durability as u32
-        + state.unreliable_quality[0] as u32
-        + state.unreliable_quality[1] as u32
+        + state.quality as u32
+        + state.unreliable_quality as u32
         + state.effects.into_bits()
         + state.combo.into_bits() as u32
 }

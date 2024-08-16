@@ -5,10 +5,8 @@ pub struct SimulationState {
     pub cp: i16,
     pub durability: i8,
     pub progress: u16,
-    pub unreliable_quality: [u16; 2],
-    // This value represents the minimum additional quality achievable by the simulator
-    // 1 while allowing the previous un-Guarded action to be Poor
-    // 0 while forcing the previous un-Guarded action to be Normal
+    pub quality: u16,            // previous unguarded action = Poor
+    pub unreliable_quality: u16, // previous unguarded action = Normal, diff with quality
     pub effects: Effects,
     pub combo: Combo,
 }
@@ -19,7 +17,8 @@ impl SimulationState {
             cp: settings.max_cp,
             durability: settings.max_durability,
             progress: 0,
-            unreliable_quality: [0; 2],
+            quality: 0,
+            unreliable_quality: 0,
             effects: Effects::default().with_guard(if settings.adversarial { 2 } else { 0 }),
             combo: Combo::SynthesisBegin,
         }
@@ -52,12 +51,6 @@ impl SimulationState {
             };
         }
         (state, errors)
-    }
-
-    pub fn get_quality(&self) -> u16 {
-        #[cfg(test)]
-        assert!(self.unreliable_quality[0] >= self.unreliable_quality[1]);
-        self.unreliable_quality[1]
     }
 
     pub fn is_final(&self, settings: &Settings) -> bool {
@@ -159,10 +152,22 @@ impl SimulationState {
             state.effects.set_muscle_memory(0);
         }
 
+        if state.effects.guard() == 0 && quality_increase == 0 {
+            state.unreliable_quality = 0;
+        } else if state.effects.guard() != 0 && quality_increase != 0 {
+            state.quality += quality_increase;
+            state.unreliable_quality = 0;
+        } else if quality_increase != 0 {
+            state.quality +=
+                quality_increase + std::cmp::min(state.unreliable_quality, quality_delta);
+            state.unreliable_quality = quality_delta.saturating_sub(state.unreliable_quality);
+        }
+
+        #[cfg(test)]
+        assert!(settings.adversarial || state.unreliable_quality == 0);
+
         // reset great strides and increase inner quiet if quality increased
         if quality_increase != 0 {
-            state.unreliable_quality[0] += quality_increase;
-            state.unreliable_quality[1] += quality_increase;
             state.effects.set_great_strides(0);
             if settings.job_level >= 11 {
                 let inner_quiet_bonus = match action {
@@ -176,24 +181,6 @@ impl SimulationState {
                     10,
                     state.effects.inner_quiet() + inner_quiet_bonus,
                 ));
-            }
-        }
-
-        // calculate guard effects
-        if settings.adversarial {
-            if (state.effects.guard() == 0 && quality_increase == 0)
-                || (state.effects.guard() != 0 && quality_increase != 0)
-            {
-                // commit the current value
-                state.unreliable_quality = [state.get_quality(); 2];
-            } else if quality_increase != 0 {
-                // append new info
-                let saved = state.unreliable_quality[0];
-                state.unreliable_quality[0] =
-                    std::cmp::min(state.unreliable_quality[1], state.unreliable_quality[0])
-                        + quality_delta;
-                state.unreliable_quality[1] =
-                    std::cmp::min(saved, state.unreliable_quality[1] + quality_delta);
             }
         }
 

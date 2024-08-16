@@ -43,7 +43,7 @@ fn test_random_926ae85b() {
     assert_eq!(state.cp, 14);
     assert_eq!(state.durability, 30);
     assert_eq!(state.progress, 4);
-    assert_eq!(state.get_quality(), 76);
+    assert_eq!(state.quality, 76);
     assert_eq!(state.effects.inner_quiet(), 0);
 }
 
@@ -82,7 +82,7 @@ fn test_random_3c721e47() {
     assert_eq!(state.cp, 223);
     assert_eq!(state.durability, 60);
     assert_eq!(state.progress, 2520);
-    assert_eq!(state.get_quality(), 1473);
+    assert_eq!(state.quality, 1473);
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn test_random_3ba90d3a() {
     assert_eq!(state.cp, 188);
     assert_eq!(state.durability, 25);
     assert_eq!(state.progress, 918);
-    assert_eq!(state.get_quality(), 2118);
+    assert_eq!(state.quality, 2118);
     assert_eq!(state.effects.inner_quiet(), 5);
     assert_eq!(state.effects.innovation(), 1);
 }
@@ -179,7 +179,7 @@ fn test_random_bce2650c() {
     assert_eq!(state.cp, 1);
     assert_eq!(state.durability, 5);
     assert_eq!(state.progress, 6323);
-    assert_eq!(state.get_quality(), 11475);
+    assert_eq!(state.quality, 11475);
 }
 
 #[test]
@@ -224,7 +224,7 @@ fn test_ingame_be9fc5c2() {
     )
     .unwrap()
     .into_iter()
-    .map(|state| (state.progress, state.get_quality()))
+    .map(|state| (state.progress, state.quality))
     .collect();
     let expected = [
         (0, 795),
@@ -288,7 +288,7 @@ fn test_ingame_d11d9c68() {
     )
     .unwrap()
     .into_iter()
-    .map(|state| (state.progress, state.get_quality()))
+    .map(|state| (state.progress, state.quality))
     .collect();
     let expected = [
         (0, 900),
@@ -362,7 +362,7 @@ fn test_ingame_f9f0dac7() {
     )
     .unwrap()
     .into_iter()
-    .map(|state| (state.progress, state.get_quality()))
+    .map(|state| (state.progress, state.quality))
     .collect();
     let expected = [
         (0, 720),

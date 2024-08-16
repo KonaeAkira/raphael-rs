@@ -55,7 +55,7 @@ impl<'a> Widget for Simulator<'a> {
         let progress = game_state.progress;
 
         let max_quality = self.settings.max_quality;
-        let quality = game_state.get_quality() + self.initial_quality;
+        let quality = game_state.quality + self.initial_quality;
 
         let prog_qual_dbg_text = format!(
             "Progress per 100% efficiency: {}\nQuality per 100% efficiency: {}",

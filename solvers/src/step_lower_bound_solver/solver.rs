@@ -68,7 +68,7 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
     }
 
     pub fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> u16 {
-        let current_quality = state.get_quality();
+        let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
         let reduced_state = ReducedState::from_state(state, step_budget);
@@ -108,7 +108,7 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
                 full_state.use_action(action, Condition::Normal, &self.settings)
             {
                 let action_progress = new_full_state.progress;
-                let action_quality = new_full_state.get_quality();
+                let action_quality = new_full_state.quality;
                 let new_reduced_state =
                     S::from_state(new_full_state, reduced_state.steps_budget() - 1);
                 if new_reduced_state.steps_budget() != 0 && !new_full_state.is_final(&self.settings)
@@ -616,7 +616,8 @@ mod tests {
             cp: rand::thread_rng().gen_range(0..=settings.max_cp),
             durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
             progress: rand::thread_rng().gen_range(0..settings.max_progress),
-            unreliable_quality: [settings.max_quality; 2],
+            quality: 0,
+            unreliable_quality: 0,
             effects: random_effects(settings.adversarial),
             combo: COMBOS[rand::thread_rng().gen_range(0..3)],
         }
@@ -637,7 +638,7 @@ mod tests {
                     Ok(child) => match child.is_final(&settings) {
                         false => solver.step_lower_bound(child),
                         true if child.progress >= settings.max_progress
-                            && child.get_quality() >= settings.max_quality =>
+                            && child.quality >= settings.max_quality =>
                         {
                             0
                         }

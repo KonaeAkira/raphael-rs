@@ -37,7 +37,8 @@ impl ReducedState {
             durability: self.durability,
             cp: self.cp,
             progress: 0,
-            unreliable_quality: [0; 2],
+            quality: 0,
+            unreliable_quality: 0,
             effects: self.effects,
             combo: self.combo,
         }

@@ -98,7 +98,7 @@ impl<'a> MacroSolver<'a> {
                 (self.progress_callback)(search_queue.progress_estimate());
             }
 
-            let search_actions = match state.get_quality() >= self.settings.max_quality
+            let search_actions = match state.quality >= self.settings.max_quality
                 || (backload_progress && state.progress != 0)
             {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
@@ -116,18 +116,17 @@ impl<'a> MacroSolver<'a> {
                         }
 
                         search_queue.update_min_score(SearchScore::new(
-                            state.get_quality(),
+                            state.quality,
                             u8::MAX,
                             u8::MAX,
                             &self.settings,
                         ));
 
-                        let quality_upper_bound =
-                            if state.get_quality() >= self.settings.max_quality {
-                                state.get_quality()
-                            } else {
-                                self.quality_upper_bound_solver.quality_upper_bound(state)
-                            };
+                        let quality_upper_bound = if state.quality >= self.settings.max_quality {
+                            state.quality
+                        } else {
+                            self.quality_upper_bound_solver.quality_upper_bound(state)
+                        };
 
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                             current_steps + 1 + self.step_lower_bound_solver.step_lower_bound(state)
@@ -148,18 +147,17 @@ impl<'a> MacroSolver<'a> {
                         );
                     } else if state.progress >= self.settings.max_progress {
                         let solution_score = SearchScore::new(
-                            state.get_quality(),
+                            state.quality,
                             score.duration,
                             current_steps + 1,
                             &self.settings,
                         );
                         search_queue.update_min_score(solution_score);
                         if solution.is_none()
-                            || solution.as_ref().unwrap().score
-                                < (solution_score, state.get_quality())
+                            || solution.as_ref().unwrap().score < (solution_score, state.quality)
                         {
                             solution = Some(Solution {
-                                score: (solution_score, state.get_quality()),
+                                score: (solution_score, state.quality),
                                 actions: search_queue
                                     .backtrack(backtrack_id)
                                     .chain(std::iter::once(action))

@@ -95,7 +95,8 @@ impl ReducedState for ReducedStateWithDurability {
             durability: self.durability,
             cp: 1000,
             progress: 0,
-            unreliable_quality: [0, 0],
+            quality: 0,
+            unreliable_quality: 0,
             effects: self.effects,
             combo: self.combo,
         }
@@ -152,7 +153,8 @@ impl ReducedState for ReducedStateWithoutDurability {
             durability: i8::MAX,
             cp: 1000,
             progress: 0,
-            unreliable_quality: [0, 0],
+            quality: 0,
+            unreliable_quality: 0,
             effects: Effects::new()
                 .with_inner_quiet(self.inner_quiet)
                 .with_innovation(self.innovation)

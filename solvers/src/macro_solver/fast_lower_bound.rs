@@ -44,7 +44,7 @@ pub fn fast_lower_bound(
                     if !finish_solver.can_finish(&state) {
                         continue;
                     }
-                    quality_lower_bound = std::cmp::max(quality_lower_bound, state.get_quality());
+                    quality_lower_bound = std::cmp::max(quality_lower_bound, state.quality);
                     if action == Action::ByregotsBlessing {
                         continue;
                     }

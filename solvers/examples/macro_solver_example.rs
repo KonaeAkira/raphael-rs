@@ -29,7 +29,7 @@ fn main() {
 
     let quality = SimulationState::from_macro(&settings, &actions)
         .unwrap()
-        .get_quality();
+        .quality;
     let steps = actions.len();
     let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
     dbg!(quality, steps, duration);

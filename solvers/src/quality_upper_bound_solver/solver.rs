@@ -53,7 +53,7 @@ impl QualityUpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, mut state: SimulationState) -> u16 {
-        let current_quality = state.get_quality();
+        let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
         // refund effects and durability
@@ -167,7 +167,7 @@ impl QualityUpperBoundSolver {
                 .use_action(action, Condition::Normal, &self.settings)
         {
             let action_progress = new_state.progress;
-            let action_quality = new_state.get_quality();
+            let action_quality = new_state.quality;
             let new_state = ReducedState::from_state(new_state, self.durability_cost);
             if new_state.cp >= self.durability_cost {
                 match self.solved_states.get(&new_state) {
@@ -693,7 +693,8 @@ mod tests {
             cp: rand::thread_rng().gen_range(0..=settings.max_cp),
             durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
             progress: rand::thread_rng().gen_range(0..settings.max_progress),
-            unreliable_quality: [settings.max_quality; 2],
+            quality: 0,
+            unreliable_quality: 0,
             effects: random_effects(settings.adversarial),
             combo: COMBOS[rand::thread_rng().gen_range(0..3)],
         }
@@ -714,7 +715,7 @@ mod tests {
                     Ok(child) => match child.is_final(&settings) {
                         false => solver.quality_upper_bound(child),
                         true if child.progress >= settings.max_progress => {
-                            std::cmp::min(settings.max_quality, child.get_quality())
+                            std::cmp::min(settings.max_quality, child.quality)
                         }
                         true => 0,
                     },
