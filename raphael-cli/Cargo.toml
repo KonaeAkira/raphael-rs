@@ -1,0 +1,17 @@
+[package]
+name = "raphael-cli"
+edition = "2021"
+default-run = "raphael-cli"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+simulator = { path = "../simulator" }
+solvers = { path = "../solvers" }
+game-data = { path = "../game_data" }
+
+clap = { version = "4.4.11", features = ["derive", "wrap_help"] }
+
+[[bin]]
+name = "raphael-cli"
+path = "src/main.rs"

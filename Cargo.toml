@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["simulator", "solvers", "game_data"]
+members = ["simulator", "solvers", "game_data", "raphael-cli"]
 
 [package]
 name = "raphael-xiv"
@@ -20,13 +20,6 @@ egui_extras = { version = "0.27.2", features = ["all_loaders"] }
 image = { version = "0.24.9", default-features = false, features = ["png"] }
 serde = { version = "1.0.203", features = ["derive"] }
 log = "0.4"
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-clap = { version = "4.4.11", features = ["derive", "wrap_help"] }
-
-[[bin]]
-name = "raphael-cli"
-path = "src/bin/raphael-cli.rs"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4"
