@@ -32,7 +32,7 @@ struct Args {
     manipulation: bool,
 
     /// Enable Heart and Soul
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short='s', long, default_value_t = false)]
     heart_and_soul: bool,
 
     /// Enable Quick Innovation
