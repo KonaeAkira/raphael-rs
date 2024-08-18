@@ -12,7 +12,3 @@ solvers = { path = "../solvers" }
 game-data = { path = "../game_data" }
 
 clap = { version = "4.4.11", features = ["derive", "wrap_help"] }
-
-[[bin]]
-name = "raphael-cli"
-path = "src/main.rs"
