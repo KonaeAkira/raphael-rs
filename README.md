@@ -15,7 +15,7 @@ Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 
 The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
 
-### Native
+### Native app
 
 To build and run the application:
 
@@ -23,7 +23,21 @@ To build and run the application:
 cargo run --release
 ```
 
-### Web (wasm)
+### Native CLI
+
+To build and run the command-line interface (CLI):
+
+```
+cargo run --release --package raphael-cli -- <cli-args>
+```
+
+The CLI can also be installed so that it can be called from anywhere:
+
+```
+cargo install --path raphael-cli
+```
+
+### Web app (WASM)
 
 [Trunk](https://trunkrs.dev/) is required to bundle and host the website and can be installed via the Rust toolchain:
 
