@@ -16,11 +16,11 @@ struct Args {
     craftsmanship: u16,
 
     /// Control rating
-    #[arg(short='o', long)]
+    #[arg(short = 'o', long)]
     control: u16,
 
     /// Crafting points
-    #[arg(short='p', long)]
+    #[arg(short = 'p', long)]
     cp: u16,
 
     /// Crafter level
@@ -32,7 +32,7 @@ struct Args {
     manipulation: bool,
 
     /// Enable Heart and Soul
-    #[arg(short='s', long, default_value_t = false)]
+    #[arg(short = 's', long, default_value_t = false)]
     heart_and_soul: bool,
 
     /// Enable Quick Innovation
@@ -44,8 +44,8 @@ fn main() {
     let args = Args::parse();
 
     let recipe = RECIPES
-        .iter().
-        find(|r| r.item_id == args.recipe_id)
+        .iter()
+        .find(|r| r.item_id == args.recipe_id)
         .expect("Recipe not found");
 
     let crafter_stats = CrafterStats {
@@ -71,7 +71,10 @@ fn main() {
 
     println!("Recipe: {}", recipe.item_id);
     println!("Quality: {}/{}", quality, settings.max_quality);
-    println!("Progress: {}/{}", final_state.progress, settings.max_progress);
+    println!(
+        "Progress: {}/{}",
+        final_state.progress, settings.max_progress
+    );
     println!("Steps: {}", steps);
     println!("Duration: {} seconds", duration);
     println!("\nActions:");
