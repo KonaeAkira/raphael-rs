@@ -38,6 +38,10 @@ struct Args {
     /// Enable Quick Innovation
     #[arg(short, long, default_value_t = false)]
     quick_innovation: bool,
+
+    /// Enable adversarial simulator (ensure 100% reliability)
+    #[arg(long, default_value_t = false)]
+    adversarial: bool,
 }
 
 fn main() {
@@ -58,7 +62,7 @@ fn main() {
         quick_innovation: args.quick_innovation,
     };
 
-    let settings = get_game_settings(*recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(*recipe, crafter_stats, None, None, args.adversarial);
     let state = SimulationState::new(&settings);
 
     let mut solver = MacroSolver::new(settings, Box::new(|_| {}), Box::new(|_| {}));
