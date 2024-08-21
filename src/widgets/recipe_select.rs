@@ -68,14 +68,19 @@ impl<'a> RecipeSelect<'a> {
 
         ui.horizontal(|ui| {
             ui.label("Search:");
-            ui.text_edit_singleline(&mut search_text);
+            if ui.text_edit_singleline(&mut search_text).changed() {
+                search_text.truncate(search_text.trim_end_matches('\0').len());
+            }
         });
         ui.separator();
 
         let mut search_result = Vec::new();
         ui.ctx().memory_mut(|mem| {
             let search_cache = mem.caches.cache::<SearchCache<'_>>();
-            search_result = search_cache.get((&search_text.to_lowercase(), self.locale));
+            let cache_search_string = search_text
+                .trim_end_matches(&['\u{e03c}', '\u{e03d}'])
+                .to_lowercase();
+            search_result = search_cache.get((&cache_search_string, self.locale));
         });
 
         ui.ctx().data_mut(|data| {
