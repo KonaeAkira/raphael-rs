@@ -92,9 +92,7 @@ impl<'a> Widget for FoodSelect<'a> {
                 let mut search_result = Vec::new();
                 ui.ctx().memory_mut(|mem| {
                     let search_cache = mem.caches.cache::<FoodSearchCache<'_>>();
-                    let cache_search_string =
-                        search_text.trim_end_matches('\u{e03c}').to_lowercase();
-                    search_result = search_cache.get((&cache_search_string, self.locale));
+                    search_result = search_cache.get((&search_text.to_lowercase(), self.locale));
                 });
 
                 ui.ctx().data_mut(|data| {
