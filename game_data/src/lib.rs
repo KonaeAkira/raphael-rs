@@ -10,7 +10,7 @@ pub use locales::*;
 use serde::{Deserialize, Serialize};
 use simulator::{Action, ActionMask, Settings};
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct Item {
     pub item_level: u16,
     pub can_be_hq: bool,
