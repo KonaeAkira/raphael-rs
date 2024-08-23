@@ -84,7 +84,7 @@ impl<'a> Widget for FoodSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label("Search:");
                     if ui.text_edit_singleline(&mut search_text).changed() {
-                        search_text.truncate(search_text.trim_end_matches('\0').len());
+                        search_text = search_text.replace("\0", "");
                     }
                 });
                 ui.separator();
