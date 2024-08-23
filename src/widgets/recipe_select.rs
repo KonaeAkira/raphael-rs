@@ -116,7 +116,17 @@ impl<'a> RecipeSelect<'a> {
                     ui.label(get_job_name(recipe.job_id, self.locale));
                 });
                 row.col(|ui| {
-                    ui.label(get_item_name(recipe.item_id, false, self.locale));
+                    let mut recipe_display_string =
+                        get_item_name(recipe.item_id, false, self.locale);
+                    if game_data::ITEMS
+                        .get(&recipe.item_id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .is_collectable
+                    {
+                        recipe_display_string.push_str(" \u{e03d}");
+                    }
+                    ui.label(recipe_display_string);
                 });
             });
         });
