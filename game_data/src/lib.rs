@@ -14,7 +14,7 @@ use simulator::{Action, ActionMask, Settings};
 pub struct Item {
     pub item_level: u16,
     pub can_be_hq: bool,
-    pub is_collectable: bool,
+    pub always_collectable: bool,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]

@@ -103,7 +103,7 @@ mod tests {
 
     #[test]
     fn test_u16_overflow() {
-        let consumable = find_consumable("Rroneek Steak (HQ)").unwrap();
+        let consumable = find_consumable("Rroneek Steak \u{e03c}").unwrap();
         // 13108 * 5 mod 1<<16 = 4
         // 2521 * 26 mod 1<<16 = 10
         assert_eq!(
@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn test_rroneek_steak_hq() {
-        let consumable = find_consumable("Rroneek Steak (HQ)").unwrap();
+        let consumable = find_consumable("Rroneek Steak \u{e03c}").unwrap();
         assert_eq!(
             consumable.effect_string(4021, 4023, 550),
             "Control +5% (97), CP +26% (92)"

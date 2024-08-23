@@ -33,8 +33,28 @@ fn test_item_name_2341() {
 }
 
 #[test]
-fn test_item_name_44232_hq() {
+fn test_item_name_44232_collectable() {
     let item_id = 44232;
+    let item_names = [
+        get_item_name(item_id, false, Locale::EN),
+        get_item_name(item_id, true, Locale::DE),
+        get_item_name(item_id, false, Locale::FR),
+        get_item_name(item_id, true, Locale::JP),
+    ];
+    assert_eq!(
+        item_names,
+        [
+            "Rarefied Tacos de Carne Asada \u{e03d}",
+            "Tacos de Carne Asada (Sammlerstück) \u{e03d}",
+            "Tacos de carne asada collectionnables \u{e03d}",
+            "収集用のタコス・カルネ・アサーダ \u{e03d}"
+        ]
+    );
+}
+
+#[test]
+fn test_item_name_44104_hq() {
+    let item_id = 44104;
     let item_names = [
         get_item_name(item_id, true, Locale::EN),
         get_item_name(item_id, true, Locale::DE),
@@ -44,10 +64,10 @@ fn test_item_name_44232_hq() {
     assert_eq!(
         item_names,
         [
-            "Rarefied Tacos de Carne Asada (HQ)",
-            "Tacos de Carne Asada (Sammlerstück) (HQ)",
-            "Tacos de carne asada collectionnables (HQ)",
-            "収集用のタコス・カルネ・アサーダ (HQ)"
+            "Tacos de Carne Asada \u{e03c}",
+            "Tacos mit Carne Asada \u{e03c}",
+            "Tacos de carne asada \u{e03c}",
+            "タコス・カルネ・アサーダ \u{e03c}"
         ]
     );
 }

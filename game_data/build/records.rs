@@ -80,9 +80,9 @@ pub struct ItemRecord {
     #[serde(rename = "CanBeHq")]
     #[serde(deserialize_with = "bool_string")]
     pub can_be_hq: bool,
-    #[serde(rename = "IsCollectable")]
+    #[serde(rename = "AlwaysCollectable")]
     #[serde(deserialize_with = "bool_string")]
-    pub is_collectable: bool,
+    pub always_collectable: bool,
 }
 
 #[derive(Deserialize)]

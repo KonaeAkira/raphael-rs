@@ -1,3 +1,4 @@
+use crate::ITEMS;
 use serde::{Deserialize, Serialize};
 use simulator::Action;
 
@@ -61,9 +62,18 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> String {
             .copied()
             .unwrap_or("Unknown item"),
     };
-    match hq {
-        true => format!("{} (HQ)", item_name),
-        false => item_name.to_string(),
+    let item_entry = ITEMS.get(&item_id);
+    let always_collectable = match item_entry {
+        Some(item) => item.always_collectable,
+        None => false,
+    };
+    if !always_collectable {
+        match hq {
+            true => format!("{} \u{e03c}", item_name),
+            false => item_name.to_string(),
+        }
+    } else {
+        format!("{} \u{e03d}", item_name)
     }
 }
 

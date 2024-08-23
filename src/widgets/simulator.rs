@@ -153,7 +153,7 @@ impl<'a> Widget for Simulator<'a> {
                                         egui::RichText::new("Synthesis failed".to_string())
                                             .strong(),
                                     );
-                                } else if self.item.is_collectable {
+                                } else if self.item.always_collectable {
                                     let t1 = QualityTarget::CollectableT1
                                         .get_target(self.settings.max_quality);
                                     let t2 = QualityTarget::CollectableT2

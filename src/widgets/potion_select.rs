@@ -83,7 +83,9 @@ impl<'a> Widget for PotionSelect<'a> {
 
                 ui.horizontal(|ui| {
                     ui.label("Search:");
-                    ui.text_edit_singleline(&mut search_text);
+                    if ui.text_edit_singleline(&mut search_text).changed() {
+                        search_text = search_text.replace("\0", "").replace("(HQ)", "\u{e03c}");
+                    }
                 });
                 ui.separator();
 

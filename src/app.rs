@@ -637,6 +637,19 @@ impl MacroSolverApp {
             .get_mut(&FontFamily::Monospace)
             .unwrap()
             .push("japanese_monospace".to_owned());
+
+        fonts.font_data.insert(
+            String::from("FFXIV_Lodestone_SSF"),
+            FontData::from_static(include_bytes!(
+                "../assets/fonts/XIV_Icon_Recreations/XIV_Icon_Recreations.ttf"
+            )),
+        );
+        fonts
+            .families
+            .get_mut(&FontFamily::Proportional)
+            .unwrap()
+            .push("FFXIV_Lodestone_SSF".to_owned());
+
         ctx.set_fonts(fonts);
     }
 }
