@@ -77,9 +77,7 @@ impl<'a> RecipeSelect<'a> {
         let mut search_result = Vec::new();
         ui.ctx().memory_mut(|mem| {
             let search_cache = mem.caches.cache::<SearchCache<'_>>();
-            let cache_search_string = search_text
-                .trim_end_matches(&['\u{e03c}', '\u{e03d}'])
-                .to_lowercase();
+            let cache_search_string = search_text.trim_end_matches('\u{e03c}').to_lowercase();
             search_result = search_cache.get((&cache_search_string, self.locale));
         });
 
