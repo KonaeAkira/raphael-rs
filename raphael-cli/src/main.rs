@@ -7,9 +7,9 @@ use solvers::MacroSolver;
 #[derive(Parser, Debug)]
 #[command(version, about)]
 struct Args {
-    /// Recipe ID
+    /// Item ID
     #[arg(short, long)]
-    recipe_id: u32,
+    item_id: u32,
 
     /// Craftsmanship rating
     #[arg(short, long)]
@@ -49,7 +49,7 @@ fn main() {
 
     let recipe = RECIPES
         .iter()
-        .find(|r| r.item_id == args.recipe_id)
+        .find(|r| r.item_id == args.item_id)
         .expect("Recipe not found");
 
     let crafter_stats = CrafterStats {
@@ -73,7 +73,7 @@ fn main() {
     let steps = actions.len();
     let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
 
-    println!("Recipe: {}", recipe.item_id);
+    println!("Item ID: {}", recipe.item_id);
     println!("Quality: {}/{}", quality, settings.max_quality);
     println!(
         "Progress: {}/{}",
