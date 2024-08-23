@@ -62,7 +62,7 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> String {
             .unwrap_or("Unknown item"),
     };
     match hq {
-        true => format!("{} (HQ)", item_name),
+        true => format!("{} \u{e03c}", item_name),
         false => item_name.to_string(),
     }
 }
