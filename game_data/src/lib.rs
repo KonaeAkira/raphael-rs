@@ -7,8 +7,14 @@ pub use config::*;
 mod locales;
 pub use locales::*;
 
+mod search;
+pub use search::*;
+
 use serde::{Deserialize, Serialize};
 use simulator::{Action, ActionMask, Settings};
+
+pub const HQ_ICON_CHAR: char = '\u{e03c}';
+pub const CL_ICON_CHAR: char = '\u{e03d}';
 
 #[derive(Debug, Clone, Copy)]
 pub struct Item {

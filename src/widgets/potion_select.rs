@@ -3,26 +3,14 @@ use egui::{
     Align, Id, Layout, Widget,
 };
 use egui_extras::Column;
-use game_data::{get_item_name, Consumable, CrafterStats, Locale};
-
-use crate::utils::contains_noncontiguous;
+use game_data::{find_potions, get_item_name, Consumable, CrafterStats, Locale};
 
 #[derive(Default)]
 struct PotionFinder {}
 
 impl ComputerMut<(&str, Locale), Vec<usize>> for PotionFinder {
     fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<usize> {
-        game_data::POTIONS
-            .iter()
-            .enumerate()
-            .filter_map(|(index, item)| {
-                let item_name = get_item_name(item.item_id, item.hq, locale);
-                match contains_noncontiguous(&item_name.to_lowercase(), text) {
-                    true => Some(index),
-                    false => None,
-                }
-            })
-            .collect()
+        find_potions(text, locale)
     }
 }
 
@@ -84,7 +72,7 @@ impl<'a> Widget for PotionSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label("Search:");
                     if ui.text_edit_singleline(&mut search_text).changed() {
-                        search_text = search_text.replace("\0", "").replace("(HQ)", "\u{e03c}");
+                        search_text = search_text.replace("\0", "");
                     }
                 });
                 ui.separator();
@@ -92,7 +80,7 @@ impl<'a> Widget for PotionSelect<'a> {
                 let mut search_result = Vec::new();
                 ui.ctx().memory_mut(|mem| {
                     let search_cache = mem.caches.cache::<PotionSearchCache<'_>>();
-                    search_result = search_cache.get((&search_text.to_lowercase(), self.locale));
+                    search_result = search_cache.get((&search_text, self.locale));
                 });
 
                 ui.ctx().data_mut(|data| {

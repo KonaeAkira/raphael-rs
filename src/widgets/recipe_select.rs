@@ -4,30 +4,18 @@ use egui::{
 };
 use egui_extras::Column;
 use game_data::{
-    get_game_settings, get_item_name, get_job_name, Consumable, Ingredient, Locale, RLVLS,
+    find_recipes, get_game_settings, get_item_name, get_job_name, Consumable, Ingredient, Locale,
+    RLVLS,
 };
 
-use crate::{
-    config::{CrafterConfig, QualitySource, RecipeConfiguration},
-    utils::contains_noncontiguous,
-};
+use crate::config::{CrafterConfig, QualitySource, RecipeConfiguration};
 
 #[derive(Default)]
 struct RecipeFinder {}
 
 impl ComputerMut<(&str, Locale), Vec<usize>> for RecipeFinder {
     fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<usize> {
-        game_data::RECIPES
-            .iter()
-            .enumerate()
-            .filter_map(|(index, recipe)| {
-                let item_name = get_item_name(recipe.item_id, false, locale);
-                match contains_noncontiguous(&item_name.to_lowercase(), text) {
-                    true => Some(index),
-                    false => None,
-                }
-            })
-            .collect()
+        find_recipes(text, locale)
     }
 }
 
@@ -69,7 +57,7 @@ impl<'a> RecipeSelect<'a> {
         ui.horizontal(|ui| {
             ui.label("Search:");
             if ui.text_edit_singleline(&mut search_text).changed() {
-                search_text = search_text.replace("\0", "").replace("(CL)", "\u{e03d}");
+                search_text = search_text.replace("\0", "");
             }
         });
         ui.separator();
@@ -77,8 +65,7 @@ impl<'a> RecipeSelect<'a> {
         let mut search_result = Vec::new();
         ui.ctx().memory_mut(|mem| {
             let search_cache = mem.caches.cache::<SearchCache<'_>>();
-            let cache_search_string = search_text.trim_end_matches('\u{e03c}').to_lowercase();
-            search_result = search_cache.get((&cache_search_string, self.locale));
+            search_result = search_cache.get((&search_text, self.locale));
         });
 
         ui.ctx().data_mut(|data| {

@@ -5,6 +5,5 @@ pub use app::MacroSolverApp;
 pub use worker::Worker;
 
 mod config;
-mod utils;
 mod widgets;
 mod worker;
