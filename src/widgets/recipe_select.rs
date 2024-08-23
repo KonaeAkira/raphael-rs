@@ -69,7 +69,7 @@ impl<'a> RecipeSelect<'a> {
         ui.horizontal(|ui| {
             ui.label("Search:");
             if ui.text_edit_singleline(&mut search_text).changed() {
-                search_text = search_text.replace("\0", "");
+                search_text = search_text.replace("\0", "").replace("(CL)", "\u{e03d}");
             }
         });
         ui.separator();
