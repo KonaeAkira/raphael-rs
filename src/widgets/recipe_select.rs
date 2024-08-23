@@ -122,7 +122,7 @@ impl<'a> RecipeSelect<'a> {
                         .get(&recipe.item_id)
                         .cloned()
                         .unwrap_or_default()
-                        .is_collectable
+                        .always_collectable
                     {
                         recipe_display_string.push_str(" \u{e03d}");
                     }

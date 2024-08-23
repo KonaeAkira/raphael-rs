@@ -14,10 +14,10 @@ pub fn import_item_records(
         .filter(|item| relevant_items.contains(&item.id))
     {
         item_stats.entry(item.id, &format!(
-            "Item {{ item_level: {item_level}, can_be_hq: {can_be_hq}, is_collectable: {is_collectable} }}",
+            "Item {{ item_level: {item_level}, can_be_hq: {can_be_hq}, always_collectable: {always_collectable} }}",
             item_level = item.item_level,
             can_be_hq = item.can_be_hq,
-            is_collectable = item.is_collectable,
+            always_collectable = item.always_collectable,
         ));
     }
     let out_path = Path::new(&std::env::var("OUT_DIR")?).join("items.rs");
