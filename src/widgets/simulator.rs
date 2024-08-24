@@ -189,7 +189,7 @@ impl<'a> Widget for Simulator<'a> {
                     ui.horizontal(|ui| {
                         for (action, error) in self.actions.iter().zip(errors.into_iter()) {
                             let image_path = format!(
-                                "{}/action-icons/{}/{}.png",
+                                "{}/action-icons/{}/{}.webp",
                                 BASE_ASSET_PATH,
                                 get_job_name(self.crafter_config.selected_job, Locale::EN),
                                 action_name(*action, Locale::EN)
