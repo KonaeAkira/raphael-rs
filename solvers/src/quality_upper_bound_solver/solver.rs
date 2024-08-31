@@ -104,7 +104,7 @@ impl QualityUpperBoundSolver {
     }
 
     fn solve_state(&mut self, state: ReducedState) {
-        if state.combo == Combo::None {
+        if state.data.combo() == Combo::None {
             self.solve_normal_state(state);
         } else {
             self.solve_combo_state(state)
@@ -137,7 +137,7 @@ impl QualityUpperBoundSolver {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
             None => self.solve_normal_state(state.to_non_combo()),
         }
-        match state.combo {
+        match state.data.combo() {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
                 for action in [Action::MuscleMemory, Action::Reflect, Action::TrainedEye] {
@@ -178,7 +178,7 @@ impl QualityUpperBoundSolver {
                 self.durability_cost,
                 self.settings.base_quality,
             );
-            if new_state.cp >= self.durability_cost {
+            if new_state.data.cp() >= self.durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
                     None => self.solve_state(new_state),
@@ -188,7 +188,7 @@ impl QualityUpperBoundSolver {
                     value.second += action_quality;
                 });
                 self.pareto_front_builder.merge();
-            } else if new_state.cp >= -self.durability_cost && action_progress != 0 {
+            } else if new_state.data.cp() >= -self.durability_cost && action_progress != 0 {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
                 self.pareto_front_builder
@@ -200,8 +200,8 @@ impl QualityUpperBoundSolver {
 
     fn should_use_action(&self, state: ReducedState, action: Action) -> bool {
         match action {
-            Action::WasteNot => state.cp >= self.waste_not_1_min_cp,
-            Action::WasteNot2 => state.cp >= self.waste_not_2_min_cp,
+            Action::WasteNot => state.data.cp() >= self.waste_not_1_min_cp,
+            Action::WasteNot2 => state.data.cp() >= self.waste_not_2_min_cp,
             _ => true,
         }
     }
