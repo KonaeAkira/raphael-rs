@@ -201,7 +201,7 @@ impl SimulationState {
             state.effects.tick_down();
         }
 
-        if quality_increase != 0 {
+        if settings.adversarial && quality_increase != 0 {
             state.effects.set_guard(1);
         }
 
