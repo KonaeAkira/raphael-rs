@@ -128,8 +128,13 @@ impl<'a> MacroSolver<'a> {
                             self.quality_upper_bound_solver.quality_upper_bound(state)
                         };
 
+                        let step_lb_hint = score.steps - current_steps - 1;
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                            current_steps + 1 + self.step_lower_bound_solver.step_lower_bound(state)
+                            current_steps
+                                + 1
+                                + self
+                                    .step_lower_bound_solver
+                                    .step_lower_bound_with_hint(state, step_lb_hint)
                         } else {
                             current_steps + 1
                         };

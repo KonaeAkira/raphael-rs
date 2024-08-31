@@ -42,6 +42,13 @@ impl StepLowerBoundSolver {
         }
         hi
     }
+
+    pub fn step_lower_bound_with_hint(&mut self, state: SimulationState, mut hint: u8) -> u8 {
+        while self.slow_solver.quality_upper_bound(state, hint) < self.settings.max_quality {
+            hint += 1;
+        }
+        hint
+    }
 }
 
 struct StepLowerBoundSolverImpl<S: ReducedState> {
