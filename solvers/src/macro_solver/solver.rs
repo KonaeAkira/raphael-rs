@@ -70,7 +70,11 @@ impl<'a> MacroSolver<'a> {
 
     fn do_solve(&mut self, state: SimulationState, backload_progress: bool) -> Option<Vec<Action>> {
         let mut search_queue = {
-            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state);
+            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(
+                state,
+                backload_progress,
+                false,
+            );
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                 self.step_lower_bound_solver.step_lower_bound(state)
             } else {
@@ -98,9 +102,9 @@ impl<'a> MacroSolver<'a> {
                 (self.progress_callback)(search_queue.progress_estimate());
             }
 
-            let search_actions = match state.quality >= self.settings.max_quality
-                || (backload_progress && state.progress != 0)
-            {
+            let progress_only = state.quality >= self.settings.max_quality
+                || (backload_progress && state.progress != 0);
+            let search_actions = match progress_only {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
             };
@@ -125,7 +129,11 @@ impl<'a> MacroSolver<'a> {
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {
                             state.quality
                         } else {
-                            self.quality_upper_bound_solver.quality_upper_bound(state)
+                            self.quality_upper_bound_solver.quality_upper_bound(
+                                state,
+                                backload_progress,
+                                progress_only,
+                            )
                         };
 
                         let step_lb_hint = score.steps - current_steps - 1;

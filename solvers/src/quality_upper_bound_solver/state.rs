@@ -7,7 +7,9 @@ pub struct ReducedStateData {
     pub unreliable_quality: u8,
     #[bits(2, default=Combo::None)]
     pub combo: Combo,
-    #[bits(6)]
+    #[bits(1)]
+    pub progress_only: bool,
+    #[bits(5)]
     _padding: u8,
 }
 
@@ -25,7 +27,12 @@ impl ReducedState {
         }
     }
 
-    pub fn from_state(state: SimulationState, durability_cost: i16, base_quality: u16) -> Self {
+    pub fn from_state(
+        state: SimulationState,
+        progress_only: bool,
+        durability_cost: i16,
+        base_quality: u16,
+    ) -> Self {
         let used_durability = (i8::MAX - state.durability) / 5;
         let cp = state.cp - used_durability as i16 * durability_cost;
         let great_strides_active = state.effects.great_strides() != 0;
@@ -35,7 +42,8 @@ impl ReducedState {
             data: ReducedStateData::new()
                 .with_cp(cp)
                 .with_unreliable_quality(unreliable_quality)
-                .with_combo(state.combo),
+                .with_combo(state.combo)
+                .with_progress_only(progress_only),
             effects: state
                 .effects
                 .with_great_strides(if great_strides_active { 3 } else { 0 })
