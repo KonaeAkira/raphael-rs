@@ -364,7 +364,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 3974);
+        assert_eq!(result, 3975);
     }
 
     #[test]
@@ -474,7 +474,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 1883);
+        assert_eq!(result, 1888);
     }
 
     #[test]

@@ -22,9 +22,9 @@ impl ReducedState {
         let great_strides_active = state.effects.great_strides() != 0;
         Self {
             cp,
-            // compress into units of base_quality, rounded up
-            unreliable_quality: ((state.unreliable_quality + base_quality - 1) / base_quality)
-                as u8,
+            // compress into units of 2 * base_quality, rounded up
+            unreliable_quality: ((state.unreliable_quality + 2 * base_quality - 1)
+                / (2 * base_quality)) as u8,
             combo: state.combo,
             effects: state
                 .effects
@@ -40,7 +40,7 @@ impl ReducedState {
             cp: self.cp,
             progress: 0,
             quality: 0,
-            unreliable_quality: self.unreliable_quality as u16 * base_quality,
+            unreliable_quality: self.unreliable_quality as u16 * base_quality * 2,
             effects: self.effects,
             combo: self.combo,
         }
