@@ -55,7 +55,7 @@ pub fn fast_lower_bound(
                     if !pareto_set.insert(state, settings) {
                         continue;
                     }
-                    search_queue.push(quality_upper_bound, state);
+                    search_queue.push(std::cmp::min(score, quality_upper_bound), state);
                 }
             }
         }

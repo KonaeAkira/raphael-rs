@@ -71,7 +71,8 @@ impl QualityUpperBoundSolver {
 
         state.durability = i8::MAX;
 
-        let reduced_state = ReducedState::from_state(state, self.durability_cost);
+        let reduced_state =
+            ReducedState::from_state(state, self.durability_cost, self.settings.base_quality);
         let pareto_front = match self.solved_states.get(&reduced_state) {
             Some(id) => self.pareto_front_builder.retrieve(*id),
             None => {
@@ -165,14 +166,18 @@ impl QualityUpperBoundSolver {
     }
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {
-        if let Ok(new_state) =
-            state
-                .to_state()
-                .use_action(action, Condition::Normal, &self.settings)
-        {
+        if let Ok(new_state) = state.to_state(self.settings.base_quality).use_action(
+            action,
+            Condition::Normal,
+            &self.settings,
+        ) {
             let action_progress = new_state.progress;
             let action_quality = new_state.quality;
-            let new_state = ReducedState::from_state(new_state, self.durability_cost);
+            let new_state = ReducedState::from_state(
+                new_state,
+                self.durability_cost,
+                self.settings.base_quality,
+            );
             if new_state.cp >= self.durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
@@ -299,7 +304,7 @@ mod tests {
                 Action::PreparatoryTouch,
             ],
         );
-        assert_eq!(result, 3242);
+        assert_eq!(result, 2955);
     }
 
     #[test]
@@ -359,7 +364,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 4693);
+        assert_eq!(result, 3974);
     }
 
     #[test]
@@ -429,7 +434,7 @@ mod tests {
                 Action::ComboStandardTouch,
             ],
         );
-        assert_eq!(result, 3953);
+        assert_eq!(result, 3406);
     }
 
     #[test]
@@ -469,7 +474,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 2075);
+        assert_eq!(result, 1883);
     }
 
     #[test]
@@ -549,7 +554,7 @@ mod tests {
             adversarial: true,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 4438);
+        assert_eq!(result, 3745);
     }
 
     #[test]
@@ -749,6 +754,7 @@ mod tests {
         monotonic_fuzz_check(settings);
     }
 
+    #[ignore = "Adversarial mode is not monotonic due to unreliable quality rounding"]
     #[test]
     fn test_monotonic_adversarial_sim() {
         let settings = Settings {

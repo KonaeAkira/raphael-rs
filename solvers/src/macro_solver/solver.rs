@@ -142,7 +142,7 @@ impl<'a> MacroSolver<'a> {
                         search_queue.push(
                             state,
                             SearchScore::new(
-                                quality_upper_bound,
+                                std::cmp::min(score.quality, quality_upper_bound),
                                 score.duration + action.time_cost() as u8,
                                 step_lower_bound,
                                 &self.settings,
