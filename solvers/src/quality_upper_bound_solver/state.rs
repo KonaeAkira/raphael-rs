@@ -35,20 +35,36 @@ impl ReducedState {
     ) -> Self {
         let used_durability = (i8::MAX - state.durability) / 5;
         let cp = state.cp - used_durability as i16 * durability_cost;
-        let great_strides_active = state.effects.great_strides() != 0;
-        let unreliable_quality =
-            ((state.unreliable_quality + 2 * base_quality - 1) / (2 * base_quality)) as u8;
+        let unreliable_quality = if progress_only {
+            0
+        } else {
+            ((state.unreliable_quality + 2 * base_quality - 1) / (2 * base_quality)) as u8
+        };
+        let effects = if progress_only {
+            state
+                .effects
+                .with_inner_quiet(0)
+                .with_innovation(0)
+                .with_great_strides(0)
+                .with_guard(0)
+                .with_quick_innovation_used(true)
+                .with_trained_perfection(SingleUse::Unavailable)
+                .with_manipulation(0)
+        } else {
+            let great_strides_active = state.effects.great_strides() != 0;
+            state
+                .effects
+                .with_great_strides(if great_strides_active { 3 } else { 0 })
+                .with_trained_perfection(SingleUse::Unavailable)
+                .with_manipulation(0)
+        };
         Self {
             data: ReducedStateData::new()
                 .with_cp(cp)
                 .with_unreliable_quality(unreliable_quality)
                 .with_combo(state.combo)
                 .with_progress_only(progress_only),
-            effects: state
-                .effects
-                .with_great_strides(if great_strides_active { 3 } else { 0 })
-                .with_trained_perfection(SingleUse::Unavailable)
-                .with_manipulation(0),
+            effects,
         }
     }
 
