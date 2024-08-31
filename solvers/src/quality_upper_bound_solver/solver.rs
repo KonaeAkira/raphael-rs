@@ -65,6 +65,10 @@ impl QualityUpperBoundSolver {
             state.cp += self.durability_cost * 4;
         }
 
+        if state.effects.heart_and_soul() == SingleUse::Available {
+            state.effects.set_heart_and_soul(SingleUse::Active);
+        }
+
         state.durability = i8::MAX;
 
         let reduced_state = ReducedState::from_state(state, self.durability_cost);

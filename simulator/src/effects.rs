@@ -1,3 +1,5 @@
+use crate::{Action, Settings};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SingleUse {
     Unavailable,
@@ -53,6 +55,16 @@ pub struct Effects {
 }
 
 impl Effects {
+    pub fn from_settings(settings: &Settings) -> Self {
+        Self::default()
+            .with_guard(if settings.adversarial { 2 } else { 0 })
+            .with_heart_and_soul(if settings.allowed_actions.has(Action::HeartAndSoul) {
+                SingleUse::Available
+            } else {
+                SingleUse::Unavailable
+            })
+    }
+
     pub fn tick_down(&mut self) {
         self.set_waste_not(self.waste_not().saturating_sub(1));
         self.set_innovation(self.innovation().saturating_sub(1));

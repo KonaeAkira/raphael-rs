@@ -19,7 +19,7 @@ impl SimulationState {
             progress: 0,
             quality: 0,
             unreliable_quality: 0,
-            effects: Effects::default().with_guard(if settings.adversarial { 2 } else { 0 }),
+            effects: Effects::from_settings(settings),
             combo: Combo::SynthesisBegin,
         }
     }
