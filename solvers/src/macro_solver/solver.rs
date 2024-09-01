@@ -127,6 +127,8 @@ impl<'a> MacroSolver<'a> {
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {
                             state.quality
                         } else {
+                            let progress_only = state.quality >= self.settings.max_quality
+                                || (self.backload_progress && state.progress != 0);
                             self.quality_upper_bound_solver
                                 .quality_upper_bound(state, progress_only)
                         };
