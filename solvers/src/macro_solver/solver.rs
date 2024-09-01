@@ -28,6 +28,7 @@ type ProgressCallback<'a> = dyn Fn(f32) + 'a;
 
 pub struct MacroSolver<'a> {
     settings: Settings,
+    backload_progress: bool,
     finish_solver: FinishSolver,
     quality_upper_bound_solver: QualityUpperBoundSolver,
     step_lower_bound_solver: StepLowerBoundSolver,
@@ -38,13 +39,15 @@ pub struct MacroSolver<'a> {
 impl<'a> MacroSolver<'a> {
     pub fn new(
         settings: Settings,
+        backload_progress: bool,
         solution_callback: Box<SolutionCallback<'a>>,
         progress_callback: Box<ProgressCallback<'a>>,
     ) -> MacroSolver<'a> {
         MacroSolver {
             settings,
+            backload_progress,
             finish_solver: FinishSolver::new(settings),
-            quality_upper_bound_solver: QualityUpperBoundSolver::new(settings),
+            quality_upper_bound_solver: QualityUpperBoundSolver::new(settings, backload_progress),
             step_lower_bound_solver: StepLowerBoundSolver::new(settings),
             solution_callback,
             progress_callback,
@@ -53,11 +56,7 @@ impl<'a> MacroSolver<'a> {
 
     /// Returns a list of Actions that maximizes Quality of the completed state.
     /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
-    pub fn solve(
-        &mut self,
-        state: SimulationState,
-        backload_progress: bool,
-    ) -> Option<Vec<Action>> {
+    pub fn solve(&mut self, state: SimulationState) -> Option<Vec<Action>> {
         let timer = NamedTimer::new("Finish solver");
         if !self.finish_solver.can_finish(&state) {
             return None;
@@ -65,16 +64,15 @@ impl<'a> MacroSolver<'a> {
         drop(timer);
 
         let _timer = NamedTimer::new("Full search");
-        self.do_solve(state, backload_progress)
+        self.do_solve(state)
     }
 
-    fn do_solve(&mut self, state: SimulationState, backload_progress: bool) -> Option<Vec<Action>> {
+    fn do_solve(&mut self, state: SimulationState) -> Option<Vec<Action>> {
         let mut search_queue = {
-            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(
-                state,
-                backload_progress,
-                false,
-            );
+            let _timer = NamedTimer::new("Initial upper bound");
+            let quality_upper_bound = self
+                .quality_upper_bound_solver
+                .quality_upper_bound(state, false);
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                 self.step_lower_bound_solver.step_lower_bound(state)
             } else {
@@ -103,7 +101,7 @@ impl<'a> MacroSolver<'a> {
             }
 
             let progress_only = state.quality >= self.settings.max_quality
-                || (backload_progress && state.progress != 0);
+                || (self.backload_progress && state.progress != 0);
             let search_actions = match progress_only {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
@@ -129,11 +127,8 @@ impl<'a> MacroSolver<'a> {
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {
                             state.quality
                         } else {
-                            self.quality_upper_bound_solver.quality_upper_bound(
-                                state,
-                                backload_progress,
-                                progress_only,
-                            )
+                            self.quality_upper_bound_solver
+                                .quality_upper_bound(state, progress_only)
                         };
 
                         let step_lb_hint = score.steps - current_steps - 1;

@@ -62,10 +62,11 @@ impl Worker {
 
         let final_solution = solvers::MacroSolver::new(
             settings,
+            config.backload_progress,
             Box::new(solution_callback),
             Box::new(progress_callback),
         )
-        .solve(SimulationState::new(&settings), config.backload_progress);
+        .solve(SimulationState::new(&settings));
 
         let tx = self.tx.clone();
         match final_solution {

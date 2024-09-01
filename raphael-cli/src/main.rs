@@ -65,8 +65,8 @@ fn main() {
     let settings = get_game_settings(*recipe, crafter_stats, None, None, args.adversarial);
     let state = SimulationState::new(&settings);
 
-    let mut solver = MacroSolver::new(settings, Box::new(|_| {}), Box::new(|_| {}));
-    let actions = solver.solve(state, false).expect("Failed to solve");
+    let mut solver = MacroSolver::new(settings, false, Box::new(|_| {}), Box::new(|_| {}));
+    let actions = solver.solve(state).expect("Failed to solve");
 
     let final_state = SimulationState::from_macro(&settings, &actions).unwrap();
     let quality = final_state.quality;
