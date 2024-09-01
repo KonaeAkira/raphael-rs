@@ -3,67 +3,21 @@ use simulator::{Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
-use super::state::{ReducedState, ReducedStateWithDurability, ReducedStateWithoutDurability};
+use super::state::ReducedState;
 
 pub struct StepLowerBoundSolver {
     settings: Settings,
-    fast_solver: StepLowerBoundSolverImpl<ReducedStateWithoutDurability>,
-    slow_solver: StepLowerBoundSolverImpl<ReducedStateWithDurability>,
+    solved_states: HashMap<ReducedState, ParetoFrontId>,
+    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
 impl StepLowerBoundSolver {
     pub fn new(settings: Settings) -> Self {
-        Self {
-            settings,
-            fast_solver: StepLowerBoundSolverImpl::new(settings),
-            slow_solver: StepLowerBoundSolverImpl::new(settings),
-        }
-    }
-
-    /// Returns a lower-bound on the additional steps required to max out both Progress and Quality from this state.
-    pub fn step_lower_bound(&mut self, state: SimulationState) -> u8 {
-        let mut lo = 0;
-        let mut hi = 1;
-        while self.fast_solver.quality_upper_bound(state, hi) < self.settings.max_quality {
-            lo = hi;
-            hi *= 2;
-        }
-        while lo + 1 < hi {
-            if self.fast_solver.quality_upper_bound(state, (lo + hi) / 2)
-                < self.settings.max_quality
-            {
-                lo = (lo + hi) / 2;
-            } else {
-                hi = (lo + hi) / 2;
-            }
-        }
-        while self.slow_solver.quality_upper_bound(state, hi) < self.settings.max_quality {
-            hi += 1;
-        }
-        hi
-    }
-
-    pub fn step_lower_bound_with_hint(&mut self, state: SimulationState, mut hint: u8) -> u8 {
-        while self.slow_solver.quality_upper_bound(state, hint) < self.settings.max_quality {
-            hint += 1;
-        }
-        hint
-    }
-}
-
-struct StepLowerBoundSolverImpl<S: ReducedState> {
-    settings: Settings,
-    solved_states: HashMap<S, ParetoFrontId>,
-    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-}
-
-impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
-    pub fn new(settings: Settings) -> Self {
-        dbg!(std::mem::size_of::<S>());
-        dbg!(std::mem::align_of::<S>());
+        dbg!(std::mem::size_of::<ReducedState>());
+        dbg!(std::mem::align_of::<ReducedState>());
         Self {
             settings: Settings {
-                allowed_actions: S::optimize_action_mask(settings.allowed_actions),
+                allowed_actions: ReducedState::optimize_action_mask(settings.allowed_actions),
                 ..settings
             },
             solved_states: HashMap::default(),
@@ -74,7 +28,19 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
         }
     }
 
-    pub fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> u16 {
+    /// Returns a lower-bound on the additional steps required to max out both Progress and Quality from this state.
+    pub fn step_lower_bound(&mut self, state: SimulationState) -> u8 {
+        self.step_lower_bound_with_hint(state, 1)
+    }
+
+    pub fn step_lower_bound_with_hint(&mut self, state: SimulationState, mut hint: u8) -> u8 {
+        while self.quality_upper_bound(state, hint) < self.settings.max_quality {
+            hint += 1;
+        }
+        hint
+    }
+
+    fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> u16 {
         let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
@@ -107,7 +73,7 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
         )
     }
 
-    fn solve_state(&mut self, reduced_state: S) {
+    fn solve_state(&mut self, reduced_state: ReducedState) {
         self.pareto_front_builder.push_empty();
         let full_state = reduced_state.to_state();
         for action in self.settings.allowed_actions.actions_iter() {
@@ -117,9 +83,8 @@ impl<S: ReducedState> StepLowerBoundSolverImpl<S> {
                 let action_progress = new_full_state.progress;
                 let action_quality = new_full_state.quality;
                 let new_reduced_state =
-                    S::from_state(new_full_state, reduced_state.steps_budget() - 1);
-                if new_reduced_state.steps_budget() != 0 && !new_full_state.is_final(&self.settings)
-                {
+                    ReducedState::from_state(new_full_state, reduced_state.steps_budget - 1);
+                if new_reduced_state.steps_budget != 0 && !new_full_state.is_final(&self.settings) {
                     match self.solved_states.get(&new_reduced_state) {
                         Some(id) => self.pareto_front_builder.push_from_id(*id),
                         None => self.solve_state(new_reduced_state),
