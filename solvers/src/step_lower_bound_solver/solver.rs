@@ -1,5 +1,5 @@
 use crate::utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue};
-use simulator::{Condition, Settings, SimulationState};
+use simulator::{Action, Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -7,19 +7,34 @@ use super::state::ReducedState;
 
 pub struct StepLowerBoundSolver {
     settings: Settings,
+    bonus_durability_restore: i8,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
 impl StepLowerBoundSolver {
-    pub fn new(settings: Settings) -> Self {
+    pub fn new(mut settings: Settings) -> Self {
         dbg!(std::mem::size_of::<ReducedState>());
         dbg!(std::mem::align_of::<ReducedState>());
+        let mut bonus_durability_restore = 0;
+        if settings.allowed_actions.has(Action::Manipulation) {
+            bonus_durability_restore = std::cmp::max(bonus_durability_restore, 10);
+        }
+        if settings.allowed_actions.has(Action::ImmaculateMend) {
+            bonus_durability_restore =
+                std::cmp::max(bonus_durability_restore, settings.max_durability - 35);
+        }
+        if settings.allowed_actions.has(Action::Manipulation) {
+            settings.max_durability += 40;
+        }
         Self {
             settings: Settings {
-                allowed_actions: ReducedState::optimize_action_mask(settings.allowed_actions),
+                allowed_actions: ReducedState::optimize_action_mask(settings.allowed_actions)
+                    .remove(Action::Manipulation)
+                    .remove(Action::ImmaculateMend),
                 ..settings
             },
+            bonus_durability_restore,
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
@@ -82,8 +97,11 @@ impl StepLowerBoundSolver {
             {
                 let action_progress = new_full_state.progress;
                 let action_quality = new_full_state.quality;
-                let new_reduced_state =
+                let mut new_reduced_state =
                     ReducedState::from_state(new_full_state, reduced_state.steps_budget - 1);
+                if action == Action::MasterMend {
+                    new_reduced_state.durability += self.bonus_durability_restore;
+                }
                 if new_reduced_state.steps_budget != 0 && !new_full_state.is_final(&self.settings) {
                     match self.solved_states.get(&new_reduced_state) {
                         Some(id) => self.pareto_front_builder.push_from_id(*id),
@@ -220,7 +238,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 14);
+        assert_eq!(result, 15);
     }
 
     #[test]
@@ -250,7 +268,7 @@ mod tests {
                 Action::Groundwork,
             ],
         );
-        assert_eq!(result, 14);
+        assert_eq!(result, 15);
     }
 
     #[test]
@@ -340,7 +358,7 @@ mod tests {
             adversarial: false,
         };
         let result = solve(settings, &[Action::MuscleMemory]);
-        assert_eq!(result, 18);
+        assert_eq!(result, 19);
     }
 
     #[test]

@@ -10,16 +10,13 @@ pub struct ReducedState {
 
 impl ReducedState {
     pub fn optimize_action_mask(mut action_mask: ActionMask) -> ActionMask {
+        action_mask = action_mask.remove(Action::TrainedPerfection);
         // No CP cost so Observe is useless
         action_mask = action_mask.remove(Action::Observe);
         // Non-combo version is just as good as the combo version because there is no CP cost
         action_mask = action_mask
             .remove(Action::ComboStandardTouch)
             .remove(Action::ComboAdvancedTouch);
-        // ImmaculateMend is always better than MasterMend because there is no CP cost
-        if action_mask.has(Action::ImmaculateMend) {
-            action_mask = action_mask.remove(Action::MasterMend);
-        }
         // WasteNot2 is always better than WasteNot because there is no CP cost
         if action_mask.has(Action::WasteNot2) {
             action_mask = action_mask.remove(Action::WasteNot);
@@ -44,19 +41,14 @@ impl ReducedState {
             0
         };
         let waste_not = if state.effects.waste_not() != 0 { 8 } else { 0 };
-        let manipulation = if state.effects.manipulation() != 0 {
-            8
-        } else {
-            0
-        };
         let trained_perfection = match state.effects.trained_perfection() {
-            SingleUse::Unavailable => SingleUse::Available,
-            SingleUse::Available => SingleUse::Available,
+            SingleUse::Unavailable => SingleUse::Unavailable,
+            SingleUse::Available => SingleUse::Unavailable,
             SingleUse::Active => SingleUse::Active,
         };
         Self {
             steps_budget,
-            durability: state.durability,
+            durability: state.durability + 5 * state.effects.manipulation() as i8,
             combo: match state.combo {
                 Combo::None => Combo::None,
                 Combo::SynthesisBegin => Combo::SynthesisBegin,
@@ -71,7 +63,7 @@ impl ReducedState {
                 .with_veneration(veneration)
                 .with_great_strides(great_strides)
                 .with_waste_not(waste_not)
-                .with_manipulation(manipulation)
+                .with_manipulation(0)
                 .with_trained_perfection(trained_perfection)
                 .with_guard(1),
         }
