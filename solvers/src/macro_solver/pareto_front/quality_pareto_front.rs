@@ -9,6 +9,7 @@ struct Value {
     quality: u16,
     unreliable_quality: u16,
     inner_quiet: u8,
+    durability: i8,
 }
 
 impl Value {
@@ -18,6 +19,7 @@ impl Value {
             quality: state.quality,
             unreliable_quality: state.unreliable_quality,
             inner_quiet: state.effects.inner_quiet(),
+            durability: state.durability,
         }
     }
 }
@@ -26,15 +28,16 @@ impl Dominate for Value {
     fn dominate(&self, other: &Self) -> bool {
         self.cp >= other.cp
             && self.quality >= other.quality
-            && self.unreliable_quality >= other.unreliable_quality
+            && (self.unreliable_quality >= other.unreliable_quality
+                || self.quality >= other.quality + other.unreliable_quality)
             && self.inner_quiet >= other.inner_quiet
+            && self.durability >= other.durability
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Key {
     progress: u16,
-    durability: i8,
     effects: Effects,
     combo: Combo,
 }
@@ -53,7 +56,6 @@ impl Key {
             state.effects.with_inner_quiet(0) // iq is included in the pareto value
         };
         Self {
-            durability: state.durability,
             progress: state.progress,
             effects,
             combo: state.combo,
