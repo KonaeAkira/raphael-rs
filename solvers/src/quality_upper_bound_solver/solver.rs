@@ -59,7 +59,7 @@ impl QualityUpperBoundSolver {
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, mut state: SimulationState, progress_only: bool) -> u16 {
+    pub fn quality_upper_bound(&mut self, mut state: SimulationState) -> u16 {
         let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
@@ -78,6 +78,7 @@ impl QualityUpperBoundSolver {
 
         state.durability = i8::MAX;
 
+        let progress_only = self.backload_progress && state.progress != 0;
         let reduced_state = ReducedState::from_state(
             state,
             progress_only,
@@ -252,8 +253,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result =
-            QualityUpperBoundSolver::new(settings, false).quality_upper_bound(state, false);
+        let result = QualityUpperBoundSolver::new(settings, false).quality_upper_bound(state);
         dbg!(result);
         result
     }
@@ -734,12 +734,12 @@ mod tests {
         let mut solver = QualityUpperBoundSolver::new(settings, false);
         for _ in 0..10000 {
             let state = random_state(&settings);
-            let state_upper_bound = solver.quality_upper_bound(state, false);
+            let state_upper_bound = solver.quality_upper_bound(state);
             for action in settings.allowed_actions.actions_iter() {
                 let child_upper_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
                     Ok(child) => match child.is_final(&settings) {
-                        false => solver.quality_upper_bound(child, false),
+                        false => solver.quality_upper_bound(child),
                         true if child.progress >= settings.max_progress => {
                             std::cmp::min(settings.max_quality, child.quality)
                         }

@@ -3,6 +3,7 @@ use simulator::{Action, ActionMask, Combo, Effects, SimulationState, SingleUse};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
     pub steps_budget: u8,
+    pub progress_only: bool,
     pub durability: i8,
     pub combo: Combo,
     pub effects: Effects,
@@ -32,40 +33,66 @@ impl ReducedState {
         action_mask
     }
 
-    pub fn from_state(state: SimulationState, steps_budget: u8) -> Self {
-        let innovation = std::cmp::min(steps_budget, state.effects.innovation());
+    pub fn from_state(state: SimulationState, steps_budget: u8, progress_only: bool) -> Self {
         let veneration = std::cmp::min(steps_budget, state.effects.veneration());
-        let great_strides = if state.effects.great_strides() != 0 {
-            3
-        } else {
-            0
-        };
         let waste_not = if state.effects.waste_not() != 0 { 8 } else { 0 };
         let trained_perfection = match state.effects.trained_perfection() {
             SingleUse::Unavailable => SingleUse::Unavailable,
             SingleUse::Available => SingleUse::Unavailable,
             SingleUse::Active => SingleUse::Active,
         };
-        Self {
-            steps_budget,
-            durability: state.durability + 5 * state.effects.manipulation() as i8,
-            combo: match state.combo {
-                Combo::None => Combo::None,
-                Combo::SynthesisBegin => Combo::SynthesisBegin,
-                // Can't optimize this combo away because there is no replacement for RefinedTouch
-                Combo::BasicTouch => Combo::BasicTouch,
-                // AdvancedTouch replaces ComboAdvancedTouch (no CP cost)
-                Combo::StandardTouch => Combo::None,
-            },
-            effects: state
-                .effects
-                .with_innovation(innovation)
-                .with_veneration(veneration)
-                .with_great_strides(great_strides)
-                .with_waste_not(waste_not)
-                .with_manipulation(0)
-                .with_trained_perfection(trained_perfection)
-                .with_guard(1),
+        if progress_only {
+            Self {
+                steps_budget,
+                progress_only,
+                durability: state.durability + 5 * state.effects.manipulation() as i8,
+                combo: match state.combo {
+                    Combo::None => Combo::None,
+                    Combo::SynthesisBegin => Combo::SynthesisBegin,
+                    Combo::BasicTouch => Combo::None,
+                    Combo::StandardTouch => Combo::None,
+                },
+                effects: state
+                    .effects
+                    .with_inner_quiet(0)
+                    .with_innovation(0)
+                    .with_veneration(veneration)
+                    .with_great_strides(0)
+                    .with_waste_not(waste_not)
+                    .with_manipulation(0)
+                    .with_trained_perfection(trained_perfection)
+                    .with_quick_innovation_used(true)
+                    .with_guard(1),
+            }
+        } else {
+            let innovation = std::cmp::min(steps_budget, state.effects.innovation());
+            let great_strides = if state.effects.great_strides() != 0 {
+                3
+            } else {
+                0
+            };
+            Self {
+                steps_budget,
+                progress_only,
+                durability: state.durability + 5 * state.effects.manipulation() as i8,
+                combo: match state.combo {
+                    Combo::None => Combo::None,
+                    Combo::SynthesisBegin => Combo::SynthesisBegin,
+                    // Can't optimize this combo away because there is no replacement for RefinedTouch
+                    Combo::BasicTouch => Combo::BasicTouch,
+                    // AdvancedTouch replaces ComboAdvancedTouch (no CP cost)
+                    Combo::StandardTouch => Combo::None,
+                },
+                effects: state
+                    .effects
+                    .with_innovation(innovation)
+                    .with_veneration(veneration)
+                    .with_great_strides(great_strides)
+                    .with_waste_not(waste_not)
+                    .with_manipulation(0)
+                    .with_trained_perfection(trained_perfection)
+                    .with_guard(1),
+            }
         }
     }
 

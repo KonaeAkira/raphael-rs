@@ -7,13 +7,14 @@ use super::state::ReducedState;
 
 pub struct StepLowerBoundSolver {
     settings: Settings,
+    backload_progress: bool,
     bonus_durability_restore: i8,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
 }
 
 impl StepLowerBoundSolver {
-    pub fn new(mut settings: Settings) -> Self {
+    pub fn new(mut settings: Settings, backload_progress: bool) -> Self {
         dbg!(std::mem::size_of::<ReducedState>());
         dbg!(std::mem::align_of::<ReducedState>());
         let mut bonus_durability_restore = 0;
@@ -34,6 +35,7 @@ impl StepLowerBoundSolver {
                     .remove(Action::ImmaculateMend),
                 ..settings
             },
+            backload_progress,
             bonus_durability_restore,
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
@@ -59,7 +61,8 @@ impl StepLowerBoundSolver {
         let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
-        let reduced_state = ReducedState::from_state(state, step_budget);
+        let progress_only = self.backload_progress && state.progress != 0;
+        let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
 
         if !self.solved_states.contains_key(&reduced_state) {
             self.solve_state(reduced_state);
@@ -97,8 +100,13 @@ impl StepLowerBoundSolver {
             {
                 let action_progress = new_full_state.progress;
                 let action_quality = new_full_state.quality;
-                let mut new_reduced_state =
-                    ReducedState::from_state(new_full_state, reduced_state.steps_budget - 1);
+                let progress_only =
+                    reduced_state.progress_only || (self.backload_progress && action_progress != 0);
+                let mut new_reduced_state = ReducedState::from_state(
+                    new_full_state,
+                    reduced_state.steps_budget - 1,
+                    progress_only,
+                );
                 if action == Action::MasterMend {
                     new_reduced_state.durability += self.bonus_durability_restore;
                 }
@@ -140,7 +148,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u8 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result = StepLowerBoundSolver::new(settings).step_lower_bound(state);
+        let result = StepLowerBoundSolver::new(settings, false).step_lower_bound(state);
         dbg!(result);
         result
     }
@@ -618,7 +626,7 @@ mod tests {
     /// Test that the upper-bound solver is monotonic,
     /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
     fn monotonic_fuzz_check(settings: Settings) {
-        let mut solver = StepLowerBoundSolver::new(settings);
+        let mut solver = StepLowerBoundSolver::new(settings, false);
         for _ in 0..10000 {
             let state = random_state(&settings);
             let state_lower_bound = solver.step_lower_bound(state);

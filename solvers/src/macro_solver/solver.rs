@@ -48,7 +48,7 @@ impl<'a> MacroSolver<'a> {
             backload_progress,
             finish_solver: FinishSolver::new(settings),
             quality_upper_bound_solver: QualityUpperBoundSolver::new(settings, backload_progress),
-            step_lower_bound_solver: StepLowerBoundSolver::new(settings),
+            step_lower_bound_solver: StepLowerBoundSolver::new(settings, backload_progress),
             solution_callback,
             progress_callback,
         }
@@ -70,9 +70,7 @@ impl<'a> MacroSolver<'a> {
     fn do_solve(&mut self, state: SimulationState) -> Option<Vec<Action>> {
         let mut search_queue = {
             let _timer = NamedTimer::new("Initial upper bound");
-            let quality_upper_bound = self
-                .quality_upper_bound_solver
-                .quality_upper_bound(state, false);
+            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state);
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                 self.step_lower_bound_solver.step_lower_bound(state)
             } else {
@@ -127,10 +125,7 @@ impl<'a> MacroSolver<'a> {
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {
                             state.quality
                         } else {
-                            let progress_only = state.quality >= self.settings.max_quality
-                                || (self.backload_progress && state.progress != 0);
-                            self.quality_upper_bound_solver
-                                .quality_upper_bound(state, progress_only)
+                            self.quality_upper_bound_solver.quality_upper_bound(state)
                         };
 
                         let step_lb_hint = score.steps - current_steps - 1;
