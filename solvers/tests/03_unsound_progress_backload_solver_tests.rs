@@ -29,7 +29,7 @@ fn random_0f93c79f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (1802, 16, 44));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -51,7 +51,7 @@ fn random_1e281667() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3306, 20, 53));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -73,7 +73,7 @@ fn random_d0bf2aef() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3402, 25, 67));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -95,7 +95,7 @@ fn random_e413e05d() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (2013, 20, 55));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -117,7 +117,7 @@ fn random_bb38a037() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (2842, 23, 62));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -139,7 +139,7 @@ fn random_a300ca2b() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (4633, 28, 75));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -161,7 +161,7 @@ fn random_0f9d7781() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (2939, 24, 64));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -183,7 +183,7 @@ fn random_e451d981() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (5364, 27, 74));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -205,7 +205,7 @@ fn random_6799bb1d() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3321, 19, 51));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -227,7 +227,7 @@ fn random_940b4755() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (4449, 26, 69));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -249,7 +249,7 @@ fn rinascita_3700_3280() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (10492, 25, 66));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -271,7 +271,7 @@ fn pactmaker_3240_3130() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (8801, 24, 65));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -292,7 +292,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (9608, 24, 65));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -314,7 +314,7 @@ fn diadochos_4021_3660() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (9580, 23, 61));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -336,7 +336,7 @@ fn indagator_3858_4057() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (12313, 27, 72));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -358,7 +358,7 @@ fn random_2ea6c001() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (10752, 16, 44));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -380,7 +380,7 @@ fn random_48ae7c9f() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (19445, 35, 98));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -402,7 +402,7 @@ fn random_4ecd54c4() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (3002, 19, 51));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -424,7 +424,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (12082, 22, 58));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -448,7 +448,7 @@ fn stuffed_peppers_2() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (19705, 29, 79));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -471,7 +471,7 @@ fn stuffed_peppers_2_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (21235, 32, 88));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -494,7 +494,7 @@ fn stuffed_peppers_2_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (19984, 30, 83));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -516,7 +516,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (7056, 16, 45));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -538,9 +538,9 @@ fn black_star_4048_3997() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (6426, 12, 31));
+    assert_eq!(score, (6114, 12, 31));
     assert!(is_progress_backloaded(&actions, &settings));
 }
 
@@ -560,7 +560,7 @@ fn claro_walnut_lumber_4900_4800() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (11517, 14, 35));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -582,7 +582,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (6015, 15, 41));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -604,7 +604,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (5717, 14, 38));
     assert!(is_progress_backloaded(&actions, &settings));
@@ -626,7 +626,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, true, false).unwrap();
+    let actions = solve(&settings, true, true).unwrap();
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (9049, 18, 49));
     assert!(is_progress_backloaded(&actions, &settings));

@@ -23,7 +23,7 @@ fn main() {
     };
 
     let state = SimulationState::new(&settings);
-    let actions = MacroSolver::new(settings, false, Box::new(|_| {}), Box::new(|_| {}))
+    let actions = MacroSolver::new(settings, false, false, Box::new(|_| {}), Box::new(|_| {}))
         .solve(state)
         .unwrap();
 

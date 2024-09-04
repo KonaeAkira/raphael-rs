@@ -29,6 +29,7 @@ type ProgressCallback<'a> = dyn Fn(f32) + 'a;
 pub struct MacroSolver<'a> {
     settings: Settings,
     backload_progress: bool,
+    unsound_branch_pruning: bool,
     finish_solver: FinishSolver,
     quality_upper_bound_solver: QualityUpperBoundSolver,
     step_lower_bound_solver: StepLowerBoundSolver,
@@ -40,15 +41,25 @@ impl<'a> MacroSolver<'a> {
     pub fn new(
         settings: Settings,
         backload_progress: bool,
+        unsound_branch_pruning: bool,
         solution_callback: Box<SolutionCallback<'a>>,
         progress_callback: Box<ProgressCallback<'a>>,
     ) -> MacroSolver<'a> {
         MacroSolver {
             settings,
             backload_progress,
+            unsound_branch_pruning,
             finish_solver: FinishSolver::new(settings),
-            quality_upper_bound_solver: QualityUpperBoundSolver::new(settings, backload_progress),
-            step_lower_bound_solver: StepLowerBoundSolver::new(settings, backload_progress),
+            quality_upper_bound_solver: QualityUpperBoundSolver::new(
+                settings,
+                backload_progress,
+                unsound_branch_pruning,
+            ),
+            step_lower_bound_solver: StepLowerBoundSolver::new(
+                settings,
+                backload_progress,
+                unsound_branch_pruning,
+            ),
             solution_callback,
             progress_callback,
         }
@@ -98,8 +109,7 @@ impl<'a> MacroSolver<'a> {
                 (self.progress_callback)(search_queue.progress_estimate());
             }
 
-            let progress_only = state.quality >= self.settings.max_quality
-                || (self.backload_progress && state.progress != 0);
+            let progress_only = self.is_progress_only_state(state);
             let search_actions = match progress_only {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
@@ -180,5 +190,16 @@ impl<'a> MacroSolver<'a> {
         } else {
             None
         }
+    }
+
+    fn is_progress_only_state(&self, state: SimulationState) -> bool {
+        let mut progress_only = false;
+        progress_only |= self.backload_progress && state.progress != 0;
+        if self.unsound_branch_pruning {
+            progress_only |= self.backload_progress && state.effects.veneration() != 0;
+            // only allow increasing Progress after using Byregot's Blessing
+            progress_only |= state.quality != 0 && state.effects.inner_quiet() == 0;
+        }
+        progress_only
     }
 }

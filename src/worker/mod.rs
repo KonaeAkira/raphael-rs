@@ -63,6 +63,7 @@ impl Worker {
         let final_solution = solvers::MacroSolver::new(
             settings,
             config.backload_progress,
+            false,
             Box::new(solution_callback),
             Box::new(progress_callback),
         )

@@ -21,6 +21,7 @@ const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
 pub struct QualityUpperBoundSolver {
     settings: Settings, // simulator settings
     backload_progress: bool,
+    unsound_branch_pruning: bool,
     durability_cost: i16,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
@@ -30,7 +31,7 @@ pub struct QualityUpperBoundSolver {
 }
 
 impl QualityUpperBoundSolver {
-    pub fn new(settings: Settings, backload_progress: bool) -> Self {
+    pub fn new(settings: Settings, backload_progress: bool, unsound_branch_pruning: bool) -> Self {
         dbg!(std::mem::size_of::<ReducedState>());
         dbg!(std::mem::align_of::<ReducedState>());
         let mut durability_cost = Action::MasterMend.cp_cost() / 6;
@@ -46,6 +47,7 @@ impl QualityUpperBoundSolver {
         Self {
             settings,
             backload_progress,
+            unsound_branch_pruning,
             durability_cost,
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
@@ -78,7 +80,7 @@ impl QualityUpperBoundSolver {
 
         state.durability = i8::MAX;
 
-        let progress_only = self.backload_progress && state.progress != 0;
+        let progress_only = self.is_progress_only_state(state);
         let reduced_state = ReducedState::from_state(
             state,
             progress_only,
@@ -188,7 +190,7 @@ impl QualityUpperBoundSolver {
             let action_progress = new_state.progress;
             let action_quality = new_state.quality;
             let progress_only =
-                (self.backload_progress && action_progress != 0) || state.data.progress_only();
+                state.data.progress_only() || self.is_progress_only_state(new_state);
             let new_state = ReducedState::from_state(
                 new_state,
                 progress_only,
@@ -222,6 +224,17 @@ impl QualityUpperBoundSolver {
             _ => true,
         }
     }
+
+    fn is_progress_only_state(&self, state: SimulationState) -> bool {
+        let mut progress_only = false;
+        progress_only |= self.backload_progress && state.progress != 0;
+        if self.unsound_branch_pruning {
+            progress_only |= self.backload_progress && state.effects.veneration() != 0;
+            // only allow increasing Progress after using Byregot's Blessing
+            progress_only |= state.quality != 0 && state.effects.inner_quiet() == 0;
+        }
+        progress_only
+    }
 }
 
 /// Calculates the minimum CP a state must have so that using WasteNot is not worse than just restoring durability via CP
@@ -253,7 +266,8 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result = QualityUpperBoundSolver::new(settings, false).quality_upper_bound(state);
+        let result =
+            QualityUpperBoundSolver::new(settings, false, false).quality_upper_bound(state);
         dbg!(result);
         result
     }
@@ -731,7 +745,7 @@ mod tests {
     /// Test that the upper-bound solver is monotonic,
     /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
     fn monotonic_fuzz_check(settings: Settings) {
-        let mut solver = QualityUpperBoundSolver::new(settings, false);
+        let mut solver = QualityUpperBoundSolver::new(settings, false, false);
         for _ in 0..10000 {
             let state = random_state(&settings);
             let state_upper_bound = solver.quality_upper_bound(state);

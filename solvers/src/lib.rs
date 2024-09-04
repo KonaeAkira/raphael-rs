@@ -18,10 +18,15 @@ pub mod test_utils {
 
     use crate::MacroSolver;
 
-    pub fn solve(settings: &Settings, backload_progress: bool) -> Option<Vec<Action>> {
+    pub fn solve(
+        settings: &Settings,
+        backload_progress: bool,
+        unsound_branch_pruning: bool,
+    ) -> Option<Vec<Action>> {
         MacroSolver::new(
             *settings,
             backload_progress,
+            unsound_branch_pruning,
             Box::new(|_| {}),
             Box::new(|_| {}),
         )
