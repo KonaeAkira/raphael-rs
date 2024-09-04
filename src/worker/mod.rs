@@ -57,7 +57,7 @@ impl Worker {
         };
 
         let tx = self.tx.clone();
-        let progress_callback = move |progress: f32| {
+        let progress_callback = move |progress: usize| {
             self.send_event(tx.clone(), scope, id, SolverEvent::Progress(progress));
         };
 

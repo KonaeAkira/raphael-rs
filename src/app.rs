@@ -29,7 +29,7 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum SolverEvent {
-    Progress(f32),
+    Progress(usize),
     IntermediateSolution(Vec<Action>),
     FinalSolution(Vec<Action>),
 }
@@ -54,7 +54,7 @@ pub struct MacroSolverApp {
     stats_edit_window_open: bool,
     actions: Vec<Action>,
     solver_pending: bool,
-    solver_progress: f32,
+    solver_progress: usize,
     start_time: Option<Instant>,
     duration: Option<Duration>,
     data_update: Rc<Cell<Option<SolverEvent>>>,
@@ -117,7 +117,7 @@ impl MacroSolverApp {
             stats_edit_window_open: false,
             actions: Vec::new(),
             solver_pending: false,
-            solver_progress: 0.0,
+            solver_progress: 0,
             start_time: None,
             duration: None,
             data_update,
@@ -281,7 +281,7 @@ impl eframe::App for MacroSolverApp {
                         });
                     });
                     ui.add_sized(
-                        [320.0, 730.0],
+                        [320.0, 733.0],
                         MacroView::new(&mut self.actions, &mut self.macro_view_config, self.locale),
                     );
                     // fill remaining horizontal space
@@ -595,7 +595,7 @@ impl MacroSolverApp {
                     if ui.button("Solve").clicked() {
                         self.actions = Vec::new();
                         self.solver_pending = true;
-                        self.solver_progress = 0.0;
+                        self.solver_progress = 0;
                         self.start_time = Some(Instant::now());
                         let mut game_settings = game_data::get_game_settings(
                             self.recipe_config.recipe,
@@ -624,8 +624,19 @@ impl MacroSolverApp {
                     }
                     if self.solver_pending {
                         ui.spinner();
-                        if self.solver_progress != 0.0 {
-                            ui.label(format!("{:.2}%", self.solver_progress * 100.0));
+                        if self.solver_progress == 0 {
+                            ui.label("Populating DP tables");
+                        } else {
+                            // format with thousands separator
+                            let num = self.solver_progress.to_string()
+                                .as_bytes()
+                                .rchunks(3)
+                                .rev()
+                                .map(std::str::from_utf8)
+                                .collect::<Result<Vec<&str>, _>>()
+                                .unwrap()
+                                .join(",");
+                            ui.label(format!("{} nodes visited", num));
                         }
                     } else if let Some(duration) = self.duration {
                         ui.label(format!("Time: {:.3}s", duration.as_secs_f64()));

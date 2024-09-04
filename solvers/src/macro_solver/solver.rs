@@ -24,7 +24,7 @@ struct Solution {
 }
 
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
-type ProgressCallback<'a> = dyn Fn(f32) + 'a;
+type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
 pub struct MacroSolver<'a> {
     settings: Settings,
@@ -105,8 +105,8 @@ impl<'a> MacroSolver<'a> {
         let mut popped = 0;
         while let Some((state, score, backtrack_id)) = search_queue.pop() {
             popped += 1;
-            if popped % (1 << 16) == 0 {
-                (self.progress_callback)(search_queue.progress_estimate());
+            if popped % (1 << 14) == 0 {
+                (self.progress_callback)(popped);
             }
 
             let progress_only = self.is_progress_only_state(state);
@@ -177,7 +177,7 @@ impl<'a> MacroSolver<'a> {
                                     .collect(),
                             });
                             (self.solution_callback)(&solution.as_ref().unwrap().actions);
-                            (self.progress_callback)(search_queue.progress_estimate());
+                            (self.progress_callback)(popped);
                         }
                     }
                 }
