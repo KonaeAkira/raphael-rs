@@ -130,11 +130,9 @@ impl<'a> MacroSolver<'a> {
 
                         let step_lb_hint = score.steps - current_steps - 1;
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                            current_steps
-                                + 1
-                                + self
-                                    .step_lower_bound_solver
-                                    .step_lower_bound_with_hint(state, step_lb_hint)
+                            self.step_lower_bound_solver
+                                .step_lower_bound_with_hint(state, step_lb_hint)
+                                .saturating_add(current_steps + 1)
                         } else {
                             current_steps + 1
                         };

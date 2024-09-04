@@ -41,17 +41,20 @@ impl ReducedState {
             SingleUse::Available => SingleUse::Unavailable,
             SingleUse::Active => SingleUse::Active,
         };
+        let combo = match state.combo {
+            Combo::None => Combo::None,
+            Combo::SynthesisBegin => Combo::SynthesisBegin,
+            // Can't optimize this combo away because there is no replacement for RefinedTouch
+            Combo::BasicTouch => Combo::BasicTouch,
+            // AdvancedTouch replaces ComboAdvancedTouch (no CP cost)
+            Combo::StandardTouch => Combo::None,
+        };
         if progress_only {
             Self {
                 steps_budget,
                 progress_only,
                 durability: state.durability + 5 * state.effects.manipulation() as i8,
-                combo: match state.combo {
-                    Combo::None => Combo::None,
-                    Combo::SynthesisBegin => Combo::SynthesisBegin,
-                    Combo::BasicTouch => Combo::None,
-                    Combo::StandardTouch => Combo::None,
-                },
+                combo,
                 effects: state
                     .effects
                     .with_inner_quiet(0)
@@ -75,14 +78,7 @@ impl ReducedState {
                 steps_budget,
                 progress_only,
                 durability: state.durability + 5 * state.effects.manipulation() as i8,
-                combo: match state.combo {
-                    Combo::None => Combo::None,
-                    Combo::SynthesisBegin => Combo::SynthesisBegin,
-                    // Can't optimize this combo away because there is no replacement for RefinedTouch
-                    Combo::BasicTouch => Combo::BasicTouch,
-                    // AdvancedTouch replaces ComboAdvancedTouch (no CP cost)
-                    Combo::StandardTouch => Combo::None,
-                },
+                combo,
                 effects: state
                     .effects
                     .with_innovation(innovation)

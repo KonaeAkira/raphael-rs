@@ -1,9 +1,20 @@
-use crate::utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue};
-use simulator::{Action, Condition, Settings, SimulationState};
+use crate::{
+    actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+};
+use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
 use super::state::ReducedState;
+
+const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+    .union(QUALITY_ACTIONS)
+    .union(DURABILITY_ACTIONS);
+
+const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
+    .union(DURABILITY_ACTIONS)
+    .remove(Action::DelicateSynthesis);
 
 pub struct StepLowerBoundSolver {
     settings: Settings,
@@ -51,6 +62,12 @@ impl StepLowerBoundSolver {
     }
 
     pub fn step_lower_bound_with_hint(&mut self, state: SimulationState, mut hint: u8) -> u8 {
+        if self.backload_progress
+            && state.progress != 0
+            && state.quality < self.settings.max_quality
+        {
+            return u8::MAX;
+        }
         while self.quality_upper_bound(state, hint) < self.settings.max_quality {
             hint += 1;
         }
@@ -94,7 +111,11 @@ impl StepLowerBoundSolver {
     fn solve_state(&mut self, reduced_state: ReducedState) {
         self.pareto_front_builder.push_empty();
         let full_state = reduced_state.to_state();
-        for action in self.settings.allowed_actions.actions_iter() {
+        let search_actions = match reduced_state.progress_only {
+            false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
+            true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
+        };
+        for action in search_actions.actions_iter() {
             if let Ok(new_full_state) =
                 full_state.use_action(action, Condition::Normal, &self.settings)
             {
