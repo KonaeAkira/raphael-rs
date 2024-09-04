@@ -40,7 +40,7 @@ pub mod test_utils {
         (quality, steps, duration)
     }
 
-    fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
+    pub fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
         let mut state = SimulationState::new(settings);
         for action in actions {
             state = state

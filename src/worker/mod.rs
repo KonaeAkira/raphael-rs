@@ -1,5 +1,6 @@
 use crate::app::{SolverConfig, SolverEvent};
 use simulator::{Action, Settings, SimulationState};
+use solvers::test_utils;
 use std::sync::mpsc::Sender;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -60,17 +61,35 @@ impl Worker {
             self.send_event(tx.clone(), scope, id, SolverEvent::Progress(progress));
         };
 
-        let final_solution = solvers::MacroSolver::new(
-            settings,
-            config.backload_progress,
-            false,
-            Box::new(solution_callback),
-            Box::new(progress_callback),
-        )
-        .solve(SimulationState::new(&settings));
+        let mut solution = if config.minimize_steps {
+            None // skip unsound solver
+        } else {
+            solvers::MacroSolver::new(
+                settings,
+                true,
+                true,
+                Box::new(solution_callback.clone()),
+                Box::new(progress_callback.clone()),
+            )
+            .solve(SimulationState::new(&settings))
+        };
+
+        if solution.is_none()
+            || test_utils::get_quality(&settings, solution.as_ref().unwrap().as_slice())
+                < settings.max_quality
+        {
+            solution = solvers::MacroSolver::new(
+                settings,
+                config.backload_progress,
+                false,
+                Box::new(solution_callback),
+                Box::new(progress_callback),
+            )
+            .solve(SimulationState::new(&settings));
+        }
 
         let tx = self.tx.clone();
-        match final_solution {
+        match solution {
             Some(actions) => {
                 self.send_event(tx.clone(), scope, id, SolverEvent::FinalSolution(actions));
             }
