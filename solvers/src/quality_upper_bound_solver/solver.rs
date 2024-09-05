@@ -1,5 +1,6 @@
 use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    branch_pruning::is_progress_only_state,
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
 use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState, SingleUse};
@@ -80,7 +81,8 @@ impl QualityUpperBoundSolver {
 
         state.durability = i8::MAX;
 
-        let progress_only = self.is_progress_only_state(state);
+        let progress_only =
+            is_progress_only_state(state, self.backload_progress, self.unsound_branch_pruning);
         let reduced_state = ReducedState::from_state(
             state,
             progress_only,
@@ -189,8 +191,12 @@ impl QualityUpperBoundSolver {
         ) {
             let action_progress = new_state.progress;
             let action_quality = new_state.quality;
-            let progress_only =
-                state.data.progress_only() || self.is_progress_only_state(new_state);
+            let progress_only = state.data.progress_only()
+                || is_progress_only_state(
+                    new_state,
+                    self.backload_progress,
+                    self.unsound_branch_pruning,
+                );
             let new_state = ReducedState::from_state(
                 new_state,
                 progress_only,
@@ -223,17 +229,6 @@ impl QualityUpperBoundSolver {
             Action::WasteNot2 => state.data.cp() >= self.waste_not_2_min_cp,
             _ => true,
         }
-    }
-
-    fn is_progress_only_state(&self, state: SimulationState) -> bool {
-        let mut progress_only = false;
-        progress_only |= self.backload_progress && state.progress != 0;
-        if self.unsound_branch_pruning {
-            progress_only |= self.backload_progress && state.effects.veneration() != 0;
-            // only allow increasing Progress after using Byregot's Blessing
-            progress_only |= state.quality != 0 && state.effects.inner_quiet() == 0;
-        }
-        progress_only
     }
 }
 

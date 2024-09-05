@@ -2,6 +2,7 @@ use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
 use super::search_queue::SearchScore;
 use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
+use crate::branch_pruning::{is_progress_only_state, strip_quality_effects};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::utils::NamedTimer;
@@ -87,17 +88,15 @@ impl<'a> MacroSolver<'a> {
             } else {
                 1 // quality dominates the search score, so no need to query the step solver
             };
-            let initial_score =
-                SearchScore::new(quality_upper_bound, 0, step_lower_bound, &self.settings);
+            let initial_score = SearchScore::new(quality_upper_bound, step_lower_bound, 0);
             let quality_lower_bound = fast_lower_bound(
                 state,
                 &self.settings,
                 &mut self.finish_solver,
                 &mut self.quality_upper_bound_solver,
             );
-            let minimum_score =
-                SearchScore::new(quality_lower_bound, u8::MAX, u8::MAX, &self.settings);
-            SearchQueue::new(state, initial_score, minimum_score, self.settings)
+            let minimum_score = SearchScore::new(quality_lower_bound, u8::MAX, u8::MAX);
+            SearchQueue::new(state, initial_score, minimum_score)
         };
 
         let mut solution: Option<Solution> = None;
@@ -109,7 +108,8 @@ impl<'a> MacroSolver<'a> {
                 (self.progress_callback)(popped);
             }
 
-            let progress_only = self.is_progress_only_state(state);
+            let progress_only =
+                is_progress_only_state(state, self.backload_progress, self.unsound_branch_pruning);
             let search_actions = match progress_only {
                 true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
                 false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
@@ -126,10 +126,9 @@ impl<'a> MacroSolver<'a> {
                         }
 
                         search_queue.update_min_score(SearchScore::new(
-                            state.quality,
+                            std::cmp::min(state.quality, self.settings.max_quality),
                             u8::MAX,
                             u8::MAX,
-                            &self.settings,
                         ));
 
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {
@@ -147,23 +146,30 @@ impl<'a> MacroSolver<'a> {
                             current_steps + 1
                         };
 
-                        search_queue.push(
+                        let progress_only = is_progress_only_state(
                             state,
+                            self.backload_progress,
+                            self.unsound_branch_pruning,
+                        );
+                        search_queue.push(
+                            if progress_only {
+                                strip_quality_effects(state)
+                            } else {
+                                state
+                            },
                             SearchScore::new(
                                 std::cmp::min(score.quality, quality_upper_bound),
-                                score.duration + action.time_cost() as u8,
                                 step_lower_bound,
-                                &self.settings,
+                                score.duration + action.time_cost() as u8,
                             ),
                             action,
                             backtrack_id,
                         );
                     } else if state.progress >= self.settings.max_progress {
                         let solution_score = SearchScore::new(
-                            state.quality,
-                            score.duration,
+                            std::cmp::min(state.quality, self.settings.max_quality),
                             current_steps + 1,
-                            &self.settings,
+                            score.duration,
                         );
                         search_queue.update_min_score(solution_score);
                         if solution.is_none()
@@ -190,16 +196,5 @@ impl<'a> MacroSolver<'a> {
         } else {
             None
         }
-    }
-
-    fn is_progress_only_state(&self, state: SimulationState) -> bool {
-        let mut progress_only = false;
-        progress_only |= self.backload_progress && state.progress != 0;
-        if self.unsound_branch_pruning {
-            progress_only |= self.backload_progress && state.effects.veneration() != 0;
-            // only allow increasing Progress after using Byregot's Blessing
-            progress_only |= state.quality != 0 && state.effects.inner_quiet() == 0;
-        }
-        progress_only
     }
 }

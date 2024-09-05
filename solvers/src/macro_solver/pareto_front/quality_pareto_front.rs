@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap;
-use simulator::{Combo, Effects, Settings, SimulationState};
+use simulator::{Combo, Effects, SimulationState};
 
 use super::{Dominate, ParetoFront};
 
@@ -43,21 +43,10 @@ struct Key {
 }
 
 impl Key {
-    pub fn new(state: SimulationState, settings: &Settings) -> Self {
-        let effects = if state.quality >= settings.max_quality {
-            state
-                .effects
-                .with_inner_quiet(0)
-                .with_innovation(0)
-                .with_great_strides(0)
-                .with_guard(0)
-                .with_quick_innovation_used(true)
-        } else {
-            state.effects.with_inner_quiet(0) // iq is included in the pareto value
-        };
+    pub fn new(state: SimulationState) -> Self {
         Self {
             progress: state.progress,
-            effects,
+            effects: state.effects.with_inner_quiet(0), // iq is included in the pareto value
             combo: state.combo,
         }
     }
@@ -69,9 +58,9 @@ pub struct QualityParetoFront {
 }
 
 impl QualityParetoFront {
-    pub fn insert(&mut self, state: SimulationState, settings: &Settings) -> bool {
+    pub fn insert(&mut self, state: SimulationState) -> bool {
         self.buckets
-            .entry(Key::new(state, settings))
+            .entry(Key::new(state))
             .or_default()
             .insert(Value::new(state))
     }

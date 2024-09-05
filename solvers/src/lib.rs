@@ -1,4 +1,5 @@
 mod actions;
+mod branch_pruning;
 mod utils;
 
 mod finish_solver;

@@ -52,7 +52,7 @@ pub fn fast_lower_bound(
                     if quality_upper_bound <= quality_lower_bound {
                         continue;
                     }
-                    if !pareto_set.insert(state, settings) {
+                    if !pareto_set.insert(state) {
                         continue;
                     }
                     search_queue.push(std::cmp::min(score, quality_upper_bound), state);

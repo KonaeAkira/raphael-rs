@@ -1,5 +1,6 @@
 use crate::{
     actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    branch_pruning::is_progress_only_state,
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
 use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
@@ -84,7 +85,8 @@ impl StepLowerBoundSolver {
         let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
-        let progress_only = self.is_progress_only_state(state);
+        let progress_only =
+            is_progress_only_state(state, self.backload_progress, self.unsound_branch_pruning);
         let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
 
         if !self.solved_states.contains_key(&reduced_state) {
@@ -127,8 +129,12 @@ impl StepLowerBoundSolver {
             {
                 let action_progress = new_full_state.progress;
                 let action_quality = new_full_state.quality;
-                let progress_only =
-                    reduced_state.progress_only || self.is_progress_only_state(new_full_state);
+                let progress_only = reduced_state.progress_only
+                    || is_progress_only_state(
+                        new_full_state,
+                        self.backload_progress,
+                        self.unsound_branch_pruning,
+                    );
                 let mut new_reduced_state = ReducedState::from_state(
                     new_full_state,
                     reduced_state.steps_budget - 1,
@@ -163,17 +169,6 @@ impl StepLowerBoundSolver {
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(reduced_state, id);
-    }
-
-    fn is_progress_only_state(&self, state: SimulationState) -> bool {
-        let mut progress_only = false;
-        progress_only |= self.backload_progress && state.progress != 0;
-        if self.unsound_branch_pruning {
-            progress_only |= self.backload_progress && state.effects.veneration() != 0;
-            // only allow increasing Progress after using Byregot's Blessing
-            progress_only |= state.quality != 0 && state.effects.inner_quiet() == 0;
-        }
-        progress_only
     }
 }
 

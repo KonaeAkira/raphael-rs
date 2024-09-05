@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap;
-use simulator::{Combo, Settings, SimulationState};
+use simulator::{Combo, SimulationState};
 
 use super::{Dominate, ParetoFront};
 
@@ -82,7 +82,7 @@ pub struct EffectParetoFront {
 }
 
 impl EffectParetoFront {
-    pub fn insert(&mut self, state: SimulationState, _settings: &Settings) -> bool {
+    pub fn insert(&mut self, state: SimulationState) -> bool {
         self.buckets
             .entry(Key::new(state))
             .or_default()

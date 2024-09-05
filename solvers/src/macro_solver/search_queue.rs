@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use simulator::{Action, Settings, SimulationState};
+use simulator::{Action, SimulationState};
 
 use crate::utils::Backtracking;
 
@@ -14,9 +14,9 @@ pub struct SearchScore {
 }
 
 impl SearchScore {
-    pub fn new(quality: u16, duration: u8, steps: u8, settings: &Settings) -> Self {
+    pub fn new(quality: u16, steps: u8, duration: u8) -> Self {
         Self {
-            quality: std::cmp::min(settings.max_quality, quality),
+            quality,
             steps,
             duration,
         }
@@ -46,7 +46,6 @@ struct SearchNode {
 }
 
 pub struct SearchQueue {
-    settings: Settings,
     quality_pareto_front: QualityParetoFront,
     effect_pareto_front: EffectParetoFront,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
@@ -61,10 +60,8 @@ impl SearchQueue {
         initial_state: SimulationState,
         initial_score: SearchScore,
         minimum_score: SearchScore,
-        settings: Settings,
     ) -> Self {
         Self {
-            settings,
             quality_pareto_front: Default::default(),
             effect_pareto_front: Default::default(),
             backtracking: Backtracking::new(),
@@ -119,8 +116,8 @@ impl SearchQueue {
                 self.current_nodes = bucket
                     .into_iter()
                     .filter(|node| {
-                        self.quality_pareto_front.insert(node.state, &self.settings)
-                            && self.effect_pareto_front.insert(node.state, &self.settings)
+                        self.quality_pareto_front.insert(node.state)
+                            && self.effect_pareto_front.insert(node.state)
                     })
                     .map(|node| {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
