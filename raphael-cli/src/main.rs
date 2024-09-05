@@ -42,6 +42,14 @@ struct Args {
     /// Enable adversarial simulator (ensure 100% reliability)
     #[arg(long, default_value_t = false)]
     adversarial: bool,
+
+    /// Only use Progress-increasing actions at the end of the macro
+    #[arg(long, default_value_t = false)]
+    backload_progress: bool,
+
+    /// Enable unsound branch pruning
+    #[arg(long, default_value_t = false)]
+    unsound: bool,
 }
 
 fn main() {
@@ -65,7 +73,13 @@ fn main() {
     let settings = get_game_settings(*recipe, crafter_stats, None, None, args.adversarial);
     let state = SimulationState::new(&settings);
 
-    let mut solver = MacroSolver::new(settings, false, false, Box::new(|_| {}), Box::new(|_| {}));
+    let mut solver = MacroSolver::new(
+        settings,
+        args.backload_progress,
+        args.unsound,
+        Box::new(|_| {}),
+        Box::new(|_| {}),
+    );
     let actions = solver.solve(state).expect("Failed to solve");
 
     let final_state = SimulationState::from_macro(&settings, &actions).unwrap();
