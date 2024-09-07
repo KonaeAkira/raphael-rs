@@ -192,7 +192,7 @@ impl StepLowerBoundSolver {
             if action == Action::MasterMend {
                 new_reduced_state.durability += self.bonus_durability_restore;
             }
-            if new_reduced_state.steps_budget != 0 && !new_full_state.is_final(&self.settings) {
+            if new_reduced_state.steps_budget != 0 && new_reduced_state.durability > 0 {
                 match self.solved_states.get(&new_reduced_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
                     None => self.solve_state(new_reduced_state),
