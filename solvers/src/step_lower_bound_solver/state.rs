@@ -10,6 +10,13 @@ pub struct ReducedState {
 }
 
 impl ReducedState {
+    pub fn to_non_combo(self) -> Self {
+        Self {
+            combo: Combo::None,
+            ..self
+        }
+    }
+
     pub fn optimize_action_mask(mut action_mask: ActionMask) -> ActionMask {
         action_mask = action_mask.remove(Action::TrainedPerfection);
         // No CP cost so Observe is useless

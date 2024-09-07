@@ -3,7 +3,7 @@ use crate::{
     branch_pruning::is_progress_only_state,
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
-use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -89,12 +89,14 @@ impl StepLowerBoundSolver {
             is_progress_only_state(state, self.backload_progress, self.unsound_branch_pruning);
         let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
 
-        if !self.solved_states.contains_key(&reduced_state) {
-            self.solve_state(reduced_state);
-            self.pareto_front_builder.clear();
-        }
-        let id = *self.solved_states.get(&reduced_state).unwrap();
-        let pareto_front = self.pareto_front_builder.retrieve(id);
+        let pareto_front = match self.solved_states.get(&reduced_state) {
+            Some(id) => self.pareto_front_builder.retrieve(*id),
+            None => {
+                self.pareto_front_builder.clear();
+                self.solve_state(reduced_state);
+                self.pareto_front_builder.peek().unwrap()
+            }
+        };
 
         match pareto_front.last() {
             Some(element) => {
@@ -117,49 +119,21 @@ impl StepLowerBoundSolver {
     }
 
     fn solve_state(&mut self, reduced_state: ReducedState) {
+        if reduced_state.combo == Combo::None {
+            self.solve_normal_state(reduced_state);
+        } else {
+            self.solve_combo_state(reduced_state)
+        }
+    }
+
+    fn solve_normal_state(&mut self, reduced_state: ReducedState) {
         self.pareto_front_builder.push_empty();
-        let full_state = reduced_state.to_state();
         let search_actions = match reduced_state.progress_only {
             false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
             true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
         };
         for action in search_actions.actions_iter() {
-            if let Ok(new_full_state) =
-                full_state.use_action(action, Condition::Normal, &self.settings)
-            {
-                let action_progress = new_full_state.progress;
-                let action_quality = new_full_state.quality;
-                let progress_only = reduced_state.progress_only
-                    || is_progress_only_state(
-                        new_full_state,
-                        self.backload_progress,
-                        self.unsound_branch_pruning,
-                    );
-                let mut new_reduced_state = ReducedState::from_state(
-                    new_full_state,
-                    reduced_state.steps_budget - 1,
-                    progress_only,
-                );
-                if action == Action::MasterMend {
-                    new_reduced_state.durability += self.bonus_durability_restore;
-                }
-                if new_reduced_state.steps_budget != 0 && !new_full_state.is_final(&self.settings) {
-                    match self.solved_states.get(&new_reduced_state) {
-                        Some(id) => self.pareto_front_builder.push_from_id(*id),
-                        None => self.solve_state(new_reduced_state),
-                    }
-                    self.pareto_front_builder.map(move |value| {
-                        value.first += action_progress;
-                        value.second += action_quality;
-                    });
-                    self.pareto_front_builder.merge();
-                } else if action_progress != 0 {
-                    // last action must be a progress increase
-                    self.pareto_front_builder
-                        .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
-                    self.pareto_front_builder.merge();
-                }
-            }
+            self.build_child_front(reduced_state, action);
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -169,6 +143,72 @@ impl StepLowerBoundSolver {
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(reduced_state, id);
+    }
+
+    fn solve_combo_state(&mut self, reduced_state: ReducedState) {
+        match self.solved_states.get(&reduced_state.to_non_combo()) {
+            Some(id) => self.pareto_front_builder.push_from_id(*id),
+            None => self.solve_normal_state(reduced_state.to_non_combo()),
+        }
+        match reduced_state.combo {
+            Combo::None => unreachable!(),
+            Combo::SynthesisBegin => {
+                for action in [Action::MuscleMemory, Action::Reflect, Action::TrainedEye] {
+                    if self.settings.allowed_actions.has(action) {
+                        self.build_child_front(reduced_state, action);
+                    }
+                }
+            }
+            Combo::BasicTouch => {
+                if !reduced_state.progress_only
+                    && self.settings.allowed_actions.has(Action::ComboRefinedTouch)
+                {
+                    self.build_child_front(reduced_state, Action::ComboRefinedTouch);
+                }
+            }
+            Combo::StandardTouch => unreachable!(),
+        }
+    }
+
+    fn build_child_front(&mut self, reduced_state: ReducedState, action: Action) {
+        if let Ok(new_full_state) =
+            reduced_state
+                .to_state()
+                .use_action(action, Condition::Normal, &self.settings)
+        {
+            let action_progress = new_full_state.progress;
+            let action_quality = new_full_state.quality;
+            let progress_only = reduced_state.progress_only
+                || is_progress_only_state(
+                    new_full_state,
+                    self.backload_progress,
+                    self.unsound_branch_pruning,
+                );
+            let mut new_reduced_state = ReducedState::from_state(
+                new_full_state,
+                reduced_state.steps_budget - 1,
+                progress_only,
+            );
+            if action == Action::MasterMend {
+                new_reduced_state.durability += self.bonus_durability_restore;
+            }
+            if new_reduced_state.steps_budget != 0 && !new_full_state.is_final(&self.settings) {
+                match self.solved_states.get(&new_reduced_state) {
+                    Some(id) => self.pareto_front_builder.push_from_id(*id),
+                    None => self.solve_state(new_reduced_state),
+                }
+                self.pareto_front_builder.map(move |value| {
+                    value.first += action_progress;
+                    value.second += action_quality;
+                });
+                self.pareto_front_builder.merge();
+            } else if action_progress != 0 {
+                // last action must be a progress increase
+                self.pareto_front_builder
+                    .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
+                self.pareto_front_builder.merge();
+            }
+        }
     }
 }
 
