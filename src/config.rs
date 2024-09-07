@@ -17,6 +17,8 @@ pub struct RecipeConfiguration {
 pub struct CrafterConfig {
     pub selected_job: u8,
     pub crafter_stats: [CrafterStats; 8],
+    #[serde(default)]
+    pub specialists: [bool; 8],
 }
 
 impl CrafterConfig {
@@ -27,6 +29,14 @@ impl CrafterConfig {
     pub fn active_stats_mut(&mut self) -> &mut CrafterStats {
         &mut self.crafter_stats[self.selected_job as usize]
     }
+
+    pub fn active_specialist_status(&self) -> &bool {
+        &self.specialists[self.selected_job as usize]
+    }
+
+    pub fn active_specialist_status_mut(&mut self) -> &mut bool {
+        &mut self.specialists[self.selected_job as usize]
+    }
 }
 
 impl Default for CrafterConfig {
@@ -34,6 +44,7 @@ impl Default for CrafterConfig {
         Self {
             selected_job: 1,
             crafter_stats: Default::default(),
+            specialists: Default::default(),
         }
     }
 }

@@ -195,9 +195,14 @@ impl eframe::App for MacroSolverApp {
             });
         });
 
+        let mut crafter_stats = self.crafter_config.active_stats().clone();
+        if !*self.crafter_config.active_specialist_status() {
+            crafter_stats.heart_and_soul = false;
+            crafter_stats.quick_innovation = false;
+        }
         let game_settings = game_data::get_game_settings(
             self.recipe_config.recipe,
-            *self.crafter_config.active_stats(),
+            crafter_stats,
             self.selected_food,
             self.selected_potion,
             self.solver_config.adversarial,
@@ -371,7 +376,28 @@ impl MacroSolverApp {
             });
             ui.separator();
 
-            ui.label(egui::RichText::new("Crafter stats").strong());
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new("Crafter stats").strong());
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if ui
+                            .checkbox(
+                                self.crafter_config.active_specialist_status_mut(),
+                                "Specialist",
+                            )
+                            .changed()
+                        {
+                            let change = match self.crafter_config.active_specialist_status() {
+                                true => (20, 15),
+                                false => (-20, -15),
+                            };
+
+                            let stats = self.crafter_config.active_stats_mut();
+                            stats.craftsmanship = stats.craftsmanship.saturating_add_signed(change.0);
+                            stats.control = stats.control.saturating_add_signed(change.0);
+                            stats.cp = stats.cp.saturating_add_signed(change.1);
+                        }
+                });
+            });
             ui.horizontal(|ui| {
                 ui.label("Craftsmanship:");
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -468,20 +494,21 @@ impl MacroSolverApp {
                     egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::Manipulation, self.locale))),
                 );
             }
-            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement() {
+            let is_specialist: bool = *self.crafter_config.active_specialist_status();
+            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement() && is_specialist {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().heart_and_soul, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))));
             } else {
                 ui.add_enabled(
                     false,
-                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))),
+                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))).indeterminate(!is_specialist),
                 );
             }
-            if self.crafter_config.active_stats().level >= Action::QuickInnovation.level_requirement() {
+            if self.crafter_config.active_stats().level >= Action::QuickInnovation.level_requirement() && is_specialist {
                 ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().quick_innovation, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))));
             } else {
                 ui.add_enabled(
                     false,
-                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))),
+                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))).indeterminate(!is_specialist),
                 );
             }
             ui.separator();
@@ -597,10 +624,14 @@ impl MacroSolverApp {
                         self.solver_pending = true;
                         self.solver_progress = 0;
                         self.start_time = Some(Instant::now());
+                        let mut crafter_stats = self.crafter_config.active_stats().clone();
+                        if !*self.crafter_config.active_specialist_status() {
+                            crafter_stats.heart_and_soul = false;
+                            crafter_stats.quick_innovation = false;
+                        }
                         let mut game_settings = game_data::get_game_settings(
                             self.recipe_config.recipe,
-                            self.crafter_config.crafter_stats
-                                [self.crafter_config.selected_job as usize],
+                            crafter_stats,
                             self.selected_food,
                             self.selected_potion,
                             self.solver_config.adversarial,
