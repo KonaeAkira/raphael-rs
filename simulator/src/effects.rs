@@ -63,11 +63,7 @@ impl Effects {
             } else {
                 SingleUse::Unavailable
             })
-            .with_quick_innovation_used(if settings.allowed_actions.has(Action::QuickInnovation) {
-                false
-            } else {
-                true
-            })
+            .with_quick_innovation_used(!settings.allowed_actions.has(Action::QuickInnovation))
     }
 
     pub fn tick_down(&mut self) {

@@ -78,6 +78,7 @@ impl Worker {
             || test_utils::get_quality(&settings, solution.as_ref().unwrap().as_slice())
                 < settings.max_quality
         {
+            progress_callback(0); // reset solver progress
             solution = solvers::MacroSolver::new(
                 settings,
                 config.backload_progress,
