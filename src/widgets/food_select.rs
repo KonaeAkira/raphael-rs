@@ -3,7 +3,9 @@ use egui::{
     Align, Id, Layout, Widget,
 };
 use egui_extras::Column;
-use game_data::{find_meals, get_item_name, Consumable, CrafterStats, Locale};
+use game_data::{find_meals, Consumable, CrafterStats, Locale};
+
+use super::ItemNameLabel;
 
 #[derive(Default)]
 struct FoodFinder {}
@@ -42,10 +44,14 @@ impl<'a> Widget for FoodSelect<'a> {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new("Food").strong());
-                    ui.label(match self.selected_consumable {
-                        Some(item) => get_item_name(item.item_id, item.hq, self.locale),
-                        None => "None".to_string(),
-                    });
+                    match self.selected_consumable {
+                        None => {
+                            ui.label("None".to_string());
+                        }
+                        Some(item) => {
+                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
+                        }
+                    }
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
                             .add_enabled(
@@ -109,7 +115,7 @@ impl<'a> Widget for FoodSelect<'a> {
                             }
                         });
                         row.col(|ui| {
-                            ui.label(get_item_name(item.item_id, item.hq, self.locale));
+                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
                         });
                         row.col(|ui| {
                             ui.label(item.effect_string(
