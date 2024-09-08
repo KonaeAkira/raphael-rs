@@ -95,31 +95,56 @@ impl<'a> Widget for Simulator<'a> {
                         });
                     });
                     ui.separator();
+                    let mut progress_bar_rect = egui::Rect {
+                        min: egui::Pos2 { x: 0.0, y: 0.0 },
+                        max: egui::Pos2 { x: 0.0, y: 0.0 },
+                    };
                     ui.horizontal(|ui| {
                         ui.label("Progress:");
-                        let mut text = format!("{} / {}", progress, max_progress);
+                        let mut text = format!(
+                            "{: >width$} / {}",
+                            progress,
+                            max_progress,
+                            width = max_progress
+                                .checked_ilog10()
+                                .unwrap_or_default()
+                                .saturating_add(1) as usize
+                        );
                         if progress >= max_progress {
                             text.push_str(&format!("  (+{} overflow)", progress - max_progress));
                         }
-                        ui.add(
-                            egui::ProgressBar::new(progress as f32 / max_progress as f32)
-                                .text(text)
-                                .rounding(Rounding::ZERO),
-                        )
-                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                        progress_bar_rect = ui
+                            .add(
+                                egui::ProgressBar::new(progress as f32 / max_progress as f32)
+                                    .text(text)
+                                    .rounding(Rounding::ZERO),
+                            )
+                            .on_hover_text_at_pointer(&prog_qual_dbg_text)
+                            .rect;
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
-                        let mut text = format!("{} / {}", quality, max_quality);
+                        let mut text = format!(
+                            "{: >width$} / {}",
+                            quality,
+                            max_quality,
+                            width = max_quality
+                                .checked_ilog10()
+                                .unwrap_or_default()
+                                .saturating_add(1) as usize
+                        );
                         if quality >= max_quality {
                             text.push_str(&format!("  (+{} overflow)", quality - max_quality));
                         }
-                        ui.add(
-                            egui::ProgressBar::new(quality as f32 / max_quality as f32)
-                                .text(text)
-                                .rounding(Rounding::ZERO),
-                        )
-                        .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.add_sized(
+                                progress_bar_rect.size(),
+                                egui::ProgressBar::new(quality as f32 / max_quality as f32)
+                                    .text(text)
+                                    .rounding(Rounding::ZERO),
+                            )
+                            .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                        });
                     });
                     ui.horizontal(|ui| {
                         ui.label("Durability:");
@@ -127,7 +152,7 @@ impl<'a> Widget for Simulator<'a> {
                         let durability = game_state.durability;
                         ui.add(
                             egui::ProgressBar::new(durability as f32 / max_durability as f32)
-                                .text(format!("{} / {}", durability, max_durability))
+                                .text(format!("{: >2} / {}", durability, max_durability))
                                 .rounding(Rounding::ZERO)
                                 .desired_width(120.0),
                         );
@@ -136,7 +161,16 @@ impl<'a> Widget for Simulator<'a> {
                         let cp = game_state.cp;
                         ui.add(
                             egui::ProgressBar::new(cp as f32 / max_cp as f32)
-                                .text(format!("{} / {}", cp, max_cp))
+                                .text(format!(
+                                    "{: >width$} / {}",
+                                    cp,
+                                    max_cp,
+                                    width = max_cp
+                                        .checked_ilog10()
+                                        .unwrap_or_default()
+                                        .saturating_add(1)
+                                        as usize
+                                ))
                                 .rounding(Rounding::ZERO)
                                 .desired_width(120.0),
                         );
