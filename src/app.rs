@@ -20,6 +20,11 @@ use crate::config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfigura
 use crate::widgets::*;
 use crate::worker::BridgeType;
 
+#[cfg(not(target_arch = "wasm32"))]
+const EXPERIMENTAL_FEATURE_WARNING_TEXT: &'static str = "⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.";
+#[cfg(target_arch = "wasm32")]
+const EXPERIMENTAL_FEATURE_WARNING_TEXT: &'static str = "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.";
+
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
         Some(storage) => eframe::get_value(storage, key).unwrap_or(default),
@@ -568,7 +573,7 @@ impl MacroSolverApp {
             });
             if self.solver_config.adversarial {
                 ui.label(
-                    egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
+                    egui::RichText::new(EXPERIMENTAL_FEATURE_WARNING_TEXT)
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
@@ -583,7 +588,7 @@ impl MacroSolverApp {
             });
             if self.solver_config.minimize_steps {
                 ui.label(
-                    egui::RichText::new("⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.")
+                    egui::RichText::new(EXPERIMENTAL_FEATURE_WARNING_TEXT)
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
