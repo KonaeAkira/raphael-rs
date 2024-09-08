@@ -48,6 +48,58 @@ impl<'a> Widget for StatsEdit<'a> {
                     ui.checkbox(&mut stats.quick_innovation, "Quick Innovation");
                 });
             }
+
+            ui.separator().rect.width();
+            ui.horizontal(|ui| {
+                let button_text = "🗐 Copy Crafter Config";
+                let button_response;
+                if ui
+                    .ctx()
+                    .animate_bool_with_time(egui::Id::new(button_text), false, 0.25)
+                    == 0.0
+                {
+                    button_response = ui.button(button_text);
+                } else {
+                    button_response = ui.add_enabled(false, egui::Button::new(button_text));
+                }
+                if button_response.clicked() {
+                    ui.output_mut(|output| {
+                        output.copied_text = serde_json::to_string(self.crafter_config).unwrap()
+                    });
+                    ui.ctx()
+                        .animate_bool_with_time(egui::Id::new(button_text), true, 0.0);
+                }
+
+                ui.add_space(button_response.rect.width() * 0.5);
+                let selected_job = self.crafter_config.selected_job;
+                let hint_text = "📋 Paste Config here to Load";
+                let input_string = &mut String::new();
+                let input_response;
+                if ui
+                    .ctx()
+                    .animate_bool_with_time(egui::Id::new(hint_text), false, 0.25)
+                    == 0.0
+                {
+                    input_response =
+                        ui.add(egui::TextEdit::singleline(input_string).hint_text(hint_text));
+                } else {
+                    input_response = ui.add_enabled(
+                        false,
+                        egui::TextEdit::singleline(input_string).hint_text(hint_text),
+                    );
+                }
+                if input_response.changed() {
+                    match serde_json::from_str(&input_string) {
+                        Ok(crafter_config) => {
+                            *self.crafter_config = crafter_config;
+                            self.crafter_config.selected_job = selected_job;
+                            ui.ctx()
+                                .animate_bool_with_time(egui::Id::new(hint_text), true, 0.0);
+                        }
+                        Err(_) => {}
+                    }
+                }
+            });
         })
         .response
     }
