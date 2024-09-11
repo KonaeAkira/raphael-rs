@@ -10,9 +10,7 @@ use std::time::Instant;
 use web_time::Instant;
 
 use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Id, Layout, TextStyle};
-use game_data::{
-    action_name, get_initial_quality, get_item_name, get_job_name, Consumable, Locale,
-};
+use game_data::{action_name, get_initial_quality, get_job_name, Consumable, Locale};
 
 use simulator::Action;
 
@@ -460,8 +458,8 @@ impl MacroSolverApp {
                         if item.can_be_hq {
                             has_hq_ingredient = true;
                             ui.horizontal(|ui| {
-                                ui.label(get_item_name(ingredient.item_id, false, self.locale));
-                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
                                     let mut max_placeholder = ingredient.amount;
                                     ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
                                     ui.monospace("/");

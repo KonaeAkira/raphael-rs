@@ -4,11 +4,12 @@ use egui::{
 };
 use egui_extras::Column;
 use game_data::{
-    find_recipes, get_game_settings, get_item_name, get_job_name, Consumable, Ingredient, Locale,
-    RLVLS,
+    find_recipes, get_game_settings, get_job_name, Consumable, Ingredient, Locale, RLVLS,
 };
 
 use crate::config::{CrafterConfig, QualitySource, RecipeConfiguration};
+
+use super::ItemNameLabel;
 
 #[derive(Default)]
 struct RecipeFinder {}
@@ -101,7 +102,7 @@ impl<'a> RecipeSelect<'a> {
                     ui.label(get_job_name(recipe.job_id, self.locale));
                 });
                 row.col(|ui| {
-                    ui.label(get_item_name(recipe.item_id, false, self.locale));
+                    ui.add(ItemNameLabel::new(recipe.item_id, false, self.locale));
                 });
             });
         });
@@ -214,11 +215,11 @@ impl<'a> Widget for RecipeSelect<'a> {
 
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new("Recipe").strong());
-                    ui.label(egui::RichText::new(get_item_name(
+                    ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
                         false,
                         self.locale,
-                    )));
+                    ));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui.checkbox(&mut custom_recipe, "Custom Recipe").changed() {
                             self.recipe_config.quality_source = match custom_recipe {

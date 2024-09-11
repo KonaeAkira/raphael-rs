@@ -18,3 +18,6 @@ pub use stats_edit::StatsEdit;
 
 mod help_text;
 pub use help_text::HelpText;
+
+mod item_name_label;
+pub use item_name_label::ItemNameLabel;
