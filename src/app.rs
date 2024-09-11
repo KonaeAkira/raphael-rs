@@ -47,6 +47,11 @@ pub struct SolverConfig {
     pub minimize_steps: bool,
 }
 
+pub struct SolverUpdates {
+    pub progress_update: Cell<Option<SolverEvent>>,
+    pub solution_update: Cell<Option<SolverEvent>>,
+}
+
 pub struct MacroSolverApp {
     locale: Locale,
     recipe_config: RecipeConfiguration,
@@ -62,7 +67,7 @@ pub struct MacroSolverApp {
     solver_progress: usize,
     start_time: Option<Instant>,
     duration: Option<Duration>,
-    data_update: Rc<Cell<Option<SolverEvent>>>,
+    data_update: Rc<SolverUpdates>,
     bridge: BridgeType,
 }
 
@@ -70,14 +75,17 @@ impl MacroSolverApp {
     #[cfg(target_arch = "wasm32")]
     fn initialize_bridge(
         cc: &eframe::CreationContext<'_>,
-        data_update: &Rc<Cell<Option<SolverEvent>>>,
+        data_update: &Rc<SolverUpdates>,
     ) -> BridgeType {
         let ctx = cc.egui_ctx.clone();
         let sender = data_update.clone();
 
         <crate::worker::Worker as gloo_worker::Spawnable>::spawner()
             .callback(move |response| {
-                sender.set(Some(response));
+                match response {
+                    SolverEvent::Progress(_) => sender.progress_update.set(Some(response)),
+                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => sender.solution_update.set(Some(response)),
+                }
                 ctx.request_repaint();
             })
             .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
@@ -86,14 +94,14 @@ impl MacroSolverApp {
     #[cfg(not(target_arch = "wasm32"))]
     fn initialize_bridge(
         _cc: &eframe::CreationContext<'_>,
-        _data_cell: &Rc<Cell<Option<SolverEvent>>>,
+        _data_cell: &Rc<SolverUpdates>,
     ) -> BridgeType {
         BridgeType::new()
     }
 
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let data_update = Rc::new(Cell::new(None));
+        let data_update = Rc::new(SolverUpdates {progress_update: Cell::new(None), solution_update: Cell::new(None) });
         let bridge = Self::initialize_bridge(cc, &data_update);
 
         cc.egui_ctx.set_pixels_per_point(1.2);
@@ -330,14 +338,27 @@ impl MacroSolverApp {
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(bridge_rx) = &self.bridge.rx {
             if let Ok(update) = bridge_rx.try_recv() {
-                self.data_update.set(Some(update));
+                match update {
+                    SolverEvent::Progress(_) => self.data_update.progress_update.set(Some(update)),
+                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => self.data_update.solution_update.set(Some(update)),
+                }
             }
         }
 
-        if let Some(update) = self.data_update.take() {
+        if let Some(update) = self.data_update.progress_update.take() {
             match update {
                 SolverEvent::Progress(progress) => {
                     self.solver_progress = progress;
+                }
+                SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
+                    dbg!(update);
+                }
+            }
+        }
+        if let Some(update) = self.data_update.solution_update.take() {
+            match update {
+                SolverEvent::Progress(_) => {
+                    dbg!(update);
                 }
                 SolverEvent::IntermediateSolution(actions) => {
                     self.actions = actions;
