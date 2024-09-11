@@ -64,7 +64,7 @@ impl<'a> Widget for StatsEdit<'a> {
                 }
                 if button_response.clicked() {
                     ui.output_mut(|output| {
-                        output.copied_text = serde_json::to_string(self.crafter_config).unwrap()
+                        output.copied_text = ron::to_string(self.crafter_config).unwrap()
                     });
                     ui.ctx()
                         .animate_bool_with_time(egui::Id::new(button_text), true, 0.0);
@@ -89,7 +89,7 @@ impl<'a> Widget for StatsEdit<'a> {
                     );
                 }
                 if input_response.changed() {
-                    match serde_json::from_str(&input_string) {
+                    match ron::from_str(&input_string) {
                         Ok(crafter_config) => {
                             *self.crafter_config = crafter_config;
                             self.crafter_config.selected_job = selected_job;
