@@ -9,7 +9,9 @@ use std::time::Instant;
 #[cfg(target_arch = "wasm32")]
 use web_time::Instant;
 
-use egui::{Align, CursorIcon, FontData, FontDefinitions, FontFamily, Id, Layout, TextStyle};
+use egui::{
+    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Id, Layout, TextStyle, Visuals,
+};
 use game_data::{action_name, get_initial_quality, get_job_name, Consumable, Locale};
 
 use simulator::Action;
@@ -107,6 +109,16 @@ impl MacroSolverApp {
         });
         let bridge = Self::initialize_bridge(cc, &data_update);
 
+        let mut dark_mode = true;
+        cc.egui_ctx.data_mut(|data| {
+            dark_mode = *data.get_persisted_mut_or(Id::new("DARK_MODE"), true);
+        });
+        if dark_mode {
+            cc.egui_ctx.set_visuals(Visuals::dark());
+        } else {
+            cc.egui_ctx.set_visuals(Visuals::light());
+        }
+
         cc.egui_ctx.set_pixels_per_point(1.2);
         cc.egui_ctx.style_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
@@ -177,7 +189,14 @@ impl eframe::App for MacroSolverApp {
                         );
                     });
 
-                egui::widgets::global_dark_light_mode_buttons(ui);
+                let mut visuals = ctx.style().visuals.clone();
+                ui.selectable_value(&mut visuals, Visuals::light(), "☀ Light");
+                ui.selectable_value(&mut visuals, Visuals::dark(), "🌙 Dark");
+                ctx.data_mut(|data| {
+                    *data.get_persisted_mut_or_default(Id::new("DARK_MODE")) = visuals.dark_mode;
+                });
+                ctx.set_visuals(visuals);
+
                 ui.add(
                     egui::Hyperlink::from_label_and_url(
                         egui::RichText::new(format!(
