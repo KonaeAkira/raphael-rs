@@ -82,7 +82,9 @@ impl MacroSolverApp {
             .callback(move |response| {
                 match response {
                     SolverEvent::Progress(_) => sender.progress_update.set(Some(response)),
-                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => sender.solution_update.set(Some(response)),
+                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
+                        sender.solution_update.set(Some(response))
+                    }
                 }
                 ctx.request_repaint();
             })
@@ -99,7 +101,10 @@ impl MacroSolverApp {
 
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let data_update = Rc::new(SolverUpdates {progress_update: Cell::new(None), solution_update: Cell::new(None) });
+        let data_update = Rc::new(SolverUpdates {
+            progress_update: Cell::new(None),
+            solution_update: Cell::new(None),
+        });
         let bridge = Self::initialize_bridge(cc, &data_update);
 
         cc.egui_ctx.set_pixels_per_point(1.2);
@@ -338,7 +343,9 @@ impl MacroSolverApp {
             if let Ok(update) = bridge_rx.try_recv() {
                 match update {
                     SolverEvent::Progress(_) => self.data_update.progress_update.set(Some(update)),
-                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => self.data_update.solution_update.set(Some(update)),
+                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
+                        self.data_update.solution_update.set(Some(update))
+                    }
                 }
             }
         }
@@ -438,7 +445,7 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().cp).clamp_range(0..=9999));
+                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().cp).clamp_range(0..=999));
                 });
             });
             ui.horizontal(|ui| {

@@ -101,15 +101,7 @@ impl<'a> Widget for Simulator<'a> {
                     };
                     ui.horizontal(|ui| {
                         ui.label("Progress:");
-                        let mut text = format!(
-                            "{: >width$} / {}",
-                            progress,
-                            max_progress,
-                            width = max_progress
-                                .checked_ilog10()
-                                .unwrap_or_default()
-                                .saturating_add(1) as usize
-                        );
+                        let mut text = format!("{: >5} / {}", progress, max_progress);
                         if progress >= max_progress {
                             text.push_str(&format!("  (+{} overflow)", progress - max_progress));
                         }
@@ -124,15 +116,7 @@ impl<'a> Widget for Simulator<'a> {
                     });
                     ui.horizontal(|ui| {
                         ui.label("Quality:");
-                        let mut text = format!(
-                            "{: >width$} / {}",
-                            quality,
-                            max_quality,
-                            width = max_quality
-                                .checked_ilog10()
-                                .unwrap_or_default()
-                                .saturating_add(1) as usize
-                        );
+                        let mut text = format!("{: >5} / {}", quality, max_quality);
                         if quality >= max_quality {
                             text.push_str(&format!("  (+{} overflow)", quality - max_quality));
                         }
@@ -161,16 +145,7 @@ impl<'a> Widget for Simulator<'a> {
                         let cp = game_state.cp;
                         ui.add(
                             egui::ProgressBar::new(cp as f32 / max_cp as f32)
-                                .text(format!(
-                                    "{: >width$} / {}",
-                                    cp,
-                                    max_cp,
-                                    width = max_cp
-                                        .checked_ilog10()
-                                        .unwrap_or_default()
-                                        .saturating_add(1)
-                                        as usize
-                                ))
+                                .text(format!("{: >3} / {}", cp, max_cp))
                                 .rounding(Rounding::ZERO)
                                 .desired_width(120.0),
                         );

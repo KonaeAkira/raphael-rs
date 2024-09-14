@@ -34,11 +34,11 @@ impl<'a> Widget for StatsEdit<'a> {
                 let stats = &mut self.crafter_config.crafter_stats[job_id as usize];
                 ui.horizontal(|ui| {
                     ui.label("Craftsmanship:");
-                    ui.add(egui::DragValue::new(&mut stats.craftsmanship));
+                    ui.add(egui::DragValue::new(&mut stats.craftsmanship).clamp_range(1..=9999));
                     ui.label("Control:");
-                    ui.add(egui::DragValue::new(&mut stats.control));
+                    ui.add(egui::DragValue::new(&mut stats.control).clamp_range(1..=9999));
                     ui.label("CP:");
-                    ui.add(egui::DragValue::new(&mut stats.cp));
+                    ui.add(egui::DragValue::new(&mut stats.cp).clamp_range(1..=999));
                     ui.label("Level:");
                     ui.add(egui::DragValue::new(&mut stats.level).clamp_range(1..=100));
                 });
