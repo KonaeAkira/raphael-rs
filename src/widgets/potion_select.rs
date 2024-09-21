@@ -43,10 +43,10 @@ impl<'a> Widget for PotionSelect<'a> {
         ui.group(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("Potion").strong());
+                    ui.label(egui::RichText::new(t!("label.potion")).strong());
                     match self.selected_consumable {
                         None => {
-                            ui.label("None".to_string());
+                            ui.label(t!("label.none"));
                         }
                         Some(item) => {
                             ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
@@ -56,7 +56,7 @@ impl<'a> Widget for PotionSelect<'a> {
                         if ui
                             .add_enabled(
                                 self.selected_consumable.is_some(),
-                                egui::Button::new("Clear"),
+                                egui::Button::new(t!("label.clear")),
                             )
                             .clicked()
                         {
@@ -76,7 +76,7 @@ impl<'a> Widget for PotionSelect<'a> {
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label("Search:");
+                    ui.label(format!("{}:", t!("label.search")));
                     if ui.text_edit_singleline(&mut search_text).changed() {
                         search_text = search_text.replace("\0", "");
                     }
@@ -110,7 +110,7 @@ impl<'a> Widget for PotionSelect<'a> {
                     body.rows(text_height, search_result.len(), |mut row| {
                         let item = game_data::POTIONS[search_result[row.index()]];
                         row.col(|ui| {
-                            if ui.button("Select").clicked() {
+                            if ui.button(t!("label.select")).clicked() {
                                 *self.selected_consumable = Some(item);
                             }
                         });

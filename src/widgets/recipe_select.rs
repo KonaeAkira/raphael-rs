@@ -56,7 +56,7 @@ impl<'a> RecipeSelect<'a> {
         });
 
         ui.horizontal(|ui| {
-            ui.label("Search:");
+            ui.label(format!("{}:", t!("label.search")));
             if ui.text_edit_singleline(&mut search_text).changed() {
                 search_text = search_text.replace("\0", "");
             }
@@ -90,7 +90,7 @@ impl<'a> RecipeSelect<'a> {
             body.rows(text_height, search_result.len(), |mut row| {
                 let recipe = game_data::RECIPES[search_result[row.index()]];
                 row.col(|ui| {
-                    if ui.button("Select").clicked() {
+                    if ui.button(t!("label.select")).clicked() {
                         self.crafter_config.selected_job = recipe.job_id;
                         *self.recipe_config = RecipeConfiguration {
                             recipe,
@@ -214,14 +214,17 @@ impl<'a> Widget for RecipeSelect<'a> {
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("Recipe").strong());
+                    ui.label(egui::RichText::new(t!("recipe")).strong());
                     ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
                         false,
                         self.locale,
                     ));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if ui.checkbox(&mut custom_recipe, "Custom Recipe").changed() {
+                        if ui
+                            .checkbox(&mut custom_recipe, t!("label.custom_recipe"))
+                            .changed()
+                        {
                             self.recipe_config.quality_source = match custom_recipe {
                                 true => QualitySource::Value(0),
                                 false => QualitySource::HqMaterialList([0; 6]),

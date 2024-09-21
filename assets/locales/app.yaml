@@ -1,0 +1,146 @@
+_version: 2
+
+craftsmanship:
+  en: Craftsmanship
+control:
+  en: Control
+cp:
+  en: CP
+job_level:
+  en: Job Level
+progress:
+  en: Progress
+quality:
+  en: Quality
+durability:
+  en: Durability
+
+header:
+  light:
+    en: ☀ Light
+  dark:
+    en: 🌙 Dark
+  github:
+    en:  View source on GitHub
+  discord:
+    en: Join Discord
+  ko_fi:
+    en: Support me on Ko-fi
+
+stats_window:
+  title:
+    en: Edit crafter stats
+
+label:
+  none:
+    en: None
+  clear:
+    en: Clear
+  select:
+    en: Select
+  search:
+    en: Search
+  crafter_stats:
+    en: Crafter stats
+  hq_materials:
+    en: HQ materials
+  actions:
+    en: Actions
+  solver_settings:
+    en: Solver settings
+  target_quality:
+    en: Target quality
+  backload_progress:
+    en: Backload progress (Quick solve)
+  adversarial:
+    en: Ensure 100% reliability
+  min_steps:
+    en: Minimize macro steps
+  solve:
+    en: Solve
+  recipe:
+    en: Recipe
+  custom_recipe:
+    en: Custom recipe
+  food:
+    en: Food
+  potion:
+    en: Potion
+  macro:
+    en: Macro
+  copy_item_name:
+    en: Copy item name
+  copy_item_id:
+    en: Copy item ID
+  copy:
+    en: Copy
+  copied:
+    en: Copied
+  macro_length:
+    en: "%{steps} steps | %{duration} seconds"
+  include_delay:
+    en: Include delay
+  split_macro:
+    en: Split macro
+  macro_lock:
+    en: Macro lock
+  macro_notification:
+    en: End-of-macro notification
+  simulation:
+    en: Simulation
+  overflow:
+    en: "  (+%{overflow} overflow)"
+  copy_to_all:
+    en: Copy to all
+  copy_crafter_config:
+    en: 🗐 Copy crafter config
+  paste_crafter_config:
+    en: 📋 Paste config here to load
+
+sim_result:
+  failed:
+    en: Synthesis failed
+  collectable:
+    en: Tier %{tier} collectable reached
+  hq:
+    en: "%{hq}% HQ"
+
+info:
+  base_progress_and_quality:
+    en: |-
+      Progress per 100% efficiency: %{progress}
+      Quality per 100% efficiency: %{quality}
+  backload_progress:
+    en: |-
+      Find a rotation that only uses Progress-increasing actions at the end of the rotation.
+      - May decrease achievable Quality.
+      - May increase macro duration.
+  adversarial:
+    en: |-
+      Find a rotation that can reach the target quality no matter how unlucky the random conditions are.
+      - May decrease achievable Quality.
+      - May increase macro duration.
+      - Much longer solve time.
+  min_steps:
+    en: |-
+      Minimize the number of steps in the generated macro.
+      - Much longer solve time.
+  adversarial_simulation:
+    en: Calculated assuming worst possible sequence of conditions
+  normal_simulation:
+    en: Calculated assuming Normal conditon on every step
+  synthesis_failed:
+    en: Synthesis failed
+
+warning:
+  experimental_feature:
+    wasm:
+      en: |-
+        ⚠ EXPERIMENTAL FEATURE
+        May crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the "solving" state indefinitely.
+    native:
+      en: |-
+        ⚠ EXPERIMENTAL FEATURE
+        This option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.
+  outdated_parameters:
+    en: ⚠ Some parameters have changed since last solve.

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::cell::Cell;
 use std::rc::Rc;
 use std::time::Duration;
@@ -19,11 +20,6 @@ use simulator::Action;
 use crate::config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration};
 use crate::widgets::*;
 use crate::worker::BridgeType;
-
-#[cfg(not(target_arch = "wasm32"))]
-const EXPERIMENTAL_FEATURE_WARNING_TEXT: &'static str = "⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.";
-#[cfg(target_arch = "wasm32")]
-const EXPERIMENTAL_FEATURE_WARNING_TEXT: &'static str = "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.";
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -159,6 +155,13 @@ impl eframe::App for MacroSolverApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.solver_update();
 
+        match self.locale {
+            Locale::EN => rust_i18n::set_locale("en"),
+            Locale::DE => rust_i18n::set_locale("de"),
+            Locale::FR => rust_i18n::set_locale("fr"),
+            Locale::JP => rust_i18n::set_locale("jp"),
+        }
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
@@ -190,8 +193,8 @@ impl eframe::App for MacroSolverApp {
                     });
 
                 let mut visuals = ctx.style().visuals.clone();
-                ui.selectable_value(&mut visuals, Visuals::light(), "☀ Light");
-                ui.selectable_value(&mut visuals, Visuals::dark(), "🌙 Dark");
+                ui.selectable_value(&mut visuals, Visuals::light(), t!("header.light"));
+                ui.selectable_value(&mut visuals, Visuals::dark(), t!("header.dark"));
                 ctx.data_mut(|data| {
                     *data.get_persisted_mut_or_default(Id::new("DARK_MODE")) = visuals.dark_mode;
                 });
@@ -199,10 +202,7 @@ impl eframe::App for MacroSolverApp {
 
                 ui.add(
                     egui::Hyperlink::from_label_and_url(
-                        egui::RichText::new(format!(
-                            "{} View source on GitHub",
-                            egui::special_emojis::GITHUB
-                        )),
+                        t!("header.github"),
                         "https://github.com/KonaeAkira/raphael-rs",
                     )
                     .open_in_new_tab(true),
@@ -210,7 +210,7 @@ impl eframe::App for MacroSolverApp {
                 ui.label("/");
                 ui.add(
                     egui::Hyperlink::from_label_and_url(
-                        "Join Discord",
+                        t!("header.discord"),
                         "https://discord.com/invite/m2aCy3y8he",
                     )
                     .open_in_new_tab(true),
@@ -218,7 +218,7 @@ impl eframe::App for MacroSolverApp {
                 ui.label("/");
                 ui.add(
                     egui::Hyperlink::from_label_and_url(
-                        "Support me on Ko-fi",
+                        t!("header.ko_fi"),
                         "https://ko-fi.com/konaeakira",
                     )
                     .open_in_new_tab(true),
@@ -328,7 +328,7 @@ impl eframe::App for MacroSolverApp {
         });
 
         egui::Window::new(
-            egui::RichText::new("Edit crafter stats")
+            egui::RichText::new(t!("stats_window.title"))
                 .strong()
                 .text_style(TextStyle::Body),
         )
@@ -421,9 +421,9 @@ impl MacroSolverApp {
             });
             ui.separator();
 
-            ui.label(egui::RichText::new("Crafter stats").strong());
+            ui.label(egui::RichText::new(t!("label.crafter_stats")).strong());
             ui.horizontal(|ui| {
-                ui.label("Craftsmanship:");
+                ui.label(format!("{}:", t!("craftsmanship")));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_enabled(
                         false,
@@ -434,13 +434,15 @@ impl MacroSolverApp {
                     );
                     ui.monospace("+");
                     ui.add(
-                        egui::DragValue::new(&mut self.crafter_config.active_stats_mut().craftsmanship)
-                            .clamp_range(0..=9999),
+                        egui::DragValue::new(
+                            &mut self.crafter_config.active_stats_mut().craftsmanship,
+                        )
+                        .clamp_range(0..=9999),
                     );
                 });
             });
             ui.horizontal(|ui| {
-                ui.label("Control:");
+                ui.label(format!("{}:", t!("control")));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_enabled(
                         false,
@@ -450,11 +452,14 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().control).clamp_range(0..=9999));
+                    ui.add(
+                        egui::DragValue::new(&mut self.crafter_config.active_stats_mut().control)
+                            .clamp_range(0..=9999),
+                    );
                 });
             });
             ui.horizontal(|ui| {
-                ui.label("CP:");
+                ui.label(format!("{}:", t!("cp")));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.add_enabled(
                         false,
@@ -464,81 +469,112 @@ impl MacroSolverApp {
                         )),
                     );
                     ui.monospace("+");
-                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().cp).clamp_range(0..=999));
+                    ui.add(
+                        egui::DragValue::new(&mut self.crafter_config.active_stats_mut().cp)
+                            .clamp_range(0..=999),
+                    );
                 });
             });
             ui.horizontal(|ui| {
-                ui.label("Job Level:");
+                ui.label(format!("{}:", t!("job_level")));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(egui::DragValue::new(&mut self.crafter_config.active_stats_mut().level).clamp_range(1..=100));
+                    ui.add(
+                        egui::DragValue::new(&mut self.crafter_config.active_stats_mut().level)
+                            .clamp_range(1..=100),
+                    );
                 });
             });
             ui.separator();
 
-            ui.label(egui::RichText::new("HQ ingredients").strong());
+            ui.label(egui::RichText::new(t!("label.hq_materials")).strong());
             let mut has_hq_ingredient = false;
             let recipe_ingredients = self.recipe_config.recipe.ingredients;
-            if let QualitySource::HqMaterialList(provided_ingredients) = &mut self.recipe_config.quality_source {
+            if let QualitySource::HqMaterialList(provided_ingredients) =
+                &mut self.recipe_config.quality_source
+            {
                 for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
                     if let Some(item) = game_data::ITEMS.get(&ingredient.item_id) {
                         if item.can_be_hq {
                             has_hq_ingredient = true;
                             ui.horizontal(|ui| {
                                 ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
-                                ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
-                                    let mut max_placeholder = ingredient.amount;
-                                    ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
-                                    ui.monospace("/");
-                                    ui.add(
-                                        egui::DragValue::new(
-                                            &mut provided_ingredients[index],
-                                        )
-                                        .clamp_range(0..=ingredient.amount),
-                                    );
-                                });
+                                ui.with_layout(
+                                    Layout::right_to_left(Align::Center),
+                                    |ui: &mut egui::Ui| {
+                                        let mut max_placeholder = ingredient.amount;
+                                        ui.add_enabled(
+                                            false,
+                                            egui::DragValue::new(&mut max_placeholder),
+                                        );
+                                        ui.monospace("/");
+                                        ui.add(
+                                            egui::DragValue::new(&mut provided_ingredients[index])
+                                                .clamp_range(0..=ingredient.amount),
+                                        );
+                                    },
+                                );
                             });
                         }
                     }
                 }
             }
             if !has_hq_ingredient {
-                ui.label("None");
+                ui.label(t!("label.none"));
             }
             ui.separator();
 
-            ui.label(egui::RichText::new("Actions").strong());
-            if self.crafter_config.active_stats().level >= Action::Manipulation.level_requirement() {
+            ui.label(egui::RichText::new(t!("label.actions")).strong());
+            if self.crafter_config.active_stats().level >= Action::Manipulation.level_requirement()
+            {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.active_stats_mut().manipulation,
-                    format!("Enable {}", action_name(Action::Manipulation, self.locale)),
+                    format!("{}", action_name(Action::Manipulation, self.locale)),
                 ));
             } else {
                 ui.add_enabled(
                     false,
-                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::Manipulation, self.locale))),
+                    egui::Checkbox::new(
+                        &mut false,
+                        format!("{}", action_name(Action::Manipulation, self.locale)),
+                    ),
                 );
             }
-            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement() {
-                ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().heart_and_soul, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))));
+            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement()
+            {
+                ui.add(egui::Checkbox::new(
+                    &mut self.crafter_config.active_stats_mut().heart_and_soul,
+                    format!("{}", action_name(Action::HeartAndSoul, self.locale)),
+                ));
             } else {
                 ui.add_enabled(
                     false,
-                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::HeartAndSoul, self.locale))),
+                    egui::Checkbox::new(
+                        &mut false,
+                        format!("{}", action_name(Action::HeartAndSoul, self.locale)),
+                    ),
                 );
             }
-            if self.crafter_config.active_stats().level >= Action::QuickInnovation.level_requirement() {
-                ui.add(egui::Checkbox::new(&mut self.crafter_config.active_stats_mut().quick_innovation, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))));
+            if self.crafter_config.active_stats().level
+                >= Action::QuickInnovation.level_requirement()
+            {
+                ui.add(egui::Checkbox::new(
+                    &mut self.crafter_config.active_stats_mut().quick_innovation,
+                    format!("{}", action_name(Action::QuickInnovation, self.locale)),
+                ));
             } else {
                 ui.add_enabled(
                     false,
-                    egui::Checkbox::new(&mut false, format!("Enable {}", action_name(Action::QuickInnovation, self.locale))),
+                    egui::Checkbox::new(
+                        &mut false,
+                        format!("{}", action_name(Action::QuickInnovation, self.locale)),
+                    ),
                 );
             }
             ui.separator();
 
-            ui.label(egui::RichText::new("Solver settings").strong());
+            ui.label(egui::RichText::new(t!("label.solver_settings")).strong());
             ui.horizontal(|ui| {
-                ui.label("Target quality");
+                ui.label(t!("label.target_quality"));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
                     let game_settings = game_data::get_game_settings(
@@ -601,24 +637,27 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.checkbox(
                     &mut self.solver_config.backload_progress,
-                    "Backload progress (Quick solve)",
+                    t!("label.backload_progress"),
                 );
-                ui.add(HelpText::new("Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊞ Shorter solve-time."));
+                ui.add(HelpText::new(t!("info.backload_progress")));
             });
 
             if self.recipe_config.recipe.is_expert {
                 self.solver_config.adversarial = false;
             }
             ui.horizontal(|ui| {
-                ui.add_enabled(!self.recipe_config.recipe.is_expert, egui::Checkbox::new(
-                    &mut self.solver_config.adversarial,
-                    "Ensure 100% reliability",
-                ));
-                ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  ⊟ May decrease achievable Quality.\n  ⊟ May increase macro duration.\n  ⊟ Much longer solve-time."));
+                ui.add_enabled(
+                    !self.recipe_config.recipe.is_expert,
+                    egui::Checkbox::new(
+                        &mut self.solver_config.adversarial,
+                        t!("label.adversarial"),
+                    ),
+                );
+                ui.add(HelpText::new(t!("info.adversarial")));
             });
             if self.solver_config.adversarial {
                 ui.label(
-                    egui::RichText::new(EXPERIMENTAL_FEATURE_WARNING_TEXT)
+                    egui::RichText::new(Self::experimental_warning_text())
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
@@ -627,13 +666,13 @@ impl MacroSolverApp {
             ui.horizontal(|ui| {
                 ui.checkbox(
                     &mut self.solver_config.minimize_steps,
-                    "Minimize macro steps",
+                    t!("label.min_steps"),
                 );
-                ui.add(HelpText::new("Minimize the number of steps in the generated macro.\n  ⊟ Much longer solve-time."));
+                ui.add(HelpText::new(t!("info.min_steps")));
             });
             if self.solver_config.minimize_steps {
                 ui.label(
-                    egui::RichText::new(EXPERIMENTAL_FEATURE_WARNING_TEXT)
+                    egui::RichText::new(Self::experimental_warning_text())
                         .small()
                         .color(ui.visuals().warn_fg_color),
                 );
@@ -642,7 +681,7 @@ impl MacroSolverApp {
             ui.add_space(5.5);
             ui.horizontal(|ui| {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui.button("Solve").clicked() {
+                    if ui.button(t!("label.solve")).clicked() {
                         self.actions = Vec::new();
                         self.solver_pending = true;
                         self.solver_progress = 0;
@@ -660,12 +699,17 @@ impl MacroSolverApp {
                             .quality_target
                             .get_target(game_settings.max_quality);
                         let initial_quality = match self.recipe_config.quality_source {
-                            QualitySource::HqMaterialList(hq_materials) => get_initial_quality(self.recipe_config.recipe, hq_materials),
+                            QualitySource::HqMaterialList(hq_materials) => {
+                                get_initial_quality(self.recipe_config.recipe, hq_materials)
+                            }
                             QualitySource::Value(quality) => quality,
                         };
 
                         ui.ctx().data_mut(|data| {
-                            data.insert_temp(Id::new("LAST_SOLVE_PARAMS"), (game_settings, initial_quality, self.solver_config));
+                            data.insert_temp(
+                                Id::new("LAST_SOLVE_PARAMS"),
+                                (game_settings, initial_quality, self.solver_config),
+                            );
                         });
 
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
@@ -678,7 +722,9 @@ impl MacroSolverApp {
                             ui.label("Populating DP tables");
                         } else {
                             // format with thousands separator
-                            let num = self.solver_progress.to_string()
+                            let num = self
+                                .solver_progress
+                                .to_string()
                                 .as_bytes()
                                 .rchunks(3)
                                 .rev()
@@ -694,6 +740,13 @@ impl MacroSolverApp {
                 });
             });
         });
+    }
+
+    fn experimental_warning_text() -> Cow<'static, str> {
+        #[cfg(not(target_arch = "wasm32"))]
+        return t!("warning.experimental_feature.native");
+        #[cfg(target_arch = "wasm32")]
+        return t!("warning.experimantal_feature.wasm");
     }
 
     fn load_fonts(ctx: &egui::Context) {

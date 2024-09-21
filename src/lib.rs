@@ -1,4 +1,7 @@
-#![warn(clippy::all, rust_2018_idioms)]
+#[macro_use]
+extern crate rust_i18n;
+
+i18n!("assets/locales", fallback = "en");
 
 mod app;
 pub use app::MacroSolverApp;

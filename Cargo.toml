@@ -4,7 +4,7 @@ members = ["simulator", "solvers", "game_data", "raphael-cli"]
 
 [package]
 name = "raphael-xiv"
-version = "0.14.0"
+version = "0.14.1"
 edition = "2021"
 default-run = "raphael-xiv"
 
@@ -21,6 +21,7 @@ image = { version = "0.24.9", default-features = false, features = ["webp"] }
 serde = { version = "1.0.203", features = ["derive"] }
 ron = "0.8"
 log = "0.4"
+rust-i18n = "3.1.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4"

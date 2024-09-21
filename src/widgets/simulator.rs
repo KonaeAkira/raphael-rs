@@ -57,9 +57,10 @@ impl<'a> Widget for Simulator<'a> {
         let max_quality = self.settings.max_quality;
         let quality = game_state.quality + self.initial_quality;
 
-        let prog_qual_dbg_text = format!(
-            "Progress per 100% efficiency: {}\nQuality per 100% efficiency: {}",
-            self.settings.base_progress, self.settings.base_quality
+        let prog_qual_dbg_text = t!(
+            "info.base_progress_and_quality",
+            progress = self.settings.base_progress,
+            quality = self.settings.base_quality
         );
 
         let mut config_changed_warning = false;
@@ -80,16 +81,14 @@ impl<'a> Widget for Simulator<'a> {
             ui.group(|ui| {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("Simulation").strong());
+                        ui.label(egui::RichText::new(t!("label.simulation")).strong());
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.add_visible(
                                 config_changed_warning,
                                 egui::Label::new(
-                                    egui::RichText::new(
-                                        "⚠ Some parameters have changed since last solve.",
-                                    )
-                                    .small()
-                                    .color(ui.visuals().warn_fg_color),
+                                    egui::RichText::new(t!("warning.outdated_paramaters"))
+                                        .small()
+                                        .color(ui.visuals().warn_fg_color),
                                 ),
                             );
                         });
@@ -100,7 +99,7 @@ impl<'a> Widget for Simulator<'a> {
                         max: egui::Pos2 { x: 0.0, y: 0.0 },
                     };
                     ui.horizontal(|ui| {
-                        ui.label("Progress:");
+                        ui.label(format!("{}:", t!("progress")));
                         let mut text = format!("{: >5} / {}", progress, max_progress);
                         if progress >= max_progress {
                             text.push_str(&format!("  (+{} overflow)", progress - max_progress));
@@ -111,14 +110,14 @@ impl<'a> Widget for Simulator<'a> {
                                     .text(text)
                                     .rounding(Rounding::ZERO),
                             )
-                            .on_hover_text_at_pointer(&prog_qual_dbg_text)
+                            .on_hover_text_at_pointer(prog_qual_dbg_text.clone())
                             .rect;
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Quality:");
+                        ui.label(format!("{}:", t!("quality")));
                         let mut text = format!("{: >5} / {}", quality, max_quality);
                         if quality >= max_quality {
-                            text.push_str(&format!("  (+{} overflow)", quality - max_quality));
+                            text.push_str(&t!("label.overflow", overflow = quality - max_quality));
                         }
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.add_sized(
@@ -127,11 +126,11 @@ impl<'a> Widget for Simulator<'a> {
                                     .text(text)
                                     .rounding(Rounding::ZERO),
                             )
-                            .on_hover_text_at_pointer(&prog_qual_dbg_text);
+                            .on_hover_text_at_pointer(prog_qual_dbg_text);
                         });
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Durability:");
+                        ui.label(format!("{}:", t!("durability")));
                         let max_durability = self.settings.max_durability;
                         let durability = game_state.durability;
                         ui.add(
@@ -140,7 +139,7 @@ impl<'a> Widget for Simulator<'a> {
                                 .rounding(Rounding::ZERO)
                                 .desired_width(120.0),
                         );
-                        ui.label("CP:");
+                        ui.label(format!("{}:", t!("cp")));
                         let max_cp = self.settings.max_cp;
                         let cp = game_state.cp;
                         ui.add(
@@ -152,16 +151,13 @@ impl<'a> Widget for Simulator<'a> {
 
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.add(HelpText::new(if self.settings.adversarial {
-                                "Calculated assuming worst possible sequence of conditions"
+                                t!("info.adversarial_simulation")
                             } else {
-                                "Calculated assuming Normal conditon on every step"
+                                t!("info.normal_simulation")
                             }));
                             if game_state.is_final(self.settings) {
                                 if progress < max_progress {
-                                    ui.label(
-                                        egui::RichText::new("Synthesis failed".to_string())
-                                            .strong(),
-                                    );
+                                    ui.label(egui::RichText::new(t!("sim_result.failed")).strong());
                                 } else if self.item.always_collectable {
                                     let t1 = QualityTarget::CollectableT1
                                         .get_target(self.settings.max_quality);
@@ -176,14 +172,17 @@ impl<'a> Widget for Simulator<'a> {
                                         _ => 0,
                                     };
                                     ui.label(
-                                        egui::RichText::new(format!(
-                                            "Tier {tier} collectable reached"
+                                        egui::RichText::new(t!(
+                                            "sim_result.collectable",
+                                            tier = tier
                                         ))
                                         .strong(),
                                     );
                                 } else {
                                     let hq = game_data::hq_percentage(quality, max_quality);
-                                    ui.label(egui::RichText::new(format!("{hq}% HQ")).strong());
+                                    ui.label(
+                                        egui::RichText::new(t!("sim_result.hq", hq = hq)).strong(),
+                                    );
                                 }
                             }
                         });

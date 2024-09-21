@@ -8,7 +8,7 @@ pub struct ItemNameLabel {
 impl ItemNameLabel {
     pub fn new(item_id: u32, hq: bool, locale: Locale) -> Self {
         Self {
-            item_id: item_id,
+            item_id,
             text: get_item_name(item_id, hq, locale),
         }
     }
@@ -36,7 +36,7 @@ impl egui::Widget for ItemNameLabel {
                 ui.close_menu();
             }
             let mut selection_made = false;
-            if ui.button("Copy Item Name").clicked() {
+            if ui.button(t!("label.copy_item_name")).clicked() {
                 let copy_item_name: String = self
                     .text
                     .trim_end_matches(&[' ', game_data::HQ_ICON_CHAR, game_data::CL_ICON_CHAR])
@@ -46,7 +46,7 @@ impl egui::Widget for ItemNameLabel {
                 selection_made = true;
             }
             ui.separator();
-            if ui.button("Copy Item ID").clicked() {
+            if ui.button(t!("label.copy_item_id")).clicked() {
                 ui.output_mut(|output| output.copied_text = self.item_id.to_string());
                 ui.close_menu();
                 selection_made = true;

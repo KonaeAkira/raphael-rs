@@ -77,12 +77,12 @@ impl Widget for MacroTextBox {
                 ui.monospace(&self.text);
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     if ui.ctx().animate_bool_with_time(id, false, 2.0) == 0.0 {
-                        if ui.button("Copy").clicked() {
+                        if ui.button(t!("label.copy")).clicked() {
                             ui.output_mut(|output| output.copied_text = self.text);
                             ui.ctx().animate_bool_with_time(id, true, 0.0);
                         }
                     } else {
-                        ui.add_enabled(false, egui::Button::new("Copied"));
+                        ui.add_enabled(false, egui::Button::new(t!("label.copied")));
                     }
                 });
             });
@@ -116,34 +116,39 @@ impl<'a> Widget for MacroView<'a> {
         ui.group(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("Macro").strong());
+                    ui.label(egui::RichText::new(t!("label.macro")).strong());
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
-                            .add_enabled(!self.actions.is_empty(), egui::Button::new("Clear"))
+                            .add_enabled(
+                                !self.actions.is_empty(),
+                                egui::Button::new(t!("label.clear")),
+                            )
                             .clicked()
                         {
                             self.actions.clear();
                         }
-                        ui.label(format!(
-                            "{} steps | {} seconds",
-                            self.actions.len(),
-                            self.actions
-                                .iter()
-                                .map(|action| action.time_cost())
-                                .sum::<i16>()
+                        let duration = self
+                            .actions
+                            .iter()
+                            .map(|action| action.time_cost())
+                            .sum::<i16>();
+                        ui.label(t!(
+                            "label.macro_length",
+                            steps = self.actions.len(),
+                            duration = duration
                         ));
                     });
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.config.include_delay, "Include delay");
-                    ui.checkbox(&mut self.config.split_macro, "Split macro");
-                    ui.checkbox(&mut self.config.macro_lock, "Macro lock");
+                    ui.checkbox(&mut self.config.include_delay, t!("label.include_delay"));
+                    ui.checkbox(&mut self.config.split_macro, t!("label.split_macro"));
+                    ui.checkbox(&mut self.config.macro_lock, t!("label.macro_lock"));
                 });
                 ui.horizontal(|ui| {
                     ui.add(egui::Checkbox::new(
                         &mut self.config.notification_enabled,
-                        "End-of-macro notification",
+                        t!("label.macro_notification"),
                     ));
                     ui.add_enabled_ui(self.config.notification_enabled, |ui| {
                         egui::ComboBox::from_id_source("SOUND_EFFECT")
