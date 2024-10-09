@@ -746,7 +746,7 @@ impl MacroSolverApp {
         #[cfg(not(target_arch = "wasm32"))]
         return t!("warning.experimental_feature.native");
         #[cfg(target_arch = "wasm32")]
-        return t!("warning.experimantal_feature.wasm");
+        return t!("warning.experimental_feature.wasm");
     }
 
     fn load_fonts(ctx: &egui::Context) {

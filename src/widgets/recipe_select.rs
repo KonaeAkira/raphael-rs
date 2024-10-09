@@ -214,7 +214,7 @@ impl<'a> Widget for RecipeSelect<'a> {
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(t!("recipe")).strong());
+                    ui.label(egui::RichText::new(t!("label.recipe")).strong());
                     ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
                         false,
