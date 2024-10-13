@@ -132,12 +132,15 @@ impl<'a> MacroSolver<'a> {
                         ));
 
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {
-                            state.quality
+                            self.settings.max_quality
                         } else {
-                            self.quality_upper_bound_solver.quality_upper_bound(state)
+                            std::cmp::min(
+                                score.quality,
+                                self.quality_upper_bound_solver.quality_upper_bound(state),
+                            )
                         };
 
-                        let step_lb_hint = score.steps - current_steps - 1;
+                        let step_lb_hint = score.steps.saturating_sub(current_steps + 1);
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                             self.step_lower_bound_solver
                                 .step_lower_bound_with_hint(state, step_lb_hint)
@@ -158,7 +161,7 @@ impl<'a> MacroSolver<'a> {
                                 state
                             },
                             SearchScore::new(
-                                std::cmp::min(score.quality, quality_upper_bound),
+                                quality_upper_bound,
                                 step_lower_bound,
                                 score.duration + action.time_cost() as u8,
                             ),

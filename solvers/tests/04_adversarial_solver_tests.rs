@@ -282,3 +282,25 @@ fn test_indagator_3858_4057() {
     let score = get_score_triple(&settings, &actions);
     assert_eq!(score, (10686, 26, 71));
 }
+
+#[test]
+fn test_rare_tacos_4628_4410() {
+    let settings = Settings {
+        max_cp: 675,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12000,
+        base_progress: 246,
+        base_quality: 246,
+        job_level: 100,
+        allowed_actions: ActionMask::from_level(100)
+            .remove(Action::Manipulation)
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: true,
+    };
+    let actions = solve(&settings, true, true).unwrap();
+    let score = get_score_triple(&settings, &actions);
+    assert_eq!(score, (11748, 31, 88));
+}
