@@ -215,7 +215,8 @@ impl SimulationState {
             Action::WasteNot2 => state.effects.set_waste_not(8),
             Action::Manipulation => state.effects.set_manipulation(8),
             Action::MasterMend => {
-                state.durability = std::cmp::min(settings.max_durability, state.durability + 30)
+                state.durability =
+                    std::cmp::min(settings.max_durability, state.durability.saturating_add(30))
             }
             Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
             Action::ImmaculateMend => state.durability = settings.max_durability,

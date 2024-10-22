@@ -75,6 +75,7 @@ impl StepLowerBoundSolver {
         {
             return u8::MAX;
         }
+        hint = std::cmp::max(1, hint);
         while self.quality_upper_bound(state, hint) < self.settings.max_quality {
             hint += 1;
         }
@@ -190,7 +191,11 @@ impl StepLowerBoundSolver {
                 progress_only,
             );
             if action == Action::MasterMend {
-                new_reduced_state.durability += self.bonus_durability_restore;
+                if new_reduced_state.durability >= 120 - self.bonus_durability_restore {
+                    new_reduced_state.durability = 120;
+                } else {
+                    new_reduced_state.durability += self.bonus_durability_restore;
+                }
             }
             if new_reduced_state.steps_budget != 0 && new_reduced_state.durability > 0 {
                 match self.solved_states.get(&new_reduced_state) {
