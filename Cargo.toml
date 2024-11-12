@@ -4,7 +4,7 @@ members = ["simulator", "solvers", "game_data", "raphael-cli"]
 
 [package]
 name = "raphael-xiv"
-version = "0.14.2"
+version = "0.14.3"
 edition = "2021"
 default-run = "raphael-xiv"
 
