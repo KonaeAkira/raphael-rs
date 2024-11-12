@@ -23,7 +23,7 @@ pub struct Item {
     pub always_collectable: bool,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Ingredient {
     pub item_id: u32,
     pub amount: u32,
@@ -37,7 +37,7 @@ pub struct RecipeLevel {
     pub quality_mod: u16,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Recipe {
     pub job_id: u8,
     pub item_id: u32,

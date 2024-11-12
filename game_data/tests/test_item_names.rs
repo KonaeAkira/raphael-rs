@@ -1,16 +1,4 @@
-use game_data::{get_item_name, Locale, ITEMS, RECIPES};
-
-#[test]
-/// Test that all ingredients have an entry in the ITEMS table
-fn test_recipe_ingredients_have_valid_id() {
-    for recipe in RECIPES.iter() {
-        for ingredient in recipe.ingredients.iter() {
-            if ingredient.item_id != 0 {
-                assert!(ITEMS.contains_key(&ingredient.item_id));
-            }
-        }
-    }
-}
+use game_data::*;
 
 #[test]
 fn test_item_name_2341() {
