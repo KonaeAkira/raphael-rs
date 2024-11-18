@@ -1,3 +1,5 @@
+use log::debug;
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ParetoValue<T, U> {
     pub first: T,
@@ -252,11 +254,8 @@ where
     U: Copy + std::cmp::Ord + std::default::Default,
 {
     fn drop(&mut self) {
-        dbg!(
-            self.buffer.capacity(),
-            self.fronts_generated,
-            self.storage.len()
-        );
+        debug!("Pareto front builder stats - buffer capacity: {}, fronts generated: {}, storage length: {}",
+            self.buffer.capacity(), self.fronts_generated, self.storage.len());
     }
 }
 

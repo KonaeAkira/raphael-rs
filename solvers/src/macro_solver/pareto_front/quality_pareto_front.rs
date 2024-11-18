@@ -1,3 +1,4 @@
+use log::debug;
 use rustc_hash::FxHashMap;
 use simulator::{Combo, Effects, SimulationState};
 
@@ -69,6 +70,10 @@ impl QualityParetoFront {
 impl Drop for QualityParetoFront {
     fn drop(&mut self) {
         let pareto_entries: usize = self.buckets.values().map(|value| value.len()).sum();
-        dbg!(self.buckets.len(), pareto_entries);
+        debug!(
+            "Quality pareto front stats - buckets: {}, entries: {}",
+            self.buckets.len(),
+            pareto_entries
+        );
     }
 }

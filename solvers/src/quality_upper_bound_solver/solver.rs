@@ -9,6 +9,8 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::state::ReducedState;
 
+use log::debug;
+
 const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
     .add(Action::WasteNot)
@@ -33,8 +35,11 @@ pub struct QualityUpperBoundSolver {
 
 impl QualityUpperBoundSolver {
     pub fn new(settings: Settings, backload_progress: bool, unsound_branch_pruning: bool) -> Self {
-        dbg!(std::mem::size_of::<ReducedState>());
-        dbg!(std::mem::align_of::<ReducedState>());
+        debug!(
+            "ReducedState size: {} bytes, alignment: {} bytes",
+            std::mem::size_of::<ReducedState>(),
+            std::mem::align_of::<ReducedState>()
+        );
         let mut durability_cost = Action::MasterMend.cp_cost() / 6;
         if settings.allowed_actions.has(Action::Manipulation) {
             durability_cost = std::cmp::min(durability_cost, Action::Manipulation.cp_cost() / 8);
@@ -254,6 +259,7 @@ fn waste_not_min_cp(
 
 #[cfg(test)]
 mod tests {
+    use log::error;
     use rand::Rng;
     use simulator::{Combo, Effects, SimulationState};
 
@@ -263,7 +269,7 @@ mod tests {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
         let result =
             QualityUpperBoundSolver::new(settings, false, false).quality_upper_bound(state);
-        dbg!(result);
+        debug!("Quality upper bound result: {}", result);
         result
     }
 
@@ -757,7 +763,8 @@ mod tests {
                     Err(_) => 0,
                 };
                 if state_upper_bound < child_upper_bound {
-                    dbg!(state, action, state_upper_bound, child_upper_bound);
+                    error!("Monotonicity violation - state: {:?}, action: {:?}, state_ub: {}, child_ub: {}",
+                        state, action, state_upper_bound, child_upper_bound);
                     panic!("Parent's upper bound is less than child's upper bound");
                 }
             }

@@ -3,6 +3,7 @@ use crate::{
     branch_pruning::is_progress_only_state,
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
+use log::debug;
 use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState};
 
 use rustc_hash::FxHashMap as HashMap;
@@ -32,8 +33,11 @@ impl StepLowerBoundSolver {
         backload_progress: bool,
         unsound_branch_pruning: bool,
     ) -> Self {
-        dbg!(std::mem::size_of::<ReducedState>());
-        dbg!(std::mem::align_of::<ReducedState>());
+        debug!(
+            "ReducedState size: {} bytes, alignment: {} bytes",
+            std::mem::size_of::<ReducedState>(),
+            std::mem::align_of::<ReducedState>()
+        );
         let mut bonus_durability_restore = 0;
         if settings.allowed_actions.has(Action::Manipulation) {
             bonus_durability_restore = std::cmp::max(bonus_durability_restore, 10);
@@ -219,6 +223,7 @@ impl StepLowerBoundSolver {
 
 #[cfg(test)]
 mod tests {
+    use log::error;
     use rand::Rng;
     use simulator::{Action, ActionMask, Combo, Effects, SimulationState};
 
@@ -227,7 +232,7 @@ mod tests {
     fn solve(settings: Settings, actions: &[Action]) -> u8 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
         let result = StepLowerBoundSolver::new(settings, false, false).step_lower_bound(state);
-        dbg!(result);
+        debug!("Step lower bound result: {}", result);
         result
     }
 
@@ -723,7 +728,8 @@ mod tests {
                     Err(_) => u8::MAX,
                 };
                 if state_lower_bound > child_lower_bound.saturating_add(1) {
-                    dbg!(state, action, state_lower_bound, child_lower_bound);
+                    error!("Monotonicity violation - state: {:?}, action: {:?}, state_lb: {}, child_lb: {}",
+                        state, action, state_lower_bound, child_lower_bound);
                     panic!("Parent's step lower bound is greater than child's step lower bound");
                 }
             }

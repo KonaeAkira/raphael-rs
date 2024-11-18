@@ -10,6 +10,8 @@ use crate::{FinishSolver, QualityUpperBoundSolver, StepLowerBoundSolver};
 
 use std::vec::Vec;
 
+use log::debug;
+
 const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(QUALITY_ACTIONS)
     .union(DURABILITY_ACTIONS);
@@ -194,7 +196,7 @@ impl<'a> MacroSolver<'a> {
         }
 
         if let Some(solution) = solution {
-            dbg!(&solution.actions);
+            debug!("Found solution actions: {:?}", &solution.actions);
             Some(solution.actions)
         } else {
             None

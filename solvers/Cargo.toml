@@ -12,6 +12,7 @@ simulator = { path = "../simulator" }
 radix-heap = "0.4.2"
 rustc-hash = "1.1.0"
 bitfield-struct = "0.8.0"
+log = "0.4"
 
 [dev-dependencies]
 rand = "0.8.5"

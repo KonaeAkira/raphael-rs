@@ -1,4 +1,5 @@
 mod pareto_front_builder;
+use log::debug;
 pub use pareto_front_builder::{ParetoFrontBuilder, ParetoFrontId, ParetoValue};
 
 pub struct NamedTimer {
@@ -87,6 +88,6 @@ impl<T: Copy> Backtracking<T> {
 
 impl<T: Copy> Drop for Backtracking<T> {
     fn drop(&mut self) {
-        dbg!(self.entries.len());
+        debug!("Backtracking entries length: {}", self.entries.len());
     }
 }
