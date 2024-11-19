@@ -238,10 +238,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result =
-            QualityUpperBoundSolver::new(settings, false, false).quality_upper_bound(state);
-        log::debug!("Quality upper bound: {}", result);
-        result
+        QualityUpperBoundSolver::new(settings, false, false).quality_upper_bound(state)
     }
 
     #[test]
@@ -734,11 +731,7 @@ mod tests {
                     Err(_) => 0,
                 };
                 if state_upper_bound < child_upper_bound {
-                    log::error!("MONOTINICITY VIOLATION");
-                    log::error!("State: {:?}", state);
-                    log::error!("Action: {:?}", action);
-                    log::error!("State UB: {}", state_upper_bound);
-                    log::error!("Child UB: {}", child_upper_bound);
+                    dbg!(state, action, state_upper_bound, child_upper_bound);
                     panic!("Parent's upper bound is less than child's upper bound");
                 }
             }

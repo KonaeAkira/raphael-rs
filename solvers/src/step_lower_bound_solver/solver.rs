@@ -219,9 +219,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u8 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result = StepLowerBoundSolver::new(settings, false, false).step_lower_bound(state);
-        log::debug!("Step lower bound: {}", result);
-        result
+        StepLowerBoundSolver::new(settings, false, false).step_lower_bound(state)
     }
 
     #[test]
@@ -716,11 +714,7 @@ mod tests {
                     Err(_) => u8::MAX,
                 };
                 if state_lower_bound > child_lower_bound.saturating_add(1) {
-                    log::error!("MONOTINICITY VIOLATION");
-                    log::error!("State: {:?}", state);
-                    log::error!("Action: {:?}", action);
-                    log::error!("State LB: {}", state_lower_bound);
-                    log::error!("Child lB: {}", child_lower_bound);
+                    dbg!(state, action, state_lower_bound, child_lower_bound);
                     panic!("Parent's step lower bound is greater than child's step lower bound");
                 }
             }

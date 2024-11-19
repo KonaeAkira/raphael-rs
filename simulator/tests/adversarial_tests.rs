@@ -1,4 +1,3 @@
-use log::debug;
 use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 const SETTINGS: Settings = Settings {
     max_cp: 1000,
@@ -228,7 +227,7 @@ fn test_exhaustive() {
             .collect();
         let state = SimulationState::from_macro(&SETTINGS, &actions);
         if let Ok(state) = state {
-            debug!("Testing actions: {:?}", &actions);
+            dbg!(&actions);
             assert_eq!(
                 state.quality,
                 guaranteed_quality(SETTINGS, &actions).unwrap()
@@ -259,7 +258,7 @@ fn test_fuzz() {
                 .take(STEPS)
                 .collect();
         if let Ok(state) = SimulationState::from_macro(&SETTINGS, &actions) {
-            debug!("Testing actions: {:?}", &actions);
+            dbg!(&actions);
             assert_eq!(
                 state.quality,
                 guaranteed_quality(SETTINGS, &actions).unwrap()

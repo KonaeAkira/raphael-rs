@@ -2,6 +2,7 @@ use simulator::{Action, ActionMask, Settings, SimulationState};
 use solvers::MacroSolver;
 
 fn main() {
+    #[cfg(feature = "env_logger")]
     env_logger::builder()
         .format_timestamp(None)
         .format_target(false)
