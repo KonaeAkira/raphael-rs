@@ -6,8 +6,6 @@ use crate::utils::Backtracking;
 
 use super::pareto_front::{EffectParetoFront, QualityParetoFront};
 
-use log::debug;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
     pub quality: u16,
@@ -86,10 +84,8 @@ impl SearchQueue {
             }
             dropped += self.buckets.pop_first().unwrap().1.len();
         }
-        debug!(
-            "Updated minimum score to {:?}, dropped {} nodes",
-            self.minimum_score, dropped
-        );
+        log::debug!("New minimum score: {:?}", score);
+        log::debug!("Nodes dropped: {}", dropped);
     }
 
     pub fn push(

@@ -4,8 +4,6 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS};
 
-use log::debug;
-
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
     .remove(Action::DelicateSynthesis);
@@ -55,8 +53,8 @@ pub struct FinishSolver {
 
 impl FinishSolver {
     pub fn new(settings: Settings) -> FinishSolver {
-        debug!(
-            "ReducedState size: {} bytes, alignment: {} bytes",
+        log::trace!(
+            "ReducedState (FinishSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
@@ -110,9 +108,6 @@ impl FinishSolver {
 
 impl Drop for FinishSolver {
     fn drop(&mut self) {
-        debug!(
-            "FinishSolver max_progress cache size: {}",
-            self.max_progress.len()
-        );
+        log::debug!("FinishSolver - states: {}", self.max_progress.len());
     }
 }

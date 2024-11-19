@@ -3,7 +3,6 @@ use crate::{
     branch_pruning::is_progress_only_state,
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
-use log::debug;
 use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
@@ -33,8 +32,8 @@ impl StepLowerBoundSolver {
         backload_progress: bool,
         unsound_branch_pruning: bool,
     ) -> Self {
-        debug!(
-            "ReducedState size: {} bytes, alignment: {} bytes",
+        log::trace!(
+            "ReducedState (StepLowerBoundSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
@@ -213,7 +212,6 @@ impl StepLowerBoundSolver {
 
 #[cfg(test)]
 mod tests {
-    use log::error;
     use rand::Rng;
     use simulator::{Action, ActionMask, Combo, Effects, SimulationState};
 
@@ -222,7 +220,7 @@ mod tests {
     fn solve(settings: Settings, actions: &[Action]) -> u8 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
         let result = StepLowerBoundSolver::new(settings, false, false).step_lower_bound(state);
-        debug!("Step lower bound result: {}", result);
+        log::debug!("Step lower bound: {}", result);
         result
     }
 
@@ -718,8 +716,11 @@ mod tests {
                     Err(_) => u8::MAX,
                 };
                 if state_lower_bound > child_lower_bound.saturating_add(1) {
-                    error!("Monotonicity violation - state: {:?}, action: {:?}, state_lb: {}, child_lb: {}",
-                        state, action, state_lower_bound, child_lower_bound);
+                    log::error!("MONOTINICITY VIOLATION");
+                    log::error!("State: {:?}", state);
+                    log::error!("Action: {:?}", action);
+                    log::error!("State LB: {}", state_lower_bound);
+                    log::error!("Child lB: {}", child_lower_bound);
                     panic!("Parent's step lower bound is greater than child's step lower bound");
                 }
             }

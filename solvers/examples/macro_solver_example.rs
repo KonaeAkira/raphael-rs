@@ -1,11 +1,14 @@
 use simulator::{Action, ActionMask, Settings, SimulationState};
 use solvers::MacroSolver;
 
-use log::debug;
-
 fn main() {
-    debug!(
-        "SimulationState size: {} bytes, alignment: {} bytes",
+    env_logger::builder()
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
+
+    log::trace!(
+        "SimulationState - size: {}, align: {}",
         std::mem::size_of::<SimulationState>(),
         std::mem::align_of::<SimulationState>()
     );
@@ -37,8 +40,11 @@ fn main() {
         .quality;
     let steps = actions.len();
     let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
-    debug!(
-        "Solution stats - quality: {}, steps: {}, duration: {}",
-        quality, steps, duration
+
+    log::info!(
+        "Solution - quality: {}, steps: {}, duration: {}",
+        quality,
+        steps,
+        duration
     );
 }

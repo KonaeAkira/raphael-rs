@@ -1,5 +1,4 @@
 mod pareto_front_builder;
-use log::debug;
 pub use pareto_front_builder::{ParetoFrontBuilder, ParetoFrontId, ParetoValue};
 
 pub struct NamedTimer {
@@ -20,10 +19,8 @@ impl NamedTimer {
 
 impl Drop for NamedTimer {
     fn drop(&mut self) {
-        #[cfg(target_arch = "wasm32")]
-        eprintln!("{}: (timer not available on WASM)", self.name);
         #[cfg(not(target_arch = "wasm32"))]
-        eprintln!(
+        log::info!(
             "{}: {} seconds",
             self.name,
             self.timer.elapsed().as_secs_f32()
@@ -88,6 +85,6 @@ impl<T: Copy> Backtracking<T> {
 
 impl<T: Copy> Drop for Backtracking<T> {
     fn drop(&mut self) {
-        debug!("Backtracking entries length: {}", self.entries.len());
+        log::debug!("Backtracking - nodes: {}", self.entries.len());
     }
 }

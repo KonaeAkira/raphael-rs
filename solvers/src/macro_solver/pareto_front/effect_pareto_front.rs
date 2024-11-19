@@ -1,4 +1,3 @@
-use log::debug;
 use rustc_hash::FxHashMap;
 use simulator::{Combo, SimulationState};
 
@@ -94,8 +93,8 @@ impl EffectParetoFront {
 impl Drop for EffectParetoFront {
     fn drop(&mut self) {
         let pareto_entries: usize = self.buckets.values().map(|value| value.len()).sum();
-        debug!(
-            "Effect pareto front stats - buckets: {}, entries: {}",
+        log::debug!(
+            "EffectParetoFront - buckets: {}, entries: {}",
             self.buckets.len(),
             pareto_entries
         );
