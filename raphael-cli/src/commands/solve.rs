@@ -1,42 +1,80 @@
+use clap::Args;
 use game_data::{get_game_settings, CrafterStats, RECIPES};
 use simulator::SimulationState;
 use solvers::MacroSolver;
 
-pub fn execute(
-    item_id: u32,
-    craftsmanship: u16,
-    control: u16,
-    cp: u16,
-    level: u8,
-    manipulation: bool,
-    heart_and_soul: bool,
-    quick_innovation: bool,
-    adversarial: bool,
-    backload_progress: bool,
-    unsound: bool,
-) {
+#[derive(Args, Debug)]
+pub struct SolveArgs {
+    /// Item ID
+    #[arg(short, long)]
+    pub item_id: u32,
+
+    /// Craftsmanship rating
+    #[arg(short, long)]
+    pub craftsmanship: u16,
+
+    /// Control rating
+    #[arg(short = 'o', long)]
+    pub control: u16,
+
+    /// Crafting points
+    #[arg(short = 'p', long)]
+    pub cp: u16,
+
+    /// Crafter level
+    #[arg(short, long, default_value_t = 100)]
+    pub level: u8,
+
+    /// Enable Manipulation
+    #[arg(short, long, default_value_t = false)]
+    pub manipulation: bool,
+
+    /// Enable Heart and Soul
+    #[arg(short = 's', long, default_value_t = false)]
+    pub heart_and_soul: bool,
+
+    /// Enable Quick Innovation
+    #[arg(short, long, default_value_t = false)]
+    pub quick_innovation: bool,
+
+    /// Enable adversarial simulator (ensure 100% reliability)
+    #[arg(long, default_value_t = false)]
+    pub adversarial: bool,
+
+    /// Only use Progress-increasing actions at the end of the macro
+    #[arg(long, default_value_t = false)]
+    pub backload_progress: bool,
+
+    /// Enable unsound branch pruning
+    #[arg(long, default_value_t = false)]
+    pub unsound: bool,
+}
+
+
+
+pub fn execute(args: &SolveArgs) {
     let recipe = RECIPES
         .iter()
-        .find(|r| r.item_id == item_id)
+        .find(|r| r.item_id == args.item_id)
         .expect("Recipe not found");
 
     let crafter_stats = CrafterStats {
-        craftsmanship,
-        control,
-        cp,
-        level,
-        manipulation,
-        heart_and_soul,
-        quick_innovation,
+        craftsmanship: args.craftsmanship,
+        control: args.control,
+        cp: args.cp,
+        level: args.level,
+        manipulation: args.manipulation,
+        heart_and_soul: args.heart_and_soul,
+        quick_innovation: args.quick_innovation,
     };
 
-    let settings = get_game_settings(*recipe, crafter_stats, None, None, adversarial);
+    let settings = get_game_settings(*recipe, crafter_stats, None, None, args.adversarial);
     let state = SimulationState::new(&settings);
 
     let mut solver = MacroSolver::new(
         settings,
-        backload_progress,
-        unsound,
+        args.backload_progress,
+        args.unsound,
         Box::new(|_| {}),
         Box::new(|_| {}),
     );

@@ -7,7 +7,8 @@ mod commands;
     version,
     about = "A command-line interface for the Raphael-XIV crafting solver."
 )]
-struct Args {
+
+struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
@@ -15,56 +16,9 @@ struct Args {
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Search for recipes by name
-    Search {
-        /// Search pattern
-        pattern: String,
-    },
+    Search(commands::search::SearchArgs),
     /// Solve a crafting rotation
-    Solve {
-        /// Item ID
-        #[arg(short, long)]
-        item_id: u32,
-
-        /// Craftsmanship rating
-        #[arg(short, long)]
-        craftsmanship: u16,
-
-        /// Control rating
-        #[arg(short = 'o', long)]
-        control: u16,
-
-        /// Crafting points
-        #[arg(short = 'p', long)]
-        cp: u16,
-
-        /// Crafter level
-        #[arg(short, long, default_value_t = 100)]
-        level: u8,
-
-        /// Enable Manipulation
-        #[arg(short, long, default_value_t = false)]
-        manipulation: bool,
-
-        /// Enable Heart and Soul
-        #[arg(short = 's', long, default_value_t = false)]
-        heart_and_soul: bool,
-
-        /// Enable Quick Innovation
-        #[arg(short, long, default_value_t = false)]
-        quick_innovation: bool,
-
-        /// Enable adversarial simulator (ensure 100% reliability)
-        #[arg(long, default_value_t = false)]
-        adversarial: bool,
-
-        /// Only use Progress-increasing actions at the end of the macro
-        #[arg(long, default_value_t = false)]
-        backload_progress: bool,
-
-        /// Enable unsound branch pruning
-        #[arg(long, default_value_t = false)]
-        unsound: bool,
-    },
+    Solve(commands::solve::SolveArgs),
 }
 
 fn main() {
@@ -73,38 +27,10 @@ fn main() {
         .format_target(false)
         .init();
 
-    let args = Args::parse();
+    let cli = Cli::parse();
 
-    match args.command {
-        Commands::Search { pattern } => {
-            commands::search::execute(pattern);
-        }
-        Commands::Solve {
-            item_id,
-            craftsmanship,
-            control,
-            cp,
-            level,
-            manipulation,
-            heart_and_soul,
-            quick_innovation,
-            adversarial,
-            backload_progress,
-            unsound,
-        } => {
-            commands::solve::execute(
-                item_id,
-                craftsmanship,
-                control,
-                cp,
-                level,
-                manipulation,
-                heart_and_soul,
-                quick_innovation,
-                adversarial,
-                backload_progress,
-                unsound,
-            );
-        }
+    match &cli.command {
+        Commands::Search(args) => commands::search::execute(args),
+        Commands::Solve(args) => commands::solve::execute(args),
     }
 }

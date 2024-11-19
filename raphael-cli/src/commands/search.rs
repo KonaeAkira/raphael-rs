@@ -1,8 +1,16 @@
+use clap::Args;
 use game_data::{get_item_name, Locale, RECIPES};
 
-pub fn execute(pattern: String) {
+#[derive(Args, Debug)]
+pub struct SearchArgs {
+    /// Search pattern
+    pub pattern: String,
+}
+
+
+pub fn execute(args: &SearchArgs) {
     let output_separator = std::env::var("OFS").unwrap_or(" ".to_string());
-    let matches = game_data::find_recipes(&pattern, Locale::EN);
+    let matches = game_data::find_recipes(&args.pattern, Locale::EN);
     if matches.is_empty() {
         println!("No matches found");
         return;
