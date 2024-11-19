@@ -21,10 +21,12 @@ impl Drop for NamedTimer {
     fn drop(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
         log::info!(
-            "{}: {} seconds",
+            "Timer \"{}\" elapsed: {} seconds",
             self.name,
             self.timer.elapsed().as_secs_f32()
         );
+        #[cfg(target_arch = "wasm32")]
+        log::info!("Timer \"{}\" elapsed", self.name);
     }
 }
 

@@ -1,6 +1,9 @@
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-    env_logger::init();
+    env_logger::builder()
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -20,8 +23,6 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    env_logger::init();
-
     // Redirect `log` message to `console.log` and friends:
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
