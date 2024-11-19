@@ -252,7 +252,8 @@ where
     U: Copy + std::cmp::Ord + std::default::Default,
 {
     fn drop(&mut self) {
-        dbg!(
+        log::debug!(
+            "ParetoFrontBuilder - buffer_size: {}, fronts_generated: {}, storage_size: {}",
             self.buffer.capacity(),
             self.fronts_generated,
             self.storage.len()

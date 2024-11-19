@@ -19,14 +19,14 @@ impl NamedTimer {
 
 impl Drop for NamedTimer {
     fn drop(&mut self) {
-        #[cfg(target_arch = "wasm32")]
-        eprintln!("{}: (timer not available on WASM)", self.name);
         #[cfg(not(target_arch = "wasm32"))]
-        eprintln!(
-            "{}: {} seconds",
+        log::info!(
+            "Timer \"{}\" elapsed: {} seconds",
             self.name,
             self.timer.elapsed().as_secs_f32()
         );
+        #[cfg(target_arch = "wasm32")]
+        log::info!("Timer \"{}\" elapsed", self.name);
     }
 }
 
@@ -87,6 +87,6 @@ impl<T: Copy> Backtracking<T> {
 
 impl<T: Copy> Drop for Backtracking<T> {
     fn drop(&mut self) {
-        dbg!(self.entries.len());
+        log::debug!("Backtracking - nodes: {}", self.entries.len());
     }
 }

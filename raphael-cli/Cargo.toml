@@ -11,3 +11,6 @@ solvers = { path = "../solvers" }
 game-data = { path = "../game_data" }
 
 clap = { version = "4.4.11", features = ["derive", "wrap_help"] }
+
+log = "0.4"
+env_logger = "0.11.5"

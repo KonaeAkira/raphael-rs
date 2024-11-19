@@ -61,7 +61,7 @@ pub fn fast_lower_bound(
         }
     }
 
-    dbg!(quality_lower_bound);
+    log::debug!("Fast quality lower bound: {}", quality_lower_bound);
     std::cmp::min(settings.max_quality, quality_lower_bound)
 }
 

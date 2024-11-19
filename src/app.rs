@@ -5,6 +5,8 @@ use std::time::Duration;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
+use log::debug;
+
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 #[cfg(target_arch = "wasm32")]
@@ -375,14 +377,14 @@ impl MacroSolverApp {
                     self.solver_progress = progress;
                 }
                 SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
-                    dbg!(update);
+                    debug!("Unexpected progress update: {:?}", update);
                 }
             }
         }
         if let Some(update) = self.data_update.solution_update.take() {
             match update {
                 SolverEvent::Progress(_) => {
-                    dbg!(update);
+                    debug!("Unexpected solution update: {:?}", update);
                 }
                 SolverEvent::IntermediateSolution(actions) => {
                     self.actions = actions;

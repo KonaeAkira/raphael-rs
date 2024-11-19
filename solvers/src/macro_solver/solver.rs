@@ -194,7 +194,7 @@ impl<'a> MacroSolver<'a> {
         }
 
         if let Some(solution) = solution {
-            dbg!(&solution.actions);
+            log::trace!("Solution actions: {:?}", &solution.actions);
             Some(solution.actions)
         } else {
             None

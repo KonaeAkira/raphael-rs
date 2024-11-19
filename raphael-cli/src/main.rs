@@ -53,6 +53,11 @@ struct Args {
 }
 
 fn main() {
+    env_logger::builder()
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
+
     let args = Args::parse();
 
     let recipe = RECIPES

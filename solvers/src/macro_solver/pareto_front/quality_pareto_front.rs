@@ -69,6 +69,10 @@ impl QualityParetoFront {
 impl Drop for QualityParetoFront {
     fn drop(&mut self) {
         let pareto_entries: usize = self.buckets.values().map(|value| value.len()).sum();
-        dbg!(self.buckets.len(), pareto_entries);
+        log::debug!(
+            "QualityParetoFront - buckets: {}, entries: {}",
+            self.buckets.len(),
+            pareto_entries
+        );
     }
 }

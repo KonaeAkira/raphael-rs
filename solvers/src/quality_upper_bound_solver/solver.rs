@@ -36,8 +36,11 @@ pub struct QualityUpperBoundSolver {
 
 impl QualityUpperBoundSolver {
     pub fn new(settings: Settings, backload_progress: bool, unsound_branch_pruning: bool) -> Self {
-        dbg!(std::mem::size_of::<ReducedState>());
-        dbg!(std::mem::align_of::<ReducedState>());
+        log::trace!(
+            "ReducedState (QualityUpperBoundSolver) - size: {}, align: {}",
+            std::mem::size_of::<ReducedState>(),
+            std::mem::align_of::<ReducedState>()
+        );
 
         let initial_state = SimulationState::new(&settings);
         let mut durability_cost = 100;
@@ -235,10 +238,7 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        let result =
-            QualityUpperBoundSolver::new(settings, false, false).quality_upper_bound(state);
-        dbg!(result);
-        result
+        QualityUpperBoundSolver::new(settings, false, false).quality_upper_bound(state)
     }
 
     #[test]

@@ -84,7 +84,8 @@ impl SearchQueue {
             }
             dropped += self.buckets.pop_first().unwrap().1.len();
         }
-        dbg!(self.minimum_score, dropped);
+        log::debug!("New minimum score: {:?}", score);
+        log::debug!("Nodes dropped: {}", dropped);
     }
 
     pub fn push(

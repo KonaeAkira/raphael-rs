@@ -1,5 +1,10 @@
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
+    env_logger::builder()
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
+
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([400.0, 300.0])
