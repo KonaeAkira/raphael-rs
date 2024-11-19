@@ -4,7 +4,10 @@ use simulator::SimulationState;
 use solvers::MacroSolver;
 
 #[derive(Parser, Debug)]
-#[command(version, about = "A command-line interface for the Raphael-XIV crafting solver.")]
+#[command(
+    version,
+    about = "A command-line interface for the Raphael-XIV crafting solver."
+)]
 struct Args {
     #[command(subcommand)]
     command: Commands,
@@ -75,6 +78,7 @@ fn main() {
 
     match args.command {
         Commands::Search { pattern } => {
+            let output_separator = std::env::var("OFS").unwrap_or(" ".to_string());
             let matches = game_data::find_recipes(&pattern, Locale::EN);
             if matches.is_empty() {
                 println!("No matches found");
@@ -85,7 +89,12 @@ fn main() {
             for recipe_idx in matches {
                 let recipe = &RECIPES[recipe_idx];
                 let name = get_item_name(recipe.item_id, false, Locale::EN);
-                println!("{}: {}", recipe.item_id, name);
+                println!(
+                    "{item_id}{separator}{name}",
+                    item_id = recipe.item_id,
+                    separator = output_separator,
+                    name = name
+                );
             }
         }
         Commands::Solve {
