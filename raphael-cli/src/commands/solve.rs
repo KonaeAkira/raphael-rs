@@ -76,6 +76,17 @@ pub struct SolveArgs {
     /// Enable unsound branch pruning
     #[arg(long, default_value_t = false)]
     pub unsound: bool,
+
+    /// Output the result according to the specified output format, with the format '<IDENTIFIER>[<DELIMITER><IDENTIFIER>][...]'
+    /// 
+    /// <IDENTIFIER> can be any of the following: `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
+    /// While the output is intended for generating CSVs, some output can contain `,` inside brackets that are not deliminating columns. For this reason the argument `output-format-delimiter` can be used to override the delimiter to something that is easier to parse and process
+    #[arg(long)]
+    pub output_format: Option<String>,
+
+    /// The delimiter the output specified with the argument `output-format` uses to separate identifiers
+    #[arg(long, requires = "output_format", default_value(","))]
+    pub output_format_delimiter: String,
 }
 
 fn parse_stats(s: &str) -> Result<[u16; 3], String> {
@@ -269,6 +280,7 @@ pub fn execute(args: &SolveArgs) {
             None => 0,
         },
     };
+    let recipe_max_quality = settings.max_quality;
     settings.max_quality = target_quality.saturating_sub(initial_quality);
 
     let state = SimulationState::new(&settings);
@@ -283,12 +295,14 @@ pub fn execute(args: &SolveArgs) {
     let actions = solver.solve(state).expect("Failed to solve");
 
     let final_state = SimulationState::from_macro(&settings, &actions).unwrap();
-    let quality = final_state.quality;
+    let state_quality = final_state.quality;
+    let final_quality = state_quality.saturating_add(initial_quality);
     let steps = actions.len();
     let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
 
+    if args.output_format.is_none() {
     println!("Item ID: {}", recipe.item_id);
-    println!("Quality: {}/{}", quality, settings.max_quality);
+        println!("Quality: {}/{}", final_quality, recipe_max_quality);
     println!(
         "Progress: {}/{}",
         final_state.progress, settings.max_progress
@@ -298,5 +312,40 @@ pub fn execute(args: &SolveArgs) {
     println!("\nActions:");
     for action in actions {
         println!("{:?}", action);
+        }
+    } else {
+        let mut output_string = "".to_owned();
+
+        let output_format = args.output_format.clone().unwrap();
+        let segments: Vec<&str> = output_format.split(&args.output_format_delimiter).collect();
+        for segment in segments {
+            let map_to_debug_str = |actions: Vec<simulator::Action>| {
+                match segment {
+                    "item_id" => format!("{:?}", args.item_id),
+                    "recipe" => format!("{:?}", recipe),
+                    "food" => format!("{:?}", food),
+                    "potion" => format!("{:?}", potion),
+                    "craftsmanship" => format!("{:?}", craftsmanship),
+                    "control" => format!("{:?}", control),
+                    "cp" => format!("{:?}", cp),
+                    "crafter_stats" => format!("{:?}", crafter_stats),
+                    "settings" => format!("{:?}", settings),
+                    "initial_quality" => format!("{:?}", initial_quality),
+                    "target_quality" => format!("{:?}", target_quality),
+                    "recipe_max_quality" => format!("{:?}", recipe_max_quality),
+                    "actions" => format!("{:?}", actions),
+                    "final_state" => format!("{:?}", final_state),
+                    "state_quality" => format!("{:?}", state_quality),
+                    "final_quality" => format!("{:?}", final_quality),
+                    "steps" => format!("{:?}", steps),
+                    "duration" => format!("{:?}", duration),
+                    _ => "Undefined".to_owned(),
+                }
+            };
+
+            output_string += &(map_to_debug_str(actions.clone()) + &args.output_format_delimiter);
+        }
+
+        println!("{}", output_string.trim_end_matches(&args.output_format_delimiter));
     }
 }
