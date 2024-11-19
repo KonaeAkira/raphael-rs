@@ -10,16 +10,20 @@ pub struct SolveArgs {
     pub item_id: u32,
 
     /// Craftsmanship rating
-    #[arg(short, long)]
-    pub craftsmanship: u16,
+    #[arg(short, long, requires_all(["control", "cp"]), required_unless_present = "stats")]
+    pub craftsmanship: Option<u16>,
 
     /// Control rating
-    #[arg(short = 'o', long)]
-    pub control: u16,
+    #[arg(short = 'o', long, requires_all(["craftsmanship", "cp"]), required_unless_present = "stats")]
+    pub control: Option<u16>,
 
     /// Crafting points
-    #[arg(short = 'p', long)]
-    pub cp: u16,
+    #[arg(short = 'p', long, requires_all(["craftsmanship", "control"]), required_unless_present = "stats")]
+    pub cp: Option<u16>,
+
+    /// Complete stats, in the format '<CRAFTSMANSHIP>/<CONTROL>/<CP>'
+    #[arg(short, long, value_parser = parse_stats, required_unless_present_all(["craftsmanship", "control", "cp"]), conflicts_with_all(["craftsmanship", "control", "cp"]))]
+    pub stats: Option<[u16; 3]>,
 
     /// Crafter level
     #[arg(short, long, default_value_t = 100)]
@@ -38,11 +42,11 @@ pub struct SolveArgs {
     pub manipulation: bool,
 
     /// Enable Heart and Soul
-    #[arg(short = 's', long, default_value_t = false)]
+    #[arg(long, default_value_t = false)]
     pub heart_and_soul: bool,
 
     /// Enable Quick Innovation
-    #[arg(short, long, default_value_t = false)]
+    #[arg(long, default_value_t = false)]
     pub quick_innovation: bool,
 
     /// Enable adversarial simulator (ensure 100% reliability)
@@ -56,6 +60,27 @@ pub struct SolveArgs {
     /// Enable unsound branch pruning
     #[arg(long, default_value_t = false)]
     pub unsound: bool,
+}
+
+fn parse_stats(s: &str) -> Result<[u16; 3], String> {
+    const PARSE_ERROR_STRING: &'static str =
+        "Stats are not parsable. Stats must have the format '<CRAFTSMANSHIP>/<CONTROL>/<CP>'";
+    let segments: Vec<&str> = s.split("/").collect();
+    match segments.len() {
+        3 => {
+            let mut stats: [u16; 3] = [0; 3];
+            for i in 0..stats.len() {
+                stats[i] = segments
+                    .get(i)
+                    .unwrap()
+                    .parse()
+                    .map_err(|_| PARSE_ERROR_STRING.to_owned())?;
+            }
+
+            Ok(stats)
+        }
+        _ => Err(PARSE_ERROR_STRING.to_owned()),
+    }
 }
 
 fn parse_consumable(s: &str) -> Result<ConsumableArg, String> {
@@ -148,10 +173,23 @@ pub fn execute(args: &SolveArgs) {
         None => None,
     };
 
+    let craftsmanship = match args.craftsmanship {
+        Some(stat) => stat,
+        None => args.stats.unwrap()[0],
+    };
+    let control = match args.control {
+        Some(stat) => stat,
+        None => args.stats.unwrap()[1],
+    };
+    let cp = match args.cp {
+        Some(stat) => stat,
+        None => args.stats.unwrap()[2],
+    };
+
     let crafter_stats = CrafterStats {
-        craftsmanship: args.craftsmanship,
-        control: args.control,
-        cp: args.cp,
+        craftsmanship: craftsmanship,
+        control: control,
+        cp: cp,
         level: args.level,
         manipulation: args.manipulation,
         heart_and_soul: args.heart_and_soul,
