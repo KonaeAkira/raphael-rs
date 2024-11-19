@@ -49,6 +49,22 @@ pub struct SolveArgs {
     #[arg(long, default_value_t = false)]
     pub quick_innovation: bool,
 
+    /// Set initial quality, value is clamped to 100% quality
+    #[arg(long, alias = "initial")]
+    pub initial_quality: Option<u16>,
+
+    /// Set HQ ingredients and calculate initial quality from them
+    #[arg(long, value_parser = parse_hq_ingredients, conflicts_with = "initial_quality")]
+    pub hq_ingredients: Option<[u8; 6]>,
+
+    /// Skip mapping HQ ingredients to entries that can actually be HQ and clamping the amount to the max allowed for the recipe
+    #[arg(long, default_value_t = false, requires = "hq_ingredients")]
+    pub skip_map_and_clamp_hq_ingredients: bool,
+
+    /// Set target quality, value is clamped to 100% quality
+    #[arg(long, alias = "target")]
+    pub target_quality: Option<u16>,
+
     /// Enable adversarial simulator (ensure 100% reliability)
     #[arg(long, default_value_t = false)]
     pub adversarial: bool,
@@ -112,6 +128,45 @@ pub enum ConsumableArg {
     NQ(u32),
     /// HQ Consumable
     HQ(u32),
+}
+
+fn parse_hq_ingredients(s: &str) -> Result<[u8; 6], String> {
+    const PARSE_ERROR_STRING: &'static str = "HQ ingredients are not parsable. HQ ingredients must have the format '<AMOUNT>[/<AMOUNT>][...] with at most 6 amounts specified'";
+    let segments: Vec<&str> = s.split("/").collect();
+    match segments.len() {
+        0..=6 => {
+            let mut hq_ingredients: [u8; 6] = [0; 6];
+            for i in 0..segments.len() {
+                hq_ingredients[i] = segments.get(i).unwrap().parse().unwrap_or(0);
+            }
+
+            Ok(hq_ingredients)
+        }
+        _ => Err(PARSE_ERROR_STRING.to_owned()),
+    }
+}
+
+fn map_and_clamp_hq_ingredients(recipe: &game_data::Recipe, hq_ingredients: [u8; 6]) -> [u8; 6] {
+    let ingredients: Vec<(game_data::Item, u32)> = recipe
+        .ingredients
+        .iter()
+        .filter_map(|ingredient| match ingredient.item_id {
+            0 => None,
+            id => Some((*game_data::ITEMS.get(&id).unwrap(), ingredient.amount)),
+        })
+        .collect();
+
+    let mut modified_hq_ingredients: [u8; 6] = [0; 6];
+    let mut hq_ingredient_index: usize = 0;
+    for (index, (item, max_amount)) in ingredients.into_iter().enumerate() {
+        if item.can_be_hq {
+            modified_hq_ingredients[index] =
+                hq_ingredients[hq_ingredient_index].min(max_amount as u8);
+            hq_ingredient_index = hq_ingredient_index.saturating_add(1);
+        }
+    }
+
+    modified_hq_ingredients
 }
 
 pub fn execute(args: &SolveArgs) {
@@ -196,7 +251,26 @@ pub fn execute(args: &SolveArgs) {
         quick_innovation: args.quick_innovation,
     };
 
-    let settings = get_game_settings(*recipe, crafter_stats, food, potion, args.adversarial);
+    let mut settings = get_game_settings(*recipe, crafter_stats, food, potion, args.adversarial);
+    let target_quality = match args.target_quality {
+        Some(target) => target.min(settings.max_quality),
+        None => settings.max_quality,
+    };
+    let initial_quality = match args.initial_quality {
+        Some(initial) => initial.min(settings.max_quality),
+        None => match args.hq_ingredients {
+            Some(hq_ingredients) => game_data::get_initial_quality(
+                *recipe,
+                match args.skip_map_and_clamp_hq_ingredients {
+                    true => hq_ingredients,
+                    false => map_and_clamp_hq_ingredients(recipe, hq_ingredients),
+                },
+            ),
+            None => 0,
+        },
+    };
+    settings.max_quality = target_quality.saturating_sub(initial_quality);
+
     let state = SimulationState::new(&settings);
 
     let mut solver = MacroSolver::new(
