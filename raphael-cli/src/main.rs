@@ -85,7 +85,6 @@ fn main() {
                 return;
             }
 
-            println!("Found {} matches:", matches.len());
             for recipe_idx in matches {
                 let recipe = &RECIPES[recipe_idx];
                 let name = get_item_name(recipe.item_id, false, Locale::EN);
