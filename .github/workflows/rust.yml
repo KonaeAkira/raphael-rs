@@ -16,4 +16,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run tests
-        run: cargo test --verbose --release --package simulator --package solvers --package game-data
+        run: cargo test --verbose --package simulator --package solvers --package game-data

@@ -17,7 +17,7 @@ use egui::{
 };
 use game_data::{action_name, get_initial_quality, get_job_name, Consumable, Locale};
 
-use simulator::Action;
+use simulator::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
 use crate::config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration};
 use crate::widgets::*;
@@ -526,8 +526,7 @@ impl MacroSolverApp {
             ui.separator();
 
             ui.label(egui::RichText::new(t!("label.actions")).strong());
-            if self.crafter_config.active_stats().level >= Action::Manipulation.level_requirement()
-            {
+            if self.crafter_config.active_stats().level >= Manipulation::LEVEL_REQUIREMENT {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.active_stats_mut().manipulation,
                     format!("{}", action_name(Action::Manipulation, self.locale)),
@@ -541,8 +540,7 @@ impl MacroSolverApp {
                     ),
                 );
             }
-            if self.crafter_config.active_stats().level >= Action::HeartAndSoul.level_requirement()
-            {
+            if self.crafter_config.active_stats().level >= HeartAndSoul::LEVEL_REQUIREMENT {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.active_stats_mut().heart_and_soul,
                     format!("{}", action_name(Action::HeartAndSoul, self.locale)),
@@ -556,9 +554,7 @@ impl MacroSolverApp {
                     ),
                 );
             }
-            if self.crafter_config.active_stats().level
-                >= Action::QuickInnovation.level_requirement()
-            {
+            if self.crafter_config.active_stats().level >= QuickInnovation::LEVEL_REQUIREMENT {
                 ui.add(egui::Checkbox::new(
                     &mut self.crafter_config.active_stats_mut().quick_innovation,
                     format!("{}", action_name(Action::QuickInnovation, self.locale)),

@@ -16,7 +16,6 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::BasicTouch,
     Action::Observe,
     Action::StandardTouch,
-    Action::ComboStandardTouch,
     Action::GreatStrides,
     Action::Innovation,
     Action::ByregotsBlessing,
@@ -26,9 +25,8 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
     Action::PreparatoryTouch,
     Action::DelicateSynthesis,
     Action::AdvancedTouch,
-    Action::ComboAdvancedTouch,
     Action::TrainedFinesse,
-    Action::ComboRefinedTouch,
+    Action::RefinedTouch,
     Action::TrainedEye,
     Action::HeartAndSoul,
     Action::QuickInnovation

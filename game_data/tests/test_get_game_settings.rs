@@ -56,7 +56,7 @@ fn test_roast_chicken() {
             base_progress: 264,
             base_quality: 274,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -98,7 +98,7 @@ fn test_turali_pineapple_ponzecake() {
             base_progress: 280,
             base_quality: 355,
             job_level: 94,
-            allowed_actions: ActionMask::from_level(94)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::QuickInnovation),
             adversarial: false,
@@ -140,7 +140,7 @@ fn test_smaller_water_otter_hardware() {
             base_quality: 260,
             job_level: 100,
             // Trained Eye is not available for expert recipes
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -183,7 +183,7 @@ fn test_grade_8_tincture() {
             base_quality: 387,
             job_level: 100,
             // Trained Eye is available
-            allowed_actions: ActionMask::from_level(100).remove(Action::QuickInnovation),
+            allowed_actions: ActionMask::all().remove(Action::QuickInnovation),
             adversarial: false,
         }
     );
@@ -218,7 +218,7 @@ fn test_claro_walnut_spinning_wheel() {
             base_progress: 241,
             base_quality: 304,
             job_level: 99,
-            allowed_actions: ActionMask::from_level(99)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul),
             adversarial: false,

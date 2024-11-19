@@ -1,9 +1,8 @@
 use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
-    branch_pruning::is_progress_only_state,
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
-use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState, SingleUse};
+use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -21,11 +20,15 @@ const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .add(Action::WasteNot)
     .add(Action::WasteNot2);
 
+pub struct SolverSettings {
+    pub durability_cost: i16, // how much CP does it cost to restore 5 durability?
+    pub backload_progress: bool,
+    pub unsound_branch_pruning: bool,
+}
+
 pub struct QualityUpperBoundSolver {
-    settings: Settings, // simulator settings
-    backload_progress: bool,
-    unsound_branch_pruning: bool,
-    durability_cost: i16,
+    simulator_settings: Settings,
+    solver_settings: SolverSettings,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
     // pre-computed branch pruning values
@@ -40,59 +43,53 @@ impl QualityUpperBoundSolver {
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
-        let mut durability_cost = Action::MasterMend.cp_cost() / 6;
-        if settings.allowed_actions.has(Action::Manipulation) {
-            durability_cost = std::cmp::min(durability_cost, Action::Manipulation.cp_cost() / 8);
+
+        let initial_state = SimulationState::new(&settings);
+        let mut durability_cost = 100;
+        if settings.is_action_allowed::<MasterMend>() {
+            let master_mend_cost = MasterMend::base_cp_cost(&initial_state, &settings);
+            durability_cost = std::cmp::min(durability_cost, master_mend_cost / 6);
         }
-        if settings.allowed_actions.has(Action::ImmaculateMend) {
-            durability_cost = std::cmp::min(
-                durability_cost,
-                Action::ImmaculateMend.cp_cost() / (settings.max_durability as i16 / 5 - 1),
-            );
+        if settings.is_action_allowed::<Manipulation>() {
+            let manipulation_cost = Manipulation::base_cp_cost(&initial_state, &settings);
+            durability_cost = std::cmp::min(durability_cost, manipulation_cost / 8);
         }
+        if settings.is_action_allowed::<ImmaculateMend>() {
+            let immaculate_mend_cost = ImmaculateMend::base_cp_cost(&initial_state, &settings);
+            let max_restored = settings.max_durability as i16 / 5 - 1;
+            durability_cost = std::cmp::min(durability_cost, immaculate_mend_cost / max_restored);
+        }
+
         Self {
-            settings,
-            backload_progress,
-            unsound_branch_pruning,
-            durability_cost,
+            simulator_settings: settings,
+            solver_settings: SolverSettings {
+                durability_cost,
+                backload_progress,
+                unsound_branch_pruning,
+            },
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
                 settings.max_quality,
             ),
-            waste_not_1_min_cp: waste_not_min_cp(Action::WasteNot.cp_cost(), 4, durability_cost),
-            waste_not_2_min_cp: waste_not_min_cp(Action::WasteNot2.cp_cost(), 8, durability_cost),
+            waste_not_1_min_cp: waste_not_min_cp(56, 4, durability_cost),
+            waste_not_2_min_cp: waste_not_min_cp(98, 8, durability_cost),
         }
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, mut state: SimulationState) -> u16 {
+    pub fn quality_upper_bound(&mut self, state: SimulationState) -> u16 {
         let current_quality = state.quality;
-        let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
+        let missing_progress = self
+            .simulator_settings
+            .max_progress
+            .saturating_sub(state.progress);
 
-        // refund effects and durability
-        state.cp += state.effects.manipulation() as i16 * (Action::Manipulation.cp_cost() / 8);
-        state.cp += state.durability as i16 / 5 * self.durability_cost;
-        if state.effects.trained_perfection() != SingleUse::Unavailable
-            && self.settings.allowed_actions.has(Action::TrainedPerfection)
-        {
-            state.cp += self.durability_cost * 4;
-        }
-
-        if state.effects.heart_and_soul() == SingleUse::Available {
-            state.effects.set_heart_and_soul(SingleUse::Active);
-        }
-
-        state.durability = i8::MAX;
-
-        let progress_only =
-            is_progress_only_state(state, self.backload_progress, self.unsound_branch_pruning);
-        let reduced_state = ReducedState::from_state(
+        let reduced_state = ReducedState::from_simulation_state(
             state,
-            progress_only,
-            self.durability_cost,
-            self.settings.base_quality,
+            &self.simulator_settings,
+            &self.solver_settings,
         );
         let pareto_front = match self.solved_states.get(&reduced_state) {
             Some(id) => self.pareto_front_builder.retrieve(*id),
@@ -119,7 +116,7 @@ impl QualityUpperBoundSolver {
         };
 
         std::cmp::min(
-            self.settings.max_quality,
+            self.simulator_settings.max_quality,
             pareto_front[index].second.saturating_add(current_quality),
         )
     }
@@ -135,9 +132,9 @@ impl QualityUpperBoundSolver {
     fn solve_normal_state(&mut self, state: ReducedState) {
         self.pareto_front_builder.push_empty();
         let search_actions = if state.data.progress_only() {
-            PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions)
+            PROGRESS_SEARCH_ACTIONS.intersection(self.simulator_settings.allowed_actions)
         } else {
-            FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions)
+            FULL_SEARCH_ACTIONS.intersection(self.simulator_settings.allowed_actions)
         };
         for action in search_actions.actions_iter() {
             if !self.should_use_action(state, action) {
@@ -156,59 +153,32 @@ impl QualityUpperBoundSolver {
     }
 
     fn solve_combo_state(&mut self, state: ReducedState) {
-        match self.solved_states.get(&state.to_non_combo()) {
+        match self.solved_states.get(&state.drop_combo()) {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
-            None => self.solve_normal_state(state.to_non_combo()),
+            None => self.solve_normal_state(state.drop_combo()),
         }
         match state.data.combo() {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
-                for action in [Action::MuscleMemory, Action::Reflect, Action::TrainedEye] {
-                    if self.settings.allowed_actions.has(action) {
-                        self.build_child_front(state, action);
-                    }
-                }
+                self.build_child_front(state, Action::MuscleMemory);
+                self.build_child_front(state, Action::Reflect);
+                self.build_child_front(state, Action::TrainedEye);
             }
             Combo::BasicTouch => {
-                for action in [Action::ComboRefinedTouch, Action::ComboStandardTouch] {
-                    if self.settings.allowed_actions.has(action) {
-                        self.build_child_front(state, action);
-                    }
-                }
+                self.build_child_front(state, Action::RefinedTouch);
+                self.build_child_front(state, Action::StandardTouch);
             }
             Combo::StandardTouch => {
-                if self
-                    .settings
-                    .allowed_actions
-                    .has(Action::ComboAdvancedTouch)
-                {
-                    self.build_child_front(state, Action::ComboAdvancedTouch);
-                }
+                self.build_child_front(state, Action::AdvancedTouch);
             }
         }
     }
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {
-        if let Ok(new_state) = state.to_state(self.settings.base_quality).use_action(
-            action,
-            Condition::Normal,
-            &self.settings,
-        ) {
-            let action_progress = new_state.progress;
-            let action_quality = new_state.quality;
-            let progress_only = state.data.progress_only()
-                || is_progress_only_state(
-                    new_state,
-                    self.backload_progress,
-                    self.unsound_branch_pruning,
-                );
-            let new_state = ReducedState::from_state(
-                new_state,
-                progress_only,
-                self.durability_cost,
-                self.settings.base_quality,
-            );
-            if new_state.data.cp() >= self.durability_cost {
+        if let Ok((new_state, action_progress, action_quality)) =
+            state.use_action(action, &self.simulator_settings, &self.solver_settings)
+        {
+            if new_state.data.cp() >= self.solver_settings.durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
                     None => self.solve_state(new_state),
@@ -218,7 +188,9 @@ impl QualityUpperBoundSolver {
                     value.second += action_quality;
                 });
                 self.pareto_front_builder.merge();
-            } else if new_state.data.cp() >= -self.durability_cost && action_progress != 0 {
+            } else if new_state.data.cp() >= -self.solver_settings.durability_cost
+                && action_progress != 0
+            {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
                 self.pareto_front_builder
@@ -243,6 +215,8 @@ fn waste_not_min_cp(
     effect_duration: i16,
     durability_cost: i16,
 ) -> i16 {
+    const BASIC_SYNTH_CP: i16 = 0;
+    const GROUNDWORK_CP: i16 = 18;
     // how many units of 5-durability does WasteNot have to save to be worth using over magically restoring durability?
     let min_durability_save = (waste_not_action_cp_cost - 1) / durability_cost + 1;
     if min_durability_save > effect_duration * 2 {
@@ -252,8 +226,8 @@ fn waste_not_min_cp(
     let double_dur_count = min_durability_save.saturating_sub(effect_duration);
     let single_dur_count = min_durability_save.abs_diff(effect_duration) as i16;
     // minimum CP required to execute those actions
-    let double_dur_cost = double_dur_count * (Action::Groundwork.cp_cost() + durability_cost * 2);
-    let single_dur_cost = single_dur_count * (Action::BasicSynthesis.cp_cost() + durability_cost);
+    let double_dur_cost = double_dur_count * (GROUNDWORK_CP + durability_cost * 2);
+    let single_dur_cost = single_dur_count * (BASIC_SYNTH_CP + durability_cost);
     waste_not_action_cp_cost + double_dur_cost + single_dur_cost - durability_cost
 }
 
@@ -283,7 +257,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -316,7 +290,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -349,7 +323,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -379,7 +353,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -409,7 +383,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -428,7 +402,7 @@ mod tests {
                 Action::PreparatoryTouch,
                 Action::Innovation,
                 Action::BasicTouch,
-                Action::ComboStandardTouch,
+                Action::StandardTouch,
             ],
         );
         assert_eq!(result, 4053);
@@ -444,7 +418,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -463,7 +437,7 @@ mod tests {
                 Action::PreparatoryTouch,
                 Action::Innovation,
                 Action::BasicTouch,
-                Action::ComboStandardTouch,
+                Action::StandardTouch,
             ],
         );
         assert_eq!(result, 3406);
@@ -479,7 +453,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -499,7 +473,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -519,7 +493,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -539,7 +513,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -559,7 +533,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -579,7 +553,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -599,7 +573,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -619,7 +593,7 @@ mod tests {
             base_progress: 10000,
             base_quality: 10000,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -639,7 +613,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
@@ -660,7 +634,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
@@ -681,7 +655,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
@@ -702,7 +676,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),

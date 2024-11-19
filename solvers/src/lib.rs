@@ -15,9 +15,8 @@ mod macro_solver;
 pub use macro_solver::MacroSolver;
 
 pub mod test_utils {
-    use simulator::{Action, Condition, Settings, SimulationState};
-
     use crate::MacroSolver;
+    use simulator::*;
 
     pub fn solve(
         settings: &Settings,
@@ -50,5 +49,22 @@ pub mod test_utils {
         }
         assert!(state.progress >= settings.max_progress);
         state.quality
+    }
+
+    pub fn is_progress_backloaded(actions: &[Action], settings: &Settings) -> bool {
+        let mut state = SimulationState::new(settings);
+        let mut quality_lock = None;
+        for action in actions {
+            state = state
+                .use_action(*action, Condition::Normal, settings)
+                .unwrap();
+            if state.progress != 0 && quality_lock.is_none() {
+                quality_lock = Some(state.quality);
+            }
+        }
+        match quality_lock {
+            Some(quality) => state.quality == quality,
+            None => true,
+        }
     }
 }

@@ -3,14 +3,43 @@ use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 fn simulate(
     settings: &Settings,
     steps: impl Iterator<Item = (Action, Condition)>,
-) -> Result<Vec<SimulationState>, &'static str> {
-    let mut state = SimulationState::new(&settings);
-    let mut result = Vec::new();
+) -> Vec<SimulationState> {
+    let mut current_state = SimulationState::new(&settings);
+    let mut states = Vec::new();
     for (action, condition) in steps {
-        state = state.use_action(action, condition, &settings)?;
-        result.push(state);
+        current_state = current_state
+            .use_action(action, condition, &settings)
+            .unwrap();
+        states.push(current_state);
     }
-    Ok(result)
+    states
+}
+
+fn simulate_normal(
+    settings: &Settings,
+    actions: impl Iterator<Item = Action>,
+) -> Vec<SimulationState> {
+    simulate(settings, actions.zip(std::iter::repeat(Condition::Normal)))
+}
+
+#[test]
+/// The simulator should return an error in case the job level isn't high enough to use an action
+fn test_level_requirement() {
+    let settings = Settings {
+        max_cp: 50,
+        max_durability: 60,
+        max_progress: 33,
+        max_quality: 150,
+        base_progress: 4,
+        base_quality: 38,
+        job_level: 50,
+        allowed_actions: ActionMask::all(),
+        adversarial: false,
+    };
+    let error = SimulationState::new(&settings)
+        .use_action(Action::ImmaculateMend, Condition::Normal, &settings)
+        .unwrap_err();
+    assert_eq!(error, "Level not high enough");
 }
 
 #[test]
@@ -33,13 +62,7 @@ fn test_random_926ae85b() {
         Action::BasicTouch,
         Action::BasicTouch,
     ];
-    let simulation = simulate(
-        &settings,
-        actions
-            .into_iter()
-            .zip(std::iter::repeat(Condition::Normal)),
-    );
-    let state = simulation.unwrap().last().copied().unwrap();
+    let state = SimulationState::from_macro(&settings, &actions).unwrap();
     assert_eq!(state.cp, 14);
     assert_eq!(state.durability, 30);
     assert_eq!(state.progress, 4);
@@ -72,13 +95,7 @@ fn test_random_3c721e47() {
         Action::PreparatoryTouch,
         Action::PrudentTouch,
     ];
-    let simulation = simulate(
-        &settings,
-        actions
-            .into_iter()
-            .zip(std::iter::repeat(Condition::Normal)),
-    );
-    let state = simulation.unwrap().last().copied().unwrap();
+    let state = SimulationState::from_macro(&settings, &actions).unwrap();
     assert_eq!(state.cp, 223);
     assert_eq!(state.durability, 60);
     assert_eq!(state.progress, 2520);
@@ -109,15 +126,9 @@ fn test_random_3ba90d3a() {
         Action::Innovation,
         Action::PrudentTouch,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
+        Action::StandardTouch,
     ];
-    let simulation = simulate(
-        &settings,
-        actions
-            .into_iter()
-            .zip(std::iter::repeat(Condition::Normal)),
-    );
-    let state = simulation.unwrap().last().copied().unwrap();
+    let state = SimulationState::from_macro(&settings, &actions).unwrap();
     assert_eq!(state.cp, 188);
     assert_eq!(state.durability, 25);
     assert_eq!(state.progress, 918);
@@ -160,22 +171,16 @@ fn test_random_bce2650c() {
         Action::Innovation,
         Action::PrudentTouch,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::GreatStrides,
         Action::Innovation,
         Action::Observe,
-        Action::ComboAdvancedTouch,
+        Action::AdvancedTouch,
         Action::GreatStrides,
         Action::ByregotsBlessing,
     ];
-    let simulation = simulate(
-        &settings,
-        actions
-            .into_iter()
-            .zip(std::iter::repeat(Condition::Normal)),
-    );
-    let state = simulation.unwrap().last().copied().unwrap();
+    let state = SimulationState::from_macro(&settings, &actions).unwrap();
     assert_eq!(state.cp, 1);
     assert_eq!(state.durability, 5);
     assert_eq!(state.progress, 6323);
@@ -197,7 +202,7 @@ fn test_ingame_be9fc5c2() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
     };
-    let states: Vec<(u16, u16)> = simulate(
+    let states = simulate(
         &settings,
         [
             (Action::Reflect, Condition::Normal), // 0, 795
@@ -209,45 +214,47 @@ fn test_ingame_be9fc5c2() {
             (Action::PreparatoryTouch, Condition::Normal), // 0, 4293
             (Action::Innovation, Condition::Normal),
             (Action::BasicTouch, Condition::Normal), // 0, 5008
-            (Action::ComboStandardTouch, Condition::Normal), // 0, 5952
-            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 7144
+            (Action::StandardTouch, Condition::Normal), // 0, 5952
+            (Action::AdvancedTouch, Condition::Normal), // 0, 7144
             (Action::PrudentTouch, Condition::Normal), // 0, 7939
             (Action::GreatStrides, Condition::Normal),
             (Action::Innovation, Condition::Normal),
             (Action::Observe, Condition::Normal),
-            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 9926
+            (Action::AdvancedTouch, Condition::Normal), // 0, 9926
             (Action::Veneration, Condition::Normal),
             (Action::Groundwork, Condition::Normal), // 1333, 9926
             (Action::DelicateSynthesis, Condition::Normal), // 1703, 10456
         ]
         .into_iter(),
-    )
-    .unwrap()
-    .into_iter()
-    .map(|state| (state.progress, state.quality))
-    .collect();
-    let expected = [
-        (0, 795),
-        (0, 795),
-        (0, 2703),
-        (0, 2703),
-        (0, 3445),
-        (0, 3445),
-        (0, 4293),
-        (0, 4293),
-        (0, 5008),
-        (0, 5952),
-        (0, 7144),
-        (0, 7939),
-        (0, 7939),
-        (0, 7939),
-        (0, 7939),
-        (0, 9926),
-        (0, 9926),
-        (1333, 9926),
-        (1703, 10456),
-    ];
-    assert_eq!(states, expected);
+    );
+    let primary_stats: Vec<_> = states
+        .into_iter()
+        .map(|state| (state.progress, state.quality))
+        .collect();
+    assert_eq!(
+        primary_stats,
+        [
+            (0, 795),
+            (0, 795),
+            (0, 2703),
+            (0, 2703),
+            (0, 3445),
+            (0, 3445),
+            (0, 4293),
+            (0, 4293),
+            (0, 5008),
+            (0, 5952),
+            (0, 7144),
+            (0, 7939),
+            (0, 7939),
+            (0, 7939),
+            (0, 7939),
+            (0, 9926),
+            (0, 9926),
+            (1333, 9926),
+            (1703, 10456),
+        ]
+    );
 }
 
 #[test]
@@ -280,31 +287,28 @@ fn test_ingame_d11d9c68() {
         Action::GreatStrides,
         Action::ByregotsBlessing,
     ];
-    let states: Vec<(u16, u16)> = simulate(
-        &settings,
-        actions
-            .into_iter()
-            .zip(std::iter::repeat(Condition::Normal)),
-    )
-    .unwrap()
-    .into_iter()
-    .map(|state| (state.progress, state.quality))
-    .collect();
-    let expected = [
-        (0, 900),
-        (0, 900),
-        (0, 1980),
-        (0, 2610),
-        (0, 2610),
-        (0, 4860),
-        (0, 4860),
-        (0, 4860),
-        (0, 7410),
-        (0, 7410),
-        (0, 7410),
-        (0, 11400),
-    ];
-    assert_eq!(states, expected);
+    let states = simulate_normal(&settings, actions.into_iter());
+    let primary_stats: Vec<_> = states
+        .into_iter()
+        .map(|state| (state.progress, state.quality))
+        .collect();
+    assert_eq!(
+        primary_stats,
+        [
+            (0, 900),
+            (0, 900),
+            (0, 1980),
+            (0, 2610),
+            (0, 2610),
+            (0, 4860),
+            (0, 4860),
+            (0, 4860),
+            (0, 7410),
+            (0, 7410),
+            (0, 7410),
+            (0, 11400),
+        ]
+    );
 }
 
 #[test]
@@ -327,22 +331,22 @@ fn test_ingame_f9f0dac7() {
     let actions = [
         Action::Reflect,
         Action::Observe,
-        Action::ComboAdvancedTouch,
+        Action::AdvancedTouch,
         Action::Innovation,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::PreparatoryTouch,
         Action::ImmaculateMend,
         Action::Innovation,
         Action::PrudentTouch,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::Innovation,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::ByregotsBlessing,
         Action::TrainedPerfection,
         Action::ImmaculateMend,
@@ -354,45 +358,108 @@ fn test_ingame_f9f0dac7() {
         Action::Veneration,
         Action::Groundwork,
     ];
-    let states: Vec<(u16, u16)> = simulate(
-        &settings,
-        actions
-            .into_iter()
-            .zip(std::iter::repeat(Condition::Normal)),
-    )
-    .unwrap()
-    .into_iter()
-    .map(|state| (state.progress, state.quality))
-    .collect();
-    let expected = [
-        (0, 720),
-        (0, 720),
-        (0, 936),
-        (0, 936),
-        (0, 1386),
-        (0, 2016),
-        (0, 2826),
-        (0, 3978),
-        (0, 3978),
-        (0, 3978),
-        (0, 4302),
-        (0, 4986),
-        (0, 5886),
-        (0, 6966),
-        (0, 6966),
-        (0, 7326),
-        (0, 8226),
-        (0, 9306),
-        (0, 11466),
-        (0, 11466),
-        (0, 11466),
-        (0, 11466),
-        (1409, 11466),
-        (2818, 11466),
-        (4227, 11466),
-        (5636, 11466),
-        (5636, 11466),
-        (7045, 11466),
+    let states = simulate_normal(&settings, actions.into_iter());
+    let primary_stats: Vec<_> = states
+        .into_iter()
+        .map(|state| (state.progress, state.quality))
+        .collect();
+    assert_eq!(
+        primary_stats,
+        [
+            (0, 720),
+            (0, 720),
+            (0, 936),
+            (0, 936),
+            (0, 1386),
+            (0, 2016),
+            (0, 2826),
+            (0, 3978),
+            (0, 3978),
+            (0, 3978),
+            (0, 4302),
+            (0, 4986),
+            (0, 5886),
+            (0, 6966),
+            (0, 6966),
+            (0, 7326),
+            (0, 8226),
+            (0, 9306),
+            (0, 11466),
+            (0, 11466),
+            (0, 11466),
+            (0, 11466),
+            (1409, 11466),
+            (2818, 11466),
+            (4227, 11466),
+            (5636, 11466),
+            (5636, 11466),
+            (7045, 11466),
+        ]
+    );
+}
+
+#[test]
+fn test_ingame_4866545e() {
+    // Maraging Steel Ingot
+    // Lv. 100, 5300 Craftsmanship, 4601 Control (7.1 TC High Tier melds + Specialist with no hat or earring equipped)
+    // Verfied in-game (patch 7.1)
+    let settings = Settings {
+        max_cp: 540,
+        max_durability: 35,
+        max_progress: 4125,
+        max_quality: 12000,
+        base_progress: 282,
+        base_quality: 256,
+        job_level: 100,
+        allowed_actions: ActionMask::all(),
+        adversarial: false,
+    };
+    let actions = [
+        Action::Reflect,
+        Action::Manipulation,
+        Action::Innovation,
+        Action::BasicTouch,
+        Action::RefinedTouch,
+        Action::PrudentTouch,
+        Action::PrudentTouch,
+        Action::Innovation,
+        Action::BasicTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
+        Action::Manipulation,
+        Action::TrainedPerfection,
+        Action::GreatStrides,
+        Action::Innovation,
+        Action::PreparatoryTouch,
+        Action::GreatStrides,
+        Action::ByregotsBlessing,
     ];
-    assert_eq!(states, expected);
+    let states = simulate_normal(&settings, actions.into_iter());
+    let primary_stats: Vec<_> = states
+        .into_iter()
+        .map(|state| (state.progress, state.quality))
+        .collect();
+    assert_eq!(
+        primary_stats,
+        [
+            (0, 768),
+            (0, 768),
+            (0, 768),
+            (0, 1228),
+            (0, 1727),
+            (0, 2303),
+            (0, 2917),
+            (0, 2917),
+            (0, 3569),
+            (0, 4433),
+            (0, 5527),
+            (0, 5527),
+            (0, 5527),
+            (0, 5527),
+            (0, 5527),
+            (0, 8087),
+            (0, 8087),
+            (0, 11927)
+        ]
+    );
 }

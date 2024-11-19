@@ -1,4 +1,15 @@
-use crate::{effects::SingleUse, Action, Combo, Condition, Effects, Settings};
+use crate::{
+    actions::{
+        ActionImpl, AdvancedTouch, BasicSynthesis, BasicTouch, ByregotsBlessing, CarefulSynthesis,
+        DelicateSynthesis, GreatStrides, Groundwork, HeartAndSoul, ImmaculateMend, Innovation,
+        IntensiveSynthesis, Manipulation, MasterMend, MuscleMemory, Observe, PreciseTouch,
+        PreparatoryTouch, PrudentSynthesis, PrudentTouch, QuickInnovation, RefinedTouch, Reflect,
+        StandardTouch, TrainedEye, TrainedFinesse, TrainedPerfection, Veneration, WasteNot,
+        WasteNot2,
+    },
+    effects::SingleUse,
+    Action, Combo, Condition, Effects, Settings,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
@@ -57,146 +68,87 @@ impl SimulationState {
         self.durability <= 0 || self.progress >= settings.max_progress
     }
 
-    pub fn can_use_action(
+    fn check_common_preconditions<A: ActionImpl>(
         &self,
-        action: Action,
-        condition: Condition,
         settings: &Settings,
+        condition: Condition,
     ) -> Result<(), &'static str> {
-        if self.is_final(settings) {
-            return Err("State is final");
-        }
-        if !settings.allowed_actions.has(action) {
-            return Err("Action not enabled");
-        }
-        if action.cp_cost() > self.cp {
-            return Err("Not enough CP");
-        }
-        if !action.combo_fulfilled(self.combo) {
-            return Err("Combo requirement not fulfilled");
-        }
-        match action {
-            Action::ByregotsBlessing if self.effects.inner_quiet() == 0 => {
-                Err("Need Inner Quiet to use Byregot's Blessing")
-            }
-            Action::PrudentSynthesis | Action::PrudentTouch if self.effects.waste_not() != 0 => {
-                Err("Action cannot be used during Waste Not")
-            }
-            Action::IntensiveSynthesis | Action::PreciseTouch
-                if self.effects.heart_and_soul() != SingleUse::Active
-                    && condition != Condition::Good
-                    && condition != Condition::Excellent =>
-            {
-                Err("Requires condition to be Good or Excellent")
-            }
-            Action::Groundwork if self.durability < action.durability_cost(&self.effects) => {
-                Err("Not enough durability")
-            }
-            Action::TrainedFinesse if self.effects.inner_quiet() < 10 => {
-                Err("Requires 10 Inner Quiet")
-            }
-            Action::TrainedPerfection
-                if !matches!(self.effects.trained_perfection(), SingleUse::Available) =>
-            {
-                Err("Action can only be used once per synthesis")
-            }
-            Action::HeartAndSoul if self.effects.heart_and_soul() != SingleUse::Available => {
-                Err("Action can only be used once per synthesis")
-            }
-            Action::QuickInnovation if self.effects.quick_innovation_used() => {
-                Err("Action can only be used once per synthesis")
-            }
-            Action::QuickInnovation if self.effects.innovation() != 0 => {
-                Err("Action cannot be used when Innovation is active")
-            }
-            _ => Ok(()),
+        if settings.job_level < A::LEVEL_REQUIREMENT {
+            Err("Level not high enough")
+        } else if !settings.allowed_actions.has_mask(A::ACTION_MASK) {
+            Err("Action disabled by action mask")
+        } else if self.is_final(settings) {
+            Err("State is final")
+        } else if A::cp_cost(self, settings, condition) > self.cp {
+            Err("Not enough CP")
+        } else {
+            Ok(())
         }
     }
 
-    pub fn use_action(
-        self,
-        action: Action,
-        condition: Condition,
+    pub fn use_action_impl<A: ActionImpl>(
+        &self,
         settings: &Settings,
+        condition: Condition,
     ) -> Result<SimulationState, &'static str> {
-        self.can_use_action(action, condition, settings)?;
-        let mut state = self;
+        self.check_common_preconditions::<A>(settings, condition)?;
+        A::precondition(&self, settings, condition)?;
 
-        let cp_cost = action.cp_cost();
-        let durability_cost = action.durability_cost(&state.effects);
-        let progress_increase = action.progress_increase(settings, &state.effects);
-        let quality_increase = if settings.adversarial && state.effects.guard() == 0 {
-            action.quality_increase(settings, &state.effects, Condition::Poor)
-        } else {
-            action.quality_increase(settings, &state.effects, condition)
-        };
-        let quality_delta = if settings.adversarial && state.effects.guard() == 0 {
-            action.quality_increase(settings, &state.effects, condition)
-                - action.quality_increase(settings, &state.effects, Condition::Poor)
-        } else {
-            0
-        };
+        let mut state = self.clone();
 
-        state.cp -= cp_cost;
-        state.durability -= durability_cost;
+        A::transform_pre(&mut state, settings, condition);
 
-        if action.base_durability_cost() != 0
-            && state.effects.trained_perfection() == SingleUse::Active
-        {
-            state.effects.set_trained_perfection(SingleUse::Unavailable);
+        if A::base_durability_cost(&state, settings) != 0 {
+            state.durability -= A::durability_cost(self, settings, condition);
+            if state.effects.trained_perfection() == SingleUse::Active {
+                state.effects.set_trained_perfection(SingleUse::Unavailable);
+            }
         }
 
-        // reset muscle memory if progress increased
+        state.cp -= A::cp_cost(self, settings, condition);
+
+        let progress_increase = A::progress_increase(self, settings, condition);
+        state.progress += progress_increase;
         if progress_increase != 0 {
-            state.progress += progress_increase;
             state.effects.set_muscle_memory(0);
         }
 
-        if state.effects.guard() == 0 && quality_increase == 0 {
-            state.unreliable_quality = 0;
-        } else if state.effects.guard() != 0 && quality_increase != 0 {
-            state.quality += quality_increase;
-            state.unreliable_quality = 0;
-        } else if quality_increase != 0 {
-            state.quality +=
-                quality_increase + std::cmp::min(state.unreliable_quality, quality_delta);
-            state.unreliable_quality = quality_delta.saturating_sub(state.unreliable_quality);
-        }
-
-        #[cfg(test)]
-        assert!(settings.adversarial || state.unreliable_quality == 0);
-
-        // reset great strides and increase inner quiet if quality increased
-        if quality_increase != 0 {
-            state.effects.set_great_strides(0);
-            if settings.job_level >= 11 {
-                let inner_quiet_bonus = match action {
-                    Action::Reflect => 2,
-                    Action::PreciseTouch => 2,
-                    Action::PreparatoryTouch => 2,
-                    Action::ComboRefinedTouch => 2,
-                    _ => 1,
-                };
-                state.effects.set_inner_quiet(std::cmp::min(
-                    10,
-                    state.effects.inner_quiet() + inner_quiet_bonus,
-                ));
+        let quality_increase = A::quality_increase(self, settings, condition);
+        if settings.adversarial {
+            let adversarial_quality_increase = if state.effects.guard() != 0 {
+                quality_increase
+            } else {
+                A::quality_increase(self, settings, Condition::Poor)
+            };
+            if state.effects.guard() == 0 && adversarial_quality_increase == 0 {
+                state.unreliable_quality = 0;
+            } else if state.effects.guard() != 0 && adversarial_quality_increase != 0 {
+                state.quality += adversarial_quality_increase;
+                state.unreliable_quality = 0;
+            } else if adversarial_quality_increase != 0 {
+                let quality_diff = quality_increase - adversarial_quality_increase;
+                state.quality += adversarial_quality_increase
+                    + std::cmp::min(state.unreliable_quality, quality_diff);
+                state.unreliable_quality = quality_diff.saturating_sub(state.unreliable_quality);
             }
+        } else {
+            state.quality += quality_increase;
+        }
+        if quality_increase != 0 && settings.job_level >= 11 {
+            state.effects.set_great_strides(0);
+            state
+                .effects
+                .set_inner_quiet(std::cmp::min(10, state.effects.inner_quiet() + 1));
         }
 
         if state.is_final(settings) {
             return Ok(state);
         }
 
-        state.combo = action.to_combo();
-
-        // skip processing effects for actions that do not increase turn count
-        if !matches!(action, Action::HeartAndSoul | Action::QuickInnovation) {
-            if action == Action::Manipulation {
-                state.effects.set_manipulation(0);
-            }
-            if state.effects.manipulation() > 0 {
-                state.durability = std::cmp::min(state.durability + 5, settings.max_durability);
+        if A::TICK_EFFECTS {
+            if state.effects.manipulation() != 0 {
+                state.durability =
+                    std::cmp::min(settings.max_durability, state.durability.saturating_add(5));
             }
             state.effects.tick_down();
         }
@@ -205,35 +157,64 @@ impl SimulationState {
             state.effects.set_guard(1);
         }
 
-        // trigger special action effects
-        match action {
-            Action::MuscleMemory => state.effects.set_muscle_memory(5),
-            Action::GreatStrides => state.effects.set_great_strides(3),
-            Action::Veneration => state.effects.set_veneration(4),
-            Action::Innovation => state.effects.set_innovation(4),
-            Action::WasteNot => state.effects.set_waste_not(4),
-            Action::WasteNot2 => state.effects.set_waste_not(8),
-            Action::Manipulation => state.effects.set_manipulation(8),
-            Action::MasterMend => {
-                state.durability =
-                    std::cmp::min(settings.max_durability, state.durability.saturating_add(30))
-            }
-            Action::ByregotsBlessing => state.effects.set_inner_quiet(0),
-            Action::ImmaculateMend => state.durability = settings.max_durability,
-            Action::TrainedPerfection => state.effects.set_trained_perfection(SingleUse::Active),
-            Action::HeartAndSoul => state.effects.set_heart_and_soul(SingleUse::Active),
-            Action::QuickInnovation => {
-                state.effects.set_innovation(1);
-                state.effects.set_quick_innovation_used(true);
-            }
-            Action::IntensiveSynthesis | Action::PreciseTouch
-                if condition != Condition::Good && condition != Condition::Excellent =>
-            {
-                state.effects.set_heart_and_soul(SingleUse::Unavailable)
-            }
-            _ => (),
-        }
+        A::transform_post(&mut state, settings, condition);
+
+        state.combo = A::combo(&state, settings, condition);
 
         Ok(state)
+    }
+
+    pub fn use_action(
+        &self,
+        action: Action,
+        condition: Condition,
+        settings: &Settings,
+    ) -> Result<SimulationState, &'static str> {
+        match action {
+            Action::BasicSynthesis => self.use_action_impl::<BasicSynthesis>(settings, condition),
+            Action::BasicTouch => self.use_action_impl::<BasicTouch>(settings, condition),
+            Action::MasterMend => self.use_action_impl::<MasterMend>(settings, condition),
+            Action::Observe => self.use_action_impl::<Observe>(settings, condition),
+            Action::WasteNot => self.use_action_impl::<WasteNot>(settings, condition),
+            Action::Veneration => self.use_action_impl::<Veneration>(settings, condition),
+            Action::StandardTouch => self.use_action_impl::<StandardTouch>(settings, condition),
+            Action::GreatStrides => self.use_action_impl::<GreatStrides>(settings, condition),
+            Action::Innovation => self.use_action_impl::<Innovation>(settings, condition),
+            Action::WasteNot2 => self.use_action_impl::<WasteNot2>(settings, condition),
+            Action::ByregotsBlessing => {
+                self.use_action_impl::<ByregotsBlessing>(settings, condition)
+            }
+            Action::PreciseTouch => self.use_action_impl::<PreciseTouch>(settings, condition),
+            Action::MuscleMemory => self.use_action_impl::<MuscleMemory>(settings, condition),
+            Action::CarefulSynthesis => {
+                self.use_action_impl::<CarefulSynthesis>(settings, condition)
+            }
+            Action::Manipulation => self.use_action_impl::<Manipulation>(settings, condition),
+            Action::PrudentTouch => self.use_action_impl::<PrudentTouch>(settings, condition),
+            Action::AdvancedTouch => self.use_action_impl::<AdvancedTouch>(settings, condition),
+            Action::Reflect => self.use_action_impl::<Reflect>(settings, condition),
+            Action::PreparatoryTouch => {
+                self.use_action_impl::<PreparatoryTouch>(settings, condition)
+            }
+            Action::Groundwork => self.use_action_impl::<Groundwork>(settings, condition),
+            Action::DelicateSynthesis => {
+                self.use_action_impl::<DelicateSynthesis>(settings, condition)
+            }
+            Action::IntensiveSynthesis => {
+                self.use_action_impl::<IntensiveSynthesis>(settings, condition)
+            }
+            Action::TrainedEye => self.use_action_impl::<TrainedEye>(settings, condition),
+            Action::HeartAndSoul => self.use_action_impl::<HeartAndSoul>(settings, condition),
+            Action::PrudentSynthesis => {
+                self.use_action_impl::<PrudentSynthesis>(settings, condition)
+            }
+            Action::TrainedFinesse => self.use_action_impl::<TrainedFinesse>(settings, condition),
+            Action::RefinedTouch => self.use_action_impl::<RefinedTouch>(settings, condition),
+            Action::QuickInnovation => self.use_action_impl::<QuickInnovation>(settings, condition),
+            Action::ImmaculateMend => self.use_action_impl::<ImmaculateMend>(settings, condition),
+            Action::TrainedPerfection => {
+                self.use_action_impl::<TrainedPerfection>(settings, condition)
+            }
+        }
     }
 }

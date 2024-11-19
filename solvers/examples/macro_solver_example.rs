@@ -20,7 +20,7 @@ fn main() {
         base_progress: 237,
         base_quality: 245,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
