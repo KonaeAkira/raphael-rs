@@ -3,7 +3,7 @@ use crate::{
     branch_pruning::is_progress_only_state,
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
-use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState};
+use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -35,23 +35,17 @@ impl StepLowerBoundSolver {
         dbg!(std::mem::size_of::<ReducedState>());
         dbg!(std::mem::align_of::<ReducedState>());
         let mut bonus_durability_restore = 0;
-        if settings.allowed_actions.has(Action::Manipulation) {
-            bonus_durability_restore = std::cmp::max(bonus_durability_restore, 10);
-        }
-        if settings.allowed_actions.has(Action::ImmaculateMend) {
+        if settings.is_action_allowed::<ImmaculateMend>() {
             bonus_durability_restore =
                 std::cmp::max(bonus_durability_restore, settings.max_durability - 35);
         }
-        if settings.allowed_actions.has(Action::Manipulation) {
+        if settings.is_action_allowed::<Manipulation>() {
+            bonus_durability_restore = std::cmp::max(bonus_durability_restore, 10);
             settings.max_durability += 40;
         }
+        ReducedState::optimize_action_mask(&mut settings);
         Self {
-            settings: Settings {
-                allowed_actions: ReducedState::optimize_action_mask(settings.allowed_actions)
-                    .remove(Action::Manipulation)
-                    .remove(Action::ImmaculateMend),
-                ..settings
-            },
+            settings,
             backload_progress,
             unsound_branch_pruning,
             bonus_durability_restore,
@@ -87,7 +81,7 @@ impl StepLowerBoundSolver {
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
         let progress_only =
-            is_progress_only_state(state, self.backload_progress, self.unsound_branch_pruning);
+            is_progress_only_state(&state, self.backload_progress, self.unsound_branch_pruning);
         let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
 
         let pareto_front = match self.solved_states.get(&reduced_state) {
@@ -130,8 +124,8 @@ impl StepLowerBoundSolver {
     fn solve_normal_state(&mut self, reduced_state: ReducedState) {
         self.pareto_front_builder.push_empty();
         let search_actions = match reduced_state.progress_only {
-            false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
-            true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
+            false => FULL_SEARCH_ACTIONS,
+            true => PROGRESS_SEARCH_ACTIONS,
         };
         for action in search_actions.actions_iter() {
             self.build_child_front(reduced_state, action);
@@ -154,17 +148,13 @@ impl StepLowerBoundSolver {
         match reduced_state.combo {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
-                for action in [Action::MuscleMemory, Action::Reflect, Action::TrainedEye] {
-                    if self.settings.allowed_actions.has(action) {
-                        self.build_child_front(reduced_state, action);
-                    }
-                }
+                self.build_child_front(reduced_state, Action::MuscleMemory);
+                self.build_child_front(reduced_state, Action::Reflect);
+                self.build_child_front(reduced_state, Action::TrainedEye);
             }
             Combo::BasicTouch => {
-                if !reduced_state.progress_only
-                    && self.settings.allowed_actions.has(Action::ComboRefinedTouch)
-                {
-                    self.build_child_front(reduced_state, Action::ComboRefinedTouch);
+                if !reduced_state.progress_only {
+                    self.build_child_front(reduced_state, Action::RefinedTouch);
                 }
             }
             Combo::StandardTouch => unreachable!(),
@@ -181,7 +171,7 @@ impl StepLowerBoundSolver {
             let action_quality = new_full_state.quality;
             let progress_only = reduced_state.progress_only
                 || is_progress_only_state(
-                    new_full_state,
+                    &new_full_state,
                     self.backload_progress,
                     self.unsound_branch_pruning,
                 );
@@ -241,7 +231,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -274,7 +264,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -307,7 +297,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -337,7 +327,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -367,7 +357,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -386,7 +376,7 @@ mod tests {
                 Action::PreparatoryTouch,
                 Action::Innovation,
                 Action::BasicTouch,
-                Action::ComboStandardTouch,
+                Action::StandardTouch,
             ],
         );
         assert_eq!(result, 13);
@@ -402,7 +392,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -421,7 +411,7 @@ mod tests {
                 Action::PreparatoryTouch,
                 Action::Innovation,
                 Action::BasicTouch,
-                Action::ComboStandardTouch,
+                Action::StandardTouch,
             ],
         );
         assert_eq!(result, 13);
@@ -437,7 +427,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -457,7 +447,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -477,7 +467,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -497,7 +487,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -517,7 +507,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -537,7 +527,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -557,7 +547,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -577,7 +567,7 @@ mod tests {
             base_progress: 10000,
             base_quality: 10000,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
@@ -597,7 +587,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 90,
-            allowed_actions: ActionMask::from_level(90)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
@@ -618,7 +608,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
@@ -639,7 +629,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)
@@ -660,7 +650,7 @@ mod tests {
             base_progress: 100,
             base_quality: 100,
             job_level: 100,
-            allowed_actions: ActionMask::from_level(100)
+            allowed_actions: ActionMask::all()
                 .remove(Action::Manipulation)
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),

@@ -1,4 +1,4 @@
-use simulator::{Action, ActionMask, Settings};
+use simulator::*;
 use solvers::test_utils::*;
 
 #[test]
@@ -11,7 +11,7 @@ fn unsolvable() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -31,7 +31,7 @@ fn zero_quality() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -52,7 +52,7 @@ fn max_quality() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -73,7 +73,7 @@ fn random_0f93c79f() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -94,7 +94,7 @@ fn random_1e281667() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -115,7 +115,7 @@ fn random_d0bf2aef() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -136,7 +136,7 @@ fn random_e413e05d() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -157,7 +157,7 @@ fn random_bb38a037() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -178,7 +178,7 @@ fn random_a300ca2b() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -199,7 +199,7 @@ fn random_0f9d7781() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -220,7 +220,7 @@ fn random_e451d981() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -241,7 +241,7 @@ fn random_6799bb1d() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -262,7 +262,7 @@ fn random_940b4755() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -283,7 +283,7 @@ fn rinascita_3700_3280() {
         base_progress: 229,
         base_quality: 224,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -304,7 +304,7 @@ fn pactmaker_3240_3130() {
         base_progress: 200,
         base_quality: 215,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -325,7 +325,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
         base_progress: 200,
         base_quality: 215,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::QuickInnovation),
         adversarial: false,
@@ -345,7 +345,7 @@ fn diadochos_4021_3660() {
         base_progress: 249,
         base_quality: 247,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -366,7 +366,7 @@ fn indagator_3858_4057() {
         base_progress: 239,
         base_quality: 271,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -387,7 +387,7 @@ fn random_2ea6c001() {
         base_progress: 241,
         base_quality: 322,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -408,7 +408,7 @@ fn random_48ae7c9f() {
         base_progress: 295,
         base_quality: 310,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -428,8 +428,8 @@ fn random_4ecd54c4() {
         max_quality: 40000,
         base_progress: 100,
         base_quality: 100,
-        job_level: 100,
-        allowed_actions: ActionMask::from_level(90)
+        job_level: 90,
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -437,7 +437,7 @@ fn random_4ecd54c4() {
     };
     let actions = solve(&settings, false, false).unwrap();
     let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (3080, 19, 51));
+    assert_eq!(score, (3002, 19, 51));
 }
 
 #[test]
@@ -450,7 +450,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
         base_progress: 256,
         base_quality: 265,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -473,7 +473,7 @@ fn stuffed_peppers_2() {
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -496,7 +496,7 @@ fn stuffed_peppers_2_heart_and_soul() {
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::QuickInnovation),
         adversarial: false,
@@ -518,7 +518,7 @@ fn stuffed_peppers_2_quick_innovation() {
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul),
         adversarial: false,
@@ -538,7 +538,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
         base_progress: 237,
         base_quality: 245,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -559,7 +559,7 @@ fn black_star_4048_3997() {
         base_progress: 250,
         base_quality: 312,
         job_level: 90,
-        allowed_actions: ActionMask::from_level(90)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -580,7 +580,7 @@ fn claro_walnut_lumber_4900_4800() {
         base_progress: 300,
         base_quality: 368,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -601,7 +601,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
         base_progress: 261,
         base_quality: 266,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -622,7 +622,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
         base_progress: 264,
         base_quality: 267,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
@@ -643,7 +643,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
         base_progress: 264,
         base_quality: 271,
         job_level: 100,
-        allowed_actions: ActionMask::from_level(100)
+        allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),

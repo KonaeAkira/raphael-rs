@@ -23,6 +23,26 @@ fn simulate_normal(
 }
 
 #[test]
+/// The simulator should return an error in case the job level isn't high enough to use an action
+fn test_level_requirement() {
+    let settings = Settings {
+        max_cp: 50,
+        max_durability: 60,
+        max_progress: 33,
+        max_quality: 150,
+        base_progress: 4,
+        base_quality: 38,
+        job_level: 50,
+        allowed_actions: ActionMask::all(),
+        adversarial: false,
+    };
+    let error = SimulationState::new(&settings)
+        .use_action(Action::ImmaculateMend, Condition::Normal, &settings)
+        .unwrap_err();
+    assert_eq!(error, "Level not high enough");
+}
+
+#[test]
 fn test_random_926ae85b() {
     // Copper Gorget
     // 10 Craftsmanship, 10 Control
@@ -106,7 +126,7 @@ fn test_random_3ba90d3a() {
         Action::Innovation,
         Action::PrudentTouch,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
+        Action::StandardTouch,
     ];
     let state = SimulationState::from_macro(&settings, &actions).unwrap();
     assert_eq!(state.cp, 188);
@@ -151,12 +171,12 @@ fn test_random_bce2650c() {
         Action::Innovation,
         Action::PrudentTouch,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::GreatStrides,
         Action::Innovation,
         Action::Observe,
-        Action::ComboAdvancedTouch,
+        Action::AdvancedTouch,
         Action::GreatStrides,
         Action::ByregotsBlessing,
     ];
@@ -194,13 +214,13 @@ fn test_ingame_be9fc5c2() {
             (Action::PreparatoryTouch, Condition::Normal), // 0, 4293
             (Action::Innovation, Condition::Normal),
             (Action::BasicTouch, Condition::Normal), // 0, 5008
-            (Action::ComboStandardTouch, Condition::Normal), // 0, 5952
-            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 7144
+            (Action::StandardTouch, Condition::Normal), // 0, 5952
+            (Action::AdvancedTouch, Condition::Normal), // 0, 7144
             (Action::PrudentTouch, Condition::Normal), // 0, 7939
             (Action::GreatStrides, Condition::Normal),
             (Action::Innovation, Condition::Normal),
             (Action::Observe, Condition::Normal),
-            (Action::ComboAdvancedTouch, Condition::Normal), // 0, 9926
+            (Action::AdvancedTouch, Condition::Normal), // 0, 9926
             (Action::Veneration, Condition::Normal),
             (Action::Groundwork, Condition::Normal), // 1333, 9926
             (Action::DelicateSynthesis, Condition::Normal), // 1703, 10456
@@ -311,22 +331,22 @@ fn test_ingame_f9f0dac7() {
     let actions = [
         Action::Reflect,
         Action::Observe,
-        Action::ComboAdvancedTouch,
+        Action::AdvancedTouch,
         Action::Innovation,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::PreparatoryTouch,
         Action::ImmaculateMend,
         Action::Innovation,
         Action::PrudentTouch,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::Innovation,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::ByregotsBlessing,
         Action::TrainedPerfection,
         Action::ImmaculateMend,
@@ -399,13 +419,13 @@ fn test_ingame_4866545e() {
         Action::Manipulation,
         Action::Innovation,
         Action::BasicTouch,
-        Action::ComboRefinedTouch,
+        Action::RefinedTouch,
         Action::PrudentTouch,
         Action::PrudentTouch,
         Action::Innovation,
         Action::BasicTouch,
-        Action::ComboStandardTouch,
-        Action::ComboAdvancedTouch,
+        Action::StandardTouch,
+        Action::AdvancedTouch,
         Action::Manipulation,
         Action::TrainedPerfection,
         Action::GreatStrides,

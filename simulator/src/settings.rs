@@ -11,7 +11,14 @@ pub struct Settings {
     pub adversarial: bool,
 }
 
-use crate::Action;
+impl Settings {
+    pub fn is_action_allowed<ACTION: ActionImpl>(&self) -> bool {
+        self.job_level >= ACTION::LEVEL_REQUIREMENT
+            && self.allowed_actions.has_mask(ACTION::ACTION_MASK)
+    }
+}
+
+use crate::{Action, ActionImpl};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct ActionMask {
@@ -27,18 +34,12 @@ impl ActionMask {
         Self { mask: u64::MAX }
     }
 
-    pub fn from_level(level: u8) -> Self {
-        let mut result = Self::none();
-        for action in ALL_ACTIONS {
-            if action.level_requirement() <= level {
-                result = result.add(*action);
-            }
-        }
-        result
-    }
-
     pub const fn has(self, action: Action) -> bool {
         (self.mask & (1 << action as u64)) != 0
+    }
+
+    pub const fn has_mask(self, other: Self) -> bool {
+        (self.mask & other.mask) == other.mask
     }
 
     pub const fn add(self, action: Action) -> Self {
@@ -110,7 +111,6 @@ const ALL_ACTIONS: &[Action] = &[
     Action::WasteNot,
     Action::Veneration,
     Action::StandardTouch,
-    Action::ComboStandardTouch,
     Action::GreatStrides,
     Action::Innovation,
     Action::WasteNot2,
@@ -127,11 +127,10 @@ const ALL_ACTIONS: &[Action] = &[
     Action::DelicateSynthesis,
     Action::IntensiveSynthesis,
     Action::AdvancedTouch,
-    Action::ComboAdvancedTouch,
     Action::HeartAndSoul,
     Action::PrudentSynthesis,
     Action::TrainedFinesse,
-    Action::ComboRefinedTouch,
+    Action::RefinedTouch,
     Action::ImmaculateMend,
     Action::TrainedPerfection,
     Action::QuickInnovation,

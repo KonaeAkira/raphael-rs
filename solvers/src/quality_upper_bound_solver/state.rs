@@ -1,4 +1,7 @@
-use simulator::{Combo, Effects, SimulationState, SingleUse};
+use crate::branch_pruning::is_progress_only_state;
+
+use super::solver::SolverSettings;
+use simulator::*;
 
 #[bitfield_struct::bitfield(u32)]
 #[derive(PartialEq, Eq, Hash)]
@@ -20,25 +23,44 @@ pub struct ReducedState {
 }
 
 impl ReducedState {
-    pub fn to_non_combo(self) -> Self {
-        Self {
-            data: self.data.with_combo(Combo::None),
-            effects: self.effects,
+    pub fn from_simulation_state(
+        mut state: SimulationState,
+        simulator_settings: &Settings,
+        solver_settings: &SolverSettings,
+    ) -> Self {
+        state.cp += state.effects.manipulation() as i16
+            * (Manipulation::base_cp_cost(&state, &simulator_settings) / 8);
+        if state.effects.trained_perfection() != SingleUse::Unavailable
+            && simulator_settings.is_action_allowed::<TrainedPerfection>()
+        {
+            state.cp += solver_settings.durability_cost * 4;
         }
+        if state.effects.heart_and_soul() == SingleUse::Available {
+            state.effects.set_heart_and_soul(SingleUse::Active);
+        }
+        state.cp += state.durability as i16 / 5 * solver_settings.durability_cost;
+        state.durability = simulator_settings.max_durability;
+        Self::from_simulation_state_inner(&state, simulator_settings, solver_settings)
     }
 
-    pub fn from_state(
-        state: SimulationState,
-        progress_only: bool,
-        durability_cost: i16,
-        base_quality: u16,
+    fn from_simulation_state_inner(
+        state: &SimulationState,
+        simulator_settings: &Settings,
+        solver_settings: &SolverSettings,
     ) -> Self {
-        let used_durability = (i8::MAX - state.durability) / 5;
-        let cp = state.cp - used_durability as i16 * durability_cost;
+        let progress_only = is_progress_only_state(
+            state,
+            solver_settings.backload_progress,
+            solver_settings.unsound_branch_pruning,
+        );
+        let used_durability = (simulator_settings.max_durability - state.durability) / 5;
+        let cp = state.cp - used_durability as i16 * solver_settings.durability_cost;
         let unreliable_quality = if progress_only {
             0
         } else {
-            ((state.unreliable_quality + 2 * base_quality - 1) / (2 * base_quality)) as u8
+            state
+                .unreliable_quality
+                .div_ceil(2 * simulator_settings.base_quality) as u8
         };
         let effects = if progress_only {
             state
@@ -68,15 +90,49 @@ impl ReducedState {
         }
     }
 
-    pub fn to_state(self, base_quality: u16) -> SimulationState {
+    pub fn drop_combo(self) -> Self {
+        Self {
+            data: self.data.with_combo(Combo::None),
+            effects: self.effects,
+        }
+    }
+
+    fn to_simulation_state(&self, settings: &Settings) -> SimulationState {
         SimulationState {
-            durability: i8::MAX,
+            durability: settings.max_durability,
             cp: self.data.cp(),
             progress: 0,
             quality: 0,
-            unreliable_quality: self.data.unreliable_quality() as u16 * base_quality * 2,
+            unreliable_quality: self.data.unreliable_quality() as u16 * settings.base_quality * 2,
             effects: self.effects,
             combo: self.data.combo(),
+        }
+    }
+
+    pub fn use_action(
+        &self,
+        action: Action,
+        simulator_settings: &Settings,
+        solver_settings: &SolverSettings,
+    ) -> Result<(Self, u16, u16), &'static str> {
+        if matches!(
+            action,
+            Action::MasterMend | Action::ImmaculateMend | Action::Manipulation
+        ) {
+            panic!("Action not supported.")
+        }
+        let progress_only = self.data.progress_only();
+        let state = self.to_simulation_state(simulator_settings);
+        match state.use_action(action, Condition::Normal, simulator_settings) {
+            Ok(state) => {
+                let mut solver_state =
+                    Self::from_simulation_state_inner(&state, simulator_settings, solver_settings);
+                if progress_only {
+                    solver_state.data.set_progress_only(true);
+                }
+                Ok((solver_state, state.progress, state.quality))
+            }
+            Err(err) => Err(err),
         }
     }
 }

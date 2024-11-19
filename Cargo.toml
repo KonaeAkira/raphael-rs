@@ -4,7 +4,7 @@ members = ["simulator", "solvers", "game_data", "raphael-cli"]
 
 [package]
 name = "raphael-xiv"
-version = "0.14.3"
+version = "0.15.0"
 edition = "2021"
 default-run = "raphael-xiv"
 
@@ -37,3 +37,7 @@ path = "src/webworker.rs"
 
 [profile.release]
 lto = "fat"
+
+[profile.test]
+opt-level = 3
+overflow-checks = true

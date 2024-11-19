@@ -1,4 +1,4 @@
-use simulator::{Action, ActionMask, Combo, Settings, SimulationState, SingleUse};
+use simulator::*;
 
 const SETTINGS: Settings = Settings {
     max_cp: 250,
@@ -12,140 +12,496 @@ const SETTINGS: Settings = Settings {
     adversarial: false,
 };
 
-#[test]
-fn test_redundant_half_efficiency_groundwork() {
-    // Groundwork's efficiency is halved when the remaining durability is lower than the durability cost
-    // Careful Synthesis is a strictly better action in case Groundwork's efficiency is halved
-    // This enables the simulator to simplify things by simply not allowing Groundwork when there isn't enough durability
-    for level in 1..=100 {
-        let settings = Settings {
-            job_level: level,
-            allowed_actions: ActionMask::from_level(level as _),
-            ..SETTINGS
-        };
-        match (
-            settings.allowed_actions.has(Action::CarefulSynthesis),
-            settings.allowed_actions.has(Action::Groundwork),
-        ) {
-            (false, true) => panic!("Cannot replace half-efficiency Groundwork because CarefulSynthesis is not available at level {}", level),
-            (true, true) => {
-                let state_1 = SimulationState::from_macro(&settings, &[Action::CarefulSynthesis]).unwrap();
-                let state_2 = SimulationState::from_macro(&settings, &[Action::Groundwork]).unwrap();
-                assert!(state_1.progress * 2 >= state_2.progress);
-                assert!(state_1.durability >= state_2.durability);
-                assert!(state_1.cp >= state_2.cp);
-            }
-            _ => ()
-        }
-    }
+/// Returns the 4 primary stats of a state:
+/// - Progress
+/// - Quality
+/// - Durability (used)
+/// - CP (used)
+fn primary_stats(state: &SimulationState, settings: &Settings) -> (u16, u16, i8, i16) {
+    (
+        state.progress,
+        state.quality,
+        settings.max_durability - state.durability,
+        settings.max_cp - state.cp,
+    )
 }
 
 #[test]
-fn test_standard_touch_combo() {
-    let state =
-        SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::ComboStandardTouch]);
-    assert!(matches!(state, Ok(_)));
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::ComboStandardTouch]);
-    assert!(matches!(state, Err("Combo requirement not fulfilled")));
+fn test_basic_synthesis() {
+    // Low level, potency increase trait not unlocked
+    let settings = Settings {
+        job_level: 30,
+        ..SETTINGS
+    };
+    let state = SimulationState::new(&settings)
+        .use_action(Action::BasicSynthesis, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &settings), (100, 0, 10, 0));
+    // Potency-increase trait unlocked
+    let settings = Settings {
+        job_level: 31,
+        ..SETTINGS
+    };
+    let state = SimulationState::new(&settings)
+        .use_action(Action::BasicSynthesis, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &settings), (120, 0, 10, 0));
 }
 
 #[test]
-fn test_advanced_touch_combo() {
-    let state = SimulationState::from_macro(
-        &SETTINGS,
-        &[
-            Action::BasicTouch,
-            Action::ComboStandardTouch,
-            Action::ComboAdvancedTouch,
-        ],
-    );
-    assert!(matches!(state, Ok(_)));
-    let state =
-        SimulationState::from_macro(&SETTINGS, &[Action::Observe, Action::ComboAdvancedTouch]);
-    assert!(matches!(state, Ok(_)));
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::ComboAdvancedTouch]);
-    assert!(matches!(state, Err("Combo requirement not fulfilled")));
-}
-
-#[test]
-fn test_reflect_opener() {
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::Reflect]);
-    assert!(matches!(state, Ok(_)));
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::Reflect]);
-    assert!(matches!(state, Err("Combo requirement not fulfilled")));
-}
-
-#[test]
-fn test_muscle_memory_opener() {
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::MuscleMemory]);
-    assert!(matches!(state, Ok(_)));
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::MuscleMemory]);
-    assert!(matches!(state, Err("Combo requirement not fulfilled")));
-}
-
-#[test]
-fn test_trained_eye_opener() {
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::TrainedEye]);
-    assert!(matches!(state, Ok(_)));
-    let state = state.unwrap();
-    assert_eq!(state.quality, SETTINGS.max_quality);
+fn test_basic_touch() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::BasicTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 100, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 1);
-    let state =
-        SimulationState::from_macro(&SETTINGS, &[Action::BasicSynthesis, Action::TrainedEye]);
-    assert!(matches!(state, Err("Combo requirement not fulfilled")));
+    assert_eq!(state.combo, Combo::BasicTouch);
+}
+
+#[test]
+fn test_master_mend() {
+    // Durability-restore fully utilized
+    let initial_state = SimulationState {
+        durability: SETTINGS.max_durability - 40,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::MasterMend, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 10, 88));
+    // Durability-restore partially utilized
+    let initial_state = SimulationState {
+        durability: SETTINGS.max_durability - 10,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::MasterMend, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 88));
+}
+
+#[test]
+fn test_observe() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::Observe, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 7));
+    assert_eq!(state.combo, Combo::StandardTouch);
+}
+
+#[test]
+fn test_waste_not() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::WasteNot, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 56));
+    assert_eq!(state.effects.waste_not(), 4);
+}
+
+#[test]
+fn test_veneration() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::Veneration, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 18));
+    assert_eq!(state.effects.veneration(), 4);
+}
+
+#[test]
+fn test_standard_touch() {
+    // Combo requirement not fulfilled
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::StandardTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 125, 10, 32));
+    assert_eq!(state.effects.inner_quiet(), 1);
+    assert_eq!(state.combo, Combo::None);
+    // Combo requirement fulfilled
+    let initial_state = SimulationState {
+        combo: Combo::BasicTouch,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::StandardTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 125, 10, 18));
+    assert_eq!(state.effects.inner_quiet(), 1);
+    assert_eq!(state.combo, Combo::StandardTouch);
+}
+
+#[test]
+fn test_great_strides() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::GreatStrides, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 32));
+    assert_eq!(state.effects.great_strides(), 3);
+}
+
+#[test]
+fn test_innovation() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::Innovation, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 18));
+    assert_eq!(state.effects.innovation(), 4);
+}
+
+#[test]
+fn test_waste_not_2() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::WasteNot2, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 98));
+    assert_eq!(state.effects.waste_not(), 8);
+}
+
+#[test]
+fn test_byregots_blessing() {
+    // Cannot use without inner quiet
+    let error = SimulationState::new(&SETTINGS)
+        .use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(
+        error,
+        "Cannot use Byregot's Blessing when Inner Quiet is 0."
+    );
+    // Quality efficiency scales with inner quiet
+    let initial_state = SimulationState {
+        effects: Effects::new().with_inner_quiet(5),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 300, 10, 24));
+    assert_eq!(state.effects.inner_quiet(), 0);
+    let initial_state = SimulationState {
+        effects: Effects::new().with_inner_quiet(10),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 600, 10, 24));
+    assert_eq!(state.effects.inner_quiet(), 0);
+}
+
+#[test]
+fn test_precise_touch() {
+    // Precondition not fulfilled
+    let error = SimulationState::new(&SETTINGS)
+        .use_action(Action::PreciseTouch, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(
+        error,
+        "Precise Touch can only be used when the condition is Good or Excellent."
+    );
+    // Can use when condition is Good or Excellent
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::PreciseTouch, Condition::Good, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 225, 10, 18));
+    assert_eq!(state.effects.inner_quiet(), 2);
+    // Can use when Heart and Soul is active
+    let initial_state = SimulationState {
+        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::PreciseTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 150, 10, 18));
+    assert_eq!(state.effects.inner_quiet(), 2);
+    assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+    // Heart and Soul effect isn't consumed when condition is Good or Excellent
+    let initial_state = SimulationState {
+        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::PreciseTouch, Condition::Good, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 225, 10, 18));
+    assert_eq!(state.effects.inner_quiet(), 2);
+    assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+}
+
+#[test]
+fn test_muscle_memory() {
+    // Precondition unfulfilled
+    let initial_state = SimulationState {
+        combo: Combo::None,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let error = initial_state
+        .use_action(Action::MuscleMemory, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(error, "Muscle Memory can only be used at synthesis begin.");
+    // Precondition fulfilled
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::MuscleMemory, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (300, 0, 10, 6));
+    assert_eq!(state.effects.muscle_memory(), 5);
+}
+
+#[test]
+fn test_careful_synthesis() {
+    // Low level, potency-increase trait not unlocked
+    let settings = Settings {
+        job_level: 81,
+        ..SETTINGS
+    };
+    let state = SimulationState::new(&settings)
+        .use_action(Action::CarefulSynthesis, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &settings), (150, 0, 10, 7));
+    // Potency-increase trait unlocked
+    let settings = Settings {
+        job_level: 82,
+        ..SETTINGS
+    };
+    let state = SimulationState::new(&settings)
+        .use_action(Action::CarefulSynthesis, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &settings), (180, 0, 10, 7));
 }
 
 #[test]
 fn test_manipulation() {
-    let state = SimulationState::from_macro(
-        &SETTINGS,
-        &[
-            Action::BasicSynthesis,
-            Action::Manipulation,
-            Action::Manipulation,
-        ],
-    )
-    .unwrap();
-    assert_eq!(state.durability, SETTINGS.max_durability - 10);
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::Manipulation, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 96));
+    assert_eq!(state.effects.manipulation(), 8);
+    // Using Manipulation while Manipulation is already active doesn't restore durability
+    let initial_state = SimulationState {
+        durability: SETTINGS.max_durability - 5,
+        effects: Effects::new().with_manipulation(2),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::Manipulation, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 5, 96));
+    assert_eq!(state.effects.manipulation(), 8);
 }
 
 #[test]
 fn test_prudent_touch() {
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::WasteNot, Action::PrudentTouch]);
-    assert!(matches!(
-        state,
-        Err("Action cannot be used during Waste Not")
-    ));
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::PrudentTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 100, 5, 25));
+    assert_eq!(state.effects.inner_quiet(), 1);
+    // Cannot use while Waste Not is active
+    let initial_state = SimulationState {
+        effects: Effects::new().with_waste_not(2),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let error = initial_state
+        .use_action(Action::PrudentTouch, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(
+        error,
+        "Prudent Touch cannot be used while Waste Not is active."
+    );
+}
+
+#[test]
+fn test_advanced_touch() {
+    // Combo requirement unfulfilled
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::AdvancedTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 150, 10, 46));
+    assert_eq!(state.effects.inner_quiet(), 1);
+    // Combo requirement fulfilled
+    let initial_state = SimulationState {
+        combo: Combo::StandardTouch,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::AdvancedTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 150, 10, 18));
+    assert_eq!(state.effects.inner_quiet(), 1);
+}
+
+#[test]
+fn test_reflect() {
+    // Precondition unfulfilled
+    let initial_state = SimulationState {
+        combo: Combo::None,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let error = initial_state
+        .use_action(Action::Reflect, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(error, "Reflect can only be used at synthesis begin.");
+    // Precondition fulfilled
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::Reflect, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 300, 10, 6));
+    assert_eq!(state.effects.inner_quiet(), 2);
+}
+
+#[test]
+fn test_preparatory_touch() {
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::PreparatoryTouch, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 200, 20, 40));
+    assert_eq!(state.effects.inner_quiet(), 2);
 }
 
 #[test]
 fn test_groundwork() {
+    // Low level, potency-increasing trait not unlocked
     let settings = Settings {
-        job_level: 100,
-        max_durability: 10,
+        job_level: 85,
         ..SETTINGS
     };
-    let state = SimulationState::from_macro(&settings, &[Action::Groundwork]);
-    assert!(matches!(state, Err("Not enough durability")));
-    let state =
-        SimulationState::from_macro(&settings, &[Action::TrainedPerfection, Action::Groundwork]);
-    match state {
-        Ok(state) => {
-            assert_eq!(state.progress, 360);
-            assert_eq!(state.durability, 10);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
+    let state = SimulationState::new(&settings)
+        .use_action(Action::Groundwork, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &settings), (300, 0, 20, 18));
+    // Potency-increasing trait unlocked
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::Groundwork, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (360, 0, 20, 18));
+    // Potency is halved when durability isn't enough
+    let initial_state = SimulationState {
+        durability: 10,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::Groundwork, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(
+        primary_stats(&state, &SETTINGS),
+        (180, 0, SETTINGS.max_durability + 10, 18)
+    );
+    // Potency isn't halved when Waste Not causes durability cost to fit into remaining durability
+    let initial_state = SimulationState {
+        durability: 10,
+        effects: Effects::new().with_waste_not(1),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::Groundwork, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(
+        primary_stats(&state, &SETTINGS),
+        (360, 0, SETTINGS.max_durability, 18)
+    );
+    // Potency isn't halved when Trained Perfection is active
+    let initial_state = SimulationState {
+        durability: 10,
+        effects: Effects::new().with_trained_perfection(SingleUse::Active),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::Groundwork, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(
+        primary_stats(&state, &SETTINGS),
+        (360, 0, SETTINGS.max_durability - 10, 18)
+    );
+}
+
+#[test]
+fn test_delicate_synthesis() {
+    // Low level, potency-increasing trait not unlocked
+    let settings = Settings {
+        job_level: 93,
+        ..SETTINGS
+    };
+    let state = SimulationState::new(&settings)
+        .use_action(Action::DelicateSynthesis, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &settings), (100, 100, 10, 32));
+    // Potency-increasing trait unlocked
+    let settings = Settings {
+        job_level: 94,
+        ..SETTINGS
+    };
+    let state = SimulationState::new(&settings)
+        .use_action(Action::DelicateSynthesis, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &settings), (150, 100, 10, 32));
+}
+
+#[test]
+fn test_intensive_synthesis() {
+    // Precondition not fulfilled
+    let error = SimulationState::new(&SETTINGS)
+        .use_action(Action::IntensiveSynthesis, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(
+        error,
+        "Intensive Synthesis can only be used when the condition is Good or Excellent."
+    );
+    // Can use when condition is Good or Excellent
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::IntensiveSynthesis, Condition::Good, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (400, 0, 10, 6));
+    // Can use when Heart and Soul is active
+    let initial_state = SimulationState {
+        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::IntensiveSynthesis, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (400, 0, 10, 6));
+    assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+    // Heart and Soul effect isn't consumed when condition is Good or Excellent
+    let initial_state = SimulationState {
+        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::IntensiveSynthesis, Condition::Good, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (400, 0, 10, 6));
+    assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+}
+
+#[test]
+fn test_trained_eye() {
+    // Precondition unfulfilled
+    let initial_state = SimulationState {
+        combo: Combo::None,
+        ..SimulationState::new(&SETTINGS)
+    };
+    let error = initial_state
+        .use_action(Action::TrainedEye, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(error, "Trained Eye can only be used at synthesis begin.");
+    // Precondition fulfilled
+    let state = SimulationState::new(&SETTINGS)
+        .use_action(Action::TrainedEye, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(
+        primary_stats(&state, &SETTINGS),
+        (0, SETTINGS.max_quality, 10, 250)
+    );
+    assert_eq!(state.effects.inner_quiet(), 1);
 }
 
 #[test]
 fn test_prudent_synthesis() {
     let state =
         SimulationState::from_macro(&SETTINGS, &[Action::WasteNot, Action::PrudentSynthesis]);
-    assert!(matches!(
+    assert_eq!(
         state,
-        Err("Action cannot be used during Waste Not")
-    ));
+        Err("Prudent Synthesis cannot be used while Waste Not is active.")
+    );
 }
 
 #[test]
@@ -158,13 +514,15 @@ fn test_trained_finesse() {
             Action::TrainedFinesse,
         ],
     );
-    assert!(matches!(state, Err("Requires 10 Inner Quiet")));
+    assert_eq!(
+        state,
+        Err("Trained Finesse can only be used when Inner Quiet is 10.")
+    );
 }
 
 #[test]
 fn test_refined_touch() {
-    let state =
-        SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::ComboRefinedTouch]);
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::RefinedTouch]);
     match state {
         Ok(state) => {
             assert_eq!(state.effects.inner_quiet(), 3);
@@ -172,8 +530,11 @@ fn test_refined_touch() {
         Err(e) => panic!("Unexpected error: {}", e),
     }
     assert!(matches!(state, Ok(_)));
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::ComboRefinedTouch]);
-    assert!(matches!(state, Err("Combo requirement not fulfilled")));
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::RefinedTouch]);
+    assert_eq!(
+        state,
+        Err("Refined Touch can only be used after Observe or Standard Touch.")
+    );
 }
 
 #[test]
@@ -215,77 +576,10 @@ fn test_trained_perfection() {
         &SETTINGS,
         &[Action::TrainedPerfection, Action::TrainedPerfection],
     );
-    assert!(matches!(
+    assert_eq!(
         state,
-        Err("Action can only be used once per synthesis")
-    ));
-}
-
-#[test]
-fn test_delicate_synthesis() {
-    let settings = Settings {
-        job_level: 93,
-        ..SETTINGS
-    };
-    let state = SimulationState::from_macro(&settings, &[Action::DelicateSynthesis]);
-    match state {
-        Ok(state) => {
-            assert_eq!(state.progress, 100);
-            assert_eq!(state.quality, 100);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
-    let settings = Settings {
-        job_level: 94,
-        ..SETTINGS
-    };
-    let state = SimulationState::from_macro(&settings, &[Action::DelicateSynthesis]);
-    match state {
-        Ok(state) => {
-            assert_eq!(state.progress, 150);
-            assert_eq!(state.quality, 100);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
-}
-
-#[test]
-fn test_intensive_synthesis() {
-    let state = SimulationState::from_macro(
-        &SETTINGS,
-        &[Action::HeartAndSoul, Action::IntensiveSynthesis],
+        Err("Trained Perfection can only be used once per synthesis.")
     );
-    match state {
-        Ok(state) => {
-            assert_eq!(state.progress, 400);
-            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::IntensiveSynthesis]);
-    assert!(matches!(
-        state,
-        Err("Requires condition to be Good or Excellent")
-    ));
-}
-
-#[test]
-fn test_precise_touch() {
-    let state =
-        SimulationState::from_macro(&SETTINGS, &[Action::HeartAndSoul, Action::PreciseTouch]);
-    match state {
-        Ok(state) => {
-            assert_eq!(state.quality, 150);
-            assert_eq!(state.effects.inner_quiet(), 2);
-            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::IntensiveSynthesis]);
-    assert!(matches!(
-        state,
-        Err("Requires condition to be Good or Excellent")
-    ));
 }
 
 #[test]
@@ -351,10 +645,10 @@ fn test_heart_and_soul() {
             Action::HeartAndSoul,
         ],
     );
-    assert!(matches!(
+    assert_eq!(
         state,
-        Err("Action can only be used once per synthesis")
-    ));
+        Err("Heart and Sould can only be used once per synthesis.")
+    );
 }
 
 #[test]
@@ -388,14 +682,14 @@ fn test_quick_innovation() {
             Action::QuickInnovation,
         ],
     );
-    assert!(matches!(
+    assert_eq!(
         state,
-        Err("Action can only be used once per synthesis")
-    ));
+        Err("Quick Innovation can only be used once per synthesis.")
+    );
     let state =
         SimulationState::from_macro(&setings, &[Action::Innovation, Action::QuickInnovation]);
-    assert!(matches!(
+    assert_eq!(
         state,
-        Err("Action cannot be used when Innovation is active")
-    ));
+        Err("Quick Innovation cannot be used while Innovation is active.")
+    );
 }

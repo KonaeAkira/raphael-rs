@@ -1,7 +1,7 @@
 use simulator::{Combo, SimulationState};
 
 pub fn is_progress_only_state(
-    state: SimulationState,
+    state: &SimulationState,
     backload_progress: bool,
     allow_unsound: bool,
 ) -> bool {

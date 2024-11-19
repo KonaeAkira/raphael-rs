@@ -70,17 +70,14 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
     match state.combo {
         Combo::None => (),
         Combo::BasicTouch => {
-            let combo_available = allowed_actions.has(Action::ComboStandardTouch)
-                || allowed_actions.has(Action::ComboRefinedTouch);
+            let combo_available = allowed_actions.has(Action::StandardTouch)
+                || allowed_actions.has(Action::RefinedTouch);
             return !combo_available
-                || matches!(
-                    action,
-                    Action::ComboStandardTouch | Action::ComboRefinedTouch
-                );
+                || matches!(action, Action::StandardTouch | Action::RefinedTouch);
         }
         Combo::StandardTouch => {
-            let combo_available = allowed_actions.has(Action::ComboAdvancedTouch);
-            return !combo_available || matches!(action, Action::ComboAdvancedTouch);
+            let combo_available = allowed_actions.has(Action::AdvancedTouch);
+            return !combo_available || matches!(action, Action::AdvancedTouch);
         }
         Combo::SynthesisBegin => {
             let combo_available = allowed_actions.has(Action::Reflect)

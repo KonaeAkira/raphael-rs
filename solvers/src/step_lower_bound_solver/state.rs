@@ -1,4 +1,4 @@
-use simulator::{Action, ActionMask, Combo, Effects, SimulationState, SingleUse};
+use simulator::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
@@ -17,27 +17,25 @@ impl ReducedState {
         }
     }
 
-    pub fn optimize_action_mask(mut action_mask: ActionMask) -> ActionMask {
-        action_mask = action_mask.remove(Action::TrainedPerfection);
-        // No CP cost so Observe is useless
-        action_mask = action_mask.remove(Action::Observe);
-        // Non-combo version is just as good as the combo version because there is no CP cost
-        action_mask = action_mask
-            .remove(Action::ComboStandardTouch)
-            .remove(Action::ComboAdvancedTouch);
+    pub fn optimize_action_mask(settings: &mut Settings) {
+        settings.allowed_actions = settings
+            .allowed_actions
+            .remove(Action::Observe)
+            .remove(Action::Manipulation)
+            .remove(Action::TrainedPerfection)
+            .remove(Action::ImmaculateMend);
         // WasteNot2 is always better than WasteNot because there is no CP cost
-        if action_mask.has(Action::WasteNot2) {
-            action_mask = action_mask.remove(Action::WasteNot);
+        if settings.is_action_allowed::<WasteNot2>() {
+            settings.allowed_actions = settings.allowed_actions.remove(Action::WasteNot);
         }
         // CarefulSynthesis is always better than BasicSynthesis because there is no CP cost
-        if action_mask.has(Action::CarefulSynthesis) {
-            action_mask = action_mask.remove(Action::BasicSynthesis);
+        if settings.is_action_allowed::<CarefulSynthesis>() {
+            settings.allowed_actions = settings.allowed_actions.remove(Action::BasicSynthesis);
         }
-        // AdvancedTouch (non-combo) is always better than StandardTouch (non-combo) because there is no CP cost
-        if action_mask.has(Action::AdvancedTouch) {
-            action_mask = action_mask.remove(Action::StandardTouch);
+        // AdvancedTouch is always better than StandardTouch because there is no CP cost
+        if settings.is_action_allowed::<AdvancedTouch>() {
+            settings.allowed_actions = settings.allowed_actions.remove(Action::StandardTouch);
         }
-        action_mask
     }
 
     pub fn from_state(state: SimulationState, steps_budget: u8, progress_only: bool) -> Self {

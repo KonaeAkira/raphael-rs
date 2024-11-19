@@ -77,7 +77,7 @@ pub fn get_game_settings(
         base_quality = base_quality * rlvl.quality_mod as f32 / 100.0;
     }
 
-    let mut allowed_actions = ActionMask::from_level(crafter_stats.level as _);
+    let mut allowed_actions = ActionMask::all();
     if !crafter_stats.manipulation {
         allowed_actions = allowed_actions.remove(Action::Manipulation);
     }

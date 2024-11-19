@@ -109,10 +109,10 @@ impl<'a> MacroSolver<'a> {
             }
 
             let progress_only =
-                is_progress_only_state(state, self.backload_progress, self.unsound_branch_pruning);
+                is_progress_only_state(&state, self.backload_progress, self.unsound_branch_pruning);
             let search_actions = match progress_only {
-                true => PROGRESS_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
-                false => FULL_SEARCH_ACTIONS.intersection(self.settings.allowed_actions),
+                true => PROGRESS_SEARCH_ACTIONS,
+                false => FULL_SEARCH_ACTIONS,
             };
 
             let current_steps = search_queue.steps(backtrack_id);
@@ -150,7 +150,7 @@ impl<'a> MacroSolver<'a> {
                         };
 
                         let progress_only = is_progress_only_state(
-                            state,
+                            &state,
                             self.backload_progress,
                             self.unsound_branch_pruning,
                         );
