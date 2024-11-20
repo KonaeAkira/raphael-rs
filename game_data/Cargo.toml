@@ -10,10 +10,13 @@ crate-type = ["rlib"]
 
 [dependencies]
 simulator = { path = "../simulator" }
-phf = "0.10.0"
-serde = { version = "1.0.132", features = ["derive"] }
+phf = "0.11.2"
+serde = { version = "1.0.215", features = ["derive"], optional = true }
 
 [build-dependencies]
 csv = "1.1.6"
-phf_codegen = "0.10.0"
-serde = { version = "1.0.132", features = ["derive"] }
+phf_codegen = "0.11.2"
+serde = { version = "1.0.215", features = ["derive"] }
+
+[features]
+serde = ["dep:serde", "simulator/serde"]

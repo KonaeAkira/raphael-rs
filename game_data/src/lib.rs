@@ -10,7 +10,6 @@ pub use locales::*;
 mod search;
 pub use search::*;
 
-use serde::{Deserialize, Serialize};
 use simulator::{Action, ActionMask, Settings};
 
 pub const HQ_ICON_CHAR: char = '\u{e03c}';
@@ -23,7 +22,8 @@ pub struct Item {
     pub always_collectable: bool,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ingredient {
     pub item_id: u32,
     pub amount: u32,
@@ -37,7 +37,8 @@ pub struct RecipeLevel {
     pub quality_mod: u16,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Recipe {
     pub job_id: u8,
     pub item_id: u32,

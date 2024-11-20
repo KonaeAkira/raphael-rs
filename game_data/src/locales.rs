@@ -1,8 +1,8 @@
 use crate::ITEMS;
-use serde::{Deserialize, Serialize};
 use simulator::Action;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Locale {
     EN,
     DE,

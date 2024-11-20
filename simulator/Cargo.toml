@@ -11,5 +11,8 @@ rand = "0.8.5"
 
 [dependencies]
 bitfield-struct = "0.8.0"
-serde = { version = "1.0.203", features = ["derive"] }
+serde = { version = "1.0.215", features = ["derive"], optional = true }
 log = "0.4"
+
+[features]
+serde = ["dep:serde"]

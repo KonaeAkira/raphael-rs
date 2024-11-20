@@ -1,20 +1,19 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CrafterStats {
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub craftsmanship: u16,
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub control: u16,
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub cp: u16,
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub level: u8,
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub manipulation: bool,
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub heart_and_soul: bool,
-    #[serde(default)]
+    #[cfg_attr(feature = "serde", serde(default))]
     pub quick_innovation: bool,
 }
 
