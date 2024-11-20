@@ -34,6 +34,7 @@ pub const QUALITY_ACTIONS: ActionMask = action_mask!(
 
 pub const DURABILITY_ACTIONS: ActionMask = action_mask!(
     Action::MasterMend,
+    Action::TricksOfTheTrade,
     Action::WasteNot,
     Action::WasteNot2,
     Action::Manipulation,

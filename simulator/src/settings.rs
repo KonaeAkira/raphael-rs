@@ -110,6 +110,7 @@ const ALL_ACTIONS: &[Action] = &[
     Action::BasicTouch,
     Action::MasterMend,
     Action::Observe,
+    Action::TricksOfTheTrade,
     Action::WasteNot,
     Action::Veneration,
     Action::StandardTouch,

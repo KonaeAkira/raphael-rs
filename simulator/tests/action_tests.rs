@@ -90,6 +90,48 @@ fn test_observe() {
 }
 
 #[test]
+fn test_tricks_of_the_trade() {
+    // Precondition not fulfilled
+    let error = SimulationState::new(&SETTINGS)
+        .use_action(Action::TricksOfTheTrade, Condition::Normal, &SETTINGS)
+        .unwrap_err();
+    assert_eq!(
+        error,
+        "Tricks of the Trade can only be used when the condition is Good or Excellent."
+    );
+    // Can use when condition is Good or Excellent
+    let initial_state = SimulationState {
+        cp: SETTINGS.max_cp - 25, // test maximum restored CP
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::TricksOfTheTrade, Condition::Good, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 5));
+    // Can use when Heart and Soul is active
+    let initial_state = SimulationState {
+        cp: SETTINGS.max_cp - 5, // test that restored CP is capped at max_cp
+        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::TricksOfTheTrade, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 0));
+    assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+    // Heart and Soul effect isn't consumed when condition is Good or Excellent
+    let initial_state = SimulationState {
+        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::TricksOfTheTrade, Condition::Good, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 0));
+    assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+}
+
+#[test]
 fn test_waste_not() {
     let state = SimulationState::new(&SETTINGS)
         .use_action(Action::WasteNot, Condition::Normal, &SETTINGS)

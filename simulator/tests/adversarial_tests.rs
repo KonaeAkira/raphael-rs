@@ -242,7 +242,7 @@ fn test_exhaustive() {
 /// Test random quality action sequences
 fn test_fuzz() {
     const STEPS: usize = 10;
-    const ACTIONS: [Action; 8] = [
+    const ACTIONS: [Action; 9] = [
         Action::BasicTouch,
         Action::StandardTouch,
         Action::AdvancedTouch,
@@ -251,6 +251,7 @@ fn test_fuzz() {
         Action::Innovation,
         Action::GreatStrides,
         Action::ImmaculateMend,
+        Action::TricksOfTheTrade,
     ];
     for _ in 0..100000 {
         let actions: Vec<Action> =

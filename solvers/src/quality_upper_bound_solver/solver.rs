@@ -1,3 +1,5 @@
+use std::i16;
+
 use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
     utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
@@ -41,6 +43,11 @@ impl QualityUpperBoundSolver {
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
+
+        let settings = Settings {
+            max_cp: i16::MAX,
+            ..settings
+        };
 
         let initial_state = SimulationState::new(&settings);
         let mut durability_cost = 100;

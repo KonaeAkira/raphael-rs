@@ -1,4 +1,4 @@
-use simulator::{Action, ActionMask, Combo, Condition, Effects, Settings, SimulationState};
+use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
 
@@ -6,6 +6,7 @@ use super::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS};
 
 const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
     .union(DURABILITY_ACTIONS)
+    .remove(Action::TricksOfTheTrade)
     .remove(Action::DelicateSynthesis);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

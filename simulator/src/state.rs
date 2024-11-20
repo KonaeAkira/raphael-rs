@@ -1,15 +1,6 @@
-use crate::{
-    actions::{
-        ActionImpl, AdvancedTouch, BasicSynthesis, BasicTouch, ByregotsBlessing, CarefulSynthesis,
-        DelicateSynthesis, GreatStrides, Groundwork, HeartAndSoul, ImmaculateMend, Innovation,
-        IntensiveSynthesis, Manipulation, MasterMend, MuscleMemory, Observe, PreciseTouch,
-        PreparatoryTouch, PrudentSynthesis, PrudentTouch, QuickInnovation, RefinedTouch, Reflect,
-        StandardTouch, TrainedEye, TrainedFinesse, TrainedPerfection, Veneration, WasteNot,
-        WasteNot2,
-    },
-    effects::SingleUse,
-    Action, Combo, Condition, Effects, Settings,
-};
+use crate::actions::*;
+use crate::effects::*;
+use crate::{Condition, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
@@ -175,6 +166,9 @@ impl SimulationState {
             Action::BasicTouch => self.use_action_impl::<BasicTouch>(settings, condition),
             Action::MasterMend => self.use_action_impl::<MasterMend>(settings, condition),
             Action::Observe => self.use_action_impl::<Observe>(settings, condition),
+            Action::TricksOfTheTrade => {
+                self.use_action_impl::<TricksOfTheTrade>(settings, condition)
+            }
             Action::WasteNot => self.use_action_impl::<WasteNot>(settings, condition),
             Action::Veneration => self.use_action_impl::<Veneration>(settings, condition),
             Action::StandardTouch => self.use_action_impl::<StandardTouch>(settings, condition),

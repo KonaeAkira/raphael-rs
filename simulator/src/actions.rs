@@ -149,6 +149,33 @@ impl ActionImpl for Observe {
     }
 }
 
+pub struct TricksOfTheTrade {}
+impl ActionImpl for TricksOfTheTrade {
+    const LEVEL_REQUIREMENT: u8 = 13;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TricksOfTheTrade);
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        condition: Condition,
+    ) -> Result<(), &'static str> {
+        if state.effects.heart_and_soul() != SingleUse::Active
+            && condition != Condition::Good
+            && condition != Condition::Excellent
+        {
+            return Err(
+                "Tricks of the Trade can only be used when the condition is Good or Excellent.",
+            );
+        }
+        Ok(())
+    }
+    fn transform_post(state: &mut SimulationState, settings: &Settings, condition: Condition) {
+        state.cp = std::cmp::min(settings.max_cp, state.cp + 20);
+        if condition != Condition::Good && condition != Condition::Excellent {
+            state.effects.set_heart_and_soul(SingleUse::Unavailable);
+        }
+    }
+}
+
 pub struct WasteNot {}
 impl ActionImpl for WasteNot {
     const LEVEL_REQUIREMENT: u8 = 15;
@@ -716,6 +743,7 @@ pub enum Action {
     BasicTouch,
     MasterMend,
     Observe,
+    TricksOfTheTrade,
     WasteNot,
     Veneration,
     StandardTouch,
@@ -779,6 +807,7 @@ impl Action {
             Action::BasicTouch => 3,
             Action::MasterMend => 3,
             Action::Observe => 3,
+            Action::TricksOfTheTrade => 3,
             Action::WasteNot => 2,
             Action::Veneration => 2,
             Action::StandardTouch => 3,

@@ -21,6 +21,7 @@ impl ReducedState {
         settings.allowed_actions = settings
             .allowed_actions
             .remove(Action::Observe)
+            .remove(Action::TricksOfTheTrade)
             .remove(Action::Manipulation)
             .remove(Action::TrainedPerfection)
             .remove(Action::ImmaculateMend);
