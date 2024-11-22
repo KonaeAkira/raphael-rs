@@ -61,7 +61,7 @@ pub fn execute(args: &SearchArgs) {
             "{item_id}{separator}{name}",
             item_id = recipe.item_id,
             separator = args.output_field_separator,
-            name = name
+            name = name.trim_end_matches(&[' ', game_data::CL_ICON_CHAR])
         );
     }
 }
