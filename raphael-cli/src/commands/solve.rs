@@ -78,7 +78,7 @@ pub struct SolveArgs {
     pub unsound: bool,
 
     /// Output the provided list of variables. The output is deliminated by the output-field-separator
-    /// 
+    ///
     /// <IDENTIFIER> can be any of the following: `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
     /// While the output is mainly intended for generating CSVs, some output can contain `,` inside brackets that are not deliminating columns. For this reason they are wrapped in double quotes and the argument `output-field-separator` can be used to override the delimiter to something that is easier to parse and process
     #[arg(long, num_args = 1.., value_name = "IDENTIFIER")]
@@ -135,7 +135,7 @@ fn map_and_clamp_hq_ingredients(recipe: &game_data::Recipe, hq_ingredients: [u8;
     for (index, (item, max_amount)) in ingredients.into_iter().enumerate() {
         if item.can_be_hq {
             modified_hq_ingredients[index] =
-                hq_ingredients[hq_ingredient_index].min(max_amount as u8);
+                hq_ingredients[hq_ingredient_index].clamp(0, max_amount as u8);
             hq_ingredient_index = hq_ingredient_index.saturating_add(1);
         }
     }
@@ -227,11 +227,11 @@ pub fn execute(args: &SolveArgs) {
 
     let mut settings = get_game_settings(*recipe, crafter_stats, food, potion, args.adversarial);
     let target_quality = match args.target_quality {
-        Some(target) => target.min(settings.max_quality),
+        Some(target) => target.clamp(0, settings.max_quality),
         None => settings.max_quality,
     };
     let initial_quality = match args.initial_quality {
-        Some(initial) => initial.min(settings.max_quality),
+        Some(initial) => initial.clamp(0, settings.max_quality),
         None => match args.hq_ingredients.clone() {
             Some(mut hq_ingredients) => {
                 hq_ingredients.resize(6, 0);
@@ -243,7 +243,7 @@ pub fn execute(args: &SolveArgs) {
                         false => map_and_clamp_hq_ingredients(recipe, amount_array),
                     },
                 )
-            },
+            }
             None => 0,
         },
     };
@@ -268,17 +268,17 @@ pub fn execute(args: &SolveArgs) {
     let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
 
     if args.output_variables.is_empty() {
-    println!("Item ID: {}", recipe.item_id);
+        println!("Item ID: {}", recipe.item_id);
         println!("Quality: {}/{}", final_quality, recipe_max_quality);
-    println!(
-        "Progress: {}/{}",
-        final_state.progress, settings.max_progress
-    );
-    println!("Steps: {}", steps);
-    println!("Duration: {} seconds", duration);
-    println!("\nActions:");
-    for action in actions {
-        println!("{:?}", action);
+        println!(
+            "Progress: {}/{}",
+            final_state.progress, settings.max_progress
+        );
+        println!("Steps: {}", steps);
+        println!("Duration: {} seconds", duration);
+        println!("\nActions:");
+        for action in actions {
+            println!("{:?}", action);
         }
     } else {
         let mut output_string = "".to_owned();
@@ -286,33 +286,34 @@ pub fn execute(args: &SolveArgs) {
         //let output_format = args.output_variables.clone().unwrap();
         //let segments: Vec<&str> = args.output_variables;
         for identifier in &args.output_variables {
-            let map_to_debug_str = |actions: Vec<simulator::Action>| {
-                match &*(*identifier) {
-                    "item_id" => format!("{:?}", args.item_id),
-                    "recipe" => format!("\"{:?}\"", recipe),
-                    "food" => format!("\"{:?}\"", food),
-                    "potion" => format!("\"{:?}\"", potion),
-                    "craftsmanship" => format!("{:?}", craftsmanship),
-                    "control" => format!("{:?}", control),
-                    "cp" => format!("{:?}", cp),
-                    "crafter_stats" => format!("\"{:?}\"", crafter_stats),
-                    "settings" => format!("\"{:?}\"", settings),
-                    "initial_quality" => format!("{:?}", initial_quality),
-                    "target_quality" => format!("{:?}", target_quality),
-                    "recipe_max_quality" => format!("{:?}", recipe_max_quality),
-                    "actions" => format!("\"{:?}\"", actions),
-                    "final_state" => format!("\"{:?}\"", final_state),
-                    "state_quality" => format!("{:?}", state_quality),
-                    "final_quality" => format!("{:?}", final_quality),
-                    "steps" => format!("{:?}", steps),
-                    "duration" => format!("{:?}", duration),
-                    _ => "Undefined".to_owned(),
-                }
+            let map_to_debug_str = |actions: Vec<simulator::Action>| match &*(*identifier) {
+                "item_id" => format!("{:?}", args.item_id),
+                "recipe" => format!("\"{:?}\"", recipe),
+                "food" => format!("\"{:?}\"", food),
+                "potion" => format!("\"{:?}\"", potion),
+                "craftsmanship" => format!("{:?}", craftsmanship),
+                "control" => format!("{:?}", control),
+                "cp" => format!("{:?}", cp),
+                "crafter_stats" => format!("\"{:?}\"", crafter_stats),
+                "settings" => format!("\"{:?}\"", settings),
+                "initial_quality" => format!("{:?}", initial_quality),
+                "target_quality" => format!("{:?}", target_quality),
+                "recipe_max_quality" => format!("{:?}", recipe_max_quality),
+                "actions" => format!("\"{:?}\"", actions),
+                "final_state" => format!("\"{:?}\"", final_state),
+                "state_quality" => format!("{:?}", state_quality),
+                "final_quality" => format!("{:?}", final_quality),
+                "steps" => format!("{:?}", steps),
+                "duration" => format!("{:?}", duration),
+                _ => "Undefined".to_owned(),
             };
 
             output_string += &(map_to_debug_str(actions.clone()) + &args.output_field_separator);
         }
 
-        println!("{}", output_string.trim_end_matches(&args.output_field_separator));
+        println!(
+            "{}",
+            output_string.trim_end_matches(&args.output_field_separator)
+        );
     }
 }
