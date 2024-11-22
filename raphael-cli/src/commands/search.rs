@@ -1,4 +1,4 @@
-use clap::Args;
+use clap::{Args, ValueEnum};
 use game_data::{get_item_name, Locale, RECIPES};
 
 #[derive(Args, Debug)]
@@ -36,7 +36,15 @@ impl Into::<Locale> for SearchLanguage {
 
 pub fn execute(args: &SearchArgs) {
     let locale = args.language.into();
-    matches = game_data::find_recipes(&args.pattern, locale);
+    let matches: Vec<usize>;
+    if let Ok(item_id) = u32::from_str_radix(&args.pattern, 10) {
+        match &RECIPES.iter().enumerate().find(|(_, recipe)| recipe.item_id == item_id) {
+            Some((index, _)) => matches = Vec::from([*index]),
+            None => matches = Vec::new(),
+        }
+    } else {
+        matches = game_data::find_recipes(&args.pattern, locale);
+    }
     if matches.is_empty() {
         println!("No matches found");
         return;
