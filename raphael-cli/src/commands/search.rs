@@ -23,9 +23,9 @@ pub enum SearchLanguage {
     JP,
 }
 
-impl Into::<Locale> for SearchLanguage {
+impl Into<Locale> for SearchLanguage {
     fn into(self) -> Locale {
-       match self {
+        match self {
             SearchLanguage::EN => Locale::EN,
             SearchLanguage::DE => Locale::DE,
             SearchLanguage::FR => Locale::FR,
@@ -38,7 +38,11 @@ pub fn execute(args: &SearchArgs) {
     let locale = args.language.into();
     let matches: Vec<usize>;
     if let Ok(item_id) = u32::from_str_radix(&args.pattern, 10) {
-        match &RECIPES.iter().enumerate().find(|(_, recipe)| recipe.item_id == item_id) {
+        match &RECIPES
+            .iter()
+            .enumerate()
+            .find(|(_, recipe)| recipe.item_id == item_id)
+        {
             Some((index, _)) => matches = Vec::from([*index]),
             None => matches = Vec::new(),
         }
