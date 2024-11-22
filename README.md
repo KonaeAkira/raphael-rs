@@ -62,9 +62,9 @@ cargo run --release --package raphael-cli -- search --help
 cargo run --release --package raphael-cli -- solve --help
 ```
 
-Some examples:
+Some basic examples:
 ```
-cargo run --release --package raphael-cli -- search 'Archeo Fending'
+cargo run --release --package raphael-cli -- search "Archeo Fending"
 cargo run --release --package raphael-cli -- solve --item-id 8548 --stats 5000 4000 500
 ```
 

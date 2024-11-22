@@ -3,7 +3,7 @@ use game_data::{get_item_name, Locale, RECIPES};
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
-    /// Search pattern
+    /// Search pattern, <PATTERN> can be a string or an item ID
     pub pattern: String,
 
     /// The delimiter the output uses between fields
