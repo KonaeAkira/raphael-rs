@@ -21,9 +21,9 @@ pub struct SolveArgs {
     #[arg(short = 'p', long, requires_all(["craftsmanship", "control"]), required_unless_present = "stats")]
     pub cp: Option<u16>,
 
-    /// Complete stats, in the format '<CRAFTSMANSHIP>/<CONTROL>/<CP>'
-    #[arg(short, long, value_parser = parse_stats, required_unless_present_all(["craftsmanship", "control", "cp"]), conflicts_with_all(["craftsmanship", "control", "cp"]))]
-    pub stats: Option<[u16; 3]>,
+    /// Complete stats, conflicts with setting one or more of the stats separately
+    #[arg(short, long, num_args = 3, value_names = ["CRAFTSMANSHIP", "CONTROL", "CP"], required_unless_present_all(["craftsmanship", "control", "cp"]), conflicts_with_all(["craftsmanship", "control", "cp"]))]
+    pub stats: Vec<u16>,
 
     /// Crafter level
     #[arg(short, long, default_value_t = 100)]
@@ -53,9 +53,9 @@ pub struct SolveArgs {
     #[arg(long, alias = "initial")]
     pub initial_quality: Option<u16>,
 
-    /// Set HQ ingredients and calculate initial quality from them
-    #[arg(long, value_parser = parse_hq_ingredients, conflicts_with = "initial_quality")]
-    pub hq_ingredients: Option<[u8; 6]>,
+    /// Set HQ ingredient amounts and calculate initial quality from them
+    #[arg(long, num_args = 1..=6, value_name = "AMOUNT", conflicts_with = "initial_quality")]
+    pub hq_ingredients: Option<Vec<u8>>,
 
     /// Skip mapping HQ ingredients to entries that can actually be HQ and clamping the amount to the max allowed for the recipe
     #[arg(long, default_value_t = false, requires = "hq_ingredients")]
@@ -77,37 +77,16 @@ pub struct SolveArgs {
     #[arg(long, default_value_t = false)]
     pub unsound: bool,
 
-    /// Output the result according to the specified output format, with the format '<IDENTIFIER>[<DELIMITER><IDENTIFIER>][...]'
+    /// Output the provided list of variables. The output is deliminated by the output-field-separator
     /// 
     /// <IDENTIFIER> can be any of the following: `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
-    /// While the output is intended for generating CSVs, some output can contain `,` inside brackets that are not deliminating columns. For this reason the argument `output-format-delimiter` can be used to override the delimiter to something that is easier to parse and process
-    #[arg(long)]
-    pub output_format: Option<String>,
+    /// While the output is mainly intended for generating CSVs, some output can contain `,` inside brackets that are not deliminating columns. For this reason they are wrapped in double quotes and the argument `output-field-separator` can be used to override the delimiter to something that is easier to parse and process
+    #[arg(long, num_args = 1.., value_name = "IDENTIFIER")]
+    pub output_variables: Vec<String>,
 
     /// The delimiter the output specified with the argument `output-format` uses to separate identifiers
-    #[arg(long, requires = "output_format", default_value(","))]
-    pub output_format_delimiter: String,
-}
-
-fn parse_stats(s: &str) -> Result<[u16; 3], String> {
-    const PARSE_ERROR_STRING: &'static str =
-        "Stats are not parsable. Stats must have the format '<CRAFTSMANSHIP>/<CONTROL>/<CP>'";
-    let segments: Vec<&str> = s.split("/").collect();
-    match segments.len() {
-        3 => {
-            let mut stats: [u16; 3] = [0; 3];
-            for i in 0..stats.len() {
-                stats[i] = segments
-                    .get(i)
-                    .unwrap()
-                    .parse()
-                    .map_err(|_| PARSE_ERROR_STRING.to_owned())?;
-            }
-
-            Ok(stats)
-        }
-        _ => Err(PARSE_ERROR_STRING.to_owned()),
-    }
+    #[arg(long, alias = "OFS", default_value = ",", env = "OFS")]
+    output_field_separator: String,
 }
 
 fn parse_consumable(s: &str) -> Result<ConsumableArg, String> {
@@ -139,22 +118,6 @@ pub enum ConsumableArg {
     NQ(u32),
     /// HQ Consumable
     HQ(u32),
-}
-
-fn parse_hq_ingredients(s: &str) -> Result<[u8; 6], String> {
-    const PARSE_ERROR_STRING: &'static str = "HQ ingredients are not parsable. HQ ingredients must have the format '<AMOUNT>[/<AMOUNT>][...] with at most 6 amounts specified'";
-    let segments: Vec<&str> = s.split("/").collect();
-    match segments.len() {
-        0..=6 => {
-            let mut hq_ingredients: [u8; 6] = [0; 6];
-            for i in 0..segments.len() {
-                hq_ingredients[i] = segments.get(i).unwrap().parse().unwrap_or(0);
-            }
-
-            Ok(hq_ingredients)
-        }
-        _ => Err(PARSE_ERROR_STRING.to_owned()),
-    }
 }
 
 fn map_and_clamp_hq_ingredients(recipe: &game_data::Recipe, hq_ingredients: [u8; 6]) -> [u8; 6] {
@@ -241,15 +204,15 @@ pub fn execute(args: &SolveArgs) {
 
     let craftsmanship = match args.craftsmanship {
         Some(stat) => stat,
-        None => args.stats.unwrap()[0],
+        None => args.stats.get(0).unwrap().to_owned(),
     };
     let control = match args.control {
         Some(stat) => stat,
-        None => args.stats.unwrap()[1],
+        None => args.stats.get(1).unwrap().to_owned(),
     };
     let cp = match args.cp {
         Some(stat) => stat,
-        None => args.stats.unwrap()[2],
+        None => args.stats.get(2).unwrap().to_owned(),
     };
 
     let crafter_stats = CrafterStats {
@@ -269,14 +232,18 @@ pub fn execute(args: &SolveArgs) {
     };
     let initial_quality = match args.initial_quality {
         Some(initial) => initial.min(settings.max_quality),
-        None => match args.hq_ingredients {
-            Some(hq_ingredients) => game_data::get_initial_quality(
-                *recipe,
-                match args.skip_map_and_clamp_hq_ingredients {
-                    true => hq_ingredients,
-                    false => map_and_clamp_hq_ingredients(recipe, hq_ingredients),
-                },
-            ),
+        None => match args.hq_ingredients.clone() {
+            Some(mut hq_ingredients) => {
+                hq_ingredients.resize(6, 0);
+                let amount_array = hq_ingredients.try_into().unwrap();
+                game_data::get_initial_quality(
+                    *recipe,
+                    match args.skip_map_and_clamp_hq_ingredients {
+                        true => amount_array,
+                        false => map_and_clamp_hq_ingredients(recipe, amount_array),
+                    },
+                )
+            },
             None => 0,
         },
     };
@@ -300,7 +267,7 @@ pub fn execute(args: &SolveArgs) {
     let steps = actions.len();
     let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
 
-    if args.output_format.is_none() {
+    if args.output_variables.is_empty() {
     println!("Item ID: {}", recipe.item_id);
         println!("Quality: {}/{}", final_quality, recipe_max_quality);
     println!(
@@ -316,11 +283,11 @@ pub fn execute(args: &SolveArgs) {
     } else {
         let mut output_string = "".to_owned();
 
-        let output_format = args.output_format.clone().unwrap();
-        let segments: Vec<&str> = output_format.split(&args.output_format_delimiter).collect();
-        for segment in segments {
+        //let output_format = args.output_variables.clone().unwrap();
+        //let segments: Vec<&str> = args.output_variables;
+        for identifier in &args.output_variables {
             let map_to_debug_str = |actions: Vec<simulator::Action>| {
-                match segment {
+                match &*(*identifier) {
                     "item_id" => format!("{:?}", args.item_id),
                     "recipe" => format!("\"{:?}\"", recipe),
                     "food" => format!("\"{:?}\"", food),
@@ -343,9 +310,9 @@ pub fn execute(args: &SolveArgs) {
                 }
             };
 
-            output_string += &(map_to_debug_str(actions.clone()) + &args.output_format_delimiter);
+            output_string += &(map_to_debug_str(actions.clone()) + &args.output_field_separator);
         }
 
-        println!("{}", output_string.trim_end_matches(&args.output_format_delimiter));
+        println!("{}", output_string.trim_end_matches(&args.output_field_separator));
     }
 }
