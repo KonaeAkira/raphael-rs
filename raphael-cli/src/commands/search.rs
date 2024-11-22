@@ -5,11 +5,13 @@ use game_data::{get_item_name, Locale, RECIPES};
 pub struct SearchArgs {
     /// Search pattern
     pub pattern: String,
+
+    /// The delimiter the output uses between fields
+    #[arg(long, alias = "OFS", default_value = " ", env = "OFS")]
+    output_field_separator: String,
 }
 
-
 pub fn execute(args: &SearchArgs) {
-    let output_separator = std::env::var("OFS").unwrap_or(" ".to_string());
     let matches = game_data::find_recipes(&args.pattern, Locale::EN);
     if matches.is_empty() {
         println!("No matches found");
@@ -22,7 +24,7 @@ pub fn execute(args: &SearchArgs) {
         println!(
             "{item_id}{separator}{name}",
             item_id = recipe.item_id,
-            separator = output_separator,
+            separator = args.output_field_separator,
             name = name
         );
     }
