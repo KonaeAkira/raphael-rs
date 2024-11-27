@@ -1,6 +1,5 @@
 mod actions;
 mod branch_pruning;
-mod utils;
 
 mod finish_solver;
 use finish_solver::FinishSolver;
@@ -14,8 +13,11 @@ use step_lower_bound_solver::StepLowerBoundSolver;
 mod macro_solver;
 pub use macro_solver::MacroSolver;
 
+mod utils;
+pub use utils::AtomicFlag;
+
 pub mod test_utils {
-    use crate::MacroSolver;
+    use crate::{utils::AtomicFlag, MacroSolver};
     use simulator::*;
 
     pub fn solve(
@@ -29,6 +31,7 @@ pub mod test_utils {
             unsound_branch_pruning,
             Box::new(|_| {}),
             Box::new(|_| {}),
+            AtomicFlag::new(),
         )
         .solve(SimulationState::new(settings))
     }

@@ -1,7 +1,7 @@
 use clap::Args;
 use game_data::{get_game_settings, CrafterStats, MEALS, POTIONS, RECIPES};
 use simulator::SimulationState;
-use solvers::MacroSolver;
+use solvers::{AtomicFlag, MacroSolver};
 
 #[derive(Args, Debug)]
 pub struct SolveArgs {
@@ -258,6 +258,7 @@ pub fn execute(args: &SolveArgs) {
         args.unsound,
         Box::new(|_| {}),
         Box::new(|_| {}),
+        AtomicFlag::new(),
     );
     let actions = solver.solve(state).expect("Failed to solve");
 

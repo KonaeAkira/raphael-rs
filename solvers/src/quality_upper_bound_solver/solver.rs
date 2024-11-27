@@ -2,7 +2,7 @@ use std::i16;
 
 use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
-    utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
 use simulator::*;
 
@@ -31,13 +31,19 @@ pub struct QualityUpperBoundSolver {
     solver_settings: SolverSettings,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
+    flag: AtomicFlag,
     // pre-computed branch pruning values
     waste_not_1_min_cp: i16,
     waste_not_2_min_cp: i16,
 }
 
 impl QualityUpperBoundSolver {
-    pub fn new(settings: Settings, backload_progress: bool, unsound_branch_pruning: bool) -> Self {
+    pub fn new(
+        settings: Settings,
+        backload_progress: bool,
+        unsound_branch_pruning: bool,
+        flag: AtomicFlag,
+    ) -> Self {
         log::trace!(
             "ReducedState (QualityUpperBoundSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
@@ -77,6 +83,7 @@ impl QualityUpperBoundSolver {
                 settings.max_progress,
                 settings.max_quality,
             ),
+            flag,
             waste_not_1_min_cp: waste_not_min_cp(56, 4, durability_cost),
             waste_not_2_min_cp: waste_not_min_cp(98, 8, durability_cost),
         }
@@ -84,7 +91,11 @@ impl QualityUpperBoundSolver {
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: SimulationState) -> u16 {
+    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Option<u16> {
+        if self.flag.is_set() {
+            return None;
+        }
+
         let current_quality = state.quality;
         let missing_progress = self
             .simulator_settings
@@ -108,10 +119,10 @@ impl QualityUpperBoundSolver {
         match pareto_front.last() {
             Some(element) => {
                 if element.first < missing_progress {
-                    return 0;
+                    return Some(0);
                 }
             }
-            None => return 0,
+            None => return Some(0),
         }
 
         let index = match pareto_front.binary_search_by_key(&missing_progress, |value| value.first)
@@ -120,13 +131,17 @@ impl QualityUpperBoundSolver {
             Err(i) => i,
         };
 
-        std::cmp::min(
+        Some(std::cmp::min(
             self.simulator_settings.max_quality,
             pareto_front[index].second.saturating_add(current_quality),
-        )
+        ))
     }
 
     fn solve_state(&mut self, state: ReducedState) {
+        if self.flag.is_set() {
+            return;
+        }
+
         if state.data.combo() == Combo::None {
             self.solve_normal_state(state);
         } else {
@@ -180,6 +195,10 @@ impl QualityUpperBoundSolver {
     }
 
     fn build_child_front(&mut self, state: ReducedState, action: Action) {
+        if self.flag.is_set() {
+            return;
+        }
+
         if let Ok((new_state, action_progress, action_quality)) =
             state.use_action(action, &self.simulator_settings, &self.solver_settings)
         {
@@ -245,7 +264,9 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u16 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        QualityUpperBoundSolver::new(settings, false, false).quality_upper_bound(state)
+        QualityUpperBoundSolver::new(settings, false, false, AtomicFlag::new())
+            .quality_upper_bound(state)
+            .unwrap()
     }
 
     #[test]
@@ -721,15 +742,15 @@ mod tests {
     /// Test that the upper-bound solver is monotonic,
     /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
     fn monotonic_fuzz_check(settings: Settings) {
-        let mut solver = QualityUpperBoundSolver::new(settings, false, false);
+        let mut solver = QualityUpperBoundSolver::new(settings, false, false, AtomicFlag::new());
         for _ in 0..10000 {
             let state = random_state(&settings);
-            let state_upper_bound = solver.quality_upper_bound(state);
+            let state_upper_bound = solver.quality_upper_bound(state).unwrap();
             for action in settings.allowed_actions.actions_iter() {
                 let child_upper_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
                     Ok(child) => match child.is_final(&settings) {
-                        false => solver.quality_upper_bound(child),
+                        false => solver.quality_upper_bound(child).unwrap(),
                         true if child.progress >= settings.max_progress => {
                             std::cmp::min(settings.max_quality, child.quality)
                         }
