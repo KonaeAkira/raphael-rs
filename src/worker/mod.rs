@@ -1,7 +1,7 @@
 use crate::app::{SolverEvent, SolverInput};
 use simulator::{Action, SimulationState};
-use solvers::test_utils;
-use std::sync::mpsc::Sender;
+use solvers::{test_utils, AtomicFlag};
+use std::sync::{mpsc::Sender, LazyLock};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod native;
@@ -29,6 +29,8 @@ pub struct Worker {
     tx: Option<Sender<Output>>,
 }
 
+static INTERRUPT_SIGNAL: LazyLock<AtomicFlag> = LazyLock::new(AtomicFlag::new);
+
 impl Worker {
     #[allow(unused)]
     pub fn solver_callback(
@@ -38,13 +40,15 @@ impl Worker {
         input: Option<Input>,
     ) {
         let input = if cfg!(not(target_arch = "wasm32")) {
-            self.input.as_ref().unwrap().clone()
+            self.input.unwrap()
         } else {
             input.unwrap()
         };
 
         match input {
-            SolverInput::Start(settings, config, flag) => {
+            SolverInput::Start(settings, config) => {
+                INTERRUPT_SIGNAL.clear();
+
                 let tx = self.tx.clone();
                 let solution_callback = move |actions: &[Action]| {
                     self.send_event(
@@ -69,7 +73,7 @@ impl Worker {
                         true,
                         Box::new(solution_callback.clone()),
                         Box::new(progress_callback.clone()),
-                        flag.clone(),
+                        INTERRUPT_SIGNAL.clone(),
                     )
                     .solve(SimulationState::new(&settings))
                 };
@@ -85,7 +89,7 @@ impl Worker {
                         false,
                         Box::new(solution_callback),
                         Box::new(progress_callback),
-                        flag,
+                        INTERRUPT_SIGNAL.clone(),
                     )
                     .solve(SimulationState::new(&settings));
                 }
@@ -104,6 +108,9 @@ impl Worker {
                         );
                     }
                 }
+            }
+            SolverInput::Cancel => {
+                INTERRUPT_SIGNAL.set();
             }
         }
     }

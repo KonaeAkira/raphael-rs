@@ -6,7 +6,6 @@ use std::time::Duration;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use log::debug;
-use solvers::AtomicFlag;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
@@ -31,12 +30,13 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum SolverInput {
-    Start(Settings, SolverConfig, AtomicFlag),
+    Start(Settings, SolverConfig),
+    Cancel,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum SolverEvent {
     Progress(usize),
     IntermediateSolution(Vec<Action>),
@@ -68,8 +68,8 @@ pub struct MacroSolverApp {
     stats_edit_window_open: bool,
     actions: Vec<Action>,
     solver_pending: bool,
+    solver_interrupt_pending: bool,
     solver_progress: usize,
-    solver_flag: Option<AtomicFlag>,
     start_time: Option<Instant>,
     duration: Option<Duration>,
     data_update: Rc<SolverUpdates>,
@@ -95,7 +95,7 @@ impl MacroSolverApp {
                 }
                 ctx.request_repaint();
             })
-            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
+            .spawn("./webworker.js")
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -150,8 +150,8 @@ impl MacroSolverApp {
             stats_edit_window_open: false,
             actions: Vec::new(),
             solver_pending: false,
+            solver_interrupt_pending: false,
             solver_progress: 0,
-            solver_flag: None,
             start_time: None,
             duration: None,
             data_update,
@@ -367,13 +367,11 @@ impl eframe::App for MacroSolverApp {
 impl MacroSolverApp {
     fn solver_update(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
-        if let Some(bridge_rx) = &self.bridge.rx {
-            if let Ok(update) = bridge_rx.try_recv() {
-                match update {
-                    SolverEvent::Progress(_) => self.data_update.progress_update.set(Some(update)),
-                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
-                        self.data_update.solution_update.set(Some(update))
-                    }
+        if let Ok(update) = self.bridge.rx.try_recv() {
+            match update {
+                SolverEvent::Progress(_) => self.data_update.progress_update.set(Some(update)),
+                SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
+                    self.data_update.solution_update.set(Some(update))
                 }
             }
         }
@@ -694,9 +692,8 @@ impl MacroSolverApp {
                     if ui.button(t!("label.solve")).clicked() {
                         self.actions = Vec::new();
                         self.solver_pending = true;
+                        self.solver_interrupt_pending = false;
                         self.solver_progress = 0;
-                        let flag = AtomicFlag::new();
-                        self.solver_flag = Some(flag.clone());
                         self.start_time = Some(Instant::now());
                         let mut game_settings = game_data::get_game_settings(
                             self.recipe_config.recipe,
@@ -725,11 +722,8 @@ impl MacroSolverApp {
                         });
 
                         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
-                        self.bridge.send(SolverInput::Start(
-                            game_settings,
-                            self.solver_config,
-                            flag,
-                        ));
+                        self.bridge
+                            .send(SolverInput::Start(game_settings, self.solver_config));
                         log::debug!("{game_settings:?}");
                     }
                     if let Some(duration) = self.duration {
@@ -737,13 +731,11 @@ impl MacroSolverApp {
                     }
                 } else {
                     ui.add_enabled_ui(
-                        self.solver_flag
-                            .as_ref()
-                            .map(|f| !f.is_set())
-                            .unwrap_or_default(),
+                        !self.solver_interrupt_pending && self.solver_pending,
                         |ui| {
                             if ui.button(t!("label.cancel")).clicked() {
-                                self.solver_flag.as_ref().unwrap().set();
+                                self.bridge.send(SolverInput::Cancel);
+                                self.solver_interrupt_pending = true;
                             }
                         },
                     );

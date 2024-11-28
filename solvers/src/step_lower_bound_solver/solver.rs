@@ -24,7 +24,7 @@ pub struct StepLowerBoundSolver {
     bonus_durability_restore: i8,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-    flag: AtomicFlag,
+    interrupt_signal: AtomicFlag,
 }
 
 impl StepLowerBoundSolver {
@@ -32,7 +32,7 @@ impl StepLowerBoundSolver {
         mut settings: Settings,
         backload_progress: bool,
         unsound_branch_pruning: bool,
-        flag: AtomicFlag,
+        interrupt_signal: AtomicFlag,
     ) -> Self {
         log::trace!(
             "ReducedState (StepLowerBoundSolver) - size: {}, align: {}",
@@ -59,7 +59,7 @@ impl StepLowerBoundSolver {
                 settings.max_progress,
                 settings.max_quality,
             ),
-            flag,
+            interrupt_signal,
         }
     }
 
@@ -87,7 +87,7 @@ impl StepLowerBoundSolver {
     }
 
     fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> Option<u16> {
-        if self.flag.is_set() {
+        if self.interrupt_signal.is_set() {
             return None;
         }
 
@@ -127,26 +127,26 @@ impl StepLowerBoundSolver {
         ))
     }
 
-    fn solve_state(&mut self, reduced_state: ReducedState) {
-        if self.flag.is_set() {
-            return;
+    fn solve_state(&mut self, reduced_state: ReducedState) -> Option<()> {
+        if self.interrupt_signal.is_set() {
+            return None;
         }
 
         if reduced_state.combo == Combo::None {
-            self.solve_normal_state(reduced_state);
+            self.solve_normal_state(reduced_state)
         } else {
             self.solve_combo_state(reduced_state)
         }
     }
 
-    fn solve_normal_state(&mut self, reduced_state: ReducedState) {
+    fn solve_normal_state(&mut self, reduced_state: ReducedState) -> Option<()> {
         self.pareto_front_builder.push_empty();
         let search_actions = match reduced_state.progress_only {
             false => FULL_SEARCH_ACTIONS,
             true => PROGRESS_SEARCH_ACTIONS,
         };
         for action in search_actions.actions_iter() {
-            self.build_child_front(reduced_state, action);
+            self.build_child_front(reduced_state, action)?;
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -156,32 +156,36 @@ impl StepLowerBoundSolver {
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(reduced_state, id);
+
+        Some(())
     }
 
-    fn solve_combo_state(&mut self, reduced_state: ReducedState) {
+    fn solve_combo_state(&mut self, reduced_state: ReducedState) -> Option<()> {
         match self.solved_states.get(&reduced_state.to_non_combo()) {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
-            None => self.solve_normal_state(reduced_state.to_non_combo()),
+            None => self.solve_normal_state(reduced_state.to_non_combo())?,
         }
         match reduced_state.combo {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
-                self.build_child_front(reduced_state, Action::MuscleMemory);
-                self.build_child_front(reduced_state, Action::Reflect);
-                self.build_child_front(reduced_state, Action::TrainedEye);
+                self.build_child_front(reduced_state, Action::MuscleMemory)?;
+                self.build_child_front(reduced_state, Action::Reflect)?;
+                self.build_child_front(reduced_state, Action::TrainedEye)?;
             }
             Combo::BasicTouch => {
                 if !reduced_state.progress_only {
-                    self.build_child_front(reduced_state, Action::RefinedTouch);
+                    self.build_child_front(reduced_state, Action::RefinedTouch)?;
                 }
             }
             Combo::StandardTouch => unreachable!(),
         }
+
+        Some(())
     }
 
-    fn build_child_front(&mut self, reduced_state: ReducedState, action: Action) {
-        if self.flag.is_set() {
-            return;
+    fn build_child_front(&mut self, reduced_state: ReducedState, action: Action) -> Option<()> {
+        if self.interrupt_signal.is_set() {
+            return None;
         }
 
         if let Ok(new_full_state) =
@@ -212,7 +216,7 @@ impl StepLowerBoundSolver {
             if new_reduced_state.steps_budget != 0 && new_reduced_state.durability > 0 {
                 match self.solved_states.get(&new_reduced_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
-                    None => self.solve_state(new_reduced_state),
+                    None => self.solve_state(new_reduced_state)?,
                 }
                 self.pareto_front_builder.map(move |value| {
                     value.first += action_progress;
@@ -226,6 +230,8 @@ impl StepLowerBoundSolver {
                 self.pareto_front_builder.merge();
             }
         }
+
+        Some(())
     }
 }
 

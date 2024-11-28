@@ -31,7 +31,7 @@ pub struct QualityUpperBoundSolver {
     solver_settings: SolverSettings,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-    flag: AtomicFlag,
+    interrupt_signal: AtomicFlag,
     // pre-computed branch pruning values
     waste_not_1_min_cp: i16,
     waste_not_2_min_cp: i16,
@@ -42,7 +42,7 @@ impl QualityUpperBoundSolver {
         settings: Settings,
         backload_progress: bool,
         unsound_branch_pruning: bool,
-        flag: AtomicFlag,
+        interrupt_signal: AtomicFlag,
     ) -> Self {
         log::trace!(
             "ReducedState (QualityUpperBoundSolver) - size: {}, align: {}",
@@ -83,7 +83,7 @@ impl QualityUpperBoundSolver {
                 settings.max_progress,
                 settings.max_quality,
             ),
-            flag,
+            interrupt_signal,
             waste_not_1_min_cp: waste_not_min_cp(56, 4, durability_cost),
             waste_not_2_min_cp: waste_not_min_cp(98, 8, durability_cost),
         }
@@ -92,7 +92,7 @@ impl QualityUpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: SimulationState) -> Option<u16> {
-        if self.flag.is_set() {
+        if self.interrupt_signal.is_set() {
             return None;
         }
 
@@ -137,19 +137,19 @@ impl QualityUpperBoundSolver {
         ))
     }
 
-    fn solve_state(&mut self, state: ReducedState) {
-        if self.flag.is_set() {
-            return;
+    fn solve_state(&mut self, state: ReducedState) -> Option<()> {
+        if self.interrupt_signal.is_set() {
+            return None;
         }
 
         if state.data.combo() == Combo::None {
-            self.solve_normal_state(state);
+            self.solve_normal_state(state)
         } else {
             self.solve_combo_state(state)
         }
     }
 
-    fn solve_normal_state(&mut self, state: ReducedState) {
+    fn solve_normal_state(&mut self, state: ReducedState) -> Option<()> {
         self.pareto_front_builder.push_empty();
         let search_actions = if state.data.progress_only() {
             PROGRESS_SEARCH_ACTIONS.intersection(self.simulator_settings.allowed_actions)
@@ -160,7 +160,7 @@ impl QualityUpperBoundSolver {
             if !self.should_use_action(state, action) {
                 continue;
             }
-            self.build_child_front(state, action);
+            self.build_child_front(state, action)?;
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -170,33 +170,37 @@ impl QualityUpperBoundSolver {
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(state, id);
+
+        Some(())
     }
 
-    fn solve_combo_state(&mut self, state: ReducedState) {
+    fn solve_combo_state(&mut self, state: ReducedState) -> Option<()> {
         match self.solved_states.get(&state.drop_combo()) {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
-            None => self.solve_normal_state(state.drop_combo()),
+            None => self.solve_normal_state(state.drop_combo())?,
         }
         match state.data.combo() {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
-                self.build_child_front(state, Action::MuscleMemory);
-                self.build_child_front(state, Action::Reflect);
-                self.build_child_front(state, Action::TrainedEye);
+                self.build_child_front(state, Action::MuscleMemory)?;
+                self.build_child_front(state, Action::Reflect)?;
+                self.build_child_front(state, Action::TrainedEye)?;
             }
             Combo::BasicTouch => {
-                self.build_child_front(state, Action::RefinedTouch);
-                self.build_child_front(state, Action::StandardTouch);
+                self.build_child_front(state, Action::RefinedTouch)?;
+                self.build_child_front(state, Action::StandardTouch)?;
             }
             Combo::StandardTouch => {
-                self.build_child_front(state, Action::AdvancedTouch);
+                self.build_child_front(state, Action::AdvancedTouch)?;
             }
         }
+
+        Some(())
     }
 
-    fn build_child_front(&mut self, state: ReducedState, action: Action) {
-        if self.flag.is_set() {
-            return;
+    fn build_child_front(&mut self, state: ReducedState, action: Action) -> Option<()> {
+        if self.interrupt_signal.is_set() {
+            return None;
         }
 
         if let Ok((new_state, action_progress, action_quality)) =
@@ -205,7 +209,7 @@ impl QualityUpperBoundSolver {
             if new_state.data.cp() >= self.solver_settings.durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
-                    None => self.solve_state(new_state),
+                    None => self.solve_state(new_state)?,
                 }
                 self.pareto_front_builder.map(move |value| {
                     value.first += action_progress;
@@ -222,6 +226,8 @@ impl QualityUpperBoundSolver {
                 self.pareto_front_builder.merge();
             }
         }
+
+        Some(())
     }
 
     fn should_use_action(&self, state: ReducedState, action: Action) -> bool {

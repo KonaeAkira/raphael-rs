@@ -39,7 +39,7 @@ pub struct MacroSolver<'a> {
     step_lower_bound_solver: StepLowerBoundSolver,
     solution_callback: Box<SolutionCallback<'a>>,
     progress_callback: Box<ProgressCallback<'a>>,
-    flag: AtomicFlag,
+    interrupt_signal: AtomicFlag,
 }
 
 impl<'a> MacroSolver<'a> {
@@ -49,7 +49,7 @@ impl<'a> MacroSolver<'a> {
         unsound_branch_pruning: bool,
         solution_callback: Box<SolutionCallback<'a>>,
         progress_callback: Box<ProgressCallback<'a>>,
-        flag: AtomicFlag,
+        interrupt_signal: AtomicFlag,
     ) -> MacroSolver<'a> {
         MacroSolver {
             settings,
@@ -60,17 +60,17 @@ impl<'a> MacroSolver<'a> {
                 settings,
                 backload_progress,
                 unsound_branch_pruning,
-                flag.clone(),
+                interrupt_signal.clone(),
             ),
             step_lower_bound_solver: StepLowerBoundSolver::new(
                 settings,
                 backload_progress,
                 unsound_branch_pruning,
-                flag.clone(),
+                interrupt_signal.clone(),
             ),
             solution_callback,
             progress_callback,
-            flag,
+            interrupt_signal,
         }
     }
 
@@ -88,10 +88,6 @@ impl<'a> MacroSolver<'a> {
     }
 
     fn do_solve(&mut self, state: SimulationState) -> Option<Vec<Action>> {
-        if self.flag.is_set() {
-            return None;
-        }
-
         let mut search_queue = {
             let _timer = NamedTimer::new("Initial upper bound");
             let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state)?;
@@ -115,7 +111,7 @@ impl<'a> MacroSolver<'a> {
 
         let mut popped = 0;
         while let Some((state, score, backtrack_id)) = search_queue.pop() {
-            if self.flag.is_set() {
+            if self.interrupt_signal.is_set() {
                 return None;
             }
 

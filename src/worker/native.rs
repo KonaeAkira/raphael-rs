@@ -12,23 +12,21 @@ impl DummyScope {
 }
 
 pub struct NativeBridge {
-    pub(crate) rx: Option<Receiver<Output>>,
+    pub(crate) tx: Sender<Output>,
+    pub(crate) rx: Receiver<Output>,
 }
 
 impl NativeBridge {
     pub fn new() -> Self {
-        Self { rx: None }
+        let (tx, rx) = mpsc::channel::<Output>();
+        Self { tx, rx }
     }
 
     pub fn send(&mut self, input: Input) {
-        let (tx, rx) = mpsc::channel::<Output>();
-
-        let worker = Worker::new(input, tx);
+        let worker = Worker::new(input, self.tx.clone());
         std::thread::spawn(move || {
             worker.solver_callback(None, None, None);
         });
-
-        self.rx = Some(rx);
     }
 }
 
