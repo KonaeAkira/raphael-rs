@@ -1,0 +1,16 @@
+[package]
+name = "bindings"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "raphael_bindings"
+crate-type = ["cdylib"]
+
+[dependencies]
+simulator = { path = "../simulator" }
+solvers = { path = "../solvers" }
+
+[build-dependencies]
+cbindgen = "0.27.0"
+csbindgen = "1.9.3"
