@@ -1,11 +1,14 @@
 use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
 
 use super::search_queue::SearchScore;
-use crate::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS};
 use crate::branch_pruning::{is_progress_only_state, strip_quality_effects};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::utils::NamedTimer;
+use crate::{
+    actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    utils::AtomicFlag,
+};
 use crate::{FinishSolver, QualityUpperBoundSolver, StepLowerBoundSolver};
 
 use std::vec::Vec;
@@ -36,6 +39,7 @@ pub struct MacroSolver<'a> {
     step_lower_bound_solver: StepLowerBoundSolver,
     solution_callback: Box<SolutionCallback<'a>>,
     progress_callback: Box<ProgressCallback<'a>>,
+    interrupt_signal: AtomicFlag,
 }
 
 impl<'a> MacroSolver<'a> {
@@ -45,6 +49,7 @@ impl<'a> MacroSolver<'a> {
         unsound_branch_pruning: bool,
         solution_callback: Box<SolutionCallback<'a>>,
         progress_callback: Box<ProgressCallback<'a>>,
+        interrupt_signal: AtomicFlag,
     ) -> MacroSolver<'a> {
         MacroSolver {
             settings,
@@ -55,14 +60,17 @@ impl<'a> MacroSolver<'a> {
                 settings,
                 backload_progress,
                 unsound_branch_pruning,
+                interrupt_signal.clone(),
             ),
             step_lower_bound_solver: StepLowerBoundSolver::new(
                 settings,
                 backload_progress,
                 unsound_branch_pruning,
+                interrupt_signal.clone(),
             ),
             solution_callback,
             progress_callback,
+            interrupt_signal,
         }
     }
 
@@ -82,9 +90,9 @@ impl<'a> MacroSolver<'a> {
     fn do_solve(&mut self, state: SimulationState) -> Option<Vec<Action>> {
         let mut search_queue = {
             let _timer = NamedTimer::new("Initial upper bound");
-            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state);
+            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state)?;
             let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                self.step_lower_bound_solver.step_lower_bound(state)
+                self.step_lower_bound_solver.step_lower_bound(state)?
             } else {
                 1 // quality dominates the search score, so no need to query the step solver
             };
@@ -94,7 +102,7 @@ impl<'a> MacroSolver<'a> {
                 &self.settings,
                 &mut self.finish_solver,
                 &mut self.quality_upper_bound_solver,
-            );
+            )?;
             let minimum_score = SearchScore::new(quality_lower_bound, u8::MAX, u8::MAX);
             SearchQueue::new(state, initial_score, minimum_score)
         };
@@ -103,6 +111,10 @@ impl<'a> MacroSolver<'a> {
 
         let mut popped = 0;
         while let Some((state, score, backtrack_id)) = search_queue.pop() {
+            if self.interrupt_signal.is_set() {
+                return None;
+            }
+
             popped += 1;
             if popped % (1 << 14) == 0 {
                 (self.progress_callback)(popped);
@@ -136,14 +148,14 @@ impl<'a> MacroSolver<'a> {
                         } else {
                             std::cmp::min(
                                 score.quality,
-                                self.quality_upper_bound_solver.quality_upper_bound(state),
+                                self.quality_upper_bound_solver.quality_upper_bound(state)?,
                             )
                         };
 
                         let step_lb_hint = score.steps.saturating_sub(current_steps + 1);
                         let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
                             self.step_lower_bound_solver
-                                .step_lower_bound_with_hint(state, step_lb_hint)
+                                .step_lower_bound_with_hint(state, step_lb_hint)?
                                 .saturating_add(current_steps + 1)
                         } else {
                             current_steps + 1

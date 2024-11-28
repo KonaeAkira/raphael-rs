@@ -1,7 +1,7 @@
 use crate::{
     actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
     branch_pruning::is_progress_only_state,
-    utils::{ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
 use simulator::*;
 
@@ -24,6 +24,7 @@ pub struct StepLowerBoundSolver {
     bonus_durability_restore: i8,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
+    interrupt_signal: AtomicFlag,
 }
 
 impl StepLowerBoundSolver {
@@ -31,6 +32,7 @@ impl StepLowerBoundSolver {
         mut settings: Settings,
         backload_progress: bool,
         unsound_branch_pruning: bool,
+        interrupt_signal: AtomicFlag,
     ) -> Self {
         log::trace!(
             "ReducedState (StepLowerBoundSolver) - size: {}, align: {}",
@@ -57,29 +59,38 @@ impl StepLowerBoundSolver {
                 settings.max_progress,
                 settings.max_quality,
             ),
+            interrupt_signal,
         }
     }
 
     /// Returns a lower-bound on the additional steps required to max out both Progress and Quality from this state.
-    pub fn step_lower_bound(&mut self, state: SimulationState) -> u8 {
+    pub fn step_lower_bound(&mut self, state: SimulationState) -> Option<u8> {
         self.step_lower_bound_with_hint(state, 1)
     }
 
-    pub fn step_lower_bound_with_hint(&mut self, state: SimulationState, mut hint: u8) -> u8 {
+    pub fn step_lower_bound_with_hint(
+        &mut self,
+        state: SimulationState,
+        mut hint: u8,
+    ) -> Option<u8> {
         if self.backload_progress
             && state.progress != 0
             && state.quality < self.settings.max_quality
         {
-            return u8::MAX;
+            return Some(u8::MAX);
         }
         hint = std::cmp::max(1, hint);
-        while self.quality_upper_bound(state, hint) < self.settings.max_quality {
+        while self.quality_upper_bound(state, hint)? < self.settings.max_quality {
             hint += 1;
         }
-        hint
+        Some(hint)
     }
 
-    fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> u16 {
+    fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> Option<u16> {
+        if self.interrupt_signal.is_set() {
+            return None;
+        }
+
         let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
@@ -99,10 +110,10 @@ impl StepLowerBoundSolver {
         match pareto_front.last() {
             Some(element) => {
                 if element.first < missing_progress {
-                    return 0;
+                    return Some(0);
                 }
             }
-            None => return 0,
+            None => return Some(0),
         }
 
         let index = match pareto_front.binary_search_by_key(&missing_progress, |value| value.first)
@@ -110,28 +121,32 @@ impl StepLowerBoundSolver {
             Ok(i) => i,
             Err(i) => i,
         };
-        std::cmp::min(
+        Some(std::cmp::min(
             self.settings.max_quality.saturating_mul(2),
             pareto_front[index].second.saturating_add(current_quality),
-        )
+        ))
     }
 
-    fn solve_state(&mut self, reduced_state: ReducedState) {
+    fn solve_state(&mut self, reduced_state: ReducedState) -> Option<()> {
+        if self.interrupt_signal.is_set() {
+            return None;
+        }
+
         if reduced_state.combo == Combo::None {
-            self.solve_normal_state(reduced_state);
+            self.solve_normal_state(reduced_state)
         } else {
             self.solve_combo_state(reduced_state)
         }
     }
 
-    fn solve_normal_state(&mut self, reduced_state: ReducedState) {
+    fn solve_normal_state(&mut self, reduced_state: ReducedState) -> Option<()> {
         self.pareto_front_builder.push_empty();
         let search_actions = match reduced_state.progress_only {
             false => FULL_SEARCH_ACTIONS,
             true => PROGRESS_SEARCH_ACTIONS,
         };
         for action in search_actions.actions_iter() {
-            self.build_child_front(reduced_state, action);
+            self.build_child_front(reduced_state, action)?;
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -141,30 +156,38 @@ impl StepLowerBoundSolver {
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(reduced_state, id);
+
+        Some(())
     }
 
-    fn solve_combo_state(&mut self, reduced_state: ReducedState) {
+    fn solve_combo_state(&mut self, reduced_state: ReducedState) -> Option<()> {
         match self.solved_states.get(&reduced_state.to_non_combo()) {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
-            None => self.solve_normal_state(reduced_state.to_non_combo()),
+            None => self.solve_normal_state(reduced_state.to_non_combo())?,
         }
         match reduced_state.combo {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
-                self.build_child_front(reduced_state, Action::MuscleMemory);
-                self.build_child_front(reduced_state, Action::Reflect);
-                self.build_child_front(reduced_state, Action::TrainedEye);
+                self.build_child_front(reduced_state, Action::MuscleMemory)?;
+                self.build_child_front(reduced_state, Action::Reflect)?;
+                self.build_child_front(reduced_state, Action::TrainedEye)?;
             }
             Combo::BasicTouch => {
                 if !reduced_state.progress_only {
-                    self.build_child_front(reduced_state, Action::RefinedTouch);
+                    self.build_child_front(reduced_state, Action::RefinedTouch)?;
                 }
             }
             Combo::StandardTouch => unreachable!(),
         }
+
+        Some(())
     }
 
-    fn build_child_front(&mut self, reduced_state: ReducedState, action: Action) {
+    fn build_child_front(&mut self, reduced_state: ReducedState, action: Action) -> Option<()> {
+        if self.interrupt_signal.is_set() {
+            return None;
+        }
+
         if let Ok(new_full_state) =
             reduced_state
                 .to_state()
@@ -193,7 +216,7 @@ impl StepLowerBoundSolver {
             if new_reduced_state.steps_budget != 0 && new_reduced_state.durability > 0 {
                 match self.solved_states.get(&new_reduced_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
-                    None => self.solve_state(new_reduced_state),
+                    None => self.solve_state(new_reduced_state)?,
                 }
                 self.pareto_front_builder.map(move |value| {
                     value.first += action_progress;
@@ -207,6 +230,8 @@ impl StepLowerBoundSolver {
                 self.pareto_front_builder.merge();
             }
         }
+
+        Some(())
     }
 }
 
@@ -219,7 +244,9 @@ mod tests {
 
     fn solve(settings: Settings, actions: &[Action]) -> u8 {
         let state = SimulationState::from_macro(&settings, actions).unwrap();
-        StepLowerBoundSolver::new(settings, false, false).step_lower_bound(state)
+        StepLowerBoundSolver::new(settings, false, false, AtomicFlag::new())
+            .step_lower_bound(state)
+            .unwrap()
     }
 
     #[test]
@@ -695,15 +722,15 @@ mod tests {
     /// Test that the upper-bound solver is monotonic,
     /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
     fn monotonic_fuzz_check(settings: Settings) {
-        let mut solver = StepLowerBoundSolver::new(settings, false, false);
+        let mut solver = StepLowerBoundSolver::new(settings, false, false, AtomicFlag::new());
         for _ in 0..10000 {
             let state = random_state(&settings);
-            let state_lower_bound = solver.step_lower_bound(state);
+            let state_lower_bound = solver.step_lower_bound(state).unwrap();
             for action in settings.allowed_actions.actions_iter() {
                 let child_lower_bound = match state.use_action(action, Condition::Normal, &settings)
                 {
                     Ok(child) => match child.is_final(&settings) {
-                        false => solver.step_lower_bound(child),
+                        false => solver.step_lower_bound(child).unwrap(),
                         true if child.progress >= settings.max_progress
                             && child.quality >= settings.max_quality =>
                         {

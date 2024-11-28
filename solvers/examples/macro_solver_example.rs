@@ -1,5 +1,5 @@
 use simulator::{Action, ActionMask, Settings, SimulationState};
-use solvers::MacroSolver;
+use solvers::{AtomicFlag, MacroSolver};
 
 fn main() {
     #[cfg(feature = "env_logger")]
@@ -32,9 +32,16 @@ fn main() {
     };
 
     let state = SimulationState::new(&settings);
-    let actions = MacroSolver::new(settings, false, false, Box::new(|_| {}), Box::new(|_| {}))
-        .solve(state)
-        .unwrap();
+    let actions = MacroSolver::new(
+        settings,
+        false,
+        false,
+        Box::new(|_| {}),
+        Box::new(|_| {}),
+        AtomicFlag::new(),
+    )
+    .solve(state)
+    .unwrap();
 
     let quality = SimulationState::from_macro(&settings, &actions)
         .unwrap()

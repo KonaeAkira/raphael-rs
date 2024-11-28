@@ -34,6 +34,8 @@ stats_window:
 label:
   none:
     en: None
+  cancel:
+    en: Cancel
   clear:
     en: Clear
   select:

@@ -1,7 +1,7 @@
-use crate::app::{SolverConfig, SolverEvent};
-use simulator::{Action, Settings, SimulationState};
-use solvers::test_utils;
-use std::sync::mpsc::Sender;
+use crate::app::{SolverEvent, SolverInput};
+use simulator::{Action, SimulationState};
+use solvers::{test_utils, AtomicFlag};
+use std::sync::{mpsc::Sender, LazyLock};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod native;
@@ -21,13 +21,15 @@ use gloo_worker::WorkerBridge;
 #[cfg(target_arch = "wasm32")]
 pub type BridgeType = WorkerBridge<Worker>;
 
-type Input = (Settings, SolverConfig);
+type Input = SolverInput;
 type Output = SolverEvent;
 
 pub struct Worker {
     input: Option<Input>,
     tx: Option<Sender<Output>>,
 }
+
+static INTERRUPT_SIGNAL: LazyLock<AtomicFlag> = LazyLock::new(AtomicFlag::new);
 
 impl Worker {
     #[allow(unused)]
@@ -43,64 +45,72 @@ impl Worker {
             input.unwrap()
         };
 
-        let settings = input.0;
-        let config = input.1;
+        match input {
+            SolverInput::Start(settings, config) => {
+                INTERRUPT_SIGNAL.clear();
 
-        let tx = self.tx.clone();
-        let solution_callback = move |actions: &[Action]| {
-            self.send_event(
-                tx.clone(),
-                scope,
-                id,
-                SolverEvent::IntermediateSolution(actions.to_vec()),
-            );
-        };
+                let tx = self.tx.clone();
+                let solution_callback = move |actions: &[Action]| {
+                    self.send_event(
+                        tx.clone(),
+                        scope,
+                        id,
+                        SolverEvent::IntermediateSolution(actions.to_vec()),
+                    );
+                };
 
-        let tx = self.tx.clone();
-        let progress_callback = move |progress: usize| {
-            self.send_event(tx.clone(), scope, id, SolverEvent::Progress(progress));
-        };
+                let tx = self.tx.clone();
+                let progress_callback = move |progress: usize| {
+                    self.send_event(tx.clone(), scope, id, SolverEvent::Progress(progress));
+                };
 
-        let mut solution = if config.minimize_steps {
-            None // skip unsound solver
-        } else {
-            solvers::MacroSolver::new(
-                settings,
-                true,
-                true,
-                Box::new(solution_callback.clone()),
-                Box::new(progress_callback.clone()),
-            )
-            .solve(SimulationState::new(&settings))
-        };
+                let mut solution = if config.minimize_steps {
+                    None // skip unsound solver
+                } else {
+                    solvers::MacroSolver::new(
+                        settings,
+                        true,
+                        true,
+                        Box::new(solution_callback.clone()),
+                        Box::new(progress_callback.clone()),
+                        INTERRUPT_SIGNAL.clone(),
+                    )
+                    .solve(SimulationState::new(&settings))
+                };
 
-        if solution.is_none()
-            || test_utils::get_quality(&settings, solution.as_ref().unwrap().as_slice())
-                < settings.max_quality
-        {
-            progress_callback(0); // reset solver progress
-            solution = solvers::MacroSolver::new(
-                settings,
-                config.backload_progress,
-                false,
-                Box::new(solution_callback),
-                Box::new(progress_callback),
-            )
-            .solve(SimulationState::new(&settings));
-        }
+                if solution.is_none()
+                    || test_utils::get_quality(&settings, solution.as_ref().unwrap().as_slice())
+                        < settings.max_quality
+                {
+                    progress_callback(0); // reset solver progress
+                    solution = solvers::MacroSolver::new(
+                        settings,
+                        config.backload_progress,
+                        false,
+                        Box::new(solution_callback),
+                        Box::new(progress_callback),
+                        INTERRUPT_SIGNAL.clone(),
+                    )
+                    .solve(SimulationState::new(&settings));
+                }
 
-        let tx = self.tx.clone();
-        match solution {
-            Some(actions) => {
-                self.send_event(tx.clone(), scope, id, SolverEvent::FinalSolution(actions));
+                let tx = self.tx.clone();
+                match solution {
+                    Some(actions) => {
+                        self.send_event(tx.clone(), scope, id, SolverEvent::FinalSolution(actions));
+                    }
+                    None => {
+                        self.send_event(
+                            tx.clone(),
+                            scope,
+                            id,
+                            SolverEvent::FinalSolution(Vec::new()),
+                        );
+                    }
+                }
             }
-            None => {
-                self.send_event(
-                    tx.clone(),
-                    scope,
-                    id,
-                    SolverEvent::FinalSolution(Vec::new()),
-                );
+            SolverInput::Cancel => {
+                INTERRUPT_SIGNAL.set();
             }
         }
     }

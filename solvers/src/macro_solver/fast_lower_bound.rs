@@ -20,7 +20,7 @@ pub fn fast_lower_bound(
     settings: &Settings,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut QualityUpperBoundSolver,
-) -> u16 {
+) -> Option<u16> {
     let _timer = NamedTimer::new("Fast lower bound");
     let allowed_actions = settings.allowed_actions.intersection(SEARCH_ACTIONS);
 
@@ -29,7 +29,7 @@ pub fn fast_lower_bound(
 
     let mut quality_lower_bound = 0;
 
-    search_queue.push(upper_bound_solver.quality_upper_bound(state), state);
+    search_queue.push(upper_bound_solver.quality_upper_bound(state)?, state);
 
     while let Some((score, state)) = search_queue.pop() {
         if score <= quality_lower_bound {
@@ -48,7 +48,7 @@ pub fn fast_lower_bound(
                     if action == Action::ByregotsBlessing {
                         continue;
                     }
-                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(state);
+                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(state)?;
                     if quality_upper_bound <= quality_lower_bound {
                         continue;
                     }
@@ -62,7 +62,7 @@ pub fn fast_lower_bound(
     }
 
     log::debug!("Fast quality lower bound: {}", quality_lower_bound);
-    std::cmp::min(settings.max_quality, quality_lower_bound)
+    Some(std::cmp::min(settings.max_quality, quality_lower_bound))
 }
 
 fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {
