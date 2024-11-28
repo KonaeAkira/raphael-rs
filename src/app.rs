@@ -95,7 +95,7 @@ impl MacroSolverApp {
                 }
                 ctx.request_repaint();
             })
-            .spawn("./webworker.js")
+            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
     }
 
     #[cfg(not(target_arch = "wasm32"))]
