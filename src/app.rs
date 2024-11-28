@@ -730,6 +730,7 @@ impl MacroSolverApp {
                         ui.label(format!("Time: {:.3}s", duration.as_secs_f64()));
                     }
                 } else {
+                    #[cfg(not(target_arch = "wasm32"))]
                     ui.add_enabled_ui(
                         !self.solver_interrupt_pending && self.solver_pending,
                         |ui| {
