@@ -116,7 +116,7 @@ impl<'a> MacroSolver<'a> {
             }
 
             popped += 1;
-            if popped % (1 << 14) == 0 {
+            if popped % (1 << 10) == 0 {
                 (self.progress_callback)(popped);
             }
 

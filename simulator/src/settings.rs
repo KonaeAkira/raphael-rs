@@ -28,6 +28,14 @@ pub struct ActionMask {
 }
 
 impl ActionMask {
+    pub const fn from_bits(mask: u64) -> Self {
+        Self { mask }
+    }
+
+    pub const fn to_bits(self) -> u64 {
+        self.mask
+    }
+
     pub const fn none() -> Self {
         Self { mask: 0 }
     }

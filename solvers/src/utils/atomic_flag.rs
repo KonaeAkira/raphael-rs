@@ -28,6 +28,10 @@ impl AtomicFlag {
         }
     }
 
+    pub fn as_ptr(&self) -> *mut bool {
+        self.flag.as_ptr()
+    }
+
     pub fn set(&self) {
         self.flag.store(true, Ordering::Relaxed);
     }
