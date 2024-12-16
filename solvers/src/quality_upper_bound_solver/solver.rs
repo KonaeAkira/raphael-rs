@@ -212,8 +212,8 @@ impl QualityUpperBoundSolver {
                     None => self.solve_state(new_state)?,
                 }
                 self.pareto_front_builder.map(move |value| {
-                    value.first += action_progress;
-                    value.second += action_quality;
+                    value.first = value.first.saturating_add(action_progress);
+                    value.second = value.second.saturating_add(action_quality);
                 });
                 self.pareto_front_builder.merge();
             } else if new_state.data.cp() >= -self.solver_settings.durability_cost

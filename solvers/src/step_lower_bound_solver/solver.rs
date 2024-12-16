@@ -219,8 +219,8 @@ impl StepLowerBoundSolver {
                     None => self.solve_state(new_reduced_state)?,
                 }
                 self.pareto_front_builder.map(move |value| {
-                    value.first += action_progress;
-                    value.second += action_quality;
+                    value.first = value.first.saturating_add(action_progress);
+                    value.second = value.second.saturating_add(action_quality);
                 });
                 self.pareto_front_builder.merge();
             } else if action_progress != 0 {
