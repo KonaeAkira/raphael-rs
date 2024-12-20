@@ -177,7 +177,7 @@ impl eframe::App for MacroSolverApp {
                 ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                 ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
 
-                egui::ComboBox::from_id_source("LOCALE")
+                egui::ComboBox::from_id_salt("LOCALE")
                     .selected_text(format!("{}", self.locale))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
@@ -421,7 +421,7 @@ impl MacroSolverApp {
                 if ui.button("Edit").clicked() {
                     self.stats_edit_window_open = true;
                 }
-                egui::ComboBox::from_id_source("SELECTED_JOB")
+                egui::ComboBox::from_id_salt("SELECTED_JOB")
                     .width(20.0)
                     .selected_text(get_job_name(self.crafter_config.selected_job, self.locale))
                     .show_ui(ui, |ui| {
@@ -451,7 +451,7 @@ impl MacroSolverApp {
                 ui.monospace("+");
                 ui.add(
                     egui::DragValue::new(&mut self.crafter_config.active_stats_mut().craftsmanship)
-                        .clamp_range(0..=9999),
+                        .range(0..=9999),
                 );
             });
         });
@@ -468,7 +468,7 @@ impl MacroSolverApp {
                 ui.monospace("+");
                 ui.add(
                     egui::DragValue::new(&mut self.crafter_config.active_stats_mut().control)
-                        .clamp_range(0..=9999),
+                        .range(0..=9999),
                 );
             });
         });
@@ -485,7 +485,7 @@ impl MacroSolverApp {
                 ui.monospace("+");
                 ui.add(
                     egui::DragValue::new(&mut self.crafter_config.active_stats_mut().cp)
-                        .clamp_range(0..=999),
+                        .range(0..=999),
                 );
             });
         });
@@ -494,7 +494,7 @@ impl MacroSolverApp {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.add(
                     egui::DragValue::new(&mut self.crafter_config.active_stats_mut().level)
-                        .clamp_range(1..=100),
+                        .range(1..=100),
                 );
             });
         });
@@ -523,7 +523,7 @@ impl MacroSolverApp {
                                     ui.monospace("/");
                                     ui.add(
                                         egui::DragValue::new(&mut provided_ingredients[index])
-                                            .clamp_range(0..=ingredient.amount),
+                                            .range(0..=ingredient.amount),
                                     );
                                 },
                             );
@@ -606,7 +606,7 @@ impl MacroSolverApp {
                         ui.add_enabled(false, egui::DragValue::new(&mut current_value));
                     }
                 };
-                egui::ComboBox::from_id_source("TARGET_QUALITY")
+                egui::ComboBox::from_id_salt("TARGET_QUALITY")
                     .selected_text(format!("{}", self.solver_config.quality_target))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
@@ -776,7 +776,8 @@ impl MacroSolverApp {
             String::from("japanese_monospace"),
             FontData::from_static(include_bytes!(
                 "../assets/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
-            )),
+            ))
+            .into(),
         );
         fonts
             .families
@@ -793,7 +794,8 @@ impl MacroSolverApp {
             String::from("FFXIV_Lodestone_SSF"),
             FontData::from_static(include_bytes!(
                 "../assets/fonts/XIV_Icon_Recreations/XIV_Icon_Recreations.ttf"
-            )),
+            ))
+            .into(),
         );
         fonts
             .families

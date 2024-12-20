@@ -129,15 +129,14 @@ impl<'a> RecipeSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label("Level:");
                     ui.add(
-                        egui::DragValue::new(&mut self.recipe_config.recipe.level)
-                            .clamp_range(1..=100),
+                        egui::DragValue::new(&mut self.recipe_config.recipe.level).range(1..=100),
                     );
                 });
                 ui.horizontal(|ui| {
                     ui.label("Recipe Level:");
                     ui.add(
                         egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
-                            .clamp_range(1..=RLVLS.len() - 1),
+                            .range(1..=RLVLS.len() - 1),
                     );
                 });
                 ui.horizontal(|ui| {
@@ -157,7 +156,7 @@ impl<'a> RecipeSelect<'a> {
                         ui.label("Initial Quality:");
                         ui.add(
                             egui::DragValue::new(initial_quality)
-                                .clamp_range(0..=self.recipe_config.recipe.quality),
+                                .range(0..=self.recipe_config.recipe.quality),
                         );
                     });
                 }
@@ -165,7 +164,7 @@ impl<'a> RecipeSelect<'a> {
                     ui.label("Durability:");
                     ui.add(
                         egui::DragValue::new(&mut self.recipe_config.recipe.durability)
-                            .clamp_range(10..=100),
+                            .range(10..=100),
                     );
                 });
                 ui.checkbox(&mut self.recipe_config.recipe.is_expert, "Expert recipe");

@@ -151,7 +151,7 @@ impl<'a> Widget for MacroView<'a> {
                         t!("label.macro_notification"),
                     ));
                     ui.add_enabled_ui(self.config.notification_enabled, |ui| {
-                        egui::ComboBox::from_id_source("SOUND_EFFECT")
+                        egui::ComboBox::from_id_salt("SOUND_EFFECT")
                             .selected_text(format!("<se.{}>", self.config.notification_sound))
                             .show_ui(ui, |ui| {
                                 for i in 1..=16 {
