@@ -3,16 +3,32 @@
 :link: [www.raphael-xiv.com](https://www.raphael-xiv.com/)
 
 Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
-* Produces optimal solutions.
+* Produces the most optimal macro according to these [criteria](#optimal-macro-selection).
 * Short solve time (20-60 seconds) and reasonable memory usage (300-1000 MB) for most configurations.
 
 ## Contents <!-- omit in toc -->
 
+* [Optimal macro selection](#optimal-macro-selection)
 * [How does it work?](#how-does-it-work)
 * [Building from source](#building-from-source)
   * [Native app](#native-app)
   * [Web app (WASM)](#web-app-wasm)
   * [Native CLI](#native-cli)
+
+## Optimal macro selection
+
+The following is the specification of how the most "optimal" macro is selected:
+
+* The generated macro must be able to finish the synthesis, i.e. reach 100% progress.
+* Valid macros are then ranked based on these criteria, in order:
+  * Quality reached, capped at the target quality defined in the solver configuration. (Higher is better)
+  * Number of macro steps. (Lower is better)
+  * Total macro duration, in seconds. (Lower is better)
+  * Excess quality above the target quality. (Higher is better)
+
+Anything not mentioned in the above specification is not taken into account. If you would like to change/amend the specification, please submit a feature request.
+
+If you find a macro that beats the generated macro according to the specification above, please submit a bug report.
 
 ## How does it work?
 
