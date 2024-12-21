@@ -124,7 +124,6 @@ impl MacroSolverApp {
             cc.egui_ctx.set_visuals(Visuals::light());
         }
 
-        cc.egui_ctx.set_pixels_per_point(1.2);
         cc.egui_ctx.style_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
             style.url_in_tooltip = true;
@@ -240,99 +239,51 @@ impl eframe::App for MacroSolverApp {
             });
         });
 
-        let game_settings = game_data::get_game_settings(
-            self.recipe_config.recipe,
-            *self.crafter_config.active_stats(),
-            self.selected_food,
-            self.selected_potion,
-            self.solver_config.adversarial,
-        );
-        let initial_quality = match self.recipe_config.quality_source {
-            QualitySource::HqMaterialList(hq_materials) => {
-                game_data::get_initial_quality(self.recipe_config.recipe, hq_materials)
-            }
-            QualitySource::Value(quality) => quality,
-        };
-
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.with_layout(Layout::top_down_justified(Align::TOP), |ui| {
-                        ui.set_max_width(885.0);
-                        ui.add(Simulator::new(
-                            &game_settings,
-                            initial_quality,
-                            self.solver_config,
-                            &self.crafter_config,
-                            &self.actions,
-                            game_data::ITEMS
-                                .get(&self.recipe_config.recipe.item_id)
-                                .unwrap(),
-                            self.locale,
-                        ));
-                        ui.add_space(5.5);
-                        ui.horizontal(|ui| {
-                            ui.vertical(|ui| {
-                                ui.push_id("RECIPE_SELECT", |ui| {
-                                    ui.set_max_width(612.0);
-                                    ui.set_max_height(212.0);
-                                    ui.add_enabled(
-                                        !self.solver_pending,
-                                        RecipeSelect::new(
-                                            &mut self.crafter_config,
-                                            &mut self.recipe_config,
-                                            self.selected_food,
-                                            self.selected_potion,
-                                            self.locale,
-                                        ),
-                                    );
-                                    // ui.shrink_height_to_current();
-                                });
-                                ui.add_space(5.0);
-                                ui.push_id("FOOD_SELECT", |ui| {
-                                    ui.set_max_width(612.0);
-                                    ui.set_max_height(172.0);
-                                    ui.add_enabled(
-                                        !self.solver_pending,
-                                        FoodSelect::new(
-                                            self.crafter_config.crafter_stats
-                                                [self.crafter_config.selected_job as usize],
-                                            &mut self.selected_food,
-                                            self.locale,
-                                        ),
-                                    );
-                                });
-                                ui.add_space(5.0);
-                                ui.push_id("POTION_SELECT", |ui| {
-                                    ui.set_max_width(612.0);
-                                    ui.set_max_height(172.0);
-                                    ui.add_enabled(
-                                        !self.solver_pending,
-                                        PotionSelect::new(
-                                            self.crafter_config.crafter_stats
-                                                [self.crafter_config.selected_job as usize],
-                                            &mut self.selected_potion,
-                                            self.locale,
-                                        ),
-                                    );
-                                });
-                            });
+                self.draw_simulator_widget(ui);
+                ui.add_space(5.5);
+                ui.with_layout(
+                    Layout::left_to_right(Align::TOP).with_main_wrap(true),
+                    |ui| {
+                        let select_min_width: f32 = 612.0;
+                        let config_min_width: f32 = 300.0;
+                        let macro_min_width: f32 = 290.0;
 
-                            ui.group(|ui| {
-                                ui.set_height(560.0);
-                                self.draw_config_and_results_widget(ui)
-                            });
+                        let select_width;
+                        let config_width;
+                        let macro_width;
+
+                        let row_width = ui.available_width();
+                        if row_width >= select_min_width + config_min_width + macro_min_width {
+                            select_width = row_width - config_min_width - macro_min_width - 16.5;
+                            config_width = config_min_width;
+                            macro_width = macro_min_width;
+                        } else if row_width >= select_min_width + config_min_width {
+                            select_width = row_width - config_min_width - 8.5;
+                            config_width = config_min_width;
+                            macro_width = row_width;
+                        } else if row_width >= config_min_width + macro_min_width {
+                            select_width = row_width;
+                            config_width = config_min_width;
+                            macro_width = row_width - config_min_width - 8.5;
+                        } else {
+                            select_width = row_width;
+                            config_width = row_width;
+                            macro_width = row_width;
+                        }
+
+                        ui.allocate_ui(egui::vec2(select_width, 0.0), |ui| {
+                            self.draw_list_select_widgets(ui);
                         });
-                    });
-                    ui.add_sized(
-                        [320.0, 733.0],
-                        MacroView::new(&mut self.actions, &mut self.macro_view_config, self.locale),
-                    );
-                    // fill remaining horizontal space
-                    ui.with_layout(Layout::right_to_left(Align::Center), |_| {});
-                });
-                // fill remaining vertical space
-                ui.with_layout(Layout::bottom_up(Align::Center), |_| {});
+                        ui.allocate_ui(egui::vec2(config_width, 0.0), |ui| {
+                            self.draw_config_and_results_widget(ui);
+                        });
+                        ui.allocate_ui(egui::vec2(macro_width, 572.0), |ui| {
+                            self.draw_macro_output_widget(ui);
+                        });
+                    },
+                );
             });
         });
 
@@ -403,13 +354,87 @@ impl MacroSolverApp {
         }
     }
 
-    fn draw_config_and_results_widget(&mut self, ui: &mut egui::Ui) {
+    fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
+        let game_settings = game_data::get_game_settings(
+            self.recipe_config.recipe,
+            *self.crafter_config.active_stats(),
+            self.selected_food,
+            self.selected_potion,
+            self.solver_config.adversarial,
+        );
+        let initial_quality = match self.recipe_config.quality_source {
+            QualitySource::HqMaterialList(hq_materials) => {
+                game_data::get_initial_quality(self.recipe_config.recipe, hq_materials)
+            }
+            QualitySource::Value(quality) => quality,
+        };
+        ui.add(Simulator::new(
+            &game_settings,
+            initial_quality,
+            self.solver_config,
+            &self.crafter_config,
+            &self.actions,
+            game_data::ITEMS
+                .get(&self.recipe_config.recipe.item_id)
+                .unwrap(),
+            self.locale,
+        ));
+    }
+
+    fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.add_enabled_ui(!self.solver_pending, |ui| {
-                self.draw_configuration_widget(ui);
+            ui.push_id("RECIPE_SELECT", |ui| {
+                ui.set_max_height(212.0);
+                ui.add_enabled(
+                    !self.solver_pending,
+                    RecipeSelect::new(
+                        &mut self.crafter_config,
+                        &mut self.recipe_config,
+                        self.selected_food,
+                        self.selected_potion,
+                        self.locale,
+                    ),
+                );
             });
             ui.add_space(5.5);
-            self.draw_results_widget(ui);
+            ui.push_id("FOOD_SELECT", |ui| {
+                ui.set_max_height(172.0);
+                ui.add_enabled(
+                    !self.solver_pending,
+                    FoodSelect::new(
+                        self.crafter_config.crafter_stats
+                            [self.crafter_config.selected_job as usize],
+                        &mut self.selected_food,
+                        self.locale,
+                    ),
+                );
+            });
+            ui.add_space(5.5);
+            ui.push_id("POTION_SELECT", |ui| {
+                ui.set_max_height(172.0);
+                ui.add_enabled(
+                    !self.solver_pending,
+                    PotionSelect::new(
+                        self.crafter_config.crafter_stats
+                            [self.crafter_config.selected_job as usize],
+                        &mut self.selected_potion,
+                        self.locale,
+                    ),
+                );
+            });
+        });
+    }
+
+    fn draw_config_and_results_widget(&mut self, ui: &mut egui::Ui) {
+        ui.group(|ui| {
+            ui.set_height(560.0);
+            ui.vertical(|ui| {
+                ui.add_enabled_ui(!self.solver_pending, |ui| {
+                    self.draw_configuration_widget(ui);
+                });
+                ui.add_space(5.5);
+                self.draw_results_widget(ui);
+            });
         });
     }
 
@@ -761,6 +786,14 @@ impl MacroSolverApp {
                 }
             });
         });
+    }
+
+    fn draw_macro_output_widget(&mut self, ui: &mut egui::Ui) {
+        ui.add(MacroView::new(
+            &mut self.actions,
+            &mut self.macro_view_config,
+            self.locale,
+        ));
     }
 
     fn experimental_warning_text() -> Cow<'static, str> {

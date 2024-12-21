@@ -93,21 +93,16 @@ impl<'a> Widget for FoodSelect<'a> {
                     data.insert_persisted(id, search_text);
                 });
 
-                let text_height = egui::TextStyle::Body
-                    .resolve(ui.style())
-                    .size
-                    .max(ui.spacing().interact_size.y);
+                let line_height = ui.spacing().interact_size.y;
                 let table = egui_extras::TableBuilder::new(ui)
                     .auto_shrink(false)
                     .striped(true)
-                    .resizable(false)
-                    .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-                    .column(Column::auto())
+                    .column(Column::exact(42.0))
                     .column(Column::exact(240.0))
-                    .column(Column::remainder())
+                    .column(Column::remainder().clip(true))
                     .min_scrolled_height(0.0);
                 table.body(|body| {
-                    body.rows(text_height, search_result.len(), |mut row| {
+                    body.rows(line_height, search_result.len(), |mut row| {
                         let item = game_data::MEALS[search_result[row.index()]];
                         row.col(|ui| {
                             if ui.button(t!("label.select")).clicked() {
