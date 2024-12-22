@@ -46,7 +46,7 @@ impl<'a> Simulator<'a> {
     }
 }
 
-impl<'a> Widget for Simulator<'a> {
+impl Widget for Simulator<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let (game_state, errors) =
             SimulationState::from_macro_continue_on_error(self.settings, self.actions);

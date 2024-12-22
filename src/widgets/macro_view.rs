@@ -111,7 +111,7 @@ impl<'a> MacroView<'a> {
     }
 }
 
-impl<'a> Widget for MacroView<'a> {
+impl Widget for MacroView<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);

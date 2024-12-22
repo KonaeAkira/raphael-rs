@@ -1,5 +1,3 @@
-use std::i16;
-
 use crate::{
     actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},

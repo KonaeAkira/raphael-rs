@@ -18,7 +18,7 @@ impl<'a> StatsEdit<'a> {
     }
 }
 
-impl<'a> Widget for StatsEdit<'a> {
+impl Widget for StatsEdit<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             for job_id in 0..8 {
@@ -62,54 +62,39 @@ impl<'a> Widget for StatsEdit<'a> {
             ui.separator().rect.width();
             ui.horizontal(|ui| {
                 let button_text = t!("label.copy_crafter_config");
-                let button_response;
-                if ui
-                    .ctx()
-                    .animate_bool_with_time(egui::Id::new("config_copy"), false, 0.25)
-                    == 0.0
-                {
-                    button_response = ui.button(button_text);
-                } else {
-                    button_response = ui.add_enabled(false, egui::Button::new(button_text));
-                }
+                let copy_id = egui::Id::new("config_copy");
+                let button_response =
+                    if ui.ctx().animate_bool_with_time(copy_id, false, 0.25) == 0.0 {
+                        ui.button(button_text)
+                    } else {
+                        ui.add_enabled(false, egui::Button::new(button_text))
+                    };
                 if button_response.clicked() {
                     ui.output_mut(|output| {
                         output.copied_text = ron::to_string(self.crafter_config).unwrap()
                     });
-                    ui.ctx()
-                        .animate_bool_with_time(egui::Id::new("config_copy"), true, 0.0);
+                    ui.ctx().animate_bool_with_time(copy_id, true, 0.0);
                 }
 
                 ui.add_space(button_response.rect.width() * 0.5);
                 let selected_job = self.crafter_config.selected_job;
                 let hint_text = t!("label.paste_crafter_config");
+                let paste_id = egui::Id::new("config_paste");
                 let input_string = &mut String::new();
-                let input_response;
-                if ui
-                    .ctx()
-                    .animate_bool_with_time(egui::Id::new("config_paste"), false, 0.25)
-                    == 0.0
-                {
-                    input_response =
-                        ui.add(egui::TextEdit::singleline(input_string).hint_text(hint_text));
-                } else {
-                    input_response = ui.add_enabled(
-                        false,
-                        egui::TextEdit::singleline(input_string).hint_text(hint_text),
-                    );
-                }
+                let input_response =
+                    if ui.ctx().animate_bool_with_time(paste_id, false, 0.25) == 0.0 {
+                        ui.add(egui::TextEdit::singleline(input_string).hint_text(hint_text))
+                    } else {
+                        ui.add_enabled(
+                            false,
+                            egui::TextEdit::singleline(input_string).hint_text(hint_text),
+                        )
+                    };
                 if input_response.changed() {
-                    match ron::from_str(&input_string) {
-                        Ok(crafter_config) => {
-                            *self.crafter_config = crafter_config;
-                            self.crafter_config.selected_job = selected_job;
-                            ui.ctx().animate_bool_with_time(
-                                egui::Id::new("config_paste"),
-                                true,
-                                0.0,
-                            );
-                        }
-                        Err(_) => {}
+                    if let Ok(crafter_config) = ron::from_str(input_string) {
+                        *self.crafter_config = crafter_config;
+                        self.crafter_config.selected_job = selected_job;
+                        ui.ctx().animate_bool_with_time(paste_id, true, 0.0);
                     }
                 }
             });

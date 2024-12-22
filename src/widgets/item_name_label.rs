@@ -18,18 +18,16 @@ impl egui::Widget for ItemNameLabel {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let id = egui::Id::new(ui.id().value() ^ u64::from(self.item_id));
 
-        let response;
-        if ui.ctx().animate_bool_with_time(id, false, 0.25) == 0.0 {
-            response = ui
-                .add(egui::Label::new(egui::RichText::new(&self.text)).sense(egui::Sense::click()));
+        let response = if ui.ctx().animate_bool_with_time(id, false, 0.25) == 0.0 {
+            ui.add(egui::Label::new(egui::RichText::new(&self.text)).sense(egui::Sense::click()))
         } else {
-            response = ui.add(
+            ui.add(
                 egui::Label::new(
                     egui::RichText::new(&self.text).color(ui.style().visuals.weak_text_color()),
                 )
                 .sense(egui::Sense::click()),
-            );
-        }
+            )
+        };
 
         response.context_menu(|ui| {
             if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
@@ -39,7 +37,7 @@ impl egui::Widget for ItemNameLabel {
             if ui.button(t!("label.copy_item_name")).clicked() {
                 let copy_item_name: String = self
                     .text
-                    .trim_end_matches(&[' ', game_data::HQ_ICON_CHAR, game_data::CL_ICON_CHAR])
+                    .trim_end_matches([' ', game_data::HQ_ICON_CHAR, game_data::CL_ICON_CHAR])
                     .to_string();
                 ui.output_mut(|output| output.copied_text = copy_item_name);
                 ui.close_menu();

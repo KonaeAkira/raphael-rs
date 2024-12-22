@@ -38,7 +38,7 @@ impl<'a> FoodSelect<'a> {
     }
 }
 
-impl<'a> Widget for FoodSelect<'a> {
+impl Widget for FoodSelect<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);

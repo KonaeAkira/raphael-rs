@@ -83,9 +83,9 @@ impl SimulationState {
         condition: Condition,
     ) -> Result<SimulationState, &'static str> {
         self.check_common_preconditions::<A>(settings, condition)?;
-        A::precondition(&self, settings, condition)?;
+        A::precondition(self, settings, condition)?;
 
-        let mut state = self.clone();
+        let mut state = *self;
 
         A::transform_pre(&mut state, settings, condition);
 

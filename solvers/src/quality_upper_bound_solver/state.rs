@@ -29,7 +29,7 @@ impl ReducedState {
         solver_settings: &SolverSettings,
     ) -> Self {
         state.cp += state.effects.manipulation() as i16
-            * (Manipulation::base_cp_cost(&state, &simulator_settings) / 8);
+            * (Manipulation::base_cp_cost(&state, simulator_settings) / 8);
         if state.effects.trained_perfection() != SingleUse::Unavailable
             && simulator_settings.is_action_allowed::<TrainedPerfection>()
         {
@@ -97,7 +97,7 @@ impl ReducedState {
         }
     }
 
-    fn to_simulation_state(&self, settings: &Settings) -> SimulationState {
+    fn to_simulation_state(self, settings: &Settings) -> SimulationState {
         SimulationState {
             durability: settings.max_durability,
             cp: self.data.cp(),

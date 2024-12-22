@@ -52,10 +52,6 @@ impl<T: Copy> Backtracking<T> {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.entries.len()
-    }
-
     pub fn get_depth(&self, index: usize) -> u8 {
         if index == Self::SENTINEL {
             0

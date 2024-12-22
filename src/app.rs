@@ -579,42 +579,36 @@ impl MacroSolverApp {
         if self.crafter_config.active_stats().level >= Manipulation::LEVEL_REQUIREMENT {
             ui.add(egui::Checkbox::new(
                 &mut self.crafter_config.active_stats_mut().manipulation,
-                format!("{}", action_name(Action::Manipulation, self.locale)),
+                action_name(Action::Manipulation, self.locale),
             ));
         } else {
             ui.add_enabled(
                 false,
-                egui::Checkbox::new(
-                    &mut false,
-                    format!("{}", action_name(Action::Manipulation, self.locale)),
-                ),
+                egui::Checkbox::new(&mut false, action_name(Action::Manipulation, self.locale)),
             );
         }
         if self.crafter_config.active_stats().level >= HeartAndSoul::LEVEL_REQUIREMENT {
             ui.add(egui::Checkbox::new(
                 &mut self.crafter_config.active_stats_mut().heart_and_soul,
-                format!("{}", action_name(Action::HeartAndSoul, self.locale)),
+                action_name(Action::HeartAndSoul, self.locale),
             ));
         } else {
             ui.add_enabled(
                 false,
-                egui::Checkbox::new(
-                    &mut false,
-                    format!("{}", action_name(Action::HeartAndSoul, self.locale)),
-                ),
+                egui::Checkbox::new(&mut false, action_name(Action::HeartAndSoul, self.locale)),
             );
         }
         if self.crafter_config.active_stats().level >= QuickInnovation::LEVEL_REQUIREMENT {
             ui.add(egui::Checkbox::new(
                 &mut self.crafter_config.active_stats_mut().quick_innovation,
-                format!("{}", action_name(Action::QuickInnovation, self.locale)),
+                action_name(Action::QuickInnovation, self.locale),
             ));
         } else {
             ui.add_enabled(
                 false,
                 egui::Checkbox::new(
                     &mut false,
-                    format!("{}", action_name(Action::QuickInnovation, self.locale)),
+                    action_name(Action::QuickInnovation, self.locale),
                 ),
             );
         }
