@@ -5,16 +5,12 @@ use std::time::Duration;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use log::debug;
-
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 #[cfg(target_arch = "wasm32")]
 use web_time::Instant;
 
-use egui::{
-    Align, CursorIcon, FontData, FontDefinitions, FontFamily, Id, Layout, TextStyle, Visuals,
-};
+use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
 use game_data::{action_name, get_initial_quality, get_job_name, Consumable, Locale};
 
 use simulator::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, Settings};
@@ -163,6 +159,7 @@ impl MacroSolverApp {
 impl eframe::App for MacroSolverApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.load_fonts_dyn(ctx);
         self.solver_update();
 
         match self.locale {
@@ -182,6 +179,7 @@ impl eframe::App for MacroSolverApp {
 
                         egui::ComboBox::from_id_salt("LOCALE")
                             .selected_text(format!("{}", self.locale))
+                            .width(0.0)
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(
                                     &mut self.locale,
@@ -357,14 +355,15 @@ impl MacroSolverApp {
                     self.solver_progress = progress;
                 }
                 SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
-                    debug!("Unexpected progress update: {:?}", update);
+                    log::debug!("Unexpected progress update: {:?}", update);
                 }
             }
         }
+
         if let Some(update) = self.data_update.solution_update.take() {
             match update {
                 SolverEvent::Progress(_) => {
-                    debug!("Unexpected solution update: {:?}", update);
+                    log::debug!("Unexpected solution update: {:?}", update);
                 }
                 SolverEvent::IntermediateSolution(actions) => {
                     self.actions = actions;
@@ -810,39 +809,65 @@ impl MacroSolverApp {
         return t!("warning.experimental_feature.wasm");
     }
 
+    fn load_fonts_dyn(&self, ctx: &egui::Context) {
+        use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
+
+        #[cfg(target_arch = "wasm32")]
+        const BASE_ASSET_PATH: &str = env!("BASE_URL");
+        #[cfg(not(target_arch = "wasm32"))]
+        const BASE_ASSET_PATH: &str = "file://./assets";
+
+        if self.locale == Locale::JP {
+            let id = egui::Id::new("japanese_font_loaded");
+            let mut font_loaded: bool = ctx.data(|data| data.get_temp(id).unwrap_or_default());
+            if !font_loaded {
+                let uri = format!(
+                    "{}/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf",
+                    BASE_ASSET_PATH
+                );
+                match ctx.try_load_bytes(&uri) {
+                    Ok(egui::load::BytesPoll::Ready { bytes, .. }) => {
+                        ctx.add_font(FontInsert::new(
+                            "MPLUS1Code-Regular",
+                            egui::FontData::from_owned(bytes.to_vec()),
+                            vec![
+                                InsertFontFamily {
+                                    family: egui::FontFamily::Proportional,
+                                    priority: FontPriority::Lowest,
+                                },
+                                InsertFontFamily {
+                                    family: egui::FontFamily::Monospace,
+                                    priority: FontPriority::Lowest,
+                                },
+                            ],
+                        ));
+                        font_loaded = true;
+                        log::debug!("Font loaded: MPLUS1Code-Regular");
+                    }
+                    _ => (),
+                };
+                ctx.data_mut(|data| *data.get_temp_mut_or_default(id) = font_loaded);
+            }
+        }
+    }
+
     fn load_fonts(ctx: &egui::Context) {
-        let mut fonts = FontDefinitions::default();
-        fonts.font_data.insert(
-            String::from("japanese_monospace"),
-            FontData::from_static(include_bytes!(
-                "../assets/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
-            ))
-            .into(),
-        );
-        fonts
-            .families
-            .get_mut(&FontFamily::Proportional)
-            .unwrap()
-            .push("japanese_monospace".to_owned());
-        fonts
-            .families
-            .get_mut(&FontFamily::Monospace)
-            .unwrap()
-            .push("japanese_monospace".to_owned());
-
-        fonts.font_data.insert(
-            String::from("FFXIV_Lodestone_SSF"),
-            FontData::from_static(include_bytes!(
+        use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
+        ctx.add_font(FontInsert::new(
+            "XIV_Icon_Recreations",
+            egui::FontData::from_static(include_bytes!(
                 "../assets/fonts/XIV_Icon_Recreations/XIV_Icon_Recreations.ttf"
-            ))
-            .into(),
-        );
-        fonts
-            .families
-            .get_mut(&FontFamily::Proportional)
-            .unwrap()
-            .push("FFXIV_Lodestone_SSF".to_owned());
-
-        ctx.set_fonts(fonts);
+            )),
+            vec![
+                InsertFontFamily {
+                    family: egui::FontFamily::Proportional,
+                    priority: FontPriority::Lowest,
+                },
+                InsertFontFamily {
+                    family: egui::FontFamily::Monospace,
+                    priority: FontPriority::Lowest,
+                },
+            ],
+        ));
     }
 }

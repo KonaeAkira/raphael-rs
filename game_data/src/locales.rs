@@ -13,10 +13,10 @@ pub enum Locale {
 impl std::fmt::Display for Locale {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::EN => write!(f, "English"),
-            Self::DE => write!(f, "Deutsch"),
-            Self::FR => write!(f, "Français"),
-            Self::JP => write!(f, "日本語"),
+            Self::EN => write!(f, "EN"),
+            Self::DE => write!(f, "DE"),
+            Self::FR => write!(f, "FR"),
+            Self::JP => write!(f, "JP"),
         }
     }
 }
