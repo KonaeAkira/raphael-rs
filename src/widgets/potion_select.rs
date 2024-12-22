@@ -96,13 +96,19 @@ impl<'a> Widget for PotionSelect<'a> {
                 });
 
                 let line_height = ui.spacing().interact_size.y;
+                let line_spacing = ui.spacing().item_spacing.y;
+                let table_height = 4.3 * line_height + 4.0 * line_spacing;
+
                 let table = egui_extras::TableBuilder::new(ui)
+                    .id_salt("POTION_SELECT_TABLE")
                     .auto_shrink(false)
                     .striped(true)
                     .column(Column::exact(42.0))
                     .column(Column::exact(240.0))
                     .column(Column::remainder().clip(true))
-                    .min_scrolled_height(0.0);
+                    .min_scrolled_height(table_height)
+                    .max_scroll_height(table_height);
+
                 table.body(|body| {
                     body.rows(line_height, search_result.len(), |mut row| {
                         let item = game_data::POTIONS[search_result[row.index()]];

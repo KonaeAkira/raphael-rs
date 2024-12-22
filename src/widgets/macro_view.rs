@@ -194,6 +194,11 @@ impl<'a> Widget for MacroView<'a> {
                         self.locale,
                     ));
                 }
+
+                if self.actions.is_empty() {
+                    ui.label(t!("label.none"));
+                }
+
                 // fill the remaining space
                 ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
             });

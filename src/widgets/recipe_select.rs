@@ -75,13 +75,18 @@ impl<'a> RecipeSelect<'a> {
         });
 
         let line_height = ui.spacing().interact_size.y;
+        let line_spacing = ui.spacing().item_spacing.y;
+        let table_height = 6.3 * line_height + 6.0 * line_spacing;
+
         let table = egui_extras::TableBuilder::new(ui)
+            .id_salt("RECIPE_SELECT_TABLE")
             .auto_shrink(false)
             .striped(true)
             .column(Column::exact(42.0))
             .column(Column::exact(28.0))
             .column(Column::remainder().clip(true))
-            .min_scrolled_height(0.0);
+            .min_scrolled_height(table_height)
+            .max_scroll_height(table_height);
         table.body(|body| {
             body.rows(line_height, search_result.len(), |mut row| {
                 let recipe = game_data::RECIPES[search_result[row.index()]];

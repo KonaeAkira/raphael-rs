@@ -261,30 +261,39 @@ impl eframe::App for MacroSolverApp {
 
                         let row_width = ui.available_width();
                         if row_width >= select_min_width + config_min_width + macro_min_width {
-                            select_width = row_width - config_min_width - macro_min_width - 16.5;
+                            select_width = row_width
+                                - config_min_width
+                                - macro_min_width
+                                - 2.0 * ui.spacing().item_spacing.x;
                             config_width = config_min_width;
                             macro_width = macro_min_width;
                         } else if row_width >= select_min_width + config_min_width {
-                            select_width = row_width - config_min_width - 8.5;
+                            select_width =
+                                row_width - config_min_width - ui.spacing().item_spacing.x;
                             config_width = config_min_width;
                             macro_width = row_width;
                         } else if row_width >= config_min_width + macro_min_width {
                             select_width = row_width;
                             config_width = config_min_width;
-                            macro_width = row_width - config_min_width - 8.5;
+                            macro_width =
+                                row_width - config_min_width - ui.spacing().item_spacing.x;
                         } else {
                             select_width = row_width;
                             config_width = row_width;
                             macro_width = row_width;
                         }
 
-                        ui.allocate_ui(egui::vec2(select_width, 0.0), |ui| {
-                            self.draw_list_select_widgets(ui);
-                        });
-                        ui.allocate_ui(egui::vec2(config_width, 0.0), |ui| {
-                            self.draw_config_and_results_widget(ui);
-                        });
-                        ui.allocate_ui(egui::vec2(macro_width, 572.0), |ui| {
+                        let response = ui
+                            .allocate_ui(egui::vec2(select_width, 0.0), |ui| {
+                                self.draw_list_select_widgets(ui);
+                            })
+                            .response;
+                        let response = ui
+                            .allocate_ui(egui::vec2(config_width, response.rect.height()), |ui| {
+                                self.draw_config_and_results_widget(ui);
+                            })
+                            .response;
+                        ui.allocate_ui(egui::vec2(macro_width, response.rect.height()), |ui| {
                             self.draw_macro_output_widget(ui);
                         });
                     },
@@ -388,55 +397,46 @@ impl MacroSolverApp {
 
     fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.push_id("RECIPE_SELECT", |ui| {
-                ui.set_max_height(212.0);
-                ui.add_enabled(
-                    !self.solver_pending,
-                    RecipeSelect::new(
-                        &mut self.crafter_config,
-                        &mut self.recipe_config,
-                        self.selected_food,
-                        self.selected_potion,
-                        self.locale,
-                    ),
-                );
-            });
-            ui.push_id("FOOD_SELECT", |ui| {
-                ui.set_max_height(172.0);
-                ui.add_enabled(
-                    !self.solver_pending,
-                    FoodSelect::new(
-                        self.crafter_config.crafter_stats
-                            [self.crafter_config.selected_job as usize],
-                        &mut self.selected_food,
-                        self.locale,
-                    ),
-                );
-            });
-            ui.push_id("POTION_SELECT", |ui| {
-                ui.set_max_height(172.0);
-                ui.add_enabled(
-                    !self.solver_pending,
-                    PotionSelect::new(
-                        self.crafter_config.crafter_stats
-                            [self.crafter_config.selected_job as usize],
-                        &mut self.selected_potion,
-                        self.locale,
-                    ),
-                );
-            });
+            ui.add_enabled(
+                !self.solver_pending,
+                RecipeSelect::new(
+                    &mut self.crafter_config,
+                    &mut self.recipe_config,
+                    self.selected_food,
+                    self.selected_potion,
+                    self.locale,
+                ),
+            );
+            ui.add_enabled(
+                !self.solver_pending,
+                FoodSelect::new(
+                    self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
+                    &mut self.selected_food,
+                    self.locale,
+                ),
+            );
+            ui.add_enabled(
+                !self.solver_pending,
+                PotionSelect::new(
+                    self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
+                    &mut self.selected_potion,
+                    self.locale,
+                ),
+            );
         });
     }
 
     fn draw_config_and_results_widget(&mut self, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-            ui.set_height(560.0);
+            // ui.set_height(560.0);
             ui.vertical(|ui| {
                 ui.add_enabled_ui(!self.solver_pending, |ui| {
                     self.draw_configuration_widget(ui);
                 });
                 self.draw_results_widget(ui);
+                // fill the remaining space
+                ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
             });
         });
     }
