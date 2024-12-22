@@ -43,7 +43,24 @@ impl<'a> Widget for PotionSelect<'a> {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
+                let mut collapsed = false;
+
                 ui.horizontal(|ui| {
+                    let mut collapse_button_text = "⏷";
+                    let collapsed_id = Id::new("POTION_SEARCH_COLLAPSED");
+                    ui.data_mut(|data| {
+                        collapsed = *data.get_persisted_mut_or_default(collapsed_id);
+                        collapse_button_text = match collapsed {
+                            false => "⏷",
+                            true => "⏵",
+                        }
+                    });
+                    if ui.button(collapse_button_text).clicked() {
+                        ui.data_mut(|data| {
+                            *data.get_persisted_mut_or_default(collapsed_id) = !collapsed;
+                        })
+                    }
+
                     ui.label(egui::RichText::new(t!("label.potion")).strong());
                     match self.selected_consumable {
                         None => {
@@ -65,6 +82,11 @@ impl<'a> Widget for PotionSelect<'a> {
                         }
                     });
                 });
+
+                if collapsed {
+                    return;
+                }
+
                 ui.separator();
 
                 let id = Id::new("POTION_SEARCH_TEXT");

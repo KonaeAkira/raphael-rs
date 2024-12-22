@@ -110,13 +110,6 @@ impl<'a> RecipeSelect<'a> {
     }
 
     fn draw_custom_recipe_select(self, ui: &mut egui::Ui) {
-        self.recipe_config.recipe.item_id = 0;
-        self.recipe_config.recipe.material_quality_factor = 0;
-        self.recipe_config.recipe.ingredients = [Ingredient {
-            item_id: 0,
-            amount: 0,
-        }; 6];
-
         let game_settings = get_game_settings(
             self.recipe_config.recipe,
             *self.crafter_config.active_stats(),
@@ -214,7 +207,24 @@ impl<'a> Widget for RecipeSelect<'a> {
                     }
                 });
 
+                let mut collapsed = false;
+
                 ui.horizontal(|ui| {
+                    let mut collapse_button_text = "⏷";
+                    let collapsed_id = Id::new("RECIPE_SEARCH_COLLAPSED");
+                    ui.data_mut(|data| {
+                        collapsed = *data.get_persisted_mut_or_default(collapsed_id);
+                        collapse_button_text = match collapsed {
+                            false => "⏷",
+                            true => "⏵",
+                        }
+                    });
+                    if ui.button(collapse_button_text).clicked() {
+                        ui.data_mut(|data| {
+                            *data.get_persisted_mut_or_default(collapsed_id) = !collapsed;
+                        })
+                    }
+
                     ui.label(egui::RichText::new(t!("label.recipe")).strong());
                     ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
@@ -226,23 +236,33 @@ impl<'a> Widget for RecipeSelect<'a> {
                             .checkbox(&mut custom_recipe, t!("label.custom_recipe"))
                             .changed()
                         {
-                            self.recipe_config.quality_source = match custom_recipe {
-                                true => QualitySource::Value(0),
-                                false => QualitySource::HqMaterialList([0; 6]),
+                            if custom_recipe {
+                                self.recipe_config.recipe.item_id = 0;
+                                self.recipe_config.recipe.material_quality_factor = 0;
+                                self.recipe_config.recipe.ingredients = [Ingredient::default(); 6];
+                                self.recipe_config.quality_source = QualitySource::Value(0);
+                            } else {
+                                self.recipe_config.quality_source =
+                                    QualitySource::HqMaterialList([0; 6]);
                             }
+                            ui.ctx().data_mut(|data| {
+                                data.insert_persisted(Id::new("CUSTOM_RECIPE"), custom_recipe);
+                            });
                         };
                     });
                 });
+
+                if collapsed {
+                    return;
+                }
+
                 ui.separator();
+
                 if custom_recipe {
                     self.draw_custom_recipe_select(ui);
                 } else {
                     self.draw_normal_recipe_select(ui);
                 }
-
-                ui.ctx().data_mut(|data| {
-                    data.insert_persisted(Id::new("CUSTOM_RECIPE"), custom_recipe);
-                });
             });
         })
         .response

@@ -288,12 +288,22 @@ impl eframe::App for MacroSolverApp {
                                 self.draw_list_select_widgets(ui);
                             })
                             .response;
+
+                        let config_min_height = match ui.available_size_before_wrap().x {
+                            x if x < config_width => 0.0,
+                            _ => response.rect.height(),
+                        };
                         let response = ui
-                            .allocate_ui(egui::vec2(config_width, response.rect.height()), |ui| {
+                            .allocate_ui(egui::vec2(config_width, config_min_height), |ui| {
                                 self.draw_config_and_results_widget(ui);
                             })
                             .response;
-                        ui.allocate_ui(egui::vec2(macro_width, response.rect.height()), |ui| {
+
+                        let macro_min_height = match ui.available_size_before_wrap().x {
+                            x if x < macro_width => 0.0,
+                            _ => response.rect.height(),
+                        };
+                        ui.allocate_ui(egui::vec2(macro_width, macro_min_height), |ui| {
                             self.draw_macro_output_widget(ui);
                         });
                     },
