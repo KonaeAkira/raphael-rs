@@ -87,7 +87,7 @@ impl<'a> Widget for Simulator<'a> {
                             ui.add_visible(
                                 config_changed_warning,
                                 egui::Label::new(
-                                    egui::RichText::new(t!("warning.outdated_paramaters"))
+                                    egui::RichText::new(t!("warning.outdated_parameters"))
                                         .small()
                                         .color(ui.visuals().warn_fg_color),
                                 ),

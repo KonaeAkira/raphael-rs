@@ -116,7 +116,7 @@ impl<'a> MacroSolver<'a> {
             }
 
             popped += 1;
-            if popped % (1 << 10) == 0 {
+            if popped % (1 << 12) == 0 {
                 (self.progress_callback)(popped);
             }
 
@@ -198,7 +198,6 @@ impl<'a> MacroSolver<'a> {
                                     .collect(),
                             });
                             (self.solution_callback)(&solution.as_ref().unwrap().actions);
-                            (self.progress_callback)(popped);
                         }
                     }
                 }
