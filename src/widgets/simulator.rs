@@ -79,6 +79,7 @@ impl<'a> Widget for Simulator<'a> {
 
         ui.vertical(|ui| {
             ui.group(|ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
                         ui.label(egui::RichText::new(t!("label.simulation")).strong());
@@ -189,8 +190,8 @@ impl<'a> Widget for Simulator<'a> {
                     });
                 });
             });
-            ui.add_space(5.5);
             ui.group(|ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 egui::ScrollArea::horizontal().show(ui, |ui| {
                     ui.set_height(30.0);
                     ui.set_width(ui.available_width());

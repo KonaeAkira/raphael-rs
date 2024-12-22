@@ -114,6 +114,7 @@ impl<'a> MacroView<'a> {
 impl<'a> Widget for MacroView<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
+            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new(t!("label.macro")).strong());

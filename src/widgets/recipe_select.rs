@@ -55,12 +55,13 @@ impl<'a> RecipeSelect<'a> {
             }
         });
 
-        ui.horizontal(|ui| {
-            ui.label(format!("{}:", t!("label.search")));
-            if ui.text_edit_singleline(&mut search_text).changed() {
-                search_text = search_text.replace("\0", "");
-            }
-        });
+        if egui::TextEdit::singleline(&mut search_text)
+            .desired_width(f32::INFINITY)
+            .ui(ui)
+            .changed()
+        {
+            search_text = search_text.replace("\0", "");
+        };
         ui.separator();
 
         let mut search_result = Vec::new();
@@ -199,6 +200,7 @@ impl<'a> RecipeSelect<'a> {
 impl<'a> Widget for RecipeSelect<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
+            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 let mut custom_recipe = false;
                 ui.ctx().data_mut(|data| {

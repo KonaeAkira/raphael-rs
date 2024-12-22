@@ -128,6 +128,7 @@ impl MacroSolverApp {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
             style.url_in_tooltip = true;
             style.always_scroll_the_only_direction = true;
+            style.spacing.item_spacing = egui::vec2(8.0, 8.0);
         });
 
         Self::load_fonts(&cc.egui_ctx);
@@ -172,77 +173,81 @@ impl eframe::App for MacroSolverApp {
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
-                ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+            egui::ScrollArea::horizontal()
+                .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                .show(ui, |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
+                        ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
 
-                egui::ComboBox::from_id_salt("LOCALE")
-                    .selected_text(format!("{}", self.locale))
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(
-                            &mut self.locale,
-                            Locale::EN,
-                            format!("{}", Locale::EN),
+                        egui::ComboBox::from_id_salt("LOCALE")
+                            .selected_text(format!("{}", self.locale))
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(
+                                    &mut self.locale,
+                                    Locale::EN,
+                                    format!("{}", Locale::EN),
+                                );
+                                ui.selectable_value(
+                                    &mut self.locale,
+                                    Locale::DE,
+                                    format!("{}", Locale::DE),
+                                );
+                                ui.selectable_value(
+                                    &mut self.locale,
+                                    Locale::FR,
+                                    format!("{}", Locale::FR),
+                                );
+                                ui.selectable_value(
+                                    &mut self.locale,
+                                    Locale::JP,
+                                    format!("{}", Locale::JP),
+                                );
+                            });
+
+                        let mut visuals = ctx.style().visuals.clone();
+                        ui.selectable_value(&mut visuals, Visuals::light(), t!("header.light"));
+                        ui.selectable_value(&mut visuals, Visuals::dark(), t!("header.dark"));
+                        ctx.data_mut(|data| {
+                            *data.get_persisted_mut_or_default(Id::new("DARK_MODE")) =
+                                visuals.dark_mode;
+                        });
+                        ctx.set_visuals(visuals);
+
+                        ui.add(
+                            egui::Hyperlink::from_label_and_url(
+                                t!("header.github"),
+                                "https://github.com/KonaeAkira/raphael-rs",
+                            )
+                            .open_in_new_tab(true),
                         );
-                        ui.selectable_value(
-                            &mut self.locale,
-                            Locale::DE,
-                            format!("{}", Locale::DE),
+                        ui.label("/");
+                        ui.add(
+                            egui::Hyperlink::from_label_and_url(
+                                t!("header.discord"),
+                                "https://discord.com/invite/m2aCy3y8he",
+                            )
+                            .open_in_new_tab(true),
                         );
-                        ui.selectable_value(
-                            &mut self.locale,
-                            Locale::FR,
-                            format!("{}", Locale::FR),
+                        ui.label("/");
+                        ui.add(
+                            egui::Hyperlink::from_label_and_url(
+                                t!("header.ko_fi"),
+                                "https://ko-fi.com/konaeakira",
+                            )
+                            .open_in_new_tab(true),
                         );
-                        ui.selectable_value(
-                            &mut self.locale,
-                            Locale::JP,
-                            format!("{}", Locale::JP),
+                        ui.with_layout(
+                            Layout::right_to_left(Align::Center),
+                            egui::warn_if_debug_build,
                         );
                     });
-
-                let mut visuals = ctx.style().visuals.clone();
-                ui.selectable_value(&mut visuals, Visuals::light(), t!("header.light"));
-                ui.selectable_value(&mut visuals, Visuals::dark(), t!("header.dark"));
-                ctx.data_mut(|data| {
-                    *data.get_persisted_mut_or_default(Id::new("DARK_MODE")) = visuals.dark_mode;
                 });
-                ctx.set_visuals(visuals);
-
-                ui.add(
-                    egui::Hyperlink::from_label_and_url(
-                        t!("header.github"),
-                        "https://github.com/KonaeAkira/raphael-rs",
-                    )
-                    .open_in_new_tab(true),
-                );
-                ui.label("/");
-                ui.add(
-                    egui::Hyperlink::from_label_and_url(
-                        t!("header.discord"),
-                        "https://discord.com/invite/m2aCy3y8he",
-                    )
-                    .open_in_new_tab(true),
-                );
-                ui.label("/");
-                ui.add(
-                    egui::Hyperlink::from_label_and_url(
-                        t!("header.ko_fi"),
-                        "https://ko-fi.com/konaeakira",
-                    )
-                    .open_in_new_tab(true),
-                );
-                ui.with_layout(
-                    Layout::right_to_left(Align::Center),
-                    egui::warn_if_debug_build,
-                );
-            });
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 self.draw_simulator_widget(ui);
-                ui.add_space(5.5);
                 ui.with_layout(
                     Layout::left_to_right(Align::TOP).with_main_wrap(true),
                     |ui| {
@@ -396,7 +401,6 @@ impl MacroSolverApp {
                     ),
                 );
             });
-            ui.add_space(5.5);
             ui.push_id("FOOD_SELECT", |ui| {
                 ui.set_max_height(172.0);
                 ui.add_enabled(
@@ -409,7 +413,6 @@ impl MacroSolverApp {
                     ),
                 );
             });
-            ui.add_space(5.5);
             ui.push_id("POTION_SELECT", |ui| {
                 ui.set_max_height(172.0);
                 ui.add_enabled(
@@ -427,12 +430,12 @@ impl MacroSolverApp {
 
     fn draw_config_and_results_widget(&mut self, ui: &mut egui::Ui) {
         ui.group(|ui| {
+            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.set_height(560.0);
             ui.vertical(|ui| {
                 ui.add_enabled_ui(!self.solver_pending, |ui| {
                     self.draw_configuration_widget(ui);
                 });
-                ui.add_space(5.5);
                 self.draw_results_widget(ui);
             });
         });

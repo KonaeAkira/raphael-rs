@@ -41,6 +41,7 @@ impl<'a> FoodSelect<'a> {
 impl<'a> Widget for FoodSelect<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
+            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     ui.label(egui::RichText::new(t!("label.food")).strong());
@@ -75,12 +76,13 @@ impl<'a> Widget for FoodSelect<'a> {
                     }
                 });
 
-                ui.horizontal(|ui| {
-                    ui.label(format!("{}:", t!("label.search")));
-                    if ui.text_edit_singleline(&mut search_text).changed() {
-                        search_text = search_text.replace("\0", "");
-                    }
-                });
+                if egui::TextEdit::singleline(&mut search_text)
+                    .desired_width(f32::INFINITY)
+                    .ui(ui)
+                    .changed()
+                {
+                    search_text = search_text.replace("\0", "");
+                };
                 ui.separator();
 
                 let mut search_result = Vec::new();
