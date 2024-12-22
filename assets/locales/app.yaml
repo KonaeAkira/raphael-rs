@@ -123,6 +123,7 @@ info:
       - May decrease achievable Quality.
       - May increase macro duration.
       - Much longer solve time.
+      The solver never tries to use Tricks of the Trade to "eat" Excellent quality procs, so in some cases this option does not produce the optimal macro.
   min_steps:
     en: |-
       Minimize the number of steps in the generated macro.
