@@ -110,10 +110,9 @@ impl MacroSolverApp {
         });
         let bridge = Self::initialize_bridge(cc, &data_update);
 
-        let mut dark_mode = true;
-        cc.egui_ctx.data_mut(|data| {
-            dark_mode = *data.get_persisted_mut_or(Id::new("DARK_MODE"), true);
-        });
+        let dark_mode = cc
+            .egui_ctx
+            .data_mut(|data| *data.get_persisted_mut_or(Id::new("DARK_MODE"), true));
         if dark_mode {
             cc.egui_ctx.set_visuals(Visuals::dark());
         } else {
@@ -127,7 +126,7 @@ impl MacroSolverApp {
             style.spacing.item_spacing = egui::vec2(8.0, 8.0);
         });
 
-        Self::load_fonts(&cc.egui_ctx);
+        load_fonts(&cc.egui_ctx);
 
         let default_recipe_config = RecipeConfiguration {
             recipe: *game_data::RECIPES.last().unwrap(),
@@ -159,7 +158,9 @@ impl MacroSolverApp {
 impl eframe::App for MacroSolverApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        #[cfg(target_arch = "wasm32")]
         self.load_fonts_dyn(ctx);
+
         self.solver_update();
 
         match self.locale {
@@ -809,55 +810,29 @@ impl MacroSolverApp {
         return t!("warning.experimental_feature.wasm");
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn load_fonts_dyn(&self, ctx: &egui::Context) {
-        use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
-
-        #[cfg(target_arch = "wasm32")]
-        const BASE_ASSET_PATH: &str = env!("BASE_URL");
-        #[cfg(not(target_arch = "wasm32"))]
-        const BASE_ASSET_PATH: &str = "file://./assets";
-
         if self.locale == Locale::JP {
-            let id = egui::Id::new("japanese_font_loaded");
-            let mut font_loaded: bool = ctx.data(|data| data.get_temp(id).unwrap_or_default());
-            if !font_loaded {
-                let uri = format!(
-                    "{}/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf",
-                    BASE_ASSET_PATH
-                );
-                match ctx.try_load_bytes(&uri) {
-                    Ok(egui::load::BytesPoll::Ready { bytes, .. }) => {
-                        ctx.add_font(FontInsert::new(
-                            "MPLUS1Code-Regular",
-                            egui::FontData::from_owned(bytes.to_vec()),
-                            vec![
-                                InsertFontFamily {
-                                    family: egui::FontFamily::Proportional,
-                                    priority: FontPriority::Lowest,
-                                },
-                                InsertFontFamily {
-                                    family: egui::FontFamily::Monospace,
-                                    priority: FontPriority::Lowest,
-                                },
-                            ],
-                        ));
-                        font_loaded = true;
-                        log::debug!("Font loaded: MPLUS1Code-Regular");
-                    }
-                    _ => (),
-                };
-                ctx.data_mut(|data| *data.get_temp_mut_or_default(id) = font_loaded);
-            }
+            let uri = concat!(
+                env!("BASE_URL"),
+                "/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
+            );
+            load_font_dyn(ctx, "MPLUS1Code-Regular", uri);
         }
     }
+}
 
-    fn load_fonts(ctx: &egui::Context) {
-        use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
+#[cfg(target_arch = "wasm32")]
+fn load_font_dyn(ctx: &egui::Context, font_name: &str, uri: &str) {
+    use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
+    let id = egui::Id::new(format!("{} loaded", uri));
+    if ctx.data(|data| data.get_temp(id).unwrap_or(false)) {
+        return;
+    }
+    if let Ok(egui::load::BytesPoll::Ready { bytes, .. }) = ctx.try_load_bytes(uri) {
         ctx.add_font(FontInsert::new(
-            "XIV_Icon_Recreations",
-            egui::FontData::from_static(include_bytes!(
-                "../assets/fonts/XIV_Icon_Recreations/XIV_Icon_Recreations.ttf"
-            )),
+            font_name,
+            egui::FontData::from_owned(bytes.to_vec()),
             vec![
                 InsertFontFamily {
                     family: egui::FontFamily::Proportional,
@@ -869,5 +844,44 @@ impl MacroSolverApp {
                 },
             ],
         ));
-    }
+        ctx.data_mut(|data| *data.get_temp_mut_or_default(id) = true);
+        log::debug!("Font loaded: {}", font_name);
+    };
+}
+
+fn load_fonts(ctx: &egui::Context) {
+    use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
+    ctx.add_font(FontInsert::new(
+        "XIV_Icon_Recreations",
+        egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/XIV_Icon_Recreations/XIV_Icon_Recreations.ttf"
+        )),
+        vec![
+            InsertFontFamily {
+                family: egui::FontFamily::Proportional,
+                priority: FontPriority::Lowest,
+            },
+            InsertFontFamily {
+                family: egui::FontFamily::Monospace,
+                priority: FontPriority::Lowest,
+            },
+        ],
+    ));
+    #[cfg(not(target_arch = "wasm32"))]
+    ctx.add_font(FontInsert::new(
+        "MPLUS1Code-Regular",
+        egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
+        )),
+        vec![
+            InsertFontFamily {
+                family: egui::FontFamily::Proportional,
+                priority: FontPriority::Lowest,
+            },
+            InsertFontFamily {
+                family: egui::FontFamily::Monospace,
+                priority: FontPriority::Lowest,
+            },
+        ],
+    ));
 }
