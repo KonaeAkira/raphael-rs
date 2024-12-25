@@ -79,13 +79,19 @@ impl<'a> RecipeSelect<'a> {
         let line_spacing = ui.spacing().item_spacing.y;
         let table_height = 6.3 * line_height + 6.0 * line_spacing;
 
+        // Column::remainder().clip(true) is buggy when resizing the table
+        // manually calculate the width of the last col to avoid janky behavior when resizing tables
+        // this is a workaround until this bug is fixed in egui_extras
+        let spacing = 2.0 * ui.spacing().item_spacing.x;
+        let item_name_width = (ui.available_width() - 42.0 - 28.0 - spacing).max(0.0);
+
         let table = egui_extras::TableBuilder::new(ui)
             .id_salt("RECIPE_SELECT_TABLE")
             .auto_shrink(false)
             .striped(true)
             .column(Column::exact(42.0))
             .column(Column::exact(28.0))
-            .column(Column::remainder().clip(true))
+            .column(Column::exact(item_name_width))
             .min_scrolled_height(table_height)
             .max_scroll_height(table_height);
         table.body(|body| {
@@ -234,7 +240,7 @@ impl Widget for RecipeSelect<'_> {
                     ));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
-                            .checkbox(&mut custom_recipe, t!("label.custom_recipe"))
+                            .checkbox(&mut custom_recipe, t!("label.custom"))
                             .changed()
                         {
                             if custom_recipe {

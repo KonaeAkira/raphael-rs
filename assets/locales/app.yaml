@@ -62,8 +62,8 @@ label:
     en: Solve
   recipe:
     en: Recipe
-  custom_recipe:
-    en: Custom recipe
+  custom:
+    en: Custom
   food:
     en: Food
   potion:
