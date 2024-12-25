@@ -57,6 +57,7 @@ impl<'a> RecipeSelect<'a> {
 
         if egui::TextEdit::singleline(&mut search_text)
             .desired_width(f32::INFINITY)
+            .hint_text("🔍 Search")
             .ui(ui)
             .changed()
         {
