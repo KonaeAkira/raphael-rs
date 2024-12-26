@@ -456,7 +456,7 @@ impl MacroSolverApp {
             ui.label(egui::RichText::new("Configuration").strong());
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
-                if ui.button("Edit").clicked() {
+                if ui.button("✏").clicked() {
                     self.stats_edit_window_open = true;
                 }
                 egui::ComboBox::from_id_salt("SELECTED_JOB")
