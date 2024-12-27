@@ -5,7 +5,7 @@ use egui::{
 use egui_extras::Column;
 use game_data::{find_potions, Consumable, CrafterStats, Locale};
 
-use super::ItemNameLabel;
+use super::{util, ItemNameLabel};
 
 #[derive(Default)]
 struct PotionFinder {}
@@ -44,23 +44,8 @@ impl Widget for PotionSelect<'_> {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 let mut collapsed = false;
-
                 ui.horizontal(|ui| {
-                    let mut collapse_button_text = "⏷";
-                    let collapsed_id = Id::new("POTION_SEARCH_COLLAPSED");
-                    ui.data_mut(|data| {
-                        collapsed = *data.get_persisted_mut_or_default(collapsed_id);
-                        collapse_button_text = match collapsed {
-                            false => "⏷",
-                            true => "⏵",
-                        }
-                    });
-                    if ui.button(collapse_button_text).clicked() {
-                        ui.data_mut(|data| {
-                            *data.get_persisted_mut_or_default(collapsed_id) = !collapsed;
-                        })
-                    }
-
+                    collapsed = util::collapse_button(ui, Id::new("POTION_SEARCH_COLLAPSED"));
                     ui.label(egui::RichText::new(t!("label.potion")).strong());
                     match self.selected_consumable {
                         None => {

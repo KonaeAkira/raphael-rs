@@ -9,7 +9,7 @@ use game_data::{
 
 use crate::config::{CrafterConfig, QualitySource, RecipeConfiguration};
 
-use super::ItemNameLabel;
+use super::{util, ItemNameLabel};
 
 #[derive(Default)]
 struct RecipeFinder {}
@@ -217,21 +217,7 @@ impl Widget for RecipeSelect<'_> {
                 let mut collapsed = false;
 
                 ui.horizontal(|ui| {
-                    let mut collapse_button_text = "⏷";
-                    let collapsed_id = Id::new("RECIPE_SEARCH_COLLAPSED");
-                    ui.data_mut(|data| {
-                        collapsed = *data.get_persisted_mut_or_default(collapsed_id);
-                        collapse_button_text = match collapsed {
-                            false => "⏷",
-                            true => "⏵",
-                        }
-                    });
-                    if ui.button(collapse_button_text).clicked() {
-                        ui.data_mut(|data| {
-                            *data.get_persisted_mut_or_default(collapsed_id) = !collapsed;
-                        })
-                    }
-
+                    collapsed = util::collapse_button(ui, Id::new("RECIPE_SEARCH_COLLAPSED"));
                     ui.label(egui::RichText::new(t!("label.recipe")).strong());
                     ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
