@@ -12,3 +12,6 @@ pub use state::SimulationState;
 
 mod settings;
 pub use settings::{ActionMask, Settings};
+
+mod probabilities;
+pub use probabilities::quality_probability_distribution;
