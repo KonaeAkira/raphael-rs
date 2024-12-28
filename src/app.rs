@@ -47,11 +47,6 @@ pub struct SolverConfig {
     pub minimize_steps: bool,
 }
 
-pub struct SolverUpdates {
-    pub progress_update: Cell<Option<SolverEvent>>,
-    pub solution_update: Cell<Option<SolverEvent>>,
-}
-
 pub struct MacroSolverApp {
     locale: Locale,
     recipe_config: RecipeConfiguration,
@@ -68,25 +63,25 @@ pub struct MacroSolverApp {
     solver_progress: usize,
     start_time: Option<Instant>,
     duration: Option<Duration>,
-    data_update: Rc<SolverUpdates>,
+
     bridge: BridgeType,
+    pub progress_update: Rc<Cell<Option<SolverEvent>>>,
+    pub solution_update: Rc<Cell<Option<SolverEvent>>>,
 }
 
 impl MacroSolverApp {
     #[cfg(target_arch = "wasm32")]
     fn initialize_bridge(
-        cc: &eframe::CreationContext<'_>,
-        data_update: &Rc<SolverUpdates>,
+        ctx: egui::Context,
+        progress_update: Rc<Cell<Option<SolverEvent>>>,
+        solution_update: Rc<Cell<Option<SolverEvent>>>,
     ) -> BridgeType {
-        let ctx = cc.egui_ctx.clone();
-        let sender = data_update.clone();
-
         <crate::worker::Worker as gloo_worker::Spawnable>::spawner()
             .callback(move |response| {
                 match response {
-                    SolverEvent::Progress(_) => sender.progress_update.set(Some(response)),
+                    SolverEvent::Progress(_) => progress_update.set(Some(response)),
                     SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
-                        sender.solution_update.set(Some(response))
+                        solution_update.set(Some(response))
                     }
                 }
                 ctx.request_repaint();
@@ -94,21 +89,18 @@ impl MacroSolverApp {
             .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    fn initialize_bridge(
-        _cc: &eframe::CreationContext<'_>,
-        _data_cell: &Rc<SolverUpdates>,
-    ) -> BridgeType {
-        BridgeType::new()
-    }
-
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let data_update = Rc::new(SolverUpdates {
-            progress_update: Cell::new(None),
-            solution_update: Cell::new(None),
-        });
-        let bridge = Self::initialize_bridge(cc, &data_update);
+        let progress_update = Rc::new(Cell::new(None));
+        let solution_update = Rc::new(Cell::new(None));
+        #[cfg(target_arch = "wasm32")]
+        let bridge = Self::initialize_bridge(
+            cc.egui_ctx.clone(),
+            progress_update.clone(),
+            solution_update.clone(),
+        );
+        #[cfg(not(target_arch = "wasm32"))]
+        let bridge = BridgeType::new();
 
         let dark_mode = cc
             .egui_ctx
@@ -149,8 +141,10 @@ impl MacroSolverApp {
             solver_progress: 0,
             start_time: None,
             duration: None,
-            data_update,
+
             bridge,
+            progress_update,
+            solution_update,
         }
     }
 }
@@ -161,6 +155,10 @@ impl eframe::App for MacroSolverApp {
         #[cfg(target_arch = "wasm32")]
         self.load_fonts_dyn(ctx);
 
+        if self.solver_pending {
+            // fix solution not displaying if there is no user input and no visible animation
+            ctx.request_repaint_after_secs(0.1);
+        }
         self.solver_update();
 
         match self.locale {
@@ -339,42 +337,30 @@ impl eframe::App for MacroSolverApp {
 }
 
 impl MacroSolverApp {
+    fn on_solver_event(&mut self, event: SolverEvent) {
+        match event {
+            SolverEvent::Progress(progress) => self.solver_progress = progress,
+            SolverEvent::IntermediateSolution(actions) => self.actions = actions,
+            SolverEvent::FinalSolution(actions) => {
+                self.actions = actions;
+                self.duration = Some(Instant::now() - self.start_time.unwrap());
+                self.solver_pending = false;
+            }
+        }
+    }
+
     fn solver_update(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
-        if let Ok(update) = self.bridge.rx.try_recv() {
-            match update {
-                SolverEvent::Progress(_) => self.data_update.progress_update.set(Some(update)),
-                SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
-                    self.data_update.solution_update.set(Some(update))
-                }
-            }
+        if let Ok(event) = self.bridge.rx.try_recv() {
+            self.on_solver_event(event);
         }
-
-        if let Some(update) = self.data_update.progress_update.take() {
-            match update {
-                SolverEvent::Progress(progress) => {
-                    self.solver_progress = progress;
-                }
-                SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
-                    log::debug!("Unexpected progress update: {:?}", update);
-                }
-            }
+        #[cfg(target_arch = "wasm32")]
+        if let Some(event) = self.progress_update.take() {
+            self.on_solver_event(event);
         }
-
-        if let Some(update) = self.data_update.solution_update.take() {
-            match update {
-                SolverEvent::Progress(_) => {
-                    log::debug!("Unexpected solution update: {:?}", update);
-                }
-                SolverEvent::IntermediateSolution(actions) => {
-                    self.actions = actions;
-                }
-                SolverEvent::FinalSolution(actions) => {
-                    self.actions = actions;
-                    self.duration = Some(Instant::now() - self.start_time.unwrap());
-                    self.solver_pending = false;
-                }
-            }
+        #[cfg(target_arch = "wasm32")]
+        if let Some(event) = self.solution_update.take() {
+            self.on_solver_event(event);
         }
     }
 
