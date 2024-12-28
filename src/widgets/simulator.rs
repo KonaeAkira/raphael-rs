@@ -154,7 +154,7 @@ impl Simulator<'_> {
                             false => t!("info.normal_simulation"),
                         }));
                         if !state.is_final(self.settings) {
-                            ();
+                            // do nothing
                         } else if state.progress < self.settings.max_progress {
                             ui.label(t!("sim_result.failed"));
                         } else if self.item.always_collectable {
@@ -190,7 +190,7 @@ impl Simulator<'_> {
                 ui.set_height(30.0);
                 ui.set_width(ui.available_width());
                 ui.horizontal(|ui| {
-                    for (action, error) in self.actions.iter().zip(errors.into_iter()) {
+                    for (action, error) in self.actions.iter().zip(errors.iter()) {
                         let image = get_action_icon(*action, self.crafter_config.selected_job)
                             .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
                             .rounding(4.0)

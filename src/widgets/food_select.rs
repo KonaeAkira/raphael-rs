@@ -110,8 +110,8 @@ impl Widget for FoodSelect<'_> {
 
                 let column_spacing = 2.0 * ui.spacing().item_spacing.x;
                 let available_text_width = ui.available_width() - column_spacing - 42.0;
-                let item_name_width = (0.7 * available_text_width).max(220.0).min(320.0);
-                let effect_width = available_text_width - item_name_width;
+                let item_name_width = (0.7 * available_text_width).clamp(220.0, 320.0);
+                let effect_width = (available_text_width - item_name_width).max(0.0);
 
                 let table = egui_extras::TableBuilder::new(ui)
                     .id_salt("FOOD_SELECT_TABLE")

@@ -87,7 +87,7 @@ pub fn quality_probability_distribution(
                 .memoization
                 .get(&(initial_state, Condition::Normal, 0))
                 .expect("State not in memoization even after solving")
-                .into_iter()
+                .iter()
                 .map(|value| Value {
                     quality: initial_quality + value.quality,
                     probability: value.probability,
