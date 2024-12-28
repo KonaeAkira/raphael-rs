@@ -52,9 +52,9 @@ impl QualityTarget {
     pub fn get_target(self, max_quality: u16) -> u16 {
         match self {
             Self::Zero => 0,
-            Self::CollectableT1 => (max_quality as f64 * 0.55).ceil() as u16,
-            Self::CollectableT2 => (max_quality as f64 * 0.75).ceil() as u16,
-            Self::CollectableT3 => (max_quality as f64 * 0.95).ceil() as u16,
+            Self::CollectableT1 => (max_quality as u32 * 55 / 100) as u16,
+            Self::CollectableT2 => (max_quality as u32 * 75 / 100) as u16,
+            Self::CollectableT3 => (max_quality as u32 * 95 / 100) as u16,
             Self::Full => max_quality,
             Self::Custom(quality) => quality,
         }

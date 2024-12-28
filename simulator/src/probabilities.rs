@@ -13,42 +13,101 @@ const fn condition_probabilities(current_condition: Condition) -> &'static [(Con
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Value {
+    pub quality: u16,
+    pub probability: f32,
+}
+
+impl Value {
+    const fn zero() -> Self {
+        Self {
+            quality: 0,
+            probability: 1.0,
+        }
+    }
+}
+
+pub struct QualityDistribution {
+    distribution: Vec<Value>,
+}
+
+impl QualityDistribution {
+    fn zero() -> Self {
+        Self {
+            distribution: vec![Value::zero()],
+        }
+    }
+}
+
+impl IntoIterator for QualityDistribution {
+    type Item = Value;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.distribution.into_iter()
+    }
+}
+
+impl QualityDistribution {
+    pub fn at_least(&self, quality: u16) -> f32 {
+        let mut result = 0.0;
+        for value in self.distribution.iter() {
+            if value.quality >= quality {
+                result += value.probability;
+            }
+        }
+        result.clamp(0.0, 1.0)
+    }
+
+    pub fn exactly(&self, quality: u16) -> f32 {
+        let mut result = 0.0;
+        for value in self.distribution.iter() {
+            if value.quality == quality {
+                result += value.probability;
+            }
+        }
+        result.clamp(0.0, 1.0)
+    }
+}
+
 pub fn quality_probability_distribution(
     settings: Settings,
     actions: impl Into<Box<[Action]>>,
-) -> Vec<f32> {
+    initial_quality: u16,
+) -> QualityDistribution {
     let initial_state = SimulationState::new(&settings);
-    let mut solver = QualityDistributionSolver::new(settings, actions.into());
-    solver.solve(initial_state, Condition::Normal, 0);
-    let compact_distribution = solver
-        .memoization
-        .get(&(initial_state, Condition::Normal, 0))
-        .expect("State not in memoization even after solving");
-    let mut distribution = vec![0.0; settings.max_quality as usize + 1];
-    for element in compact_distribution {
-        distribution[std::cmp::min(element.quality, settings.max_quality) as usize] +=
-            element.probability
+    let actions: Box<[Action]> = actions.into();
+    match actions.len() {
+        0 => QualityDistribution::zero(),
+        _ => {
+            let mut solver = QualityDistributionSolver::new(settings, actions);
+            solver.solve(initial_state, Condition::Normal, 0);
+            let distribution = solver
+                .memoization
+                .get(&(initial_state, Condition::Normal, 0))
+                .expect("State not in memoization even after solving")
+                .into_iter()
+                .map(|value| Value {
+                    quality: initial_quality + value.quality,
+                    probability: value.probability,
+                });
+            QualityDistribution {
+                distribution: distribution.collect(),
+            }
+        }
     }
-    distribution
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Element {
-    quality: u16,
-    probability: f32,
 }
 
 struct QualityDistributionSolver {
     settings: Settings,
     actions: Box<[Action]>,
-    memoization: std::collections::HashMap<(SimulationState, Condition, usize), Vec<Element>>,
+    memoization: std::collections::HashMap<(SimulationState, Condition, usize), Vec<Value>>,
 }
 
 impl QualityDistributionSolver {
-    const ZERO_DISTRIBUTION: &[Element] = &[Element {
-        quality: 0,
-        probability: 1.0,
-    }];
+    const ZERO_DISTRIBUTION: &[Value] = &[Value::zero()];
+    const EMPTY_DISTRIBUTION: &[Value] = &[];
 
     fn new(settings: Settings, actions: Box<[Action]>) -> Self {
         Self {
@@ -75,7 +134,10 @@ impl QualityDistributionSolver {
             };
             let action_quality = next_state.quality;
             let next_distribution = match step + 1 == self.actions.len() {
-                true => Self::ZERO_DISTRIBUTION,
+                true => match next_state.progress >= self.settings.max_progress {
+                    true => Self::ZERO_DISTRIBUTION,
+                    false => Self::EMPTY_DISTRIBUTION,
+                },
                 false => {
                     self.solve(next_state, *condition, step + 1);
                     self.memoization
@@ -84,7 +146,7 @@ impl QualityDistributionSolver {
                 }
             }
             .iter()
-            .map(|element| Element {
+            .map(|element| Value {
                 quality: element.quality.saturating_add(action_quality),
                 probability: element.probability * condition_probability,
             });
@@ -102,9 +164,9 @@ impl QualityDistributionSolver {
     }
 
     fn merge_distributions(
-        lhs_iter: impl Iterator<Item = Element>,
-        rhs_iter: impl Iterator<Item = Element>,
-    ) -> Vec<Element> {
+        lhs_iter: impl Iterator<Item = Value>,
+        rhs_iter: impl Iterator<Item = Value>,
+    ) -> Vec<Value> {
         let mut result = Vec::new();
         let mut lhs_iter = lhs_iter.peekable();
         let mut rhs_iter = rhs_iter.peekable();
@@ -115,7 +177,7 @@ impl QualityDistributionSolver {
                     lhs_iter.next();
                 }
                 std::cmp::Ordering::Equal => {
-                    result.push(Element {
+                    result.push(Value {
                         quality: lhs.quality,
                         probability: lhs.probability + rhs.probability,
                     });
