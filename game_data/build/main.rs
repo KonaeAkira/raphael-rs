@@ -41,7 +41,7 @@ fn import_rlvl_records() -> Result<Vec<RecipeLevelRecord>, Box<dyn std::error::E
     );
     writeln!(writer, "[")?;
     for record in rlvl_records.iter() {
-        writeln!(writer, "RecipeLevel {{ progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {} }},", record.progress_divider, record.quality_divider, record.progress_modifier, record.quality_modifier)?;
+        writeln!(writer, "RecipeLevel {{ progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {}, conditions_flag: {} }},", record.progress_divider, record.quality_divider, record.progress_modifier, record.quality_modifier, record.conditions_flag)?;
     }
     writeln!(writer, "]")?;
     Ok(rlvl_records)

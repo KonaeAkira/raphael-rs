@@ -3,9 +3,9 @@ use crate::{Action, Condition, Settings, SimulationState};
 const fn condition_probabilities(current_condition: Condition) -> &'static [(Condition, f32)] {
     match current_condition {
         Condition::Normal => &[
-            (Condition::Normal, 0.80),
-            (Condition::Good, 0.15),
-            (Condition::Excellent, 0.05),
+            (Condition::Normal, 0.86),
+            (Condition::Good, 0.12),
+            (Condition::Excellent, 0.02),
         ],
         Condition::Good => &[(Condition::Normal, 1.00)],
         Condition::Excellent => &[(Condition::Poor, 1.00)],

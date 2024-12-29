@@ -151,4 +151,6 @@ pub struct RecipeLevelRecord {
     pub progress_modifier: u32,
     #[serde(rename = "QualityModifier")]
     pub quality_modifier: u32,
+    #[serde(rename = "ConditionsFlag")]
+    pub conditions_flag: u32,
 }

@@ -35,6 +35,7 @@ pub struct RecipeLevel {
     pub quality_div: u16,
     pub progress_mod: u16,
     pub quality_mod: u16,
+    pub conditions_flag: u16,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -391,6 +391,7 @@ impl MacroSolverApp {
             initial_quality,
             target_quality,
             &self.actions,
+            self.recipe_config.recipe.is_expert,
         ));
     }
 

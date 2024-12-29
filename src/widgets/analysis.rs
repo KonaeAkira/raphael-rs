@@ -10,6 +10,7 @@ pub struct SolutionAnalysis<'a> {
     initial_quality: u16,
     target_quality: u16,
     actions: &'a [Action],
+    is_expert: bool,
 }
 
 impl<'a> SolutionAnalysis<'a> {
@@ -18,6 +19,7 @@ impl<'a> SolutionAnalysis<'a> {
         initial_quality: u16,
         target_quality: u16,
         actions: &'a [Action],
+        is_expert: bool,
     ) -> Self {
         Self {
             settings: Settings {
@@ -27,6 +29,7 @@ impl<'a> SolutionAnalysis<'a> {
             initial_quality,
             target_quality,
             actions,
+            is_expert,
         }
     }
 }
@@ -48,8 +51,10 @@ impl egui::Widget for SolutionAnalysis<'_> {
                 ui.horizontal(|ui| {
                     collapsed = util::collapse_button(ui, egui::Id::new("analysis_collapsed"));
                     ui.label(egui::RichText::new("Analysis").strong());
-                    if self.actions.is_empty() {
-                        ui.label("N/A");
+                    if self.is_expert {
+                        ui.label("N/A (Expert recipes not supported)");
+                    } else if self.actions.is_empty() {
+                        ui.label("N/A (No macro to analyze)");
                     } else {
                         ui.label(format!(
                             "{:.2}% chance to reach target Quality ({})",
@@ -58,7 +63,7 @@ impl egui::Widget for SolutionAnalysis<'_> {
                         ));
                     }
                 });
-                if collapsed {
+                if collapsed || self.is_expert {
                     return;
                 }
                 ui.separator();
