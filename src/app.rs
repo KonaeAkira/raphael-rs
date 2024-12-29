@@ -154,11 +154,58 @@ impl eframe::App for MacroSolverApp {
         #[cfg(target_arch = "wasm32")]
         self.load_fonts_dyn(ctx);
 
-        if self.solver_pending {
-            // fix solution not displaying if there is no user input and no visible animation
-            ctx.request_repaint_after_secs(0.1);
-        }
         self.solver_update();
+
+        if self.solver_pending {
+            egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.vertical(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                egui::RichText::new(match self.solver_interrupt_pending {
+                                    true => "Cancelling ...",
+                                    false => "Solving ...",
+                                })
+                                .strong(),
+                            );
+                            ui.label(format!(
+                                "({:.2}s)",
+                                self.start_time.unwrap().elapsed().as_secs_f32()
+                            ));
+                        });
+                        if self.solver_progress == 0 {
+                            ui.label("initializing solver");
+                        } else {
+                            // format with thousands separator
+                            let num = self
+                                .solver_progress
+                                .to_string()
+                                .as_bytes()
+                                .rchunks(3)
+                                .rev()
+                                .map(std::str::from_utf8)
+                                .collect::<Result<Vec<&str>, _>>()
+                                .unwrap()
+                                .join(",");
+                            ui.label(format!("{} nodes visited", num));
+                        }
+                    });
+                });
+
+                #[cfg(not(target_arch = "wasm32"))]
+                ui.vertical_centered_justified(|ui| {
+                    ui.separator();
+                    let response =
+                        ui.add_enabled(!self.solver_interrupt_pending, egui::Button::new("Cancel"));
+                    if response.clicked() {
+                        self.bridge.send(SolverInput::Cancel);
+                        self.solver_interrupt_pending = true;
+                    }
+                });
+            });
+        }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::ScrollArea::horizontal()
@@ -338,7 +385,7 @@ impl MacroSolverApp {
             SolverEvent::IntermediateSolution(actions) => self.actions = actions,
             SolverEvent::FinalSolution(actions) => {
                 self.actions = actions;
-                self.duration = Some(Instant::now() - self.start_time.unwrap());
+                self.duration = Some(self.start_time.unwrap().elapsed());
                 self.solver_pending = false;
             }
         }
@@ -400,32 +447,23 @@ impl MacroSolverApp {
 
     fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.add_enabled(
-                !self.solver_pending,
-                RecipeSelect::new(
-                    &mut self.crafter_config,
-                    &mut self.recipe_config,
-                    self.selected_food,
-                    self.selected_potion,
-                    self.locale,
-                ),
-            );
-            ui.add_enabled(
-                !self.solver_pending,
-                FoodSelect::new(
-                    self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
-                    &mut self.selected_food,
-                    self.locale,
-                ),
-            );
-            ui.add_enabled(
-                !self.solver_pending,
-                PotionSelect::new(
-                    self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
-                    &mut self.selected_potion,
-                    self.locale,
-                ),
-            );
+            ui.add(RecipeSelect::new(
+                &mut self.crafter_config,
+                &mut self.recipe_config,
+                self.selected_food,
+                self.selected_potion,
+                self.locale,
+            ));
+            ui.add(FoodSelect::new(
+                self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
+                &mut self.selected_food,
+                self.locale,
+            ));
+            ui.add(PotionSelect::new(
+                self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
+                &mut self.selected_potion,
+                self.locale,
+            ));
         });
     }
 
@@ -433,10 +471,19 @@ impl MacroSolverApp {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
-                ui.add_enabled_ui(!self.solver_pending, |ui| {
-                    self.draw_configuration_widget(ui);
+                self.draw_configuration_widget(ui);
+                ui.separator();
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button("Solve").clicked() {
+                        self.on_solve_button_clicked(ui.ctx());
+                    }
                 });
-                self.draw_results_widget(ui);
+                ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
+                    ui.label(format!(
+                        "Elapsed time: {:.2}s",
+                        self.duration.unwrap_or_default().as_secs_f32()
+                    ));
+                });
                 // fill the remaining space
                 ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
             });
@@ -712,82 +759,41 @@ impl MacroSolverApp {
         }
     }
 
-    fn draw_results_widget(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if !self.solver_pending {
-                    if ui.button("Solve").clicked() {
-                        self.actions = Vec::new();
-                        self.solver_pending = true;
-                        self.solver_interrupt_pending = false;
-                        self.solver_progress = 0;
-                        self.start_time = Some(Instant::now());
-                        let mut game_settings = game_data::get_game_settings(
-                            self.recipe_config.recipe,
-                            self.crafter_config.crafter_stats
-                                [self.crafter_config.selected_job as usize],
-                            self.selected_food,
-                            self.selected_potion,
-                            self.solver_config.adversarial,
-                        );
-                        let target_quality = self
-                            .solver_config
-                            .quality_target
-                            .get_target(game_settings.max_quality);
-                        let initial_quality = match self.recipe_config.quality_source {
-                            QualitySource::HqMaterialList(hq_materials) => {
-                                get_initial_quality(self.recipe_config.recipe, hq_materials)
-                            }
-                            QualitySource::Value(quality) => quality,
-                        };
+    fn on_solve_button_clicked(&mut self, ctx: &egui::Context) {
+        self.actions = Vec::new();
+        self.solver_pending = true;
+        self.solver_interrupt_pending = false;
+        self.solver_progress = 0;
+        self.start_time = Some(Instant::now());
+        let mut game_settings = game_data::get_game_settings(
+            self.recipe_config.recipe,
+            self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
+            self.selected_food,
+            self.selected_potion,
+            self.solver_config.adversarial,
+        );
+        let target_quality = self
+            .solver_config
+            .quality_target
+            .get_target(game_settings.max_quality);
+        let initial_quality = match self.recipe_config.quality_source {
+            QualitySource::HqMaterialList(hq_materials) => {
+                get_initial_quality(self.recipe_config.recipe, hq_materials)
+            }
+            QualitySource::Value(quality) => quality,
+        };
 
-                        ui.ctx().data_mut(|data| {
-                            data.insert_temp(
-                                Id::new("LAST_SOLVE_PARAMS"),
-                                (game_settings, initial_quality, self.solver_config),
-                            );
-                        });
-
-                        game_settings.max_quality = target_quality.saturating_sub(initial_quality);
-                        self.bridge
-                            .send(SolverInput::Start(game_settings, self.solver_config));
-                        log::debug!("{game_settings:?}");
-                    }
-                    if let Some(duration) = self.duration {
-                        ui.label(format!("Time: {:.3}s", duration.as_secs_f64()));
-                    }
-                } else {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    ui.add_enabled_ui(
-                        !self.solver_interrupt_pending && self.solver_pending,
-                        |ui| {
-                            if ui.button("Cancel").clicked() {
-                                self.bridge.send(SolverInput::Cancel);
-                                self.solver_interrupt_pending = true;
-                            }
-                        },
-                    );
-
-                    ui.spinner();
-                    if self.solver_progress == 0 {
-                        ui.label("Populating DP tables");
-                    } else {
-                        // format with thousands separator
-                        let num = self
-                            .solver_progress
-                            .to_string()
-                            .as_bytes()
-                            .rchunks(3)
-                            .rev()
-                            .map(std::str::from_utf8)
-                            .collect::<Result<Vec<&str>, _>>()
-                            .unwrap()
-                            .join(",");
-                        ui.label(format!("{} nodes visited", num));
-                    }
-                }
-            });
+        ctx.data_mut(|data| {
+            data.insert_temp(
+                Id::new("LAST_SOLVE_PARAMS"),
+                (game_settings, initial_quality, self.solver_config),
+            );
         });
+
+        game_settings.max_quality = target_quality.saturating_sub(initial_quality);
+        self.bridge
+            .send(SolverInput::Start(game_settings, self.solver_config));
+        log::debug!("{game_settings:?}");
     }
 
     fn draw_macro_output_widget(&mut self, ui: &mut egui::Ui) {
