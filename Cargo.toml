@@ -22,7 +22,6 @@ image = { version = "0.25", default-features = false, features = ["webp"] }
 serde = { version = "1.0.215", features = ["derive"] }
 ron = "0.8"
 log = "0.4"
-rust-i18n = "3.1.2"
 
 # workaround for https://github.com/emilk/egui/issues/5491
 # remove after updating to egui 0.30.1

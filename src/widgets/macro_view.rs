@@ -77,12 +77,12 @@ impl Widget for MacroTextBox {
                 ui.monospace(&self.text);
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     if ui.ctx().animate_bool_with_time(id, false, 2.0) == 0.0 {
-                        if ui.button(t!("label.copy")).clicked() {
+                        if ui.button("Copy").clicked() {
                             ui.output_mut(|output| output.copied_text = self.text);
                             ui.ctx().animate_bool_with_time(id, true, 0.0);
                         }
                     } else {
-                        ui.add_enabled(false, egui::Button::new(t!("label.copied")));
+                        ui.add_enabled(false, egui::Button::new("Copied"));
                     }
                 });
             });
@@ -117,13 +117,10 @@ impl Widget for MacroView<'_> {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(t!("label.macro")).strong());
+                    ui.label(egui::RichText::new("Macro").strong());
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
-                            .add_enabled(
-                                !self.actions.is_empty(),
-                                egui::Button::new(t!("label.clear")),
-                            )
+                            .add_enabled(!self.actions.is_empty(), egui::Button::new("Clear"))
                             .clicked()
                         {
                             self.actions.clear();
@@ -133,23 +130,23 @@ impl Widget for MacroView<'_> {
                             .iter()
                             .map(|action| action.time_cost())
                             .sum::<i16>();
-                        ui.label(t!(
-                            "label.macro_length",
-                            steps = self.actions.len(),
-                            duration = duration
+                        ui.label(format!(
+                            "{} steps | {} seconds",
+                            self.actions.len(),
+                            duration
                         ));
                     });
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.config.include_delay, t!("label.include_delay"));
-                    ui.checkbox(&mut self.config.split_macro, t!("label.split_macro"));
-                    ui.checkbox(&mut self.config.macro_lock, t!("label.macro_lock"));
+                    ui.checkbox(&mut self.config.include_delay, "Include delay");
+                    ui.checkbox(&mut self.config.split_macro, "Split macro");
+                    ui.checkbox(&mut self.config.macro_lock, "Macro lock");
                 });
                 ui.horizontal(|ui| {
                     ui.add(egui::Checkbox::new(
                         &mut self.config.notification_enabled,
-                        t!("label.macro_notification"),
+                        "End-of-macro notification",
                     ));
                     ui.add_enabled_ui(self.config.notification_enabled, |ui| {
                         egui::ComboBox::from_id_salt("SOUND_EFFECT")
@@ -196,7 +193,7 @@ impl Widget for MacroView<'_> {
                 }
 
                 if self.actions.is_empty() {
-                    ui.label(t!("label.none"));
+                    ui.label("None");
                 }
 
                 // fill the remaining space

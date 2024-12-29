@@ -60,14 +60,16 @@ impl Simulator<'_> {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(t!("label.simulation")).strong());
+                    ui.label(egui::RichText::new("Simulation").strong());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_visible(
                             !self.actions.is_empty() && self.config_changed(ui.ctx()),
                             egui::Label::new(
-                                egui::RichText::new(t!("warning.outdated_parameters"))
-                                    .small()
-                                    .color(ui.visuals().warn_fg_color),
+                                egui::RichText::new(
+                                    "⚠ Some parameters have changed since last solve.",
+                                )
+                                .small()
+                                .color(ui.visuals().warn_fg_color),
                             ),
                         );
                     });
@@ -75,10 +77,10 @@ impl Simulator<'_> {
 
                 ui.separator();
 
-                let progress_text_width = text_width(ui, t!("progress"));
-                let quality_text_width = text_width(ui, t!("quality"));
-                let durability_text_width = text_width(ui, t!("durability"));
-                let cp_text_width = text_width(ui, t!("cp"));
+                let progress_text_width = text_width(ui, "Progress");
+                let quality_text_width = text_width(ui, "Quality");
+                let durability_text_width = text_width(ui, "Durability");
+                let cp_text_width = text_width(ui, "CP");
 
                 let max_text_width = progress_text_width
                     .max(quality_text_width)
@@ -90,7 +92,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("progress"));
+                        ui.label("Progress");
                     });
                     ui.add(
                         egui::ProgressBar::new(
@@ -106,7 +108,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("quality"));
+                        ui.label("Quality");
                     });
                     let quality = self.initial_quality + state.quality;
                     ui.add(
@@ -118,7 +120,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("durability"));
+                        ui.label("Durability");
                     });
                     ui.add(
                         egui::ProgressBar::new(
@@ -134,7 +136,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("cp"));
+                        ui.label("CP");
                     });
                     ui.add(
                         egui::ProgressBar::new(state.cp as f32 / self.settings.max_cp as f32)
@@ -150,13 +152,13 @@ impl Simulator<'_> {
                     ui.with_layout(text_layout, |ui| {
                         ui.set_height(ui.style().spacing.interact_size.y);
                         ui.add(HelpText::new(match self.settings.adversarial {
-                            true => t!("info.adversarial_simulation"),
-                            false => t!("info.normal_simulation"),
+                            true => "Calculated assuming worst possible sequence of conditions",
+                            false => "Calculated assuming Normal conditon on every step",
                         }));
                         if !state.is_final(self.settings) {
                             // do nothing
                         } else if state.progress < self.settings.max_progress {
-                            ui.label(t!("sim_result.failed"));
+                            ui.label("Synthesis failed");
                         } else if self.item.always_collectable {
                             let (t1, t2, t3) = (
                                 QualityTarget::CollectableT1.get_target(self.settings.max_quality),
@@ -169,13 +171,13 @@ impl Simulator<'_> {
                                 quality if quality >= t1 => 1,
                                 _ => 0,
                             };
-                            ui.label(t!("sim_result.collectable", tier = tier));
+                            ui.label(format!("Tier {} collectable", tier));
                         } else {
                             let hq = game_data::hq_percentage(
                                 self.initial_quality + state.quality,
                                 self.settings.max_quality,
                             );
-                            ui.label(t!("sim_result.hq", hq = hq));
+                            ui.label(format!("{}% HQ", hq));
                         }
                     });
                 });

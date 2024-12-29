@@ -34,7 +34,7 @@ impl egui::Widget for ItemNameLabel {
                 ui.close_menu();
             }
             let mut selection_made = false;
-            if ui.button(t!("label.copy_item_name")).clicked() {
+            if ui.button("Copy item name").clicked() {
                 let copy_item_name: String = self
                     .text
                     .trim_end_matches([' ', game_data::HQ_ICON_CHAR, game_data::CL_ICON_CHAR])
@@ -44,7 +44,7 @@ impl egui::Widget for ItemNameLabel {
                 selection_made = true;
             }
             ui.separator();
-            if ui.button(t!("label.copy_item_id")).clicked() {
+            if ui.button("Copy item ID").clicked() {
                 ui.output_mut(|output| output.copied_text = self.item_id.to_string());
                 ui.close_menu();
                 selection_made = true;

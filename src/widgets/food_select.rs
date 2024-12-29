@@ -47,20 +47,18 @@ impl Widget for FoodSelect<'_> {
 
                 ui.horizontal(|ui| {
                     collapsed = util::collapse_button(ui, Id::new("FOOD_SEARCH_COLLAPSED"));
-                    ui.label(egui::RichText::new(t!("label.food")).strong());
+                    ui.label(egui::RichText::new("Food").strong());
                     match self.selected_consumable {
-                        None => {
-                            ui.label(t!("label.none"));
-                        }
+                        None => ui.label("None"),
                         Some(item) => {
-                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
+                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale))
                         }
-                    }
+                    };
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
                             .add_enabled(
                                 self.selected_consumable.is_some(),
-                                egui::Button::new(t!("label.clear")),
+                                egui::Button::new("Clear"),
                             )
                             .clicked()
                         {
@@ -126,7 +124,7 @@ impl Widget for FoodSelect<'_> {
                     body.rows(line_height, search_result.len(), |mut row| {
                         let item = game_data::MEALS[search_result[row.index()]];
                         row.col(|ui| {
-                            if ui.button(t!("label.select")).clicked() {
+                            if ui.button("Select").clicked() {
                                 *self.selected_consumable = Some(item);
                             }
                         });

@@ -98,7 +98,7 @@ impl<'a> RecipeSelect<'a> {
             body.rows(line_height, search_result.len(), |mut row| {
                 let recipe = game_data::RECIPES[search_result[row.index()]];
                 row.col(|ui| {
-                    if ui.button(t!("label.select")).clicked() {
+                    if ui.button("Select").clicked() {
                         self.crafter_config.selected_job = recipe.job_id;
                         *self.recipe_config = RecipeConfiguration {
                             recipe,
@@ -218,17 +218,14 @@ impl Widget for RecipeSelect<'_> {
 
                 ui.horizontal(|ui| {
                     collapsed = util::collapse_button(ui, Id::new("RECIPE_SEARCH_COLLAPSED"));
-                    ui.label(egui::RichText::new(t!("label.recipe")).strong());
+                    ui.label(egui::RichText::new("Recipe").strong());
                     ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
                         false,
                         self.locale,
                     ));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if ui
-                            .checkbox(&mut custom_recipe, t!("label.custom"))
-                            .changed()
-                        {
+                        if ui.checkbox(&mut custom_recipe, "Custom").changed() {
                             if custom_recipe {
                                 self.recipe_config.recipe.item_id = 0;
                                 self.recipe_config.recipe.material_quality_factor = 0;

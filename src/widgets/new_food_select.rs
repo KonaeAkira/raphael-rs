@@ -3,28 +3,28 @@ use egui::{
     Align, Id, Layout, Widget,
 };
 use egui_extras::Column;
-use game_data::{find_potions, Consumable, CrafterStats, Locale};
+use game_data::{find_meals, Consumable, CrafterStats, Locale};
 
-use super::{util, ItemNameLabel};
+use super::ItemNameLabel;
 
 #[derive(Default)]
-struct PotionFinder {}
+struct FoodFinder {}
 
-impl ComputerMut<(&str, Locale), Vec<usize>> for PotionFinder {
+impl ComputerMut<(&str, Locale), Vec<usize>> for FoodFinder {
     fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<usize> {
-        find_potions(text, locale)
+        find_meals(text, locale)
     }
 }
 
-type PotionSearchCache<'a> = FrameCache<Vec<usize>, PotionFinder>;
+type FoodSearchCache<'a> = FrameCache<Vec<usize>, FoodFinder>;
 
-pub struct PotionSelect<'a> {
+pub struct FoodSelectWidget<'a> {
     crafter_stats: CrafterStats,
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
 }
 
-impl<'a> PotionSelect<'a> {
+impl<'a> FoodSelectWidget<'a> {
     pub fn new(
         crafter_stats: CrafterStats,
         selected_consumable: &'a mut Option<Consumable>,
@@ -38,21 +38,38 @@ impl<'a> PotionSelect<'a> {
     }
 }
 
-impl Widget for PotionSelect<'_> {
+impl Widget for FoodSelectWidget<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 let mut collapsed = false;
+
                 ui.horizontal(|ui| {
-                    collapsed = util::collapse_button(ui, Id::new("POTION_SEARCH_COLLAPSED"));
-                    ui.label(egui::RichText::new("Potion").strong());
-                    match self.selected_consumable {
-                        None => ui.label("None"),
-                        Some(item) => {
-                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale))
+                    let mut collapse_button_text = "⏷";
+                    let collapsed_id = Id::new("FOOD_SEARCH_COLLAPSED");
+                    ui.data_mut(|data| {
+                        collapsed = *data.get_persisted_mut_or_default(collapsed_id);
+                        collapse_button_text = match collapsed {
+                            false => "⏷",
+                            true => "⏵",
                         }
-                    };
+                    });
+                    if ui.button(collapse_button_text).clicked() {
+                        ui.data_mut(|data| {
+                            *data.get_persisted_mut_or_default(collapsed_id) = !collapsed;
+                        })
+                    }
+
+                    ui.label(egui::RichText::new("Food").strong());
+                    match self.selected_consumable {
+                        None => {
+                            ui.label("None");
+                        }
+                        Some(item) => {
+                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
+                        }
+                    }
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
                             .add_enabled(
@@ -72,29 +89,22 @@ impl Widget for PotionSelect<'_> {
 
                 ui.separator();
 
-                let id = Id::new("POTION_SEARCH_TEXT");
+                let id = Id::new("FOOD_SEARCH_TEXTTT");
 
-                let mut search_text = String::new();
-                ui.ctx().data_mut(|data| {
-                    if let Some(text) = data.get_persisted::<String>(id) {
-                        search_text = text;
-                    }
-                });
+                let mut search_text = ui
+                    .ctx()
+                    .data_mut(|data| data.get_persisted_mut_or(id, String::new()).clone());
 
-                if egui::TextEdit::singleline(&mut search_text)
-                    .desired_width(f32::INFINITY)
-                    .hint_text("🔍 Search")
-                    .ui(ui)
-                    .changed()
-                {
-                    search_text = search_text.replace("\0", "");
-                };
+                ui.add(
+                    egui::TextEdit::singleline(&mut search_text)
+                        .desired_width(f32::INFINITY)
+                        .hint_text("🔍 Search"),
+                );
                 ui.separator();
 
-                let mut search_result = Vec::new();
-                ui.ctx().memory_mut(|mem| {
-                    let search_cache = mem.caches.cache::<PotionSearchCache<'_>>();
-                    search_result = search_cache.get((&search_text, self.locale));
+                let search_result = ui.ctx().memory_mut(|mem| {
+                    let search_cache = mem.caches.cache::<FoodSearchCache<'_>>();
+                    search_cache.get((&search_text, self.locale))
                 });
 
                 ui.ctx().data_mut(|data| {
@@ -107,11 +117,11 @@ impl Widget for PotionSelect<'_> {
 
                 let column_spacing = 2.0 * ui.spacing().item_spacing.x;
                 let available_text_width = ui.available_width() - column_spacing - 42.0;
-                let item_name_width = (0.7 * available_text_width).clamp(220.0, 320.0);
-                let effect_width = (available_text_width - item_name_width).max(0.0);
+                let item_name_width = (0.7 * available_text_width).max(220.0).min(320.0);
+                let effect_width = available_text_width - item_name_width;
 
                 let table = egui_extras::TableBuilder::new(ui)
-                    .id_salt("POTION_SELECT_TABLE")
+                    .id_salt("FOOD_SELECT_TABLE")
                     .auto_shrink(false)
                     .striped(true)
                     .column(Column::exact(42.0))
@@ -119,10 +129,9 @@ impl Widget for PotionSelect<'_> {
                     .column(Column::exact(effect_width))
                     .min_scrolled_height(table_height)
                     .max_scroll_height(table_height);
-
                 table.body(|body| {
                     body.rows(line_height, search_result.len(), |mut row| {
-                        let item = game_data::POTIONS[search_result[row.index()]];
+                        let item = game_data::MEALS[search_result[row.index()]];
                         row.col(|ui| {
                             if ui.button("Select").clicked() {
                                 *self.selected_consumable = Some(item);
