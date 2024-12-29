@@ -308,7 +308,10 @@ impl eframe::App for MacroSolverApp {
         .open(&mut self.stats_edit_window_open)
         .collapsible(false)
         .resizable(false)
+        .min_width(400.0)
+        .max_width(400.0)
         .show(ctx, |ui| {
+            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(StatsEdit::new(self.locale, &mut self.crafter_config));
         });
     }
@@ -429,7 +432,6 @@ impl MacroSolverApp {
     fn draw_config_and_results_widget(&mut self, ui: &mut egui::Ui) {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-            // ui.set_height(560.0);
             ui.vertical(|ui| {
                 ui.add_enabled_ui(!self.solver_pending, |ui| {
                     self.draw_configuration_widget(ui);

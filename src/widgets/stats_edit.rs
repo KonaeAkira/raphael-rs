@@ -72,7 +72,6 @@ impl Widget for StatsEdit<'_> {
                     ui.ctx().animate_bool_with_time(copy_id, true, 0.0);
                 }
 
-                ui.add_space(button_response.rect.width() * 0.5);
                 let selected_job = self.crafter_config.selected_job;
                 let paste_id = egui::Id::new("config_paste");
                 let input_enabled = ui.ctx().animate_bool_with_time(paste_id, false, 0.25) == 0.0;
