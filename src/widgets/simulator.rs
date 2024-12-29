@@ -127,8 +127,8 @@ impl Simulator<'_> {
                             state.durability as f32 / self.settings.max_durability as f32,
                         )
                         .text(progress_bar_text(
-                            state.durability as u16,
-                            self.settings.max_durability as u16,
+                            state.durability,
+                            self.settings.max_durability,
                         ))
                         .rounding(egui::Rounding::ZERO),
                     );
@@ -140,10 +140,7 @@ impl Simulator<'_> {
                     });
                     ui.add(
                         egui::ProgressBar::new(state.cp as f32 / self.settings.max_cp as f32)
-                            .text(progress_bar_text(
-                                state.cp as u16,
-                                self.settings.max_cp as u16,
-                            ))
+                            .text(progress_bar_text(state.cp, self.settings.max_cp))
                             .rounding(egui::Rounding::ZERO),
                     );
                 });
@@ -236,11 +233,15 @@ fn text_width(ui: &mut egui::Ui, text: impl Into<String>) -> f32 {
     })
 }
 
-fn progress_bar_text(a: u16, b: u16) -> String {
-    if a > b {
-        format!("{: >5} / {}  (+{} overflow)", a, b, a - b)
+fn progress_bar_text<T: Copy + std::cmp::Ord + std::ops::Sub<Output = T> + std::fmt::Display>(
+    value: T,
+    maximum: T,
+) -> String {
+    if value > maximum {
+        let overflow = value - maximum;
+        format!("{: >5} / {}  (+{} overflow)", value, maximum, overflow)
     } else {
-        format!("{: >5} / {}", a, b)
+        format!("{: >5} / {}", value, maximum)
     }
 }
 
