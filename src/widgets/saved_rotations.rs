@@ -53,14 +53,8 @@ impl Rotation {
             solver: solver_params,
             actions,
             item: recipe.item_id,
-            food: match food {
-                Some(consumable) => Some((consumable.item_id, consumable.hq)),
-                None => None,
-            },
-            potion: match potion {
-                Some(consumable) => Some((consumable.item_id, consumable.hq)),
-                None => None,
-            },
+            food: food.map(|consumable| (consumable.item_id, consumable.hq)),
+            potion: potion.map(|consumable| (consumable.item_id, consumable.hq)),
             crafter_stats: *crafter_config.active_stats(),
             job_id: crafter_config.selected_job,
         }

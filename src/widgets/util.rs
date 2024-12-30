@@ -27,8 +27,8 @@ pub fn get_action_icon(action: Action, job_id: u8) -> egui::Image<'static> {
     let image_path = format!(
         "{}/action-icons/{}/{}.webp",
         env!("BASE_URL"),
-        game_data::get_job_name(job_id, Locale::EN),
-        game_data::action_name(action, Locale::EN)
+        game_data::get_job_name(job_id, game_data::Locale::EN),
+        game_data::action_name(action, game_data::Locale::EN)
     );
     egui::Image::new(image_path)
 }

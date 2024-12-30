@@ -40,6 +40,7 @@ gloo-worker = { version = "0.5.0", features = ["futures"] }
 web-time = "1.1.0"
 # web-sys doesn't follow semver, so version needs to be pinned (https://github.com/emilk/egui/issues/4961)
 web-sys = "=0.3.76"
+getrandom = { version = "0.2.15", features = ["js"] }
 
 [[bin]]
 name = "webworker"
