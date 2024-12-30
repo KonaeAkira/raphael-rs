@@ -46,7 +46,7 @@ impl Widget for FoodSelect<'_> {
                 let mut collapsed = false;
 
                 ui.horizontal(|ui| {
-                    collapsed = util::collapse_button(ui, Id::new("FOOD_SEARCH_COLLAPSED"));
+                    util::collapse_persisted(ui, Id::new("FOOD_SEARCH_COLLAPSED"), &mut collapsed);
                     ui.label(egui::RichText::new("Food").strong());
                     match self.selected_consumable {
                         None => ui.label("None"),

@@ -54,8 +54,11 @@ pub struct MacroSolverApp {
     crafter_config: CrafterConfig,
     solver_config: SolverConfig,
     macro_view_config: MacroViewConfig,
+    saved_rotations_data: SavedRotationsData,
 
     stats_edit_window_open: bool,
+    saved_rotations_window_open: bool,
+
     actions: Vec<Action>,
     solver_pending: bool,
     solver_interrupt_pending: bool,
@@ -132,8 +135,11 @@ impl MacroSolverApp {
             crafter_config: load(cc, "CRAFTER_CONFIG", Default::default()),
             solver_config: load(cc, "SOLVER_CONFIG", Default::default()),
             macro_view_config: load(cc, "MACRO_VIEW_CONFIG", Default::default()),
+            saved_rotations_data: load(cc, "SAVED_ROTATIONS", Default::default()),
 
             stats_edit_window_open: false,
+            saved_rotations_window_open: false,
+
             actions: Vec::new(),
             solver_pending: false,
             solver_interrupt_pending: false,
@@ -361,6 +367,23 @@ impl eframe::App for MacroSolverApp {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(StatsEdit::new(self.locale, &mut self.crafter_config));
         });
+
+        egui::Window::new(
+            egui::RichText::new("Saved rotations")
+                .strong()
+                .text_style(TextStyle::Body),
+        )
+        .open(&mut self.saved_rotations_window_open)
+        .collapsible(false)
+        .default_size((400.0, 600.0))
+        .show(ctx, |ui| {
+            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+            ui.add(SavedRotationsWidget::new(
+                self.locale,
+                &mut self.saved_rotations_data,
+                &mut self.actions,
+            ));
+        });
     }
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
@@ -371,6 +394,7 @@ impl eframe::App for MacroSolverApp {
         eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
         eframe::set_value(storage, "SOLVER_CONFIG", &self.solver_config);
         eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
+        eframe::set_value(storage, "SAVED_ROTATIONS", &self.saved_rotations_data);
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
@@ -387,6 +411,15 @@ impl MacroSolverApp {
                 self.actions = actions;
                 self.duration = Some(self.start_time.unwrap().elapsed());
                 self.solver_pending = false;
+                self.saved_rotations_data.add_solved_rotation(Rotation::new(
+                    game_data::get_item_name(self.recipe_config.recipe.item_id, false, self.locale),
+                    self.actions.clone(),
+                    &self.recipe_config.recipe,
+                    &self.selected_food,
+                    &self.selected_potion,
+                    &self.crafter_config,
+                    &self.solver_config,
+                ));
             }
         }
     }
@@ -473,10 +506,16 @@ impl MacroSolverApp {
             ui.vertical(|ui| {
                 self.draw_configuration_widget(ui);
                 ui.separator();
-                ui.vertical_centered_justified(|ui| {
-                    if ui.button("Solve").clicked() {
-                        self.on_solve_button_clicked(ui.ctx());
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    if ui.button("History").clicked() {
+                        self.saved_rotations_window_open = true;
                     }
+                    ui.add_space(-5.0);
+                    ui.vertical_centered_justified(|ui| {
+                        if ui.button("Solve").clicked() {
+                            self.on_solve_button_clicked(ui.ctx());
+                        }
+                    });
                 });
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     ui.label(format!(

@@ -131,7 +131,7 @@ impl Widget for MacroView<'_> {
                             .map(|action| action.time_cost())
                             .sum::<i16>();
                         ui.label(format!(
-                            "{} steps | {} seconds",
+                            "{} steps, {} seconds",
                             self.actions.len(),
                             duration
                         ));

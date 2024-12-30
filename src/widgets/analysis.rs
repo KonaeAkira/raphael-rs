@@ -40,7 +40,7 @@ impl egui::Widget for SolutionAnalysis<'_> {
             ui.set_width(ui.available_width());
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
 
-            let mut collapsed = false;
+            let mut collapsed = true;
             let distribution = simulator::quality_probability_distribution(
                 self.settings,
                 self.actions,
@@ -49,7 +49,11 @@ impl egui::Widget for SolutionAnalysis<'_> {
 
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    collapsed = util::collapse_button(ui, egui::Id::new("analysis_collapsed"));
+                    util::collapse_persisted(
+                        ui,
+                        egui::Id::new("analysis_collapsed"),
+                        &mut collapsed,
+                    );
                     ui.label(egui::RichText::new("Analysis").strong());
                     if self.is_expert {
                         ui.label("N/A (Expert recipes not supported)");

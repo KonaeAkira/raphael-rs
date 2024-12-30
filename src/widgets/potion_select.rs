@@ -45,7 +45,11 @@ impl Widget for PotionSelect<'_> {
             ui.vertical(|ui| {
                 let mut collapsed = false;
                 ui.horizontal(|ui| {
-                    collapsed = util::collapse_button(ui, Id::new("POTION_SEARCH_COLLAPSED"));
+                    util::collapse_persisted(
+                        ui,
+                        Id::new("POTION_SEARCH_COLLAPSED"),
+                        &mut collapsed,
+                    );
                     ui.label(egui::RichText::new("Potion").strong());
                     match self.selected_consumable {
                         None => ui.label("None"),

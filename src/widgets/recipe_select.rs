@@ -217,7 +217,11 @@ impl Widget for RecipeSelect<'_> {
                 let mut collapsed = false;
 
                 ui.horizontal(|ui| {
-                    collapsed = util::collapse_button(ui, Id::new("RECIPE_SEARCH_COLLAPSED"));
+                    util::collapse_persisted(
+                        ui,
+                        Id::new("RECIPE_SEARCH_COLLAPSED"),
+                        &mut collapsed,
+                    );
                     ui.label(egui::RichText::new("Recipe").strong());
                     ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
