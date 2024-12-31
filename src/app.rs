@@ -165,6 +165,7 @@ impl eframe::App for MacroSolverApp {
         if self.solver_pending {
             egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+                ui.set_width(180.0);
                 ui.horizontal(|ui| {
                     ui.spinner();
                     ui.vertical(|ui| {
@@ -182,7 +183,7 @@ impl eframe::App for MacroSolverApp {
                             ));
                         });
                         if self.solver_progress == 0 {
-                            ui.label("initializing solver");
+                            ui.label("computing dp tables");
                         } else {
                             // format with thousands separator
                             let num = self

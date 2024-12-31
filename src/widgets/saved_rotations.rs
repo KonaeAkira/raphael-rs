@@ -32,7 +32,7 @@ impl Rotation {
         solver_config: &SolverConfig,
     ) -> Self {
         let solver_params = format!(
-            "Raphael v{} {} {} {}",
+            "Raphael v{}{}{}{}",
             env!("CARGO_PKG_VERSION"),
             match solver_config.backload_progress {
                 true => " +backload",
