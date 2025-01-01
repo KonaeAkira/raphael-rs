@@ -266,7 +266,7 @@ pub fn execute(args: &SolveArgs) {
     let state_quality = final_state.quality;
     let final_quality = state_quality.saturating_add(initial_quality);
     let steps = actions.len();
-    let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
+    let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
 
     if args.output_variables.is_empty() {
         println!("Item ID: {}", recipe.item_id);

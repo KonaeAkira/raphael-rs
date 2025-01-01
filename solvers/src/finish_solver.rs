@@ -2,12 +2,7 @@ use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
 
-use super::actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS};
-
-const SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(DURABILITY_ACTIONS)
-    .remove(Action::TricksOfTheTrade)
-    .remove(Action::DelicateSynthesis);
+use crate::actions::{use_solver_action, FULL_SEARCH_ACTIONS};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
@@ -75,14 +70,9 @@ impl FinishSolver {
             Some(max_progress) => *max_progress,
             None => {
                 let mut max_progress = 0;
-                for action in SEARCH_ACTIONS
-                    .intersection(self.settings.allowed_actions)
-                    .actions_iter()
-                {
+                for action in FULL_SEARCH_ACTIONS.iter() {
                     if let Ok(new_state) =
-                        state
-                            .to_state()
-                            .use_action(action, Condition::Normal, &self.settings)
+                        use_solver_action(&self.settings, state.to_state(), *action)
                     {
                         if !new_state.is_final(&self.settings) {
                             let child_progress =

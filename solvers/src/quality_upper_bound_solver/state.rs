@@ -1,4 +1,7 @@
-use crate::branch_pruning::is_progress_only_state;
+use crate::{
+    actions::{use_solver_action, SolverAction},
+    branch_pruning::is_progress_only_state,
+};
 
 use super::solver::SolverSettings;
 use simulator::*;
@@ -34,9 +37,6 @@ impl ReducedState {
             && simulator_settings.is_action_allowed::<TrainedPerfection>()
         {
             state.cp += solver_settings.durability_cost * 4;
-        }
-        if state.effects.heart_and_soul() == SingleUse::Available {
-            state.effects.set_heart_and_soul(SingleUse::Active);
         }
         state.cp += state.durability as i16 / 5 * solver_settings.durability_cost;
         state.durability = simulator_settings.max_durability;
@@ -111,28 +111,32 @@ impl ReducedState {
 
     pub fn use_action(
         &self,
-        action: Action,
+        action: SolverAction,
         simulator_settings: &Settings,
         solver_settings: &SolverSettings,
     ) -> Result<(Self, u16, u16), &'static str> {
-        if matches!(
-            action,
-            Action::MasterMend | Action::ImmaculateMend | Action::Manipulation
-        ) {
-            panic!("Action not supported.")
-        }
-        let progress_only = self.data.progress_only();
-        let state = self.to_simulation_state(simulator_settings);
-        match state.use_action(action, Condition::Normal, simulator_settings) {
-            Ok(state) => {
-                let mut solver_state =
-                    Self::from_simulation_state_inner(&state, simulator_settings, solver_settings);
-                if progress_only {
-                    solver_state.data.set_progress_only(true);
+        match action {
+            SolverAction::Single(
+                Action::MasterMend | Action::ImmaculateMend | Action::Manipulation,
+            ) => Err("Action not supported"),
+            _ => {
+                let progress_only = self.data.progress_only();
+                let state = self.to_simulation_state(simulator_settings);
+                match use_solver_action(simulator_settings, state, action) {
+                    Ok(state) => {
+                        let mut solver_state = Self::from_simulation_state_inner(
+                            &state,
+                            simulator_settings,
+                            solver_settings,
+                        );
+                        if progress_only {
+                            solver_state.data.set_progress_only(true);
+                        }
+                        Ok((solver_state, state.progress, state.quality))
+                    }
+                    Err(err) => Err(err),
                 }
-                Ok((solver_state, state.progress, state.quality))
             }
-            Err(err) => Err(err),
         }
     }
 }

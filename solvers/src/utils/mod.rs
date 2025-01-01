@@ -52,14 +52,6 @@ impl<T: Copy> Backtracking<T> {
         }
     }
 
-    pub fn get_depth(&self, index: usize) -> u8 {
-        if index == Self::SENTINEL {
-            0
-        } else {
-            self.entries[index].depth
-        }
-    }
-
     pub fn get_items(&self, mut index: usize) -> impl Iterator<Item = T> {
         let mut items = Vec::new();
         while index != Self::SENTINEL {

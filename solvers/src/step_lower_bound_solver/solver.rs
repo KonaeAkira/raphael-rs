@@ -1,5 +1,5 @@
 use crate::{
-    actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    actions::{use_solver_action, SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     branch_pruning::is_progress_only_state,
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
@@ -8,14 +8,6 @@ use simulator::*;
 use rustc_hash::FxHashMap as HashMap;
 
 use super::state::ReducedState;
-
-const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(QUALITY_ACTIONS)
-    .union(DURABILITY_ACTIONS);
-
-const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(DURABILITY_ACTIONS)
-    .remove(Action::DelicateSynthesis);
 
 pub struct StepLowerBoundSolver {
     settings: Settings,
@@ -80,7 +72,8 @@ impl StepLowerBoundSolver {
             return Some(u8::MAX);
         }
         hint = std::cmp::max(1, hint);
-        while self.quality_upper_bound(state, hint)? < self.settings.max_quality {
+        while hint != u8::MAX && self.quality_upper_bound(state, hint)? < self.settings.max_quality
+        {
             hint += 1;
         }
         Some(hint)
@@ -143,10 +136,10 @@ impl StepLowerBoundSolver {
         self.pareto_front_builder.push_empty();
         let search_actions = match reduced_state.progress_only {
             false => FULL_SEARCH_ACTIONS,
-            true => PROGRESS_SEARCH_ACTIONS,
+            true => PROGRESS_ONLY_SEARCH_ACTIONS,
         };
-        for action in search_actions.actions_iter() {
-            self.build_child_front(reduced_state, action)?;
+        for action in search_actions.iter() {
+            self.build_child_front(reduced_state, *action)?;
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -168,13 +161,16 @@ impl StepLowerBoundSolver {
         match reduced_state.combo {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
-                self.build_child_front(reduced_state, Action::MuscleMemory)?;
-                self.build_child_front(reduced_state, Action::Reflect)?;
-                self.build_child_front(reduced_state, Action::TrainedEye)?;
+                self.build_child_front(reduced_state, SolverAction::Single(Action::MuscleMemory))?;
+                self.build_child_front(reduced_state, SolverAction::Single(Action::Reflect))?;
+                self.build_child_front(reduced_state, SolverAction::Single(Action::TrainedEye))?;
             }
             Combo::BasicTouch => {
                 if !reduced_state.progress_only {
-                    self.build_child_front(reduced_state, Action::RefinedTouch)?;
+                    self.build_child_front(
+                        reduced_state,
+                        SolverAction::Single(Action::RefinedTouch),
+                    )?;
                 }
             }
             Combo::StandardTouch => unreachable!(),
@@ -183,16 +179,20 @@ impl StepLowerBoundSolver {
         Some(())
     }
 
-    fn build_child_front(&mut self, reduced_state: ReducedState, action: Action) -> Option<()> {
+    fn build_child_front(
+        &mut self,
+        reduced_state: ReducedState,
+        action: SolverAction,
+    ) -> Option<()> {
         if self.interrupt_signal.is_set() {
             return None;
         }
-
         if let Ok(new_full_state) =
-            reduced_state
-                .to_state()
-                .use_action(action, Condition::Normal, &self.settings)
+            use_solver_action(&self.settings, reduced_state.to_state(), action)
         {
+            if reduced_state.steps_budget < action.steps() {
+                return Some(());
+            }
             let action_progress = new_full_state.progress;
             let action_quality = new_full_state.quality;
             let progress_only = reduced_state.progress_only
@@ -203,10 +203,10 @@ impl StepLowerBoundSolver {
                 );
             let mut new_reduced_state = ReducedState::from_state(
                 new_full_state,
-                reduced_state.steps_budget - 1,
+                reduced_state.steps_budget - action.steps(),
                 progress_only,
             );
-            if action == Action::MasterMend {
+            if action == SolverAction::Single(Action::MasterMend) {
                 if new_reduced_state.durability >= 120 - self.bonus_durability_restore {
                     new_reduced_state.durability = 120;
                 } else {

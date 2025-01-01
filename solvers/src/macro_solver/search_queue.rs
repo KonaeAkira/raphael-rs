@@ -2,25 +2,17 @@ use std::collections::BTreeMap;
 
 use simulator::{Action, SimulationState};
 
-use crate::utils::Backtracking;
+use crate::{actions::SolverAction, utils::Backtracking};
 
 use super::pareto_front::{EffectParetoFront, QualityParetoFront};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
-    pub quality: u16,
-    pub steps: u8,
-    pub duration: u8,
-}
-
-impl SearchScore {
-    pub fn new(quality: u16, steps: u8, duration: u8) -> Self {
-        Self {
-            quality,
-            steps,
-            duration,
-        }
-    }
+    pub quality_upper_bound: u16,
+    pub steps_lower_bound: u8,
+    pub duration_lower_bound: u8,
+    pub current_steps: u8,
+    pub current_duration: u8,
 }
 
 impl std::cmp::PartialOrd for SearchScore {
@@ -31,17 +23,19 @@ impl std::cmp::PartialOrd for SearchScore {
 
 impl std::cmp::Ord for SearchScore {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.quality
-            .cmp(&other.quality)
-            .then(other.steps.cmp(&self.steps))
-            .then(other.duration.cmp(&self.duration))
+        self.quality_upper_bound
+            .cmp(&other.quality_upper_bound)
+            .then(other.steps_lower_bound.cmp(&self.steps_lower_bound))
+            .then(other.duration_lower_bound.cmp(&self.duration_lower_bound))
+            .then(other.current_steps.cmp(&self.current_steps))
+            .then(other.current_duration.cmp(&self.current_duration))
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 struct SearchNode {
     state: SimulationState,
-    action: Action,
+    action: SolverAction,
     parent_id: usize,
 }
 
@@ -49,7 +43,7 @@ pub struct SearchQueue {
     quality_pareto_front: QualityParetoFront,
     effect_pareto_front: EffectParetoFront,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
-    backtracking: Backtracking<Action>,
+    backtracking: Backtracking<SolverAction>,
     current_score: SearchScore,
     current_nodes: Vec<(SimulationState, usize)>,
     minimum_score: SearchScore,
@@ -92,7 +86,7 @@ impl SearchQueue {
         &mut self,
         state: SimulationState,
         score: SearchScore,
-        action: Action,
+        action: SolverAction,
         parent_id: usize,
     ) {
         assert!(self.current_score > score);
@@ -133,12 +127,8 @@ impl SearchQueue {
         Some((state, self.current_score, backtrack_id))
     }
 
-    pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = Action> {
+    pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = SolverAction> {
         self.backtracking.get_items(backtrack_id)
-    }
-
-    pub fn steps(&self, backtrack_id: usize) -> u8 {
-        self.backtracking.get_depth(backtrack_id)
     }
 }
 

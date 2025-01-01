@@ -1,19 +1,13 @@
 use radix_heap::RadixHeapMap;
-use simulator::{Action, ActionMask, Combo, Condition, Settings, SimulationState};
+use simulator::{Action, ActionMask, Combo, Settings, SimulationState};
 
 use crate::{
-    actions::{DURABILITY_ACTIONS, QUALITY_ACTIONS},
+    actions::{use_solver_action, SolverAction, QUALITY_ONLY_SEARCH_ACTIONS},
     finish_solver::FinishSolver,
     macro_solver::pareto_front::QualityParetoFront,
     utils::NamedTimer,
     QualityUpperBoundSolver,
 };
-
-const SEARCH_ACTIONS: ActionMask = QUALITY_ACTIONS
-    .union(DURABILITY_ACTIONS)
-    .remove(Action::StandardTouch) // non-combo version
-    .remove(Action::AdvancedTouch) // non-combo version
-    .remove(Action::DelicateSynthesis);
 
 pub fn fast_lower_bound(
     state: SimulationState,
@@ -22,7 +16,6 @@ pub fn fast_lower_bound(
     upper_bound_solver: &mut QualityUpperBoundSolver,
 ) -> Option<u16> {
     let _timer = NamedTimer::new("Fast lower bound");
-    let allowed_actions = settings.allowed_actions.intersection(SEARCH_ACTIONS);
 
     let mut search_queue: RadixHeapMap<u16, SimulationState> = RadixHeapMap::default();
     let mut pareto_set = QualityParetoFront::default();
@@ -35,17 +28,17 @@ pub fn fast_lower_bound(
         if score <= quality_lower_bound {
             break;
         }
-        for action in allowed_actions.actions_iter() {
-            if !should_use_action(action, &state, allowed_actions) {
+        for action in QUALITY_ONLY_SEARCH_ACTIONS.iter() {
+            if !should_use_action(*action, &state, settings.allowed_actions) {
                 continue;
             }
-            if let Ok(state) = state.use_action(action, Condition::Normal, settings) {
+            if let Ok(state) = use_solver_action(settings, state, *action) {
                 if !state.is_final(settings) {
                     if !finish_solver.can_finish(&state) {
                         continue;
                     }
                     quality_lower_bound = std::cmp::max(quality_lower_bound, state.quality);
-                    if action == Action::ByregotsBlessing {
+                    if *action == SolverAction::Single(Action::ByregotsBlessing) {
                         continue;
                     }
                     let quality_upper_bound = upper_bound_solver.quality_upper_bound(state)?;
@@ -65,7 +58,11 @@ pub fn fast_lower_bound(
     Some(std::cmp::min(settings.max_quality, quality_lower_bound))
 }
 
-fn should_use_action(action: Action, state: &SimulationState, allowed_actions: ActionMask) -> bool {
+fn should_use_action(
+    action: SolverAction,
+    state: &SimulationState,
+    allowed_actions: ActionMask,
+) -> bool {
     // Force the use of the next combo action if it is available
     match state.combo {
         Combo::None => (),
@@ -73,11 +70,15 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
             let combo_available = allowed_actions.has(Action::StandardTouch)
                 || allowed_actions.has(Action::RefinedTouch);
             return !combo_available
-                || matches!(action, Action::StandardTouch | Action::RefinedTouch);
+                || matches!(
+                    action,
+                    SolverAction::Single(Action::StandardTouch | Action::RefinedTouch)
+                );
         }
         Combo::StandardTouch => {
             let combo_available = allowed_actions.has(Action::AdvancedTouch);
-            return !combo_available || matches!(action, Action::AdvancedTouch);
+            return !combo_available
+                || matches!(action, SolverAction::Single(Action::AdvancedTouch));
         }
         Combo::SynthesisBegin => {
             let combo_available = allowed_actions.has(Action::Reflect)
@@ -86,19 +87,23 @@ fn should_use_action(action: Action, state: &SimulationState, allowed_actions: A
             return !combo_available
                 || matches!(
                     action,
-                    Action::Reflect | Action::MuscleMemory | Action::TrainedEye
+                    SolverAction::Single(
+                        Action::Reflect | Action::MuscleMemory | Action::TrainedEye
+                    )
                 );
         }
     }
 
     // Misc
     match action {
-        Action::Innovation => state.effects.innovation() == 0,
-        Action::Veneration => state.effects.veneration() == 0,
-        Action::Manipulation => state.effects.manipulation() == 0,
-        Action::WasteNot | Action::WasteNot2 => state.effects.waste_not() == 0,
-        Action::GreatStrides => state.effects.great_strides() == 0,
-        Action::TrainedPerfection => state.effects.waste_not() == 0,
+        SolverAction::Single(Action::Innovation) => state.effects.innovation() == 0,
+        SolverAction::Single(Action::Veneration) => state.effects.veneration() == 0,
+        SolverAction::Single(Action::Manipulation) => state.effects.manipulation() == 0,
+        SolverAction::Single(Action::WasteNot | Action::WasteNot2) => {
+            state.effects.waste_not() == 0
+        }
+        SolverAction::Single(Action::GreatStrides) => state.effects.great_strides() == 0,
+        SolverAction::Single(Action::TrainedPerfection) => state.effects.waste_not() == 0,
         _ => true,
     }
 }

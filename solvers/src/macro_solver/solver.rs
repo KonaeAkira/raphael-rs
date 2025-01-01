@@ -1,30 +1,32 @@
-use simulator::{Action, ActionMask, Condition, Settings, SimulationState};
+use simulator::{Action, Settings, SimulationState};
 
 use super::search_queue::SearchScore;
+use crate::actions::{
+    use_solver_action, SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS,
+};
 use crate::branch_pruning::{is_progress_only_state, strip_quality_effects};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
+use crate::utils::AtomicFlag;
 use crate::utils::NamedTimer;
-use crate::{
-    actions::{DURABILITY_ACTIONS, PROGRESS_ACTIONS, QUALITY_ACTIONS},
-    utils::AtomicFlag,
-};
 use crate::{FinishSolver, QualityUpperBoundSolver, StepLowerBoundSolver};
 
 use std::vec::Vec;
 
-const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(QUALITY_ACTIONS)
-    .union(DURABILITY_ACTIONS);
-
-const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(DURABILITY_ACTIONS)
-    .remove(Action::DelicateSynthesis);
-
 #[derive(Clone)]
 struct Solution {
     score: (SearchScore, u16),
-    actions: Vec<Action>,
+    solver_actions: Vec<SolverAction>,
+}
+
+impl Solution {
+    fn actions(&self) -> Vec<Action> {
+        let mut actions = Vec::new();
+        for solver_action in self.solver_actions.iter() {
+            actions.extend_from_slice(solver_action.actions());
+        }
+        actions
+    }
 }
 
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
@@ -84,26 +86,37 @@ impl<'a> MacroSolver<'a> {
         drop(timer);
 
         let _timer = NamedTimer::new("Full search");
-        self.do_solve(state)
+        Some(self.do_solve(state)?.actions())
     }
 
-    fn do_solve(&mut self, state: SimulationState) -> Option<Vec<Action>> {
+    fn do_solve(&mut self, state: SimulationState) -> Option<Solution> {
         let mut search_queue = {
             let _timer = NamedTimer::new("Initial upper bound");
             let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state)?;
-            let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                self.step_lower_bound_solver.step_lower_bound(state)?
-            } else {
-                1 // quality dominates the search score, so no need to query the step solver
+            let steps_lower_bound = match quality_upper_bound >= self.settings.max_quality {
+                true => self.step_lower_bound_solver.step_lower_bound(state)?,
+                false => 1, // quality dominates the search score, so no need to query the step solver
             };
-            let initial_score = SearchScore::new(quality_upper_bound, step_lower_bound, 0);
+            let initial_score = SearchScore {
+                quality_upper_bound,
+                steps_lower_bound,
+                duration_lower_bound: 0,
+                current_steps: 0,
+                current_duration: 0,
+            };
             let quality_lower_bound = fast_lower_bound(
                 state,
                 &self.settings,
                 &mut self.finish_solver,
                 &mut self.quality_upper_bound_solver,
             )?;
-            let minimum_score = SearchScore::new(quality_lower_bound, u8::MAX, u8::MAX);
+            let minimum_score = SearchScore {
+                quality_upper_bound: quality_lower_bound,
+                steps_lower_bound: u8::MAX,
+                duration_lower_bound: u8::MAX,
+                current_steps: u8::MAX,
+                current_duration: u8::MAX,
+            };
             SearchQueue::new(state, initial_score, minimum_score)
         };
 
@@ -123,43 +136,49 @@ impl<'a> MacroSolver<'a> {
             let progress_only =
                 is_progress_only_state(&state, self.backload_progress, self.unsound_branch_pruning);
             let search_actions = match progress_only {
-                true => PROGRESS_SEARCH_ACTIONS,
+                true => PROGRESS_ONLY_SEARCH_ACTIONS,
                 false => FULL_SEARCH_ACTIONS,
             };
 
-            let current_steps = search_queue.steps(backtrack_id);
-
-            for action in search_actions.actions_iter() {
-                if let Ok(state) = state.use_action(action, Condition::Normal, &self.settings) {
+            for action in search_actions.iter() {
+                if let Ok(state) = use_solver_action(&self.settings, state, *action) {
                     if !state.is_final(&self.settings) {
                         if !self.finish_solver.can_finish(&state) {
                             // skip this state if it is impossible to max out Progress
                             continue;
                         }
 
-                        search_queue.update_min_score(SearchScore::new(
-                            std::cmp::min(state.quality, self.settings.max_quality),
-                            u8::MAX,
-                            u8::MAX,
-                        ));
+                        search_queue.update_min_score(SearchScore {
+                            quality_upper_bound: std::cmp::min(
+                                state.quality,
+                                self.settings.max_quality,
+                            ),
+                            steps_lower_bound: u8::MAX,
+                            duration_lower_bound: u8::MAX,
+                            current_steps: u8::MAX,
+                            current_duration: u8::MAX,
+                        });
 
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {
                             self.settings.max_quality
                         } else {
                             std::cmp::min(
-                                score.quality,
+                                score.quality_upper_bound,
                                 self.quality_upper_bound_solver.quality_upper_bound(state)?,
                             )
                         };
 
-                        let step_lb_hint = score.steps.saturating_sub(current_steps + 1);
-                        let step_lower_bound = if quality_upper_bound >= self.settings.max_quality {
-                            self.step_lower_bound_solver
-                                .step_lower_bound_with_hint(state, step_lb_hint)?
-                                .saturating_add(current_steps + 1)
-                        } else {
-                            current_steps + 1
-                        };
+                        let step_lb_hint = score
+                            .steps_lower_bound
+                            .saturating_sub(score.current_steps + action.steps());
+                        let steps_lower_bound =
+                            match quality_upper_bound >= self.settings.max_quality {
+                                true => self
+                                    .step_lower_bound_solver
+                                    .step_lower_bound_with_hint(state, step_lb_hint)?
+                                    .saturating_add(score.current_steps + action.steps()),
+                                false => score.current_steps + action.steps(),
+                            };
 
                         let progress_only = is_progress_only_state(
                             &state,
@@ -172,43 +191,47 @@ impl<'a> MacroSolver<'a> {
                             } else {
                                 state
                             },
-                            SearchScore::new(
+                            SearchScore {
                                 quality_upper_bound,
-                                step_lower_bound,
-                                score.duration + action.time_cost() as u8,
-                            ),
-                            action,
+                                steps_lower_bound,
+                                duration_lower_bound: score.current_duration
+                                    + action.duration()
+                                    + 3,
+                                current_steps: score.current_steps + action.steps(),
+                                current_duration: score.current_duration + action.duration(),
+                            },
+                            *action,
                             backtrack_id,
                         );
                     } else if state.progress >= self.settings.max_progress {
-                        let solution_score = SearchScore::new(
-                            std::cmp::min(state.quality, self.settings.max_quality),
-                            current_steps + 1,
-                            score.duration,
-                        );
+                        let solution_score = SearchScore {
+                            quality_upper_bound: std::cmp::min(
+                                state.quality,
+                                self.settings.max_quality,
+                            ),
+                            steps_lower_bound: score.current_steps + action.steps(),
+                            duration_lower_bound: score.current_duration + action.duration(),
+                            current_steps: score.current_steps + action.steps(),
+                            current_duration: score.current_duration + action.duration(),
+                        };
                         search_queue.update_min_score(solution_score);
                         if solution.is_none()
                             || solution.as_ref().unwrap().score < (solution_score, state.quality)
                         {
                             solution = Some(Solution {
                                 score: (solution_score, state.quality),
-                                actions: search_queue
+                                solver_actions: search_queue
                                     .backtrack(backtrack_id)
-                                    .chain(std::iter::once(action))
+                                    .chain(std::iter::once(*action))
                                     .collect(),
                             });
-                            (self.solution_callback)(&solution.as_ref().unwrap().actions);
+                            (self.solution_callback)(&solution.as_ref().unwrap().actions());
                         }
                     }
                 }
             }
         }
 
-        if let Some(solution) = solution {
-            log::trace!("Solution actions: {:?}", &solution.actions);
-            Some(solution.actions)
-        } else {
-            None
-        }
+        solution
     }
 }

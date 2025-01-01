@@ -47,7 +47,7 @@ fn main() {
         .unwrap()
         .quality;
     let steps = actions.len();
-    let duration: i16 = actions.iter().map(|action| action.time_cost()).sum();
+    let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
 
     log::info!(
         "Solution - quality: {}, steps: {}, duration: {}",

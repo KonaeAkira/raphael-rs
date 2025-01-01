@@ -801,7 +801,7 @@ impl Combo {
 }
 
 impl Action {
-    pub const fn time_cost(self) -> i16 {
+    pub const fn time_cost(self) -> u8 {
         match self {
             Action::BasicSynthesis => 3,
             Action::BasicTouch => 3,

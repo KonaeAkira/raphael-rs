@@ -1,5 +1,5 @@
 use crate::{
-    actions::{PROGRESS_ACTIONS, QUALITY_ACTIONS},
+    actions::{SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
 use simulator::*;
@@ -7,16 +7,6 @@ use simulator::*;
 use rustc_hash::FxHashMap as HashMap;
 
 use super::state::ReducedState;
-
-const FULL_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .union(QUALITY_ACTIONS)
-    .add(Action::WasteNot)
-    .add(Action::WasteNot2);
-
-const PROGRESS_SEARCH_ACTIONS: ActionMask = PROGRESS_ACTIONS
-    .remove(Action::DelicateSynthesis)
-    .add(Action::WasteNot)
-    .add(Action::WasteNot2);
 
 pub struct SolverSettings {
     pub durability_cost: i16, // how much CP does it cost to restore 5 durability?
@@ -149,16 +139,15 @@ impl QualityUpperBoundSolver {
 
     fn solve_normal_state(&mut self, state: ReducedState) -> Option<()> {
         self.pareto_front_builder.push_empty();
-        let search_actions = if state.data.progress_only() {
-            PROGRESS_SEARCH_ACTIONS.intersection(self.simulator_settings.allowed_actions)
-        } else {
-            FULL_SEARCH_ACTIONS.intersection(self.simulator_settings.allowed_actions)
+        let search_actions = match state.data.progress_only() {
+            true => PROGRESS_ONLY_SEARCH_ACTIONS,
+            false => FULL_SEARCH_ACTIONS,
         };
-        for action in search_actions.actions_iter() {
-            if !self.should_use_action(state, action) {
+        for action in search_actions.iter() {
+            if !self.should_use_action(state, *action) {
                 continue;
             }
-            self.build_child_front(state, action)?;
+            self.build_child_front(state, *action)?;
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -180,23 +169,23 @@ impl QualityUpperBoundSolver {
         match state.data.combo() {
             Combo::None => unreachable!(),
             Combo::SynthesisBegin => {
-                self.build_child_front(state, Action::MuscleMemory)?;
-                self.build_child_front(state, Action::Reflect)?;
-                self.build_child_front(state, Action::TrainedEye)?;
+                self.build_child_front(state, SolverAction::Single(Action::MuscleMemory))?;
+                self.build_child_front(state, SolverAction::Single(Action::Reflect))?;
+                self.build_child_front(state, SolverAction::Single(Action::TrainedEye))?;
             }
             Combo::BasicTouch => {
-                self.build_child_front(state, Action::RefinedTouch)?;
-                self.build_child_front(state, Action::StandardTouch)?;
+                self.build_child_front(state, SolverAction::Single(Action::RefinedTouch))?;
+                self.build_child_front(state, SolverAction::Single(Action::StandardTouch))?;
             }
             Combo::StandardTouch => {
-                self.build_child_front(state, Action::AdvancedTouch)?;
+                self.build_child_front(state, SolverAction::Single(Action::AdvancedTouch))?;
             }
         }
 
         Some(())
     }
 
-    fn build_child_front(&mut self, state: ReducedState, action: Action) -> Option<()> {
+    fn build_child_front(&mut self, state: ReducedState, action: SolverAction) -> Option<()> {
         if self.interrupt_signal.is_set() {
             return None;
         }
@@ -228,10 +217,10 @@ impl QualityUpperBoundSolver {
         Some(())
     }
 
-    fn should_use_action(&self, state: ReducedState, action: Action) -> bool {
+    fn should_use_action(&self, state: ReducedState, action: SolverAction) -> bool {
         match action {
-            Action::WasteNot => state.data.cp() >= self.waste_not_1_min_cp,
-            Action::WasteNot2 => state.data.cp() >= self.waste_not_2_min_cp,
+            SolverAction::Single(Action::WasteNot) => state.data.cp() >= self.waste_not_1_min_cp,
+            SolverAction::Single(Action::WasteNot2) => state.data.cp() >= self.waste_not_2_min_cp,
             _ => true,
         }
     }

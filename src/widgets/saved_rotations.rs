@@ -137,7 +137,7 @@ impl<'a> RotationWidget<'a> {
                     .actions
                     .iter()
                     .map(|action| action.time_cost())
-                    .sum::<i16>();
+                    .sum::<u8>();
                 ui.label(format!(
                     "{} steps, {} seconds",
                     self.rotation.actions.len(),
