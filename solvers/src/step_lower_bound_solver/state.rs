@@ -22,9 +22,7 @@ impl ReducedState {
             .allowed_actions
             .remove(Action::Observe)
             .remove(Action::TricksOfTheTrade)
-            .remove(Action::Manipulation)
-            .remove(Action::TrainedPerfection)
-            .remove(Action::ImmaculateMend);
+            .remove(Action::TrainedPerfection);
         // WasteNot2 is always better than WasteNot because there is no CP cost
         if settings.is_action_allowed::<WasteNot2>() {
             settings.allowed_actions = settings.allowed_actions.remove(Action::WasteNot);
@@ -37,9 +35,15 @@ impl ReducedState {
         if settings.is_action_allowed::<AdvancedTouch>() {
             settings.allowed_actions = settings.allowed_actions.remove(Action::StandardTouch);
         }
+        // ImmaculateMend is always better than MasterMend because there is no CP cost
+        if settings.is_action_allowed::<ImmaculateMend>() {
+            settings.allowed_actions = settings.allowed_actions.remove(Action::MasterMend);
+        }
     }
 
     pub fn from_state(state: SimulationState, steps_budget: u8, progress_only: bool) -> Self {
+        let manipulation =
+            std::cmp::min(steps_budget.saturating_sub(1), state.effects.manipulation());
         let veneration = std::cmp::min(steps_budget, state.effects.veneration());
         let waste_not = if state.effects.waste_not() != 0 { 8 } else { 0 };
         let trained_perfection = match state.effects.trained_perfection() {
@@ -59,7 +63,7 @@ impl ReducedState {
             Self {
                 steps_budget,
                 progress_only,
-                durability: state.durability + 5 * state.effects.manipulation() as i8,
+                durability: state.durability,
                 combo,
                 effects: state
                     .effects
@@ -68,7 +72,7 @@ impl ReducedState {
                     .with_veneration(veneration)
                     .with_great_strides(0)
                     .with_waste_not(waste_not)
-                    .with_manipulation(0)
+                    .with_manipulation(manipulation)
                     .with_trained_perfection(trained_perfection)
                     .with_quick_innovation_used(true)
                     .with_guard(1),
@@ -83,7 +87,7 @@ impl ReducedState {
             Self {
                 steps_budget,
                 progress_only,
-                durability: state.durability + 5 * state.effects.manipulation() as i8,
+                durability: state.durability,
                 combo,
                 effects: state
                     .effects
@@ -91,7 +95,7 @@ impl ReducedState {
                     .with_veneration(veneration)
                     .with_great_strides(great_strides)
                     .with_waste_not(waste_not)
-                    .with_manipulation(0)
+                    .with_manipulation(manipulation)
                     .with_trained_perfection(trained_perfection)
                     .with_guard(1),
             }

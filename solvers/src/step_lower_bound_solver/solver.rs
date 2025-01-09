@@ -13,7 +13,6 @@ pub struct StepLowerBoundSolver {
     settings: Settings,
     backload_progress: bool,
     unsound_branch_pruning: bool,
-    bonus_durability_restore: i8,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
     interrupt_signal: AtomicFlag,
@@ -31,21 +30,11 @@ impl StepLowerBoundSolver {
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
-        let mut bonus_durability_restore = 0;
-        if settings.is_action_allowed::<ImmaculateMend>() {
-            bonus_durability_restore =
-                std::cmp::max(bonus_durability_restore, settings.max_durability - 35);
-        }
-        if settings.is_action_allowed::<Manipulation>() {
-            bonus_durability_restore = std::cmp::max(bonus_durability_restore, 10);
-            settings.max_durability += 40;
-        }
         ReducedState::optimize_action_mask(&mut settings);
         Self {
             settings,
             backload_progress,
             unsound_branch_pruning,
-            bonus_durability_restore,
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress,
@@ -201,18 +190,11 @@ impl StepLowerBoundSolver {
                     self.backload_progress,
                     self.unsound_branch_pruning,
                 );
-            let mut new_reduced_state = ReducedState::from_state(
+            let new_reduced_state = ReducedState::from_state(
                 new_full_state,
                 reduced_state.steps_budget - action.steps(),
                 progress_only,
             );
-            if action == SolverAction::Single(Action::MasterMend) {
-                if new_reduced_state.durability >= 120 - self.bonus_durability_restore {
-                    new_reduced_state.durability = 120;
-                } else {
-                    new_reduced_state.durability += self.bonus_durability_restore;
-                }
-            }
             if new_reduced_state.steps_budget != 0 && new_reduced_state.durability > 0 {
                 match self.solved_states.get(&new_reduced_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
