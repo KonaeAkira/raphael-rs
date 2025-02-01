@@ -15,6 +15,24 @@ pub struct SearchScore {
     pub current_duration: u8,
 }
 
+impl SearchScore {
+    pub const MIN: Self = Self {
+        quality_upper_bound: 0,
+        steps_lower_bound: u8::MAX,
+        duration_lower_bound: u8::MAX,
+        current_steps: u8::MAX,
+        current_duration: u8::MAX,
+    };
+
+    pub const MAX: Self = Self {
+        quality_upper_bound: u16::MAX,
+        steps_lower_bound: 0,
+        duration_lower_bound: 0,
+        current_steps: 0,
+        current_duration: 0,
+    };
+}
+
 impl std::cmp::PartialOrd for SearchScore {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(std::cmp::Ord::cmp(self, other))
@@ -50,17 +68,13 @@ pub struct SearchQueue {
 }
 
 impl SearchQueue {
-    pub fn new(
-        initial_state: SimulationState,
-        initial_score: SearchScore,
-        minimum_score: SearchScore,
-    ) -> Self {
+    pub fn new(initial_state: SimulationState, minimum_score: SearchScore) -> Self {
         Self {
             quality_pareto_front: Default::default(),
             effect_pareto_front: Default::default(),
             backtracking: Backtracking::new(),
             buckets: Default::default(),
-            current_score: initial_score,
+            current_score: SearchScore::MAX,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
             minimum_score,
         }
@@ -89,15 +103,15 @@ impl SearchQueue {
         action: SolverAction,
         parent_id: usize,
     ) {
+        #[cfg(test)]
         assert!(self.current_score > score);
-        if score < self.minimum_score {
-            return;
+        if score > self.minimum_score {
+            self.buckets.entry(score).or_default().push(SearchNode {
+                state,
+                action,
+                parent_id,
+            });
         }
-        self.buckets.entry(score).or_default().push(SearchNode {
-            state,
-            action,
-            parent_id,
-        });
     }
 
     pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {

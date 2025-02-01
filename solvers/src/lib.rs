@@ -16,15 +16,21 @@ pub use macro_solver::MacroSolver;
 mod utils;
 pub use utils::AtomicFlag;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SolverException {
+    NoSolution,
+    Interrupted,
+}
+
 pub mod test_utils {
-    use crate::{utils::AtomicFlag, MacroSolver};
+    use crate::{utils::AtomicFlag, MacroSolver, SolverException};
     use simulator::*;
 
     pub fn solve(
         settings: &Settings,
         backload_progress: bool,
         unsound_branch_pruning: bool,
-    ) -> Option<Vec<Action>> {
+    ) -> Result<Vec<Action>, SolverException> {
         MacroSolver::new(
             *settings,
             backload_progress,
@@ -39,7 +45,7 @@ pub mod test_utils {
     pub fn get_score_triple(settings: &Settings, actions: &[Action]) -> (u16, u8, u8) {
         let quality = get_quality(settings, actions);
         let steps = actions.len() as u8;
-        let duration: u8 = actions.iter().map(|action| action.time_cost() as u8).sum();
+        let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
         (quality, steps, duration)
     }
 

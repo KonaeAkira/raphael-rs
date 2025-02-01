@@ -6,7 +6,7 @@ use super::*;
 fn solve(settings: Settings, actions: &[Action]) -> u8 {
     let state = SimulationState::from_macro(&settings, actions).unwrap();
     StepLowerBoundSolver::new(settings, false, false, Default::default())
-        .step_lower_bound(state)
+        .step_lower_bound_with_hint(state, 0)
         .unwrap()
 }
 
@@ -486,11 +486,11 @@ fn monotonic_fuzz_check(settings: Settings) {
     let mut solver = StepLowerBoundSolver::new(settings, false, false, Default::default());
     for _ in 0..10000 {
         let state = random_state(&settings);
-        let state_lower_bound = solver.step_lower_bound(state).unwrap();
+        let state_lower_bound = solver.step_lower_bound_with_hint(state, 0).unwrap();
         for action in settings.allowed_actions.actions_iter() {
             let child_lower_bound = match state.use_action(action, Condition::Normal, &settings) {
                 Ok(child) => match child.is_final(&settings) {
-                    false => solver.step_lower_bound(child).unwrap(),
+                    false => solver.step_lower_bound_with_hint(child, 0).unwrap(),
                     true if child.progress >= settings.max_progress
                         && child.quality >= settings.max_quality =>
                     {

@@ -1,6 +1,6 @@
 use crate::app::{SolverEvent, SolverInput};
 use simulator::{Action, SimulationState};
-use solvers::{test_utils, AtomicFlag};
+use solvers::{test_utils, AtomicFlag, SolverException};
 use std::sync::{mpsc::Sender, LazyLock};
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -64,8 +64,8 @@ impl Worker {
                     self.send_event(tx.clone(), scope, id, SolverEvent::Progress(progress));
                 };
 
-                let mut solution = if config.minimize_steps {
-                    None // skip unsound solver
+                let mut result = if config.minimize_steps {
+                    Err(SolverException::NoSolution) // skip unsound solver
                 } else {
                     solvers::MacroSolver::new(
                         settings,
@@ -78,12 +78,17 @@ impl Worker {
                     .solve(SimulationState::new(&settings))
                 };
 
-                if solution.is_none()
-                    || test_utils::get_quality(&settings, solution.as_ref().unwrap().as_slice())
-                        < settings.max_quality
-                {
+                let result_acceptable = match &result {
+                    Ok(actions) => {
+                        test_utils::get_quality(&settings, actions) >= settings.max_quality
+                    }
+                    Err(SolverException::Interrupted) => true,
+                    Err(SolverException::NoSolution) => false,
+                };
+
+                if !result_acceptable {
                     progress_callback(0); // reset solver progress
-                    solution = solvers::MacroSolver::new(
+                    result = solvers::MacroSolver::new(
                         settings,
                         config.backload_progress,
                         false,
@@ -95,11 +100,11 @@ impl Worker {
                 }
 
                 let tx = self.tx.clone();
-                match solution {
-                    Some(actions) => {
+                match result {
+                    Ok(actions) => {
                         self.send_event(tx.clone(), scope, id, SolverEvent::FinalSolution(actions));
                     }
-                    None => {
+                    Err(_) => {
                         self.send_event(
                             tx.clone(),
                             scope,

@@ -9,7 +9,7 @@ use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::utils::AtomicFlag;
 use crate::utils::NamedTimer;
-use crate::{FinishSolver, QualityUpperBoundSolver, StepLowerBoundSolver};
+use crate::{FinishSolver, QualityUpperBoundSolver, SolverException, StepLowerBoundSolver};
 
 use std::vec::Vec;
 
@@ -78,46 +78,30 @@ impl<'a> MacroSolver<'a> {
 
     /// Returns a list of Actions that maximizes Quality of the completed state.
     /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
-    pub fn solve(&mut self, state: SimulationState) -> Option<Vec<Action>> {
+    pub fn solve(&mut self, state: SimulationState) -> Result<Vec<Action>, SolverException> {
         let timer = NamedTimer::new("Finish solver");
         if !self.finish_solver.can_finish(&state) {
-            return None;
+            return Err(SolverException::NoSolution);
         }
         drop(timer);
-
         let _timer = NamedTimer::new("Full search");
-        Some(self.do_solve(state)?.actions())
+        Ok(self.do_solve(state)?.actions())
     }
 
-    fn do_solve(&mut self, state: SimulationState) -> Option<Solution> {
+    fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
         let mut search_queue = {
-            let _timer = NamedTimer::new("Initial upper bound");
-            let quality_upper_bound = self.quality_upper_bound_solver.quality_upper_bound(state)?;
-            let steps_lower_bound = match quality_upper_bound >= self.settings.max_quality {
-                true => self.step_lower_bound_solver.step_lower_bound(state)?,
-                false => 1, // quality dominates the search score, so no need to query the step solver
-            };
-            let initial_score = SearchScore {
-                quality_upper_bound,
-                steps_lower_bound,
-                duration_lower_bound: 0,
-                current_steps: 0,
-                current_duration: 0,
-            };
             let quality_lower_bound = fast_lower_bound(
                 state,
                 &self.settings,
+                self.interrupt_signal.clone(),
                 &mut self.finish_solver,
                 &mut self.quality_upper_bound_solver,
             )?;
             let minimum_score = SearchScore {
                 quality_upper_bound: quality_lower_bound,
-                steps_lower_bound: u8::MAX,
-                duration_lower_bound: u8::MAX,
-                current_steps: u8::MAX,
-                current_duration: u8::MAX,
+                ..SearchScore::MIN
             };
-            SearchQueue::new(state, initial_score, minimum_score)
+            SearchQueue::new(state, minimum_score)
         };
 
         let mut solution: Option<Solution> = None;
@@ -125,7 +109,7 @@ impl<'a> MacroSolver<'a> {
         let mut popped = 0;
         while let Some((state, score, backtrack_id)) = search_queue.pop() {
             if self.interrupt_signal.is_set() {
-                return None;
+                return Err(SolverException::Interrupted);
             }
 
             popped += 1;
@@ -232,6 +216,9 @@ impl<'a> MacroSolver<'a> {
             }
         }
 
-        solution
+        match solution {
+            Some(solution) => Ok(solution),
+            None => Err(SolverException::NoSolution),
+        }
     }
 }

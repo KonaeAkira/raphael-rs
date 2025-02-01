@@ -1,6 +1,7 @@
 use crate::{
     actions::{SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    SolverException,
 };
 use simulator::*;
 
@@ -79,11 +80,7 @@ impl QualityUpperBoundSolver {
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Option<u16> {
-        if self.interrupt_signal.is_set() {
-            return None;
-        }
-
+    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u16, SolverException> {
         let current_quality = state.quality;
         let missing_progress = self
             .simulator_settings
@@ -99,7 +96,7 @@ impl QualityUpperBoundSolver {
             Some(id) => self.pareto_front_builder.retrieve(*id),
             None => {
                 self.pareto_front_builder.clear();
-                self.solve_state(reduced_state);
+                self.solve_state(reduced_state)?;
                 self.pareto_front_builder.peek().unwrap()
             }
         };
@@ -107,10 +104,10 @@ impl QualityUpperBoundSolver {
         match pareto_front.last() {
             Some(element) => {
                 if element.first < missing_progress {
-                    return Some(0);
+                    return Ok(0);
                 }
             }
-            None => return Some(0),
+            None => return Ok(0),
         }
 
         let index = match pareto_front.binary_search_by_key(&missing_progress, |value| value.first)
@@ -119,17 +116,16 @@ impl QualityUpperBoundSolver {
             Err(i) => i,
         };
 
-        Some(std::cmp::min(
+        Ok(std::cmp::min(
             self.simulator_settings.max_quality,
             pareto_front[index].second.saturating_add(current_quality),
         ))
     }
 
-    fn solve_state(&mut self, state: ReducedState) -> Option<()> {
+    fn solve_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
         if self.interrupt_signal.is_set() {
-            return None;
+            return Err(SolverException::Interrupted);
         }
-
         if state.data.combo() == Combo::None {
             self.solve_normal_state(state)
         } else {
@@ -137,7 +133,7 @@ impl QualityUpperBoundSolver {
         }
     }
 
-    fn solve_normal_state(&mut self, state: ReducedState) -> Option<()> {
+    fn solve_normal_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
         self.pareto_front_builder.push_empty();
         let search_actions = match state.data.progress_only() {
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
@@ -158,10 +154,10 @@ impl QualityUpperBoundSolver {
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(state, id);
 
-        Some(())
+        Ok(())
     }
 
-    fn solve_combo_state(&mut self, state: ReducedState) -> Option<()> {
+    fn solve_combo_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
         match self.solved_states.get(&state.drop_combo()) {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
             None => self.solve_normal_state(state.drop_combo())?,
@@ -182,14 +178,14 @@ impl QualityUpperBoundSolver {
             }
         }
 
-        Some(())
+        Ok(())
     }
 
-    fn build_child_front(&mut self, state: ReducedState, action: SolverAction) -> Option<()> {
-        if self.interrupt_signal.is_set() {
-            return None;
-        }
-
+    fn build_child_front(
+        &mut self,
+        state: ReducedState,
+        action: SolverAction,
+    ) -> Result<(), SolverException> {
         if let Ok((new_state, action_progress, action_quality)) =
             state.use_action(action, &self.simulator_settings, &self.solver_settings)
         {
@@ -214,7 +210,7 @@ impl QualityUpperBoundSolver {
             }
         }
 
-        Some(())
+        Ok(())
     }
 
     fn should_use_action(&self, state: ReducedState, action: SolverAction) -> bool {

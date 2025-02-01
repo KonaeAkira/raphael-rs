@@ -1,5 +1,5 @@
 use simulator::*;
-use solvers::test_utils::*;
+use solvers::{test_utils::*, SolverException};
 
 #[test]
 fn unsolvable() {
@@ -18,7 +18,7 @@ fn unsolvable() {
         adversarial: false,
     };
     let actions = solve(&settings, false, false);
-    assert_eq!(actions, None);
+    assert_eq!(actions, Err(SolverException::NoSolution));
 }
 
 #[test]

@@ -6,15 +6,16 @@ use crate::{
     finish_solver::FinishSolver,
     macro_solver::pareto_front::QualityParetoFront,
     utils::NamedTimer,
-    QualityUpperBoundSolver,
+    AtomicFlag, QualityUpperBoundSolver, SolverException,
 };
 
 pub fn fast_lower_bound(
     state: SimulationState,
     settings: &Settings,
+    interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut QualityUpperBoundSolver,
-) -> Option<u16> {
+) -> Result<u16, SolverException> {
     let _timer = NamedTimer::new("Fast lower bound");
 
     let mut search_queue: RadixHeapMap<u16, SimulationState> = RadixHeapMap::default();
@@ -25,6 +26,9 @@ pub fn fast_lower_bound(
     search_queue.push(upper_bound_solver.quality_upper_bound(state)?, state);
 
     while let Some((score, state)) = search_queue.pop() {
+        if interrupt_signal.is_set() {
+            return Err(SolverException::Interrupted);
+        }
         if score <= quality_lower_bound {
             break;
         }
@@ -55,7 +59,7 @@ pub fn fast_lower_bound(
     }
 
     log::debug!("Fast quality lower bound: {}", quality_lower_bound);
-    Some(std::cmp::min(settings.max_quality, quality_lower_bound))
+    Ok(std::cmp::min(settings.max_quality, quality_lower_bound))
 }
 
 fn should_use_action(

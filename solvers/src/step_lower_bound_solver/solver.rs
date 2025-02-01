@@ -2,6 +2,7 @@ use crate::{
     actions::{use_solver_action, SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     branch_pruning::is_progress_only_state,
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    SolverException,
 };
 use simulator::*;
 
@@ -44,35 +45,30 @@ impl StepLowerBoundSolver {
         }
     }
 
-    /// Returns a lower-bound on the additional steps required to max out both Progress and Quality from this state.
-    pub fn step_lower_bound(&mut self, state: SimulationState) -> Option<u8> {
-        self.step_lower_bound_with_hint(state, 1)
-    }
-
     pub fn step_lower_bound_with_hint(
         &mut self,
         state: SimulationState,
         mut hint: u8,
-    ) -> Option<u8> {
+    ) -> Result<u8, SolverException> {
         if self.backload_progress
             && state.progress != 0
             && state.quality < self.settings.max_quality
         {
-            return Some(u8::MAX);
+            return Ok(u8::MAX);
         }
         hint = std::cmp::max(1, hint);
         while hint != u8::MAX && self.quality_upper_bound(state, hint)? < self.settings.max_quality
         {
             hint += 1;
         }
-        Some(hint)
+        Ok(hint)
     }
 
-    fn quality_upper_bound(&mut self, state: SimulationState, step_budget: u8) -> Option<u16> {
-        if self.interrupt_signal.is_set() {
-            return None;
-        }
-
+    fn quality_upper_bound(
+        &mut self,
+        state: SimulationState,
+        step_budget: u8,
+    ) -> Result<u16, SolverException> {
         let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
@@ -84,7 +80,7 @@ impl StepLowerBoundSolver {
             Some(id) => self.pareto_front_builder.retrieve(*id),
             None => {
                 self.pareto_front_builder.clear();
-                self.solve_state(reduced_state);
+                self.solve_state(reduced_state)?;
                 self.pareto_front_builder.peek().unwrap()
             }
         };
@@ -92,10 +88,10 @@ impl StepLowerBoundSolver {
         match pareto_front.last() {
             Some(element) => {
                 if element.first < missing_progress {
-                    return Some(0);
+                    return Ok(0);
                 }
             }
-            None => return Some(0),
+            None => return Ok(0),
         }
 
         let index = match pareto_front.binary_search_by_key(&missing_progress, |value| value.first)
@@ -103,17 +99,16 @@ impl StepLowerBoundSolver {
             Ok(i) => i,
             Err(i) => i,
         };
-        Some(std::cmp::min(
+        Ok(std::cmp::min(
             self.settings.max_quality.saturating_mul(2),
             pareto_front[index].second.saturating_add(current_quality),
         ))
     }
 
-    fn solve_state(&mut self, reduced_state: ReducedState) -> Option<()> {
+    fn solve_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
         if self.interrupt_signal.is_set() {
-            return None;
+            return Err(SolverException::Interrupted);
         }
-
         if reduced_state.combo == Combo::None {
             self.solve_normal_state(reduced_state)
         } else {
@@ -121,7 +116,7 @@ impl StepLowerBoundSolver {
         }
     }
 
-    fn solve_normal_state(&mut self, reduced_state: ReducedState) -> Option<()> {
+    fn solve_normal_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
         self.pareto_front_builder.push_empty();
         let search_actions = match reduced_state.progress_only {
             false => FULL_SEARCH_ACTIONS,
@@ -139,10 +134,10 @@ impl StepLowerBoundSolver {
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(reduced_state, id);
 
-        Some(())
+        Ok(())
     }
 
-    fn solve_combo_state(&mut self, reduced_state: ReducedState) -> Option<()> {
+    fn solve_combo_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
         match self.solved_states.get(&reduced_state.to_non_combo()) {
             Some(id) => self.pareto_front_builder.push_from_id(*id),
             None => self.solve_normal_state(reduced_state.to_non_combo())?,
@@ -165,22 +160,19 @@ impl StepLowerBoundSolver {
             Combo::StandardTouch => unreachable!(),
         }
 
-        Some(())
+        Ok(())
     }
 
     fn build_child_front(
         &mut self,
         reduced_state: ReducedState,
         action: SolverAction,
-    ) -> Option<()> {
-        if self.interrupt_signal.is_set() {
-            return None;
-        }
+    ) -> Result<(), SolverException> {
         if let Ok(new_full_state) =
             use_solver_action(&self.settings, reduced_state.to_state(), action)
         {
             if reduced_state.steps_budget < action.steps() {
-                return Some(());
+                return Ok(());
             }
             let action_progress = new_full_state.progress;
             let action_quality = new_full_state.quality;
@@ -213,6 +205,6 @@ impl StepLowerBoundSolver {
             }
         }
 
-        Some(())
+        Ok(())
     }
 }
