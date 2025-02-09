@@ -13,22 +13,14 @@ simulator = { path = "simulator", features = ["serde"] }
 solvers = { path = "solvers" }
 game-data = { path = "game_data", features = ["serde"] }
 
-egui = "0.30.0"
-
-eframe = { version = "0.30.0", features = ["persistence"] }
-egui_extras = { version = "0.30.0", features = ["all_loaders"] }
-egui_plot = "0.30.0"
-image = { version = "0.25", default-features = false, features = ["webp"] }
-serde = { version = "1.0.215", features = ["derive"] }
+egui = "0.31"
+eframe = { version = "0.31", features = ["persistence"] }
+egui_extras = { version = "0.31", features = ["http", "webp"] }
+egui_plot = "0.31"
+serde = { version = "1.0", features = ["derive"] }
 ron = "0.8"
 log = "0.4"
-rand = "0.8.5"
-
-# workaround for https://github.com/emilk/egui/issues/5491
-# remove after updating to egui 0.30.1
-profiling = { version = "1.0.16", features = [
-    "type-check",
-], default-features = false }
+rand = "0.8"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11.5"
@@ -38,8 +30,7 @@ wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 gloo-worker = { version = "0.5.0", features = ["futures"] }
 web-time = "1.1.0"
-# web-sys doesn't follow semver, so version needs to be pinned (https://github.com/emilk/egui/issues/4961)
-web-sys = "=0.3.76"
+web-sys = "0.3"
 getrandom = { version = "0.2.15", features = ["js"] }
 
 [[bin]]
@@ -47,8 +38,11 @@ name = "webworker"
 path = "src/webworker.rs"
 
 [profile.release]
+opt-level = 3
 lto = "fat"
+overflow-checks = false
 
 [profile.test]
 opt-level = 3
+lto = "thin"
 overflow-checks = true

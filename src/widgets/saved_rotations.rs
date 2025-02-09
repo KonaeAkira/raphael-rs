@@ -199,7 +199,7 @@ impl<'a> RotationWidget<'a> {
                     for action in self.rotation.actions.iter() {
                         let image = util::get_action_icon(*action, self.rotation.job_id)
                             .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
-                            .rounding(4.0);
+                            .corner_radius(4.0);
                         ui.add(image)
                             .on_hover_text(game_data::action_name(*action, self.locale));
                     }

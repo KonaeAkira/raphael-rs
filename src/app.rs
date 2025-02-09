@@ -508,7 +508,7 @@ impl MacroSolverApp {
                 self.draw_configuration_widget(ui);
                 ui.separator();
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                    if ui.button("History").clicked() {
+                    if ui.button("📑").clicked() {
                         self.saved_rotations_window_open = true;
                     }
                     ui.add_space(-5.0);

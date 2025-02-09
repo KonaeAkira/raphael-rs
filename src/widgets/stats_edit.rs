@@ -66,9 +66,8 @@ impl Widget for StatsEdit<'_> {
                 let button_response =
                     ui.add_enabled(button_enabled, egui::Button::new("🗐 Copy crafter config"));
                 if button_response.clicked() {
-                    ui.output_mut(|output| {
-                        output.copied_text = ron::to_string(self.crafter_config).unwrap()
-                    });
+                    ui.ctx()
+                        .copy_text(ron::to_string(self.crafter_config).unwrap());
                     ui.ctx().animate_bool_with_time(copy_id, true, 0.0);
                 }
 

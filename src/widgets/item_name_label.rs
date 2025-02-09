@@ -35,17 +35,17 @@ impl egui::Widget for ItemNameLabel {
             }
             let mut selection_made = false;
             if ui.button("Copy item name").clicked() {
-                let copy_item_name: String = self
+                let copy_item_name = self
                     .text
                     .trim_end_matches([' ', game_data::HQ_ICON_CHAR, game_data::CL_ICON_CHAR])
                     .to_string();
-                ui.output_mut(|output| output.copied_text = copy_item_name);
+                ui.ctx().copy_text(copy_item_name);
                 ui.close_menu();
                 selection_made = true;
             }
             ui.separator();
             if ui.button("Copy item ID").clicked() {
-                ui.output_mut(|output| output.copied_text = self.item_id.to_string());
+                ui.ctx().copy_text(self.item_id.to_string());
                 ui.close_menu();
                 selection_made = true;
             }

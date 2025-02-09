@@ -78,7 +78,7 @@ impl Widget for MacroTextBox {
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     if ui.ctx().animate_bool_with_time(id, false, 2.0) == 0.0 {
                         if ui.button("Copy").clicked() {
-                            ui.output_mut(|output| output.copied_text = self.text);
+                            ui.ctx().copy_text(self.text);
                             ui.ctx().animate_bool_with_time(id, true, 0.0);
                         }
                     } else {

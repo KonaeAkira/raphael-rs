@@ -102,7 +102,7 @@ impl Simulator<'_> {
                             state.progress,
                             self.settings.max_progress,
                         ))
-                        .rounding(egui::Rounding::ZERO),
+                        .corner_radius(0),
                     );
                 });
 
@@ -114,7 +114,7 @@ impl Simulator<'_> {
                     ui.add(
                         egui::ProgressBar::new(quality as f32 / self.settings.max_quality as f32)
                             .text(progress_bar_text(quality, self.settings.max_quality))
-                            .rounding(egui::Rounding::ZERO),
+                            .corner_radius(0),
                     );
                 });
 
@@ -130,7 +130,7 @@ impl Simulator<'_> {
                             state.durability,
                             self.settings.max_durability,
                         ))
-                        .rounding(egui::Rounding::ZERO),
+                        .corner_radius(0),
                     );
                 });
 
@@ -141,7 +141,7 @@ impl Simulator<'_> {
                     ui.add(
                         egui::ProgressBar::new(state.cp as f32 / self.settings.max_cp as f32)
                             .text(progress_bar_text(state.cp, self.settings.max_cp))
-                            .rounding(egui::Rounding::ZERO),
+                            .corner_radius(0),
                     );
                 });
 
@@ -193,7 +193,7 @@ impl Simulator<'_> {
                         let image =
                             util::get_action_icon(*action, self.crafter_config.selected_job)
                                 .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
-                                .rounding(4.0)
+                                .corner_radius(4.0)
                                 .tint(match error {
                                     Ok(_) => egui::Color32::WHITE,
                                     Err(_) => egui::Color32::DARK_GRAY,
