@@ -513,7 +513,11 @@ impl MacroSolverApp {
                     }
                     ui.add_space(-5.0);
                     ui.vertical_centered_justified(|ui| {
-                        if ui.button("Solve").clicked() {
+                        let text_color = ui.ctx().style().visuals.selection.stroke.color;
+                        let text = egui::RichText::new("Solve").color(text_color);
+                        let fill_color = ui.ctx().style().visuals.selection.bg_fill;
+                        let button = ui.add(egui::Button::new(text).fill(fill_color));
+                        if button.clicked() {
                             self.on_solve_button_clicked(ui.ctx());
                         }
                     });
