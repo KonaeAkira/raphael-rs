@@ -97,6 +97,7 @@ impl SavedRotationsData {
 struct RotationWidget<'a> {
     locale: Locale,
     pinned: &'a mut bool,
+    deleted: &'a mut bool,
     rotation: &'a Rotation,
     actions: &'a mut Vec<Action>,
 }
@@ -105,12 +106,14 @@ impl<'a> RotationWidget<'a> {
     pub fn new(
         locale: Locale,
         pinned: &'a mut bool,
+        deleted: &'a mut bool,
         rotation: &'a Rotation,
         actions: &'a mut Vec<Action>,
     ) -> Self {
         Self {
             locale,
             pinned,
+            deleted,
             rotation,
             actions,
         }
@@ -125,8 +128,15 @@ impl<'a> RotationWidget<'a> {
             util::collapse_temporary(ui, self.id_salt("collapsed").into(), collapsed);
             ui.label(egui::RichText::new(&self.rotation.name).strong());
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button("📌").clicked() {
-                    *self.pinned = !*self.pinned;
+                if ui.add(egui::Button::new("🗑")).clicked() {
+                    *self.deleted = true;
+                }
+                ui.add_space(-3.0);
+                if ui
+                    .add_enabled(!*self.pinned, egui::Button::new("📌"))
+                    .clicked()
+                {
+                    *self.pinned = true;
                 }
                 ui.add_space(-3.0);
                 if ui.button("Load").clicked() {
@@ -251,34 +261,23 @@ impl egui::Widget for SavedRotationsWidget<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.label(
-                    egui::RichText::new("⚠ NOT A PERMANENT STORAGE ⚠\nRotations shown here may be lost between sessions.")
-                        .small()
-                        .color(ui.visuals().warn_fg_color),
-                );
-                ui.add_space(3.0);
-
                 ui.group(|ui| {
-                    ui.label(egui::RichText::new("Pinned rotations").strong());
+                    ui.label(egui::RichText::new("Saved macros").strong());
                     ui.separator();
                     if self.rotations.pinned.is_empty() {
-                        ui.label("No pinned rotations");
+                        ui.label("No saved macros");
                     }
-                    let mut index = 0;
-                    while index < self.rotations.pinned.len() {
-                        let mut pinned = false;
+                    self.rotations.pinned.retain(|rotation| {
+                        let mut deleted = false;
                         ui.add(RotationWidget::new(
                             self.locale,
-                            &mut pinned,
-                            &self.rotations.pinned[index],
+                            &mut true,
+                            &mut deleted,
+                            rotation,
                             self.actions,
                         ));
-                        if pinned {
-                            self.rotations.pinned.remove(index);
-                        } else {
-                            index += 1;
-                        }
-                    }
+                        !deleted
+                    });
                 });
 
                 ui.add_space(5.0);
@@ -287,7 +286,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     ui.horizontal(|ui| {
                         ui.label(egui::RichText::new("Solve history").strong());
                         ui.label(format!(
-                            "({} / {})",
+                            "({}/{})",
                             self.rotations.solve_history.len(),
                             SavedRotationsData::MAX_HISTORY_SIZE
                         ));
@@ -296,18 +295,21 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     if self.rotations.solve_history.is_empty() {
                         ui.label("No solve history");
                     }
-                    for rotation in self.rotations.solve_history.iter() {
+                    self.rotations.solve_history.retain(|rotation| {
                         let mut pinned = false;
+                        let mut deleted = false;
                         ui.add(RotationWidget::new(
                             self.locale,
                             &mut pinned,
+                            &mut deleted,
                             rotation,
                             self.actions,
                         ));
                         if pinned {
                             self.rotations.pinned.push(rotation.clone());
                         }
-                    }
+                        !pinned && !deleted
+                    });
                 });
             });
         })

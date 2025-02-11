@@ -116,7 +116,7 @@ impl MacroSolverApp {
         cc.egui_ctx.style_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
             style.url_in_tooltip = true;
-            style.always_scroll_the_only_direction = true;
+            style.always_scroll_the_only_direction = false;
             style.spacing.item_spacing = egui::vec2(8.0, 8.0);
         });
 
@@ -183,7 +183,7 @@ impl eframe::App for MacroSolverApp {
                             ));
                         });
                         if self.solver_progress == 0 {
-                            ui.label("computing dp tables");
+                            ui.label("Computing ...");
                         } else {
                             // format with thousands separator
                             let num = self
@@ -370,7 +370,7 @@ impl eframe::App for MacroSolverApp {
         });
 
         egui::Window::new(
-            egui::RichText::new("Saved rotations")
+            egui::RichText::new("Saved macros & solve history")
                 .strong()
                 .text_style(TextStyle::Body),
         )
