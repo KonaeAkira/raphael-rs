@@ -457,10 +457,6 @@ impl MacroSolverApp {
         let item = game_data::ITEMS
             .get(&self.recipe_config.recipe.item_id)
             .unwrap();
-        let target_quality = self
-            .solver_config
-            .quality_target
-            .get_target(game_settings.max_quality);
         ui.add(Simulator::new(
             &game_settings,
             initial_quality,
@@ -470,13 +466,17 @@ impl MacroSolverApp {
             item,
             self.locale,
         ));
-        ui.add(SolutionAnalysis::new(
-            game_settings,
-            initial_quality,
-            target_quality,
-            &self.actions,
-            self.recipe_config.recipe.is_expert,
-        ));
+        // let target_quality = self
+        //     .solver_config
+        //     .quality_target
+        //     .get_target(game_settings.max_quality);
+        // ui.add(SolutionAnalysis::new(
+        //     game_settings,
+        //     initial_quality,
+        //     target_quality,
+        //     &self.actions,
+        //     self.recipe_config.recipe.is_expert,
+        // ));
     }
 
     fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {
