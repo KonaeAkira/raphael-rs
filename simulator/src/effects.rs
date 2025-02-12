@@ -33,7 +33,7 @@ pub struct Effects {
     #[bits(2, default=SingleUse::Available)]
     pub heart_and_soul: SingleUse,
     #[bits(1)]
-    pub quick_innovation_used: bool,
+    pub quick_innovation_available: bool,
     #[bits(4)]
     pub inner_quiet: u8,
     #[bits(4)]
@@ -63,7 +63,7 @@ impl Effects {
             } else {
                 SingleUse::Unavailable
             })
-            .with_quick_innovation_used(!settings.allowed_actions.has(Action::QuickInnovation))
+            .with_quick_innovation_available(settings.allowed_actions.has(Action::QuickInnovation))
     }
 
     pub fn tick_down(&mut self) {

@@ -57,7 +57,7 @@ impl ReducedState {
                     .with_waste_not(waste_not)
                     .with_manipulation(manipulation)
                     .with_trained_perfection(trained_perfection)
-                    .with_quick_innovation_used(true)
+                    .with_quick_innovation_available(false)
                     .with_guard(1),
             }
         } else {

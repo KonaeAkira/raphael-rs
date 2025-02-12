@@ -694,14 +694,14 @@ impl ActionImpl for QuickInnovation {
         if state.effects.innovation() != 0 {
             return Err("Quick Innovation cannot be used while Innovation is active.");
         }
-        if state.effects.quick_innovation_used() {
+        if !state.effects.quick_innovation_available() {
             return Err("Quick Innovation can only be used once per synthesis.");
         }
         Ok(())
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_innovation(1);
-        state.effects.set_quick_innovation_used(true);
+        state.effects.set_quick_innovation_available(false);
     }
 }
 

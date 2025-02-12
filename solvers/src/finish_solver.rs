@@ -23,7 +23,7 @@ impl ReducedState {
                 .with_innovation(0)
                 .with_great_strides(0)
                 .with_guard(0)
-                .with_quick_innovation_used(true),
+                .with_quick_innovation_available(false),
             combo: state.combo,
         }
     }

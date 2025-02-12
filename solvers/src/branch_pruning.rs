@@ -24,7 +24,7 @@ pub fn strip_quality_effects(state: SimulationState) -> SimulationState {
             .with_innovation(0)
             .with_great_strides(0)
             .with_guard(0)
-            .with_quick_innovation_used(true),
+            .with_quick_innovation_available(false),
         combo: match state.combo {
             Combo::None => Combo::None,
             Combo::SynthesisBegin => Combo::SynthesisBegin,
