@@ -5,18 +5,10 @@ pub struct ReducedState {
     pub steps_budget: u8,
     pub progress_only: bool,
     pub durability: i8,
-    pub combo: Combo,
     pub effects: Effects,
 }
 
 impl ReducedState {
-    pub fn to_non_combo(self) -> Self {
-        Self {
-            combo: Combo::None,
-            ..self
-        }
-    }
-
     pub fn optimize_action_mask(settings: &mut Settings) {
         settings.allowed_actions = settings
             .allowed_actions
@@ -51,20 +43,11 @@ impl ReducedState {
             SingleUse::Available => SingleUse::Unavailable,
             SingleUse::Active => SingleUse::Active,
         };
-        let combo = match state.combo {
-            Combo::None => Combo::None,
-            Combo::SynthesisBegin => Combo::SynthesisBegin,
-            // Can't optimize this combo away because there is no replacement for RefinedTouch
-            Combo::BasicTouch => Combo::BasicTouch,
-            // AdvancedTouch replaces ComboAdvancedTouch (no CP cost)
-            Combo::StandardTouch => Combo::None,
-        };
         if progress_only {
             Self {
                 steps_budget,
                 progress_only,
                 durability: state.durability,
-                combo,
                 effects: state
                     .effects
                     .with_inner_quiet(0)
@@ -88,7 +71,6 @@ impl ReducedState {
                 steps_budget,
                 progress_only,
                 durability: state.durability,
-                combo,
                 effects: state
                     .effects
                     .with_innovation(innovation)
@@ -110,7 +92,7 @@ impl ReducedState {
             quality: 0,
             unreliable_quality: 0,
             effects: self.effects,
-            combo: self.combo,
+            combo: Combo::None,
         }
     }
 }

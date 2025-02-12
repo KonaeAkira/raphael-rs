@@ -2,7 +2,7 @@ use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::actions::{use_solver_action, FULL_SEARCH_ACTIONS};
+use crate::actions::{use_action_combo, FULL_SEARCH_ACTIONS};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
@@ -72,7 +72,7 @@ impl FinishSolver {
                 let mut max_progress = 0;
                 for action in FULL_SEARCH_ACTIONS.iter() {
                     if let Ok(new_state) =
-                        use_solver_action(&self.settings, state.to_state(), *action)
+                        use_action_combo(&self.settings, state.to_state(), *action)
                     {
                         if !new_state.is_final(&self.settings) {
                             let child_progress =

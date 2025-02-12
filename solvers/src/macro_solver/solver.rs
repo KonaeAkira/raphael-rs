@@ -2,7 +2,7 @@ use simulator::{Action, Settings, SimulationState};
 
 use super::search_queue::SearchScore;
 use crate::actions::{
-    use_solver_action, SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS,
+    use_action_combo, ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS,
 };
 use crate::branch_pruning::{is_progress_only_state, strip_quality_effects};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
@@ -16,7 +16,7 @@ use std::vec::Vec;
 #[derive(Clone)]
 struct Solution {
     score: (SearchScore, u16),
-    solver_actions: Vec<SolverAction>,
+    solver_actions: Vec<ActionCombo>,
 }
 
 impl Solution {
@@ -125,7 +125,7 @@ impl<'a> MacroSolver<'a> {
             };
 
             for action in search_actions.iter() {
-                if let Ok(state) = use_solver_action(&self.settings, state, *action) {
+                if let Ok(state) = use_action_combo(&self.settings, state, *action) {
                     if !state.is_final(&self.settings) {
                         if !self.finish_solver.can_finish(&state) {
                             // skip this state if it is impossible to max out Progress

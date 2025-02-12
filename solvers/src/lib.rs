@@ -20,6 +20,7 @@ pub use utils::AtomicFlag;
 pub enum SolverException {
     NoSolution,
     Interrupted,
+    InternalError(&'static str),
 }
 
 pub mod test_utils {

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use simulator::{Action, SimulationState};
 
-use crate::{actions::SolverAction, utils::Backtracking};
+use crate::{actions::ActionCombo, utils::Backtracking};
 
 use super::pareto_front::{EffectParetoFront, QualityParetoFront};
 
@@ -53,7 +53,7 @@ impl std::cmp::Ord for SearchScore {
 #[derive(Debug, Clone, Copy)]
 struct SearchNode {
     state: SimulationState,
-    action: SolverAction,
+    action: ActionCombo,
     parent_id: usize,
 }
 
@@ -61,7 +61,7 @@ pub struct SearchQueue {
     quality_pareto_front: QualityParetoFront,
     effect_pareto_front: EffectParetoFront,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
-    backtracking: Backtracking<SolverAction>,
+    backtracking: Backtracking<ActionCombo>,
     current_score: SearchScore,
     current_nodes: Vec<(SimulationState, usize)>,
     minimum_score: SearchScore,
@@ -100,7 +100,7 @@ impl SearchQueue {
         &mut self,
         state: SimulationState,
         score: SearchScore,
-        action: SolverAction,
+        action: ActionCombo,
         parent_id: usize,
     ) {
         #[cfg(test)]
@@ -141,7 +141,7 @@ impl SearchQueue {
         Some((state, self.current_score, backtrack_id))
     }
 
-    pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = SolverAction> {
+    pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = ActionCombo> {
         self.backtracking.get_items(backtrack_id)
     }
 }

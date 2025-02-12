@@ -1,10 +1,15 @@
 use rand::Rng;
 use simulator::*;
 
+use crate::actions::{use_action_combo, FULL_SEARCH_ACTIONS};
+
 use super::*;
 
 fn solve(settings: Settings, actions: &[Action]) -> u8 {
-    let state = SimulationState::from_macro(&settings, actions).unwrap();
+    let state = SimulationState {
+        combo: Combo::None,
+        ..SimulationState::from_macro(&settings, actions).unwrap()
+    };
     StepLowerBoundSolver::new(settings, false, false, Default::default())
         .step_lower_bound_with_hint(state, 0)
         .unwrap()
@@ -384,7 +389,7 @@ fn test_09() {
         adversarial: false,
     };
     let result = solve(settings, &[]);
-    assert_eq!(result, 16);
+    assert_eq!(result, 17);
 }
 
 #[test]
@@ -446,7 +451,7 @@ fn test_12() {
         adversarial: false,
     };
     let result = solve(settings, &[]);
-    assert_eq!(result, 5);
+    assert_eq!(result, 11);
 }
 
 fn random_effects(adversarial: bool) -> Effects {
@@ -466,7 +471,6 @@ fn random_effects(adversarial: bool) -> Effects {
 }
 
 fn random_state(settings: &Settings) -> SimulationState {
-    const COMBOS: [Combo; 3] = [Combo::None, Combo::BasicTouch, Combo::StandardTouch];
     SimulationState {
         cp: rand::thread_rng().gen_range(0..=settings.max_cp),
         durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
@@ -474,7 +478,7 @@ fn random_state(settings: &Settings) -> SimulationState {
         quality: 0,
         unreliable_quality: 0,
         effects: random_effects(settings.adversarial),
-        combo: COMBOS[rand::thread_rng().gen_range(0..3)],
+        combo: Combo::None,
     }
     .try_into()
     .unwrap()
@@ -487,8 +491,8 @@ fn monotonic_fuzz_check(settings: Settings) {
     for _ in 0..10000 {
         let state = random_state(&settings);
         let state_lower_bound = solver.step_lower_bound_with_hint(state, 0).unwrap();
-        for action in settings.allowed_actions.actions_iter() {
-            let child_lower_bound = match state.use_action(action, Condition::Normal, &settings) {
+        for action in FULL_SEARCH_ACTIONS {
+            let child_lower_bound = match use_action_combo(&settings, state, *action) {
                 Ok(child) => match child.is_final(&settings) {
                     false => solver.step_lower_bound_with_hint(child, 0).unwrap(),
                     true if child.progress >= settings.max_progress
@@ -500,7 +504,7 @@ fn monotonic_fuzz_check(settings: Settings) {
                 },
                 Err(_) => u8::MAX,
             };
-            if state_lower_bound > child_lower_bound.saturating_add(1) {
+            if state_lower_bound > child_lower_bound.saturating_add(action.steps()) {
                 dbg!(state, action, state_lower_bound, child_lower_bound);
                 panic!("Parent's step lower bound is greater than child's step lower bound");
             }

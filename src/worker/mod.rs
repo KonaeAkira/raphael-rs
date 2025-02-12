@@ -78,15 +78,16 @@ impl Worker {
                     .solve(SimulationState::new(&settings))
                 };
 
-                let result_acceptable = match &result {
+                let need_resolve = match &result {
                     Ok(actions) => {
-                        test_utils::get_quality(&settings, actions) >= settings.max_quality
+                        test_utils::get_quality(&settings, actions) < settings.max_quality
                     }
-                    Err(SolverException::Interrupted) => true,
-                    Err(SolverException::NoSolution) => false,
+                    Err(SolverException::Interrupted) => false,
+                    Err(SolverException::NoSolution) => true,
+                    Err(SolverException::InternalError(_)) => false,
                 };
 
-                if !result_acceptable {
+                if need_resolve {
                     progress_callback(0); // reset solver progress
                     result = solvers::MacroSolver::new(
                         settings,

@@ -2,7 +2,7 @@ use radix_heap::RadixHeapMap;
 use simulator::{Action, ActionMask, Combo, Settings, SimulationState};
 
 use crate::{
-    actions::{use_solver_action, SolverAction, QUALITY_ONLY_SEARCH_ACTIONS},
+    actions::{use_action_combo, ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS},
     finish_solver::FinishSolver,
     macro_solver::pareto_front::QualityParetoFront,
     utils::NamedTimer,
@@ -36,13 +36,13 @@ pub fn fast_lower_bound(
             if !should_use_action(*action, &state, settings.allowed_actions) {
                 continue;
             }
-            if let Ok(state) = use_solver_action(settings, state, *action) {
+            if let Ok(state) = use_action_combo(settings, state, *action) {
                 if !state.is_final(settings) {
                     if !finish_solver.can_finish(&state) {
                         continue;
                     }
                     quality_lower_bound = std::cmp::max(quality_lower_bound, state.quality);
-                    if *action == SolverAction::Single(Action::ByregotsBlessing) {
+                    if *action == ActionCombo::Single(Action::ByregotsBlessing) {
                         continue;
                     }
                     let quality_upper_bound = upper_bound_solver.quality_upper_bound(state)?;
@@ -63,7 +63,7 @@ pub fn fast_lower_bound(
 }
 
 fn should_use_action(
-    action: SolverAction,
+    action: ActionCombo,
     state: &SimulationState,
     allowed_actions: ActionMask,
 ) -> bool {
@@ -76,13 +76,13 @@ fn should_use_action(
             return !combo_available
                 || matches!(
                     action,
-                    SolverAction::Single(Action::StandardTouch | Action::RefinedTouch)
+                    ActionCombo::Single(Action::StandardTouch | Action::RefinedTouch)
                 );
         }
         Combo::StandardTouch => {
             let combo_available = allowed_actions.has(Action::AdvancedTouch);
             return !combo_available
-                || matches!(action, SolverAction::Single(Action::AdvancedTouch));
+                || matches!(action, ActionCombo::Single(Action::AdvancedTouch));
         }
         Combo::SynthesisBegin => {
             let combo_available = allowed_actions.has(Action::Reflect)
@@ -91,7 +91,7 @@ fn should_use_action(
             return !combo_available
                 || matches!(
                     action,
-                    SolverAction::Single(
+                    ActionCombo::Single(
                         Action::Reflect | Action::MuscleMemory | Action::TrainedEye
                     )
                 );
@@ -100,14 +100,12 @@ fn should_use_action(
 
     // Misc
     match action {
-        SolverAction::Single(Action::Innovation) => state.effects.innovation() == 0,
-        SolverAction::Single(Action::Veneration) => state.effects.veneration() == 0,
-        SolverAction::Single(Action::Manipulation) => state.effects.manipulation() == 0,
-        SolverAction::Single(Action::WasteNot | Action::WasteNot2) => {
-            state.effects.waste_not() == 0
-        }
-        SolverAction::Single(Action::GreatStrides) => state.effects.great_strides() == 0,
-        SolverAction::Single(Action::TrainedPerfection) => state.effects.waste_not() == 0,
+        ActionCombo::Single(Action::Innovation) => state.effects.innovation() == 0,
+        ActionCombo::Single(Action::Veneration) => state.effects.veneration() == 0,
+        ActionCombo::Single(Action::Manipulation) => state.effects.manipulation() == 0,
+        ActionCombo::Single(Action::WasteNot | Action::WasteNot2) => state.effects.waste_not() == 0,
+        ActionCombo::Single(Action::GreatStrides) => state.effects.great_strides() == 0,
+        ActionCombo::Single(Action::TrainedPerfection) => state.effects.waste_not() == 0,
         _ => true,
     }
 }

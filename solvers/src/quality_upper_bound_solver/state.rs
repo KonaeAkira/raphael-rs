@@ -1,27 +1,16 @@
 use crate::{
-    actions::{use_solver_action, SolverAction},
+    actions::{use_action_combo, ActionCombo},
     branch_pruning::is_progress_only_state,
 };
 
 use super::solver::SolverSettings;
 use simulator::*;
 
-#[bitfield_struct::bitfield(u32)]
-#[derive(PartialEq, Eq, Hash)]
-pub struct ReducedStateData {
-    pub cp: i16,
-    pub unreliable_quality: u8,
-    #[bits(2, default=Combo::None)]
-    pub combo: Combo,
-    #[bits(1)]
-    pub progress_only: bool,
-    #[bits(5)]
-    _padding: u8,
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
-    pub data: ReducedStateData,
+    pub cp: i16,
+    pub unreliable_quality: u8,
+    pub progress_only: bool,
     pub effects: Effects,
 }
 
@@ -81,48 +70,39 @@ impl ReducedState {
                 .with_manipulation(0)
         };
         Self {
-            data: ReducedStateData::new()
-                .with_cp(cp)
-                .with_unreliable_quality(unreliable_quality)
-                .with_combo(state.combo)
-                .with_progress_only(progress_only),
+            cp,
+            unreliable_quality,
+            progress_only,
             effects,
-        }
-    }
-
-    pub fn drop_combo(self) -> Self {
-        Self {
-            data: self.data.with_combo(Combo::None),
-            effects: self.effects,
         }
     }
 
     fn to_simulation_state(self, settings: &Settings) -> SimulationState {
         SimulationState {
             durability: settings.max_durability,
-            cp: self.data.cp(),
+            cp: self.cp,
             progress: 0,
             quality: 0,
-            unreliable_quality: self.data.unreliable_quality() as u16 * settings.base_quality * 2,
+            unreliable_quality: self.unreliable_quality as u16 * settings.base_quality * 2,
             effects: self.effects,
-            combo: self.data.combo(),
+            combo: Combo::None,
         }
     }
 
     pub fn use_action(
         &self,
-        action: SolverAction,
+        action: ActionCombo,
         simulator_settings: &Settings,
         solver_settings: &SolverSettings,
     ) -> Result<(Self, u16, u16), &'static str> {
         match action {
-            SolverAction::Single(
+            ActionCombo::Single(
                 Action::MasterMend | Action::ImmaculateMend | Action::Manipulation,
             ) => Err("Action not supported"),
             _ => {
-                let progress_only = self.data.progress_only();
+                let progress_only = self.progress_only;
                 let state = self.to_simulation_state(simulator_settings);
-                match use_solver_action(simulator_settings, state, action) {
+                match use_action_combo(simulator_settings, state, action) {
                     Ok(state) => {
                         let mut solver_state = Self::from_simulation_state_inner(
                             &state,
@@ -130,7 +110,7 @@ impl ReducedState {
                             solver_settings,
                         );
                         if progress_only {
-                            solver_state.data.set_progress_only(true);
+                            solver_state.progress_only = true;
                         }
                         Ok((solver_state, state.progress, state.quality))
                     }

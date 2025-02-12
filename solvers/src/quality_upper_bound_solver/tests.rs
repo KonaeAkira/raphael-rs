@@ -1,10 +1,15 @@
 use rand::Rng;
 use simulator::*;
 
+use crate::actions::{use_action_combo, FULL_SEARCH_ACTIONS};
+
 use super::*;
 
 fn solve(settings: Settings, actions: &[Action]) -> u16 {
-    let state = SimulationState::from_macro(&settings, actions).unwrap();
+    let state = SimulationState {
+        combo: Combo::None,
+        ..SimulationState::from_macro(&settings, actions).unwrap()
+    };
     QualityUpperBoundSolver::new(settings, false, false, Default::default())
         .quality_upper_bound(state)
         .unwrap()
@@ -168,7 +173,7 @@ fn test_03() {
             Action::StandardTouch,
         ],
     );
-    assert_eq!(result, 4053);
+    assert_eq!(result, 4004);
 }
 
 #[test]
@@ -203,7 +208,7 @@ fn test_adversarial_03() {
             Action::StandardTouch,
         ],
     );
-    assert_eq!(result, 3406);
+    assert_eq!(result, 3376);
 }
 
 #[test]
@@ -384,7 +389,7 @@ fn test_09() {
         adversarial: false,
     };
     let result = solve(settings, &[]);
-    assert_eq!(result, 4510);
+    assert_eq!(result, 4079);
 }
 
 #[test]
@@ -405,7 +410,7 @@ fn test_10() {
         adversarial: false,
     };
     let result = solve(settings, &[]);
-    assert_eq!(result, 4269);
+    assert_eq!(result, 3929);
 }
 
 #[test]
@@ -426,27 +431,7 @@ fn test_11() {
         adversarial: false,
     };
     let result = solve(settings, &[]);
-    assert_eq!(result, 2986);
-}
-
-#[test]
-fn test_12() {
-    let settings = Settings {
-        max_cp: 320,
-        max_durability: 80,
-        max_progress: 1600,
-        max_quality: 24000,
-        base_progress: 100,
-        base_quality: 100,
-        job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::Manipulation)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
-        adversarial: false,
-    };
-    let result = solve(settings, &[]);
-    assert_eq!(result, 24000);
+    assert_eq!(result, 2481);
 }
 
 fn random_effects(adversarial: bool) -> Effects {
@@ -466,7 +451,6 @@ fn random_effects(adversarial: bool) -> Effects {
 }
 
 fn random_state(settings: &Settings) -> SimulationState {
-    const COMBOS: [Combo; 3] = [Combo::None, Combo::BasicTouch, Combo::StandardTouch];
     SimulationState {
         cp: rand::thread_rng().gen_range(0..=settings.max_cp),
         durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
@@ -474,7 +458,7 @@ fn random_state(settings: &Settings) -> SimulationState {
         quality: 0,
         unreliable_quality: 0,
         effects: random_effects(settings.adversarial),
-        combo: COMBOS[rand::thread_rng().gen_range(0..3)],
+        combo: Combo::None,
     }
     .try_into()
     .unwrap()
@@ -487,8 +471,8 @@ fn monotonic_fuzz_check(settings: Settings) {
     for _ in 0..10000 {
         let state = random_state(&settings);
         let state_upper_bound = solver.quality_upper_bound(state).unwrap();
-        for action in settings.allowed_actions.actions_iter() {
-            let child_upper_bound = match state.use_action(action, Condition::Normal, &settings) {
+        for action in FULL_SEARCH_ACTIONS {
+            let child_upper_bound = match use_action_combo(&settings, state, *action) {
                 Ok(child) => match child.is_final(&settings) {
                     false => solver.quality_upper_bound(child).unwrap(),
                     true if child.progress >= settings.max_progress => {

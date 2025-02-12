@@ -1,5 +1,5 @@
 use crate::{
-    actions::{SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
     SolverException,
 };
@@ -81,6 +81,15 @@ impl QualityUpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u16, SolverException> {
+        if state.combo == Combo::SynthesisBegin {
+            return Ok(self.simulator_settings.max_quality);
+        }
+        if state.combo != Combo::None {
+            return Err(SolverException::InternalError(
+                "Combo state in internal solver",
+            ));
+        }
+
         let current_quality = state.quality;
         let missing_progress = self
             .simulator_settings
@@ -126,16 +135,8 @@ impl QualityUpperBoundSolver {
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
-        if state.data.combo() == Combo::None {
-            self.solve_normal_state(state)
-        } else {
-            self.solve_combo_state(state)
-        }
-    }
-
-    fn solve_normal_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
         self.pareto_front_builder.push_empty();
-        let search_actions = match state.data.progress_only() {
+        let search_actions = match state.progress_only {
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
             false => FULL_SEARCH_ACTIONS,
         };
@@ -153,43 +154,18 @@ impl QualityUpperBoundSolver {
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(state, id);
-
-        Ok(())
-    }
-
-    fn solve_combo_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
-        match self.solved_states.get(&state.drop_combo()) {
-            Some(id) => self.pareto_front_builder.push_from_id(*id),
-            None => self.solve_normal_state(state.drop_combo())?,
-        }
-        match state.data.combo() {
-            Combo::None => unreachable!(),
-            Combo::SynthesisBegin => {
-                self.build_child_front(state, SolverAction::Single(Action::MuscleMemory))?;
-                self.build_child_front(state, SolverAction::Single(Action::Reflect))?;
-                self.build_child_front(state, SolverAction::Single(Action::TrainedEye))?;
-            }
-            Combo::BasicTouch => {
-                self.build_child_front(state, SolverAction::Single(Action::RefinedTouch))?;
-                self.build_child_front(state, SolverAction::Single(Action::StandardTouch))?;
-            }
-            Combo::StandardTouch => {
-                self.build_child_front(state, SolverAction::Single(Action::AdvancedTouch))?;
-            }
-        }
-
         Ok(())
     }
 
     fn build_child_front(
         &mut self,
         state: ReducedState,
-        action: SolverAction,
+        action: ActionCombo,
     ) -> Result<(), SolverException> {
         if let Ok((new_state, action_progress, action_quality)) =
             state.use_action(action, &self.simulator_settings, &self.solver_settings)
         {
-            if new_state.data.cp() >= self.solver_settings.durability_cost {
+            if new_state.cp >= self.solver_settings.durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_from_id(*id),
                     None => self.solve_state(new_state)?,
@@ -199,8 +175,7 @@ impl QualityUpperBoundSolver {
                     value.second = value.second.saturating_add(action_quality);
                 });
                 self.pareto_front_builder.merge();
-            } else if new_state.data.cp() >= -self.solver_settings.durability_cost
-                && action_progress != 0
+            } else if new_state.cp >= -self.solver_settings.durability_cost && action_progress != 0
             {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
@@ -213,10 +188,10 @@ impl QualityUpperBoundSolver {
         Ok(())
     }
 
-    fn should_use_action(&self, state: ReducedState, action: SolverAction) -> bool {
+    fn should_use_action(&self, state: ReducedState, action: ActionCombo) -> bool {
         match action {
-            SolverAction::Single(Action::WasteNot) => state.data.cp() >= self.waste_not_1_min_cp,
-            SolverAction::Single(Action::WasteNot2) => state.data.cp() >= self.waste_not_2_min_cp,
+            ActionCombo::Single(Action::WasteNot) => state.cp >= self.waste_not_1_min_cp,
+            ActionCombo::Single(Action::WasteNot2) => state.cp >= self.waste_not_2_min_cp,
             _ => true,
         }
     }

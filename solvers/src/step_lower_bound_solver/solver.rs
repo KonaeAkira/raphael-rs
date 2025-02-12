@@ -1,5 +1,5 @@
 use crate::{
-    actions::{use_solver_action, SolverAction, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
+    actions::{use_action_combo, ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     branch_pruning::is_progress_only_state,
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
     SolverException,
@@ -69,6 +69,15 @@ impl StepLowerBoundSolver {
         state: SimulationState,
         step_budget: u8,
     ) -> Result<u16, SolverException> {
+        if state.combo == Combo::SynthesisBegin {
+            return Ok(self.settings.max_quality);
+        }
+        if state.combo != Combo::None {
+            return Err(SolverException::InternalError(
+                "Combo state in internal solver",
+            ));
+        }
+
         let current_quality = state.quality;
         let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
 
@@ -109,14 +118,7 @@ impl StepLowerBoundSolver {
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
-        if reduced_state.combo == Combo::None {
-            self.solve_normal_state(reduced_state)
-        } else {
-            self.solve_combo_state(reduced_state)
-        }
-    }
 
-    fn solve_normal_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
         self.pareto_front_builder.push_empty();
         let search_actions = match reduced_state.progress_only {
             false => FULL_SEARCH_ACTIONS,
@@ -137,39 +139,13 @@ impl StepLowerBoundSolver {
         Ok(())
     }
 
-    fn solve_combo_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
-        match self.solved_states.get(&reduced_state.to_non_combo()) {
-            Some(id) => self.pareto_front_builder.push_from_id(*id),
-            None => self.solve_normal_state(reduced_state.to_non_combo())?,
-        }
-        match reduced_state.combo {
-            Combo::None => unreachable!(),
-            Combo::SynthesisBegin => {
-                self.build_child_front(reduced_state, SolverAction::Single(Action::MuscleMemory))?;
-                self.build_child_front(reduced_state, SolverAction::Single(Action::Reflect))?;
-                self.build_child_front(reduced_state, SolverAction::Single(Action::TrainedEye))?;
-            }
-            Combo::BasicTouch => {
-                if !reduced_state.progress_only {
-                    self.build_child_front(
-                        reduced_state,
-                        SolverAction::Single(Action::RefinedTouch),
-                    )?;
-                }
-            }
-            Combo::StandardTouch => unreachable!(),
-        }
-
-        Ok(())
-    }
-
     fn build_child_front(
         &mut self,
         reduced_state: ReducedState,
-        action: SolverAction,
+        action: ActionCombo,
     ) -> Result<(), SolverException> {
         if let Ok(new_full_state) =
-            use_solver_action(&self.settings, reduced_state.to_state(), action)
+            use_action_combo(&self.settings, reduced_state.to_state(), action)
         {
             if reduced_state.steps_budget < action.steps() {
                 return Ok(());

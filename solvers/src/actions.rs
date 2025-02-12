@@ -1,25 +1,33 @@
 use simulator::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SolverAction {
-    TricksOfTheTradeCombo,   // Heart and Soul + Tricks of the Trade
-    IntensiveSynthesisCombo, // Heart and Soul + Intensive Synthesis
-    PreciseTouchCombo,       // Heart and Soul + Precise Touch
+pub enum ActionCombo {
+    TricksOfTheTrade,   // Heart and Soul + Tricks of the Trade
+    IntensiveSynthesis, // Heart and Soul + Intensive Synthesis
+    PreciseTouch,       // Heart and Soul + Precise Touch
+    StandardTouch,      // Basic Touch + Standard Touch
+    AdvancedTouch,      // Basic Touch + Standard Touch + Advanced Touch
+    FocusedTouch,       // Observe + AdvancedTouch
+    RefinedTouch,       // Basic Touch + Refined Touch
     Single(Action),
 }
 
-impl SolverAction {
+impl ActionCombo {
     #[inline(always)]
-    pub fn actions(self) -> &'static [Action] {
+    pub const fn actions(self) -> &'static [Action] {
         match self {
-            SolverAction::TricksOfTheTradeCombo => {
-                &[Action::HeartAndSoul, Action::TricksOfTheTrade]
-            }
-            SolverAction::IntensiveSynthesisCombo => {
-                &[Action::HeartAndSoul, Action::IntensiveSynthesis]
-            }
-            SolverAction::PreciseTouchCombo => &[Action::HeartAndSoul, Action::PreciseTouch],
-            SolverAction::Single(action) => match action {
+            ActionCombo::TricksOfTheTrade => &[Action::HeartAndSoul, Action::TricksOfTheTrade],
+            ActionCombo::IntensiveSynthesis => &[Action::HeartAndSoul, Action::IntensiveSynthesis],
+            ActionCombo::PreciseTouch => &[Action::HeartAndSoul, Action::PreciseTouch],
+            ActionCombo::StandardTouch => &[Action::BasicTouch, Action::StandardTouch],
+            ActionCombo::AdvancedTouch => &[
+                Action::BasicTouch,
+                Action::StandardTouch,
+                Action::AdvancedTouch,
+            ],
+            ActionCombo::FocusedTouch => &[Action::Observe, Action::AdvancedTouch],
+            ActionCombo::RefinedTouch => &[Action::BasicTouch, Action::RefinedTouch],
+            ActionCombo::Single(action) => match action {
                 Action::BasicSynthesis => &[Action::BasicSynthesis],
                 Action::BasicTouch => &[Action::BasicTouch],
                 Action::MasterMend => &[Action::MasterMend],
@@ -55,116 +63,115 @@ impl SolverAction {
         }
     }
 
-    #[inline(always)]
-    pub fn steps(self) -> u8 {
+    pub const fn steps(self) -> u8 {
         self.actions().len() as u8
     }
 
-    #[inline(always)]
     pub fn duration(self) -> u8 {
         self.actions().iter().map(|action| action.time_cost()).sum()
     }
 }
 
-pub const FULL_SEARCH_ACTIONS: &[SolverAction] = &[
-    SolverAction::TricksOfTheTradeCombo,
-    SolverAction::IntensiveSynthesisCombo,
-    SolverAction::PreciseTouchCombo,
+pub const FULL_SEARCH_ACTIONS: &[ActionCombo] = &[
+    ActionCombo::TricksOfTheTrade,
+    ActionCombo::IntensiveSynthesis,
+    ActionCombo::PreciseTouch,
+    ActionCombo::StandardTouch,
+    ActionCombo::AdvancedTouch,
+    ActionCombo::FocusedTouch,
+    ActionCombo::RefinedTouch,
     // progress
-    SolverAction::Single(Action::BasicSynthesis),
-    SolverAction::Single(Action::Veneration),
-    SolverAction::Single(Action::MuscleMemory),
-    SolverAction::Single(Action::CarefulSynthesis),
-    SolverAction::Single(Action::Groundwork),
-    SolverAction::Single(Action::IntensiveSynthesis),
-    SolverAction::Single(Action::PrudentSynthesis),
+    ActionCombo::Single(Action::BasicSynthesis),
+    ActionCombo::Single(Action::Veneration),
+    ActionCombo::Single(Action::MuscleMemory),
+    ActionCombo::Single(Action::CarefulSynthesis),
+    ActionCombo::Single(Action::Groundwork),
+    ActionCombo::Single(Action::PrudentSynthesis),
     // quality
-    SolverAction::Single(Action::BasicTouch),
-    SolverAction::Single(Action::StandardTouch),
-    SolverAction::Single(Action::GreatStrides),
-    SolverAction::Single(Action::Innovation),
-    SolverAction::Single(Action::ByregotsBlessing),
-    SolverAction::Single(Action::PreciseTouch),
-    SolverAction::Single(Action::PrudentTouch),
-    SolverAction::Single(Action::Reflect),
-    SolverAction::Single(Action::PreparatoryTouch),
-    SolverAction::Single(Action::AdvancedTouch),
-    SolverAction::Single(Action::TrainedFinesse),
-    SolverAction::Single(Action::RefinedTouch),
-    SolverAction::Single(Action::TrainedEye),
-    SolverAction::Single(Action::QuickInnovation),
+    ActionCombo::Single(Action::BasicTouch),
+    ActionCombo::Single(Action::StandardTouch),
+    ActionCombo::Single(Action::GreatStrides),
+    ActionCombo::Single(Action::Innovation),
+    ActionCombo::Single(Action::ByregotsBlessing),
+    ActionCombo::Single(Action::PrudentTouch),
+    ActionCombo::Single(Action::Reflect),
+    ActionCombo::Single(Action::PreparatoryTouch),
+    ActionCombo::Single(Action::AdvancedTouch),
+    ActionCombo::Single(Action::TrainedFinesse),
+    ActionCombo::Single(Action::TrainedEye),
+    ActionCombo::Single(Action::QuickInnovation),
     // durability
-    SolverAction::Single(Action::MasterMend),
-    SolverAction::Single(Action::WasteNot),
-    SolverAction::Single(Action::WasteNot2),
-    SolverAction::Single(Action::Manipulation),
-    SolverAction::Single(Action::ImmaculateMend),
-    SolverAction::Single(Action::TrainedPerfection),
+    ActionCombo::Single(Action::MasterMend),
+    ActionCombo::Single(Action::WasteNot),
+    ActionCombo::Single(Action::WasteNot2),
+    ActionCombo::Single(Action::Manipulation),
+    ActionCombo::Single(Action::ImmaculateMend),
+    ActionCombo::Single(Action::TrainedPerfection),
     // misc
-    SolverAction::Single(Action::DelicateSynthesis),
-    SolverAction::Single(Action::Observe),
-    SolverAction::Single(Action::TricksOfTheTrade),
+    ActionCombo::Single(Action::DelicateSynthesis),
+    ActionCombo::Single(Action::TricksOfTheTrade),
 ];
 
-pub const PROGRESS_ONLY_SEARCH_ACTIONS: &[SolverAction] = &[
-    SolverAction::IntensiveSynthesisCombo,
-    SolverAction::TricksOfTheTradeCombo,
+pub const PROGRESS_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
+    ActionCombo::IntensiveSynthesis,
+    ActionCombo::TricksOfTheTrade,
     // progress
-    SolverAction::Single(Action::BasicSynthesis),
-    SolverAction::Single(Action::Veneration),
-    SolverAction::Single(Action::MuscleMemory),
-    SolverAction::Single(Action::CarefulSynthesis),
-    SolverAction::Single(Action::Groundwork),
-    SolverAction::Single(Action::IntensiveSynthesis),
-    SolverAction::Single(Action::PrudentSynthesis),
+    ActionCombo::Single(Action::BasicSynthesis),
+    ActionCombo::Single(Action::Veneration),
+    ActionCombo::Single(Action::MuscleMemory),
+    ActionCombo::Single(Action::CarefulSynthesis),
+    ActionCombo::Single(Action::Groundwork),
+    ActionCombo::Single(Action::PrudentSynthesis),
     // durability
-    SolverAction::Single(Action::MasterMend),
-    SolverAction::Single(Action::WasteNot),
-    SolverAction::Single(Action::WasteNot2),
-    SolverAction::Single(Action::Manipulation),
-    SolverAction::Single(Action::ImmaculateMend),
-    SolverAction::Single(Action::TrainedPerfection),
+    ActionCombo::Single(Action::MasterMend),
+    ActionCombo::Single(Action::WasteNot),
+    ActionCombo::Single(Action::WasteNot2),
+    ActionCombo::Single(Action::Manipulation),
+    ActionCombo::Single(Action::ImmaculateMend),
+    ActionCombo::Single(Action::TrainedPerfection),
     // misc
-    SolverAction::Single(Action::TricksOfTheTrade),
+    ActionCombo::Single(Action::TricksOfTheTrade),
 ];
 
-pub const QUALITY_ONLY_SEARCH_ACTIONS: &[SolverAction] = &[
-    SolverAction::TricksOfTheTradeCombo,
-    SolverAction::PreciseTouchCombo,
+pub const QUALITY_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
+    ActionCombo::TricksOfTheTrade,
+    ActionCombo::PreciseTouch,
+    ActionCombo::StandardTouch,
+    ActionCombo::AdvancedTouch,
+    ActionCombo::FocusedTouch,
+    ActionCombo::RefinedTouch,
     // quality
-    SolverAction::Single(Action::BasicTouch),
-    SolverAction::Single(Action::StandardTouch),
-    SolverAction::Single(Action::GreatStrides),
-    SolverAction::Single(Action::Innovation),
-    SolverAction::Single(Action::ByregotsBlessing),
-    SolverAction::Single(Action::PreciseTouch),
-    SolverAction::Single(Action::PrudentTouch),
-    SolverAction::Single(Action::Reflect),
-    SolverAction::Single(Action::PreparatoryTouch),
-    SolverAction::Single(Action::AdvancedTouch),
-    SolverAction::Single(Action::TrainedFinesse),
-    SolverAction::Single(Action::RefinedTouch),
-    SolverAction::Single(Action::TrainedEye),
-    SolverAction::Single(Action::QuickInnovation),
+    ActionCombo::Single(Action::BasicTouch),
+    ActionCombo::Single(Action::StandardTouch),
+    ActionCombo::Single(Action::GreatStrides),
+    ActionCombo::Single(Action::Innovation),
+    ActionCombo::Single(Action::ByregotsBlessing),
+    ActionCombo::Single(Action::PrudentTouch),
+    ActionCombo::Single(Action::Reflect),
+    ActionCombo::Single(Action::PreparatoryTouch),
+    ActionCombo::Single(Action::AdvancedTouch),
+    ActionCombo::Single(Action::TrainedFinesse),
+    ActionCombo::Single(Action::TrainedEye),
+    ActionCombo::Single(Action::QuickInnovation),
     // durability
-    SolverAction::Single(Action::MasterMend),
-    SolverAction::Single(Action::WasteNot),
-    SolverAction::Single(Action::WasteNot2),
-    SolverAction::Single(Action::Manipulation),
-    SolverAction::Single(Action::ImmaculateMend),
-    SolverAction::Single(Action::TrainedPerfection),
+    ActionCombo::Single(Action::MasterMend),
+    ActionCombo::Single(Action::WasteNot),
+    ActionCombo::Single(Action::WasteNot2),
+    ActionCombo::Single(Action::Manipulation),
+    ActionCombo::Single(Action::ImmaculateMend),
+    ActionCombo::Single(Action::TrainedPerfection),
     // misc
-    SolverAction::Single(Action::Observe),
-    SolverAction::Single(Action::TricksOfTheTrade),
+    ActionCombo::Single(Action::TricksOfTheTrade),
 ];
 
-pub fn use_solver_action(
+pub fn use_action_combo(
     settings: &Settings,
     mut state: SimulationState,
-    action: SolverAction,
+    action_combo: ActionCombo,
 ) -> Result<SimulationState, &'static str> {
-    for action in action.actions().iter() {
+    for action in action_combo.actions().iter() {
         state = state.use_action(*action, Condition::Normal, settings)?;
     }
+    state.combo = Combo::None;
     Ok(state)
 }
