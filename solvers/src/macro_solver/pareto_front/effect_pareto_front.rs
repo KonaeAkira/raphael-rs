@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap;
-use simulator::{Combo, SimulationState};
+use simulator::SimulationState;
 
 use super::{Dominate, ParetoFront};
 
@@ -20,9 +20,7 @@ struct Value {
     durability: u8,
     #[bits(5)]
     cp_mod: u8,
-    #[bits(2)]
-    combo: Combo,
-    #[bits(3)]
+    #[bits(5)]
     _padding: u8,
 }
 
@@ -36,12 +34,7 @@ impl std::convert::From<SimulationState> for Value {
             .with_manipulation(state.effects.manipulation())
             .with_durability(state.durability as u8 / 5)
             .with_cp_mod((state.cp % 32) as u8)
-            .with_combo(state.combo)
     }
-}
-
-fn combo_dominate(lhs: Combo, rhs: Combo) -> bool {
-    lhs == rhs || rhs == Combo::None
 }
 
 impl Dominate for Value {
@@ -53,7 +46,6 @@ impl Dominate for Value {
             && self.manipulation() >= other.manipulation()
             && self.durability() >= other.durability()
             && self.cp_mod() >= other.cp_mod()
-            && combo_dominate(self.combo(), other.combo())
     }
 }
 
@@ -71,7 +63,6 @@ impl Key {
         state.effects.set_manipulation(0);
         state.durability = 0;
         state.cp /= 32;
-        state.combo = Combo::None;
         Self { state }
     }
 }
