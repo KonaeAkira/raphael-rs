@@ -1,5 +1,5 @@
 use radix_heap::RadixHeapMap;
-use simulator::{Action, ActionMask, Combo, Settings, SimulationState};
+use simulator::{Action, ActionMask, Combo, Settings, SimulationState, SingleUse};
 
 use crate::{
     actions::{use_action_combo, ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS},
@@ -67,35 +67,16 @@ fn should_use_action(
     state: &SimulationState,
     allowed_actions: ActionMask,
 ) -> bool {
-    // Force the use of the next combo action if it is available
-    match state.combo {
-        Combo::None => (),
-        Combo::BasicTouch => {
-            let combo_available = allowed_actions.has(Action::StandardTouch)
-                || allowed_actions.has(Action::RefinedTouch);
-            return !combo_available
-                || matches!(
-                    action,
-                    ActionCombo::Single(Action::StandardTouch | Action::RefinedTouch)
-                );
-        }
-        Combo::StandardTouch => {
-            let combo_available = allowed_actions.has(Action::AdvancedTouch);
-            return !combo_available
-                || matches!(action, ActionCombo::Single(Action::AdvancedTouch));
-        }
-        Combo::SynthesisBegin => {
-            let combo_available = allowed_actions.has(Action::Reflect)
-                || allowed_actions.has(Action::MuscleMemory)
-                || allowed_actions.has(Action::TrainedEye);
-            return !combo_available
-                || matches!(
-                    action,
-                    ActionCombo::Single(
-                        Action::Reflect | Action::MuscleMemory | Action::TrainedEye
-                    )
-                );
-        }
+    // Force the use of an opener if one is available
+    if state.combo == Combo::SynthesisBegin {
+        let action_is_opener = matches!(
+            action,
+            ActionCombo::Single(Action::Reflect | Action::MuscleMemory | Action::TrainedEye)
+        );
+        let opener_available = allowed_actions.has(Action::Reflect)
+            || allowed_actions.has(Action::MuscleMemory)
+            || allowed_actions.has(Action::TrainedEye);
+        return action_is_opener || !opener_available;
     }
 
     // Misc
@@ -103,7 +84,10 @@ fn should_use_action(
         ActionCombo::Single(Action::Innovation) => state.effects.innovation() == 0,
         ActionCombo::Single(Action::Veneration) => state.effects.veneration() == 0,
         ActionCombo::Single(Action::Manipulation) => state.effects.manipulation() == 0,
-        ActionCombo::Single(Action::WasteNot | Action::WasteNot2) => state.effects.waste_not() == 0,
+        ActionCombo::Single(Action::WasteNot | Action::WasteNot2) => {
+            state.effects.waste_not() == 0
+                && state.effects.trained_perfection() != SingleUse::Active
+        }
         ActionCombo::Single(Action::GreatStrides) => state.effects.great_strides() == 0,
         ActionCombo::Single(Action::TrainedPerfection) => state.effects.waste_not() == 0,
         _ => true,
