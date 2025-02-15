@@ -37,7 +37,7 @@ impl ReducedState {
         Self {
             steps_budget,
             progress_only,
-            durability: state.durability,
+            durability: Self::optimize_durability(state.effects, state.durability, steps_budget),
             effects: Self::optimize_effects(state.effects, steps_budget, progress_only),
         }
     }
@@ -52,6 +52,16 @@ impl ReducedState {
             effects: self.effects,
             combo: Combo::None,
         }
+    }
+
+    fn optimize_durability(effects: Effects, durability: i8, step_budget: u8) -> i8 {
+        let mut usable_durability: i32 = step_budget as i32 * 20;
+        let usable_manipulation =
+            std::cmp::min(effects.manipulation(), step_budget.saturating_sub(1));
+        usable_durability -= usable_manipulation as i32 * 5;
+        let usable_waste_not = std::cmp::min(effects.waste_not(), step_budget);
+        usable_durability -= usable_waste_not as i32 * 10;
+        std::cmp::min(usable_durability, durability as _) as _
     }
 
     fn optimize_effects(mut effects: Effects, step_budget: u8, progress_only: bool) -> Effects {
