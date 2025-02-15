@@ -34,53 +34,11 @@ impl ReducedState {
     }
 
     pub fn from_state(state: SimulationState, steps_budget: u8, progress_only: bool) -> Self {
-        let manipulation =
-            std::cmp::min(steps_budget.saturating_sub(1), state.effects.manipulation());
-        let veneration = std::cmp::min(steps_budget, state.effects.veneration());
-        let waste_not = if state.effects.waste_not() != 0 { 8 } else { 0 };
-        let trained_perfection = match state.effects.trained_perfection() {
-            SingleUse::Unavailable => SingleUse::Unavailable,
-            SingleUse::Available => SingleUse::Unavailable,
-            SingleUse::Active => SingleUse::Active,
-        };
-        if progress_only {
-            Self {
-                steps_budget,
-                progress_only,
-                durability: state.durability,
-                effects: state
-                    .effects
-                    .with_inner_quiet(0)
-                    .with_innovation(0)
-                    .with_veneration(veneration)
-                    .with_great_strides(0)
-                    .with_waste_not(waste_not)
-                    .with_manipulation(manipulation)
-                    .with_trained_perfection(trained_perfection)
-                    .with_quick_innovation_available(false)
-                    .with_guard(1),
-            }
-        } else {
-            let innovation = std::cmp::min(steps_budget, state.effects.innovation());
-            let great_strides = if state.effects.great_strides() != 0 {
-                3
-            } else {
-                0
-            };
-            Self {
-                steps_budget,
-                progress_only,
-                durability: state.durability,
-                effects: state
-                    .effects
-                    .with_innovation(innovation)
-                    .with_veneration(veneration)
-                    .with_great_strides(great_strides)
-                    .with_waste_not(waste_not)
-                    .with_manipulation(manipulation)
-                    .with_trained_perfection(trained_perfection)
-                    .with_guard(1),
-            }
+        Self {
+            steps_budget,
+            progress_only,
+            durability: state.durability,
+            effects: Self::optimize_effects(state.effects, steps_budget, progress_only),
         }
     }
 
@@ -93,6 +51,42 @@ impl ReducedState {
             unreliable_quality: 0,
             effects: self.effects,
             combo: Combo::None,
+        }
+    }
+
+    fn optimize_effects(mut effects: Effects, step_budget: u8, progress_only: bool) -> Effects {
+        if effects.manipulation() > step_budget.saturating_sub(1) {
+            effects.set_manipulation(step_budget.saturating_sub(1));
+        }
+        if effects.waste_not() != 0 {
+            // make waste not last forever
+            // this gives a looser bound but decreases the number of states
+            effects.set_waste_not(8);
+        }
+        if effects.trained_perfection() == SingleUse::Available {
+            effects.set_trained_perfection(SingleUse::Unavailable);
+        }
+        if effects.veneration() > step_budget {
+            effects.set_veneration(step_budget);
+        }
+        if effects.innovation() > step_budget {
+            effects.set_innovation(step_budget);
+        }
+        if effects.great_strides() != 0 {
+            // make great strides last forever (until used)
+            // this gives a looser bound but decreases the number of states
+            effects.set_great_strides(3);
+        }
+
+        if progress_only {
+            effects
+                .with_inner_quiet(0)
+                .with_innovation(0)
+                .with_great_strides(0)
+                .with_quick_innovation_available(false)
+                .with_guard(1)
+        } else {
+            effects.with_guard(1)
         }
     }
 }
