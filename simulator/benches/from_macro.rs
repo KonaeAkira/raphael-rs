@@ -1,4 +1,7 @@
-use crate::*;
+#![feature(test)]
+extern crate test;
+
+use simulator::*;
 
 #[bench]
 fn from_macro(bencher: &mut test::Bencher) {
