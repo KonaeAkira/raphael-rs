@@ -1,3 +1,5 @@
+use std::num::NonZeroU8;
+
 use crate::{
     actions::{use_action_combo, ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     branch_pruning::is_progress_only_state,
@@ -48,7 +50,7 @@ impl StepLowerBoundSolver {
     pub fn step_lower_bound_with_hint(
         &mut self,
         state: SimulationState,
-        mut hint: u8,
+        hint: u8,
     ) -> Result<u8, SolverException> {
         if self.backload_progress
             && state.progress != 0
@@ -56,18 +58,19 @@ impl StepLowerBoundSolver {
         {
             return Ok(u8::MAX);
         }
-        hint = std::cmp::max(1, hint);
-        while hint != u8::MAX && self.quality_upper_bound(state, hint)? < self.settings.max_quality
+        let mut hint = NonZeroU8::try_from(std::cmp::max(hint, 1)).unwrap();
+        while hint.get() != u8::MAX
+            && self.quality_upper_bound(state, hint)? < self.settings.max_quality
         {
-            hint += 1;
+            hint = hint.saturating_add(1);
         }
-        Ok(hint)
+        Ok(hint.get())
     }
 
     fn quality_upper_bound(
         &mut self,
         state: SimulationState,
-        step_budget: u8,
+        step_budget: NonZeroU8,
     ) -> Result<u16, SolverException> {
         if state.combo == Combo::SynthesisBegin {
             return Ok(self.settings.max_quality);
@@ -118,24 +121,24 @@ impl StepLowerBoundSolver {
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
-
         self.pareto_front_builder.push_empty();
         let search_actions = match reduced_state.progress_only {
             false => FULL_SEARCH_ACTIONS,
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
         };
         for action in search_actions.iter() {
-            self.build_child_front(reduced_state, *action)?;
-            if self.pareto_front_builder.is_max() {
-                // stop early if both Progress and Quality are maxed out
-                // this optimization would work even better with better action ordering
-                // (i.e. if better actions are visited first)
-                break;
+            if action.steps() <= reduced_state.steps_budget.get() {
+                self.build_child_front(reduced_state, *action)?;
+                if self.pareto_front_builder.is_max() {
+                    // stop early if both Progress and Quality are maxed out
+                    // this optimization would work even better with better action ordering
+                    // (i.e. if better actions are visited first)
+                    break;
+                }
             }
         }
         let id = self.pareto_front_builder.save().unwrap();
         self.solved_states.insert(reduced_state, id);
-
         Ok(())
     }
 
@@ -147,9 +150,6 @@ impl StepLowerBoundSolver {
         if let Ok(new_full_state) =
             use_action_combo(&self.settings, reduced_state.to_state(), action)
         {
-            if reduced_state.steps_budget < action.steps() {
-                return Ok(());
-            }
             let action_progress = new_full_state.progress;
             let action_quality = new_full_state.quality;
             let progress_only = reduced_state.progress_only
@@ -158,29 +158,34 @@ impl StepLowerBoundSolver {
                     self.backload_progress,
                     self.unsound_branch_pruning,
                 );
-            let new_reduced_state = ReducedState::from_state(
-                new_full_state,
-                reduced_state.steps_budget - action.steps(),
-                progress_only,
-            );
-            if new_reduced_state.steps_budget != 0 && new_reduced_state.durability > 0 {
-                match self.solved_states.get(&new_reduced_state) {
-                    Some(id) => self.pareto_front_builder.push_from_id(*id),
-                    None => self.solve_state(new_reduced_state)?,
+            let new_step_budget = reduced_state.steps_budget.get() - action.steps();
+            match NonZeroU8::try_from(new_step_budget) {
+                Ok(new_step_budget) if new_full_state.durability > 0 => {
+                    // New state is not final
+                    let new_reduced_state =
+                        ReducedState::from_state(new_full_state, new_step_budget, progress_only);
+                    match self.solved_states.get(&new_reduced_state) {
+                        Some(id) => self.pareto_front_builder.push_from_id(*id),
+                        None => self.solve_state(new_reduced_state)?,
+                    }
+                    self.pareto_front_builder.map(move |value| {
+                        value.first = value.first.saturating_add(action_progress);
+                        value.second = value.second.saturating_add(action_quality);
+                    });
+                    self.pareto_front_builder.merge();
                 }
-                self.pareto_front_builder.map(move |value| {
-                    value.first = value.first.saturating_add(action_progress);
-                    value.second = value.second.saturating_add(action_quality);
-                });
-                self.pareto_front_builder.merge();
-            } else if action_progress != 0 {
-                // last action must be a progress increase
-                self.pareto_front_builder
-                    .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
-                self.pareto_front_builder.merge();
+                Err(_) if action_progress != 0 => {
+                    // New state is final and last action increased Progress
+                    self.pareto_front_builder
+                        .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
+                    self.pareto_front_builder.merge();
+                }
+                _ => {
+                    // New state is final but last action did not increase Progress
+                    ()
+                }
             }
         }
-
         Ok(())
     }
 }

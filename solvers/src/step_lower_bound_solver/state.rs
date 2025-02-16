@@ -1,8 +1,10 @@
+use std::num::NonZeroU8;
+
 use simulator::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
-    pub steps_budget: u8,
+    pub steps_budget: NonZeroU8,
     pub progress_only: bool,
     pub durability: i8,
     pub effects: Effects,
@@ -33,7 +35,11 @@ impl ReducedState {
         }
     }
 
-    pub fn from_state(state: SimulationState, steps_budget: u8, progress_only: bool) -> Self {
+    pub fn from_state(
+        state: SimulationState,
+        steps_budget: NonZeroU8,
+        progress_only: bool,
+    ) -> Self {
         Self {
             steps_budget,
             progress_only,
@@ -54,19 +60,22 @@ impl ReducedState {
         }
     }
 
-    fn optimize_durability(effects: Effects, durability: i8, step_budget: u8) -> i8 {
-        let mut usable_durability: i32 = step_budget as i32 * 20;
-        let usable_manipulation =
-            std::cmp::min(effects.manipulation(), step_budget.saturating_sub(1));
+    fn optimize_durability(effects: Effects, durability: i8, step_budget: NonZeroU8) -> i8 {
+        let mut usable_durability: i32 = step_budget.get() as i32 * 20;
+        let usable_manipulation = std::cmp::min(effects.manipulation(), step_budget.get() - 1);
         usable_durability -= usable_manipulation as i32 * 5;
-        let usable_waste_not = std::cmp::min(effects.waste_not(), step_budget);
+        let usable_waste_not = std::cmp::min(effects.waste_not(), step_budget.get());
         usable_durability -= usable_waste_not as i32 * 10;
         std::cmp::min(usable_durability, durability as _) as _
     }
 
-    fn optimize_effects(mut effects: Effects, step_budget: u8, progress_only: bool) -> Effects {
-        if effects.manipulation() > step_budget.saturating_sub(1) {
-            effects.set_manipulation(step_budget.saturating_sub(1));
+    fn optimize_effects(
+        mut effects: Effects,
+        step_budget: NonZeroU8,
+        progress_only: bool,
+    ) -> Effects {
+        if effects.manipulation() > step_budget.get() - 1 {
+            effects.set_manipulation(step_budget.get() - 1);
         }
         if effects.waste_not() != 0 {
             // make waste not last forever
@@ -76,11 +85,11 @@ impl ReducedState {
         if effects.trained_perfection() == SingleUse::Available {
             effects.set_trained_perfection(SingleUse::Unavailable);
         }
-        if effects.veneration() > step_budget {
-            effects.set_veneration(step_budget);
+        if effects.veneration() > step_budget.get() {
+            effects.set_veneration(step_budget.get());
         }
-        if effects.innovation() > step_budget {
-            effects.set_innovation(step_budget);
+        if effects.innovation() > step_budget.get() {
+            effects.set_innovation(step_budget.get());
         }
         if effects.great_strides() != 0 {
             // make great strides last forever (until used)
