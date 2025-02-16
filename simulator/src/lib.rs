@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 mod actions;
 pub use actions::*;
 
@@ -15,3 +18,6 @@ pub use settings::{ActionMask, Settings};
 
 mod probabilities;
 pub use probabilities::quality_probability_distribution;
+
+#[cfg(test)]
+mod bench;
