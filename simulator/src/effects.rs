@@ -67,12 +67,28 @@ impl Effects {
     }
 
     pub fn tick_down(&mut self) {
-        self.set_waste_not(self.waste_not().saturating_sub(1));
-        self.set_innovation(self.innovation().saturating_sub(1));
-        self.set_veneration(self.veneration().saturating_sub(1));
-        self.set_great_strides(self.great_strides().saturating_sub(1));
-        self.set_muscle_memory(self.muscle_memory().saturating_sub(1));
-        self.set_manipulation(self.manipulation().saturating_sub(1));
-        self.set_guard(self.guard().saturating_sub(1));
+        let mut effect_tick = 0;
+        if self.waste_not() != 0 {
+            effect_tick |= const { Effects::from_bits(0).with_waste_not(1).into_bits() };
+        }
+        if self.innovation() != 0 {
+            effect_tick |= const { Effects::from_bits(0).with_innovation(1).into_bits() };
+        }
+        if self.veneration() != 0 {
+            effect_tick |= const { Effects::from_bits(0).with_veneration(1).into_bits() };
+        }
+        if self.great_strides() != 0 {
+            effect_tick |= const { Effects::from_bits(0).with_great_strides(1).into_bits() };
+        }
+        if self.muscle_memory() != 0 {
+            effect_tick |= const { Effects::from_bits(0).with_muscle_memory(1).into_bits() };
+        }
+        if self.manipulation() != 0 {
+            effect_tick |= const { Effects::from_bits(0).with_manipulation(1).into_bits() };
+        }
+        if self.guard() != 0 {
+            effect_tick |= const { Effects::from_bits(0).with_guard(1).into_bits() };
+        }
+        self.0 -= effect_tick;
     }
 }
