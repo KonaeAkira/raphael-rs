@@ -20,8 +20,8 @@ pub type ParetoFrontId = Segment;
 
 pub struct ParetoFrontBuilder<T, U>
 where
-    T: Copy + std::cmp::Ord + std::default::Default,
-    U: Copy + std::cmp::Ord + std::default::Default,
+    T: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
+    U: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
 {
     storage: Vec<ParetoValue<T, U>>,
     buffer: Vec<ParetoValue<T, U>>,
@@ -35,8 +35,8 @@ where
 
 impl<T, U> ParetoFrontBuilder<T, U>
 where
-    T: Copy + std::cmp::Ord + std::default::Default,
-    U: Copy + std::cmp::Ord + std::default::Default,
+    T: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
+    U: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
 {
     pub fn new(max_first: T, max_second: U) -> Self {
         Self {
@@ -97,88 +97,136 @@ where
         let segment_b = self.segments.pop().unwrap();
         let segment_a = self.segments.pop().unwrap();
 
-        let length_c = segment_a.length + segment_b.length;
-        let offset_c = if segment_a.offset + segment_a.length + length_c <= segment_b.offset {
-            // sandwich C between A and B
-            segment_a.offset + segment_a.length
-        } else {
-            // allocate C after B
-            self.buffer
-                .resize(self.buffer.len() + length_c, Default::default());
-            segment_b.offset + segment_b.length
-        };
+        let (slice_a, slice_b, slice_c) =
+            Self::create_merge_slices(&mut self.buffer, segment_a, segment_b);
+        let slice_c = Self::merge_mixed(slice_a, slice_b, slice_c);
+        let slice_c = Self::trim_slice(slice_c, self.max_first, self.max_second);
 
-        let (slice_l, slice_r) = self.buffer.split_at_mut(offset_c);
-        let (slice_c, slice_r) = slice_r.split_at_mut(length_c);
-        let slice_a = &slice_l[segment_a.offset..segment_a.offset + segment_a.length];
-        let slice_b = if segment_b.offset <= offset_c {
-            &slice_l[segment_b.offset..segment_b.offset + segment_b.length]
-        } else {
-            let offset = segment_b.offset - offset_c - length_c;
-            &slice_r[offset..offset + segment_b.length]
-        };
-
-        let mut head_a: usize = 0;
-        let mut head_b: usize = 0;
-        let mut head_c: usize = 0;
-        let mut tail_c: usize = 0;
-
-        let mut rolling_max: Option<T> = None;
-        let mut try_insert = |x: ParetoValue<T, U>| {
-            if rolling_max.is_none() || x.first > rolling_max.unwrap() {
-                rolling_max = Some(x.first);
-                slice_c[tail_c] = x;
-                tail_c += 1;
-            }
-        };
-
-        while head_a < slice_a.len() && head_b < slice_b.len() {
-            match slice_a[head_a].second.cmp(&slice_b[head_b].second) {
-                std::cmp::Ordering::Less => {
-                    try_insert(slice_b[head_b]);
-                    head_b += 1;
-                }
-                std::cmp::Ordering::Equal => {
-                    let first = std::cmp::max(slice_a[head_a].first, slice_b[head_b].first);
-                    let second = slice_a[head_a].second;
-                    try_insert(ParetoValue::new(first, second));
-                    head_a += 1;
-                    head_b += 1;
-                }
-                std::cmp::Ordering::Greater => {
-                    try_insert(slice_a[head_a]);
-                    head_a += 1;
-                }
-            }
-        }
-
-        while head_a < slice_a.len() {
-            try_insert(slice_a[head_a]);
-            head_a += 1;
-        }
-
-        while head_b < slice_b.len() {
-            try_insert(slice_b[head_b]);
-            head_b += 1;
-        }
-
-        // cut out values in front that are over max_second
-        while head_c + 1 < tail_c && slice_c[head_c + 1].second >= self.max_second {
-            head_c += 1;
-        }
-
-        // cut out values in the back that are over max_first
-        while head_c + 1 < tail_c && slice_c[tail_c - 2].first >= self.max_first {
-            tail_c -= 1;
-        }
-
+        // SAFETY: slice_c and slice_a come from the same object (self.buffer) and outlive the pointers
+        let offset_c =
+            segment_a.offset + unsafe { slice_c.as_ptr().offset_from(slice_a.as_ptr()) as usize };
         let segment_c = Segment {
-            offset: offset_c + head_c,
-            length: tail_c - head_c,
+            offset: offset_c,
+            length: slice_c.len(),
         };
 
         self.segments.push(segment_c);
         self.buffer.truncate(segment_c.offset + segment_c.length);
+    }
+
+    #[inline(always)]
+    fn create_merge_slices(
+        buffer: &mut Vec<ParetoValue<T, U>>,
+        segment_a: Segment,
+        segment_b: Segment,
+    ) -> (
+        &mut [ParetoValue<T, U>],
+        &mut [ParetoValue<T, U>],
+        &mut [ParetoValue<T, U>],
+    ) {
+        assert!(
+            buffer.len() >= segment_b.offset + segment_b.length
+                && segment_b.offset >= segment_a.offset + segment_a.length
+        );
+        let required_length = segment_a.length + segment_b.length;
+        let available_length = segment_b.offset - (segment_a.offset + segment_a.length);
+        if required_length <= available_length {
+            // sandwich merge segment between parent segments
+            let (_, buffer) = buffer.split_at_mut(segment_a.offset);
+            let (slice_a, buffer) = buffer.split_at_mut(segment_a.length);
+            let (slice_c, buffer) = buffer.split_at_mut(available_length);
+            let (slice_b, _) = buffer.split_at_mut(segment_b.length);
+            (slice_a, slice_b, slice_c)
+        } else {
+            // allocate merge segment at the end of the buffer
+            buffer.resize(
+                segment_b.offset + segment_b.length + required_length,
+                Default::default(),
+            );
+            let (_, buffer) = buffer.split_at_mut(segment_a.offset);
+            let (slice_a, buffer) = buffer.split_at_mut(segment_a.length);
+            let (_, buffer) = buffer.split_at_mut(available_length);
+            let (slice_b, slice_c) = buffer.split_at_mut(segment_b.length);
+            (slice_a, slice_b, slice_c)
+        }
+    }
+
+    #[inline(always)]
+    fn merge_mixed<'a>(
+        // slice_a and slice_b are marked &mut to tell the compiler that they are disjoint
+        slice_a: &mut [ParetoValue<T, U>],
+        slice_b: &mut [ParetoValue<T, U>],
+        slice_c: &'a mut [ParetoValue<T, U>],
+    ) -> &'a [ParetoValue<T, U>] {
+        assert!(slice_a.len() + slice_b.len() <= slice_c.len());
+
+        let mut idx_a = 0;
+        let mut idx_b = 0;
+        let mut idx_c = 0;
+
+        let mut rolling_max = None;
+        let mut try_insert = |x: ParetoValue<T, U>| {
+            if rolling_max.is_none() || rolling_max.unwrap() < x.first {
+                rolling_max = Some(x.first);
+                unsafe {
+                    // SAFETY: the number of elements added to slice_c is not greater than the total number of elements in slice_a and slice_b
+                    *slice_c.get_unchecked_mut(idx_c) = x;
+                }
+                idx_c += 1;
+            }
+        };
+
+        while idx_a < slice_a.len() && idx_b < slice_b.len() {
+            let a = slice_a[idx_a];
+            let b = slice_b[idx_b];
+            match (a.first.cmp(&b.first), a.second.cmp(&b.second)) {
+                (_, std::cmp::Ordering::Greater) => {
+                    try_insert(a);
+                    idx_a += 1;
+                }
+                (std::cmp::Ordering::Greater, std::cmp::Ordering::Equal) => {
+                    try_insert(a);
+                    idx_a += 1;
+                    idx_b += 1;
+                }
+                (_, std::cmp::Ordering::Equal) => {
+                    try_insert(b);
+                    idx_a += 1;
+                    idx_b += 1;
+                }
+                _ => {
+                    try_insert(b);
+                    idx_b += 1;
+                }
+            }
+        }
+
+        while idx_a < slice_a.len() {
+            try_insert(slice_a[idx_a]);
+            idx_a += 1;
+        }
+
+        while idx_b < slice_b.len() {
+            try_insert(slice_b[idx_b]);
+            idx_b += 1;
+        }
+
+        &slice_c[0..idx_c]
+    }
+
+    #[inline(always)]
+    fn trim_slice<'a>(
+        mut slice: &'a [ParetoValue<T, U>],
+        max_first: T,
+        max_second: U,
+    ) -> &'a [ParetoValue<T, U>] {
+        while slice.len() > 1 && slice[1].second >= max_second {
+            (_, slice) = slice.split_first().unwrap();
+        }
+        while slice.len() > 1 && slice[slice.len() - 2].first >= max_first {
+            (_, slice) = slice.split_last().unwrap();
+        }
+        slice
     }
 
     /// Saves the last segment to storage and returns an identifier to retrieve the segment
@@ -248,8 +296,8 @@ where
 
 impl<T, U> Drop for ParetoFrontBuilder<T, U>
 where
-    T: Copy + std::cmp::Ord + std::default::Default,
-    U: Copy + std::cmp::Ord + std::default::Default,
+    T: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
+    U: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
 {
     fn drop(&mut self) {
         log::debug!(
