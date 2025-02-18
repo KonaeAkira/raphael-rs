@@ -18,9 +18,9 @@ impl SingleUse {
 
     pub const fn from_bits(value: u8) -> Self {
         match value {
+            0 => Self::Unavailable,
             1 => Self::Available,
-            2 => Self::Active,
-            _ => Self::Unavailable,
+            _ => Self::Active,
         }
     }
 }
@@ -69,25 +69,25 @@ impl Effects {
     pub fn tick_down(&mut self) {
         let mut effect_tick = 0;
         if self.waste_not() != 0 {
-            effect_tick |= const { Effects::from_bits(0).with_waste_not(1).into_bits() };
+            effect_tick |= const { Self::from_bits(0).with_waste_not(1).into_bits() };
         }
         if self.innovation() != 0 {
-            effect_tick |= const { Effects::from_bits(0).with_innovation(1).into_bits() };
+            effect_tick |= const { Self::from_bits(0).with_innovation(1).into_bits() };
         }
         if self.veneration() != 0 {
-            effect_tick |= const { Effects::from_bits(0).with_veneration(1).into_bits() };
+            effect_tick |= const { Self::from_bits(0).with_veneration(1).into_bits() };
         }
         if self.great_strides() != 0 {
-            effect_tick |= const { Effects::from_bits(0).with_great_strides(1).into_bits() };
+            effect_tick |= const { Self::from_bits(0).with_great_strides(1).into_bits() };
         }
         if self.muscle_memory() != 0 {
-            effect_tick |= const { Effects::from_bits(0).with_muscle_memory(1).into_bits() };
+            effect_tick |= const { Self::from_bits(0).with_muscle_memory(1).into_bits() };
         }
         if self.manipulation() != 0 {
-            effect_tick |= const { Effects::from_bits(0).with_manipulation(1).into_bits() };
+            effect_tick |= const { Self::from_bits(0).with_manipulation(1).into_bits() };
         }
         if self.guard() != 0 {
-            effect_tick |= const { Effects::from_bits(0).with_guard(1).into_bits() };
+            effect_tick |= const { Self::from_bits(0).with_guard(1).into_bits() };
         }
         self.0 -= effect_tick;
     }
