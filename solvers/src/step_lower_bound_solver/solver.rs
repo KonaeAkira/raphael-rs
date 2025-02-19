@@ -165,19 +165,23 @@ impl StepLowerBoundSolver {
                     let new_reduced_state =
                         ReducedState::from_state(new_full_state, new_step_budget, progress_only);
                     match self.solved_states.get(&new_reduced_state) {
-                        Some(id) => self.pareto_front_builder.push_from_id(*id),
+                        Some(id) => self.pareto_front_builder.push_id(*id),
                         None => self.solve_state(new_reduced_state)?,
                     }
-                    self.pareto_front_builder.map(move |value| {
-                        value.first = value.first.saturating_add(action_progress);
-                        value.second = value.second.saturating_add(action_quality);
-                    });
+                    self.pareto_front_builder
+                        .peek_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .for_each(|value| {
+                            value.first = value.first.saturating_add(action_progress);
+                            value.second = value.second.saturating_add(action_quality);
+                        });
                     self.pareto_front_builder.merge();
                 }
                 Err(_) if action_progress != 0 => {
                     // New state is final and last action increased Progress
                     self.pareto_front_builder
-                        .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
+                        .push_slice(&[ParetoValue::new(action_progress, action_quality)]);
                     self.pareto_front_builder.merge();
                 }
                 _ => {

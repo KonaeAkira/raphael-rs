@@ -167,20 +167,24 @@ impl QualityUpperBoundSolver {
         {
             if new_state.cp >= self.solver_settings.durability_cost {
                 match self.solved_states.get(&new_state) {
-                    Some(id) => self.pareto_front_builder.push_from_id(*id),
+                    Some(id) => self.pareto_front_builder.push_id(*id),
                     None => self.solve_state(new_state)?,
                 }
-                self.pareto_front_builder.map(move |value| {
-                    value.first = value.first.saturating_add(action_progress);
-                    value.second = value.second.saturating_add(action_quality);
-                });
+                self.pareto_front_builder
+                    .peek_mut()
+                    .unwrap()
+                    .iter_mut()
+                    .for_each(|value| {
+                        value.first = value.first.saturating_add(action_progress);
+                        value.second = value.second.saturating_add(action_quality);
+                    });
                 self.pareto_front_builder.merge();
             } else if new_state.cp >= -self.solver_settings.durability_cost && action_progress != 0
             {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
                 self.pareto_front_builder
-                    .push_from_slice(&[ParetoValue::new(action_progress, action_quality)]);
+                    .push_slice(&[ParetoValue::new(action_progress, action_quality)]);
                 self.pareto_front_builder.merge();
             }
         }

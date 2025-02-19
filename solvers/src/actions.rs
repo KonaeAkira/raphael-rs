@@ -73,11 +73,11 @@ impl ActionCombo {
 }
 
 pub const FULL_SEARCH_ACTIONS: &[ActionCombo] = &[
+    ActionCombo::AdvancedTouch,
     ActionCombo::TricksOfTheTrade,
     ActionCombo::IntensiveSynthesis,
     ActionCombo::PreciseTouch,
     ActionCombo::StandardTouch,
-    ActionCombo::AdvancedTouch,
     ActionCombo::FocusedTouch,
     ActionCombo::RefinedTouch,
     // progress
