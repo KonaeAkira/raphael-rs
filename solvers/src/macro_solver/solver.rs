@@ -137,10 +137,7 @@ impl<'a> MacroSolver<'a> {
                                 state.quality,
                                 self.settings.max_quality,
                             ),
-                            steps_lower_bound: u8::MAX,
-                            duration_lower_bound: u8::MAX,
-                            current_steps: u8::MAX,
-                            current_duration: u8::MAX,
+                            ..SearchScore::MIN
                         });
 
                         let quality_upper_bound = if state.quality >= self.settings.max_quality {

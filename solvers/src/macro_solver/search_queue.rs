@@ -69,6 +69,7 @@ pub struct SearchQueue {
 
 impl SearchQueue {
     pub fn new(initial_state: SimulationState, minimum_score: SearchScore) -> Self {
+        log::debug!("New minimum score: {:?}", minimum_score);
         Self {
             quality_pareto_front: Default::default(),
             effect_pareto_front: Default::default(),

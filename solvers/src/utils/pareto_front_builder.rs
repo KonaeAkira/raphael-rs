@@ -22,9 +22,9 @@ where
     U: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
 {
     storage: Vec<ParetoValue<T, U>>,
+    segments: Vec<usize>, // indices to the beginning of each segment
     buffer: Vec<ParetoValue<T, U>>,
     merge_buffer: [ParetoValue<T, U>; 1024],
-    segments: Vec<usize>, // indices to the beginning of each segment
     // cut-off values
     max_first: T,
     max_second: U,
@@ -42,9 +42,9 @@ where
     pub fn new(max_first: T, max_second: U) -> Self {
         Self {
             storage: Vec::with_capacity(1 << 18),
+            segments: Vec::with_capacity(1 << 12),
             buffer: Vec::with_capacity(1 << 12),
             merge_buffer: [Default::default(); 1024],
-            segments: Vec::with_capacity(1 << 12),
             max_first,
             max_second,
             fronts_generated: 0,
