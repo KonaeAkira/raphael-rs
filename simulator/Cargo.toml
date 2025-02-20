@@ -1,12 +1,11 @@
 [package]
 name = "simulator"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["rlib"]
 
 [dev-dependencies]
-more-asserts = "0.3.1"
 rand = "0.8.5"
 
 [dependencies]

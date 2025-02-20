@@ -1,10 +1,10 @@
 use std::num::NonZeroU8;
 
 use crate::{
-    actions::{use_action_combo, ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
+    SolverException,
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
     branch_pruning::is_progress_only_state,
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
-    SolverException,
 };
 use simulator::*;
 
@@ -186,7 +186,7 @@ impl StepLowerBoundSolver {
                 }
                 _ => {
                     // New state is final but last action did not increase Progress
-                    ()
+                    // Skip this state
                 }
             }
         }

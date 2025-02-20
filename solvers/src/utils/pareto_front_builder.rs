@@ -169,8 +169,8 @@ where
     }
 
     #[inline(always)]
-    fn merge_mixed<'a>(
-        // slice_a and slice_b are marked &mut to tell the compiler that they are disjoint
+    fn merge_mixed(
+        // slices are marked &mut to tell the compiler that they are disjoint
         slice_a: &mut [ParetoValue<T, U>],
         slice_b: &mut [ParetoValue<T, U>],
         slice_c: &mut [ParetoValue<T, U>],

@@ -112,7 +112,7 @@ impl From<SolveArgs> for Settings {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn solve(args: &SolveArgs) {
     let flag = AtomicFlag::new();
     (args.on_start)(flag.as_ptr());
