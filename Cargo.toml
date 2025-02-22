@@ -10,7 +10,7 @@ default-run = "raphael-xiv"
 
 [dependencies]
 simulator = { path = "simulator", features = ["serde"] }
-solvers = { path = "solvers" }
+solvers = { path = "solvers", features = ["serde"] }
 game-data = { path = "game_data", features = ["serde"] }
 
 egui = "0.31"

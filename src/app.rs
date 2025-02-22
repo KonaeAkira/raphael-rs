@@ -2,7 +2,8 @@ use std::cell::Cell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use solvers::SolverException;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
@@ -10,7 +11,7 @@ use std::time::Instant;
 use web_time::Instant;
 
 use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
-use game_data::{action_name, get_initial_quality, get_job_name, Consumable, Locale};
+use game_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
 
 use simulator::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, Settings};
 
@@ -36,6 +37,7 @@ pub enum SolverEvent {
     Progress(usize),
     IntermediateSolution(Vec<Action>),
     FinalSolution(Vec<Action>),
+    Error(SolverException),
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -65,6 +67,7 @@ pub struct MacroSolverApp {
     solver_progress: usize,
     start_time: Option<Instant>,
     duration: Option<Duration>,
+    solver_error: Option<SolverException>,
 
     bridge: BridgeType,
     pub progress_update: Rc<Cell<Option<SolverEvent>>>,
@@ -146,6 +149,7 @@ impl MacroSolverApp {
             solver_progress: 0,
             start_time: None,
             duration: None,
+            solver_error: None,
 
             bridge,
             progress_update,
@@ -161,6 +165,32 @@ impl eframe::App for MacroSolverApp {
         self.load_fonts_dyn(ctx);
 
         self.solver_update();
+
+        if let Some(error) = self.solver_error.clone() {
+            egui::Modal::new(egui::Id::new("solver_error")).show(ctx, |ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+                match error {
+                    SolverException::NoSolution => {
+                        ui.label(egui::RichText::new("No solution").strong());
+                        ui.separator();
+                        ui.label("Make sure your stats are enough to craft this item.");
+                    }
+                    SolverException::Interrupted => self.solver_error = None,
+                    SolverException::InternalError(message) => {
+                        ui.label(egui::RichText::new("Error").strong());
+                        ui.separator();
+                        ui.label(message);
+                        ui.label("This is an internal error. Please submit a bug report :)");
+                    }
+                }
+                ui.separator();
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button("Close").clicked() {
+                        self.solver_error = None;
+                    }
+                });
+            });
+        }
 
         if self.solver_pending {
             egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
@@ -421,6 +451,14 @@ impl MacroSolverApp {
                     &self.crafter_config,
                     &self.solver_config,
                 ));
+            }
+            SolverEvent::Error(error) => {
+                self.actions.clear();
+                self.duration = Some(self.start_time.unwrap().elapsed());
+                self.solver_pending = false;
+                if error != SolverException::Interrupted {
+                    self.solver_error = Some(error);
+                }
             }
         }
     }

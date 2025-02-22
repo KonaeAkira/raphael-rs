@@ -1,7 +1,7 @@
 use crate::app::{SolverEvent, SolverInput};
 use simulator::{Action, SimulationState};
-use solvers::{test_utils, AtomicFlag, SolverException};
-use std::sync::{mpsc::Sender, LazyLock};
+use solvers::{AtomicFlag, SolverException, test_utils};
+use std::sync::{LazyLock, mpsc::Sender};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod native;
@@ -105,14 +105,7 @@ impl Worker {
                     Ok(actions) => {
                         self.send_event(tx.clone(), scope, id, SolverEvent::FinalSolution(actions));
                     }
-                    Err(_) => {
-                        self.send_event(
-                            tx.clone(),
-                            scope,
-                            id,
-                            SolverEvent::FinalSolution(Vec::new()),
-                        );
-                    }
+                    Err(error) => self.send_event(tx.clone(), scope, id, SolverEvent::Error(error)),
                 }
             }
             SolverInput::Cancel => {

@@ -76,9 +76,10 @@ impl StepLowerBoundSolver {
             return Ok(self.settings.max_quality);
         }
         if state.combo != Combo::None {
-            return Err(SolverException::InternalError(
-                "Combo state in internal solver",
-            ));
+            return Err(SolverException::InternalError(format!(
+                "\"{:?}\" combo in step lower bound solver",
+                state.combo
+            )));
         }
 
         let current_quality = state.quality;

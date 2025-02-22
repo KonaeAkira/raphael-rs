@@ -1,7 +1,7 @@
 use crate::{
+    SolverException,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
-    SolverException,
 };
 use simulator::*;
 
@@ -85,9 +85,10 @@ impl QualityUpperBoundSolver {
             return Ok(self.simulator_settings.max_quality);
         }
         if state.combo != Combo::None {
-            return Err(SolverException::InternalError(
-                "Combo state in internal solver",
-            ));
+            return Err(SolverException::InternalError(format!(
+                "\"{:?}\" combo in quality upper bound solver",
+                state.combo
+            )));
         }
 
         let current_quality = state.quality;

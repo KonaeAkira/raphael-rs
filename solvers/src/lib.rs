@@ -16,15 +16,16 @@ pub use macro_solver::MacroSolver;
 mod utils;
 pub use utils::AtomicFlag;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SolverException {
     NoSolution,
     Interrupted,
-    InternalError(&'static str),
+    InternalError(String),
 }
 
 pub mod test_utils {
-    use crate::{utils::AtomicFlag, MacroSolver, SolverException};
+    use crate::{MacroSolver, SolverException, utils::AtomicFlag};
     use simulator::*;
 
     pub fn solve(
