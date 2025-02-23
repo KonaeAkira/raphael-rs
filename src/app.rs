@@ -85,9 +85,7 @@ impl MacroSolverApp {
             .callback(move |response| {
                 match response {
                     SolverEvent::Progress(_) => progress_update.set(Some(response)),
-                    SolverEvent::IntermediateSolution(_) | SolverEvent::FinalSolution(_) => {
-                        solution_update.set(Some(response))
-                    }
+                    _ => solution_update.set(Some(response)),
                 }
                 ctx.request_repaint();
             })
