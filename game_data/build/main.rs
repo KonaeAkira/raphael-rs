@@ -31,17 +31,22 @@ fn import_game_data() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn import_rlvl_records() -> Result<Vec<RecipeLevelRecord>, Box<dyn std::error::Error>> {
-    let mut rlvl_table_csv = csv::Reader::from_path("data/RecipeLevelTable.csv")?;
-    let rlvl_records: Vec<_> = rlvl_table_csv
-        .deserialize::<RecipeLevelRecord>()
-        .map(|record| record.unwrap())
-        .collect();
+    let rlvl_records: Vec<_> =
+        read_csv_data::<RecipeLevelRecord>("data/RecipeLevelTable.csv").collect();
     let mut writer = BufWriter::new(
         File::create(Path::new(&std::env::var("OUT_DIR")?).join("rlvls.rs")).unwrap(),
     );
     writeln!(writer, "[")?;
     for record in rlvl_records.iter() {
-        writeln!(writer, "RecipeLevel {{ progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {}, conditions_flag: {} }},", record.progress_divider, record.quality_divider, record.progress_modifier, record.quality_modifier, record.conditions_flag)?;
+        writeln!(
+            writer,
+            "RecipeLevel {{ progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {}, conditions_flag: {} }},",
+            record.progress_divider,
+            record.quality_divider,
+            record.progress_modifier,
+            record.quality_modifier,
+            record.conditions_flag
+        )?;
     }
     writeln!(writer, "]")?;
     Ok(rlvl_records)
@@ -72,33 +77,34 @@ fn import_recipe_records(
         relevant_items.insert(recipe_record.ingredient_id_5);
 
         let ingredients = format!(
-                "[Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}]",
-                recipe_record.ingredient_id_0,
-                recipe_record.ingredient_amount_0,
-                recipe_record.ingredient_id_1,
-                recipe_record.ingredient_amount_1,
-                recipe_record.ingredient_id_2,
-                recipe_record.ingredient_amount_2,
-                recipe_record.ingredient_id_3,
-                recipe_record.ingredient_amount_3,
-                recipe_record.ingredient_id_4,
-                recipe_record.ingredient_amount_4,
-                recipe_record.ingredient_id_5,
-                recipe_record.ingredient_amount_5
-            );
+            "[Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}, Ingredient {{ item_id: {}, amount: {} }}]",
+            recipe_record.ingredient_id_0,
+            recipe_record.ingredient_amount_0,
+            recipe_record.ingredient_id_1,
+            recipe_record.ingredient_amount_1,
+            recipe_record.ingredient_id_2,
+            recipe_record.ingredient_amount_2,
+            recipe_record.ingredient_id_3,
+            recipe_record.ingredient_amount_3,
+            recipe_record.ingredient_id_4,
+            recipe_record.ingredient_amount_4,
+            recipe_record.ingredient_id_5,
+            recipe_record.ingredient_amount_5
+        );
 
         let rlvl_record = &rlvls[recipe_record.recipe_level as usize];
-        let recipe = format!("Recipe {{ job_id: {job_id}, item_id: {item_id}, level: {level}, recipe_level: {recipe_level}, progress: {progress}, quality: {quality}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients}, is_expert: {is_expert} }}",
-                job_id = recipe_record.job_id,
-                item_id = recipe_record.resulting_item,
-                level = rlvl_record.level,
-                recipe_level = recipe_record.recipe_level,
-                progress = apply_factor(rlvl_record.progress, recipe_record.progress_factor),
-                quality = apply_factor(rlvl_record.quality, recipe_record.quality_factor),
-                durability = apply_factor(rlvl_record.durability, recipe_record.durability_factor),
-                material_quality_factor = recipe_record.material_quality_factor,
-                ingredients = ingredients,
-                is_expert = recipe_record.is_expert
+        let recipe = format!(
+            "Recipe {{ job_id: {job_id}, item_id: {item_id}, level: {level}, recipe_level: {recipe_level}, progress: {progress}, quality: {quality}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients}, is_expert: {is_expert} }}",
+            job_id = recipe_record.job_id,
+            item_id = recipe_record.resulting_item,
+            level = rlvl_record.level,
+            recipe_level = recipe_record.recipe_level,
+            progress = apply_factor(rlvl_record.progress, recipe_record.progress_factor),
+            quality = apply_factor(rlvl_record.quality, recipe_record.quality_factor),
+            durability = apply_factor(rlvl_record.durability, recipe_record.durability_factor),
+            material_quality_factor = recipe_record.material_quality_factor,
+            ingredients = ingredients,
+            is_expert = recipe_record.is_expert
         );
 
         recipes.push(recipe);
