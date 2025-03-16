@@ -1,11 +1,11 @@
 use egui::{
-    util::cache::{ComputerMut, FrameCache},
     Align, Id, Layout, Widget,
+    util::cache::{ComputerMut, FrameCache},
 };
 use egui_extras::Column;
-use game_data::{find_meals, Consumable, CrafterStats, Locale};
+use game_data::{Consumable, CrafterStats, Locale, find_meals};
 
-use super::{util, ItemNameLabel};
+use super::{ItemNameLabel, util};
 
 #[derive(Default)]
 struct FoodFinder {}
@@ -88,8 +88,8 @@ impl Widget for FoodSelect<'_> {
                     .ui(ui)
                     .changed()
                 {
-                    search_text = search_text.replace("\0", "");
-                };
+                    search_text = search_text.replace('\0', "");
+                }
                 ui.separator();
 
                 let mut search_result = Vec::new();

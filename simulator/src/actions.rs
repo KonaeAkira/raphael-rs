@@ -52,7 +52,7 @@ pub trait ActionImpl {
             * condition_mod
             * effect_mod
             * inner_quiet_mod
-            / 100000000) as u16
+            / 100_000_000) as u16
     }
 
     fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> i8 {
@@ -95,11 +95,7 @@ impl ActionImpl for BasicSynthesis {
     const LEVEL_REQUIREMENT: u8 = 1;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicSynthesis);
     fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u16 {
-        if settings.job_level < 31 {
-            100
-        } else {
-            120
-        }
+        if settings.job_level < 31 { 100 } else { 120 }
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
         10
@@ -803,37 +799,37 @@ impl Combo {
 impl Action {
     pub const fn time_cost(self) -> u8 {
         match self {
-            Action::BasicSynthesis => 3,
-            Action::BasicTouch => 3,
-            Action::MasterMend => 3,
-            Action::Observe => 3,
-            Action::TricksOfTheTrade => 3,
-            Action::WasteNot => 2,
-            Action::Veneration => 2,
-            Action::StandardTouch => 3,
-            Action::GreatStrides => 2,
-            Action::Innovation => 2,
-            Action::WasteNot2 => 2,
-            Action::ByregotsBlessing => 3,
-            Action::PreciseTouch => 3,
-            Action::MuscleMemory => 3,
-            Action::CarefulSynthesis => 3,
-            Action::Manipulation => 2,
-            Action::PrudentTouch => 3,
-            Action::Reflect => 3,
-            Action::PreparatoryTouch => 3,
-            Action::Groundwork => 3,
-            Action::DelicateSynthesis => 3,
-            Action::IntensiveSynthesis => 3,
-            Action::AdvancedTouch => 3,
-            Action::HeartAndSoul => 3,
-            Action::PrudentSynthesis => 3,
-            Action::TrainedFinesse => 3,
-            Action::RefinedTouch => 3,
-            Action::ImmaculateMend => 3,
-            Action::TrainedPerfection => 3,
-            Action::TrainedEye => 3,
-            Action::QuickInnovation => 3,
+            Self::BasicSynthesis => 3,
+            Self::BasicTouch => 3,
+            Self::MasterMend => 3,
+            Self::Observe => 3,
+            Self::TricksOfTheTrade => 3,
+            Self::WasteNot => 2,
+            Self::Veneration => 2,
+            Self::StandardTouch => 3,
+            Self::GreatStrides => 2,
+            Self::Innovation => 2,
+            Self::WasteNot2 => 2,
+            Self::ByregotsBlessing => 3,
+            Self::PreciseTouch => 3,
+            Self::MuscleMemory => 3,
+            Self::CarefulSynthesis => 3,
+            Self::Manipulation => 2,
+            Self::PrudentTouch => 3,
+            Self::Reflect => 3,
+            Self::PreparatoryTouch => 3,
+            Self::Groundwork => 3,
+            Self::DelicateSynthesis => 3,
+            Self::IntensiveSynthesis => 3,
+            Self::AdvancedTouch => 3,
+            Self::HeartAndSoul => 3,
+            Self::PrudentSynthesis => 3,
+            Self::TrainedFinesse => 3,
+            Self::RefinedTouch => 3,
+            Self::ImmaculateMend => 3,
+            Self::TrainedPerfection => 3,
+            Self::TrainedEye => 3,
+            Self::QuickInnovation => 3,
         }
     }
 }

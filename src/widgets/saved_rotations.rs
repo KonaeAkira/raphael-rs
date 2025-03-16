@@ -26,8 +26,8 @@ impl Rotation {
         name: impl Into<String>,
         actions: Vec<Action>,
         recipe: &Recipe,
-        food: &Option<Consumable>,
-        potion: &Option<Consumable>,
+        food: Option<Consumable>,
+        potion: Option<Consumable>,
         crafter_config: &CrafterConfig,
         solver_config: &SolverConfig,
     ) -> Self {
@@ -140,7 +140,7 @@ impl<'a> RotationWidget<'a> {
                 }
                 ui.add_space(-3.0);
                 if ui.button("Load").clicked() {
-                    *self.actions = self.rotation.actions.clone();
+                    self.actions.clone_from(&self.rotation.actions);
                 }
                 let duration = self
                     .rotation
@@ -206,7 +206,7 @@ impl<'a> RotationWidget<'a> {
             .id_salt(self.id_salt("scroll_area"))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    for action in self.rotation.actions.iter() {
+                    for action in &self.rotation.actions {
                         let image = util::get_action_icon(*action, self.rotation.job_id)
                             .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
                             .corner_radius(4.0);

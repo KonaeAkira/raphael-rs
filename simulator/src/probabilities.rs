@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{Action, Condition, Settings, SimulationState};
 
 const fn condition_probabilities(current_condition: Condition) -> &'static [(Condition, f32)] {
@@ -52,7 +54,7 @@ impl IntoIterator for QualityDistribution {
 impl QualityDistribution {
     pub fn at_least(&self, quality: u16) -> f32 {
         let mut result = 0.0;
-        for value in self.distribution.iter() {
+        for value in &self.distribution {
             if value.quality >= quality {
                 result += value.probability;
             }
@@ -62,7 +64,7 @@ impl QualityDistribution {
 
     pub fn exactly(&self, quality: u16) -> f32 {
         let mut result = 0.0;
-        for value in self.distribution.iter() {
+        for value in &self.distribution {
             if value.quality == quality {
                 result += value.probability;
             }
@@ -116,7 +118,7 @@ impl QualityDistributionSolver {
                 ..settings
             },
             actions,
-            memoization: Default::default(),
+            memoization: HashMap::default(),
         }
     }
 
@@ -128,10 +130,7 @@ impl QualityDistributionSolver {
         let mut distribution = Vec::new();
         for (condition, condition_probability) in condition_probabilities(condition) {
             let action_result = state.use_action(self.actions[step], *condition, &self.settings);
-            let next_state = match action_result {
-                Ok(next_state) => next_state,
-                Err(_) => state,
-            };
+            let next_state = action_result.unwrap_or(state);
             let action_quality = next_state.quality;
             let next_distribution = match step + 1 == self.actions.len() {
                 true => match next_state.progress >= self.settings.max_progress {

@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 pub const MEALS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/meals.rs"));
 pub const POTIONS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/potions.rs"));
 
@@ -19,25 +21,28 @@ impl Consumable {
     pub fn effect_string(self, craftsmanship: u16, control: u16, cp: u16) -> String {
         let mut effect: String = String::new();
         if self.craft_rel != 0 {
-            effect.push_str(&format!(
+            let _write_error = write!(
+                effect,
                 "Crafts. +{}% ({}), ",
                 self.craft_rel,
                 craftsmanship_bonus(craftsmanship, &[Some(self)])
-            ));
+            );
         }
         if self.control_rel != 0 {
-            effect.push_str(&format!(
+            let _write_error = write!(
+                effect,
                 "Control +{}% ({}), ",
                 self.control_rel,
                 control_bonus(control, &[Some(self)])
-            ));
+            );
         }
         if self.cp_rel != 0 {
-            effect.push_str(&format!(
+            let _write_error = write!(
+                effect,
                 "CP +{}% ({}), ",
                 self.cp_rel,
                 cp_bonus(cp, &[Some(self)])
-            ));
+            );
         }
         effect.pop();
         effect.pop();
@@ -48,12 +53,10 @@ impl Consumable {
 pub fn craftsmanship_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
-        .map(|item| match item {
-            Some(item) => {
-                let rel_bonus = (base as u32 * item.craft_rel as u32 / 100) as u16;
-                std::cmp::min(item.craft_max, rel_bonus)
-            }
-            None => 0,
+        .flatten()
+        .map(|item| {
+            let rel_bonus = (base as u32 * item.craft_rel as u32 / 100) as u16;
+            std::cmp::min(item.craft_max, rel_bonus)
         })
         .sum()
 }
@@ -61,12 +64,10 @@ pub fn craftsmanship_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16
 pub fn control_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
-        .map(|item| match item {
-            Some(item) => {
-                let rel_bonus = (base as u32 * item.control_rel as u32 / 100) as u16;
-                std::cmp::min(item.control_max, rel_bonus)
-            }
-            None => 0,
+        .flatten()
+        .map(|item| {
+            let rel_bonus = (base as u32 * item.control_rel as u32 / 100) as u16;
+            std::cmp::min(item.control_max, rel_bonus)
         })
         .sum()
 }
@@ -74,19 +75,17 @@ pub fn control_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
 pub fn cp_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
     consumables
         .iter()
-        .map(|item| match item {
-            Some(item) => {
-                let rel_bonus = (base as u32 * item.cp_rel as u32 / 100) as u16;
-                std::cmp::min(item.cp_max, rel_bonus)
-            }
-            None => 0,
+        .flatten()
+        .map(|item| {
+            let rel_bonus = (base as u32 * item.cp_rel as u32 / 100) as u16;
+            std::cmp::min(item.cp_max, rel_bonus)
         })
         .sum()
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{get_item_name, Locale};
+    use crate::{Locale, get_item_name};
 
     use super::*;
 

@@ -16,18 +16,18 @@ impl ActionCombo {
     #[inline(always)]
     pub const fn actions(self) -> &'static [Action] {
         match self {
-            ActionCombo::TricksOfTheTrade => &[Action::HeartAndSoul, Action::TricksOfTheTrade],
-            ActionCombo::IntensiveSynthesis => &[Action::HeartAndSoul, Action::IntensiveSynthesis],
-            ActionCombo::PreciseTouch => &[Action::HeartAndSoul, Action::PreciseTouch],
-            ActionCombo::StandardTouch => &[Action::BasicTouch, Action::StandardTouch],
-            ActionCombo::AdvancedTouch => &[
+            Self::TricksOfTheTrade => &[Action::HeartAndSoul, Action::TricksOfTheTrade],
+            Self::IntensiveSynthesis => &[Action::HeartAndSoul, Action::IntensiveSynthesis],
+            Self::PreciseTouch => &[Action::HeartAndSoul, Action::PreciseTouch],
+            Self::StandardTouch => &[Action::BasicTouch, Action::StandardTouch],
+            Self::AdvancedTouch => &[
                 Action::BasicTouch,
                 Action::StandardTouch,
                 Action::AdvancedTouch,
             ],
-            ActionCombo::FocusedTouch => &[Action::Observe, Action::AdvancedTouch],
-            ActionCombo::RefinedTouch => &[Action::BasicTouch, Action::RefinedTouch],
-            ActionCombo::Single(action) => match action {
+            Self::FocusedTouch => &[Action::Observe, Action::AdvancedTouch],
+            Self::RefinedTouch => &[Action::BasicTouch, Action::RefinedTouch],
+            Self::Single(action) => match action {
                 Action::BasicSynthesis => &[Action::BasicSynthesis],
                 Action::BasicTouch => &[Action::BasicTouch],
                 Action::MasterMend => &[Action::MasterMend],
@@ -169,7 +169,7 @@ pub fn use_action_combo(
     mut state: SimulationState,
     action_combo: ActionCombo,
 ) -> Result<SimulationState, &'static str> {
-    for action in action_combo.actions().iter() {
+    for action in action_combo.actions() {
         state = state.use_action(*action, Condition::Normal, settings)?;
     }
     state.combo = Combo::None;

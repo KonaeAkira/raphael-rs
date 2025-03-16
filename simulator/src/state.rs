@@ -81,7 +81,7 @@ impl SimulationState {
         &self,
         settings: &Settings,
         condition: Condition,
-    ) -> Result<SimulationState, &'static str> {
+    ) -> Result<Self, &'static str> {
         self.check_common_preconditions::<A>(settings, condition)?;
         A::precondition(self, settings, condition)?;
 
@@ -160,7 +160,7 @@ impl SimulationState {
         action: Action,
         condition: Condition,
         settings: &Settings,
-    ) -> Result<SimulationState, &'static str> {
+    ) -> Result<Self, &'static str> {
         match action {
             Action::BasicSynthesis => self.use_action_impl::<BasicSynthesis>(settings, condition),
             Action::BasicTouch => self.use_action_impl::<BasicTouch>(settings, condition),

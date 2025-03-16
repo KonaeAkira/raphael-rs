@@ -2,11 +2,11 @@ use radix_heap::RadixHeapMap;
 use simulator::{Action, ActionMask, Combo, Settings, SimulationState, SingleUse};
 
 use crate::{
-    actions::{use_action_combo, ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS},
+    AtomicFlag, QualityUpperBoundSolver, SolverException,
+    actions::{ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo},
     finish_solver::FinishSolver,
     macro_solver::pareto_front::QualityParetoFront,
     utils::NamedTimer,
-    AtomicFlag, QualityUpperBoundSolver, SolverException,
 };
 
 pub fn fast_lower_bound(
@@ -32,7 +32,7 @@ pub fn fast_lower_bound(
         if score <= quality_lower_bound {
             break;
         }
-        for action in QUALITY_ONLY_SEARCH_ACTIONS.iter() {
+        for action in QUALITY_ONLY_SEARCH_ACTIONS {
             if !should_use_action(*action, &state, settings.allowed_actions) {
                 continue;
             }

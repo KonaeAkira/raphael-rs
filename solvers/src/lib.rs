@@ -73,9 +73,6 @@ pub mod test_utils {
                 quality_lock = Some(state.quality);
             }
         }
-        match quality_lock {
-            Some(quality) => state.quality == quality,
-            None => true,
-        }
+        quality_lock.is_none_or(|quality| state.quality == quality)
     }
 }

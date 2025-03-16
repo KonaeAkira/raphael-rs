@@ -127,7 +127,7 @@ impl StepLowerBoundSolver {
             false => FULL_SEARCH_ACTIONS,
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
         };
-        for action in search_actions.iter() {
+        for action in search_actions {
             if action.steps() <= reduced_state.steps_budget.get() {
                 self.build_child_front(reduced_state, *action)?;
                 if self.pareto_front_builder.is_max() {

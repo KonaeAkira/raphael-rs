@@ -1,11 +1,11 @@
 use egui::{
-    util::cache::{ComputerMut, FrameCache},
     Align, Id, Layout, Widget,
+    util::cache::{ComputerMut, FrameCache},
 };
 use egui_extras::Column;
-use game_data::{find_potions, Consumable, CrafterStats, Locale};
+use game_data::{Consumable, CrafterStats, Locale, find_potions};
 
-use super::{util, ItemNameLabel};
+use super::{ItemNameLabel, util};
 
 #[derive(Default)]
 struct PotionFinder {}
@@ -91,8 +91,8 @@ impl Widget for PotionSelect<'_> {
                     .ui(ui)
                     .changed()
                 {
-                    search_text = search_text.replace("\0", "");
-                };
+                    search_text = search_text.replace('\0', "");
+                }
                 ui.separator();
 
                 let mut search_result = Vec::new();

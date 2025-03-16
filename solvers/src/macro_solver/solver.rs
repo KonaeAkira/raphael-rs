@@ -2,7 +2,7 @@ use simulator::{Action, Settings, SimulationState};
 
 use super::search_queue::SearchScore;
 use crate::actions::{
-    use_action_combo, ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS,
+    ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo,
 };
 use crate::branch_pruning::{is_progress_only_state, strip_quality_effects};
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
@@ -22,7 +22,7 @@ struct Solution {
 impl Solution {
     fn actions(&self) -> Vec<Action> {
         let mut actions = Vec::new();
-        for solver_action in self.solver_actions.iter() {
+        for solver_action in &self.solver_actions {
             actions.extend_from_slice(solver_action.actions());
         }
         actions
@@ -52,8 +52,8 @@ impl<'a> MacroSolver<'a> {
         solution_callback: Box<SolutionCallback<'a>>,
         progress_callback: Box<ProgressCallback<'a>>,
         interrupt_signal: AtomicFlag,
-    ) -> MacroSolver<'a> {
-        MacroSolver {
+    ) -> Self {
+        Self {
             settings,
             backload_progress,
             unsound_branch_pruning,
@@ -124,7 +124,7 @@ impl<'a> MacroSolver<'a> {
                 false => FULL_SEARCH_ACTIONS,
             };
 
-            for action in search_actions.iter() {
+            for action in search_actions {
                 if let Ok(state) = use_action_combo(&self.settings, state, *action) {
                     if !state.is_final(&self.settings) {
                         if !self.finish_solver.can_finish(&state) {
@@ -213,9 +213,6 @@ impl<'a> MacroSolver<'a> {
             }
         }
 
-        match solution {
-            Some(solution) => Ok(solution),
-            None => Err(SolverException::NoSolution),
-        }
+        solution.ok_or(SolverException::NoSolution)
     }
 }

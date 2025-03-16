@@ -71,10 +71,10 @@ impl SearchQueue {
     pub fn new(initial_state: SimulationState, minimum_score: SearchScore) -> Self {
         log::debug!("New minimum score: {:?}", minimum_score);
         Self {
-            quality_pareto_front: Default::default(),
-            effect_pareto_front: Default::default(),
+            quality_pareto_front: QualityParetoFront::default(),
+            effect_pareto_front: EffectParetoFront::default(),
             backtracking: Backtracking::new(),
-            buckets: Default::default(),
+            buckets: BTreeMap::default(),
             current_score: SearchScore::MAX,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
             minimum_score,

@@ -1,15 +1,15 @@
 use egui::{
-    util::cache::{ComputerMut, FrameCache},
     Align, Id, Layout, Widget,
+    util::cache::{ComputerMut, FrameCache},
 };
 use egui_extras::Column;
 use game_data::{
-    find_recipes, get_game_settings, get_job_name, Consumable, Ingredient, Locale, RLVLS,
+    Consumable, Ingredient, Locale, RLVLS, find_recipes, get_game_settings, get_job_name,
 };
 
 use crate::config::{CrafterConfig, QualitySource, RecipeConfiguration};
 
-use super::{util, ItemNameLabel};
+use super::{ItemNameLabel, util};
 
 #[derive(Default)]
 struct RecipeFinder {}
@@ -61,8 +61,8 @@ impl<'a> RecipeSelect<'a> {
             .ui(ui)
             .changed()
         {
-            search_text = search_text.replace("\0", "");
-        };
+            search_text = search_text.replace('\0', "");
+        }
         ui.separator();
 
         let mut search_result = Vec::new();
@@ -104,7 +104,7 @@ impl<'a> RecipeSelect<'a> {
                             recipe,
                             quality_source: QualitySource::HqMaterialList([0; 6]),
                         }
-                    };
+                    }
                 });
                 row.col(|ui| {
                     ui.label(get_job_name(recipe.job_id, self.locale));
@@ -242,7 +242,7 @@ impl Widget for RecipeSelect<'_> {
                             ui.ctx().data_mut(|data| {
                                 data.insert_persisted(Id::new("CUSTOM_RECIPE"), custom_recipe);
                             });
-                        };
+                        }
                     });
                 });
 

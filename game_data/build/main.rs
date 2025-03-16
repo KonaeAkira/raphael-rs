@@ -37,7 +37,7 @@ fn import_rlvl_records() -> Result<Vec<RecipeLevelRecord>, Box<dyn std::error::E
         File::create(Path::new(&std::env::var("OUT_DIR")?).join("rlvls.rs")).unwrap(),
     );
     writeln!(writer, "[")?;
-    for record in rlvl_records.iter() {
+    for record in &rlvl_records {
         writeln!(
             writer,
             "RecipeLevel {{ progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {}, conditions_flag: {} }},",

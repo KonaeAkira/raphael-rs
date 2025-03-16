@@ -2,7 +2,7 @@ use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::actions::{use_action_combo, FULL_SEARCH_ACTIONS};
+use crate::actions::{FULL_SEARCH_ACTIONS, use_action_combo};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
@@ -13,8 +13,8 @@ struct ReducedState {
 }
 
 impl ReducedState {
-    fn from_state(state: &SimulationState) -> ReducedState {
-        ReducedState {
+    fn from_state(state: &SimulationState) -> Self {
+        Self {
             durability: state.durability,
             cp: state.cp,
             effects: state
@@ -48,13 +48,13 @@ pub struct FinishSolver {
 }
 
 impl FinishSolver {
-    pub fn new(settings: Settings) -> FinishSolver {
+    pub fn new(settings: Settings) -> Self {
         log::trace!(
             "ReducedState (FinishSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
-        FinishSolver {
+        Self {
             settings,
             max_progress: HashMap::default(),
         }
@@ -70,17 +70,17 @@ impl FinishSolver {
             Some(max_progress) => *max_progress,
             None => {
                 let mut max_progress = 0;
-                for action in FULL_SEARCH_ACTIONS.iter() {
+                for action in FULL_SEARCH_ACTIONS {
                     if let Ok(new_state) =
                         use_action_combo(&self.settings, state.to_state(), *action)
                     {
-                        if !new_state.is_final(&self.settings) {
+                        if new_state.is_final(&self.settings) {
+                            max_progress = std::cmp::max(max_progress, new_state.progress);
+                        } else {
                             let child_progress =
                                 self.solve_max_progress(ReducedState::from_state(&new_state));
                             max_progress =
                                 std::cmp::max(max_progress, child_progress + new_state.progress);
-                        } else {
-                            max_progress = std::cmp::max(max_progress, new_state.progress);
                         }
                     }
                     if max_progress >= self.settings.max_progress {

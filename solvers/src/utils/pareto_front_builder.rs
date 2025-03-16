@@ -44,7 +44,7 @@ where
             storage: Vec::with_capacity(1 << 18),
             segments: Vec::with_capacity(1 << 12),
             buffer: Vec::with_capacity(1 << 12),
-            merge_buffer: [Default::default(); 1024],
+            merge_buffer: [ParetoValue::default(); 1024],
             max_first,
             max_second,
             fronts_generated: 0,
@@ -251,17 +251,15 @@ where
     }
 
     pub fn peek(&self) -> Option<&[ParetoValue<T, U>]> {
-        match self.segments.last().copied() {
-            Some(segment_begin) => Some(&self.buffer[segment_begin..]),
-            None => None,
-        }
+        self.segments
+            .last()
+            .map(|&segment_begin| &self.buffer[segment_begin..])
     }
 
     pub fn peek_mut(&mut self) -> Option<&mut [ParetoValue<T, U>]> {
-        match self.segments.last().copied() {
-            Some(segment_begin) => Some(&mut self.buffer[segment_begin..]),
-            None => None,
-        }
+        self.segments
+            .last()
+            .map(|&segment_begin| &mut self.buffer[segment_begin..])
     }
 
     /// Retrieves a Pareto front from storage

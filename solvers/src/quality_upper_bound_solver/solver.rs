@@ -141,7 +141,7 @@ impl QualityUpperBoundSolver {
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
             false => FULL_SEARCH_ACTIONS,
         };
-        for action in search_actions.iter() {
+        for action in search_actions {
             if !self.should_use_action(state, *action) {
                 continue;
             }

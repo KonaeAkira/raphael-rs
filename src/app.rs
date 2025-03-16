@@ -123,20 +123,15 @@ impl MacroSolverApp {
 
         load_fonts(&cc.egui_ctx);
 
-        let default_recipe_config = RecipeConfiguration {
-            recipe: *game_data::RECIPES.last().unwrap(),
-            quality_source: QualitySource::HqMaterialList([0; 6]),
-        };
-
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
-            recipe_config: load(cc, "RECIPE_CONFIG", default_recipe_config),
+            recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
             selected_food: load(cc, "SELECTED_FOOD", None),
             selected_potion: load(cc, "SELECTED_POTION", None),
-            crafter_config: load(cc, "CRAFTER_CONFIG", Default::default()),
-            solver_config: load(cc, "SOLVER_CONFIG", Default::default()),
-            macro_view_config: load(cc, "MACRO_VIEW_CONFIG", Default::default()),
-            saved_rotations_data: load(cc, "SAVED_ROTATIONS", Default::default()),
+            crafter_config: load(cc, "CRAFTER_CONFIG", CrafterConfig::default()),
+            solver_config: load(cc, "SOLVER_CONFIG", SolverConfig::default()),
+            macro_view_config: load(cc, "MACRO_VIEW_CONFIG", MacroViewConfig::default()),
+            saved_rotations_data: load(cc, "SAVED_ROTATIONS", SavedRotationsData::default()),
 
             stats_edit_window_open: false,
             saved_rotations_window_open: false,
@@ -444,8 +439,8 @@ impl MacroSolverApp {
                     game_data::get_item_name(self.recipe_config.recipe.item_id, false, self.locale),
                     self.actions.clone(),
                     &self.recipe_config.recipe,
-                    &self.selected_food,
-                    &self.selected_potion,
+                    self.selected_food,
+                    self.selected_potion,
                     &self.crafter_config,
                     &self.solver_config,
                 ));
@@ -756,7 +751,7 @@ impl MacroSolverApp {
                     _ => {
                         ui.add_enabled(false, egui::DragValue::new(&mut current_value));
                     }
-                };
+                }
                 egui::ComboBox::from_id_salt("TARGET_QUALITY")
                     .selected_text(format!("{}", self.solver_config.quality_target))
                     .show_ui(ui, |ui| {

@@ -6,7 +6,7 @@ use crate::{
     config::{CrafterConfig, QualityTarget},
 };
 
-use super::{util, HelpText};
+use super::{HelpText, util};
 
 pub struct Simulator<'a> {
     settings: &'a Settings,
@@ -229,7 +229,11 @@ impl egui::Widget for Simulator<'_> {
 
 fn text_width(ui: &mut egui::Ui, text: impl Into<String>) -> f32 {
     ui.fonts(|fonts| {
-        let galley = fonts.layout_no_wrap(text.into(), Default::default(), Default::default());
+        let galley = fonts.layout_no_wrap(
+            text.into(),
+            egui::FontId::default(),
+            egui::Color32::default(),
+        );
         galley.rect.width()
     })
 }

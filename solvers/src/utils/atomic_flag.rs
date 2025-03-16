@@ -1,6 +1,6 @@
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc,
+    atomic::{AtomicBool, Ordering},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -16,7 +16,7 @@ fn cold() {}
 #[inline]
 fn unlikely(b: bool) -> bool {
     if b {
-        cold()
+        cold();
     }
     b
 }

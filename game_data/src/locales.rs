@@ -63,10 +63,7 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> String {
             .unwrap_or("Unknown item"),
     };
     let item_entry = ITEMS.get(&item_id);
-    let always_collectable = match item_entry {
-        Some(item) => item.always_collectable,
-        None => false,
-    };
+    let always_collectable = item_entry.is_some_and(|item| item.always_collectable);
     if !always_collectable {
         match hq {
             true => format!("{} \u{e03c}", item_name),

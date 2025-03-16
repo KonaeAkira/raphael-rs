@@ -1,6 +1,6 @@
+use crate::Worker;
 use crate::worker::Input;
 use crate::worker::Output;
-use crate::Worker;
 use std::sync::mpsc::{self, Receiver, Sender};
 
 pub(crate) type Scope = DummyScope;
@@ -31,8 +31,8 @@ impl NativeBridge {
 }
 
 impl Worker {
-    fn new(input: Input, tx: Sender<Output>) -> Worker {
-        Worker {
+    fn new(input: Input, tx: Sender<Output>) -> Self {
+        Self {
             input: Some(input),
             tx: Some(tx),
         }

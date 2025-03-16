@@ -2,6 +2,9 @@
 name = "simulator"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [lib]
 crate-type = ["rlib"]
 

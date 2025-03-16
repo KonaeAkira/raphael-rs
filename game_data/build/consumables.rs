@@ -63,12 +63,12 @@ pub fn import_consumable_records(
 
             relevant_items.insert(item.id);
 
-            let (craftsmanship, control, cp) = get_stats(item_food);
+            let (cms, control, cp) = get_stats(item_food);
 
             let consumable = ConsumableOutput {
                 item_id: item.id,
                 item_level: item.item_level,
-                craftsmanship,
+                cms,
                 control,
                 cp,
             };
@@ -87,7 +87,7 @@ pub fn import_consumable_records(
         File::create(Path::new(&std::env::var("OUT_DIR")?).join("meals.rs")).unwrap(),
     );
     writeln!(writer, "&[")?;
-    for meal in meals.into_iter() {
+    for meal in meals {
         writeln!(writer, "{},", meal.export(true))?;
         writeln!(writer, "{},", meal.export(false))?;
     }
@@ -99,7 +99,7 @@ pub fn import_consumable_records(
         File::create(Path::new(&std::env::var("OUT_DIR")?).join("potions.rs")).unwrap(),
     );
     writeln!(writer, "&[")?;
-    for potion in potions.into_iter() {
+    for potion in potions {
         writeln!(writer, "{},", potion.export(true))?;
         writeln!(writer, "{},", potion.export(false))?;
     }
@@ -156,16 +156,22 @@ struct Consumable {
 struct ConsumableOutput {
     item_id: u32,
     item_level: u32,
-    craftsmanship: [u32; 4],
+    cms: [u32; 4],
     control: [u32; 4],
     cp: [u32; 4],
 }
 
 impl ConsumableOutput {
     fn export(&self, hq: bool) -> String {
-        match hq {
-            true => format!("Consumable {{ item_id: {}, item_level: {}, hq: true, craft_rel: {}, craft_max: {}, control_rel: {}, control_max: {}, cp_rel: {}, cp_max: {} }}", self.item_id, self.item_level, self.craftsmanship[2], self.craftsmanship[3], self.control[2], self.control[3], self.cp[2], self.cp[3]),
-            false => format!("Consumable {{ item_id: {}, item_level: {}, hq: false, craft_rel: {}, craft_max: {}, control_rel: {}, control_max: {}, cp_rel: {}, cp_max: {} }}", self.item_id, self.item_level, self.craftsmanship[0], self.craftsmanship[1], self.control[0], self.control[1], self.cp[0], self.cp[1])
-        }
+        let cms_rel = if hq { self.cms[2] } else { self.cms[0] };
+        let cms_max = if hq { self.cms[3] } else { self.cms[1] };
+        let control_rel = if hq { self.control[2] } else { self.control[0] };
+        let control_max = if hq { self.control[3] } else { self.control[1] };
+        let cp_rel = if hq { self.cp[2] } else { self.cp[0] };
+        let cp_max = if hq { self.cp[3] } else { self.cp[1] };
+        format!(
+            "Consumable {{ item_id: {}, item_level: {}, hq: {hq}, craft_rel: {cms_rel}, craft_max: {cms_max}, control_rel: {control_rel}, control_max: {control_max}, cp_rel: {cp_rel}, cp_max: {cp_max} }}",
+            self.item_id, self.item_level,
+        )
     }
 }

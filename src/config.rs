@@ -13,6 +13,15 @@ pub struct RecipeConfiguration {
     pub quality_source: QualitySource,
 }
 
+impl Default for RecipeConfiguration {
+    fn default() -> Self {
+        Self {
+            recipe: *game_data::RECIPES.last().unwrap(),
+            quality_source: QualitySource::HqMaterialList([0; 6]),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 pub struct CrafterConfig {
     pub selected_job: u8,

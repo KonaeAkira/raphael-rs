@@ -52,6 +52,7 @@ impl ActionMask {
         (self.mask & other.mask) == other.mask
     }
 
+    #[must_use]
     pub const fn add(self, action: Action) -> Self {
         let bit = 1 << (action as u64);
         Self {
@@ -59,6 +60,7 @@ impl ActionMask {
         }
     }
 
+    #[must_use]
     pub const fn remove(self, action: Action) -> Self {
         let bit = 1 << (action as u64);
         Self {
@@ -66,18 +68,21 @@ impl ActionMask {
         }
     }
 
+    #[must_use]
     pub const fn union(self, other: Self) -> Self {
         Self {
             mask: self.mask | other.mask,
         }
     }
 
+    #[must_use]
     pub const fn intersection(self, other: Self) -> Self {
         Self {
             mask: self.mask & other.mask,
         }
     }
 
+    #[must_use]
     pub const fn minus(self, other: Self) -> Self {
         Self {
             mask: self.mask & (!other.mask),
