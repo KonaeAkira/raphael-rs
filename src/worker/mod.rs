@@ -68,9 +68,11 @@ impl Worker {
                     Err(SolverException::NoSolution) // skip unsound solver
                 } else {
                     solvers::MacroSolver::new(
-                        settings,
-                        true,
-                        true,
+                        solvers::SolverSettings {
+                            simulator_settings: settings,
+                            backload_progress: true,
+                            allow_unsound_branch_pruning: true,
+                        },
                         Box::new(solution_callback.clone()),
                         Box::new(progress_callback.clone()),
                         INTERRUPT_SIGNAL.clone(),
@@ -90,9 +92,11 @@ impl Worker {
                 if need_resolve {
                     progress_callback(0); // reset solver progress
                     result = solvers::MacroSolver::new(
-                        settings,
-                        config.backload_progress,
-                        false,
+                        solvers::SolverSettings {
+                            simulator_settings: settings,
+                            backload_progress: config.backload_progress,
+                            allow_unsound_branch_pruning: false,
+                        },
                         Box::new(solution_callback),
                         Box::new(progress_callback),
                         INTERRUPT_SIGNAL.clone(),

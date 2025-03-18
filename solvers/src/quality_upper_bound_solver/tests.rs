@@ -1,16 +1,24 @@
 use rand::Rng;
 use simulator::*;
 
-use crate::actions::{use_action_combo, FULL_SEARCH_ACTIONS};
+use crate::{
+    SolverSettings,
+    actions::{FULL_SEARCH_ACTIONS, use_action_combo},
+};
 
 use super::*;
 
-fn solve(settings: Settings, actions: &[Action]) -> u16 {
+fn solve(simulator_settings: Settings, actions: &[Action]) -> u16 {
     let state = SimulationState {
         combo: Combo::None,
-        ..SimulationState::from_macro(&settings, actions).unwrap()
+        ..SimulationState::from_macro(&simulator_settings, actions).unwrap()
     };
-    QualityUpperBoundSolver::new(settings, false, false, Default::default())
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    QualityUpperBoundSolver::new(solver_settings, Default::default())
         .quality_upper_bound(state)
         .unwrap()
 }
@@ -466,17 +474,22 @@ fn random_state(settings: &Settings) -> SimulationState {
 
 /// Test that the upper-bound solver is monotonic,
 /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
-fn monotonic_fuzz_check(settings: Settings) {
-    let mut solver = QualityUpperBoundSolver::new(settings, false, false, Default::default());
+fn monotonic_fuzz_check(simulator_settings: Settings) {
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {
-        let state = random_state(&settings);
+        let state = random_state(&simulator_settings);
         let state_upper_bound = solver.quality_upper_bound(state).unwrap();
         for action in FULL_SEARCH_ACTIONS {
-            let child_upper_bound = match use_action_combo(&settings, state, *action) {
-                Ok(child) => match child.is_final(&settings) {
+            let child_upper_bound = match use_action_combo(&solver_settings, state, *action) {
+                Ok(child) => match child.is_final(&simulator_settings) {
                     false => solver.quality_upper_bound(child).unwrap(),
-                    true if child.progress >= settings.max_progress => {
-                        std::cmp::min(settings.max_quality, child.quality)
+                    true if child.progress >= simulator_settings.max_progress => {
+                        std::cmp::min(simulator_settings.max_quality, child.quality)
                     }
                     true => 0,
                 },

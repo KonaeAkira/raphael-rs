@@ -1,5 +1,5 @@
 use crate::{
-    SolverException,
+    SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
@@ -9,70 +9,65 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::state::ReducedState;
 
-pub struct SolverSettings {
-    pub durability_cost: i16, // how much CP does it cost to restore 5 durability?
-    pub backload_progress: bool,
-    pub unsound_branch_pruning: bool,
-}
-
 pub struct QualityUpperBoundSolver {
-    simulator_settings: Settings,
-    solver_settings: SolverSettings,
+    settings: SolverSettings,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
     interrupt_signal: AtomicFlag,
     // pre-computed branch pruning values
     waste_not_1_min_cp: i16,
     waste_not_2_min_cp: i16,
+    durability_cost: i16,
 }
 
 impl QualityUpperBoundSolver {
-    pub fn new(
-        settings: Settings,
-        backload_progress: bool,
-        unsound_branch_pruning: bool,
-        interrupt_signal: AtomicFlag,
-    ) -> Self {
+    pub fn new(mut settings: SolverSettings, interrupt_signal: AtomicFlag) -> Self {
         log::trace!(
             "ReducedState (QualityUpperBoundSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
 
-        let settings = Settings {
-            max_cp: i16::MAX,
-            ..settings
-        };
+        settings.simulator_settings.max_cp = i16::MAX;
 
-        let initial_state = SimulationState::new(&settings);
+        let initial_state = SimulationState::new(&settings.simulator_settings);
+
         let mut durability_cost = 100;
-        if settings.is_action_allowed::<MasterMend>() {
-            let master_mend_cost = MasterMend::base_cp_cost(&initial_state, &settings);
+        if settings
+            .simulator_settings
+            .is_action_allowed::<MasterMend>()
+        {
+            let master_mend_cost =
+                MasterMend::base_cp_cost(&initial_state, &settings.simulator_settings);
             durability_cost = std::cmp::min(durability_cost, master_mend_cost / 6);
         }
-        if settings.is_action_allowed::<Manipulation>() {
-            let manipulation_cost = Manipulation::base_cp_cost(&initial_state, &settings);
+        if settings
+            .simulator_settings
+            .is_action_allowed::<Manipulation>()
+        {
+            let manipulation_cost =
+                Manipulation::base_cp_cost(&initial_state, &settings.simulator_settings);
             durability_cost = std::cmp::min(durability_cost, manipulation_cost / 8);
         }
-        if settings.is_action_allowed::<ImmaculateMend>() {
-            let immaculate_mend_cost = ImmaculateMend::base_cp_cost(&initial_state, &settings);
-            let max_restored = settings.max_durability as i16 / 5 - 1;
+        if settings
+            .simulator_settings
+            .is_action_allowed::<ImmaculateMend>()
+        {
+            let immaculate_mend_cost =
+                ImmaculateMend::base_cp_cost(&initial_state, &settings.simulator_settings);
+            let max_restored = settings.simulator_settings.max_durability as i16 / 5 - 1;
             durability_cost = std::cmp::min(durability_cost, immaculate_mend_cost / max_restored);
         }
 
         Self {
-            simulator_settings: settings,
-            solver_settings: SolverSettings {
-                durability_cost,
-                backload_progress,
-                unsound_branch_pruning,
-            },
+            settings,
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
-                settings.max_progress,
-                settings.max_quality,
+                settings.simulator_settings.max_progress,
+                settings.simulator_settings.max_quality,
             ),
             interrupt_signal,
+            durability_cost,
             waste_not_1_min_cp: waste_not_min_cp(56, 4, durability_cost),
             waste_not_2_min_cp: waste_not_min_cp(98, 8, durability_cost),
         }
@@ -82,7 +77,7 @@ impl QualityUpperBoundSolver {
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u16, SolverException> {
         if state.combo == Combo::SynthesisBegin {
-            return Ok(self.simulator_settings.max_quality);
+            return Ok(self.settings.simulator_settings.max_quality);
         }
         if state.combo != Combo::None {
             return Err(SolverException::InternalError(format!(
@@ -93,15 +88,13 @@ impl QualityUpperBoundSolver {
 
         let current_quality = state.quality;
         let missing_progress = self
+            .settings
             .simulator_settings
             .max_progress
             .saturating_sub(state.progress);
 
-        let reduced_state = ReducedState::from_simulation_state(
-            state,
-            &self.simulator_settings,
-            &self.solver_settings,
-        );
+        let reduced_state =
+            ReducedState::from_simulation_state(state, &self.settings, self.durability_cost);
         let pareto_front = match self.solved_states.get(&reduced_state) {
             Some(id) => self.pareto_front_builder.retrieve(*id),
             None => {
@@ -127,7 +120,7 @@ impl QualityUpperBoundSolver {
         };
 
         Ok(std::cmp::min(
-            self.simulator_settings.max_quality,
+            self.settings.simulator_settings.max_quality,
             pareto_front[index].second.saturating_add(current_quality),
         ))
     }
@@ -164,9 +157,9 @@ impl QualityUpperBoundSolver {
         action: ActionCombo,
     ) -> Result<(), SolverException> {
         if let Ok((new_state, action_progress, action_quality)) =
-            state.use_action(action, &self.simulator_settings, &self.solver_settings)
+            state.use_action(action, &self.settings, self.durability_cost)
         {
-            if new_state.cp >= self.solver_settings.durability_cost {
+            if new_state.cp >= self.durability_cost {
                 match self.solved_states.get(&new_state) {
                     Some(id) => self.pareto_front_builder.push_id(*id),
                     None => self.solve_state(new_state)?,
@@ -180,8 +173,7 @@ impl QualityUpperBoundSolver {
                         value.second = value.second.saturating_add(action_quality);
                     });
                 self.pareto_front_builder.merge();
-            } else if new_state.cp >= -self.solver_settings.durability_cost && action_progress != 0
-            {
+            } else if new_state.cp >= -self.durability_cost && action_progress != 0 {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
                 self.pareto_front_builder

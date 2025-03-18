@@ -1,7 +1,7 @@
 use clap::Args;
-use game_data::{get_game_settings, CrafterStats, MEALS, POTIONS, RECIPES};
+use game_data::{CrafterStats, MEALS, POTIONS, RECIPES, get_game_settings};
 use simulator::SimulationState;
-use solvers::{AtomicFlag, MacroSolver};
+use solvers::{AtomicFlag, MacroSolver, SolverSettings};
 
 #[derive(Args, Debug)]
 pub struct SolveArgs {
@@ -252,10 +252,14 @@ pub fn execute(args: &SolveArgs) {
 
     let state = SimulationState::new(&settings);
 
+    let solver_settings = SolverSettings {
+        simulator_settings: settings,
+        backload_progress: args.backload_progress,
+        allow_unsound_branch_pruning: args.unsound,
+    };
+
     let mut solver = MacroSolver::new(
-        settings,
-        args.backload_progress,
-        args.unsound,
+        solver_settings,
         Box::new(|_| {}),
         Box::new(|_| {}),
         AtomicFlag::new(),

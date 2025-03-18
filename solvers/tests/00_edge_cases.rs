@@ -1,5 +1,5 @@
 use simulator::*;
-use solvers::{test_utils::*, SolverException};
+use solvers::{SolverException, test_utils::*};
 
 #[test]
 fn unsolvable() {
@@ -38,8 +38,8 @@ fn zero_quality() {
         adversarial: false,
     };
     let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (0, 5, 14));
+    let score = get_score_quad(&settings, &actions);
+    assert_eq!(score, (0, 5, 14, 0));
 }
 
 #[test]
@@ -59,8 +59,8 @@ fn max_quality() {
         adversarial: false,
     };
     let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (1100, 11, 28));
+    let score = get_score_quad(&settings, &actions);
+    assert_eq!(score, (1000, 11, 28, 100));
 }
 
 #[test]
@@ -77,6 +77,6 @@ fn large_progress_quality_increase() {
         adversarial: false,
     };
     let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_triple(&settings, &actions);
-    assert_eq!(score, (5000, 1, 3));
+    let score = get_score_quad(&settings, &actions);
+    assert_eq!(score, (100, 1, 3, 4900));
 }

@@ -1,5 +1,4 @@
 mod actions;
-mod branch_pruning;
 
 mod finish_solver;
 use finish_solver::FinishSolver;
@@ -24,19 +23,29 @@ pub enum SolverException {
     InternalError(String),
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct SolverSettings {
+    pub simulator_settings: simulator::Settings,
+    pub backload_progress: bool,
+    pub allow_unsound_branch_pruning: bool,
+}
+
 pub mod test_utils {
-    use crate::{MacroSolver, SolverException, utils::AtomicFlag};
+    use crate::{MacroSolver, SolverException, SolverSettings, utils::AtomicFlag};
     use simulator::*;
 
     pub fn solve(
         settings: &Settings,
         backload_progress: bool,
-        unsound_branch_pruning: bool,
+        allow_unsound_branch_pruning: bool,
     ) -> Result<Vec<Action>, SolverException> {
-        MacroSolver::new(
-            *settings,
+        let solver_settings = SolverSettings {
+            simulator_settings: *settings,
             backload_progress,
-            unsound_branch_pruning,
+            allow_unsound_branch_pruning,
+        };
+        MacroSolver::new(
+            solver_settings,
             Box::new(|_| {}),
             Box::new(|_| {}),
             AtomicFlag::new(),
@@ -44,11 +53,13 @@ pub mod test_utils {
         .solve(SimulationState::new(settings))
     }
 
-    pub fn get_score_triple(settings: &Settings, actions: &[Action]) -> (u16, u8, u8) {
+    pub fn get_score_quad(settings: &Settings, actions: &[Action]) -> (u16, u8, u8, u16) {
         let quality = get_quality(settings, actions);
+        let capped_quality = std::cmp::min(quality, settings.max_quality);
+        let overflow_quality = quality.saturating_sub(settings.max_quality);
         let steps = actions.len() as u8;
         let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
-        (quality, steps, duration)
+        (capped_quality, steps, duration, overflow_quality)
     }
 
     pub fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {

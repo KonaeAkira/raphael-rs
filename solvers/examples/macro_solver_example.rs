@@ -1,5 +1,5 @@
 use simulator::{Action, ActionMask, Settings, SimulationState};
-use solvers::{AtomicFlag, MacroSolver};
+use solvers::{AtomicFlag, MacroSolver, SolverSettings};
 
 fn main() {
     #[cfg(feature = "env_logger")]
@@ -16,7 +16,7 @@ fn main() {
 
     // Ra'Kaznar Lapidary Hammer
     // 4462 Craftsmanship, 4391 Control
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 569,
         max_durability: 80,
         max_progress: 6600,
@@ -31,11 +31,15 @@ fn main() {
         adversarial: false,
     };
 
-    let state = SimulationState::new(&settings);
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+
+    let state = SimulationState::new(&simulator_settings);
     let actions = MacroSolver::new(
-        settings,
-        false,
-        false,
+        solver_settings,
         Box::new(|_| {}),
         Box::new(|_| {}),
         AtomicFlag::new(),
@@ -43,7 +47,7 @@ fn main() {
     .solve(state)
     .unwrap();
 
-    let quality = SimulationState::from_macro(&settings, &actions)
+    let quality = SimulationState::from_macro(&simulator_settings, &actions)
         .unwrap()
         .quality;
     let steps = actions.len();

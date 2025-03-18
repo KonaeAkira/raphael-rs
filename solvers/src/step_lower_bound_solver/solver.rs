@@ -1,9 +1,11 @@
 use std::num::NonZeroU8;
 
 use crate::{
-    SolverException,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
-    branch_pruning::is_progress_only_state,
+    SolverException, SolverSettings,
+    actions::{
+        ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, is_progress_only_state,
+        use_action_combo,
+    },
     utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
 };
 use simulator::*;
@@ -13,35 +15,26 @@ use rustc_hash::FxHashMap as HashMap;
 use super::state::ReducedState;
 
 pub struct StepLowerBoundSolver {
-    settings: Settings,
-    backload_progress: bool,
-    unsound_branch_pruning: bool,
+    settings: SolverSettings,
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
     interrupt_signal: AtomicFlag,
 }
 
 impl StepLowerBoundSolver {
-    pub fn new(
-        mut settings: Settings,
-        backload_progress: bool,
-        unsound_branch_pruning: bool,
-        interrupt_signal: AtomicFlag,
-    ) -> Self {
+    pub fn new(mut settings: SolverSettings, interrupt_signal: AtomicFlag) -> Self {
         log::trace!(
             "ReducedState (StepLowerBoundSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
             std::mem::align_of::<ReducedState>()
         );
-        ReducedState::optimize_action_mask(&mut settings);
+        ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
             settings,
-            backload_progress,
-            unsound_branch_pruning,
             solved_states: HashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
-                settings.max_progress,
-                settings.max_quality,
+                settings.simulator_settings.max_progress,
+                settings.simulator_settings.max_quality,
             ),
             interrupt_signal,
         }
@@ -52,15 +45,15 @@ impl StepLowerBoundSolver {
         state: SimulationState,
         hint: u8,
     ) -> Result<u8, SolverException> {
-        if self.backload_progress
+        if self.settings.backload_progress
             && state.progress != 0
-            && state.quality < self.settings.max_quality
+            && state.quality < self.settings.simulator_settings.max_quality
         {
             return Ok(u8::MAX);
         }
         let mut hint = NonZeroU8::try_from(std::cmp::max(hint, 1)).unwrap();
         while hint.get() != u8::MAX
-            && self.quality_upper_bound(state, hint)? < self.settings.max_quality
+            && self.quality_upper_bound(state, hint)? < self.settings.simulator_settings.max_quality
         {
             hint = hint.saturating_add(1);
         }
@@ -73,7 +66,7 @@ impl StepLowerBoundSolver {
         step_budget: NonZeroU8,
     ) -> Result<u16, SolverException> {
         if state.combo == Combo::SynthesisBegin {
-            return Ok(self.settings.max_quality);
+            return Ok(self.settings.simulator_settings.max_quality);
         }
         if state.combo != Combo::None {
             return Err(SolverException::InternalError(format!(
@@ -83,10 +76,13 @@ impl StepLowerBoundSolver {
         }
 
         let current_quality = state.quality;
-        let missing_progress = self.settings.max_progress.saturating_sub(state.progress);
+        let missing_progress = self
+            .settings
+            .simulator_settings
+            .max_progress
+            .saturating_sub(state.progress);
 
-        let progress_only =
-            is_progress_only_state(&state, self.backload_progress, self.unsound_branch_pruning);
+        let progress_only = is_progress_only_state(&self.settings, &state);
         let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
 
         let pareto_front = match self.solved_states.get(&reduced_state) {
@@ -113,7 +109,7 @@ impl StepLowerBoundSolver {
             Err(i) => i,
         };
         Ok(std::cmp::min(
-            self.settings.max_quality.saturating_mul(2),
+            self.settings.simulator_settings.max_quality,
             pareto_front[index].second.saturating_add(current_quality),
         ))
     }
@@ -154,11 +150,7 @@ impl StepLowerBoundSolver {
             let action_progress = new_full_state.progress;
             let action_quality = new_full_state.quality;
             let progress_only = reduced_state.progress_only
-                || is_progress_only_state(
-                    &new_full_state,
-                    self.backload_progress,
-                    self.unsound_branch_pruning,
-                );
+                || is_progress_only_state(&self.settings, &new_full_state);
             let new_step_budget = reduced_state.steps_budget.get() - action.steps();
             match NonZeroU8::try_from(new_step_budget) {
                 Ok(new_step_budget) if new_full_state.durability > 0 => {

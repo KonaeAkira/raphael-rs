@@ -1,9 +1,8 @@
 use crate::{
-    actions::{use_action_combo, ActionCombo},
-    branch_pruning::is_progress_only_state,
+    SolverSettings,
+    actions::{ActionCombo, is_progress_only_state, use_action_combo},
 };
 
-use super::solver::SolverSettings;
 use simulator::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -17,51 +16,39 @@ pub struct ReducedState {
 impl ReducedState {
     pub fn from_simulation_state(
         mut state: SimulationState,
-        simulator_settings: &Settings,
-        solver_settings: &SolverSettings,
+        settings: &SolverSettings,
+        durability_cost: i16,
     ) -> Self {
         state.cp += state.effects.manipulation() as i16
-            * (Manipulation::base_cp_cost(&state, simulator_settings) / 8);
+            * (Manipulation::base_cp_cost(&state, &settings.simulator_settings) / 8);
         if state.effects.trained_perfection() != SingleUse::Unavailable
-            && simulator_settings.is_action_allowed::<TrainedPerfection>()
+            && settings
+                .simulator_settings
+                .is_action_allowed::<TrainedPerfection>()
         {
-            state.cp += solver_settings.durability_cost * 4;
+            state.cp += durability_cost * 4;
         }
-        state.cp += state.durability as i16 / 5 * solver_settings.durability_cost;
-        state.durability = simulator_settings.max_durability;
-        Self::from_simulation_state_inner(&state, simulator_settings, solver_settings)
+        state.cp += state.durability as i16 / 5 * durability_cost;
+        state.durability = settings.simulator_settings.max_durability;
+        Self::from_simulation_state_inner(&state, settings, durability_cost)
     }
 
     fn from_simulation_state_inner(
         state: &SimulationState,
-        simulator_settings: &Settings,
-        solver_settings: &SolverSettings,
+        settings: &SolverSettings,
+        durability_cost: i16,
     ) -> Self {
-        let progress_only = is_progress_only_state(
-            state,
-            solver_settings.backload_progress,
-            solver_settings.unsound_branch_pruning,
-        );
-        let used_durability = (simulator_settings.max_durability - state.durability) / 5;
-        let cp = state.cp - used_durability as i16 * solver_settings.durability_cost;
+        let progress_only = is_progress_only_state(settings, state);
+        let used_durability = (settings.simulator_settings.max_durability - state.durability) / 5;
+        let cp = state.cp - used_durability as i16 * durability_cost;
         let unreliable_quality = if progress_only {
             0
         } else {
             state
                 .unreliable_quality
-                .div_ceil(2 * simulator_settings.base_quality) as u8
+                .div_ceil(2 * settings.simulator_settings.base_quality) as u8
         };
-        let effects = if progress_only {
-            state
-                .effects
-                .with_inner_quiet(0)
-                .with_innovation(0)
-                .with_great_strides(0)
-                .with_guard(0)
-                .with_quick_innovation_available(false)
-                .with_trained_perfection(SingleUse::Unavailable)
-                .with_manipulation(0)
-        } else {
+        let effects = {
             let great_strides_active = state.effects.great_strides() != 0;
             state
                 .effects
@@ -92,8 +79,8 @@ impl ReducedState {
     pub fn use_action(
         &self,
         action: ActionCombo,
-        simulator_settings: &Settings,
-        solver_settings: &SolverSettings,
+        settings: &SolverSettings,
+        durability_cost: i16,
     ) -> Result<(Self, u16, u16), &'static str> {
         match action {
             ActionCombo::Single(
@@ -101,14 +88,11 @@ impl ReducedState {
             ) => Err("Action not supported"),
             _ => {
                 let progress_only = self.progress_only;
-                let state = self.to_simulation_state(simulator_settings);
-                match use_action_combo(simulator_settings, state, action) {
+                let state = self.to_simulation_state(&settings.simulator_settings);
+                match use_action_combo(settings, state, action) {
                     Ok(state) => {
-                        let mut solver_state = Self::from_simulation_state_inner(
-                            &state,
-                            simulator_settings,
-                            solver_settings,
-                        );
+                        let mut solver_state =
+                            Self::from_simulation_state_inner(&state, settings, durability_cost);
                         if progress_only {
                             solver_state.progress_only = true;
                         }

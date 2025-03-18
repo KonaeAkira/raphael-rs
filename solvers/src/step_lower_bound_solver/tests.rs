@@ -1,16 +1,24 @@
 use rand::Rng;
 use simulator::*;
 
-use crate::actions::{use_action_combo, FULL_SEARCH_ACTIONS};
+use crate::{
+    SolverSettings,
+    actions::{FULL_SEARCH_ACTIONS, use_action_combo},
+};
 
 use super::*;
 
-fn solve(settings: Settings, actions: &[Action]) -> u8 {
+fn solve(simulator_settings: Settings, actions: &[Action]) -> u8 {
     let state = SimulationState {
         combo: Combo::None,
-        ..SimulationState::from_macro(&settings, actions).unwrap()
+        ..SimulationState::from_macro(&simulator_settings, actions).unwrap()
     };
-    StepLowerBoundSolver::new(settings, false, false, Default::default())
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    StepLowerBoundSolver::new(solver_settings, Default::default())
         .step_lower_bound_with_hint(state, 0)
         .unwrap()
 }
@@ -486,17 +494,22 @@ fn random_state(settings: &Settings) -> SimulationState {
 
 /// Test that the upper-bound solver is monotonic,
 /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
-fn monotonic_fuzz_check(settings: Settings) {
-    let mut solver = StepLowerBoundSolver::new(settings, false, false, Default::default());
+fn monotonic_fuzz_check(simulator_settings: Settings) {
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let mut solver = StepLowerBoundSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {
-        let state = random_state(&settings);
+        let state = random_state(&simulator_settings);
         let state_lower_bound = solver.step_lower_bound_with_hint(state, 0).unwrap();
         for action in FULL_SEARCH_ACTIONS {
-            let child_lower_bound = match use_action_combo(&settings, state, *action) {
-                Ok(child) => match child.is_final(&settings) {
+            let child_lower_bound = match use_action_combo(&solver_settings, state, *action) {
+                Ok(child) => match child.is_final(&simulator_settings) {
                     false => solver.step_lower_bound_with_hint(child, 0).unwrap(),
-                    true if child.progress >= settings.max_progress
-                        && child.quality >= settings.max_quality =>
+                    true if child.progress >= simulator_settings.max_progress
+                        && child.quality >= simulator_settings.max_quality =>
                     {
                         0
                     }

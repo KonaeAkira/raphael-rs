@@ -1,5 +1,5 @@
 use simulator::{ActionMask, Settings, SimulationState};
-use solvers::{AtomicFlag, MacroSolver};
+use solvers::{AtomicFlag, MacroSolver, SolverSettings};
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -96,9 +96,9 @@ impl From<simulator::Action> for Action {
     }
 }
 
-impl From<SolveArgs> for Settings {
+impl From<SolveArgs> for SolverSettings {
     fn from(value: SolveArgs) -> Self {
-        Self {
+        let simulator_settings = Settings {
             max_cp: value.cp,
             max_durability: value.durability,
             max_progress: value.progress,
@@ -108,6 +108,11 @@ impl From<SolveArgs> for Settings {
             job_level: value.job_level,
             allowed_actions: ActionMask::from_bits(value.action_mask),
             adversarial: value.adversarial,
+        };
+        Self {
+            simulator_settings,
+            backload_progress: value.backload_progress,
+            allow_unsound_branch_pruning: value.unsound_branch_pruning,
         }
     }
 }
@@ -117,7 +122,7 @@ pub extern "C" fn solve(args: &SolveArgs) {
     let flag = AtomicFlag::new();
     (args.on_start)(flag.as_ptr());
 
-    let settings = Settings::from(*args);
+    let settings = SolverSettings::from(*args);
     let solution_callback: Box<dyn Fn(&[simulator::Action])> =
         if let Some(cb) = args.on_suggest_solution {
             Box::new(move |actions| {
@@ -134,16 +139,8 @@ pub extern "C" fn solve(args: &SolveArgs) {
         Box::new(|_| {})
     };
 
-    let state = SimulationState::new(&settings);
-
-    let mut solver = MacroSolver::new(
-        settings,
-        args.backload_progress,
-        args.unsound_branch_pruning,
-        solution_callback,
-        progress_callback,
-        flag.clone(),
-    );
+    let state = SimulationState::new(&settings.simulator_settings);
+    let mut solver = MacroSolver::new(settings, solution_callback, progress_callback, flag.clone());
 
     let actions = solver.solve(state).unwrap_or_default();
     (args.on_finish)(actions.as_ptr() as *const Action, actions.len());

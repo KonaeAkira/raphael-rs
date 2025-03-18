@@ -1,8 +1,8 @@
 use radix_heap::RadixHeapMap;
-use simulator::{Action, ActionMask, Combo, Settings, SimulationState, SingleUse};
+use simulator::*;
 
 use crate::{
-    AtomicFlag, QualityUpperBoundSolver, SolverException,
+    AtomicFlag, QualityUpperBoundSolver, SolverException, SolverSettings,
     actions::{ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo},
     finish_solver::FinishSolver,
     macro_solver::pareto_front::QualityParetoFront,
@@ -11,7 +11,7 @@ use crate::{
 
 pub fn fast_lower_bound(
     state: SimulationState,
-    settings: &Settings,
+    settings: &SolverSettings,
     interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
     upper_bound_solver: &mut QualityUpperBoundSolver,
@@ -33,11 +33,11 @@ pub fn fast_lower_bound(
             break;
         }
         for action in QUALITY_ONLY_SEARCH_ACTIONS {
-            if !should_use_action(*action, &state, settings.allowed_actions) {
+            if !should_use_action(*action, &state, settings.simulator_settings.allowed_actions) {
                 continue;
             }
             if let Ok(state) = use_action_combo(settings, state, *action) {
-                if !state.is_final(settings) {
+                if !state.is_final(&settings.simulator_settings) {
                     if !finish_solver.can_finish(&state) {
                         continue;
                     }
@@ -58,7 +58,10 @@ pub fn fast_lower_bound(
         }
     }
 
-    Ok(std::cmp::min(settings.max_quality, quality_lower_bound))
+    Ok(std::cmp::min(
+        settings.simulator_settings.max_quality,
+        quality_lower_bound,
+    ))
 }
 
 fn should_use_action(

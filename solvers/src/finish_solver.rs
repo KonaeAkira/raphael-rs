@@ -2,7 +2,10 @@ use simulator::*;
 
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::actions::{FULL_SEARCH_ACTIONS, use_action_combo};
+use crate::{
+    SolverSettings,
+    actions::{FULL_SEARCH_ACTIONS, use_action_combo},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
@@ -42,13 +45,13 @@ impl ReducedState {
 }
 
 pub struct FinishSolver {
-    settings: Settings,
+    settings: SolverSettings,
     // maximum attainable progress for each state
     max_progress: HashMap<ReducedState, u16>,
 }
 
 impl FinishSolver {
-    pub fn new(settings: Settings) -> Self {
+    pub fn new(settings: SolverSettings) -> Self {
         log::trace!(
             "ReducedState (FinishSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
@@ -62,7 +65,7 @@ impl FinishSolver {
 
     pub fn can_finish(&mut self, state: &SimulationState) -> bool {
         let max_progress = self.solve_max_progress(ReducedState::from_state(state));
-        state.progress + max_progress >= self.settings.max_progress
+        state.progress + max_progress >= self.settings.simulator_settings.max_progress
     }
 
     fn solve_max_progress(&mut self, state: ReducedState) -> u16 {
@@ -74,7 +77,7 @@ impl FinishSolver {
                     if let Ok(new_state) =
                         use_action_combo(&self.settings, state.to_state(), *action)
                     {
-                        if new_state.is_final(&self.settings) {
+                        if new_state.is_final(&self.settings.simulator_settings) {
                             max_progress = std::cmp::max(max_progress, new_state.progress);
                         } else {
                             let child_progress =
@@ -83,10 +86,10 @@ impl FinishSolver {
                                 std::cmp::max(max_progress, child_progress + new_state.progress);
                         }
                     }
-                    if max_progress >= self.settings.max_progress {
+                    if max_progress >= self.settings.simulator_settings.max_progress {
                         // stop early if progress is already maxed out
                         // this optimization would work better with a better action ordering
-                        max_progress = self.settings.max_progress;
+                        max_progress = self.settings.simulator_settings.max_progress;
                         break;
                     }
                 }
