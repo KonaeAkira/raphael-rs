@@ -9,6 +9,7 @@ workspace = true
 crate-type = ["rlib"]
 
 [dev-dependencies]
+criterion = "0.5.1"
 rand = "0.8.5"
 
 [dependencies]
@@ -18,3 +19,7 @@ log = "0.4"
 
 [features]
 serde = ["dep:serde"]
+
+[[bench]]
+name = "bench_simulator"
+harness = false
