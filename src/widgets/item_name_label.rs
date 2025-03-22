@@ -1,4 +1,4 @@
-use game_data::{get_item_name, Locale};
+use raphael_data::{Locale, get_item_name};
 
 pub struct ItemNameLabel {
     item_id: u32,
@@ -31,22 +31,22 @@ impl egui::Widget for ItemNameLabel {
 
         response.context_menu(|ui| {
             if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                ui.close_menu();
+                ui.close();
             }
             let mut selection_made = false;
             if ui.button("Copy item name").clicked() {
                 let copy_item_name = self
                     .text
-                    .trim_end_matches([' ', game_data::HQ_ICON_CHAR, game_data::CL_ICON_CHAR])
+                    .trim_end_matches([' ', raphael_data::HQ_ICON_CHAR, raphael_data::CL_ICON_CHAR])
                     .to_string();
                 ui.ctx().copy_text(copy_item_name);
-                ui.close_menu();
+                ui.close();
                 selection_made = true;
             }
             ui.separator();
             if ui.button("Copy item ID").clicked() {
                 ui.ctx().copy_text(self.item_id.to_string());
-                ui.close_menu();
+                ui.close();
                 selection_made = true;
             }
 

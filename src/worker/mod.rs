@@ -1,6 +1,6 @@
 use crate::app::{SolverEvent, SolverInput};
-use simulator::{Action, SimulationState};
-use solvers::{AtomicFlag, SolverException, test_utils};
+use raphael_sim::{Action, SimulationState};
+use raphael_solver::{AtomicFlag, SolverException, test_utils};
 use std::sync::{LazyLock, mpsc::Sender};
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -67,8 +67,8 @@ impl Worker {
                 let mut result = if config.minimize_steps {
                     Err(SolverException::NoSolution) // skip unsound solver
                 } else {
-                    solvers::MacroSolver::new(
-                        solvers::SolverSettings {
+                    raphael_solver::MacroSolver::new(
+                        raphael_solver::SolverSettings {
                             simulator_settings: settings,
                             backload_progress: true,
                             allow_unsound_branch_pruning: true,
@@ -91,8 +91,8 @@ impl Worker {
 
                 if need_resolve {
                     progress_callback(0); // reset solver progress
-                    result = solvers::MacroSolver::new(
-                        solvers::SolverSettings {
+                    result = raphael_solver::MacroSolver::new(
+                        raphael_solver::SolverSettings {
                             simulator_settings: settings,
                             backload_progress: config.backload_progress,
                             allow_unsound_branch_pruning: false,

@@ -1,5 +1,5 @@
-use game_data::{Item, Locale};
-use simulator::{Action, Settings, SimulationState};
+use raphael_data::{Item, Locale};
+use raphael_sim::{Action, Settings, SimulationState};
 
 use crate::{
     app::SolverConfig,
@@ -170,7 +170,7 @@ impl Simulator<'_> {
                             };
                             ui.label(format!("Tier {} collectable", tier));
                         } else {
-                            let hq = game_data::hq_percentage(
+                            let hq = raphael_data::hq_percentage(
                                 self.initial_quality + state.quality,
                                 self.settings.max_quality,
                             );
@@ -200,7 +200,7 @@ impl Simulator<'_> {
                                 });
                         let response = ui
                             .add(image)
-                            .on_hover_text(game_data::action_name(*action, self.locale));
+                            .on_hover_text(raphael_data::action_name(*action, self.locale));
                         if error.is_err() {
                             egui::Image::new(egui::include_image!(
                                 "../../assets/action-icons/disabled.webp"

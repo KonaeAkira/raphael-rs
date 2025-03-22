@@ -3,12 +3,10 @@ name = "raphael-cli"
 version = "0.1.0"
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-simulator = { path = "../simulator" }
-solvers = { path = "../solvers" }
-game-data = { path = "../game_data" }
+raphael-sim = { workspace = true }
+raphael-solver = { workspace = true }
+raphael-data = { workspace = true }
 
 clap = { version = "4.4.11", features = ["derive", "wrap_help", "env"] }
 

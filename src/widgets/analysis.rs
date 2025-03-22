@@ -1,5 +1,5 @@
 use egui_plot::PlotPoints;
-use simulator::*;
+use raphael_sim::*;
 
 use crate::config::QualityTarget;
 
@@ -41,7 +41,7 @@ impl egui::Widget for SolutionAnalysis<'_> {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
 
             let mut collapsed = true;
-            let distribution = simulator::quality_probability_distribution(
+            let distribution = raphael_sim::quality_probability_distribution(
                 self.settings,
                 self.actions,
                 self.initial_quality,

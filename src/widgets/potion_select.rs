@@ -3,7 +3,7 @@ use egui::{
     util::cache::{ComputerMut, FrameCache},
 };
 use egui_extras::Column;
-use game_data::{Consumable, CrafterStats, Locale, find_potions};
+use raphael_data::{Consumable, CrafterStats, Locale, find_potions};
 
 use super::{ItemNameLabel, util};
 
@@ -126,7 +126,7 @@ impl Widget for PotionSelect<'_> {
 
                 table.body(|body| {
                     body.rows(line_height, search_result.len(), |mut row| {
-                        let item = game_data::POTIONS[search_result[row.index()]];
+                        let item = raphael_data::POTIONS[search_result[row.index()]];
                         row.col(|ui| {
                             if ui.button("Select").clicked() {
                                 *self.selected_consumable = Some(item);

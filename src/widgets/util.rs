@@ -1,4 +1,4 @@
-use simulator::*;
+use raphael_sim::*;
 
 pub fn collapse_persisted(ui: &mut egui::Ui, id: egui::Id, collapsed: &mut bool) {
     *collapsed = ui.data_mut(|data| *data.get_persisted_mut_or(id, *collapsed));
@@ -27,8 +27,8 @@ pub fn get_action_icon(action: Action, job_id: u8) -> egui::Image<'static> {
     let image_path = format!(
         "{}/action-icons/{}/{}.webp",
         env!("BASE_URL"),
-        game_data::get_job_name(job_id, game_data::Locale::EN),
-        game_data::action_name(action, game_data::Locale::EN)
+        raphael_data::get_job_name(job_id, raphael_data::Locale::EN),
+        raphael_data::action_name(action, raphael_data::Locale::EN)
     );
     egui::Image::new(image_path)
 }

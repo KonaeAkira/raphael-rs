@@ -1,7 +1,7 @@
 use egui::{Align, Id, Layout, Widget};
-use game_data::{action_name, Locale};
+use raphael_data::{Locale, action_name};
+use raphael_sim::Action;
 use serde::{Deserialize, Serialize};
-use simulator::Action;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MacroViewConfig {

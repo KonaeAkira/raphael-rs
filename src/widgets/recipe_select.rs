@@ -3,7 +3,7 @@ use egui::{
     util::cache::{ComputerMut, FrameCache},
 };
 use egui_extras::Column;
-use game_data::{
+use raphael_data::{
     Consumable, Ingredient, Locale, RLVLS, find_recipes, get_game_settings, get_job_name,
 };
 
@@ -96,7 +96,7 @@ impl<'a> RecipeSelect<'a> {
             .max_scroll_height(table_height);
         table.body(|body| {
             body.rows(line_height, search_result.len(), |mut row| {
-                let recipe = game_data::RECIPES[search_result[row.index()]];
+                let recipe = raphael_data::RECIPES[search_result[row.index()]];
                 row.col(|ui| {
                     if ui.button("Select").clicked() {
                         self.crafter_config.selected_job = recipe.job_id;

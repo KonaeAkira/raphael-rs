@@ -1,7 +1,7 @@
 use clap::Args;
-use game_data::{CrafterStats, MEALS, POTIONS, RECIPES, get_game_settings};
-use simulator::SimulationState;
-use solvers::{AtomicFlag, MacroSolver, SolverSettings};
+use raphael_data::{CrafterStats, MEALS, POTIONS, RECIPES, get_game_settings};
+use raphael_sim::SimulationState;
+use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 #[derive(Args, Debug)]
 pub struct SolveArgs {
@@ -120,13 +120,13 @@ pub enum ConsumableArg {
     HQ(u32),
 }
 
-fn map_and_clamp_hq_ingredients(recipe: &game_data::Recipe, hq_ingredients: [u8; 6]) -> [u8; 6] {
-    let ingredients: Vec<(game_data::Item, u32)> = recipe
+fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [u8; 6]) -> [u8; 6] {
+    let ingredients: Vec<(raphael_data::Item, u32)> = recipe
         .ingredients
         .iter()
         .filter_map(|ingredient| match ingredient.item_id {
             0 => None,
-            id => Some((*game_data::ITEMS.get(&id).unwrap(), ingredient.amount)),
+            id => Some((*raphael_data::ITEMS.get(&id).unwrap(), ingredient.amount)),
         })
         .collect();
 
@@ -236,7 +236,7 @@ pub fn execute(args: &SolveArgs) {
             Some(mut hq_ingredients) => {
                 hq_ingredients.resize(6, 0);
                 let amount_array = hq_ingredients.try_into().unwrap();
-                game_data::get_initial_quality(
+                raphael_data::get_initial_quality(
                     *recipe,
                     match args.skip_map_and_clamp_hq_ingredients {
                         true => amount_array,
@@ -291,7 +291,7 @@ pub fn execute(args: &SolveArgs) {
         //let output_format = args.output_variables.clone().unwrap();
         //let segments: Vec<&str> = args.output_variables;
         for identifier in &args.output_variables {
-            let map_to_debug_str = |actions: Vec<simulator::Action>| match &*(*identifier) {
+            let map_to_debug_str = |actions: Vec<raphael_sim::Action>| match &*(*identifier) {
                 "item_id" => format!("{:?}", args.item_id),
                 "recipe" => format!("\"{:?}\"", recipe),
                 "food" => format!("\"{:?}\"", food),

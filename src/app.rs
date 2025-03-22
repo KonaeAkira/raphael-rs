@@ -2,8 +2,8 @@ use std::cell::Cell;
 use std::rc::Rc;
 use std::time::Duration;
 
+use raphael_solver::SolverException;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use solvers::SolverException;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
@@ -11,9 +11,9 @@ use std::time::Instant;
 use web_time::Instant;
 
 use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
-use game_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
+use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
 
-use simulator::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, Settings};
+use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, Settings};
 
 use crate::config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration};
 use crate::widgets::*;
@@ -241,7 +241,7 @@ impl eframe::App for MacroSolverApp {
             egui::ScrollArea::horizontal()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
-                    egui::menu::bar(ui, |ui| {
+                    egui::containers::menu::Bar::new().ui(ui, |ui| {
                         ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                         ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
 
@@ -436,7 +436,11 @@ impl MacroSolverApp {
                 self.duration = Some(self.start_time.unwrap().elapsed());
                 self.solver_pending = false;
                 self.saved_rotations_data.add_solved_rotation(Rotation::new(
-                    game_data::get_item_name(self.recipe_config.recipe.item_id, false, self.locale),
+                    raphael_data::get_item_name(
+                        self.recipe_config.recipe.item_id,
+                        false,
+                        self.locale,
+                    ),
                     self.actions.clone(),
                     &self.recipe_config.recipe,
                     self.selected_food,
@@ -472,7 +476,7 @@ impl MacroSolverApp {
     }
 
     fn draw_simulator_and_analysis_widgets(&mut self, ui: &mut egui::Ui) {
-        let game_settings = game_data::get_game_settings(
+        let game_settings = raphael_data::get_game_settings(
             self.recipe_config.recipe,
             *self.crafter_config.active_stats(),
             self.selected_food,
@@ -481,11 +485,11 @@ impl MacroSolverApp {
         );
         let initial_quality = match self.recipe_config.quality_source {
             QualitySource::HqMaterialList(hq_materials) => {
-                game_data::get_initial_quality(self.recipe_config.recipe, hq_materials)
+                raphael_data::get_initial_quality(self.recipe_config.recipe, hq_materials)
             }
             QualitySource::Value(quality) => quality,
         };
-        let item = game_data::ITEMS
+        let item = raphael_data::ITEMS
             .get(&self.recipe_config.recipe.item_id)
             .unwrap();
         ui.add(Simulator::new(
@@ -595,7 +599,7 @@ impl MacroSolverApp {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.add_enabled(
                     false,
-                    egui::DragValue::new(&mut game_data::craftsmanship_bonus(
+                    egui::DragValue::new(&mut raphael_data::craftsmanship_bonus(
                         self.crafter_config.active_stats().craftsmanship,
                         &[self.selected_food, self.selected_potion],
                     )),
@@ -612,7 +616,7 @@ impl MacroSolverApp {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.add_enabled(
                     false,
-                    egui::DragValue::new(&mut game_data::control_bonus(
+                    egui::DragValue::new(&mut raphael_data::control_bonus(
                         self.crafter_config.active_stats().control,
                         &[self.selected_food, self.selected_potion],
                     )),
@@ -629,7 +633,7 @@ impl MacroSolverApp {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.add_enabled(
                     false,
-                    egui::DragValue::new(&mut game_data::cp_bonus(
+                    egui::DragValue::new(&mut raphael_data::cp_bonus(
                         self.crafter_config.active_stats().cp,
                         &[self.selected_food, self.selected_potion],
                     )),
@@ -659,7 +663,7 @@ impl MacroSolverApp {
             &mut self.recipe_config.quality_source
         {
             for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
-                if let Some(item) = game_data::ITEMS.get(&ingredient.item_id) {
+                if let Some(item) = raphael_data::ITEMS.get(&ingredient.item_id) {
                     if item.can_be_hq {
                         has_hq_ingredient = true;
                         ui.horizontal(|ui| {
@@ -733,7 +737,7 @@ impl MacroSolverApp {
             ui.label("Target quality");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
-                let game_settings = game_data::get_game_settings(
+                let game_settings = raphael_data::get_game_settings(
                     self.recipe_config.recipe,
                     self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
                     self.selected_food,
@@ -840,7 +844,7 @@ impl MacroSolverApp {
         self.solver_interrupt_pending = false;
         self.solver_progress = 0;
         self.start_time = Some(Instant::now());
-        let mut game_settings = game_data::get_game_settings(
+        let mut game_settings = raphael_data::get_game_settings(
             self.recipe_config.recipe,
             self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
             self.selected_food,

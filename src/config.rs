@@ -1,4 +1,4 @@
-use game_data::{CrafterStats, Recipe};
+use raphael_data::{CrafterStats, Recipe};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -16,7 +16,7 @@ pub struct RecipeConfiguration {
 impl Default for RecipeConfiguration {
     fn default() -> Self {
         Self {
-            recipe: *game_data::RECIPES.last().unwrap(),
+            recipe: *raphael_data::RECIPES.last().unwrap(),
             quality_source: QualitySource::HqMaterialList([0; 6]),
         }
     }

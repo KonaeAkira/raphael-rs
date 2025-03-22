@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
-use game_data::{Consumable, CrafterStats, Locale, Recipe};
+use raphael_data::{Consumable, CrafterStats, Locale, Recipe};
+use raphael_sim::*;
 use serde::{Deserialize, Serialize};
-use simulator::*;
 
 use crate::{app::SolverConfig, config::CrafterConfig};
 
@@ -172,7 +172,7 @@ impl<'a> RotationWidget<'a> {
 
     fn get_consumable_name(&self, consumable: Option<(u32, bool)>) -> String {
         match consumable {
-            Some((item_id, hq)) => game_data::get_item_name(item_id, hq, self.locale),
+            Some((item_id, hq)) => raphael_data::get_item_name(item_id, hq, self.locale),
             None => "None".to_string(),
         }
     }
@@ -187,12 +187,12 @@ impl<'a> RotationWidget<'a> {
         let job_string = format!(
             "Level {} {}",
             self.rotation.crafter_stats.level,
-            game_data::get_job_name(self.rotation.job_id, self.locale)
+            raphael_data::get_job_name(self.rotation.job_id, self.locale)
         );
         self.show_info_row(
             ui,
             "Recipe",
-            game_data::get_item_name(self.rotation.item, false, self.locale),
+            raphael_data::get_item_name(self.rotation.item, false, self.locale),
         );
         self.show_info_row(ui, "Crafter stats", stats_string);
         self.show_info_row(ui, "Job", job_string);
@@ -211,7 +211,7 @@ impl<'a> RotationWidget<'a> {
                             .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
                             .corner_radius(4.0);
                         ui.add(image)
-                            .on_hover_text(game_data::action_name(*action, self.locale));
+                            .on_hover_text(raphael_data::action_name(*action, self.locale));
                     }
                 });
             });

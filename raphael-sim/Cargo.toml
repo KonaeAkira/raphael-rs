@@ -1,0 +1,25 @@
+[package]
+name = "raphael-sim"
+edition = "2024"
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["rlib"]
+
+[dev-dependencies]
+criterion = "0.5.1"
+rand = "0.8.5"
+
+[dependencies]
+bitfield-struct = "0.8.0"
+serde = { version = "1.0.215", features = ["derive"], optional = true }
+log = "0.4"
+
+[features]
+serde = ["dep:serde"]
+
+[[bench]]
+name = "bench_simulator"
+harness = false

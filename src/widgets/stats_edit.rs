@@ -1,6 +1,6 @@
 use egui::Widget;
-use game_data::{action_name, get_job_name, Locale};
-use simulator::Action;
+use raphael_data::{Locale, action_name, get_job_name};
+use raphael_sim::Action;
 
 use crate::config::CrafterConfig;
 

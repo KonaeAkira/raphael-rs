@@ -1,6 +1,12 @@
 [workspace]
 resolver = "2"
-members = ["simulator", "solvers", "game_data", "raphael-cli", "bindings"]
+members = [
+    "raphael-sim",
+    "raphael-solver",
+    "raphael-data",
+    "raphael-cli",
+    "raphael-bindings",
+]
 
 [workspace.lints]
 clippy.assigning_clones = "warn"
@@ -15,6 +21,11 @@ clippy.redundant_closure_for_method_calls = "warn"
 clippy.option_if_let_else = "warn"
 clippy.use_self = "warn"
 
+[workspace.dependencies]
+raphael-sim = { path = "raphael-sim", features = ["serde"] }
+raphael-solver = { path = "raphael-solver", features = ["serde"] }
+raphael-data = { path = "raphael-data", features = ["serde"] }
+
 [package]
 name = "raphael-xiv"
 version = "0.18.0"
@@ -25,9 +36,9 @@ default-run = "raphael-xiv"
 workspace = true
 
 [dependencies]
-simulator = { path = "simulator", features = ["serde"] }
-solvers = { path = "solvers", features = ["serde"] }
-game-data = { path = "game_data", features = ["serde"] }
+raphael-sim = { workspace = true }
+raphael-solver = { workspace = true }
+raphael-data = { workspace = true }
 
 egui = { git = "https://github.com/KonaeAkira/egui.git" }
 eframe = { git = "https://github.com/KonaeAkira/egui.git", features = [

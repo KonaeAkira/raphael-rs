@@ -1,5 +1,5 @@
 use clap::{Args, ValueEnum};
-use game_data::{get_item_name, Locale, RECIPES};
+use raphael_data::{Locale, RECIPES, get_item_name};
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
@@ -47,7 +47,7 @@ pub fn execute(args: &SearchArgs) {
             None => matches = Vec::new(),
         }
     } else {
-        matches = game_data::find_recipes(&args.pattern, locale);
+        matches = raphael_data::find_recipes(&args.pattern, locale);
     }
     if matches.is_empty() {
         println!("No matches found");
@@ -61,7 +61,7 @@ pub fn execute(args: &SearchArgs) {
             "{item_id}{separator}{name}",
             item_id = recipe.item_id,
             separator = args.output_field_separator,
-            name = name.trim_end_matches(&[' ', game_data::CL_ICON_CHAR])
+            name = name.trim_end_matches(&[' ', raphael_data::CL_ICON_CHAR])
         );
     }
 }
