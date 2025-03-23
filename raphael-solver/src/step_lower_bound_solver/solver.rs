@@ -19,6 +19,7 @@ pub struct StepLowerBoundSolver {
     solved_states: HashMap<ReducedState, ParetoFrontId>,
     pareto_front_builder: ParetoFrontBuilder<u16, u16>,
     interrupt_signal: AtomicFlag,
+    single_step_states: usize,
 }
 
 impl StepLowerBoundSolver {
@@ -37,6 +38,7 @@ impl StepLowerBoundSolver {
                 settings.simulator_settings.max_quality,
             ),
             interrupt_signal,
+            single_step_states: 0,
         }
     }
 
@@ -115,6 +117,9 @@ impl StepLowerBoundSolver {
     }
 
     fn solve_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
+        if reduced_state.steps_budget.get() == 1 {
+            self.single_step_states += 1;
+        }
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
@@ -171,7 +176,7 @@ impl StepLowerBoundSolver {
                         });
                     self.pareto_front_builder.merge();
                 }
-                Err(_) if action_progress != 0 => {
+                _ if action_progress != 0 => {
                     // New state is final and last action increased Progress
                     self.pareto_front_builder
                         .push_slice(&[ParetoValue::new(action_progress, action_quality)]);
