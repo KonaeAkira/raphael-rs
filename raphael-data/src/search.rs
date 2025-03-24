@@ -1,5 +1,5 @@
 use crate::{
-    get_item_name, Consumable, Locale, CL_ICON_CHAR, HQ_ICON_CHAR, MEALS, POTIONS, RECIPES,
+    CL_ICON_CHAR, Consumable, HQ_ICON_CHAR, Locale, MEALS, POTIONS, RECIPES, get_item_name,
 };
 
 fn contains_noncontiguous(string: &str, pattern: &str) -> bool {

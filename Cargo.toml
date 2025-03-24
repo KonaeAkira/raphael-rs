@@ -40,11 +40,13 @@ raphael-sim = { workspace = true }
 raphael-solver = { workspace = true }
 raphael-data = { workspace = true }
 
-egui = { git = "https://github.com/KonaeAkira/egui.git" }
-eframe = { git = "https://github.com/KonaeAkira/egui.git", features = [
+# This revision includes the fix for tab-navigating over disabled widgets.
+# Switch back to version number once new egui version is released.
+egui = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29" }
+eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", features = [
     "persistence",
 ] }
-egui_extras = { git = "https://github.com/KonaeAkira/egui.git", features = [
+egui_extras = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", features = [
     "http",
     "webp",
 ] }

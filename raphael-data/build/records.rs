@@ -1,4 +1,4 @@
-use serde::{de, Deserialize};
+use serde::{Deserialize, de};
 
 fn bool_string<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
