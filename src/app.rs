@@ -597,52 +597,44 @@ impl MacroSolverApp {
         ui.horizontal(|ui| {
             ui.label("Craftsmanship");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                ui.add_enabled(
-                    false,
-                    egui::DragValue::new(&mut raphael_data::craftsmanship_bonus(
-                        self.crafter_config.active_stats().craftsmanship,
-                        &[self.selected_food, self.selected_potion],
-                    )),
+                let cms_base = &mut self.crafter_config.active_stats_mut().craftsmanship;
+                let cms_bonus = raphael_data::craftsmanship_bonus(
+                    *cms_base,
+                    &[self.selected_food, self.selected_potion],
                 );
-                ui.monospace("+");
-                ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.active_stats_mut().craftsmanship)
-                        .range(0..=9999),
-                );
+                let mut cms_total = *cms_base + cms_bonus;
+                ui.style_mut().spacing.item_spacing.x = 5.0;
+                ui.add_enabled(false, egui::DragValue::new(&mut cms_total));
+                ui.label("➡");
+                ui.add(egui::DragValue::new(cms_base).range(0..=9000));
             });
         });
         ui.horizontal(|ui| {
             ui.label("Control");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                ui.add_enabled(
-                    false,
-                    egui::DragValue::new(&mut raphael_data::control_bonus(
-                        self.crafter_config.active_stats().control,
-                        &[self.selected_food, self.selected_potion],
-                    )),
+                let control_base = &mut self.crafter_config.active_stats_mut().control;
+                let control_bonus = raphael_data::control_bonus(
+                    *control_base,
+                    &[self.selected_food, self.selected_potion],
                 );
-                ui.monospace("+");
-                ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.active_stats_mut().control)
-                        .range(0..=9999),
-                );
+                let mut control_total = *control_base + control_bonus;
+                ui.style_mut().spacing.item_spacing.x = 5.0;
+                ui.add_enabled(false, egui::DragValue::new(&mut control_total));
+                ui.label("➡");
+                ui.add(egui::DragValue::new(control_base).range(0..=9000));
             });
         });
         ui.horizontal(|ui| {
             ui.label("CP");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                ui.add_enabled(
-                    false,
-                    egui::DragValue::new(&mut raphael_data::cp_bonus(
-                        self.crafter_config.active_stats().cp,
-                        &[self.selected_food, self.selected_potion],
-                    )),
-                );
-                ui.monospace("+");
-                ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.active_stats_mut().cp)
-                        .range(0..=999),
-                );
+                let cp_base = &mut self.crafter_config.active_stats_mut().cp;
+                let cp_bonus =
+                    raphael_data::cp_bonus(*cp_base, &[self.selected_food, self.selected_potion]);
+                let mut cp_total = *cp_base + cp_bonus;
+                ui.style_mut().spacing.item_spacing.x = 5.0;
+                ui.add_enabled(false, egui::DragValue::new(&mut cp_total));
+                ui.label("➡");
+                ui.add(egui::DragValue::new(cp_base).range(0..=9000));
             });
         });
         ui.horizontal(|ui| {
