@@ -1,3 +1,7 @@
+// Prevents a console from being opened on Windows
+// This attribute is ignored for all other platforms
+#![windows_subsystem = "windows"]
+
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     env_logger::builder()
