@@ -1,4 +1,7 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    hash::{Hash, Hasher},
+};
 
 use raphael_data::{Consumable, CrafterStats, Locale, Recipe};
 use raphael_sim::*;
@@ -8,9 +11,15 @@ use crate::{app::SolverConfig, config::CrafterConfig};
 
 use super::util;
 
+fn generate_unique_rotation_id() -> u64 {
+    let mut hasher = std::hash::DefaultHasher::new();
+    web_time::Instant::now().hash(&mut hasher);
+    hasher.finish()
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rotation {
-    pub unique_id: u32,
+    pub unique_id: u64,
     pub name: String,
     pub solver: String,
     pub actions: Vec<Action>,
@@ -48,7 +57,7 @@ impl Rotation {
             }
         );
         Self {
-            unique_id: rand::random(),
+            unique_id: generate_unique_rotation_id(),
             name: name.into(),
             solver: solver_params,
             actions,
@@ -64,7 +73,7 @@ impl Rotation {
 impl Clone for Rotation {
     fn clone(&self) -> Self {
         Self {
-            unique_id: rand::random(),
+            unique_id: generate_unique_rotation_id(),
             name: self.name.clone(),
             solver: self.solver.clone(),
             actions: self.actions.clone(),

@@ -54,7 +54,6 @@ egui_extras = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", feat
 serde = { version = "1.0", features = ["derive"] }
 ron = "0.8"
 log = "0.4"
-rand = "0.8"
 web-time = "1.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -65,7 +64,6 @@ wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 gloo-worker = { version = "0.5.0", features = ["futures"] }
 web-sys = "0.3"
-getrandom = { version = "0.2.15", features = ["js"] }
 
 [[bin]]
 name = "webworker"
