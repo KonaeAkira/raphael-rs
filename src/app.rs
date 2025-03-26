@@ -1,14 +1,8 @@
 use std::cell::Cell;
 use std::rc::Rc;
-use std::time::Duration;
 
 use raphael_solver::SolverException;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Instant;
-#[cfg(target_arch = "wasm32")]
-use web_time::Instant;
 
 use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
 use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
@@ -65,8 +59,8 @@ pub struct MacroSolverApp {
     solver_pending: bool,
     solver_interrupt_pending: bool,
     solver_progress: usize,
-    start_time: Option<Instant>,
-    duration: Option<Duration>,
+    start_time: web_time::Instant,
+    duration: web_time::Duration,
     solver_error: Option<SolverException>,
 
     bridge: BridgeType,
@@ -140,8 +134,8 @@ impl MacroSolverApp {
             solver_pending: false,
             solver_interrupt_pending: false,
             solver_progress: 0,
-            start_time: None,
-            duration: None,
+            start_time: web_time::Instant::now(),
+            duration: web_time::Duration::ZERO,
             solver_error: None,
 
             bridge,
@@ -200,10 +194,7 @@ impl eframe::App for MacroSolverApp {
                                 })
                                 .strong(),
                             );
-                            ui.label(format!(
-                                "({:.2}s)",
-                                self.start_time.unwrap().elapsed().as_secs_f32()
-                            ));
+                            ui.label(format!("({:.2}s)", self.start_time.elapsed().as_secs_f32()));
                         });
                         if self.solver_progress == 0 {
                             ui.label("Computing ...");
@@ -433,7 +424,7 @@ impl MacroSolverApp {
             SolverEvent::IntermediateSolution(actions) => self.actions = actions,
             SolverEvent::FinalSolution(actions) => {
                 self.actions = actions;
-                self.duration = Some(self.start_time.unwrap().elapsed());
+                self.duration = self.start_time.elapsed();
                 self.solver_pending = false;
                 self.saved_rotations_data.add_solved_rotation(Rotation::new(
                     raphael_data::get_item_name(
@@ -451,7 +442,7 @@ impl MacroSolverApp {
             }
             SolverEvent::Error(error) => {
                 self.actions.clear();
-                self.duration = Some(self.start_time.unwrap().elapsed());
+                self.duration = self.start_time.elapsed();
                 self.solver_pending = false;
                 if error != SolverException::Interrupted {
                     self.solver_error = Some(error);
@@ -558,10 +549,7 @@ impl MacroSolverApp {
                     });
                 });
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-                    ui.label(format!(
-                        "Elapsed time: {:.2}s",
-                        self.duration.unwrap_or_default().as_secs_f32()
-                    ));
+                    ui.label(format!("Elapsed time: {:.2}s", self.duration.as_secs_f32()));
                 });
                 // fill the remaining space
                 ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
@@ -835,7 +823,7 @@ impl MacroSolverApp {
         self.solver_pending = true;
         self.solver_interrupt_pending = false;
         self.solver_progress = 0;
-        self.start_time = Some(Instant::now());
+        self.start_time = web_time::Instant::now();
         let mut game_settings = raphael_data::get_game_settings(
             self.recipe_config.recipe,
             self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
