@@ -141,9 +141,7 @@ const HQ_LOOKUP: [u8; 101] = [
     71, 74, 76, 78, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 94, 96, 98, 100,
 ];
 
-pub fn hq_percentage(quality: u16, max_quality: u16) -> u8 {
-    // TODO: switch to std::num::NonZeroU32 at some point
-    assert!(max_quality != 0, "max_quality must be non-zero");
-    let ratio = std::cmp::min(quality, max_quality) as f64 / max_quality as f64;
-    HQ_LOOKUP[(ratio * 100.0).floor() as usize]
+pub fn hq_percentage(quality: u16, max_quality: u16) -> Option<u8> {
+    let ratio = (quality as usize * 100).checked_div(max_quality as usize)?;
+    Some(HQ_LOOKUP[std::cmp::min(ratio, 101)])
 }

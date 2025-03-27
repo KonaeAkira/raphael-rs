@@ -173,7 +173,8 @@ impl Simulator<'_> {
                             let hq = raphael_data::hq_percentage(
                                 self.initial_quality + state.quality,
                                 self.settings.max_quality,
-                            );
+                            )
+                            .unwrap_or(0);
                             ui.label(format!("{}% HQ", hq));
                         }
                     });
