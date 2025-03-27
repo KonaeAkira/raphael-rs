@@ -1,0 +1,32 @@
+name: Publish Release Assets
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use nightly toolchain
+        run: rustup update nightly && rustup default nightly
+      - name: Build
+        run: cargo build --release
+      - name: Publish asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          curl
+            -X POST
+            -H "Authorization: token $GITHUB_TOKEN"
+            -H "Content-Type: application/octet-stream"
+            --data-binary @target/release/raphael-xiv
+            https://uploads.github.com/repos/${{ github.repository }}/releases/${{ github.event.release.id }}/assets?name=raphael_x86_64_linux
+          
