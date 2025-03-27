@@ -250,8 +250,6 @@ pub fn execute(args: &SolveArgs) {
     let recipe_max_quality = settings.max_quality;
     settings.max_quality = target_quality.saturating_sub(initial_quality);
 
-    let state = SimulationState::new(&settings);
-
     let solver_settings = SolverSettings {
         simulator_settings: settings,
         backload_progress: args.backload_progress,
@@ -264,7 +262,7 @@ pub fn execute(args: &SolveArgs) {
         Box::new(|_| {}),
         AtomicFlag::new(),
     );
-    let actions = solver.solve(state).expect("Failed to solve");
+    let actions = solver.solve().expect("Failed to solve");
 
     let final_state = SimulationState::from_macro(&settings, &actions).unwrap();
     let state_quality = final_state.quality;

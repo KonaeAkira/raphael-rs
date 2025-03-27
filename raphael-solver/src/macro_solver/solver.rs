@@ -62,16 +62,16 @@ impl<'a> MacroSolver<'a> {
         }
     }
 
-    /// Returns a list of Actions that maximizes Quality of the completed state.
-    /// Returns `None` if the state cannot be completed (i.e. cannot max out Progress).
-    pub fn solve(&mut self, state: SimulationState) -> Result<Vec<Action>, SolverException> {
+    /// Solve for the best macro starting from the initial state
+    pub fn solve(&mut self) -> Result<Vec<Action>, SolverException> {
+        let initial_state = SimulationState::new(&self.settings.simulator_settings);
         let timer = NamedTimer::new("Finish solver");
-        if !self.finish_solver.can_finish(&state) {
+        if !self.finish_solver.can_finish(&initial_state) {
             return Err(SolverException::NoSolution);
         }
         drop(timer);
         let _timer = NamedTimer::new("Full search");
-        Ok(self.do_solve(state)?.actions())
+        Ok(self.do_solve(initial_state)?.actions())
     }
 
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {

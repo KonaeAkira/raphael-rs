@@ -50,7 +50,7 @@ pub mod test_utils {
             Box::new(|_| {}),
             AtomicFlag::new(),
         )
-        .solve(SimulationState::new(settings))
+        .solve()
     }
 
     pub fn get_score_quad(settings: &Settings, actions: &[Action]) -> (u16, u8, u8, u16) {

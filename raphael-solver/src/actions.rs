@@ -110,7 +110,6 @@ pub const FULL_SEARCH_ACTIONS: &[ActionCombo] = &[
     ActionCombo::Single(Action::TrainedPerfection),
     // misc
     ActionCombo::Single(Action::DelicateSynthesis),
-    ActionCombo::Single(Action::TricksOfTheTrade),
 ];
 
 pub const PROGRESS_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
@@ -130,8 +129,6 @@ pub const PROGRESS_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
     ActionCombo::Single(Action::Manipulation),
     ActionCombo::Single(Action::ImmaculateMend),
     ActionCombo::Single(Action::TrainedPerfection),
-    // misc
-    ActionCombo::Single(Action::TricksOfTheTrade),
 ];
 
 pub const QUALITY_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
@@ -161,8 +158,6 @@ pub const QUALITY_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
     ActionCombo::Single(Action::Manipulation),
     ActionCombo::Single(Action::ImmaculateMend),
     ActionCombo::Single(Action::TrainedPerfection),
-    // misc
-    ActionCombo::Single(Action::TricksOfTheTrade),
 ];
 
 pub fn is_progress_only_state(settings: &SolverSettings, state: &SimulationState) -> bool {

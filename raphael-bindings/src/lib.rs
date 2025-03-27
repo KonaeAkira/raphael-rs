@@ -1,4 +1,4 @@
-use raphael_sim::{ActionMask, Settings, SimulationState};
+use raphael_sim::{ActionMask, Settings};
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 #[repr(C)]
@@ -139,9 +139,7 @@ pub extern "C" fn solve(args: &SolveArgs) {
         Box::new(|_| {})
     };
 
-    let state = SimulationState::new(&settings.simulator_settings);
     let mut solver = MacroSolver::new(settings, solution_callback, progress_callback, flag.clone());
-
-    let actions = solver.solve(state).unwrap_or_default();
+    let actions = solver.solve().unwrap_or_default();
     (args.on_finish)(actions.as_ptr() as *const Action, actions.len());
 }

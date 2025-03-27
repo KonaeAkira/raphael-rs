@@ -37,15 +37,13 @@ fn main() {
         allow_unsound_branch_pruning: false,
     };
 
-    let state = SimulationState::new(&simulator_settings);
-    let actions = MacroSolver::new(
+    let mut solver = MacroSolver::new(
         solver_settings,
         Box::new(|_| {}),
         Box::new(|_| {}),
         AtomicFlag::new(),
-    )
-    .solve(state)
-    .unwrap();
+    );
+    let actions = solver.solve().unwrap();
 
     let quality = SimulationState::from_macro(&simulator_settings, &actions)
         .unwrap()

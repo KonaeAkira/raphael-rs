@@ -1,5 +1,5 @@
 use crate::app::{SolverEvent, SolverInput};
-use raphael_sim::{Action, SimulationState};
+use raphael_sim::Action;
 use raphael_solver::{AtomicFlag, SolverException, test_utils};
 use std::sync::{LazyLock, mpsc::Sender};
 
@@ -77,7 +77,7 @@ impl Worker {
                         Box::new(progress_callback.clone()),
                         INTERRUPT_SIGNAL.clone(),
                     )
-                    .solve(SimulationState::new(&settings))
+                    .solve()
                 };
 
                 let need_resolve = match &result {
@@ -101,7 +101,7 @@ impl Worker {
                         Box::new(progress_callback),
                         INTERRUPT_SIGNAL.clone(),
                     )
-                    .solve(SimulationState::new(&settings));
+                    .solve();
                 }
 
                 let tx = self.tx.clone();
