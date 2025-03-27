@@ -19,7 +19,7 @@ serde = { version = "1.0.215", features = ["derive"], optional = true }
 
 [features]
 env_logger = ["dep:env_logger"]
-serde = ["dep:serde"]
+serde = ["dep:serde", "raphael-sim/serde"]
 
 [dev-dependencies]
 rand = "0.8.5"

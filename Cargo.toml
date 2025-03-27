@@ -22,9 +22,9 @@ clippy.option_if_let_else = "warn"
 clippy.use_self = "warn"
 
 [workspace.dependencies]
-raphael-sim = { path = "raphael-sim", features = ["serde"] }
-raphael-solver = { path = "raphael-solver", features = ["serde"] }
-raphael-data = { path = "raphael-data", features = ["serde"] }
+raphael-sim = { path = "raphael-sim" }
+raphael-solver = { path = "raphael-solver" }
+raphael-data = { path = "raphael-data" }
 
 [package]
 name = "raphael-xiv"
@@ -36,9 +36,9 @@ default-run = "raphael-xiv"
 workspace = true
 
 [dependencies]
-raphael-sim = { workspace = true }
-raphael-solver = { workspace = true }
-raphael-data = { workspace = true }
+raphael-sim = { workspace = true, features = ["serde"] }
+raphael-solver = { workspace = true, features = ["serde"] }
+raphael-data = { workspace = true, features = ["serde"] }
 
 # This revision includes the fix for tab-navigating over disabled widgets.
 # Switch back to version number once new egui version is released.
