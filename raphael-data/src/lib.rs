@@ -143,5 +143,5 @@ const HQ_LOOKUP: [u8; 101] = [
 
 pub fn hq_percentage(quality: u16, max_quality: u16) -> Option<u8> {
     let ratio = (quality as usize * 100).checked_div(max_quality as usize)?;
-    Some(HQ_LOOKUP[std::cmp::min(ratio, 101)])
+    Some(HQ_LOOKUP[std::cmp::min(ratio, 100)])
 }
