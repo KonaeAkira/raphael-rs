@@ -1,6 +1,3 @@
-mod effect_pareto_front;
-pub use effect_pareto_front::EffectParetoFront;
-
 mod quality_pareto_front;
 pub use quality_pareto_front::QualityParetoFront;
 

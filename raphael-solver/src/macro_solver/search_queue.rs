@@ -4,7 +4,7 @@ use raphael_sim::{Action, SimulationState};
 
 use crate::{actions::ActionCombo, utils::Backtracking};
 
-use super::pareto_front::{EffectParetoFront, QualityParetoFront};
+use super::pareto_front::QualityParetoFront;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
@@ -59,7 +59,6 @@ struct SearchNode {
 
 pub struct SearchQueue {
     quality_pareto_front: QualityParetoFront,
-    effect_pareto_front: EffectParetoFront,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<ActionCombo>,
     current_score: SearchScore,
@@ -72,7 +71,6 @@ impl SearchQueue {
         log::debug!("New minimum score: {:?}", minimum_score);
         Self {
             quality_pareto_front: QualityParetoFront::default(),
-            effect_pareto_front: EffectParetoFront::default(),
             backtracking: Backtracking::new(),
             buckets: BTreeMap::default(),
             current_score: SearchScore::MAX,
@@ -125,10 +123,7 @@ impl SearchQueue {
                 self.current_score = score;
                 self.current_nodes = bucket
                     .into_iter()
-                    .filter(|node| {
-                        self.quality_pareto_front.insert(node.state)
-                            && self.effect_pareto_front.insert(node.state)
-                    })
+                    .filter(|node| self.quality_pareto_front.insert(node.state))
                     .map(|node| {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
                         (node.state, backtrack_id)
@@ -150,7 +145,7 @@ impl SearchQueue {
 fn pareto_weight(state: &SimulationState) -> u32 {
     state.cp as u32
         + state.durability as u32
+        + state.progress as u32
         + state.quality as u32
         + state.unreliable_quality as u32
-        + state.effects.into_bits()
 }

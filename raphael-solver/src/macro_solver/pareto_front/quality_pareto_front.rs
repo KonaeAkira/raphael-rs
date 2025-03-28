@@ -1,4 +1,4 @@
-use raphael_sim::{Combo, Effects, SimulationState};
+use raphael_sim::*;
 use rustc_hash::FxHashMap;
 
 use super::{Dominate, ParetoFront};
@@ -6,9 +6,9 @@ use super::{Dominate, ParetoFront};
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Value {
     cp: i16,
+    progress: u16,
     quality: u16,
     unreliable_quality: u16,
-    inner_quiet: u8,
     durability: i8,
 }
 
@@ -16,9 +16,9 @@ impl Value {
     pub fn new(state: SimulationState) -> Self {
         Self {
             cp: state.cp,
+            progress: state.progress,
             quality: state.quality,
             unreliable_quality: state.unreliable_quality,
-            inner_quiet: state.effects.inner_quiet(),
             durability: state.durability,
         }
     }
@@ -27,27 +27,25 @@ impl Value {
 impl Dominate for Value {
     fn dominate(&self, other: &Self) -> bool {
         self.cp >= other.cp
+            && self.progress >= other.progress
             && self.quality >= other.quality
             && (self.unreliable_quality >= other.unreliable_quality
                 || self.quality >= other.quality + other.unreliable_quality)
-            && self.inner_quiet >= other.inner_quiet
             && self.durability >= other.durability
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Key {
-    progress: u16,
     effects: Effects,
-    combo: Combo,
 }
 
 impl Key {
     pub fn new(state: SimulationState) -> Self {
+        #[cfg(test)]
+        assert!(state.combo == Combo::None);
         Self {
-            progress: state.progress,
-            effects: state.effects.with_inner_quiet(0), // iq is included in the pareto value
-            combo: state.combo,
+            effects: state.effects,
         }
     }
 }
