@@ -25,6 +25,9 @@ clippy.use_self = "warn"
 raphael-sim = { path = "raphael-sim" }
 raphael-solver = { path = "raphael-solver" }
 raphael-data = { path = "raphael-data" }
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+web-time = "1.1.0"
 
 [package]
 name = "raphael-xiv"
@@ -51,10 +54,10 @@ egui_extras = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", feat
     "webp",
 ] }
 
-serde = { version = "1.0", features = ["derive"] }
+serde = { workspace = true }
+log = { workspace = true }
+web-time = { workspace = true }
 ron = "0.8"
-log = "0.4"
-web-time = "1.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11.5"

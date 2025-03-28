@@ -2,7 +2,6 @@ use raphael_sim::{Action, ActionMask, Settings, SimulationState};
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 fn main() {
-    #[cfg(feature = "env_logger")]
     env_logger::builder()
         .format_timestamp(None)
         .format_target(false)

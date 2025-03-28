@@ -13,13 +13,12 @@ raphael-sim = { workspace = true }
 radix-heap = "0.4.2"
 rustc-hash = "1.1.0"
 bitfield-struct = "0.8.0"
-log = "0.4"
-env_logger = { version = "0.11.5", optional = true }
-serde = { version = "1.0.215", features = ["derive"], optional = true }
+log = { workspace = true }
+serde = { workspace = true, optional = true }
 
 [features]
-env_logger = ["dep:env_logger"]
 serde = ["dep:serde", "raphael-sim/serde"]
 
 [dev-dependencies]
 rand = "0.8.5"
+env_logger = "0.11.5"
