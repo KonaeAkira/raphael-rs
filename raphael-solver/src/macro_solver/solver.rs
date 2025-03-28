@@ -56,43 +56,6 @@ impl<'a> MacroSolver<'a> {
         }
     }
 
-    #[cfg(target_arch = "wasm32")]
-    fn initialize_score_ub_solvers(&self) -> (QualityUpperBoundSolver, StepLowerBoundSolver) {
-        let quality_ub_solver =
-            QualityUpperBoundSolver::new(self.settings, self.interrupt_signal.clone());
-        let step_lb_solver =
-            StepLowerBoundSolver::new(self.settings, self.interrupt_signal.clone());
-        (quality_ub_solver, step_lb_solver)
-    }
-
-    // Precompute most states of `QualityUpperBoundSolver` and `StepLowerBoundSolver` in parallel.
-    #[cfg(not(target_arch = "wasm32"))]
-    fn initialize_score_ub_solvers(&self) -> (QualityUpperBoundSolver, StepLowerBoundSolver) {
-        let settings = self.settings;
-        let mut seed_state = SimulationState::new(&settings.simulator_settings);
-        seed_state.combo = Combo::None;
-
-        let interrupt_signal = self.interrupt_signal.clone();
-        let thread_1 = std::thread::spawn(move || {
-            let _timer = ScopedTimer::new("Quality UB Solver");
-            let mut quality_ub_solver = QualityUpperBoundSolver::new(settings, interrupt_signal);
-            _ = quality_ub_solver.quality_upper_bound(seed_state);
-            quality_ub_solver
-        });
-
-        let interrupt_signal = self.interrupt_signal.clone();
-        let thread_2 = std::thread::spawn(move || {
-            let _timer = ScopedTimer::new("Step LB Solver");
-            let mut step_lb_solver = StepLowerBoundSolver::new(settings, interrupt_signal);
-            _ = step_lb_solver.step_lower_bound_with_hint(seed_state, 0);
-            step_lb_solver
-        });
-
-        let quality_ub_solver = thread_1.join().unwrap();
-        let step_lb_solver = thread_2.join().unwrap();
-        (quality_ub_solver, step_lb_solver)
-    }
-
     pub fn solve(&mut self) -> Result<Vec<Action>, SolverException> {
         let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
@@ -103,7 +66,34 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        let (mut quality_ub_solver, mut step_lb_solver) = self.initialize_score_ub_solvers();
+        fn initialize_quality_ub_solver(
+            settings: SolverSettings,
+            interrupt_signal: AtomicFlag,
+        ) -> QualityUpperBoundSolver {
+            let _timer = ScopedTimer::new("Quality UB Solver");
+            let mut seed_state = SimulationState::new(&settings.simulator_settings);
+            seed_state.combo = Combo::None;
+            let mut quality_ub_solver = QualityUpperBoundSolver::new(settings, interrupt_signal);
+            _ = quality_ub_solver.quality_upper_bound(seed_state);
+            quality_ub_solver
+        }
+
+        fn initialize_step_lb_solver(
+            settings: SolverSettings,
+            interrupt_signal: AtomicFlag,
+        ) -> StepLowerBoundSolver {
+            let _timer = ScopedTimer::new("Step LB Solver");
+            let mut seed_state = SimulationState::new(&settings.simulator_settings);
+            seed_state.combo = Combo::None;
+            let mut step_lb_solver = StepLowerBoundSolver::new(settings, interrupt_signal);
+            _ = step_lb_solver.step_lower_bound_with_hint(seed_state, 0);
+            step_lb_solver
+        }
+
+        let (mut quality_ub_solver, mut step_lb_solver) = rayon::join(
+            || initialize_quality_ub_solver(self.settings, self.interrupt_signal.clone()),
+            || initialize_step_lb_solver(self.settings, self.interrupt_signal.clone()),
+        );
 
         let _timer = ScopedTimer::new("Search");
         Ok(self

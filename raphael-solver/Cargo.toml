@@ -13,6 +13,7 @@ raphael-sim = { workspace = true }
 radix-heap = "0.4.2"
 rustc-hash = "1.1.0"
 bitfield-struct = "0.8.0"
+rayon = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true, optional = true }
 web-time = { workspace = true }
