@@ -15,6 +15,7 @@ rustc-hash = "1.1.0"
 bitfield-struct = "0.8.0"
 log = { workspace = true }
 serde = { workspace = true, optional = true }
+web-time = { workspace = true }
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]

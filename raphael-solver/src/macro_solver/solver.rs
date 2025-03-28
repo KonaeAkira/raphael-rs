@@ -8,7 +8,7 @@ use crate::actions::{
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::utils::AtomicFlag;
-use crate::utils::NamedTimer;
+use crate::utils::ScopedTimer;
 use crate::{
     FinishSolver, QualityUpperBoundSolver, SolverException, SolverSettings, StepLowerBoundSolver,
 };
@@ -74,7 +74,7 @@ impl<'a> MacroSolver<'a> {
 
         let interrupt_signal = self.interrupt_signal.clone();
         let thread_1 = std::thread::spawn(move || {
-            let _timer = NamedTimer::new("Quality UB Solver");
+            let _timer = ScopedTimer::new("Quality UB Solver");
             let mut quality_ub_solver = QualityUpperBoundSolver::new(settings, interrupt_signal);
             _ = quality_ub_solver.quality_upper_bound(seed_state);
             quality_ub_solver
@@ -82,7 +82,7 @@ impl<'a> MacroSolver<'a> {
 
         let interrupt_signal = self.interrupt_signal.clone();
         let thread_2 = std::thread::spawn(move || {
-            let _timer = NamedTimer::new("Step LB Solver");
+            let _timer = ScopedTimer::new("Step LB Solver");
             let mut step_lb_solver = StepLowerBoundSolver::new(settings, interrupt_signal);
             _ = step_lb_solver.step_lower_bound_with_hint(seed_state, 0);
             step_lb_solver
@@ -97,7 +97,7 @@ impl<'a> MacroSolver<'a> {
         let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
         let mut finish_solver = FinishSolver::new(self.settings);
-        let timer = NamedTimer::new("Finish Solver");
+        let timer = ScopedTimer::new("Finish Solver");
         if !finish_solver.can_finish(&initial_state) {
             return Err(SolverException::NoSolution);
         }
@@ -105,7 +105,7 @@ impl<'a> MacroSolver<'a> {
 
         let (mut quality_ub_solver, mut step_lb_solver) = self.initialize_score_ub_solvers();
 
-        let _timer = NamedTimer::new("Search");
+        let _timer = ScopedTimer::new("Search");
         Ok(self
             .do_solve(
                 initial_state,

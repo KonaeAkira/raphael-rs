@@ -4,32 +4,27 @@ mod pareto_front_builder;
 pub use atomic_flag::AtomicFlag;
 pub use pareto_front_builder::{ParetoFrontBuilder, ParetoFrontId, ParetoValue};
 
-pub struct NamedTimer {
+pub struct ScopedTimer {
     name: &'static str,
-    #[cfg(not(target_arch = "wasm32"))]
-    timer: std::time::Instant,
+    timer: web_time::Instant,
 }
 
-impl NamedTimer {
+impl ScopedTimer {
     pub fn new(name: &'static str) -> Self {
         Self {
             name,
-            #[cfg(not(target_arch = "wasm32"))]
-            timer: std::time::Instant::now(),
+            timer: web_time::Instant::now(),
         }
     }
 }
 
-impl Drop for NamedTimer {
+impl Drop for ScopedTimer {
     fn drop(&mut self) {
-        #[cfg(not(target_arch = "wasm32"))]
         log::info!(
             "Timer \"{}\" elapsed: {} seconds",
             self.name,
             self.timer.elapsed().as_secs_f32()
         );
-        #[cfg(target_arch = "wasm32")]
-        log::info!("Timer \"{}\" elapsed", self.name);
     }
 }
 
