@@ -76,9 +76,6 @@ impl QualityUpperBoundSolver {
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
     pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u16, SolverException> {
-        if state.combo == Combo::SynthesisBegin {
-            return Ok(self.settings.simulator_settings.max_quality);
-        }
         if state.combo != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in quality upper bound solver",
