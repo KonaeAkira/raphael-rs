@@ -157,6 +157,56 @@ impl<'a> MacroView<'a> {
     }
 }
 
+impl MacroView<'_> {
+    fn macro_notification_menu(ui: &mut egui::Ui, notification_cfg: &mut MacroNotificationConfig) {
+        ui.horizontal(|ui| {
+            ui.radio_value(
+                &mut notification_cfg.default_notification,
+                true,
+                "Use default notification",
+            );
+            ui.add_enabled_ui(notification_cfg.default_notification, |ui| {
+                ui.reset_style();
+                ui.add_sized(
+                    [50.0, ui.available_height()],
+                    egui::DragValue::new(&mut notification_cfg.notification_sound)
+                        .range(1..=16)
+                        .prefix("<se.")
+                        .suffix(">"),
+                );
+            });
+        });
+
+        ui.separator();
+        ui.horizontal(|ui| {
+            ui.radio_value(
+                &mut notification_cfg.default_notification,
+                false,
+                "Use custom notification format",
+            );
+            ui.add(super::HelpText::new("Specify the exact format of the command that is executed at the end of each macro.\n\nUse the special format strings \"{index}\", \"{max_index}\", and \"{reverse_index}\" to add the respective value to the notification."));
+        });
+
+        ui.add_space(5.0);
+        ui.add_enabled_ui(!notification_cfg.default_notification, |ui| {
+            ui.vertical(|ui| {
+                ui.text_edit_singleline(&mut notification_cfg.custom_notification_format);
+                ui.add_space(5.0);
+                ui.checkbox(
+                    &mut notification_cfg.different_last_notification,
+                    "Use different format for last notification",
+                );
+                ui.add_enabled_ui(notification_cfg.different_last_notification, |ui| {
+                    egui::TextEdit::singleline(
+                        &mut notification_cfg.custom_last_notification_format,
+                    )
+                    .ui(ui);
+                });
+            });
+        });
+    }
+}
+
 impl Widget for MacroView<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
@@ -201,44 +251,10 @@ impl Widget for MacroView<'_> {
                                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
                             )
                             .ui(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.radio_value(&mut self.config.notification_config.default_notification, true,
-                                        "Use default notification",
-                                    );
-                                    ui.add_enabled_ui(
-                                        self.config.notification_config.default_notification,
-                                        |ui| {
-                                            ui.reset_style();
-                                            ui.add_sized([50.0, ui.available_height()], egui::DragValue::new(&mut self.config.notification_config.notification_sound).range(1..=16).prefix("<se.").suffix(">"));
-                                        },
-                                    );
-                                });
-
-                                ui.separator();
-                                ui.horizontal(|ui| {
-                                    ui.radio_value(&mut self.config.notification_config.default_notification, false, "Use custom notification format");
-                                ui.add(super::HelpText::new("Specify the exact format of the command that is executed at the end of each macro.\n\nUse the special format strings \"{index}\", \"{max_index}\", and \"{reverse_index}\" to add the respective value to the notification."));
-                                });
-
-                                ui.add_space(5.0);
-                                ui.add_enabled_ui(!self.config.notification_config.default_notification, |ui| {
-                                    ui.vertical(|ui| {
-                                        ui.text_edit_singleline(
-                                            &mut self
-                                                .config
-                                                .notification_config
-                                                .custom_notification_format,
-                                        );
-                                        ui.add_space(5.0);
-                                        ui.checkbox(&mut self.config.notification_config.different_last_notification, "Use different format for last notification");
-                                        ui.add_enabled_ui(self.config.notification_config.different_last_notification, |ui| {
-                                            egui::TextEdit::singleline(&mut self
-                                                .config
-                                                .notification_config
-                                                .custom_last_notification_format).ui(ui);
-                                        });
-                                    });
-                                });
+                                Self::macro_notification_menu(
+                                    ui,
+                                    &mut self.config.notification_config,
+                                )
                             });
                     });
                 });
