@@ -12,5 +12,5 @@ raphael-sim = { workspace = true }
 raphael-solver = { workspace = true }
 
 [build-dependencies]
-cbindgen = "0.27.0"
+cbindgen = "0.28.0"
 csbindgen = "1.9.3"

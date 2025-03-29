@@ -82,3 +82,7 @@ overflow-checks = false
 opt-level = 3
 lto = "thin"
 overflow-checks = true
+
+[patch.crates-io]
+# unsafe(no_mangle) fix for csbindgen in raphael-bindings
+csbindgen = { git = "https://github.com/Cysharp/csbindgen.git", rev = "refs/pull/103/head" }
