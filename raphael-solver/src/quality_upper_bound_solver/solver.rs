@@ -85,14 +85,6 @@ impl QualityUpperBoundSolver {
                 state.combo
             )));
         }
-
-        let current_quality = state.quality;
-        let missing_progress = self
-            .settings
-            .simulator_settings
-            .max_progress
-            .saturating_sub(state.progress);
-
         let reduced_state =
             ReducedState::from_simulation_state(state, &self.settings, self.durability_cost);
         let pareto_front = match self.solved_states.get(&reduced_state) {
@@ -103,26 +95,15 @@ impl QualityUpperBoundSolver {
                 self.pareto_front_builder.peek().unwrap()
             }
         };
-
-        match pareto_front.last() {
-            Some(element) => {
-                if element.first < missing_progress {
-                    return Ok(0);
-                }
-            }
-            None => return Ok(0),
-        }
-
-        let index = match pareto_front.binary_search_by_key(&missing_progress, |value| value.first)
-        {
-            Ok(i) => i,
-            Err(i) => i,
-        };
-
-        Ok(std::cmp::min(
-            self.settings.simulator_settings.max_quality,
-            pareto_front[index].second.saturating_add(current_quality),
-        ))
+        let required_progress = self.settings.simulator_settings.max_progress - state.progress;
+        let index = pareto_front.partition_point(|value| value.first < required_progress);
+        let quality_upper_bound = pareto_front.get(index).map_or(0, |value| {
+            std::cmp::min(
+                self.settings.simulator_settings.max_quality,
+                state.quality.saturating_add(value.second),
+            )
+        });
+        Ok(quality_upper_bound)
     }
 
     fn solve_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
