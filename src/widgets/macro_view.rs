@@ -48,8 +48,7 @@ impl Default for MacroNotificationConfig {
         Self {
             default_notification: true,
             notification_sound: 1,
-            custom_notification_format: "/echo Example ({index}/{max_index}) <se.{reverse_index}>"
-                .to_owned(),
+            custom_notification_format: "/echo Example ({index}/{max_index}) <se.1>".to_owned(),
             different_last_notification: false,
             custom_last_notification_format: "/echo Example End".to_owned(),
         }
@@ -64,7 +63,6 @@ fn format_custom_notification(notification_format: &str, index: usize, max_index
     notification_format
         .replace("{index}", &index.to_string())
         .replace("{max_index}", &max_index.to_string())
-        .replace("{reverse_index}", &(max_index - index + 1).to_string())
 }
 
 impl MacroTextBox {
@@ -184,7 +182,7 @@ impl MacroView<'_> {
                 false,
                 "Use custom notification format",
             );
-            ui.add(super::HelpText::new("Specify the exact format of the command that is executed at the end of each macro.\n\nUse the special format strings \"{index}\", \"{max_index}\", and \"{reverse_index}\" to add the respective value to the notification."));
+            ui.add(super::HelpText::new("Specify the exact format of the command that is executed at the end of each macro.\n\nUse the special format strings \"{index}\" and \"{max_index}\" to add the respective value to the notification."));
         });
 
         ui.add_space(5.0);
