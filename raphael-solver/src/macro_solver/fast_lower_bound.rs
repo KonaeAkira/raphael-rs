@@ -1,16 +1,34 @@
-use radix_heap::RadixHeapMap;
 use raphael_sim::*;
 
 use crate::{
     AtomicFlag, QualityUpperBoundSolver, SolverException, SolverSettings,
     actions::{ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo},
     finish_solver::FinishSolver,
-    macro_solver::pareto_front::QualityParetoFront,
     utils::ScopedTimer,
 };
 
-pub fn fast_lower_bound(
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Node {
+    quality_upper_bound: u16,
     state: SimulationState,
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.quality_upper_bound
+            .cmp(&other.quality_upper_bound)
+            .then(self.state.quality.cmp(&other.state.quality))
+    }
+}
+
+pub fn fast_lower_bound(
+    initial_state: SimulationState,
     settings: &SolverSettings,
     interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
@@ -18,41 +36,47 @@ pub fn fast_lower_bound(
 ) -> Result<u16, SolverException> {
     let _timer = ScopedTimer::new("Fast lower bound");
 
-    let mut search_queue: RadixHeapMap<u16, SimulationState> = RadixHeapMap::default();
-    let mut pareto_set = QualityParetoFront::default();
+    let mut search_queue = std::collections::BinaryHeap::default();
+    let initial_node = Node {
+        quality_upper_bound: upper_bound_solver.quality_upper_bound(initial_state)?,
+        state: initial_state,
+    };
+    search_queue.push(initial_node);
 
-    let mut quality_lower_bound = 0;
+    let mut best_achieved_quality = 0;
 
-    search_queue.push(upper_bound_solver.quality_upper_bound(state)?, state);
-
-    while let Some((score, state)) = search_queue.pop() {
+    while let Some(node) = search_queue.pop() {
         if interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
-        if score <= quality_lower_bound {
+        if node.quality_upper_bound <= best_achieved_quality {
             break;
         }
         for action in QUALITY_ONLY_SEARCH_ACTIONS {
-            if !should_use_action(*action, &state, settings.simulator_settings.allowed_actions) {
+            if !should_use_action(
+                *action,
+                &node.state,
+                settings.simulator_settings.allowed_actions,
+            ) {
                 continue;
             }
-            if let Ok(state) = use_action_combo(settings, state, *action) {
+            if let Ok(state) = use_action_combo(settings, node.state, *action) {
                 if !state.is_final(&settings.simulator_settings) {
                     if !finish_solver.can_finish(&state) {
                         continue;
                     }
-                    quality_lower_bound = std::cmp::max(quality_lower_bound, state.quality);
+                    best_achieved_quality = std::cmp::max(best_achieved_quality, state.quality);
                     if *action == ActionCombo::Single(Action::ByregotsBlessing) {
                         continue;
                     }
                     let quality_upper_bound = upper_bound_solver.quality_upper_bound(state)?;
-                    if quality_upper_bound <= quality_lower_bound {
+                    if quality_upper_bound <= best_achieved_quality {
                         continue;
                     }
-                    if !pareto_set.insert(state) {
-                        continue;
-                    }
-                    search_queue.push(std::cmp::min(score, quality_upper_bound), state);
+                    search_queue.push(Node {
+                        quality_upper_bound,
+                        state,
+                    });
                 }
             }
         }
@@ -60,7 +84,7 @@ pub fn fast_lower_bound(
 
     Ok(std::cmp::min(
         settings.simulator_settings.max_quality,
-        quality_lower_bound,
+        best_achieved_quality,
     ))
 }
 

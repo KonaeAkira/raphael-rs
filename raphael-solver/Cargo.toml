@@ -10,7 +10,6 @@ crate-type = ["rlib"]
 
 [dependencies]
 raphael-sim = { workspace = true }
-radix-heap = "0.4.2"
 rustc-hash = "1.1.0"
 bitfield-struct = "0.8.0"
 rayon = { workspace = true }
