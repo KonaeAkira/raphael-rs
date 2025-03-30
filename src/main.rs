@@ -1,13 +1,50 @@
 // Prevents a console from being opened on Windows
 // This attribute is ignored for all other platforms
-#![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-#[cfg(not(target_arch = "wasm32"))]
-fn main() -> eframe::Result<()> {
+#[cfg(all(target_os = "windows", not(debug_assertions)))]
+fn init_logging() {
+    // Ensure app storage folder exists
+    let mut file_path = eframe::storage_dir("Raphael XIV").unwrap();
+    if !std::fs::exists(&file_path).unwrap() {
+        let creation_result = std::fs::create_dir_all(&file_path);
+        assert!(creation_result.is_ok());
+    }
+
+    // Get log file target. File is truncated if it already exists
+    file_path.push("log.txt");
+    let log_file_target = Box::new(std::fs::File::create(file_path).unwrap());
+
+    env_logger::builder()
+        .format_timestamp(None)
+        .format_target(false)
+        .target(env_logger::Target::Pipe(log_file_target))
+        .init();
+
+    // Ensure panics are logged when detached, since the default hook outputs to stderr
+    // Backtraces are currently not generated
+    std::panic::set_hook(Box::new(|info| {
+        log::error!("{}", info);
+    }));
+}
+
+#[cfg(target_arch = "wasm32")]
+fn init_logging() {
+    // Redirect `log` message to `console.log` and friends:
+    eframe::WebLogger::init(log::LevelFilter::Debug).ok();
+}
+
+#[cfg(not(any(all(target_os = "windows", not(debug_assertions)), target_arch = "wasm32")))]
+fn init_logging() {
     env_logger::builder()
         .format_timestamp(None)
         .format_target(false)
         .init();
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn main() -> eframe::Result<()> {
+    init_logging();
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -27,8 +64,7 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    // Redirect `log` message to `console.log` and friends:
-    eframe::WebLogger::init(log::LevelFilter::Debug).ok();
+    init_logging();
 
     fn get_canvas() -> Option<web_sys::HtmlCanvasElement> {
         use web_sys::wasm_bindgen::JsCast;
