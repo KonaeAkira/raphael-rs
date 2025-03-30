@@ -3,7 +3,7 @@ use raphael_data::{Locale, action_name};
 use raphael_sim::Action;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MacroViewConfig {
     #[serde(default)]
     split_macro: bool,
@@ -12,7 +12,7 @@ pub struct MacroViewConfig {
     #[serde(default)]
     notification_enabled: bool,
     #[serde(default)]
-    notification_sound: u8,
+    notification_config: MacroNotificationConfig,
     #[serde(default)]
     macro_lock: bool,
 }
@@ -23,14 +23,46 @@ impl Default for MacroViewConfig {
             split_macro: true,
             include_delay: true,
             notification_enabled: false,
-            notification_sound: 1,
+            notification_config: MacroNotificationConfig::default(),
             macro_lock: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct MacroNotificationConfig {
+    #[serde(default)]
+    default_notification: bool,
+    #[serde(default)]
+    notification_sound: u8,
+    #[serde(default)]
+    custom_notification_format: String,
+    #[serde(default)]
+    different_last_notification: bool,
+    #[serde(default)]
+    custom_last_notification_format: String,
+}
+
+impl Default for MacroNotificationConfig {
+    fn default() -> Self {
+        Self {
+            default_notification: true,
+            notification_sound: 1,
+            custom_notification_format: String::new(),
+            different_last_notification: false,
+            custom_last_notification_format: String::new(),
         }
     }
 }
 
 struct MacroTextBox {
     text: String,
+}
+
+fn format_custom_notification(notification_format: &str, index: usize, max_index: usize) -> String {
+    notification_format
+        .replace("{index}", &index.to_string())
+        .replace("{max_index}", &max_index.to_string())
 }
 
 impl MacroTextBox {
@@ -58,10 +90,22 @@ impl MacroTextBox {
             }
         }));
         if config.notification_enabled {
-            lines.push(format!(
-                "/echo Macro finished ({}/{}) <se.{}>",
-                index, max_index, config.notification_sound
-            ));
+            if config.notification_config.default_notification {
+                lines.push(format!(
+                    "/echo Macro finished ({}/{}) <se.{}>",
+                    index, max_index, config.notification_config.notification_sound
+                ));
+            } else {
+                let notification = if config.notification_config.different_last_notification
+                    && index == max_index
+                {
+                    &config.notification_config.custom_last_notification_format
+                } else {
+                    &config.notification_config.custom_notification_format
+                };
+
+                lines.push(format_custom_notification(notification, index, max_index))
+            }
         }
         Self {
             text: lines.join(newline),
@@ -111,6 +155,50 @@ impl<'a> MacroView<'a> {
     }
 }
 
+impl MacroView<'_> {
+    fn macro_notification_menu(ui: &mut egui::Ui, notification_cfg: &mut MacroNotificationConfig) {
+        ui.style_mut().spacing.item_spacing.y = 3.0;
+        ui.horizontal(|ui| {
+            ui.radio_value(
+                &mut notification_cfg.default_notification,
+                true,
+                "Use default notification",
+            );
+            ui.add_enabled(
+                notification_cfg.default_notification,
+                egui::DragValue::new(&mut notification_cfg.notification_sound)
+                    .range(1..=16)
+                    .prefix("<se.")
+                    .suffix(">"),
+            );
+        });
+        ui.separator();
+        ui.radio_value(
+            &mut notification_cfg.default_notification,
+            false,
+            "Use custom notification format",
+        );
+        ui.add_enabled_ui(!notification_cfg.default_notification, |ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut notification_cfg.custom_notification_format)
+                    .font(egui::TextStyle::Monospace)
+                    .hint_text("/echo Done {index}/{max_index} <se.1>"),
+            );
+            ui.add_space(2.0);
+            ui.checkbox(
+                &mut notification_cfg.different_last_notification,
+                "Use different format for last notification",
+            );
+            ui.add_enabled(
+                notification_cfg.different_last_notification,
+                egui::TextEdit::singleline(&mut notification_cfg.custom_last_notification_format)
+                    .font(egui::TextStyle::Monospace)
+                    .hint_text("/echo All macros done <se.2>"),
+            );
+        });
+    }
+}
+
 impl Widget for MacroView<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.group(|ui| {
@@ -149,16 +237,17 @@ impl Widget for MacroView<'_> {
                         "End-of-macro notification",
                     ));
                     ui.add_enabled_ui(self.config.notification_enabled, |ui| {
-                        egui::ComboBox::from_id_salt("SOUND_EFFECT")
-                            .selected_text(format!("<se.{}>", self.config.notification_sound))
-                            .show_ui(ui, |ui| {
-                                for i in 1..=16 {
-                                    ui.selectable_value(
-                                        &mut self.config.notification_sound,
-                                        i,
-                                        format!("<se.{}>", i),
-                                    );
-                                }
+                        egui::containers::menu::MenuButton::new("✏ Edit")
+                            .config(
+                                egui::containers::menu::MenuConfig::default()
+                                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
+                            )
+                            .ui(ui, |ui| {
+                                ui.reset_style(); // prevent egui::DragValue from looking weird
+                                Self::macro_notification_menu(
+                                    ui,
+                                    &mut self.config.notification_config,
+                                )
                             });
                     });
                 });
