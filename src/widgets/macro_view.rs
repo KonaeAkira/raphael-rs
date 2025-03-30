@@ -48,9 +48,9 @@ impl Default for MacroNotificationConfig {
         Self {
             default_notification: true,
             notification_sound: 1,
-            custom_notification_format: "/echo Example ({index}/{max_index}) <se.1>".to_owned(),
+            custom_notification_format: String::new(),
             different_last_notification: false,
-            custom_last_notification_format: "/echo Example End".to_owned(),
+            custom_last_notification_format: String::new(),
         }
     }
 }
@@ -182,14 +182,14 @@ impl MacroView<'_> {
                 false,
                 "Use custom notification format",
             );
-            ui.add(super::HelpText::new("Specify the exact format of the command that is executed at the end of each macro.\n\nUse the special format strings \"{index}\" and \"{max_index}\" to add the respective value to the notification."));
         });
 
         ui.add_enabled_ui(!notification_cfg.default_notification, |ui| {
             ui.vertical(|ui| {
                 ui.add(
                     egui::TextEdit::singleline(&mut notification_cfg.custom_notification_format)
-                        .font(egui::TextStyle::Monospace),
+                        .font(egui::TextStyle::Monospace)
+                        .hint_text("/echo Done {index}/{max_index} <se.1>"),
                 );
                 ui.checkbox(
                     &mut notification_cfg.different_last_notification,
@@ -200,7 +200,8 @@ impl MacroView<'_> {
                     egui::TextEdit::singleline(
                         &mut notification_cfg.custom_last_notification_format,
                     )
-                    .font(egui::TextStyle::Monospace),
+                    .font(egui::TextStyle::Monospace)
+                    .hint_text("/echo All macros done <se.2>"),
                 );
             });
         });
@@ -245,7 +246,7 @@ impl Widget for MacroView<'_> {
                         "End-of-macro notification",
                     ));
                     ui.add_enabled_ui(self.config.notification_enabled, |ui| {
-                        egui::containers::menu::MenuButton::new("✏ Edit contents")
+                        egui::containers::menu::MenuButton::new("✏ Edit")
                             .config(
                                 egui::containers::menu::MenuConfig::default()
                                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
