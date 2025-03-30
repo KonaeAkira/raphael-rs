@@ -115,29 +115,24 @@ impl SearchQueue {
 
     pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {
         while self.current_nodes.is_empty() {
-            if let Some((score, mut bucket)) = self.buckets.pop_last() {
+            if let Some((score, mut nodes)) = self.buckets.pop_last() {
                 self.current_score = score;
                 // Nodes are sorted by their pareto key to improve cache efficiency on insertion.
                 // Nodes with the same key are sorted by decreasing pareto weight to make sure that no inserted node is later dominated by another node in the same bucket.
-                bucket.sort_unstable_by(|lhs, rhs| {
+                nodes.sort_unstable_by(|lhs, rhs| {
                     let lhs_pareto_key = lhs.state.effects.into_bits();
                     let rhs_pareto_key = rhs.state.effects.into_bits();
                     lhs_pareto_key
                         .cmp(&rhs_pareto_key)
                         .then(ParetoValue::weight(&rhs.state).cmp(&ParetoValue::weight(&lhs.state)))
                 });
-                self.current_nodes = bucket
-                    .into_iter()
-                    .filter(|node| {
-                        let pareto_front =
-                            self.pareto_fronts.entry(node.state.effects).or_default();
-                        pareto_front.insert(ParetoValue::new(node.state))
-                    })
-                    .map(|node| {
+                for node in nodes.into_iter() {
+                    let pareto_front = self.pareto_fronts.entry(node.state.effects).or_default();
+                    if pareto_front.insert(ParetoValue::new(node.state)) {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
-                        (node.state, backtrack_id)
-                    })
-                    .collect();
+                        self.current_nodes.push((node.state, backtrack_id));
+                    }
+                }
             } else {
                 return None;
             }
