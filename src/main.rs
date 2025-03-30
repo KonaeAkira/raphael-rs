@@ -1,8 +1,8 @@
 // Prevents a console from being opened on Windows
 // This attribute is ignored for all other platforms
-#![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(debug_assertions)))]
 fn init_logging() {
     // Ensure app storage folder exists
     let mut file_path = eframe::storage_dir("Raphael XIV").unwrap();
@@ -34,7 +34,7 @@ fn init_logging() {
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 }
 
-#[cfg(not(any(target_os = "windows", target_arch = "wasm32")))]
+#[cfg(not(any(all(target_os = "windows", not(debug_assertions)), target_arch = "wasm32")))]
 fn init_logging() {
     env_logger::builder()
         .format_timestamp(None)
