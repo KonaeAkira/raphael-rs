@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
 
-use raphael_sim::{Action, SimulationState};
+use super::pareto_front::{ParetoFront, ParetoValue};
+use raphael_sim::{Action, Effects, SimulationState};
+use rustc_hash::FxHashMap;
 
 use crate::{actions::ActionCombo, utils::Backtracking};
-
-use super::pareto_front::QualityParetoFront;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
@@ -58,7 +58,7 @@ struct SearchNode {
 }
 
 pub struct SearchQueue {
-    quality_pareto_front: QualityParetoFront,
+    pareto_fronts: FxHashMap<Effects, ParetoFront<ParetoValue>>,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<ActionCombo>,
     current_score: SearchScore,
@@ -70,7 +70,7 @@ impl SearchQueue {
     pub fn new(initial_state: SimulationState, minimum_score: SearchScore) -> Self {
         log::debug!("New minimum score: {:?}", minimum_score);
         Self {
-            quality_pareto_front: QualityParetoFront::default(),
+            pareto_fronts: FxHashMap::default(),
             backtracking: Backtracking::new(),
             buckets: BTreeMap::default(),
             current_score: SearchScore::MAX,
@@ -85,8 +85,8 @@ impl SearchQueue {
         }
         self.minimum_score = score;
         let mut dropped = 0;
-        while let Some((bucket_score, _)) = self.buckets.first_key_value() {
-            if *bucket_score >= self.minimum_score {
+        while let Some((score, _)) = self.buckets.first_key_value() {
+            if *score >= self.minimum_score {
                 break;
             }
             dropped += self.buckets.pop_first().unwrap().1.len();
@@ -103,7 +103,7 @@ impl SearchQueue {
         parent_id: usize,
     ) {
         #[cfg(test)]
-        assert!(self.current_score > score);
+        assert!(score < self.current_score);
         if score > self.minimum_score {
             self.buckets.entry(score).or_default().push(SearchNode {
                 state,
@@ -116,14 +116,23 @@ impl SearchQueue {
     pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {
         while self.current_nodes.is_empty() {
             if let Some((score, mut bucket)) = self.buckets.pop_last() {
-                // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
-                bucket.sort_unstable_by(|lhs, rhs| {
-                    pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
-                });
                 self.current_score = score;
+                // Nodes are sorted by their pareto key to improve cache efficiency on insertion.
+                // Nodes with the same key are sorted by decreasing pareto weight to make sure that no inserted node is later dominated by another node in the same bucket.
+                bucket.sort_unstable_by(|lhs, rhs| {
+                    let lhs_pareto_key = lhs.state.effects.into_bits();
+                    let rhs_pareto_key = rhs.state.effects.into_bits();
+                    lhs_pareto_key
+                        .cmp(&rhs_pareto_key)
+                        .then(ParetoValue::weight(&rhs.state).cmp(&ParetoValue::weight(&lhs.state)))
+                });
                 self.current_nodes = bucket
                     .into_iter()
-                    .filter(|node| self.quality_pareto_front.insert(node.state))
+                    .filter(|node| {
+                        let pareto_front =
+                            self.pareto_fronts.entry(node.state.effects).or_default();
+                        pareto_front.insert(ParetoValue::new(node.state))
+                    })
                     .map(|node| {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
                         (node.state, backtrack_id)
@@ -140,12 +149,4 @@ impl SearchQueue {
     pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = ActionCombo> {
         self.backtracking.get_items(backtrack_id)
     }
-}
-
-fn pareto_weight(state: &SimulationState) -> u32 {
-    state.cp as u32
-        + state.durability as u32
-        + state.progress as u32
-        + state.quality as u32
-        + state.unreliable_quality as u32
 }
