@@ -157,53 +157,44 @@ impl<'a> MacroView<'a> {
 
 impl MacroView<'_> {
     fn macro_notification_menu(ui: &mut egui::Ui, notification_cfg: &mut MacroNotificationConfig) {
+        ui.style_mut().spacing.item_spacing.y = 3.0;
         ui.horizontal(|ui| {
             ui.radio_value(
                 &mut notification_cfg.default_notification,
                 true,
                 "Use default notification",
             );
-            ui.add_enabled_ui(notification_cfg.default_notification, |ui| {
-                ui.reset_style();
-                ui.add_sized(
-                    [50.0, ui.available_height()],
-                    egui::DragValue::new(&mut notification_cfg.notification_sound)
-                        .range(1..=16)
-                        .prefix("<se.")
-                        .suffix(">"),
-                );
-            });
-        });
-
-        ui.separator();
-        ui.horizontal(|ui| {
-            ui.radio_value(
-                &mut notification_cfg.default_notification,
-                false,
-                "Use custom notification format",
+            ui.add_enabled(
+                notification_cfg.default_notification,
+                egui::DragValue::new(&mut notification_cfg.notification_sound)
+                    .range(1..=16)
+                    .prefix("<se.")
+                    .suffix(">"),
             );
         });
-
+        ui.separator();
+        ui.radio_value(
+            &mut notification_cfg.default_notification,
+            false,
+            "Use custom notification format",
+        );
         ui.add_enabled_ui(!notification_cfg.default_notification, |ui| {
-            ui.vertical(|ui| {
-                ui.add(
-                    egui::TextEdit::singleline(&mut notification_cfg.custom_notification_format)
-                        .font(egui::TextStyle::Monospace)
-                        .hint_text("/echo Done {index}/{max_index} <se.1>"),
-                );
-                ui.checkbox(
-                    &mut notification_cfg.different_last_notification,
-                    "Use different format for last notification",
-                );
-                ui.add_enabled(
-                    notification_cfg.different_last_notification,
-                    egui::TextEdit::singleline(
-                        &mut notification_cfg.custom_last_notification_format,
-                    )
+            ui.add(
+                egui::TextEdit::singleline(&mut notification_cfg.custom_notification_format)
+                    .font(egui::TextStyle::Monospace)
+                    .hint_text("/echo Done {index}/{max_index} <se.1>"),
+            );
+            ui.add_space(2.0);
+            ui.checkbox(
+                &mut notification_cfg.different_last_notification,
+                "Use different format for last notification",
+            );
+            ui.add_enabled(
+                notification_cfg.different_last_notification,
+                egui::TextEdit::singleline(&mut notification_cfg.custom_last_notification_format)
                     .font(egui::TextStyle::Monospace)
                     .hint_text("/echo All macros done <se.2>"),
-                );
-            });
+            );
         });
     }
 }
@@ -252,6 +243,7 @@ impl Widget for MacroView<'_> {
                                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
                             )
                             .ui(ui, |ui| {
+                                ui.reset_style(); // prevent egui::DragValue from looking weird
                                 Self::macro_notification_menu(
                                     ui,
                                     &mut self.config.notification_config,
