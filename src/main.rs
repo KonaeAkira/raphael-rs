@@ -4,50 +4,28 @@
 
 #[cfg(target_os = "windows")]
 fn init_logging() {
-    use windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
-
-    // Check if parent process has a console and attach to it if it does
-    // Running the app from a Shortcut, the Start Menu, or File Explorer will log to a file
-    // while running it from a console or console script will output to them directly
-    let mut detached = true;
-    unsafe {
-        let result = AttachConsole(ATTACH_PARENT_PROCESS);
-        if result.is_ok() {
-            detached = false;
-            eprintln!(
-                "WARNING: Attached to Parent Console. Console may not wait for app to terminate!"
-            );
-        }
+    // Ensure app storage folder exists
+    let mut file_path = eframe::storage_dir("Raphael XIV").unwrap();
+    if !std::fs::exists(&file_path).unwrap() {
+        let creation_result = std::fs::create_dir_all(&file_path);
+        assert!(creation_result.is_ok());
     }
 
-    if detached {
-        // Get log file target. File is truncated if it allready exists
-        let mut file_path = eframe::storage_dir("Raphael XIV").unwrap();
-        if !std::fs::exists(&file_path).unwrap() {
-            let creation_result = std::fs::create_dir_all(&file_path);
-            assert!(creation_result.is_ok());
-        }
+    // Get log file target. File is truncated if it already exists
+    file_path.push("log.txt");
+    let log_file_target = Box::new(std::fs::File::create(file_path).unwrap());
 
-        file_path.push("log.txt");
-        let log_file_target = Box::new(std::fs::File::create(file_path).unwrap());
+    env_logger::builder()
+        .format_timestamp(None)
+        .format_target(false)
+        .target(env_logger::Target::Pipe(log_file_target))
+        .init();
 
-        env_logger::builder()
-            .format_timestamp(None)
-            .format_target(false)
-            .target(env_logger::Target::Pipe(log_file_target))
-            .init();
-
-        // Ensure panics are logged when detached, since the default hook outputs to stderr
-        // Backtraces are currently not generated
-        std::panic::set_hook(Box::new(|info| {
-            log::error!("{}", info);
-        }));
-    } else {
-        env_logger::builder()
-            .format_timestamp(None)
-            .format_target(false)
-            .init();
-    }
+    // Ensure panics are logged when detached, since the default hook outputs to stderr
+    // Backtraces are currently not generated
+    std::panic::set_hook(Box::new(|info| {
+        log::error!("{}", info);
+    }));
 }
 
 #[cfg(target_arch = "wasm32")]
