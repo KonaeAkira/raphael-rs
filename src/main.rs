@@ -23,6 +23,11 @@ fn init_logging() {
     if detached {
         // Get log file target. File is truncated if it allready exists
         let mut file_path = eframe::storage_dir("Raphael XIV").unwrap();
+        if !std::fs::exists(&file_path).unwrap() {
+            let creation_result = std::fs::create_dir_all(&file_path);
+            assert!(creation_result.is_ok());
+        }
+
         file_path.push("log.txt");
         let log_file_target = Box::new(std::fs::File::create(file_path).unwrap());
 
