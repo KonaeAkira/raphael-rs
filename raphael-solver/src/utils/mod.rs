@@ -70,9 +70,3 @@ impl<T: Copy> Backtracking<T> {
         self.entries.len() - 1
     }
 }
-
-impl<T: Copy> Drop for Backtracking<T> {
-    fn drop(&mut self) {
-        log::debug!("Backtracking - nodes: {}", self.entries.len());
-    }
-}

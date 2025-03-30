@@ -64,6 +64,8 @@ pub struct SearchQueue {
     current_score: SearchScore,
     current_nodes: Vec<(SimulationState, usize)>,
     minimum_score: SearchScore,
+    nodes_pushed: usize,
+    nodes_popped: usize,
 }
 
 impl SearchQueue {
@@ -76,6 +78,8 @@ impl SearchQueue {
             current_score: SearchScore::MAX,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
             minimum_score,
+            nodes_pushed: 0,
+            nodes_popped: 0,
         }
     }
 
@@ -110,6 +114,7 @@ impl SearchQueue {
                 action,
                 parent_id,
             });
+            self.nodes_pushed += 1;
         }
     }
 
@@ -138,10 +143,19 @@ impl SearchQueue {
             }
         }
         let (state, backtrack_id) = self.current_nodes.pop().unwrap();
+        self.nodes_popped += 1;
         Some((state, self.current_score, backtrack_id))
     }
 
     pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = ActionCombo> {
         self.backtracking.get_items(backtrack_id)
+    }
+}
+
+impl Drop for SearchQueue {
+    fn drop(&mut self) {
+        log::debug!("Total nodes pushed: {}", self.nodes_pushed);
+        log::debug!("Total nodes popped: {}", self.nodes_popped);
+        log::debug!("Pareto front keys: {}", self.pareto_fronts.len());
     }
 }
