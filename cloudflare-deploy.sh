@@ -22,7 +22,7 @@ rustup target add wasm32-unknown-unknown
 # web_sys unstable APIs needed for copy to clipboard functionality
 export RUSTFLAGS="--cfg=web_sys_unstable_apis"
 
-trunk build index.html --release --dist distrib
+trunk build index.html --release
 
 mv distrib/webworker.js distrib/webworker${RANDOM_SUFFIX}.js
 mv distrib/webworker_bg.wasm distrib/webworker${RANDOM_SUFFIX}_bg.wasm
