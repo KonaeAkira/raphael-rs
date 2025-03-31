@@ -55,6 +55,7 @@ egui_extras = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", feat
     "webp",
 ] }
 
+rayon = { workspace = true }
 serde = { workspace = true }
 log = { workspace = true }
 web-time = { workspace = true }
@@ -64,14 +65,10 @@ ron = "0.8"
 env_logger = "0.11.5"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-rayon = { version = "1.2", features = ["no-bundler"] }
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
-gloo-worker = { version = "0.5.0", features = ["futures"] }
 web-sys = "0.3"
-
-[[bin]]
-name = "webworker"
-path = "src/webworker.rs"
 
 [profile.release]
 opt-level = 3

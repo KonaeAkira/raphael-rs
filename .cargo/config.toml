@@ -1,0 +1,6 @@
+[alias]
+tr = "test --release --package raphael-solver -- -Z unstable-options --report-time"
+rr = "run --release --package raphael-solver --example macro_solver_example"
+
+[unstable]
+build-std = ["panic_abort", "std"]

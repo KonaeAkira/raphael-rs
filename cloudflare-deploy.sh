@@ -3,9 +3,6 @@
 
 set -euxo pipefail
 
-# Random suffix to invalidate caches for binaries
-export RANDOM_SUFFIX="-$(echo $RANDOM$RANDOM | md5sum | head -c 8)"
-
 # Base URL used to fetch assets
 if [ "$CF_PAGES_BRANCH" == "main" ]; then
     export BASE_URL="https://www.raphael-xiv.com"
@@ -13,16 +10,16 @@ else
     export BASE_URL=$CF_PAGES_URL
 fi
 
-# Install dependencies
+# Install the Rust toolchain
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 . "$HOME/.cargo/env"
-cargo install --locked trunk
+
+rustup update nightly && rustup default nightly
 rustup target add wasm32-unknown-unknown
 
+cargo install --locked trunk
+
 # web_sys unstable APIs needed for copy to clipboard functionality
-export RUSTFLAGS="--cfg=web_sys_unstable_apis"
+export RUSTFLAGS="--cfg=web_sys_unstable_apis -Ctarget-feature=+atomics,+bulk-memory"
 
 trunk build index.html --release
-
-mv distrib/webworker.js distrib/webworker${RANDOM_SUFFIX}.js
-mv distrib/webworker_bg.wasm distrib/webworker${RANDOM_SUFFIX}_bg.wasm
