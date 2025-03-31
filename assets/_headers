@@ -1,5 +1,9 @@
 # Headers for Cloudflare deployments
 
+/*
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Opener-Policy: same-origin
+
 # Prevent crawlers from indexing preview builds
 https://:project.pages.dev/*
   X-Robots-Tag: noindex
