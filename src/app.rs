@@ -931,11 +931,12 @@ fn spawn_solver(
                 Box::new(progress_callback.clone()),
                 solver_interrupt.clone(),
             );
-            match macro_solver.solve() {
+            let result = macro_solver.solve();
+            let mut solver_events = solver_events.lock().unwrap();
+            match result {
                 Ok(actions) => {
                     let quality =
                         raphael_solver::test_utils::get_quality(&simulator_settings, &actions);
-                    let mut solver_events = solver_events.lock().unwrap();
                     solver_events.push_back(SolverEvent::Actions(actions));
                     if quality >= simulator_settings.max_quality {
                         solver_events.push_back(SolverEvent::Finished(None));
@@ -943,13 +944,11 @@ fn spawn_solver(
                     }
                 }
                 Err(exception) => {
-                    solver_events
-                        .lock()
-                        .unwrap()
-                        .push_back(SolverEvent::Finished(Some(exception)));
+                    solver_events.push_back(SolverEvent::Finished(Some(exception)));
                     return;
                 }
             }
+            solver_events.push_back(SolverEvent::NodesVisited(0));
         }
 
         let solver_settings = raphael_solver::SolverSettings {
