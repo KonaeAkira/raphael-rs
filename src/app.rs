@@ -19,7 +19,6 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
     }
 }
 
-#[derive(Debug)]
 enum SolverEvent {
     NodesVisited(usize),
     Actions(Vec<Action>),
@@ -49,7 +48,6 @@ pub struct MacroSolverApp {
 
     actions: Vec<Action>,
     solver_pending: bool,
-    solver_interrupt_pending: bool,
     solver_progress: usize,
     start_time: web_time::Instant,
     duration: web_time::Duration,
@@ -95,7 +93,6 @@ impl MacroSolverApp {
 
             actions: Vec::new(),
             solver_pending: false,
-            solver_interrupt_pending: false,
             solver_progress: 0,
             start_time: web_time::Instant::now(),
             duration: web_time::Duration::ZERO,
@@ -142,6 +139,7 @@ impl eframe::App for MacroSolverApp {
         }
 
         if self.solver_pending {
+            let interrupt_pending = self.solver_interrupt.is_set();
             egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.set_width(180.0);
@@ -150,9 +148,10 @@ impl eframe::App for MacroSolverApp {
                     ui.vertical(|ui| {
                         ui.horizontal(|ui| {
                             ui.label(
-                                egui::RichText::new(match self.solver_interrupt_pending {
-                                    true => "Cancelling ...",
-                                    false => "Solving ...",
+                                egui::RichText::new(if interrupt_pending {
+                                    "Cancelling ..."
+                                } else {
+                                    "Solving ..."
                                 })
                                 .strong(),
                             );
@@ -179,11 +178,9 @@ impl eframe::App for MacroSolverApp {
 
                 ui.vertical_centered_justified(|ui| {
                     ui.separator();
-                    let response =
-                        ui.add_enabled(!self.solver_interrupt_pending, egui::Button::new("Cancel"));
+                    let response = ui.add_enabled(!interrupt_pending, egui::Button::new("Cancel"));
                     if response.clicked() {
                         self.solver_interrupt.set();
-                        self.solver_interrupt_pending = true;
                     }
                 });
             });
@@ -382,14 +379,12 @@ impl MacroSolverApp {
     fn process_solver_events(&mut self) {
         let mut solver_events = self.solver_events.lock().unwrap();
         while let Some(event) = solver_events.pop_front() {
-            log::debug!("{event:?}");
             match event {
                 SolverEvent::NodesVisited(count) => self.solver_progress = count,
                 SolverEvent::Actions(actions) => self.actions = actions,
                 SolverEvent::Finished(exception) => {
                     self.duration = self.start_time.elapsed();
                     self.solver_pending = false;
-                    self.solver_interrupt_pending = false;
                     self.solver_interrupt.clear();
                     if exception.is_none() {
                         self.saved_rotations_data.add_solved_rotation(Rotation::new(
@@ -768,7 +763,6 @@ impl MacroSolverApp {
     fn on_solve_button_clicked(&mut self, ctx: &egui::Context) {
         self.actions = Vec::new();
         self.solver_pending = true;
-        self.solver_interrupt_pending = false;
         self.solver_interrupt.clear();
         self.solver_progress = 0;
         self.start_time = web_time::Instant::now();
