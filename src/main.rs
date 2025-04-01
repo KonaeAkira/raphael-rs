@@ -34,7 +34,10 @@ fn init_logging() {
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 }
 
-#[cfg(not(any(all(target_os = "windows", not(debug_assertions)), target_arch = "wasm32")))]
+#[cfg(not(any(
+    all(target_os = "windows", not(debug_assertions)),
+    target_arch = "wasm32"
+)))]
 fn init_logging() {
     env_logger::builder()
         .format_timestamp(None)

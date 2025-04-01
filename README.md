@@ -11,8 +11,7 @@ Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 * [Optimal macro selection](#optimal-macro-selection)
 * [How does it work?](#how-does-it-work)
 * [Building from source](#building-from-source)
-  * [Native app](#native-app)
-  * [Web app (WASM)](#web-app-wasm)
+  * [Native GUI](#native-gui)
   * [Native CLI](#native-cli)
 
 ## Optimal macro selection
@@ -39,28 +38,12 @@ If you find a macro that beats the generated macro according to the specificatio
 
 The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
 
-### Native app
+### Native GUI
 
 To build and run the application:
 
 ```
 cargo run --release
-```
-
-### Web app (WASM)
-
-[Trunk](https://trunkrs.dev/) is required to bundle and host the website and can be installed via the Rust toolchain:
-
-```
-cargo install --locked trunk
-```
-
-To build and host the application locally:
-
-```
-export RANDOM_SUFFIX=""
-export RUSTFLAGS="--cfg=web_sys_unstable_apis"
-trunk serve --release --dist distrib
 ```
 
 ### Native CLI

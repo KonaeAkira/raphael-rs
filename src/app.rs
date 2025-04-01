@@ -1,5 +1,5 @@
-use std::cell::Cell;
-use std::rc::Rc;
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 
 use raphael_solver::SolverException;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -7,11 +7,10 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
 use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
 
-use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, Settings};
+use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
 use crate::config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration};
 use crate::widgets::*;
-use crate::worker::BridgeType;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -20,18 +19,10 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum SolverInput {
-    Start(Settings, SolverConfig),
-    Cancel,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum SolverEvent {
-    Progress(usize),
-    IntermediateSolution(Vec<Action>),
-    FinalSolution(Vec<Action>),
-    Error(SolverException),
+enum SolverEvent {
+    NodesVisited(usize),
+    Actions(Vec<Action>),
+    Finished(Option<SolverException>),
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -57,48 +48,18 @@ pub struct MacroSolverApp {
 
     actions: Vec<Action>,
     solver_pending: bool,
-    solver_interrupt_pending: bool,
     solver_progress: usize,
     start_time: web_time::Instant,
     duration: web_time::Duration,
     solver_error: Option<SolverException>,
 
-    bridge: BridgeType,
-    pub progress_update: Rc<Cell<Option<SolverEvent>>>,
-    pub solution_update: Rc<Cell<Option<SolverEvent>>>,
+    solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
+    solver_interrupt: raphael_solver::AtomicFlag,
 }
 
 impl MacroSolverApp {
-    #[cfg(target_arch = "wasm32")]
-    fn initialize_bridge(
-        ctx: egui::Context,
-        progress_update: Rc<Cell<Option<SolverEvent>>>,
-        solution_update: Rc<Cell<Option<SolverEvent>>>,
-    ) -> BridgeType {
-        <crate::worker::Worker as gloo_worker::Spawnable>::spawner()
-            .callback(move |response| {
-                match response {
-                    SolverEvent::Progress(_) => progress_update.set(Some(response)),
-                    _ => solution_update.set(Some(response)),
-                }
-                ctx.request_repaint();
-            })
-            .spawn(concat!("./webworker", env!("RANDOM_SUFFIX"), ".js"))
-    }
-
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let progress_update = Rc::new(Cell::new(None));
-        let solution_update = Rc::new(Cell::new(None));
-        #[cfg(target_arch = "wasm32")]
-        let bridge = Self::initialize_bridge(
-            cc.egui_ctx.clone(),
-            progress_update.clone(),
-            solution_update.clone(),
-        );
-        #[cfg(not(target_arch = "wasm32"))]
-        let bridge = BridgeType::new();
-
         let dark_mode = cc
             .egui_ctx
             .data_mut(|data| *data.get_persisted_mut_or(Id::new("DARK_MODE"), true));
@@ -132,15 +93,13 @@ impl MacroSolverApp {
 
             actions: Vec::new(),
             solver_pending: false,
-            solver_interrupt_pending: false,
             solver_progress: 0,
             start_time: web_time::Instant::now(),
             duration: web_time::Duration::ZERO,
             solver_error: None,
 
-            bridge,
-            progress_update,
-            solution_update,
+            solver_events: Arc::new(Mutex::new(VecDeque::new())),
+            solver_interrupt: raphael_solver::AtomicFlag::new(),
         }
     }
 }
@@ -151,7 +110,7 @@ impl eframe::App for MacroSolverApp {
         #[cfg(target_arch = "wasm32")]
         self.load_fonts_dyn(ctx);
 
-        self.solver_update();
+        self.process_solver_events();
 
         if let Some(error) = self.solver_error.clone() {
             egui::Modal::new(egui::Id::new("solver_error")).show(ctx, |ui| {
@@ -180,6 +139,7 @@ impl eframe::App for MacroSolverApp {
         }
 
         if self.solver_pending {
+            let interrupt_pending = self.solver_interrupt.is_set();
             egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.set_width(180.0);
@@ -188,9 +148,10 @@ impl eframe::App for MacroSolverApp {
                     ui.vertical(|ui| {
                         ui.horizontal(|ui| {
                             ui.label(
-                                egui::RichText::new(match self.solver_interrupt_pending {
-                                    true => "Cancelling ...",
-                                    false => "Solving ...",
+                                egui::RichText::new(if interrupt_pending {
+                                    "Cancelling ..."
+                                } else {
+                                    "Solving ..."
                                 })
                                 .strong(),
                             );
@@ -215,14 +176,11 @@ impl eframe::App for MacroSolverApp {
                     });
                 });
 
-                #[cfg(not(target_arch = "wasm32"))]
                 ui.vertical_centered_justified(|ui| {
                     ui.separator();
-                    let response =
-                        ui.add_enabled(!self.solver_interrupt_pending, egui::Button::new("Cancel"));
+                    let response = ui.add_enabled(!interrupt_pending, egui::Button::new("Cancel"));
                     if response.clicked() {
-                        self.bridge.send(SolverInput::Cancel);
-                        self.solver_interrupt_pending = true;
+                        self.solver_interrupt.set();
                     }
                 });
             });
@@ -418,51 +376,35 @@ impl eframe::App for MacroSolverApp {
 }
 
 impl MacroSolverApp {
-    fn on_solver_event(&mut self, event: SolverEvent) {
-        match event {
-            SolverEvent::Progress(progress) => self.solver_progress = progress,
-            SolverEvent::IntermediateSolution(actions) => self.actions = actions,
-            SolverEvent::FinalSolution(actions) => {
-                self.actions = actions;
-                self.duration = self.start_time.elapsed();
-                self.solver_pending = false;
-                self.saved_rotations_data.add_solved_rotation(Rotation::new(
-                    raphael_data::get_item_name(
-                        self.recipe_config.recipe.item_id,
-                        false,
-                        self.locale,
-                    ),
-                    self.actions.clone(),
-                    &self.recipe_config.recipe,
-                    self.selected_food,
-                    self.selected_potion,
-                    &self.crafter_config,
-                    &self.solver_config,
-                ));
-            }
-            SolverEvent::Error(error) => {
-                self.actions.clear();
-                self.duration = self.start_time.elapsed();
-                self.solver_pending = false;
-                if error != SolverException::Interrupted {
-                    self.solver_error = Some(error);
+    fn process_solver_events(&mut self) {
+        let mut solver_events = self.solver_events.lock().unwrap();
+        while let Some(event) = solver_events.pop_front() {
+            match event {
+                SolverEvent::NodesVisited(count) => self.solver_progress = count,
+                SolverEvent::Actions(actions) => self.actions = actions,
+                SolverEvent::Finished(exception) => {
+                    self.duration = self.start_time.elapsed();
+                    self.solver_pending = false;
+                    self.solver_interrupt.clear();
+                    if exception.is_none() {
+                        self.saved_rotations_data.add_solved_rotation(Rotation::new(
+                            raphael_data::get_item_name(
+                                self.recipe_config.recipe.item_id,
+                                false,
+                                self.locale,
+                            ),
+                            self.actions.clone(),
+                            &self.recipe_config.recipe,
+                            self.selected_food,
+                            self.selected_potion,
+                            &self.crafter_config,
+                            &self.solver_config,
+                        ));
+                    } else {
+                        self.solver_error = exception;
+                    }
                 }
             }
-        }
-    }
-
-    fn solver_update(&mut self) {
-        #[cfg(not(target_arch = "wasm32"))]
-        if let Ok(event) = self.bridge.rx.try_recv() {
-            self.on_solver_event(event);
-        }
-        #[cfg(target_arch = "wasm32")]
-        if let Some(event) = self.progress_update.take() {
-            self.on_solver_event(event);
-        }
-        #[cfg(target_arch = "wasm32")]
-        if let Some(event) = self.solution_update.take() {
-            self.on_solver_event(event);
         }
     }
 
@@ -821,7 +763,7 @@ impl MacroSolverApp {
     fn on_solve_button_clicked(&mut self, ctx: &egui::Context) {
         self.actions = Vec::new();
         self.solver_pending = true;
-        self.solver_interrupt_pending = false;
+        self.solver_interrupt.clear();
         self.solver_progress = 0;
         self.start_time = web_time::Instant::now();
         let mut game_settings = raphael_data::get_game_settings(
@@ -850,9 +792,12 @@ impl MacroSolverApp {
         });
 
         game_settings.max_quality = target_quality.saturating_sub(initial_quality);
-        self.bridge
-            .send(SolverInput::Start(game_settings, self.solver_config));
-        log::debug!("{game_settings:?}");
+        spawn_solver(
+            self.solver_config,
+            game_settings,
+            self.solver_events.clone(),
+            self.solver_interrupt.clone(),
+        );
     }
 
     fn draw_macro_output_widget(&mut self, ui: &mut egui::Ui) {
@@ -944,4 +889,84 @@ fn load_fonts(ctx: &egui::Context) {
             },
         ],
     ));
+}
+
+fn spawn_solver(
+    solver_config: SolverConfig,
+    simulator_settings: raphael_sim::Settings,
+    solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
+    solver_interrupt: raphael_solver::AtomicFlag,
+) {
+    let events = solver_events.clone();
+    let solution_callback = move |actions: &[raphael_sim::Action]| {
+        let event = SolverEvent::Actions(actions.to_vec());
+        events.lock().unwrap().push_back(event);
+    };
+
+    let events = solver_events.clone();
+    let progress_callback = move |progress: usize| {
+        let event = SolverEvent::NodesVisited(progress);
+        events.lock().unwrap().push_back(event);
+    };
+
+    rayon::spawn(move || {
+        if !solver_config.minimize_steps {
+            // If "minimize steps" is not active, we first try backload progress + unsound.
+            // If we find a max-quality solution here, we can return early.
+            let solver_settings = raphael_solver::SolverSettings {
+                simulator_settings,
+                backload_progress: true,
+                allow_unsound_branch_pruning: true,
+            };
+            log::debug!("Spawning solver: {solver_settings:?}");
+            let mut macro_solver = raphael_solver::MacroSolver::new(
+                solver_settings,
+                Box::new(solution_callback.clone()),
+                Box::new(progress_callback.clone()),
+                solver_interrupt.clone(),
+            );
+            let result = macro_solver.solve();
+            let mut solver_events = solver_events.lock().unwrap();
+            match result {
+                Ok(actions) => {
+                    let quality =
+                        raphael_solver::test_utils::get_quality(&simulator_settings, &actions);
+                    solver_events.push_back(SolverEvent::Actions(actions));
+                    if quality >= simulator_settings.max_quality {
+                        solver_events.push_back(SolverEvent::Finished(None));
+                        return;
+                    }
+                }
+                Err(exception) => {
+                    solver_events.push_back(SolverEvent::Finished(Some(exception)));
+                    return;
+                }
+            }
+            solver_events.push_back(SolverEvent::NodesVisited(0));
+        }
+
+        let solver_settings = raphael_solver::SolverSettings {
+            simulator_settings,
+            backload_progress: solver_config.backload_progress,
+            allow_unsound_branch_pruning: false,
+        };
+        log::debug!("Spawning solver: {solver_settings:?}");
+        let mut macro_solver = raphael_solver::MacroSolver::new(
+            solver_settings,
+            Box::new(solution_callback),
+            Box::new(progress_callback),
+            solver_interrupt,
+        );
+        match macro_solver.solve() {
+            Ok(actions) => {
+                let mut solver_events = solver_events.lock().unwrap();
+                solver_events.push_back(SolverEvent::Actions(actions));
+                solver_events.push_back(SolverEvent::Finished(None));
+            }
+            Err(exception) => solver_events
+                .lock()
+                .unwrap()
+                .push_back(SolverEvent::Finished(Some(exception))),
+        }
+    });
 }
