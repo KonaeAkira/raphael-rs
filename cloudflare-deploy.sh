@@ -15,7 +15,12 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 . "$HOME/.cargo/env"
 
 rustup update nightly && rustup default nightly
+rustup component add rust-src
 rustup target add wasm32-unknown-unknown
+
+mv ./.cargo/config.toml ./.cargo/config.toml.backup
+mv ./.cargo/config_wasm.toml ./.cargo/config.toml
+trap "mv ./.cargo/config.toml ./.cargo/config_wasm.toml && mv ./.cargo/config.toml.backup ./.cargo/config.toml" EXIT
 
 cargo install --locked trunk
 
