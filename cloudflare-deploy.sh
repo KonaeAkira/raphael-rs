@@ -20,6 +20,6 @@ rustup target add wasm32-unknown-unknown
 cargo install --locked trunk
 
 # web_sys unstable APIs needed for copy to clipboard functionality
-export RUSTFLAGS="--cfg=web_sys_unstable_apis -Ctarget-feature=+atomics,+bulk-memory"
+export RUSTFLAGS="--cfg=web_sys_unstable_apis -Ctarget-feature=+atomics,+bulk-memory -Clink-arg=--max-memory=4294967296"
 
 trunk build index.html --release
