@@ -9,7 +9,9 @@ use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
-use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLowerBoundSolver};
+use crate::{
+    FinishSolver, QualityUpperBoundSolver, SolverException, SolverSettings, StepLowerBoundSolver,
+};
 
 use std::vec::Vec;
 
@@ -67,11 +69,11 @@ impl<'a> MacroSolver<'a> {
         fn initialize_quality_ub_solver(
             settings: SolverSettings,
             interrupt_signal: AtomicFlag,
-        ) -> QualityUbSolver {
+        ) -> QualityUpperBoundSolver {
             let _timer = ScopedTimer::new("Quality UB Solver");
             let mut seed_state = SimulationState::new(&settings.simulator_settings);
             seed_state.combo = Combo::None;
-            let solver = QualityUbSolver::new(settings, interrupt_signal);
+            let solver = QualityUpperBoundSolver::new(settings, interrupt_signal);
             _ = solver.quality_upper_bound(seed_state);
             solver
         }
@@ -108,7 +110,7 @@ impl<'a> MacroSolver<'a> {
         &mut self,
         state: SimulationState,
         finish_solver: &mut FinishSolver,
-        quality_ub_solver: &QualityUbSolver,
+        quality_ub_solver: &QualityUpperBoundSolver,
         step_lb_solver: &mut StepLowerBoundSolver,
     ) -> Result<Solution, SolverException> {
         let mut search_queue = {

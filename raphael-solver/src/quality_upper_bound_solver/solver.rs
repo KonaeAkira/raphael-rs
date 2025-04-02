@@ -15,7 +15,7 @@ type SolvedStates = papaya::HashMap<
     std::hash::BuildHasherDefault<rustc_hash::FxHasher>,
 >;
 
-pub struct QualityUbSolver {
+pub struct QualityUpperBoundSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
@@ -25,7 +25,7 @@ pub struct QualityUbSolver {
     durability_cost: i16,
 }
 
-impl QualityUbSolver {
+impl QualityUpperBoundSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         settings.simulator_settings.max_cp = i16::MAX;
         let initial_state = SimulationState::new(&settings.simulator_settings);
