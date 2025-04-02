@@ -72,7 +72,7 @@ impl<'a> MacroSolver<'a> {
             let _timer = ScopedTimer::new("Quality UB Solver");
             let mut seed_state = SimulationState::new(&settings.simulator_settings);
             seed_state.combo = Combo::None;
-            let solved_states = QualityUbLookup::new();
+            let solved_states = QualityUbLookup::default();
             rayon::scope(|s| {
                 s.spawn(|_| {
                     let mut solver = QualityUbSolver::<1>::new(settings, interrupt_signal.clone());

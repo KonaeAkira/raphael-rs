@@ -10,7 +10,11 @@ use super::state::ReducedState;
 type ParetoValue = utils::ParetoValue<u16, u16>;
 type ParetoFrontBuilder = utils::ParetoFrontBuilder<u16, u16>;
 
-pub type QualityUbLookup = papaya::HashMap<ReducedState, Box<[ParetoValue]>>;
+pub type QualityUbLookup = papaya::HashMap<
+    ReducedState,
+    Box<[ParetoValue]>,
+    std::hash::BuildHasherDefault<rustc_hash::FxHasher>,
+>;
 
 pub struct QualityUbSolver<const S: usize> {
     settings: SolverSettings,
