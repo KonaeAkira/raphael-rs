@@ -500,7 +500,7 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = StepLowerBoundSolver::new(solver_settings, Default::default());
+    let solver = StepLowerBoundSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {
         let state = random_state(&simulator_settings);
         let state_lower_bound = solver.step_lower_bound_with_hint(state, 0).unwrap();

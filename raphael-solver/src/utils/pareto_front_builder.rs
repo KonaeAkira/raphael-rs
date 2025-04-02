@@ -38,11 +38,6 @@ where
         }
     }
 
-    pub fn clear(&mut self) {
-        self.segments.clear();
-        self.buffer.clear();
-    }
-
     pub fn push_empty(&mut self) {
         self.segments.push(self.buffer.len());
     }

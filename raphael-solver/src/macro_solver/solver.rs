@@ -83,7 +83,7 @@ impl<'a> MacroSolver<'a> {
             let _timer = ScopedTimer::new("Step LB Solver");
             let mut seed_state = SimulationState::new(&settings.simulator_settings);
             seed_state.combo = Combo::None;
-            let mut step_lb_solver = StepLowerBoundSolver::new(settings, interrupt_signal);
+            let step_lb_solver = StepLowerBoundSolver::new(settings, interrupt_signal);
             _ = step_lb_solver.step_lower_bound_with_hint(seed_state, 0);
             step_lb_solver
         }
