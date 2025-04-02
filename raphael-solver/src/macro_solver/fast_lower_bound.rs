@@ -38,7 +38,7 @@ pub fn fast_lower_bound(
 
     let mut search_queue = std::collections::BinaryHeap::default();
     let initial_node = Node {
-        quality_upper_bound: quality_ub_solver.quality_upper_bound(initial_state)?,
+        quality_upper_bound: settings.simulator_settings.max_quality,
         state: initial_state,
     };
     search_queue.push(initial_node);

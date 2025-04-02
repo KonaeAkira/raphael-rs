@@ -70,9 +70,6 @@ impl StepLowerBoundSolver {
         state: SimulationState,
         step_budget: NonZeroU8,
     ) -> Result<u16, SolverException> {
-        if state.combo == Combo::SynthesisBegin {
-            return Ok(self.settings.simulator_settings.max_quality);
-        }
         if state.combo != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in step lower bound solver",
