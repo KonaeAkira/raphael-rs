@@ -1,9 +1,10 @@
 use raphael_sim::*;
 
 use crate::{
-    AtomicFlag, QualityUpperBoundSolver, SolverException, SolverSettings,
+    AtomicFlag, QualityUbSolver, SolverException, SolverSettings,
     actions::{ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo},
     finish_solver::FinishSolver,
+    quality_upper_bound_solver::QualityUbLookup,
     utils::ScopedTimer,
 };
 
@@ -29,16 +30,19 @@ impl Ord for Node {
 
 pub fn fast_lower_bound(
     initial_state: SimulationState,
-    settings: &SolverSettings,
+    settings: SolverSettings,
     interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
-    upper_bound_solver: &mut QualityUpperBoundSolver,
+    solved_quality_ub_states: &QualityUbLookup,
 ) -> Result<u16, SolverException> {
     let _timer = ScopedTimer::new("Fast lower bound");
 
+    let mut quality_ub_solver = QualityUbSolver::<1>::new(settings, interrupt_signal.clone());
+
     let mut search_queue = std::collections::BinaryHeap::default();
     let initial_node = Node {
-        quality_upper_bound: upper_bound_solver.quality_upper_bound(initial_state)?,
+        quality_upper_bound: quality_ub_solver
+            .quality_upper_bound(&solved_quality_ub_states, initial_state)?,
         state: initial_state,
     };
     search_queue.push(initial_node);
@@ -60,7 +64,7 @@ pub fn fast_lower_bound(
             ) {
                 continue;
             }
-            if let Ok(state) = use_action_combo(settings, node.state, *action) {
+            if let Ok(state) = use_action_combo(&settings, node.state, *action) {
                 if !state.is_final(&settings.simulator_settings) {
                     if !finish_solver.can_finish(&state) {
                         continue;
@@ -69,7 +73,8 @@ pub fn fast_lower_bound(
                     if *action == ActionCombo::Single(Action::ByregotsBlessing) {
                         continue;
                     }
-                    let quality_upper_bound = upper_bound_solver.quality_upper_bound(state)?;
+                    let quality_upper_bound =
+                        quality_ub_solver.quality_upper_bound(&solved_quality_ub_states, state)?;
                     if quality_upper_bound <= best_achieved_quality {
                         continue;
                     }

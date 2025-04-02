@@ -7,11 +7,10 @@ use crate::actions::{
 };
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
+use crate::quality_upper_bound_solver::QualityUbLookup;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
-use crate::{
-    FinishSolver, QualityUpperBoundSolver, SolverException, SolverSettings, StepLowerBoundSolver,
-};
+use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLowerBoundSolver};
 
 use std::vec::Vec;
 
@@ -69,13 +68,30 @@ impl<'a> MacroSolver<'a> {
         fn initialize_quality_ub_solver(
             settings: SolverSettings,
             interrupt_signal: AtomicFlag,
-        ) -> QualityUpperBoundSolver {
+        ) -> QualityUbLookup {
             let _timer = ScopedTimer::new("Quality UB Solver");
             let mut seed_state = SimulationState::new(&settings.simulator_settings);
             seed_state.combo = Combo::None;
-            let mut quality_ub_solver = QualityUpperBoundSolver::new(settings, interrupt_signal);
-            _ = quality_ub_solver.quality_upper_bound(seed_state);
-            quality_ub_solver
+            let solved_states = QualityUbLookup::new();
+            rayon::scope(|s| {
+                s.spawn(|_| {
+                    let mut solver = QualityUbSolver::<1>::new(settings, interrupt_signal.clone());
+                    _ = solver.quality_upper_bound(&solved_states, seed_state);
+                });
+                s.spawn(|_| {
+                    let mut solver = QualityUbSolver::<59>::new(settings, interrupt_signal.clone());
+                    _ = solver.quality_upper_bound(&solved_states, seed_state);
+                });
+                s.spawn(|_| {
+                    let mut solver = QualityUbSolver::<83>::new(settings, interrupt_signal.clone());
+                    _ = solver.quality_upper_bound(&solved_states, seed_state);
+                });
+                s.spawn(|_| {
+                    let mut solver = QualityUbSolver::<97>::new(settings, interrupt_signal.clone());
+                    _ = solver.quality_upper_bound(&solved_states, seed_state);
+                });
+            });
+            solved_states
         }
 
         fn initialize_step_lb_solver(
@@ -90,7 +106,7 @@ impl<'a> MacroSolver<'a> {
             step_lb_solver
         }
 
-        let (mut quality_ub_solver, mut step_lb_solver) = rayon::join(
+        let (solved_quality_ub_states, mut step_lb_solver) = rayon::join(
             || initialize_quality_ub_solver(self.settings, self.interrupt_signal.clone()),
             || initialize_step_lb_solver(self.settings, self.interrupt_signal.clone()),
         );
@@ -100,7 +116,7 @@ impl<'a> MacroSolver<'a> {
             .do_solve(
                 initial_state,
                 &mut finish_solver,
-                &mut quality_ub_solver,
+                &solved_quality_ub_states,
                 &mut step_lb_solver,
             )?
             .actions())
@@ -110,16 +126,19 @@ impl<'a> MacroSolver<'a> {
         &mut self,
         state: SimulationState,
         finish_solver: &mut FinishSolver,
-        quality_ub_solver: &mut QualityUpperBoundSolver,
+        solved_quality_ub_states: &QualityUbLookup,
         step_lb_solver: &mut StepLowerBoundSolver,
     ) -> Result<Solution, SolverException> {
+        let mut quality_ub_solver =
+            QualityUbSolver::<1>::new(self.settings, self.interrupt_signal.clone());
+
         let mut search_queue = {
             let quality_lower_bound = fast_lower_bound(
                 state,
-                &self.settings,
+                self.settings,
                 self.interrupt_signal.clone(),
                 finish_solver,
-                quality_ub_solver,
+                solved_quality_ub_states,
             )?;
             let minimum_score = SearchScore {
                 quality_upper_bound: quality_lower_bound,
@@ -169,7 +188,8 @@ impl<'a> MacroSolver<'a> {
                             } else {
                                 std::cmp::min(
                                     score.quality_upper_bound,
-                                    quality_ub_solver.quality_upper_bound(state)?,
+                                    quality_ub_solver
+                                        .quality_upper_bound(&solved_quality_ub_states, state)?,
                                 )
                             };
 
