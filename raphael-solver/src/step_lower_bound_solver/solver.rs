@@ -6,7 +6,7 @@ use crate::{
         ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, is_progress_only_state,
         use_action_combo,
     },
-    utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    utils,
 };
 use raphael_sim::*;
 
@@ -14,16 +14,19 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::state::ReducedState;
 
+type ParetoValue = utils::ParetoValue<u16, u16>;
+type ParetoFrontBuilder = utils::ParetoFrontBuilder<u16, u16>;
+
 pub struct StepLowerBoundSolver {
     settings: SolverSettings,
-    solved_states: HashMap<ReducedState, ParetoFrontId>,
-    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-    interrupt_signal: AtomicFlag,
+    solved_states: HashMap<ReducedState, Box<[ParetoValue]>>,
+    pareto_front_builder: ParetoFrontBuilder,
+    interrupt_signal: utils::AtomicFlag,
     single_step_states: usize,
 }
 
 impl StepLowerBoundSolver {
-    pub fn new(mut settings: SolverSettings, interrupt_signal: AtomicFlag) -> Self {
+    pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         log::trace!(
             "ReducedState (StepLowerBoundSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
@@ -81,7 +84,7 @@ impl StepLowerBoundSolver {
         let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
 
         let pareto_front = match self.solved_states.get(&reduced_state) {
-            Some(id) => self.pareto_front_builder.retrieve(*id),
+            Some(pareto_front) => pareto_front,
             None => {
                 self.pareto_front_builder.clear();
                 self.solve_state(reduced_state)?;
@@ -122,8 +125,8 @@ impl StepLowerBoundSolver {
                 }
             }
         }
-        let id = self.pareto_front_builder.save().unwrap();
-        self.solved_states.insert(reduced_state, id);
+        let pareto_front = Box::from(self.pareto_front_builder.peek().unwrap());
+        self.solved_states.insert(reduced_state, pareto_front);
         Ok(())
     }
 
@@ -146,7 +149,7 @@ impl StepLowerBoundSolver {
                     let new_reduced_state =
                         ReducedState::from_state(new_full_state, new_step_budget, progress_only);
                     match self.solved_states.get(&new_reduced_state) {
-                        Some(id) => self.pareto_front_builder.push_id(*id),
+                        Some(pareto_front) => self.pareto_front_builder.push_slice(pareto_front),
                         None => self.solve_state(new_reduced_state)?,
                     }
                     self.pareto_front_builder

@@ -1,7 +1,7 @@
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
-    utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    utils,
 };
 use raphael_sim::*;
 
@@ -9,11 +9,14 @@ use rustc_hash::FxHashMap as HashMap;
 
 use super::state::ReducedState;
 
+type ParetoValue = utils::ParetoValue<u16, u16>;
+type ParetoFrontBuilder = utils::ParetoFrontBuilder<u16, u16>;
+
 pub struct QualityUpperBoundSolver {
     settings: SolverSettings,
-    solved_states: HashMap<ReducedState, ParetoFrontId>,
-    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-    interrupt_signal: AtomicFlag,
+    solved_states: HashMap<ReducedState, Box<[ParetoValue]>>,
+    pareto_front_builder: ParetoFrontBuilder,
+    interrupt_signal: utils::AtomicFlag,
     // pre-computed branch pruning values
     waste_not_1_min_cp: i16,
     waste_not_2_min_cp: i16,
@@ -21,7 +24,7 @@ pub struct QualityUpperBoundSolver {
 }
 
 impl QualityUpperBoundSolver {
-    pub fn new(mut settings: SolverSettings, interrupt_signal: AtomicFlag) -> Self {
+    pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         log::trace!(
             "ReducedState (QualityUpperBoundSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
@@ -88,7 +91,7 @@ impl QualityUpperBoundSolver {
         let reduced_state =
             ReducedState::from_simulation_state(state, &self.settings, self.durability_cost);
         let pareto_front = match self.solved_states.get(&reduced_state) {
-            Some(id) => self.pareto_front_builder.retrieve(*id),
+            Some(pareto_front) => pareto_front,
             None => {
                 self.pareto_front_builder.clear();
                 self.solve_state(reduced_state)?;
@@ -127,8 +130,8 @@ impl QualityUpperBoundSolver {
                 break;
             }
         }
-        let id = self.pareto_front_builder.save().unwrap();
-        self.solved_states.insert(state, id);
+        let pareto_front = Box::from(self.pareto_front_builder.peek().unwrap());
+        self.solved_states.insert(state, pareto_front);
         Ok(())
     }
 
@@ -142,7 +145,7 @@ impl QualityUpperBoundSolver {
         {
             if new_state.cp >= self.durability_cost {
                 match self.solved_states.get(&new_state) {
-                    Some(id) => self.pareto_front_builder.push_id(*id),
+                    Some(pareto_front) => self.pareto_front_builder.push_slice(pareto_front),
                     None => self.solve_state(new_state)?,
                 }
                 self.pareto_front_builder
