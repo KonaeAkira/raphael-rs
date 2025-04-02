@@ -41,7 +41,7 @@ impl StepLowerBoundSolver {
         }
     }
 
-    pub fn step_lower_bound_with_hint(
+    pub fn step_lower_bound(
         &self,
         state: SimulationState,
         hint: u8,
