@@ -21,9 +21,6 @@ where
     // cut-off values
     max_first: T,
     max_second: U,
-    // used for profiling
-    merged: usize,
-    skipped: usize,
 }
 
 impl<T, U> ParetoFrontBuilder<T, U>
@@ -38,8 +35,6 @@ where
             merge_buffer: [ParetoValue::default(); 1024],
             max_first,
             max_second,
-            merged: 0,
-            skipped: 0,
         }
     }
 
@@ -78,7 +73,6 @@ where
             if idx_b >= slice_b.len() {
                 // slice_a fully dominates slice_b
                 self.buffer.truncate(begin_b);
-                self.skipped += 1;
                 return;
             }
 
@@ -117,7 +111,6 @@ where
         let length_c = end_c - begin_c;
         self.buffer.truncate(begin_a + length_c);
         self.buffer[begin_a..].copy_from_slice(&self.merge_buffer[begin_c..end_c]);
-        self.merged += 1;
     }
 
     /// Find the first element of slice_b that is not dominated by slice_a
@@ -258,20 +251,6 @@ where
             }
             segment_end = segment_begin;
         }
-    }
-}
-
-impl<T, U> Drop for ParetoFrontBuilder<T, U>
-where
-    T: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
-    U: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
-{
-    fn drop(&mut self) {
-        log::debug!(
-            "ParetoFrontBuilder - buffer_capacity: {}, skip_rate: {:.2}%",
-            self.buffer.capacity(),
-            self.skipped as f32 / (self.skipped + self.merged) as f32 * 100.0
-        );
     }
 }
 

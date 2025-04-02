@@ -6,7 +6,7 @@ use crate::{
     actions::{FULL_SEARCH_ACTIONS, use_action_combo},
 };
 
-use super::{solver::QualityUbLookup, *};
+use super::QualityUbSolver;
 
 fn solve(simulator_settings: Settings, actions: &[Action]) -> u16 {
     let state = SimulationState {
@@ -18,8 +18,8 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u16 {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    QualityUbSolver::<1>::new(solver_settings, Default::default())
-        .quality_upper_bound(&QualityUbLookup::default(), state)
+    QualityUbSolver::new(solver_settings, Default::default())
+        .quality_upper_bound(state)
         .unwrap()
 }
 
@@ -480,15 +480,14 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = QualityUbSolver::<1>::new(solver_settings, Default::default());
-    let solved_states = QualityUbLookup::default();
+    let solver = QualityUbSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {
         let state = random_state(&simulator_settings);
-        let state_upper_bound = solver.quality_upper_bound(&solved_states, state).unwrap();
+        let state_upper_bound = solver.quality_upper_bound(state).unwrap();
         for action in FULL_SEARCH_ACTIONS {
             let child_upper_bound = match use_action_combo(&solver_settings, state, *action) {
                 Ok(child) => match child.is_final(&simulator_settings) {
-                    false => solver.quality_upper_bound(&solved_states, child).unwrap(),
+                    false => solver.quality_upper_bound(child).unwrap(),
                     true if child.progress >= simulator_settings.max_progress => {
                         std::cmp::min(simulator_settings.max_quality, child.quality)
                     }

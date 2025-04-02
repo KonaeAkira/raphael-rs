@@ -1,7 +1,7 @@
 mod solver;
 mod state;
 
-pub use solver::{QualityUbLookup, QualityUbSolver};
+pub use solver::QualityUbSolver;
 
 #[cfg(test)]
 mod tests;
