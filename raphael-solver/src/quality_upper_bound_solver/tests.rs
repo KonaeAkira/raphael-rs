@@ -6,7 +6,7 @@ use crate::{
     actions::{FULL_SEARCH_ACTIONS, use_action_combo},
 };
 
-use super::*;
+use super::QualityUpperBoundSolver;
 
 fn solve(simulator_settings: Settings, actions: &[Action]) -> u16 {
     let state = SimulationState {
@@ -480,7 +480,7 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    let solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {
         let state = random_state(&simulator_settings);
         let state_upper_bound = solver.quality_upper_bound(state).unwrap();

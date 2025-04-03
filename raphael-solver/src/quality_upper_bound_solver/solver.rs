@@ -1,19 +1,24 @@
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
-    utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    utils,
 };
 use raphael_sim::*;
 
-use rustc_hash::FxHashMap as HashMap;
-
 use super::state::ReducedState;
+
+type ParetoValue = utils::ParetoValue<u16, u16>;
+type ParetoFrontBuilder = utils::ParetoFrontBuilder<u16, u16>;
+type SolvedStates = papaya::HashMap<
+    ReducedState,
+    Box<[ParetoValue]>,
+    std::hash::BuildHasherDefault<rustc_hash::FxHasher>,
+>;
 
 pub struct QualityUpperBoundSolver {
     settings: SolverSettings,
-    solved_states: HashMap<ReducedState, ParetoFrontId>,
-    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-    interrupt_signal: AtomicFlag,
+    interrupt_signal: utils::AtomicFlag,
+    solved_states: SolvedStates,
     // pre-computed branch pruning values
     waste_not_1_min_cp: i16,
     waste_not_2_min_cp: i16,
@@ -21,15 +26,8 @@ pub struct QualityUpperBoundSolver {
 }
 
 impl QualityUpperBoundSolver {
-    pub fn new(mut settings: SolverSettings, interrupt_signal: AtomicFlag) -> Self {
-        log::trace!(
-            "ReducedState (QualityUpperBoundSolver) - size: {}, align: {}",
-            std::mem::size_of::<ReducedState>(),
-            std::mem::align_of::<ReducedState>()
-        );
-
+    pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         settings.simulator_settings.max_cp = i16::MAX;
-
         let initial_state = SimulationState::new(&settings.simulator_settings);
 
         let mut durability_cost = 100;
@@ -61,11 +59,7 @@ impl QualityUpperBoundSolver {
 
         Self {
             settings,
-            solved_states: HashMap::default(),
-            pareto_front_builder: ParetoFrontBuilder::new(
-                settings.simulator_settings.max_progress,
-                settings.simulator_settings.max_quality,
-            ),
+            solved_states: SolvedStates::default(),
             interrupt_signal,
             durability_cost,
             waste_not_1_min_cp: waste_not_min_cp(56, 4, durability_cost),
@@ -75,91 +69,148 @@ impl QualityUpperBoundSolver {
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u16, SolverException> {
-        if state.combo == Combo::SynthesisBegin {
-            return Ok(self.settings.simulator_settings.max_quality);
-        }
+    pub fn quality_upper_bound(&self, state: SimulationState) -> Result<u16, SolverException> {
         if state.combo != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in quality upper bound solver",
                 state.combo
             )));
         }
+
         let reduced_state =
             ReducedState::from_simulation_state(state, &self.settings, self.durability_cost);
-        let pareto_front = match self.solved_states.get(&reduced_state) {
-            Some(id) => self.pareto_front_builder.retrieve(*id),
-            None => {
-                self.pareto_front_builder.clear();
-                self.solve_state(reduced_state)?;
-                self.pareto_front_builder.peek().unwrap()
-            }
-        };
         let required_progress = self.settings.simulator_settings.max_progress - state.progress;
-        let index = pareto_front.partition_point(|value| value.first < required_progress);
-        let quality_upper_bound = pareto_front.get(index).map_or(0, |value| {
-            std::cmp::min(
+
+        if let Some(pareto_front) = self.solved_states.pin().get(&reduced_state) {
+            let index = pareto_front.partition_point(|value| value.first < required_progress);
+            let quality = pareto_front
+                .get(index)
+                .map_or(0, |value| state.quality.saturating_add(value.second));
+            return Ok(std::cmp::min(
                 self.settings.simulator_settings.max_quality,
-                state.quality.saturating_add(value.second),
-            )
-        });
-        Ok(quality_upper_bound)
+                quality,
+            ));
+        }
+
+        self.par_solve_state(reduced_state)?;
+
+        if let Some(pareto_front) = self.solved_states.pin().get(&reduced_state) {
+            let index = pareto_front.partition_point(|value| value.first < required_progress);
+            let quality = pareto_front
+                .get(index)
+                .map_or(0, |value| state.quality.saturating_add(value.second));
+            Ok(std::cmp::min(
+                self.settings.simulator_settings.max_quality,
+                quality,
+            ))
+        } else {
+            unreachable!("State must be in memoization table after solver")
+        }
     }
 
-    fn solve_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
+    fn par_solve_state(&self, state: ReducedState) -> Result<(), SolverException> {
+        let (lhs_result, rhs_result) = rayon::join(
+            || {
+                let (lhs_result, rhs_result) = rayon::join(
+                    || self.solve_state_begin::<59>(state),
+                    || self.solve_state_begin::<67>(state),
+                );
+                lhs_result?;
+                rhs_result?;
+                Ok(())
+            },
+            || {
+                let (lhs_result, rhs_result) = rayon::join(
+                    || self.solve_state_begin::<73>(state),
+                    || self.solve_state_begin::<97>(state),
+                );
+                lhs_result?;
+                rhs_result?;
+                Ok(())
+            },
+        );
+        lhs_result?;
+        rhs_result?;
+        Ok(())
+    }
+
+    fn solve_state_begin<const S: usize>(
+        &self,
+        state: ReducedState,
+    ) -> Result<(), SolverException> {
+        let mut pareto_front_builder = ParetoFrontBuilder::new(
+            self.settings.simulator_settings.max_progress,
+            self.settings.simulator_settings.max_quality,
+        );
+        self.solve_state::<S>(&mut pareto_front_builder, state)
+    }
+
+    fn solve_state<const S: usize>(
+        &self,
+        pareto_front_builder: &mut ParetoFrontBuilder,
+        state: ReducedState,
+    ) -> Result<(), SolverException> {
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
-        self.pareto_front_builder.push_empty();
+        pareto_front_builder.push_empty();
+
+        // S must be co-prime to the action list length, otherwise we won't iterate over all actions.
+        assert_eq!(gcd::euclid_usize(S, PROGRESS_ONLY_SEARCH_ACTIONS.len()), 1);
+        assert_eq!(gcd::euclid_usize(S, FULL_SEARCH_ACTIONS.len()), 1);
         let search_actions = match state.progress_only {
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
             false => FULL_SEARCH_ACTIONS,
         };
-        for action in search_actions {
-            if !self.should_use_action(state, *action) {
+        for i in 0..search_actions.len() {
+            let action = search_actions[(i + 1) * S % search_actions.len()];
+            if !self.should_use_action(state, action) {
                 continue;
             }
-            self.build_child_front(state, *action)?;
-            if self.pareto_front_builder.is_max() {
+            self.build_child_front::<S>(pareto_front_builder, state, action)?;
+            if pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
                 // (i.e. if better actions are visited first)
                 break;
             }
         }
-        let id = self.pareto_front_builder.save().unwrap();
-        self.solved_states.insert(state, id);
+
+        let pareto_front = Box::from(pareto_front_builder.peek().unwrap());
+        self.solved_states.pin().insert(state, pareto_front);
         Ok(())
     }
 
-    fn build_child_front(
-        &mut self,
+    #[inline(always)]
+    fn build_child_front<const S: usize>(
+        &self,
+        pareto_front_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
         action: ActionCombo,
     ) -> Result<(), SolverException> {
-        if let Ok((new_state, action_progress, action_quality)) =
+        if let Ok((new_state, progress, quality)) =
             state.use_action(action, &self.settings, self.durability_cost)
         {
             if new_state.cp >= self.durability_cost {
-                match self.solved_states.get(&new_state) {
-                    Some(id) => self.pareto_front_builder.push_id(*id),
-                    None => self.solve_state(new_state)?,
+                if let Some(pareto_front) = self.solved_states.pin().get(&new_state) {
+                    pareto_front_builder.push_slice(pareto_front);
+                } else {
+                    self.solve_state::<S>(pareto_front_builder, new_state)?;
                 }
-                self.pareto_front_builder
+                pareto_front_builder
                     .peek_mut()
                     .unwrap()
                     .iter_mut()
                     .for_each(|value| {
-                        value.first = value.first.saturating_add(action_progress);
-                        value.second = value.second.saturating_add(action_quality);
+                        value.first = value.first.saturating_add(progress);
+                        value.second = value.second.saturating_add(quality);
                     });
-                self.pareto_front_builder.merge();
-            } else if new_state.cp >= -self.durability_cost && action_progress != 0 {
+                pareto_front_builder.merge();
+            } else if new_state.cp >= -self.durability_cost && progress != 0 {
                 // "durability" must not go lower than -5
                 // last action must be a progress increase
-                self.pareto_front_builder
-                    .push_slice(&[ParetoValue::new(action_progress, action_quality)]);
-                self.pareto_front_builder.merge();
+                pareto_front_builder.push_slice(&[ParetoValue::new(progress, quality)]);
+                pareto_front_builder.merge();
             }
         }
 

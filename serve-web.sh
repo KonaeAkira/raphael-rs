@@ -10,8 +10,8 @@ export BASE_URL="http://localhost:8080"
 # rustup component add rust-src
 # rustup target add wasm32-unknown-unknown
 
-mv ./.cargo/config.toml ./.cargo/config.toml.backup
-mv ./.cargo/config_wasm.toml ./.cargo/config.toml
-trap "mv ./.cargo/config.toml ./.cargo/config_wasm.toml && mv ./.cargo/config.toml.backup ./.cargo/config.toml" EXIT
+cp --no-target-directory ./.cargo/config.toml ./.cargo/config.toml.backup
+cp --no-target-directory ./.cargo/config_wasm.toml ./.cargo/config.toml
+trap "mv --no-target-directory ./.cargo/config.toml.backup ./.cargo/config.toml" EXIT
 
 trunk serve index.html --release

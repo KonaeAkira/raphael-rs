@@ -6,24 +6,28 @@ use crate::{
         ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, is_progress_only_state,
         use_action_combo,
     },
-    utils::{AtomicFlag, ParetoFrontBuilder, ParetoFrontId, ParetoValue},
+    utils,
 };
 use raphael_sim::*;
 
-use rustc_hash::FxHashMap as HashMap;
-
 use super::state::ReducedState;
+
+type ParetoValue = utils::ParetoValue<u16, u16>;
+type ParetoFrontBuilder = utils::ParetoFrontBuilder<u16, u16>;
+type SolvedStates = papaya::HashMap<
+    ReducedState,
+    Box<[ParetoValue]>,
+    std::hash::BuildHasherDefault<rustc_hash::FxHasher>,
+>;
 
 pub struct StepLowerBoundSolver {
     settings: SolverSettings,
-    solved_states: HashMap<ReducedState, ParetoFrontId>,
-    pareto_front_builder: ParetoFrontBuilder<u16, u16>,
-    interrupt_signal: AtomicFlag,
-    single_step_states: usize,
+    solved_states: SolvedStates,
+    interrupt_signal: utils::AtomicFlag,
 }
 
 impl StepLowerBoundSolver {
-    pub fn new(mut settings: SolverSettings, interrupt_signal: AtomicFlag) -> Self {
+    pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         log::trace!(
             "ReducedState (StepLowerBoundSolver) - size: {}, align: {}",
             std::mem::size_of::<ReducedState>(),
@@ -32,18 +36,13 @@ impl StepLowerBoundSolver {
         ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
             settings,
-            solved_states: HashMap::default(),
-            pareto_front_builder: ParetoFrontBuilder::new(
-                settings.simulator_settings.max_progress,
-                settings.simulator_settings.max_quality,
-            ),
+            solved_states: SolvedStates::default(),
             interrupt_signal,
-            single_step_states: 0,
         }
     }
 
-    pub fn step_lower_bound_with_hint(
-        &mut self,
+    pub fn step_lower_bound(
+        &self,
         state: SimulationState,
         hint: u8,
     ) -> Result<u8, SolverException> {
@@ -63,13 +62,10 @@ impl StepLowerBoundSolver {
     }
 
     fn quality_upper_bound(
-        &mut self,
+        &self,
         state: SimulationState,
         step_budget: NonZeroU8,
     ) -> Result<u16, SolverException> {
-        if state.combo == Combo::SynthesisBegin {
-            return Ok(self.settings.simulator_settings.max_quality);
-        }
         if state.combo != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in step lower bound solver",
@@ -79,42 +75,94 @@ impl StepLowerBoundSolver {
 
         let progress_only = is_progress_only_state(&self.settings, &state);
         let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
-
-        let pareto_front = match self.solved_states.get(&reduced_state) {
-            Some(id) => self.pareto_front_builder.retrieve(*id),
-            None => {
-                self.pareto_front_builder.clear();
-                self.solve_state(reduced_state)?;
-                self.pareto_front_builder.peek().unwrap()
-            }
-        };
         let required_progress = self.settings.simulator_settings.max_progress - state.progress;
-        let index = pareto_front.partition_point(|value| value.first < required_progress);
-        let quality_upper_bound = pareto_front.get(index).map_or(0, |value| {
-            std::cmp::min(
+
+        if let Some(pareto_front) = self.solved_states.pin().get(&reduced_state) {
+            let index = pareto_front.partition_point(|value| value.first < required_progress);
+            let quality = pareto_front
+                .get(index)
+                .map_or(0, |value| state.quality.saturating_add(value.second));
+            return Ok(std::cmp::min(
                 self.settings.simulator_settings.max_quality,
-                state.quality.saturating_add(value.second),
-            )
-        });
-        Ok(quality_upper_bound)
+                quality,
+            ));
+        }
+
+        self.par_solve_state(reduced_state)?;
+
+        if let Some(pareto_front) = self.solved_states.pin().get(&reduced_state) {
+            let index = pareto_front.partition_point(|value| value.first < required_progress);
+            let quality = pareto_front
+                .get(index)
+                .map_or(0, |value| state.quality.saturating_add(value.second));
+            Ok(std::cmp::min(
+                self.settings.simulator_settings.max_quality,
+                quality,
+            ))
+        } else {
+            unreachable!("State must be in memoization table after solver")
+        }
     }
 
-    fn solve_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
-        if reduced_state.steps_budget.get() == 1 {
-            self.single_step_states += 1;
-        }
+    fn par_solve_state(&self, state: ReducedState) -> Result<(), SolverException> {
+        let (lhs_result, rhs_result) = rayon::join(
+            || {
+                let (lhs_result, rhs_result) = rayon::join(
+                    || self.solve_state_begin::<59>(state),
+                    || self.solve_state_begin::<67>(state),
+                );
+                lhs_result?;
+                rhs_result?;
+                Ok(())
+            },
+            || {
+                let (lhs_result, rhs_result) = rayon::join(
+                    || self.solve_state_begin::<73>(state),
+                    || self.solve_state_begin::<97>(state),
+                );
+                lhs_result?;
+                rhs_result?;
+                Ok(())
+            },
+        );
+        lhs_result?;
+        rhs_result?;
+        Ok(())
+    }
+
+    fn solve_state_begin<const S: usize>(
+        &self,
+        state: ReducedState,
+    ) -> Result<(), SolverException> {
+        let mut pareto_front_builder = ParetoFrontBuilder::new(
+            self.settings.simulator_settings.max_progress,
+            self.settings.simulator_settings.max_quality,
+        );
+        self.solve_state::<S>(&mut pareto_front_builder, state)
+    }
+
+    fn solve_state<const S: usize>(
+        &self,
+        pareto_front_builder: &mut ParetoFrontBuilder,
+        reduced_state: ReducedState,
+    ) -> Result<(), SolverException> {
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
-        self.pareto_front_builder.push_empty();
+        pareto_front_builder.push_empty();
+
+        // S must be co-prime to the action list length, otherwise we won't iterate over all actions.
+        assert_eq!(gcd::euclid_usize(S, PROGRESS_ONLY_SEARCH_ACTIONS.len()), 1);
+        assert_eq!(gcd::euclid_usize(S, FULL_SEARCH_ACTIONS.len()), 1);
         let search_actions = match reduced_state.progress_only {
-            false => FULL_SEARCH_ACTIONS,
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
+            false => FULL_SEARCH_ACTIONS,
         };
-        for action in search_actions {
+        for i in 0..search_actions.len() {
+            let action = search_actions[(i + 1) * S % search_actions.len()];
             if action.steps() <= reduced_state.steps_budget.get() {
-                self.build_child_front(reduced_state, *action)?;
-                if self.pareto_front_builder.is_max() {
+                self.build_child_front::<S>(pareto_front_builder, reduced_state, action)?;
+                if pareto_front_builder.is_max() {
                     // stop early if both Progress and Quality are maxed out
                     // this optimization would work even better with better action ordering
                     // (i.e. if better actions are visited first)
@@ -122,13 +170,15 @@ impl StepLowerBoundSolver {
                 }
             }
         }
-        let id = self.pareto_front_builder.save().unwrap();
-        self.solved_states.insert(reduced_state, id);
+
+        let pareto_front = Box::from(pareto_front_builder.peek().unwrap());
+        self.solved_states.pin().insert(reduced_state, pareto_front);
         Ok(())
     }
 
-    fn build_child_front(
-        &mut self,
+    fn build_child_front<const S: usize>(
+        &self,
+        pareto_front_builder: &mut ParetoFrontBuilder,
         reduced_state: ReducedState,
         action: ActionCombo,
     ) -> Result<(), SolverException> {
@@ -145,11 +195,12 @@ impl StepLowerBoundSolver {
                     // New state is not final
                     let new_reduced_state =
                         ReducedState::from_state(new_full_state, new_step_budget, progress_only);
-                    match self.solved_states.get(&new_reduced_state) {
-                        Some(id) => self.pareto_front_builder.push_id(*id),
-                        None => self.solve_state(new_reduced_state)?,
+                    if let Some(pareto_front) = self.solved_states.pin().get(&new_reduced_state) {
+                        pareto_front_builder.push_slice(pareto_front);
+                    } else {
+                        self.solve_state::<S>(pareto_front_builder, new_reduced_state)?;
                     }
-                    self.pareto_front_builder
+                    pareto_front_builder
                         .peek_mut()
                         .unwrap()
                         .iter_mut()
@@ -157,13 +208,13 @@ impl StepLowerBoundSolver {
                             value.first = value.first.saturating_add(action_progress);
                             value.second = value.second.saturating_add(action_quality);
                         });
-                    self.pareto_front_builder.merge();
+                    pareto_front_builder.merge();
                 }
                 _ if action_progress != 0 => {
                     // New state is final and last action increased Progress
-                    self.pareto_front_builder
+                    pareto_front_builder
                         .push_slice(&[ParetoValue::new(action_progress, action_quality)]);
-                    self.pareto_front_builder.merge();
+                    pareto_front_builder.merge();
                 }
                 _ => {
                     // New state is final but last action did not increase Progress
