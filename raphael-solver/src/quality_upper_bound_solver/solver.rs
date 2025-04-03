@@ -154,6 +154,10 @@ impl QualityUpperBoundSolver {
             return Err(SolverException::Interrupted);
         }
         pareto_front_builder.push_empty();
+
+        // S must be co-prime to the action list length, otherwise we won't iterate over all actions.
+        assert_eq!(gcd::euclid_usize(S, PROGRESS_ONLY_SEARCH_ACTIONS.len()), 1);
+        assert_eq!(gcd::euclid_usize(S, FULL_SEARCH_ACTIONS.len()), 1);
         let search_actions = match state.progress_only {
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
             false => FULL_SEARCH_ACTIONS,
@@ -171,6 +175,7 @@ impl QualityUpperBoundSolver {
                 break;
             }
         }
+
         let pareto_front = Box::from(pareto_front_builder.peek().unwrap());
         self.solved_states.pin().insert(state, pareto_front);
         Ok(())
