@@ -60,9 +60,11 @@ serde = { workspace = true }
 log = { workspace = true }
 web-time = { workspace = true }
 ron = "0.8"
+semver = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11.5"
+ehttp = { version = "0.5.0", features = ["json"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-rayon = { version = "1.2", features = ["no-bundler"] }
