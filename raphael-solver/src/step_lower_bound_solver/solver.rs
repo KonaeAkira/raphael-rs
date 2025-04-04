@@ -28,11 +28,6 @@ pub struct StepLowerBoundSolver {
 
 impl StepLowerBoundSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
-        log::trace!(
-            "ReducedState (StepLowerBoundSolver) - size: {}, align: {}",
-            std::mem::size_of::<ReducedState>(),
-            std::mem::align_of::<ReducedState>()
-        );
         ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
             settings,

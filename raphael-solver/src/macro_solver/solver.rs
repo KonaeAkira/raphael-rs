@@ -65,9 +65,8 @@ impl<'a> MacroSolver<'a> {
     pub fn solve(&mut self) -> Result<Vec<Action>, SolverException> {
         let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
-        let mut finish_solver = FinishSolver::new(self.settings);
         let timer = ScopedTimer::new("Finish Solver");
-        if !finish_solver.can_finish(&initial_state) {
+        if !self.finish_solver.can_finish(&initial_state) {
             return Err(SolverException::NoSolution);
         }
         drop(timer);

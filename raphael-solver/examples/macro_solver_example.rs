@@ -7,12 +7,6 @@ fn main() {
         .format_target(false)
         .init();
 
-    log::trace!(
-        "SimulationState - size: {}, align: {}",
-        std::mem::size_of::<SimulationState>(),
-        std::mem::align_of::<SimulationState>()
-    );
-
     // Ra'Kaznar Lapidary Hammer
     // 4462 Craftsmanship, 4391 Control
     let simulator_settings = Settings {
