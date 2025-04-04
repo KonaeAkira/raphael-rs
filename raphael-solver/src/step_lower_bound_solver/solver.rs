@@ -111,6 +111,7 @@ impl StepLowerBoundSolver {
         };
         PRIMES
             .par_iter()
+            .take_any(rayon::current_num_threads())
             .for_each_init(init, |pareto_front_builder, &stride| {
                 pareto_front_builder.clear();
                 _ = self.solve_state(pareto_front_builder, stride, state);
