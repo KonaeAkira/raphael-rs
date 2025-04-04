@@ -1,3 +1,5 @@
+use crate::{Action, ActionImpl};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Settings {
@@ -18,8 +20,6 @@ impl Settings {
             && self.allowed_actions.has_mask(ACTION::ACTION_MASK)
     }
 }
-
-use crate::{Action, ActionImpl};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

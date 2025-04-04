@@ -82,9 +82,7 @@ impl ReducedState {
             // this gives a looser bound but decreases the number of states
             effects.set_waste_not(8);
         }
-        if effects.trained_perfection() == SingleUse::Available {
-            effects.set_trained_perfection(SingleUse::Unavailable);
-        }
+        effects.set_trained_perfection_available(false);
         if effects.veneration() > step_budget.get() {
             effects.set_veneration(step_budget.get());
         }

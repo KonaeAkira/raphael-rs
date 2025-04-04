@@ -111,8 +111,7 @@ fn should_use_action(
         ActionCombo::Single(Action::Veneration) => state.effects.veneration() == 0,
         ActionCombo::Single(Action::Manipulation) => state.effects.manipulation() == 0,
         ActionCombo::Single(Action::WasteNot | Action::WasteNot2) => {
-            state.effects.waste_not() == 0
-                && state.effects.trained_perfection() != SingleUse::Active
+            state.effects.waste_not() == 0 && !state.effects.trained_perfection_active()
         }
         ActionCombo::Single(Action::GreatStrides) => state.effects.great_strides() == 0,
         ActionCombo::Single(Action::TrainedPerfection) => state.effects.waste_not() == 0,
