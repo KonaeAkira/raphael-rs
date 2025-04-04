@@ -63,6 +63,7 @@ impl<'a> MacroSolver<'a> {
     }
 
     pub fn solve(&mut self) -> Result<Vec<Action>, SolverException> {
+        let _total_time = ScopedTimer::new("Total Time");
         let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
         let timer = ScopedTimer::new("Finish Solver");

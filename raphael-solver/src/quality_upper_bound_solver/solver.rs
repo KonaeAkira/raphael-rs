@@ -4,6 +4,7 @@ use crate::{
     utils,
 };
 use raphael_sim::*;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use super::state::ReducedState;
 
@@ -14,6 +15,8 @@ type SolvedStates = papaya::HashMap<
     Box<[ParetoValue]>,
     std::hash::BuildHasherDefault<rustc_hash::FxHasher>,
 >;
+
+const PRIMES: [usize; 8] = [59, 61, 67, 71, 73, 79, 83, 89];
 
 pub struct QualityUpperBoundSolver {
     settings: SolverSettings,
@@ -109,65 +112,41 @@ impl QualityUpperBoundSolver {
     }
 
     fn par_solve_state(&self, state: ReducedState) -> Result<(), SolverException> {
-        let (lhs_result, rhs_result) = rayon::join(
-            || {
-                let (lhs_result, rhs_result) = rayon::join(
-                    || self.solve_state_begin::<59>(state),
-                    || self.solve_state_begin::<67>(state),
-                );
-                lhs_result?;
-                rhs_result?;
-                Ok(())
-            },
-            || {
-                let (lhs_result, rhs_result) = rayon::join(
-                    || self.solve_state_begin::<73>(state),
-                    || self.solve_state_begin::<97>(state),
-                );
-                lhs_result?;
-                rhs_result?;
-                Ok(())
-            },
-        );
-        lhs_result?;
-        rhs_result?;
+        let init = || {
+            ParetoFrontBuilder::new(
+                self.settings.simulator_settings.max_progress,
+                self.settings.simulator_settings.max_quality,
+            )
+        };
+        PRIMES
+            .par_iter()
+            .for_each_init(init, |pareto_front_builder, &stride| {
+                pareto_front_builder.clear();
+                _ = self.solve_state(pareto_front_builder, stride, state);
+            });
         Ok(())
     }
 
-    fn solve_state_begin<const S: usize>(
-        &self,
-        state: ReducedState,
-    ) -> Result<(), SolverException> {
-        let mut pareto_front_builder = ParetoFrontBuilder::new(
-            self.settings.simulator_settings.max_progress,
-            self.settings.simulator_settings.max_quality,
-        );
-        self.solve_state::<S>(&mut pareto_front_builder, state)
-    }
-
-    fn solve_state<const S: usize>(
+    fn solve_state(
         &self,
         pareto_front_builder: &mut ParetoFrontBuilder,
+        stride: usize,
         state: ReducedState,
     ) -> Result<(), SolverException> {
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
         pareto_front_builder.push_empty();
-
-        // S must be co-prime to the action list length, otherwise we won't iterate over all actions.
-        assert_eq!(gcd::euclid_usize(S, PROGRESS_ONLY_SEARCH_ACTIONS.len()), 1);
-        assert_eq!(gcd::euclid_usize(S, FULL_SEARCH_ACTIONS.len()), 1);
         let search_actions = match state.progress_only {
             true => PROGRESS_ONLY_SEARCH_ACTIONS,
             false => FULL_SEARCH_ACTIONS,
         };
         for i in 0..search_actions.len() {
-            let action = search_actions[(i + 1) * S % search_actions.len()];
+            let action = search_actions[(i + 1) * stride % search_actions.len()];
             if !self.should_use_action(state, action) {
                 continue;
             }
-            self.build_child_front::<S>(pareto_front_builder, state, action)?;
+            self.build_child_front(pareto_front_builder, stride, state, action)?;
             if pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -175,16 +154,16 @@ impl QualityUpperBoundSolver {
                 break;
             }
         }
-
         let pareto_front = Box::from(pareto_front_builder.peek().unwrap());
         self.solved_states.pin().insert(state, pareto_front);
         Ok(())
     }
 
     #[inline(always)]
-    fn build_child_front<const S: usize>(
+    fn build_child_front(
         &self,
         pareto_front_builder: &mut ParetoFrontBuilder,
+        stride: usize,
         state: ReducedState,
         action: ActionCombo,
     ) -> Result<(), SolverException> {
@@ -195,7 +174,7 @@ impl QualityUpperBoundSolver {
                 if let Some(pareto_front) = self.solved_states.pin().get(&new_state) {
                     pareto_front_builder.push_slice(pareto_front);
                 } else {
-                    self.solve_state::<S>(pareto_front_builder, new_state)?;
+                    self.solve_state(pareto_front_builder, stride, new_state)?;
                 }
                 pareto_front_builder
                     .peek_mut()
