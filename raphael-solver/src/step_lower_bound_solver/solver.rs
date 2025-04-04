@@ -115,7 +115,11 @@ impl StepLowerBoundSolver {
                 pareto_front_builder.clear();
                 _ = self.solve_state(pareto_front_builder, stride, state);
             });
-        Ok(())
+        if self.interrupt_signal.is_set() {
+            Err(SolverException::Interrupted)
+        } else {
+            Ok(())
+        }
     }
 
     fn solve_state(
