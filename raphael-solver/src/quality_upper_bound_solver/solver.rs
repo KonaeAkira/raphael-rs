@@ -31,35 +31,7 @@ pub struct QualityUpperBoundSolver {
 impl QualityUpperBoundSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         settings.simulator_settings.max_cp = i16::MAX;
-        let initial_state = SimulationState::new(&settings.simulator_settings);
-
-        let mut durability_cost = 100;
-        if settings
-            .simulator_settings
-            .is_action_allowed::<MasterMend>()
-        {
-            let master_mend_cost =
-                MasterMend::base_cp_cost(&initial_state, &settings.simulator_settings);
-            durability_cost = std::cmp::min(durability_cost, master_mend_cost / 6);
-        }
-        if settings
-            .simulator_settings
-            .is_action_allowed::<Manipulation>()
-        {
-            let manipulation_cost =
-                Manipulation::base_cp_cost(&initial_state, &settings.simulator_settings);
-            durability_cost = std::cmp::min(durability_cost, manipulation_cost / 8);
-        }
-        if settings
-            .simulator_settings
-            .is_action_allowed::<ImmaculateMend>()
-        {
-            let immaculate_mend_cost =
-                ImmaculateMend::base_cp_cost(&initial_state, &settings.simulator_settings);
-            let max_restored = settings.simulator_settings.max_durability as i16 / 5 - 1;
-            durability_cost = std::cmp::min(durability_cost, immaculate_mend_cost / max_restored);
-        }
-
+        let durability_cost = durability_cost(&settings.simulator_settings);
         Self {
             settings,
             solved_states: SolvedStates::default(),
@@ -221,6 +193,24 @@ impl Drop for QualityUpperBoundSolver {
             .sum::<usize>();
         log::debug!("QualityUpperBoundSolver - states: {num_states}, values: {num_values}");
     }
+}
+
+/// Calculates the CP cost to "magically" restore 5 durability
+fn durability_cost(settings: &Settings) -> i16 {
+    let mut cost = 100;
+    if settings.is_action_allowed::<MasterMend>() {
+        let cost_per_five = MasterMend::CP_COST / 6;
+        cost = std::cmp::min(cost, cost_per_five);
+    }
+    if settings.is_action_allowed::<Manipulation>() {
+        let cost_per_five = Manipulation::CP_COST / 8;
+        cost = std::cmp::min(cost, cost_per_five);
+    }
+    if settings.is_action_allowed::<ImmaculateMend>() {
+        let cost_per_five = ImmaculateMend::CP_COST / (settings.max_durability as i16 / 5 - 1);
+        cost = std::cmp::min(cost, cost_per_five);
+    }
+    cost
 }
 
 /// Calculates the minimum CP a state must have so that using WasteNot is not worse than just restoring durability via CP

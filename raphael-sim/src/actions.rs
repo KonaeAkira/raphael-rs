@@ -121,11 +121,14 @@ impl ActionImpl for BasicTouch {
 }
 
 pub struct MasterMend {}
+impl MasterMend {
+    pub const CP_COST: i16 = 88;
+}
 impl ActionImpl for MasterMend {
     const LEVEL_REQUIREMENT: u8 = 7;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::MasterMend);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        88
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability =
@@ -366,11 +369,14 @@ impl ActionImpl for CarefulSynthesis {
 }
 
 pub struct Manipulation {}
+impl Manipulation {
+    pub const CP_COST: i16 = 96;
+}
 impl ActionImpl for Manipulation {
     const LEVEL_REQUIREMENT: u8 = 65;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Manipulation);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        96
+        Self::CP_COST
     }
     fn transform_pre(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_manipulation(0);
@@ -703,11 +709,14 @@ impl ActionImpl for QuickInnovation {
 }
 
 pub struct ImmaculateMend {}
+impl ImmaculateMend {
+    pub const CP_COST: i16 = 112;
+}
 impl ActionImpl for ImmaculateMend {
     const LEVEL_REQUIREMENT: u8 = 98;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::ImmaculateMend);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        112
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability = settings.max_durability;
