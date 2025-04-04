@@ -225,3 +225,16 @@ impl StepLowerBoundSolver {
         Ok(())
     }
 }
+
+impl Drop for StepLowerBoundSolver {
+    fn drop(&mut self) {
+        let num_states = self.solved_states.len();
+        let num_values = self
+            .solved_states
+            .pin()
+            .iter()
+            .map(|(_key, value)| value.len())
+            .sum::<usize>();
+        log::debug!("StepLowerBoundSolver - states: {num_states}, values: {num_values}");
+    }
+}
