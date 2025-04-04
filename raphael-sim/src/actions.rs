@@ -1,4 +1,4 @@
-use crate::{ActionMask, Condition, Settings, SimulationState, SingleUse};
+use crate::{ActionMask, Condition, Settings, SimulationState};
 
 pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
@@ -56,7 +56,7 @@ pub trait ActionImpl {
     }
 
     fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> i8 {
-        if matches!(state.effects.trained_perfection(), SingleUse::Active) {
+        if state.effects.trained_perfection_active() {
             return 0;
         }
         match state.effects.waste_not() {
@@ -154,7 +154,7 @@ impl ActionImpl for TricksOfTheTrade {
         _settings: &Settings,
         condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.effects.heart_and_soul() != SingleUse::Active
+        if !state.effects.heart_and_soul_active()
             && condition != Condition::Good
             && condition != Condition::Excellent
         {
@@ -167,7 +167,7 @@ impl ActionImpl for TricksOfTheTrade {
     fn transform_post(state: &mut SimulationState, settings: &Settings, condition: Condition) {
         state.cp = std::cmp::min(settings.max_cp, state.cp + 20);
         if condition != Condition::Good && condition != Condition::Excellent {
-            state.effects.set_heart_and_soul(SingleUse::Unavailable);
+            state.effects.set_heart_and_soul_active(false);
         }
     }
 }
@@ -293,7 +293,7 @@ impl ActionImpl for PreciseTouch {
         _settings: &Settings,
         condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.effects.heart_and_soul() != SingleUse::Active
+        if !state.effects.heart_and_soul_active()
             && condition != Condition::Good
             && condition != Condition::Excellent
         {
@@ -314,7 +314,7 @@ impl ActionImpl for PreciseTouch {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
         if condition != Condition::Good && condition != Condition::Excellent {
-            state.effects.set_heart_and_soul(SingleUse::Unavailable);
+            state.effects.set_heart_and_soul_active(false);
         }
     }
 }
@@ -523,7 +523,7 @@ impl ActionImpl for IntensiveSynthesis {
         _settings: &Settings,
         condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.effects.heart_and_soul() != SingleUse::Active
+        if !state.effects.heart_and_soul_active()
             && condition != Condition::Good
             && condition != Condition::Excellent
         {
@@ -544,7 +544,7 @@ impl ActionImpl for IntensiveSynthesis {
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
         if condition != Condition::Good && condition != Condition::Excellent {
-            state.effects.set_heart_and_soul(SingleUse::Unavailable);
+            state.effects.set_heart_and_soul_active(false);
         }
     }
 }
@@ -591,13 +591,14 @@ impl ActionImpl for HeartAndSoul {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.effects.heart_and_soul() != SingleUse::Available {
+        if !state.effects.heart_and_soul_available() {
             return Err("Heart and Sould can only be used once per synthesis.");
         }
         Ok(())
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_heart_and_soul(SingleUse::Active);
+        state.effects.set_heart_and_soul_available(false);
+        state.effects.set_heart_and_soul_active(true);
     }
 }
 
@@ -722,13 +723,14 @@ impl ActionImpl for TrainedPerfection {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.effects.trained_perfection() != SingleUse::Available {
+        if !state.effects.trained_perfection_available() {
             return Err("Trained Perfection can only be used once per synthesis.");
         }
         Ok(())
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_trained_perfection(SingleUse::Active);
+        state.effects.set_trained_perfection_available(false);
+        state.effects.set_trained_perfection_active(true);
     }
 }
 

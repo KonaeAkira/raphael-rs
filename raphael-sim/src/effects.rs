@@ -1,39 +1,8 @@
-use crate::{Action, Settings};
+use crate::Settings;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum SingleUse {
-    Unavailable,
-    Available,
-    Active,
-}
-
-impl SingleUse {
-    pub const fn into_bits(self) -> u8 {
-        match self {
-            Self::Unavailable => 0,
-            Self::Available => 1,
-            Self::Active => 2,
-        }
-    }
-
-    pub const fn from_bits(value: u8) -> Self {
-        match value {
-            0 => Self::Unavailable,
-            1 => Self::Available,
-            _ => Self::Active,
-        }
-    }
-}
-
-#[bitfield_struct::bitfield(u32)]
+#[bitfield_struct::bitfield(u32, default = false)]
 #[derive(PartialEq, Eq, Hash)]
 pub struct Effects {
-    #[bits(2, default=SingleUse::Available)]
-    pub trained_perfection: SingleUse,
-    #[bits(2, default=SingleUse::Available)]
-    pub heart_and_soul: SingleUse,
-    #[bits(1)]
-    pub quick_innovation_available: bool,
     #[bits(4)]
     pub inner_quiet: u8,
     #[bits(4)]
@@ -50,20 +19,30 @@ pub struct Effects {
     pub manipulation: u8,
     #[bits(2)]
     pub guard: u8,
+
+    pub trained_perfection_available: bool,
+    pub heart_and_soul_available: bool,
+    pub quick_innovation_available: bool,
+    pub trained_perfection_active: bool,
+    pub heart_and_soul_active: bool,
+
     #[bits(1)]
     _padding: u8,
 }
 
 impl Effects {
-    pub fn from_settings(settings: &Settings) -> Self {
-        Self::default()
+    pub fn initial(settings: &Settings) -> Self {
+        Self::new()
             .with_guard(if settings.adversarial { 2 } else { 0 })
-            .with_heart_and_soul(if settings.allowed_actions.has(Action::HeartAndSoul) {
-                SingleUse::Available
-            } else {
-                SingleUse::Unavailable
-            })
-            .with_quick_innovation_available(settings.allowed_actions.has(Action::QuickInnovation))
+            .with_trained_perfection_available(
+                settings.is_action_allowed::<crate::actions::TrainedPerfection>(),
+            )
+            .with_heart_and_soul_available(
+                settings.is_action_allowed::<crate::actions::HeartAndSoul>(),
+            )
+            .with_quick_innovation_available(
+                settings.is_action_allowed::<crate::actions::QuickInnovation>(),
+            )
     }
 
     pub fn tick_down(&mut self) {

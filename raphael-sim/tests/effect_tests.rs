@@ -29,7 +29,7 @@ fn primary_stats(state: &SimulationState, settings: &Settings) -> (u16, u16, i8,
 #[test]
 fn test_trained_perfection() {
     let initial_state = SimulationState {
-        effects: Effects::new().with_trained_perfection(SingleUse::Active),
+        effects: Effects::new().with_trained_perfection_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     // No durability cost when trained perfection is active
@@ -37,10 +37,10 @@ fn test_trained_perfection() {
         .use_action(Action::BasicSynthesis, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (120, 0, 0, 0));
-    assert_eq!(state.effects.trained_perfection(), SingleUse::Unavailable);
+    assert_eq!(state.effects.trained_perfection_active(), false);
     // Trained Perfection effect doesn't wear off if durability cost is zero
     let state = initial_state
         .use_action(Action::Observe, Condition::Normal, &SETTINGS)
         .unwrap();
-    assert_eq!(state.effects.trained_perfection(), SingleUse::Active);
+    assert_eq!(state.effects.trained_perfection_active(), true);
 }

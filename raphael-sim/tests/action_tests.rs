@@ -111,24 +111,24 @@ fn test_tricks_of_the_trade() {
     // Can use when Heart and Soul is active
     let initial_state = SimulationState {
         cp: SETTINGS.max_cp - 5, // test that restored CP is capped at max_cp
-        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        effects: Effects::new().with_heart_and_soul_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
         .use_action(Action::TricksOfTheTrade, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 0));
-    assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+    assert_eq!(state.effects.heart_and_soul_active(), false);
     // Heart and Soul effect isn't consumed when condition is Good or Excellent
     let initial_state = SimulationState {
-        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        effects: Effects::new().with_heart_and_soul_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
         .use_action(Action::TricksOfTheTrade, Condition::Good, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 0));
-    assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+    assert_eq!(state.effects.heart_and_soul_active(), true);
 }
 
 #[test]
@@ -247,7 +247,7 @@ fn test_precise_touch() {
     assert_eq!(state.effects.inner_quiet(), 2);
     // Can use when Heart and Soul is active
     let initial_state = SimulationState {
-        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        effects: Effects::new().with_heart_and_soul_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
@@ -255,10 +255,10 @@ fn test_precise_touch() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 150, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 2);
-    assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+    assert_eq!(state.effects.heart_and_soul_active(), false);
     // Heart and Soul effect isn't consumed when condition is Good or Excellent
     let initial_state = SimulationState {
-        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        effects: Effects::new().with_heart_and_soul_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
@@ -266,7 +266,7 @@ fn test_precise_touch() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 225, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 2);
-    assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+    assert_eq!(state.effects.heart_and_soul_active(), true);
 }
 
 #[test]
@@ -443,7 +443,7 @@ fn test_groundwork() {
     // Potency isn't halved when Trained Perfection is active
     let initial_state = SimulationState {
         durability: 10,
-        effects: Effects::new().with_trained_perfection(SingleUse::Active),
+        effects: Effects::new().with_trained_perfection_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
@@ -494,24 +494,24 @@ fn test_intensive_synthesis() {
     assert_eq!(primary_stats(&state, &SETTINGS), (400, 0, 10, 6));
     // Can use when Heart and Soul is active
     let initial_state = SimulationState {
-        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        effects: Effects::new().with_heart_and_soul_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
         .use_action(Action::IntensiveSynthesis, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (400, 0, 10, 6));
-    assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable);
+    assert_eq!(state.effects.heart_and_soul_active(), false);
     // Heart and Soul effect isn't consumed when condition is Good or Excellent
     let initial_state = SimulationState {
-        effects: Effects::new().with_heart_and_soul(SingleUse::Active),
+        effects: Effects::new().with_heart_and_soul_active(true),
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
         .use_action(Action::IntensiveSynthesis, Condition::Good, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (400, 0, 10, 6));
-    assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+    assert_eq!(state.effects.heart_and_soul_active(), true);
 }
 
 #[test]
@@ -643,7 +643,8 @@ fn test_heart_and_soul() {
             assert_eq!(state.combo, Combo::None); // combo is removed
             assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
-            assert_eq!(state.effects.heart_and_soul(), SingleUse::Active);
+            assert_eq!(state.effects.heart_and_soul_available(), false);
+            assert_eq!(state.effects.heart_and_soul_active(), true);
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -657,7 +658,7 @@ fn test_heart_and_soul() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.effects.heart_and_soul(), SingleUse::Active); // effect stays active until used
+            assert_eq!(state.effects.heart_and_soul_active(), true); // effect stays active until used
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -667,7 +668,7 @@ fn test_heart_and_soul() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable); // effect is used up
+            assert_eq!(state.effects.heart_and_soul_active(), false); // effect is used up
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -675,7 +676,7 @@ fn test_heart_and_soul() {
         SimulationState::from_macro(&settings, &[Action::HeartAndSoul, Action::PreciseTouch]);
     match state {
         Ok(state) => {
-            assert_eq!(state.effects.heart_and_soul(), SingleUse::Unavailable); // effect is used up
+            assert_eq!(state.effects.heart_and_soul_active(), false); // effect is used up
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }

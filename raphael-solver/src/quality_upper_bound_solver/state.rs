@@ -21,10 +21,7 @@ impl ReducedState {
     ) -> Self {
         state.cp += state.effects.manipulation() as i16
             * (Manipulation::base_cp_cost(&state, &settings.simulator_settings) / 8);
-        if state.effects.trained_perfection() != SingleUse::Unavailable
-            && settings
-                .simulator_settings
-                .is_action_allowed::<TrainedPerfection>()
+        if state.effects.trained_perfection_active() || state.effects.trained_perfection_available()
         {
             state.cp += durability_cost * 4;
         }
@@ -53,7 +50,8 @@ impl ReducedState {
             state
                 .effects
                 .with_great_strides(if great_strides_active { 3 } else { 0 })
-                .with_trained_perfection(SingleUse::Unavailable)
+                .with_trained_perfection_available(false)
+                .with_trained_perfection_active(false)
                 .with_manipulation(0)
         };
         Self {

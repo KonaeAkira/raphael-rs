@@ -52,11 +52,6 @@ pub struct FinishSolver {
 
 impl FinishSolver {
     pub fn new(settings: SolverSettings) -> Self {
-        log::trace!(
-            "ReducedState (FinishSolver) - size: {}, align: {}",
-            std::mem::size_of::<ReducedState>(),
-            std::mem::align_of::<ReducedState>()
-        );
         Self {
             settings,
             max_progress: HashMap::default(),

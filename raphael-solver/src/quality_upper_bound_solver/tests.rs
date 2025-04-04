@@ -443,7 +443,7 @@ fn test_11() {
 }
 
 fn random_effects(adversarial: bool) -> Effects {
-    Effects::default()
+    Effects::new()
         .with_inner_quiet(rand::thread_rng().gen_range(0..=10))
         .with_great_strides(rand::thread_rng().gen_range(0..=3))
         .with_innovation(rand::thread_rng().gen_range(0..=4))

@@ -21,7 +21,7 @@ impl SimulationState {
             progress: 0,
             quality: 0,
             unreliable_quality: 0,
-            effects: Effects::from_settings(settings),
+            effects: Effects::initial(settings),
             combo: Combo::SynthesisBegin,
         }
     }
@@ -91,9 +91,7 @@ impl SimulationState {
 
         if A::base_durability_cost(&state, settings) != 0 {
             state.durability -= A::durability_cost(self, settings, condition);
-            if state.effects.trained_perfection() == SingleUse::Active {
-                state.effects.set_trained_perfection(SingleUse::Unavailable);
-            }
+            state.effects.set_trained_perfection_active(false);
         }
 
         state.cp -= A::cp_cost(self, settings, condition);
