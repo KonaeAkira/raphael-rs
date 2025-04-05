@@ -575,7 +575,7 @@ fn test_refined_touch() {
     let state = SimulationState::from_macro(&SETTINGS, &[Action::RefinedTouch]);
     assert_eq!(
         state,
-        Err("Refined Touch can only be used after Observe or Standard Touch.")
+        Err("Refined Touch can only be used after Observe or Basic Touch.")
     );
 }
 
