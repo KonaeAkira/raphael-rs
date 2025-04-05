@@ -18,9 +18,8 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u16 {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    QualityUpperBoundSolver::new(solver_settings, Default::default())
-        .quality_upper_bound(state)
-        .unwrap()
+    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    solver.quality_upper_bound(state).unwrap()
 }
 
 #[test]
@@ -480,7 +479,8 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    solver.precompute(simulator_settings.max_cp);
     for _ in 0..10000 {
         let state = random_state(&simulator_settings);
         let state_upper_bound = solver.quality_upper_bound(state).unwrap();

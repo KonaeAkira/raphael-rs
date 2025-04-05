@@ -103,6 +103,9 @@ impl ActionImpl for BasicSynthesis {
 }
 
 pub struct BasicTouch {}
+impl BasicTouch {
+    pub const CP_COST: i16 = 18;
+}
 impl ActionImpl for BasicTouch {
     const LEVEL_REQUIREMENT: u8 = 5;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicTouch);
@@ -113,7 +116,7 @@ impl ActionImpl for BasicTouch {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        18
+        Self::CP_COST
     }
     fn combo(_state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
         Combo::BasicTouch
@@ -121,11 +124,14 @@ impl ActionImpl for BasicTouch {
 }
 
 pub struct MasterMend {}
+impl MasterMend {
+    pub const CP_COST: i16 = 88;
+}
 impl ActionImpl for MasterMend {
     const LEVEL_REQUIREMENT: u8 = 7;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::MasterMend);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        88
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability =
@@ -134,11 +140,14 @@ impl ActionImpl for MasterMend {
 }
 
 pub struct Observe {}
+impl Observe {
+    pub const CP_COST: i16 = 7;
+}
 impl ActionImpl for Observe {
     const LEVEL_REQUIREMENT: u8 = 13;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Observe);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        7
+        Self::CP_COST
     }
     fn combo(_state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
         Combo::StandardTouch
@@ -173,11 +182,14 @@ impl ActionImpl for TricksOfTheTrade {
 }
 
 pub struct WasteNot {}
+impl WasteNot {
+    pub const CP_COST: i16 = 56;
+}
 impl ActionImpl for WasteNot {
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        56
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_waste_not(4);
@@ -185,11 +197,14 @@ impl ActionImpl for WasteNot {
 }
 
 pub struct Veneration {}
+impl Veneration {
+    pub const CP_COST: i16 = 18;
+}
 impl ActionImpl for Veneration {
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Veneration);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        18
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_veneration(4);
@@ -221,11 +236,14 @@ impl ActionImpl for StandardTouch {
 }
 
 pub struct GreatStrides {}
+impl GreatStrides {
+    pub const CP_COST: i16 = 32;
+}
 impl ActionImpl for GreatStrides {
     const LEVEL_REQUIREMENT: u8 = 21;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::GreatStrides);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        32
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_great_strides(3);
@@ -233,11 +251,14 @@ impl ActionImpl for GreatStrides {
 }
 
 pub struct Innovation {}
+impl Innovation {
+    pub const CP_COST: i16 = 18;
+}
 impl ActionImpl for Innovation {
     const LEVEL_REQUIREMENT: u8 = 26;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Innovation);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        18
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_innovation(4);
@@ -245,11 +266,14 @@ impl ActionImpl for Innovation {
 }
 
 pub struct WasteNot2 {}
+impl WasteNot2 {
+    pub const CP_COST: i16 = 98;
+}
 impl ActionImpl for WasteNot2 {
     const LEVEL_REQUIREMENT: u8 = 47;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot2);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        98
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_waste_not(8);
@@ -366,11 +390,14 @@ impl ActionImpl for CarefulSynthesis {
 }
 
 pub struct Manipulation {}
+impl Manipulation {
+    pub const CP_COST: i16 = 96;
+}
 impl ActionImpl for Manipulation {
     const LEVEL_REQUIREMENT: u8 = 65;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Manipulation);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        96
+        Self::CP_COST
     }
     fn transform_pre(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_manipulation(0);
@@ -453,6 +480,9 @@ impl ActionImpl for Reflect {
 }
 
 pub struct PreparatoryTouch {}
+impl PreparatoryTouch {
+    pub const CP_COST: i16 = 40;
+}
 impl ActionImpl for PreparatoryTouch {
     const LEVEL_REQUIREMENT: u8 = 71;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PreparatoryTouch);
@@ -463,7 +493,7 @@ impl ActionImpl for PreparatoryTouch {
         20
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        40
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
@@ -650,6 +680,9 @@ impl ActionImpl for TrainedFinesse {
 }
 
 pub struct RefinedTouch {}
+impl RefinedTouch {
+    pub const CP_COST: i16 = 24;
+}
 impl ActionImpl for RefinedTouch {
     const LEVEL_REQUIREMENT: u8 = 92;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::RefinedTouch);
@@ -659,7 +692,7 @@ impl ActionImpl for RefinedTouch {
         _condition: Condition,
     ) -> Result<(), &'static str> {
         if state.combo != Combo::BasicTouch {
-            return Err("Refined Touch can only be used after Observe or Standard Touch.");
+            return Err("Refined Touch can only be used after Observe or Basic Touch.");
         }
         Ok(())
     }
@@ -670,7 +703,7 @@ impl ActionImpl for RefinedTouch {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        24
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
@@ -703,11 +736,14 @@ impl ActionImpl for QuickInnovation {
 }
 
 pub struct ImmaculateMend {}
+impl ImmaculateMend {
+    pub const CP_COST: i16 = 112;
+}
 impl ActionImpl for ImmaculateMend {
     const LEVEL_REQUIREMENT: u8 = 98;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::ImmaculateMend);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
-        112
+        Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability = settings.max_durability;
