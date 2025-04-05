@@ -25,7 +25,9 @@ pub struct QualityUpperBoundSolver {
 
 impl QualityUpperBoundSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
-        settings.simulator_settings.max_cp = i16::MAX;
+        let durability_cost = durability_cost(&settings.simulator_settings);
+        settings.simulator_settings.max_cp +=
+            durability_cost * (settings.simulator_settings.max_durability as i16 / 5);
         Self {
             settings,
             interrupt_signal,
@@ -34,7 +36,7 @@ impl QualityUpperBoundSolver {
                 settings.simulator_settings.max_progress,
                 settings.simulator_settings.max_quality,
             ),
-            durability_cost: durability_cost(&settings.simulator_settings),
+            durability_cost,
         }
     }
 
@@ -42,6 +44,10 @@ impl QualityUpperBoundSolver {
         if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
             return;
         }
+        let cost_per_inner_quiet_tick = minimum_cp_cost_per_inner_quiet_tick(
+            &self.settings.simulator_settings,
+            self.durability_cost,
+        );
         let templates = templates_for_precompute(&self.settings.simulator_settings);
         for cp in self.durability_cost..=precompute_cp {
             if self.interrupt_signal.is_set() {
@@ -56,14 +62,17 @@ impl QualityUpperBoundSolver {
                 );
                 (solved_mtx.clone(), pareto_front_builder)
             };
-            templates.par_iter().for_each_init(
-                init,
-                |(solved_mtx, pareto_front_builder), &state| {
+            templates
+                .par_iter()
+                .filter(|state| {
+                    let missing_cp = self.settings.simulator_settings.max_cp - cp;
+                    minimum_cp_cost(state, cost_per_inner_quiet_tick) <= missing_cp
+                })
+                .for_each_init(init, |(solved_mtx, pareto_front_builder), &state| {
                     let state = ReducedState { cp, ..state };
                     let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
                     solved_mtx.lock().unwrap().push((state, pareto_front));
-                },
-            );
+                });
             self.solved_states.extend(solved.into_iter());
         }
         log::debug!(
@@ -88,6 +97,9 @@ impl QualityUpperBoundSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
+                        log::error!("Parent: {state:?}");
+                        log::error!("Child: {new_state:?}");
+                        log::error!("Action: {action:?}");
                         unreachable!("Precompute child state {new_state:?} does not exist.");
                     }
                     pareto_front_builder
@@ -223,7 +235,7 @@ impl Drop for QualityUpperBoundSolver {
 
 /// Calculates the CP cost to "magically" restore 5 durability
 fn durability_cost(settings: &Settings) -> i16 {
-    let mut cost = 100;
+    let mut cost = 20;
     if settings.is_action_allowed::<MasterMend>() {
         let cost_per_five = MasterMend::CP_COST / 6;
         cost = std::cmp::min(cost, cost_per_five);
@@ -237,6 +249,54 @@ fn durability_cost(settings: &Settings) -> i16 {
         cost = std::cmp::min(cost, cost_per_five);
     }
     cost
+}
+
+fn minimum_cp_cost_per_inner_quiet_tick(settings: &Settings, durability_cost: i16) -> i16 {
+    let mut cost_per_tick = BasicTouch::CP_COST + durability_cost;
+    if settings.is_action_allowed::<PreparatoryTouch>() {
+        cost_per_tick = std::cmp::min(
+            cost_per_tick,
+            (PreparatoryTouch::CP_COST + 2 * durability_cost) / 2,
+        );
+    }
+    if settings.is_action_allowed::<RefinedTouch>() {
+        cost_per_tick = std::cmp::min(
+            cost_per_tick,
+            (Observe::CP_COST + RefinedTouch::CP_COST + durability_cost) / 2,
+        );
+        cost_per_tick = std::cmp::min(
+            cost_per_tick,
+            (BasicTouch::CP_COST + RefinedTouch::CP_COST + 2 * durability_cost) / 3,
+        );
+    }
+    cost_per_tick
+}
+
+/// Calculates a lower bound of the minimum CP cost to reach the given state from the initial state.
+fn minimum_cp_cost(state: &ReducedState, cost_per_inner_quiet_tick: i16) -> i16 {
+    let mut result = 0;
+    // InnerQuiet effect
+    result += state.effects.inner_quiet() as i16 * cost_per_inner_quiet_tick;
+    // WasteNot effect
+    if state.effects.waste_not() > 4 {
+        result += WasteNot2::CP_COST;
+    } else if state.effects.waste_not() > 0 {
+        result += WasteNot::CP_COST;
+    }
+    // Innovation effect
+    if state.effects.innovation() > 1 {
+        // Innovation = 1 could be because of QuickInnovation
+        result += Innovation::CP_COST;
+    }
+    // Veneration effect
+    if state.effects.veneration() > 0 {
+        result += Veneration::CP_COST;
+    }
+    // GreatStrides effect
+    if state.effects.great_strides() > 0 {
+        result += GreatStrides::CP_COST;
+    }
+    result
 }
 
 fn templates_for_precompute(settings: &Settings) -> Box<[ReducedState]> {
