@@ -88,7 +88,7 @@ impl QualityUpperBoundSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        unreachable!("Precompute child state {new_state:?} does not exist");
+                        unreachable!("Precompute child state {new_state:?} does not exist.");
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -241,9 +241,9 @@ fn durability_cost(settings: &Settings) -> i16 {
 
 fn templates_for_precompute(settings: &Settings) -> Box<[ReducedState]> {
     let mut templates = rustc_hash::FxHashSet::<ReducedState>::default();
-    let mut add = |effects: Effects, unreliable_quality: u8| {
+    let mut add = |effects: Effects, compressed_unreliable_quality: u8| {
         // TODO: add validity checks
-        if !settings.adversarial && (unreliable_quality != 0 || effects.guard() != 0) {
+        if !settings.adversarial && (compressed_unreliable_quality != 0 || effects.guard() != 0) {
             return;
         }
         if !settings.is_action_allowed::<QuickInnovation>() && effects.quick_innovation_available()
@@ -252,7 +252,7 @@ fn templates_for_precompute(settings: &Settings) -> Box<[ReducedState]> {
         }
         let template = ReducedState {
             effects,
-            unreliable_quality,
+            compressed_unreliable_quality,
             progress_only: false,
             cp: 0,
         };
@@ -276,15 +276,39 @@ fn templates_for_precompute(settings: &Settings) -> Box<[ReducedState]> {
                 .with_veneration(veneration)
                 .with_inner_quiet(inner_quiet)
                 .with_great_strides(great_strides * 3);
+
             // TODO: handle quick innovation
             // TODO: handle heart and soul
-            // TODO: reduce unreliable quality range
-            for unreliable_quality in 0..=4 {
-                add(effects, unreliable_quality);
+
+            let max_compressed_unreliable_quality = if settings.adversarial {
+                // Maximum quality potency of the last quality-action based on current InnerQuiet
+                const MAX_QUALITY_POTENCY: [u16; 11] = [
+                    1500, // ByregotsBlessing at 10 InnerQuiet + Innovation + GreatStrides
+                    375,  // AdvancedTouch at 0 InnerQuiet + Innovation + GreatStrides
+                    500,  // PreparatoryTouch at 0 InnerQuiet + Innovation + GreatStrides
+                    550,  // PreparatoryTouch at 1 InnerQuiet + Innovation + GreatStrides
+                    600,  // PreparatoryTouch at 2 InnerQuiet + Innovation + GreatStrides
+                    650,  // PreparatoryTouch at 3 InnerQuiet + Innovation + GreatStrides
+                    700,  // PreparatoryTouch at 4 InnerQuiet + Innovation + GreatStrides
+                    750,  // PreparatoryTouch at 5 InnerQuiet + Innovation + GreatStrides
+                    800,  // PreparatoryTouch at 6 InnerQuiet + Innovation + GreatStrides
+                    850,  // PreparatoryTouch at 7 InnerQuiet + Innovation + GreatStrides
+                    1000, // PreparatoryTouch at 10 InnerQuiet + Innovation + GreatStrides
+                ];
+                // Unreliable quality is at most half of the last action's quality potency.
+                // Each point of compressed unreliable quality is equivalent to 200 unreliable quality potency.
+                let max_quality_potency = MAX_QUALITY_POTENCY[effects.inner_quiet() as usize];
+                max_quality_potency.div_ceil(2 * 200) as u8
+            } else {
+                0
+            };
+
+            for compressed_unreliable_quality in 0..=max_compressed_unreliable_quality {
+                add(effects, compressed_unreliable_quality);
                 if !indices.contains(&0) {
                     // Use a quality-increasing action as the most recent action
                     if settings.adversarial {
-                        add(effects.with_guard(1), unreliable_quality);
+                        add(effects.with_guard(1), compressed_unreliable_quality);
                     }
                 }
             }

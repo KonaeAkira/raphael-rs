@@ -8,7 +8,7 @@ use raphael_sim::*;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
     pub cp: i16,
-    pub unreliable_quality: u8,
+    pub compressed_unreliable_quality: u8,
     pub progress_only: bool,
     pub effects: Effects,
 }
@@ -38,7 +38,7 @@ impl ReducedState {
         let progress_only = is_progress_only_state(settings, state);
         let used_durability = (settings.simulator_settings.max_durability - state.durability) / 5;
         let cp = state.cp - used_durability as i16 * durability_cost;
-        let unreliable_quality = if progress_only {
+        let compressed_unreliable_quality = if progress_only {
             0
         } else {
             state
@@ -56,7 +56,7 @@ impl ReducedState {
         };
         Self {
             cp,
-            unreliable_quality,
+            compressed_unreliable_quality,
             progress_only,
             effects,
         }
@@ -68,14 +68,16 @@ impl ReducedState {
             cp: self.cp,
             progress: 0,
             quality: 0,
-            unreliable_quality: self.unreliable_quality as u16 * settings.base_quality * 2,
+            unreliable_quality: self.compressed_unreliable_quality as u16
+                * settings.base_quality
+                * 2,
             effects: self.effects,
             combo: Combo::None,
         }
     }
 
     pub fn has_no_quality_attributes(&self) -> bool {
-        self.unreliable_quality == 0
+        self.compressed_unreliable_quality == 0
             && self.effects.inner_quiet() == 0
             && self.effects.innovation() == 0
             && self.effects.great_strides() == 0
@@ -84,7 +86,7 @@ impl ReducedState {
     }
 
     fn strip_quality_attributes(&mut self) {
-        self.unreliable_quality = 0;
+        self.compressed_unreliable_quality = 0;
         self.effects.set_inner_quiet(0);
         self.effects.set_innovation(0);
         self.effects.set_great_strides(0);

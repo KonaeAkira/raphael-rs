@@ -19,7 +19,6 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u16 {
         allow_unsound_branch_pruning: false,
     };
     let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
-    solver.precompute(simulator_settings.max_cp);
     solver.quality_upper_bound(state).unwrap()
 }
 
