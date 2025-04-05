@@ -5,7 +5,7 @@ use crate::{
 
 use raphael_sim::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
     pub cp: i16,
     pub unreliable_quality: u8,
@@ -74,6 +74,24 @@ impl ReducedState {
         }
     }
 
+    pub fn has_no_quality_attributes(&self) -> bool {
+        self.unreliable_quality == 0
+            && self.effects.inner_quiet() == 0
+            && self.effects.innovation() == 0
+            && self.effects.great_strides() == 0
+            && self.effects.guard() == 0
+            && self.effects.quick_innovation_available() == false
+    }
+
+    fn strip_quality_attributes(&mut self) {
+        self.unreliable_quality = 0;
+        self.effects.set_inner_quiet(0);
+        self.effects.set_innovation(0);
+        self.effects.set_great_strides(0);
+        self.effects.set_guard(0);
+        self.effects.set_quick_innovation_available(false);
+    }
+
     pub fn use_action(
         &self,
         action: ActionCombo,
@@ -91,8 +109,9 @@ impl ReducedState {
                     Ok(state) => {
                         let mut solver_state =
                             Self::from_simulation_state_inner(&state, settings, durability_cost);
-                        if progress_only {
+                        if progress_only || solver_state.progress_only {
                             solver_state.progress_only = true;
+                            solver_state.strip_quality_attributes();
                         }
                         Ok((solver_state, state.progress, state.quality))
                     }

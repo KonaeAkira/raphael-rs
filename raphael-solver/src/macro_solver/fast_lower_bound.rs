@@ -32,7 +32,7 @@ pub fn fast_lower_bound(
     settings: SolverSettings,
     interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
-    quality_ub_solver: &QualityUpperBoundSolver,
+    quality_ub_solver: &mut QualityUpperBoundSolver,
 ) -> Result<u16, SolverException> {
     let _timer = ScopedTimer::new("Fast lower bound");
 

@@ -17,6 +17,7 @@ log = { workspace = true }
 serde = { workspace = true, optional = true }
 web-time = { workspace = true }
 papaya = "0.2.1"
+itertools = "0.14.0"
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]

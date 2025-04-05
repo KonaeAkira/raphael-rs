@@ -77,15 +77,16 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        let mut seed_state = SimulationState::new(&self.settings.simulator_settings);
-        seed_state.combo = Combo::None;
         _ = rayon::join(
             || {
                 let _timer = ScopedTimer::new("Quality UB Solver");
-                self.quality_ub_solver.quality_upper_bound(seed_state)
+                self.quality_ub_solver
+                    .precompute(self.settings.simulator_settings.max_cp)
             },
             || {
                 let _timer = ScopedTimer::new("Step LB Solver");
+                let mut seed_state = SimulationState::new(&self.settings.simulator_settings);
+                seed_state.combo = Combo::None;
                 self.step_lb_solver.step_lower_bound(seed_state, 0)
             },
         );
@@ -101,7 +102,7 @@ impl<'a> MacroSolver<'a> {
                 self.settings,
                 self.interrupt_signal.clone(),
                 &mut self.finish_solver,
-                &self.quality_ub_solver,
+                &mut self.quality_ub_solver,
             )?;
             let minimum_score = SearchScore {
                 quality_upper_bound: quality_lower_bound,
