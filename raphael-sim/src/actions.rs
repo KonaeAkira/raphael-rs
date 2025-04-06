@@ -55,7 +55,7 @@ pub trait ActionImpl {
             / 100_000_000) as u16
     }
 
-    fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> i8 {
+    fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> i16 {
         if state.effects.trained_perfection_active() {
             return 0;
         }
@@ -75,7 +75,7 @@ pub trait ActionImpl {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         0
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         0
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -97,7 +97,7 @@ impl ActionImpl for BasicSynthesis {
     fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u16 {
         if settings.job_level < 31 { 100 } else { 120 }
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
 }
@@ -112,7 +112,7 @@ impl ActionImpl for BasicTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -134,8 +134,7 @@ impl ActionImpl for MasterMend {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
-        state.durability =
-            std::cmp::min(settings.max_durability, state.durability.saturating_add(30));
+        state.durability = std::cmp::min(i16::from(settings.max_durability), state.durability + 30);
     }
 }
 
@@ -218,7 +217,7 @@ impl ActionImpl for StandardTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         125
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> i16 {
@@ -297,7 +296,7 @@ impl ActionImpl for ByregotsBlessing {
     fn base_quality_increase(state: &SimulationState, _settings: &Settings) -> u16 {
         100 + 20 * state.effects.inner_quiet() as u16
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -328,7 +327,7 @@ impl ActionImpl for PreciseTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         150
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -360,7 +359,7 @@ impl ActionImpl for MuscleMemory {
     fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         300
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -381,7 +380,7 @@ impl ActionImpl for CarefulSynthesis {
             82.. => 180,
         }
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -424,7 +423,7 @@ impl ActionImpl for PrudentTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         5
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -439,7 +438,7 @@ impl ActionImpl for AdvancedTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         150
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> i16 {
@@ -467,7 +466,7 @@ impl ActionImpl for Reflect {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         300
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -489,7 +488,7 @@ impl ActionImpl for PreparatoryTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         200
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         20
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -515,7 +514,7 @@ impl ActionImpl for Groundwork {
         }
         base
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         20
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -536,7 +535,7 @@ impl ActionImpl for DelicateSynthesis {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -566,7 +565,7 @@ impl ActionImpl for IntensiveSynthesis {
     fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         400
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -603,7 +602,7 @@ impl ActionImpl for TrainedEye {
     fn base_quality_increase(_state: &SimulationState, settings: &Settings) -> u16 {
         settings.max_quality
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -649,7 +648,7 @@ impl ActionImpl for PrudentSynthesis {
     fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         180
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         5
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -699,7 +698,7 @@ impl ActionImpl for RefinedTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u16 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i8 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         10
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
@@ -746,7 +745,7 @@ impl ActionImpl for ImmaculateMend {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
-        state.durability = settings.max_durability;
+        state.durability = i16::from(settings.max_durability);
     }
 }
 

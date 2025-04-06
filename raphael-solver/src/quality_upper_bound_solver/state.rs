@@ -26,7 +26,7 @@ impl ReducedState {
             state.cp += durability_cost * 4;
         }
         state.cp += state.durability as i16 / 5 * durability_cost;
-        state.durability = settings.simulator_settings.max_durability;
+        state.durability = i16::from(settings.simulator_settings.max_durability);
         Self::from_simulation_state_inner(&state, settings, durability_cost)
     }
 
@@ -36,8 +36,9 @@ impl ReducedState {
         durability_cost: i16,
     ) -> Self {
         let progress_only = is_progress_only_state(settings, state);
-        let used_durability = (settings.simulator_settings.max_durability - state.durability) / 5;
-        let cp = state.cp - used_durability as i16 * durability_cost;
+        let used_durability =
+            i16::from(settings.simulator_settings.max_durability) - state.durability;
+        let cp = state.cp - used_durability / 5 * durability_cost;
         let compressed_unreliable_quality = if progress_only {
             0
         } else {
@@ -64,7 +65,7 @@ impl ReducedState {
 
     fn to_simulation_state(self, settings: &Settings) -> SimulationState {
         SimulationState {
-            durability: settings.max_durability,
+            durability: i16::from(settings.max_durability),
             cp: self.cp,
             progress: 0,
             quality: 0,

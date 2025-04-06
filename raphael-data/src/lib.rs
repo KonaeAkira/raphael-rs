@@ -47,7 +47,7 @@ pub struct Recipe {
     pub recipe_level: u16,
     pub progress: u16,
     pub quality: u16,
-    pub durability: i8,
+    pub durability: i16,
     pub material_quality_factor: u16,
     pub ingredients: [Ingredient; 6],
     pub is_expert: bool,

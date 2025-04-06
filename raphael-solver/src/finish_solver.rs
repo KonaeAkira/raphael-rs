@@ -9,7 +9,7 @@ use crate::{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ReducedState {
-    durability: i8,
+    durability: i16,
     cp: i16,
     effects: Effects,
 }

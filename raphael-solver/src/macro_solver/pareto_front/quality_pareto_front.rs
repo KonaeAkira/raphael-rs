@@ -9,7 +9,7 @@ struct Value {
     quality: u16,
     unreliable_quality: u16,
     inner_quiet: u8,
-    durability: i8,
+    durability: i16,
 }
 
 impl Value {

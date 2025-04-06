@@ -17,11 +17,11 @@ const SETTINGS: Settings = Settings {
 /// - Quality
 /// - Durability (used)
 /// - CP (used)
-fn primary_stats(state: &SimulationState, settings: &Settings) -> (u16, u16, i8, i16) {
+fn primary_stats(state: &SimulationState, settings: &Settings) -> (u16, u16, i16, i16) {
     (
         state.progress,
         state.quality,
-        settings.max_durability - state.durability,
+        i16::from(SETTINGS.max_durability) - state.durability,
         settings.max_cp - state.cp,
     )
 }
@@ -62,7 +62,7 @@ fn test_basic_touch() {
 fn test_master_mend() {
     // Durability-restore fully utilized
     let initial_state = SimulationState {
-        durability: SETTINGS.max_durability - 40,
+        durability: i16::from(SETTINGS.max_durability) - 40,
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
@@ -71,7 +71,7 @@ fn test_master_mend() {
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 10, 88));
     // Durability-restore partially utilized
     let initial_state = SimulationState {
-        durability: SETTINGS.max_durability - 10,
+        durability: i16::from(SETTINGS.max_durability) - 10,
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
@@ -315,7 +315,7 @@ fn test_manipulation() {
     assert_eq!(state.effects.manipulation(), 8);
     // Using Manipulation while Manipulation is already active doesn't restore durability
     let initial_state = SimulationState {
-        durability: SETTINGS.max_durability - 5,
+        durability: i16::from(SETTINGS.max_durability) - 5,
         effects: Effects::new().with_manipulation(2),
         ..SimulationState::new(&SETTINGS)
     };
@@ -417,7 +417,7 @@ fn test_groundwork() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (180, 0, SETTINGS.max_durability + 10, 18)
+        (180, 0, i16::from(SETTINGS.max_durability) + 10, 18)
     );
     // Potency isn't halved when Waste Not causes durability cost to fit into remaining durability
     let initial_state = SimulationState {
@@ -430,7 +430,7 @@ fn test_groundwork() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (360, 0, SETTINGS.max_durability, 18)
+        (360, 0, i16::from(SETTINGS.max_durability), 18)
     );
     // Potency isn't halved when Trained Perfection is active
     let initial_state = SimulationState {
@@ -443,7 +443,7 @@ fn test_groundwork() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (360, 0, SETTINGS.max_durability - 10, 18)
+        (360, 0, i16::from(SETTINGS.max_durability) - 10, 18)
     );
 }
 
@@ -582,7 +582,7 @@ fn test_immaculate_mend() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.durability, SETTINGS.max_durability);
+            assert_eq!(state.durability, i16::from(SETTINGS.max_durability));
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -600,7 +600,7 @@ fn test_trained_perfection() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.durability, SETTINGS.max_durability);
+            assert_eq!(state.durability, i16::from(SETTINGS.max_durability));
         }
         Err(e) => panic!("Unexpected error: {}", e),
     };

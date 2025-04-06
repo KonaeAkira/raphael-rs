@@ -128,7 +128,7 @@ impl Simulator<'_> {
                         )
                         .text(progress_bar_text(
                             state.durability,
-                            self.settings.max_durability,
+                            i16::from(self.settings.max_durability),
                         ))
                         .corner_radius(0),
                     );
