@@ -297,7 +297,7 @@ impl eframe::App for MacroSolverApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
-                self.draw_simulator_and_analysis_widgets(ui);
+                self.draw_simulator_widget(ui);
                 ui.with_layout(
                     Layout::left_to_right(Align::TOP).with_main_wrap(true),
                     |ui| {
@@ -443,7 +443,7 @@ impl MacroSolverApp {
         }
     }
 
-    fn draw_simulator_and_analysis_widgets(&mut self, ui: &mut egui::Ui) {
+    fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
         let game_settings = raphael_data::get_game_settings(
             self.recipe_config.recipe,
             *self.crafter_config.active_stats(),
@@ -469,17 +469,6 @@ impl MacroSolverApp {
             item,
             self.locale,
         ));
-        // let target_quality = self
-        //     .solver_config
-        //     .quality_target
-        //     .get_target(game_settings.max_quality);
-        // ui.add(SolutionAnalysis::new(
-        //     game_settings,
-        //     initial_quality,
-        //     target_quality,
-        //     &self.actions,
-        //     self.recipe_config.recipe.is_expert,
-        // ));
     }
 
     fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {

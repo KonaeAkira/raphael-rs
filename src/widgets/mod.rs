@@ -22,9 +22,6 @@ pub use help_text::HelpText;
 mod item_name_label;
 pub use item_name_label::ItemNameLabel;
 
-// mod analysis;
-// pub use analysis::SolutionAnalysis;
-
 mod saved_rotations;
 pub use saved_rotations::{Rotation, SavedRotationsData, SavedRotationsWidget};
 
