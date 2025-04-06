@@ -8,7 +8,7 @@ use super::pareto_front::{EffectParetoFront, QualityParetoFront};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
-    pub quality_upper_bound: u16,
+    pub quality_upper_bound: u32,
     pub steps_lower_bound: u8,
     pub duration_lower_bound: u8,
     pub current_steps: u8,
@@ -25,7 +25,7 @@ impl SearchScore {
     };
 
     pub const MAX: Self = Self {
-        quality_upper_bound: u16::MAX,
+        quality_upper_bound: u32::MAX,
         steps_lower_bound: 0,
         duration_lower_bound: 0,
         current_steps: 0,

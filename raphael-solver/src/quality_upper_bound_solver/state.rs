@@ -44,7 +44,7 @@ impl ReducedState {
         } else {
             state
                 .unreliable_quality
-                .div_ceil(2 * settings.simulator_settings.base_quality) as u8
+                .div_ceil(2 * u32::from(settings.simulator_settings.base_quality)) as u8
         };
         let effects = {
             let great_strides_active = state.effects.great_strides() != 0;
@@ -69,9 +69,8 @@ impl ReducedState {
             cp: self.cp,
             progress: 0,
             quality: 0,
-            unreliable_quality: self.compressed_unreliable_quality as u16
-                * settings.base_quality
-                * 2,
+            unreliable_quality: u32::from(self.compressed_unreliable_quality)
+                * (2 * u32::from(settings.base_quality)),
             effects: self.effects,
         }
     }
@@ -99,7 +98,7 @@ impl ReducedState {
         action: ActionCombo,
         settings: &SolverSettings,
         durability_cost: i16,
-    ) -> Result<(Self, u16, u16), &'static str> {
+    ) -> Result<(Self, u32, u32), &'static str> {
         match action {
             ActionCombo::Single(
                 Action::MasterMend | Action::ImmaculateMend | Action::Manipulation,

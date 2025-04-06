@@ -17,7 +17,7 @@ const SETTINGS: Settings = Settings {
 /// - Quality
 /// - Durability (used)
 /// - CP (used)
-fn primary_stats(state: &SimulationState, settings: &Settings) -> (u16, u16, i16, i16) {
+fn primary_stats(state: &SimulationState, settings: &Settings) -> (u32, u32, i16, i16) {
     (
         state.progress,
         state.quality,
@@ -521,7 +521,7 @@ fn test_trained_eye() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (0, SETTINGS.max_quality, 10, 250)
+        (0, u32::from(SETTINGS.max_quality), 10, 250)
     );
     assert_eq!(state.effects.inner_quiet(), 1);
 }

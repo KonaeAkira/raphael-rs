@@ -17,7 +17,7 @@ use std::vec::Vec;
 
 #[derive(Clone)]
 struct Solution {
-    score: (SearchScore, u16),
+    score: (SearchScore, u32),
     solver_actions: Vec<ActionCombo>,
 }
 
@@ -141,33 +141,31 @@ impl<'a> MacroSolver<'a> {
                         search_queue.update_min_score(SearchScore {
                             quality_upper_bound: std::cmp::min(
                                 state.quality,
-                                self.settings.simulator_settings.max_quality,
+                                self.settings.max_quality(),
                             ),
                             ..SearchScore::MIN
                         });
 
-                        let quality_upper_bound =
-                            if state.quality >= self.settings.simulator_settings.max_quality {
-                                self.settings.simulator_settings.max_quality
-                            } else {
-                                std::cmp::min(
-                                    score.quality_upper_bound,
-                                    self.quality_ub_solver.quality_upper_bound(state)?,
-                                )
-                            };
+                        let quality_upper_bound = if state.quality >= self.settings.max_quality() {
+                            self.settings.max_quality()
+                        } else {
+                            std::cmp::min(
+                                score.quality_upper_bound,
+                                self.quality_ub_solver.quality_upper_bound(state)?,
+                            )
+                        };
 
                         let step_lb_hint = score
                             .steps_lower_bound
                             .saturating_sub(score.current_steps + action.steps());
-                        let steps_lower_bound = match quality_upper_bound
-                            >= self.settings.simulator_settings.max_quality
-                        {
-                            true => self
-                                .step_lb_solver
-                                .step_lower_bound(state, step_lb_hint)?
-                                .saturating_add(score.current_steps + action.steps()),
-                            false => score.current_steps + action.steps(),
-                        };
+                        let steps_lower_bound =
+                            match quality_upper_bound >= self.settings.max_quality() {
+                                true => self
+                                    .step_lb_solver
+                                    .step_lower_bound(state, step_lb_hint)?
+                                    .saturating_add(score.current_steps + action.steps()),
+                                false => score.current_steps + action.steps(),
+                            };
 
                         search_queue.push(
                             state,
@@ -183,11 +181,11 @@ impl<'a> MacroSolver<'a> {
                             *action,
                             backtrack_id,
                         );
-                    } else if state.progress >= self.settings.simulator_settings.max_progress {
+                    } else if state.progress >= self.settings.max_progress() {
                         let solution_score = SearchScore {
                             quality_upper_bound: std::cmp::min(
                                 state.quality,
-                                self.settings.simulator_settings.max_quality,
+                                self.settings.max_quality(),
                             ),
                             steps_lower_bound: score.current_steps + action.steps(),
                             duration_lower_bound: score.current_duration + action.duration(),

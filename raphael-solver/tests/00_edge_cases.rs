@@ -64,20 +64,19 @@ fn max_quality() {
 }
 
 #[test]
-#[ignore = "TODO"]
 fn large_progress_quality_increase() {
     let settings = Settings {
         max_cp: 300,
         max_durability: 40,
         max_progress: 100,
         max_quality: 100,
-        base_progress: 5000,
-        base_quality: 5000,
+        base_progress: u16::MAX,
+        base_quality: u16::MAX,
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: false,
     };
     let actions = solve(&settings, false, false).unwrap();
     let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (100, 1, 3, 4900));
+    assert_eq!(score, (100, 1, 3, u32::from(u16::MAX) - 100));
 }

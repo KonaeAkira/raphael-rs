@@ -480,7 +480,7 @@ fn random_state(settings: &Settings) -> SimulationState {
     SimulationState {
         cp: rand::thread_rng().gen_range(0..=settings.max_cp),
         durability: rand::thread_rng().gen_range(1..=(i16::from(settings.max_durability) / 5)) * 5,
-        progress: rand::thread_rng().gen_range(0..settings.max_progress),
+        progress: rand::thread_rng().gen_range(0..u32::from(settings.max_progress)),
         quality: 0,
         unreliable_quality: 0,
         effects: random_effects(settings.adversarial),
@@ -505,8 +505,8 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
             let child_lower_bound = match use_action_combo(&solver_settings, state, *action) {
                 Ok(child) => match child.is_final(&simulator_settings) {
                     false => solver.step_lower_bound(child, 0).unwrap(),
-                    true if child.progress >= simulator_settings.max_progress
-                        && child.quality >= simulator_settings.max_quality =>
+                    true if child.progress >= u32::from(simulator_settings.max_progress)
+                        && child.quality >= u32::from(simulator_settings.max_quality) =>
                     {
                         0
                     }

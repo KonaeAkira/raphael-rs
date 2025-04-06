@@ -44,7 +44,7 @@ impl ReducedState {
 pub struct FinishSolver {
     settings: SolverSettings,
     // maximum attainable progress for each state
-    max_progress: HashMap<ReducedState, u16>,
+    max_progress: HashMap<ReducedState, u32>,
 }
 
 impl FinishSolver {
@@ -57,10 +57,10 @@ impl FinishSolver {
 
     pub fn can_finish(&mut self, state: &SimulationState) -> bool {
         let max_progress = self.solve_max_progress(ReducedState::from_state(state));
-        state.progress + max_progress >= self.settings.simulator_settings.max_progress
+        state.progress + max_progress >= self.settings.max_progress()
     }
 
-    fn solve_max_progress(&mut self, state: ReducedState) -> u16 {
+    fn solve_max_progress(&mut self, state: ReducedState) -> u32 {
         match self.max_progress.get(&state) {
             Some(max_progress) => *max_progress,
             None => {
@@ -78,10 +78,10 @@ impl FinishSolver {
                                 std::cmp::max(max_progress, child_progress + new_state.progress);
                         }
                     }
-                    if max_progress >= self.settings.simulator_settings.max_progress {
+                    if max_progress >= self.settings.max_progress() {
                         // stop early if progress is already maxed out
                         // this optimization would work better with a better action ordering
-                        max_progress = self.settings.simulator_settings.max_progress;
+                        max_progress = self.settings.max_progress();
                         break;
                     }
                 }
