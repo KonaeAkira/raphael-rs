@@ -80,8 +80,7 @@ impl<'a> MacroSolver<'a> {
         _ = rayon::join(
             || {
                 let _timer = ScopedTimer::new("Quality UB Solver");
-                self.quality_ub_solver
-                    .precompute(self.settings.simulator_settings.max_cp)
+                self.quality_ub_solver.precompute(self.settings.max_cp())
             },
             || {
                 let _timer = ScopedTimer::new("Step LB Solver");

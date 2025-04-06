@@ -31,14 +31,34 @@ pub struct SolverSettings {
 }
 
 impl SolverSettings {
-    /// Convenience function to get max progress
+    pub fn max_durability(&self) -> i16 {
+        #[allow(clippy::useless_conversion)]
+        i16::from(self.simulator_settings.max_durability)
+    }
+
+    pub fn max_cp(&self) -> i16 {
+        #[allow(clippy::useless_conversion)]
+        i16::from(self.simulator_settings.max_cp)
+    }
+
     pub fn max_progress(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
         u32::from(self.simulator_settings.max_progress)
     }
 
-    /// Convenience function to get max quality
     pub fn max_quality(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
         u32::from(self.simulator_settings.max_quality)
+    }
+
+    pub fn base_progress(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
+        u32::from(self.simulator_settings.base_progress)
+    }
+
+    pub fn base_quality(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
+        u32::from(self.simulator_settings.base_quality)
     }
 }
 

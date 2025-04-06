@@ -26,15 +26,14 @@ pub struct QualityUpperBoundSolver {
 impl QualityUpperBoundSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         let durability_cost = durability_cost(&settings.simulator_settings);
-        settings.simulator_settings.max_cp +=
-            durability_cost * (settings.simulator_settings.max_durability as i16 / 5);
+        settings.simulator_settings.max_cp += durability_cost * (settings.max_durability() / 5);
         Self {
             settings,
             interrupt_signal,
             solved_states: SolvedStates::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
-                u32::from(settings.simulator_settings.max_progress),
-                u32::from(settings.simulator_settings.max_quality),
+                settings.max_progress(),
+                settings.max_quality(),
             ),
             durability_cost,
         }
@@ -65,7 +64,7 @@ impl QualityUpperBoundSolver {
             templates
                 .par_iter()
                 .filter(|state| {
-                    let missing_cp = self.settings.simulator_settings.max_cp - cp;
+                    let missing_cp = self.settings.max_cp() - cp;
                     minimum_cp_cost(state, cost_per_inner_quiet_tick) <= missing_cp
                 })
                 .for_each_init(init, |(solved_mtx, pareto_front_builder), &state| {

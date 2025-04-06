@@ -31,8 +31,8 @@ impl StepLowerBoundSolver {
             interrupt_signal,
             solved_states: SolvedStates::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
-                u32::from(settings.simulator_settings.max_progress),
-                u32::from(settings.simulator_settings.max_quality),
+                settings.max_progress(),
+                settings.max_quality(),
             ),
         }
     }

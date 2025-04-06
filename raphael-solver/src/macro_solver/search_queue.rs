@@ -150,7 +150,7 @@ impl SearchQueue {
 fn pareto_weight(state: &SimulationState) -> u32 {
     state.cp as u32
         + state.durability as u32
-        + state.quality as u32
-        + state.unreliable_quality as u32
+        + state.quality
+        + state.unreliable_quality
         + state.effects.into_bits()
 }
