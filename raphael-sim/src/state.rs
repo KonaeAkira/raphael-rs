@@ -10,7 +10,6 @@ pub struct SimulationState {
     pub quality: u16,            // previous unguarded action = Poor
     pub unreliable_quality: u16, // previous unguarded action = Normal, diff with quality
     pub effects: Effects,
-    pub combo: Combo,
 }
 
 impl SimulationState {
@@ -22,7 +21,6 @@ impl SimulationState {
             quality: 0,
             unreliable_quality: 0,
             effects: Effects::initial(settings),
-            combo: Combo::SynthesisBegin,
         }
     }
 
@@ -148,7 +146,9 @@ impl SimulationState {
 
         A::transform_post(&mut state, settings, condition);
 
-        state.combo = A::combo(&state, settings, condition);
+        state
+            .effects
+            .set_combo(A::combo(&state, settings, condition));
 
         Ok(state)
     }

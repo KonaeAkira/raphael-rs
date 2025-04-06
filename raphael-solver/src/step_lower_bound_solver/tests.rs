@@ -9,10 +9,8 @@ use crate::{
 use super::*;
 
 fn solve(simulator_settings: Settings, actions: &[Action]) -> u8 {
-    let state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::from_macro(&simulator_settings, actions).unwrap()
-    };
+    let mut state = SimulationState::from_macro(&simulator_settings, actions).unwrap();
+    state.effects.set_combo(Combo::None);
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
@@ -486,7 +484,6 @@ fn random_state(settings: &Settings) -> SimulationState {
         quality: 0,
         unreliable_quality: 0,
         effects: random_effects(settings.adversarial),
-        combo: Combo::None,
     }
     .try_into()
     .unwrap()

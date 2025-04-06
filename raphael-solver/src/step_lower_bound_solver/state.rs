@@ -56,7 +56,6 @@ impl ReducedState {
             quality: 0,
             unreliable_quality: 0,
             effects: self.effects,
-            combo: Combo::None,
         }
     }
 

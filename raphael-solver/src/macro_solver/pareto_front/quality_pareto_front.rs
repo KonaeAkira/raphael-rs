@@ -47,7 +47,7 @@ impl Key {
         Self {
             progress: state.progress,
             effects: state.effects.with_inner_quiet(0), // iq is included in the pareto value
-            combo: state.combo,
+            combo: state.effects.combo(),
         }
     }
 }

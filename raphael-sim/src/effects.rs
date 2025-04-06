@@ -1,4 +1,4 @@
-use crate::Settings;
+use crate::{Combo, Settings};
 
 #[bitfield_struct::bitfield(u32, default = false)]
 #[derive(PartialEq, Eq, Hash)]
@@ -11,7 +11,7 @@ pub struct Effects {
     pub innovation: u8,
     #[bits(3)]
     pub veneration: u8,
-    #[bits(3)]
+    #[bits(2)]
     pub great_strides: u8,
     #[bits(3)]
     pub muscle_memory: u8,
@@ -26,8 +26,8 @@ pub struct Effects {
     pub trained_perfection_active: bool,
     pub heart_and_soul_active: bool,
 
-    #[bits(1)]
-    _padding: u8,
+    #[bits(2)]
+    pub combo: Combo,
 }
 
 impl Effects {
@@ -43,6 +43,7 @@ impl Effects {
             .with_quick_innovation_available(
                 settings.is_action_allowed::<crate::actions::QuickInnovation>(),
             )
+            .with_combo(Combo::SynthesisBegin)
     }
 
     pub fn tick_down(&mut self) {

@@ -72,7 +72,6 @@ impl ReducedState {
                 * settings.base_quality
                 * 2,
             effects: self.effects,
-            combo: Combo::None,
         }
     }
 

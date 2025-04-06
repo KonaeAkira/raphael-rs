@@ -12,7 +12,6 @@ struct ReducedState {
     durability: i8,
     cp: i16,
     effects: Effects,
-    combo: Combo,
 }
 
 impl ReducedState {
@@ -27,7 +26,6 @@ impl ReducedState {
                 .with_great_strides(0)
                 .with_guard(0)
                 .with_quick_innovation_available(false),
-            combo: state.combo,
         }
     }
 
@@ -39,7 +37,6 @@ impl ReducedState {
             quality: 0,
             unreliable_quality: 0,
             effects: self.effects,
-            combo: self.combo,
         }
     }
 }

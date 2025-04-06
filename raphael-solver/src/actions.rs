@@ -193,6 +193,6 @@ pub fn use_action_combo(
         state.effects.set_guard(0);
         state.effects.set_quick_innovation_available(false);
     }
-    state.combo = Combo::None;
+    state.effects.set_combo(Combo::None);
     Ok(state)
 }

@@ -55,7 +55,7 @@ fn test_basic_touch() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 100, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 1);
-    assert_eq!(state.combo, Combo::BasicTouch);
+    assert_eq!(state.effects.combo(), Combo::BasicTouch);
 }
 
 #[test]
@@ -86,7 +86,7 @@ fn test_observe() {
         .use_action(Action::Observe, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 7));
-    assert_eq!(state.combo, Combo::StandardTouch);
+    assert_eq!(state.effects.combo(), Combo::StandardTouch);
 }
 
 #[test]
@@ -157,18 +157,16 @@ fn test_standard_touch() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 125, 10, 32));
     assert_eq!(state.effects.inner_quiet(), 1);
-    assert_eq!(state.combo, Combo::None);
+    assert_eq!(state.effects.combo(), Combo::None);
     // Combo requirement fulfilled
-    let initial_state = SimulationState {
-        combo: Combo::BasicTouch,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::BasicTouch);
     let state = initial_state
         .use_action(Action::StandardTouch, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 125, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 1);
-    assert_eq!(state.combo, Combo::StandardTouch);
+    assert_eq!(state.effects.combo(), Combo::StandardTouch);
 }
 
 #[test]
@@ -272,10 +270,8 @@ fn test_precise_touch() {
 #[test]
 fn test_muscle_memory() {
     // Precondition unfulfilled
-    let initial_state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::None);
     let error = initial_state
         .use_action(Action::MuscleMemory, Condition::Normal, &SETTINGS)
         .unwrap_err();
@@ -360,10 +356,8 @@ fn test_advanced_touch() {
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 150, 10, 46));
     assert_eq!(state.effects.inner_quiet(), 1);
     // Combo requirement fulfilled
-    let initial_state = SimulationState {
-        combo: Combo::StandardTouch,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::StandardTouch);
     let state = initial_state
         .use_action(Action::AdvancedTouch, Condition::Normal, &SETTINGS)
         .unwrap();
@@ -374,10 +368,8 @@ fn test_advanced_touch() {
 #[test]
 fn test_reflect() {
     // Precondition unfulfilled
-    let initial_state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::None);
     let error = initial_state
         .use_action(Action::Reflect, Condition::Normal, &SETTINGS)
         .unwrap_err();
@@ -517,10 +509,8 @@ fn test_intensive_synthesis() {
 #[test]
 fn test_trained_eye() {
     // Precondition unfulfilled
-    let initial_state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::None);
     let error = initial_state
         .use_action(Action::TrainedEye, Condition::Normal, &SETTINGS)
         .unwrap_err();
@@ -640,7 +630,7 @@ fn test_heart_and_soul() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.combo, Combo::None); // combo is removed
+            assert_eq!(state.effects.combo(), Combo::None); // combo is removed
             assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.heart_and_soul_available(), false);
@@ -710,7 +700,7 @@ fn test_quick_innovation() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.combo, Combo::None); // combo is removed
+            assert_eq!(state.effects.combo(), Combo::None); // combo is removed
             assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.innovation(), 1);

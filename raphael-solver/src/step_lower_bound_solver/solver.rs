@@ -62,10 +62,10 @@ impl StepLowerBoundSolver {
         state: SimulationState,
         step_budget: NonZeroU8,
     ) -> Result<u16, SolverException> {
-        if state.combo != Combo::None {
+        if state.effects.combo() != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in step lower bound solver",
-                state.combo
+                state.effects.combo()
             )));
         }
 

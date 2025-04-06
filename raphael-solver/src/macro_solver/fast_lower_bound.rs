@@ -94,7 +94,7 @@ fn should_use_action(
     allowed_actions: ActionMask,
 ) -> bool {
     // Force the use of an opener if one is available
-    if state.combo == Combo::SynthesisBegin {
+    if state.effects.combo() == Combo::SynthesisBegin {
         let action_is_opener = matches!(
             action,
             ActionCombo::Single(Action::Reflect | Action::MuscleMemory | Action::TrainedEye)

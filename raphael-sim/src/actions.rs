@@ -222,13 +222,13 @@ impl ActionImpl for StandardTouch {
         10
     }
     fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> i16 {
-        match state.combo {
+        match state.effects.combo() {
             Combo::BasicTouch => 18,
             _ => 32,
         }
     }
     fn combo(state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
-        match state.combo {
+        match state.effects.combo() {
             Combo::BasicTouch => Combo::StandardTouch,
             _ => Combo::None,
         }
@@ -352,7 +352,7 @@ impl ActionImpl for MuscleMemory {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.combo != Combo::SynthesisBegin {
+        if state.effects.combo() != Combo::SynthesisBegin {
             return Err("Muscle Memory can only be used at synthesis begin.");
         }
         Ok(())
@@ -443,7 +443,7 @@ impl ActionImpl for AdvancedTouch {
         10
     }
     fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> i16 {
-        match state.combo {
+        match state.effects.combo() {
             Combo::StandardTouch => 18,
             _ => 46,
         }
@@ -459,7 +459,7 @@ impl ActionImpl for Reflect {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.combo != Combo::SynthesisBegin {
+        if state.effects.combo() != Combo::SynthesisBegin {
             return Err("Reflect can only be used at synthesis begin.");
         }
         Ok(())
@@ -588,7 +588,7 @@ impl ActionImpl for TrainedEye {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.combo != Combo::SynthesisBegin {
+        if state.effects.combo() != Combo::SynthesisBegin {
             return Err("Trained Eye can only be used at synthesis begin.");
         }
         Ok(())
@@ -691,7 +691,7 @@ impl ActionImpl for RefinedTouch {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        if state.combo != Combo::BasicTouch {
+        if state.effects.combo() != Combo::BasicTouch {
             return Err("Refined Touch can only be used after Observe or Basic Touch.");
         }
         Ok(())
@@ -826,6 +826,7 @@ impl Combo {
 
     pub const fn from_bits(value: u8) -> Self {
         match value {
+            0 => Self::None,
             1 => Self::SynthesisBegin,
             2 => Self::BasicTouch,
             3 => Self::StandardTouch,
