@@ -173,8 +173,8 @@ impl Drop for StepLowerBoundSolver {
         let num_states = self.solved_states.len();
         let num_values = self
             .solved_states
-            .iter()
-            .map(|(_key, value)| value.len())
+            .values()
+            .map(|value| value.len())
             .sum::<usize>();
         log::debug!("StepLowerBoundSolver - states: {num_states}, values: {num_values}");
     }

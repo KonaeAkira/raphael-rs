@@ -219,8 +219,8 @@ impl Drop for QualityUpperBoundSolver {
         let num_states = self.solved_states.len();
         let num_values = self
             .solved_states
-            .iter()
-            .map(|(_key, value)| value.len())
+            .values()
+            .map(|value| value.len())
             .sum::<usize>();
         log::debug!("QualityUpperBoundSolver - states: {num_states}, values: {num_values}");
     }

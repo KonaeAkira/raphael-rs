@@ -25,7 +25,7 @@ impl ReducedState {
         {
             state.cp += durability_cost * 4;
         }
-        state.cp += state.durability as i16 / 5 * durability_cost;
+        state.cp += state.durability / 5 * durability_cost;
         state.durability = settings.max_durability();
         Self::from_simulation_state_inner(&state, settings, durability_cost)
     }
@@ -80,7 +80,7 @@ impl ReducedState {
             && self.effects.innovation() == 0
             && self.effects.great_strides() == 0
             && self.effects.guard() == 0
-            && self.effects.quick_innovation_available() == false
+            && !self.effects.quick_innovation_available()
     }
 
     fn strip_quality_attributes(&mut self) {
