@@ -6,10 +6,10 @@ use super::{Dominate, ParetoFront};
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Value {
     cp: i16,
-    quality: u16,
-    unreliable_quality: u16,
+    quality: u32,
+    unreliable_quality: u32,
     inner_quiet: u8,
-    durability: i8,
+    durability: i16,
 }
 
 impl Value {
@@ -37,7 +37,7 @@ impl Dominate for Value {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Key {
-    progress: u16,
+    progress: u32,
     effects: Effects,
     combo: Combo,
 }
@@ -47,7 +47,7 @@ impl Key {
         Self {
             progress: state.progress,
             effects: state.effects.with_inner_quiet(0), // iq is included in the pareto value
-            combo: state.combo,
+            combo: state.effects.combo(),
         }
     }
 }

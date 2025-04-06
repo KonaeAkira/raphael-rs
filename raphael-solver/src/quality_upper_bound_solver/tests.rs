@@ -8,11 +8,9 @@ use crate::{
 
 use super::QualityUpperBoundSolver;
 
-fn solve(simulator_settings: Settings, actions: &[Action]) -> u16 {
-    let state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::from_macro(&simulator_settings, actions).unwrap()
-    };
+fn solve(simulator_settings: Settings, actions: &[Action]) -> u32 {
+    let mut state = SimulationState::from_macro(&simulator_settings, actions).unwrap();
+    state.effects.set_combo(Combo::None);
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
@@ -460,12 +458,11 @@ fn random_effects(adversarial: bool) -> Effects {
 fn random_state(settings: &Settings) -> SimulationState {
     SimulationState {
         cp: rand::thread_rng().gen_range(0..=settings.max_cp),
-        durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
-        progress: rand::thread_rng().gen_range(0..settings.max_progress),
+        durability: rand::thread_rng().gen_range(1..=(i16::from(settings.max_durability) / 5)) * 5,
+        progress: rand::thread_rng().gen_range(0..u32::from(settings.max_progress)),
         quality: 0,
         unreliable_quality: 0,
         effects: random_effects(settings.adversarial),
-        combo: Combo::None,
     }
     .try_into()
     .unwrap()
@@ -488,8 +485,8 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
             let child_upper_bound = match use_action_combo(&solver_settings, state, *action) {
                 Ok(child) => match child.is_final(&simulator_settings) {
                     false => solver.quality_upper_bound(child).unwrap(),
-                    true if child.progress >= simulator_settings.max_progress => {
-                        std::cmp::min(simulator_settings.max_quality, child.quality)
+                    true if child.progress >= u32::from(simulator_settings.max_progress) => {
+                        std::cmp::min(u32::from(simulator_settings.max_quality), child.quality)
                     }
                     true => 0,
                 },

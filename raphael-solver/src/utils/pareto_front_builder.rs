@@ -17,7 +17,7 @@ where
 {
     segments: Vec<usize>, // indices to the beginning of each segment
     buffer: Vec<ParetoValue<T, U>>,
-    merge_buffer: [ParetoValue<T, U>; 1024],
+    merge_buffer: [ParetoValue<T, U>; 512],
     // cut-off values
     max_first: T,
     max_second: U,
@@ -30,9 +30,9 @@ where
 {
     pub fn new(max_first: T, max_second: U) -> Self {
         Self {
-            segments: Vec::with_capacity(1 << 12),
-            buffer: Vec::with_capacity(1 << 12),
-            merge_buffer: [ParetoValue::default(); 1024],
+            segments: Vec::new(),
+            buffer: Vec::new(),
+            merge_buffer: [ParetoValue::default(); 512],
             max_first,
             max_second,
         }

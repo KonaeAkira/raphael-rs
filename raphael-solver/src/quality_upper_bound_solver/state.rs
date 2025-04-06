@@ -25,8 +25,8 @@ impl ReducedState {
         {
             state.cp += durability_cost * 4;
         }
-        state.cp += state.durability as i16 / 5 * durability_cost;
-        state.durability = settings.simulator_settings.max_durability;
+        state.cp += state.durability / 5 * durability_cost;
+        state.durability = settings.max_durability();
         Self::from_simulation_state_inner(&state, settings, durability_cost)
     }
 
@@ -36,14 +36,14 @@ impl ReducedState {
         durability_cost: i16,
     ) -> Self {
         let progress_only = is_progress_only_state(settings, state);
-        let used_durability = (settings.simulator_settings.max_durability - state.durability) / 5;
-        let cp = state.cp - used_durability as i16 * durability_cost;
+        let used_durability = settings.max_durability() - state.durability;
+        let cp = state.cp - used_durability / 5 * durability_cost;
         let compressed_unreliable_quality = if progress_only {
             0
         } else {
             state
                 .unreliable_quality
-                .div_ceil(2 * settings.simulator_settings.base_quality) as u8
+                .div_ceil(2 * settings.base_quality()) as u8
         };
         let effects = {
             let great_strides_active = state.effects.great_strides() != 0;
@@ -62,17 +62,15 @@ impl ReducedState {
         }
     }
 
-    fn to_simulation_state(self, settings: &Settings) -> SimulationState {
+    fn to_simulation_state(self, settings: &SolverSettings) -> SimulationState {
         SimulationState {
-            durability: settings.max_durability,
+            durability: settings.max_durability(),
             cp: self.cp,
             progress: 0,
             quality: 0,
-            unreliable_quality: self.compressed_unreliable_quality as u16
-                * settings.base_quality
-                * 2,
+            unreliable_quality: u32::from(self.compressed_unreliable_quality)
+                * (2 * settings.base_quality()),
             effects: self.effects,
-            combo: Combo::None,
         }
     }
 
@@ -82,7 +80,7 @@ impl ReducedState {
             && self.effects.innovation() == 0
             && self.effects.great_strides() == 0
             && self.effects.guard() == 0
-            && self.effects.quick_innovation_available() == false
+            && !self.effects.quick_innovation_available()
     }
 
     fn strip_quality_attributes(&mut self) {
@@ -99,14 +97,14 @@ impl ReducedState {
         action: ActionCombo,
         settings: &SolverSettings,
         durability_cost: i16,
-    ) -> Result<(Self, u16, u16), &'static str> {
+    ) -> Result<(Self, u32, u32), &'static str> {
         match action {
             ActionCombo::Single(
                 Action::MasterMend | Action::ImmaculateMend | Action::Manipulation,
             ) => Err("Action not supported"),
             _ => {
                 let progress_only = self.progress_only;
-                let state = self.to_simulation_state(&settings.simulator_settings);
+                let state = self.to_simulation_state(settings);
                 match use_action_combo(settings, state, action) {
                     Ok(state) => {
                         let mut solver_state =

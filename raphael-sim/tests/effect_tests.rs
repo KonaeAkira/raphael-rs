@@ -17,11 +17,11 @@ const SETTINGS: Settings = Settings {
 /// - Quality
 /// - Durability (used)
 /// - CP (used)
-fn primary_stats(state: &SimulationState, settings: &Settings) -> (u16, u16, i8, i16) {
+fn primary_stats(state: &SimulationState, settings: &Settings) -> (u32, u32, i16, i16) {
     (
         state.progress,
         state.quality,
-        settings.max_durability - state.durability,
+        i16::from(SETTINGS.max_durability) - state.durability,
         settings.max_cp - state.cp,
     )
 }

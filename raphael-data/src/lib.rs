@@ -47,7 +47,7 @@ pub struct Recipe {
     pub recipe_level: u16,
     pub progress: u16,
     pub quality: u16,
-    pub durability: i8,
+    pub durability: i16,
     pub material_quality_factor: u16,
     pub ingredients: [Ingredient; 6],
     pub is_expert: bool,
@@ -141,7 +141,9 @@ const HQ_LOOKUP: [u8; 101] = [
     71, 74, 76, 78, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 94, 96, 98, 100,
 ];
 
-pub fn hq_percentage(quality: u16, max_quality: u16) -> Option<u8> {
-    let ratio = (quality as usize * 100).checked_div(max_quality as usize)?;
-    Some(HQ_LOOKUP[std::cmp::min(ratio, 100)])
+pub fn hq_percentage(quality: impl Into<u32>, max_quality: impl Into<u32>) -> Option<u8> {
+    let quality: u32 = quality.into();
+    let max_quality: u32 = max_quality.into();
+    let ratio = (quality * 100).checked_div(max_quality)?;
+    Some(HQ_LOOKUP[std::cmp::min(ratio as usize, 100)])
 }

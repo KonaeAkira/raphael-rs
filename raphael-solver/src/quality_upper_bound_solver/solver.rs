@@ -11,8 +11,8 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use super::state::ReducedState;
 
-type ParetoValue = utils::ParetoValue<u16, u16>;
-type ParetoFrontBuilder = utils::ParetoFrontBuilder<u16, u16>;
+type ParetoValue = utils::ParetoValue<u32, u32>;
+type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
 type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 pub struct QualityUpperBoundSolver {
@@ -26,15 +26,14 @@ pub struct QualityUpperBoundSolver {
 impl QualityUpperBoundSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         let durability_cost = durability_cost(&settings.simulator_settings);
-        settings.simulator_settings.max_cp +=
-            durability_cost * (settings.simulator_settings.max_durability as i16 / 5);
+        settings.simulator_settings.max_cp += durability_cost * (settings.max_durability() / 5);
         Self {
             settings,
             interrupt_signal,
             solved_states: SolvedStates::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
-                settings.simulator_settings.max_progress,
-                settings.simulator_settings.max_quality,
+                settings.max_progress(),
+                settings.max_quality(),
             ),
             durability_cost,
         }
@@ -57,15 +56,15 @@ impl QualityUpperBoundSolver {
             let solved_mtx = Arc::new(Mutex::new(&mut solved));
             let init = || {
                 let pareto_front_builder = ParetoFrontBuilder::new(
-                    self.settings.simulator_settings.max_progress,
-                    self.settings.simulator_settings.max_quality,
+                    self.settings.max_progress(),
+                    self.settings.max_quality(),
                 );
                 (solved_mtx.clone(), pareto_front_builder)
             };
             templates
                 .par_iter()
                 .filter(|state| {
-                    let missing_cp = self.settings.simulator_settings.max_cp - cp;
+                    let missing_cp = self.settings.max_cp() - cp;
                     minimum_cp_cost(state, cost_per_inner_quiet_tick) <= missing_cp
                 })
                 .for_each_init(init, |(solved_mtx, pareto_front_builder), &state| {
@@ -107,8 +106,8 @@ impl QualityUpperBoundSolver {
                         .unwrap()
                         .iter_mut()
                         .for_each(|value| {
-                            value.first = value.first.saturating_add(progress);
-                            value.second = value.second.saturating_add(quality);
+                            value.first += progress;
+                            value.second += quality;
                         });
                     pareto_front_builder.merge();
                 } else if new_state.cp >= -self.durability_cost && progress != 0 {
@@ -122,27 +121,24 @@ impl QualityUpperBoundSolver {
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u16, SolverException> {
-        if state.combo != Combo::None {
+    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u32, SolverException> {
+        if state.effects.combo() != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in quality upper bound solver",
-                state.combo
+                state.effects.combo()
             )));
         }
 
         let reduced_state =
             ReducedState::from_simulation_state(state, &self.settings, self.durability_cost);
-        let required_progress = self.settings.simulator_settings.max_progress - state.progress;
+        let required_progress = self.settings.max_progress() - state.progress;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
             let quality = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality.saturating_add(value.second));
-            return Ok(std::cmp::min(
-                self.settings.simulator_settings.max_quality,
-                quality,
-            ));
+                .map_or(0, |value| state.quality + value.second);
+            return Ok(std::cmp::min(self.settings.max_quality(), quality));
         }
 
         self.pareto_front_builder.clear();
@@ -152,11 +148,8 @@ impl QualityUpperBoundSolver {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
             let quality = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality.saturating_add(value.second));
-            Ok(std::cmp::min(
-                self.settings.simulator_settings.max_quality,
-                quality,
-            ))
+                .map_or(0, |value| state.quality + value.second);
+            Ok(std::cmp::min(self.settings.max_quality(), quality))
         } else {
             unreachable!("State must be in memoization table after solver")
         }
@@ -205,8 +198,8 @@ impl QualityUpperBoundSolver {
                     .unwrap()
                     .iter_mut()
                     .for_each(|value| {
-                        value.first = value.first.saturating_add(progress);
-                        value.second = value.second.saturating_add(quality);
+                        value.first += progress;
+                        value.second += quality;
                     });
                 self.pareto_front_builder.merge();
             } else if new_state.cp >= -self.durability_cost && progress != 0 {
@@ -226,8 +219,8 @@ impl Drop for QualityUpperBoundSolver {
         let num_states = self.solved_states.len();
         let num_values = self
             .solved_states
-            .iter()
-            .map(|(_key, value)| value.len())
+            .values()
+            .map(|value| value.len())
             .sum::<usize>();
         log::debug!("QualityUpperBoundSolver - states: {num_states}, values: {num_values}");
     }
@@ -342,7 +335,7 @@ fn templates_for_precompute(settings: &Settings) -> Box<[ReducedState]> {
 
             let max_compressed_unreliable_quality = if settings.adversarial {
                 // Maximum quality potency of the last quality-action based on current InnerQuiet
-                const MAX_QUALITY_POTENCY: [u16; 11] = [
+                const MAX_QUALITY_POTENCY: [u32; 11] = [
                     1500, // ByregotsBlessing at 10 InnerQuiet + Innovation + GreatStrides
                     375,  // AdvancedTouch at 0 InnerQuiet + Innovation + GreatStrides
                     500,  // PreparatoryTouch at 0 InnerQuiet + Innovation + GreatStrides

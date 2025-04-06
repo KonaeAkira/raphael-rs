@@ -17,7 +17,7 @@ use std::vec::Vec;
 
 #[derive(Clone)]
 struct Solution {
-    score: (SearchScore, u16),
+    score: (SearchScore, u32),
     solver_actions: Vec<ActionCombo>,
 }
 
@@ -80,13 +80,12 @@ impl<'a> MacroSolver<'a> {
         _ = rayon::join(
             || {
                 let _timer = ScopedTimer::new("Quality UB Solver");
-                self.quality_ub_solver
-                    .precompute(self.settings.simulator_settings.max_cp)
+                self.quality_ub_solver.precompute(self.settings.max_cp())
             },
             || {
                 let _timer = ScopedTimer::new("Step LB Solver");
                 let mut seed_state = SimulationState::new(&self.settings.simulator_settings);
-                seed_state.combo = Combo::None;
+                seed_state.effects.set_combo(Combo::None);
                 self.step_lb_solver.step_lower_bound(seed_state, 0)
             },
         );
@@ -141,33 +140,31 @@ impl<'a> MacroSolver<'a> {
                         search_queue.update_min_score(SearchScore {
                             quality_upper_bound: std::cmp::min(
                                 state.quality,
-                                self.settings.simulator_settings.max_quality,
+                                self.settings.max_quality(),
                             ),
                             ..SearchScore::MIN
                         });
 
-                        let quality_upper_bound =
-                            if state.quality >= self.settings.simulator_settings.max_quality {
-                                self.settings.simulator_settings.max_quality
-                            } else {
-                                std::cmp::min(
-                                    score.quality_upper_bound,
-                                    self.quality_ub_solver.quality_upper_bound(state)?,
-                                )
-                            };
+                        let quality_upper_bound = if state.quality >= self.settings.max_quality() {
+                            self.settings.max_quality()
+                        } else {
+                            std::cmp::min(
+                                score.quality_upper_bound,
+                                self.quality_ub_solver.quality_upper_bound(state)?,
+                            )
+                        };
 
                         let step_lb_hint = score
                             .steps_lower_bound
                             .saturating_sub(score.current_steps + action.steps());
-                        let steps_lower_bound = match quality_upper_bound
-                            >= self.settings.simulator_settings.max_quality
-                        {
-                            true => self
-                                .step_lb_solver
-                                .step_lower_bound(state, step_lb_hint)?
-                                .saturating_add(score.current_steps + action.steps()),
-                            false => score.current_steps + action.steps(),
-                        };
+                        let steps_lower_bound =
+                            match quality_upper_bound >= self.settings.max_quality() {
+                                true => self
+                                    .step_lb_solver
+                                    .step_lower_bound(state, step_lb_hint)?
+                                    .saturating_add(score.current_steps + action.steps()),
+                                false => score.current_steps + action.steps(),
+                            };
 
                         search_queue.push(
                             state,
@@ -183,11 +180,11 @@ impl<'a> MacroSolver<'a> {
                             *action,
                             backtrack_id,
                         );
-                    } else if state.progress >= self.settings.simulator_settings.max_progress {
+                    } else if state.progress >= self.settings.max_progress() {
                         let solution_score = SearchScore {
                             quality_upper_bound: std::cmp::min(
                                 state.quality,
-                                self.settings.simulator_settings.max_quality,
+                                self.settings.max_quality(),
                             ),
                             steps_lower_bound: score.current_steps + action.steps(),
                             duration_lower_bound: score.current_duration + action.duration(),

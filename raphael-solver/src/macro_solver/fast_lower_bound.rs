@@ -9,7 +9,7 @@ use crate::{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Node {
-    quality_upper_bound: u16,
+    quality_upper_bound: u32,
     state: SimulationState,
 }
 
@@ -33,12 +33,12 @@ pub fn fast_lower_bound(
     interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
     quality_ub_solver: &mut QualityUpperBoundSolver,
-) -> Result<u16, SolverException> {
+) -> Result<u32, SolverException> {
     let _timer = ScopedTimer::new("Fast lower bound");
 
     let mut search_queue = std::collections::BinaryHeap::default();
     let initial_node = Node {
-        quality_upper_bound: settings.simulator_settings.max_quality,
+        quality_upper_bound: settings.max_quality(),
         state: initial_state,
     };
     search_queue.push(initial_node);
@@ -82,10 +82,7 @@ pub fn fast_lower_bound(
         }
     }
 
-    Ok(std::cmp::min(
-        settings.simulator_settings.max_quality,
-        best_achieved_quality,
-    ))
+    Ok(std::cmp::min(settings.max_quality(), best_achieved_quality))
 }
 
 fn should_use_action(
@@ -94,7 +91,7 @@ fn should_use_action(
     allowed_actions: ActionMask,
 ) -> bool {
     // Force the use of an opener if one is available
-    if state.combo == Combo::SynthesisBegin {
+    if state.effects.combo() == Combo::SynthesisBegin {
         let action_is_opener = matches!(
             action,
             ActionCombo::Single(Action::Reflect | Action::MuscleMemory | Action::TrainedEye)

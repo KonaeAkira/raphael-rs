@@ -12,8 +12,8 @@ use raphael_sim::*;
 
 use super::state::ReducedState;
 
-type ParetoValue = utils::ParetoValue<u16, u16>;
-type ParetoFrontBuilder = utils::ParetoFrontBuilder<u16, u16>;
+type ParetoValue = utils::ParetoValue<u32, u32>;
+type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
 type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 pub struct StepLowerBoundSolver {
@@ -31,8 +31,8 @@ impl StepLowerBoundSolver {
             interrupt_signal,
             solved_states: SolvedStates::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
-                settings.simulator_settings.max_progress,
-                settings.simulator_settings.max_quality,
+                settings.max_progress(),
+                settings.max_quality(),
             ),
         }
     }
@@ -44,13 +44,13 @@ impl StepLowerBoundSolver {
     ) -> Result<u8, SolverException> {
         if self.settings.backload_progress
             && state.progress != 0
-            && state.quality < self.settings.simulator_settings.max_quality
+            && state.quality < self.settings.max_quality()
         {
             return Ok(u8::MAX);
         }
         let mut hint = NonZeroU8::try_from(std::cmp::max(hint, 1)).unwrap();
         while hint.get() != u8::MAX
-            && self.quality_upper_bound(state, hint)? < self.settings.simulator_settings.max_quality
+            && self.quality_upper_bound(state, hint)? < self.settings.max_quality()
         {
             hint = hint.saturating_add(1);
         }
@@ -61,27 +61,24 @@ impl StepLowerBoundSolver {
         &mut self,
         state: SimulationState,
         step_budget: NonZeroU8,
-    ) -> Result<u16, SolverException> {
-        if state.combo != Combo::None {
+    ) -> Result<u32, SolverException> {
+        if state.effects.combo() != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in step lower bound solver",
-                state.combo
+                state.effects.combo()
             )));
         }
 
         let progress_only = is_progress_only_state(&self.settings, &state);
         let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
-        let required_progress = self.settings.simulator_settings.max_progress - state.progress;
+        let required_progress = self.settings.max_progress() - state.progress;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
             let quality = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality.saturating_add(value.second));
-            return Ok(std::cmp::min(
-                self.settings.simulator_settings.max_quality,
-                quality,
-            ));
+                .map_or(0, |value| state.quality + value.second);
+            return Ok(std::cmp::min(self.settings.max_quality(), quality));
         }
 
         self.solve_state(reduced_state)?;
@@ -90,11 +87,8 @@ impl StepLowerBoundSolver {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
             let quality = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality.saturating_add(value.second));
-            Ok(std::cmp::min(
-                self.settings.simulator_settings.max_quality,
-                quality,
-            ))
+                .map_or(0, |value| state.quality + value.second);
+            Ok(std::cmp::min(self.settings.max_quality(), quality))
         } else {
             unreachable!("State must be in memoization table after solver")
         }
@@ -153,8 +147,8 @@ impl StepLowerBoundSolver {
                         .unwrap()
                         .iter_mut()
                         .for_each(|value| {
-                            value.first = value.first.saturating_add(action_progress);
-                            value.second = value.second.saturating_add(action_quality);
+                            value.first += action_progress;
+                            value.second += action_quality;
                         });
                     self.pareto_front_builder.merge();
                 }
@@ -179,8 +173,8 @@ impl Drop for StepLowerBoundSolver {
         let num_states = self.solved_states.len();
         let num_values = self
             .solved_states
-            .iter()
-            .map(|(_key, value)| value.len())
+            .values()
+            .map(|value| value.len())
             .sum::<usize>();
         log::debug!("StepLowerBoundSolver - states: {num_states}, values: {num_values}");
     }

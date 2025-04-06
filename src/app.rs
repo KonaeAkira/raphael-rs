@@ -815,7 +815,7 @@ impl MacroSolverApp {
             );
         });
 
-        game_settings.max_quality = target_quality.saturating_sub(initial_quality);
+        game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
         spawn_solver(
             self.solver_config,
             game_settings,
@@ -956,7 +956,7 @@ fn spawn_solver(
                     let quality =
                         raphael_solver::test_utils::get_quality(&simulator_settings, &actions);
                     solver_events.push_back(SolverEvent::Actions(actions));
-                    if quality >= simulator_settings.max_quality {
+                    if quality >= u32::from(simulator_settings.max_quality) {
                         solver_events.push_back(SolverEvent::Finished(None));
                         return;
                     }
@@ -1007,7 +1007,7 @@ fn fetch_latest_version(latest_version: Arc<Mutex<semver::Version>>) {
         request,
         move |result: ehttp::Result<ehttp::Response>| match result {
             Ok(response) => match response.json::<ApiResponse>() {
-                Ok(data) => match semver::Version::parse(data.tag_name.trim_start_matches("v")) {
+                Ok(data) => match semver::Version::parse(data.tag_name.trim_start_matches('v')) {
                     Ok(version) => {
                         log::debug!("Latest version: {}", version);
                         *latest_version.lock().unwrap() = version;

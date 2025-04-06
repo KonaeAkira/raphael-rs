@@ -30,6 +30,38 @@ pub struct SolverSettings {
     pub allow_unsound_branch_pruning: bool,
 }
 
+impl SolverSettings {
+    pub fn max_durability(&self) -> i16 {
+        #[allow(clippy::useless_conversion)]
+        i16::from(self.simulator_settings.max_durability)
+    }
+
+    pub fn max_cp(&self) -> i16 {
+        #[allow(clippy::useless_conversion)]
+        i16::from(self.simulator_settings.max_cp)
+    }
+
+    pub fn max_progress(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
+        u32::from(self.simulator_settings.max_progress)
+    }
+
+    pub fn max_quality(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
+        u32::from(self.simulator_settings.max_quality)
+    }
+
+    pub fn base_progress(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
+        u32::from(self.simulator_settings.base_progress)
+    }
+
+    pub fn base_quality(&self) -> u32 {
+        #[allow(clippy::useless_conversion)]
+        u32::from(self.simulator_settings.base_quality)
+    }
+}
+
 pub mod test_utils {
     use crate::{MacroSolver, SolverException, SolverSettings, utils::AtomicFlag};
     use raphael_sim::*;
@@ -53,23 +85,23 @@ pub mod test_utils {
         .solve()
     }
 
-    pub fn get_score_quad(settings: &Settings, actions: &[Action]) -> (u16, u8, u8, u16) {
+    pub fn get_score_quad(settings: &Settings, actions: &[Action]) -> (u32, u8, u8, u32) {
         let quality = get_quality(settings, actions);
-        let capped_quality = std::cmp::min(quality, settings.max_quality);
-        let overflow_quality = quality.saturating_sub(settings.max_quality);
+        let capped_quality = std::cmp::min(quality, u32::from(settings.max_quality));
+        let overflow_quality = quality.saturating_sub(u32::from(settings.max_quality));
         let steps = actions.len() as u8;
         let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
         (capped_quality, steps, duration, overflow_quality)
     }
 
-    pub fn get_quality(settings: &Settings, actions: &[Action]) -> u16 {
+    pub fn get_quality(settings: &Settings, actions: &[Action]) -> u32 {
         let mut state = SimulationState::new(settings);
         for action in actions {
             state = state
                 .use_action(*action, Condition::Normal, settings)
                 .unwrap();
         }
-        assert!(state.progress >= settings.max_progress);
+        assert!(state.progress >= u32::from(settings.max_progress));
         state.quality
     }
 

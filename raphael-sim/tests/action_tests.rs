@@ -17,11 +17,11 @@ const SETTINGS: Settings = Settings {
 /// - Quality
 /// - Durability (used)
 /// - CP (used)
-fn primary_stats(state: &SimulationState, settings: &Settings) -> (u16, u16, i8, i16) {
+fn primary_stats(state: &SimulationState, settings: &Settings) -> (u32, u32, i16, i16) {
     (
         state.progress,
         state.quality,
-        settings.max_durability - state.durability,
+        i16::from(SETTINGS.max_durability) - state.durability,
         settings.max_cp - state.cp,
     )
 }
@@ -55,14 +55,14 @@ fn test_basic_touch() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 100, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 1);
-    assert_eq!(state.combo, Combo::BasicTouch);
+    assert_eq!(state.effects.combo(), Combo::BasicTouch);
 }
 
 #[test]
 fn test_master_mend() {
     // Durability-restore fully utilized
     let initial_state = SimulationState {
-        durability: SETTINGS.max_durability - 40,
+        durability: i16::from(SETTINGS.max_durability) - 40,
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
@@ -71,7 +71,7 @@ fn test_master_mend() {
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 10, 88));
     // Durability-restore partially utilized
     let initial_state = SimulationState {
-        durability: SETTINGS.max_durability - 10,
+        durability: i16::from(SETTINGS.max_durability) - 10,
         ..SimulationState::new(&SETTINGS)
     };
     let state = initial_state
@@ -86,7 +86,7 @@ fn test_observe() {
         .use_action(Action::Observe, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 7));
-    assert_eq!(state.combo, Combo::StandardTouch);
+    assert_eq!(state.effects.combo(), Combo::StandardTouch);
 }
 
 #[test]
@@ -157,18 +157,16 @@ fn test_standard_touch() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 125, 10, 32));
     assert_eq!(state.effects.inner_quiet(), 1);
-    assert_eq!(state.combo, Combo::None);
+    assert_eq!(state.effects.combo(), Combo::None);
     // Combo requirement fulfilled
-    let initial_state = SimulationState {
-        combo: Combo::BasicTouch,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::BasicTouch);
     let state = initial_state
         .use_action(Action::StandardTouch, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 125, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 1);
-    assert_eq!(state.combo, Combo::StandardTouch);
+    assert_eq!(state.effects.combo(), Combo::StandardTouch);
 }
 
 #[test]
@@ -272,10 +270,8 @@ fn test_precise_touch() {
 #[test]
 fn test_muscle_memory() {
     // Precondition unfulfilled
-    let initial_state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::None);
     let error = initial_state
         .use_action(Action::MuscleMemory, Condition::Normal, &SETTINGS)
         .unwrap_err();
@@ -319,7 +315,7 @@ fn test_manipulation() {
     assert_eq!(state.effects.manipulation(), 8);
     // Using Manipulation while Manipulation is already active doesn't restore durability
     let initial_state = SimulationState {
-        durability: SETTINGS.max_durability - 5,
+        durability: i16::from(SETTINGS.max_durability) - 5,
         effects: Effects::new().with_manipulation(2),
         ..SimulationState::new(&SETTINGS)
     };
@@ -360,10 +356,8 @@ fn test_advanced_touch() {
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 150, 10, 46));
     assert_eq!(state.effects.inner_quiet(), 1);
     // Combo requirement fulfilled
-    let initial_state = SimulationState {
-        combo: Combo::StandardTouch,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::StandardTouch);
     let state = initial_state
         .use_action(Action::AdvancedTouch, Condition::Normal, &SETTINGS)
         .unwrap();
@@ -374,10 +368,8 @@ fn test_advanced_touch() {
 #[test]
 fn test_reflect() {
     // Precondition unfulfilled
-    let initial_state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::None);
     let error = initial_state
         .use_action(Action::Reflect, Condition::Normal, &SETTINGS)
         .unwrap_err();
@@ -425,7 +417,7 @@ fn test_groundwork() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (180, 0, SETTINGS.max_durability + 10, 18)
+        (180, 0, i16::from(SETTINGS.max_durability) + 10, 18)
     );
     // Potency isn't halved when Waste Not causes durability cost to fit into remaining durability
     let initial_state = SimulationState {
@@ -438,7 +430,7 @@ fn test_groundwork() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (360, 0, SETTINGS.max_durability, 18)
+        (360, 0, i16::from(SETTINGS.max_durability), 18)
     );
     // Potency isn't halved when Trained Perfection is active
     let initial_state = SimulationState {
@@ -451,7 +443,7 @@ fn test_groundwork() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (360, 0, SETTINGS.max_durability - 10, 18)
+        (360, 0, i16::from(SETTINGS.max_durability) - 10, 18)
     );
 }
 
@@ -517,10 +509,8 @@ fn test_intensive_synthesis() {
 #[test]
 fn test_trained_eye() {
     // Precondition unfulfilled
-    let initial_state = SimulationState {
-        combo: Combo::None,
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_combo(Combo::None);
     let error = initial_state
         .use_action(Action::TrainedEye, Condition::Normal, &SETTINGS)
         .unwrap_err();
@@ -531,7 +521,7 @@ fn test_trained_eye() {
         .unwrap();
     assert_eq!(
         primary_stats(&state, &SETTINGS),
-        (0, SETTINGS.max_quality, 10, 250)
+        (0, u32::from(SETTINGS.max_quality), 10, 250)
     );
     assert_eq!(state.effects.inner_quiet(), 1);
 }
@@ -592,7 +582,7 @@ fn test_immaculate_mend() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.durability, SETTINGS.max_durability);
+            assert_eq!(state.durability, i16::from(SETTINGS.max_durability));
         }
         Err(e) => panic!("Unexpected error: {}", e),
     }
@@ -610,7 +600,7 @@ fn test_trained_perfection() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.durability, SETTINGS.max_durability);
+            assert_eq!(state.durability, i16::from(SETTINGS.max_durability));
         }
         Err(e) => panic!("Unexpected error: {}", e),
     };
@@ -640,7 +630,7 @@ fn test_heart_and_soul() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.combo, Combo::None); // combo is removed
+            assert_eq!(state.effects.combo(), Combo::None); // combo is removed
             assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.heart_and_soul_available(), false);
@@ -710,7 +700,7 @@ fn test_quick_innovation() {
     );
     match state {
         Ok(state) => {
-            assert_eq!(state.combo, Combo::None); // combo is removed
+            assert_eq!(state.effects.combo(), Combo::None); // combo is removed
             assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.innovation(), 1);

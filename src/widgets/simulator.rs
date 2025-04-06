@@ -100,7 +100,7 @@ impl Simulator<'_> {
                         )
                         .text(progress_bar_text(
                             state.progress,
-                            self.settings.max_progress,
+                            u32::from(self.settings.max_progress),
                         ))
                         .corner_radius(0),
                     );
@@ -110,10 +110,13 @@ impl Simulator<'_> {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
                         ui.label("Quality");
                     });
-                    let quality = self.initial_quality + state.quality;
+                    let quality = u32::from(self.initial_quality) + state.quality;
                     ui.add(
                         egui::ProgressBar::new(quality as f32 / self.settings.max_quality as f32)
-                            .text(progress_bar_text(quality, self.settings.max_quality))
+                            .text(progress_bar_text(
+                                quality,
+                                u32::from(self.settings.max_quality),
+                            ))
                             .corner_radius(0),
                     );
                 });
@@ -128,7 +131,7 @@ impl Simulator<'_> {
                         )
                         .text(progress_bar_text(
                             state.durability,
-                            self.settings.max_durability,
+                            i16::from(self.settings.max_durability),
                         ))
                         .corner_radius(0),
                     );
@@ -154,7 +157,7 @@ impl Simulator<'_> {
                         }));
                         if !state.is_final(self.settings) {
                             // do nothing
-                        } else if state.progress < self.settings.max_progress {
+                        } else if state.progress < u32::from(self.settings.max_progress) {
                             ui.label("Synthesis failed");
                         } else if self.item.always_collectable {
                             let (t1, t2, t3) = (
@@ -162,16 +165,16 @@ impl Simulator<'_> {
                                 QualityTarget::CollectableT2.get_target(self.settings.max_quality),
                                 QualityTarget::CollectableT3.get_target(self.settings.max_quality),
                             );
-                            let tier = match self.initial_quality + state.quality {
-                                quality if quality >= t3 => 3,
-                                quality if quality >= t2 => 2,
-                                quality if quality >= t1 => 1,
+                            let tier = match u32::from(self.initial_quality) + state.quality {
+                                quality if quality >= u32::from(t3) => 3,
+                                quality if quality >= u32::from(t2) => 2,
+                                quality if quality >= u32::from(t1) => 1,
                                 _ => 0,
                             };
                             ui.label(format!("Tier {} collectable", tier));
                         } else {
                             let hq = raphael_data::hq_percentage(
-                                self.initial_quality + state.quality,
+                                u32::from(self.initial_quality) + state.quality,
                                 self.settings.max_quality,
                             )
                             .unwrap_or(0);
