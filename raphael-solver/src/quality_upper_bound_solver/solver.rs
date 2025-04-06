@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
@@ -52,27 +50,24 @@ impl QualityUpperBoundSolver {
             if self.interrupt_signal.is_set() {
                 return;
             }
-            let mut solved = Vec::new();
-            let solved_mtx = Arc::new(Mutex::new(&mut solved));
             let init = || {
-                let pareto_front_builder = ParetoFrontBuilder::new(
-                    self.settings.max_progress(),
-                    self.settings.max_quality(),
-                );
-                (solved_mtx.clone(), pareto_front_builder)
+                ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality())
             };
-            templates
+            let solved_states = templates
                 .par_iter()
                 .filter(|state| {
                     let missing_cp = self.settings.max_cp() - cp;
                     minimum_cp_cost(state, cost_per_inner_quiet_tick) <= missing_cp
                 })
-                .for_each_init(init, |(solved_mtx, pareto_front_builder), &state| {
+                .map_init(init, |pareto_front_builder, &state| {
                     let state = ReducedState { cp, ..state };
                     let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                    solved_mtx.lock().unwrap().push((state, pareto_front));
-                });
-            self.solved_states.extend(solved.into_iter());
+                    (state, pareto_front)
+                })
+                .collect_vec_list();
+            for thread_solved_states in solved_states {
+                self.solved_states.extend(thread_solved_states);
+            }
         }
         log::debug!(
             "QualityUpperBoundSolver - templates: {}, precomputed_states: {}",
