@@ -265,16 +265,20 @@ impl QualityUpperBoundSolver {
         }
         Ok(())
     }
+
+    pub fn computed_states(&self) -> usize {
+        self.solved_states.len()
+    }
+
+    pub fn computed_values(&self) -> usize {
+        self.solved_states.values().map(|value| value.len()).sum()
+    }
 }
 
 impl Drop for QualityUpperBoundSolver {
     fn drop(&mut self) {
-        let num_states = self.solved_states.len();
-        let num_values = self
-            .solved_states
-            .values()
-            .map(|value| value.len())
-            .sum::<usize>();
+        let num_states = self.computed_states();
+        let num_values = self.computed_values();
         log::debug!("QualityUpperBoundSolver - states: {num_states}, values: {num_values}");
     }
 }
