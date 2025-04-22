@@ -470,6 +470,35 @@ fn test_issue_113() {
     assert_eq!(solver.computed_values(), 214_671_922);
 }
 
+#[test]
+fn test_issue_118() {
+    let simulator_settings = Settings {
+        max_cp: 614,
+        max_durability: 20,
+        max_progress: 2310,
+        max_quality: 8400,
+        base_progress: 205,
+        base_quality: 240,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: true,
+    };
+
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+
+    solver.precompute(simulator_settings.max_cp);
+    assert_eq!(solver.computed_states(), 3_388_741);
+    assert_eq!(solver.computed_values(), 39_470_337);
+}
+
 fn random_effects(adversarial: bool) -> Effects {
     Effects::new()
         .with_inner_quiet(rand::thread_rng().gen_range(0..=10))
