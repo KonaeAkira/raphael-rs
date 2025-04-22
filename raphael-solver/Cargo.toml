@@ -16,7 +16,6 @@ rayon = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true, optional = true }
 web-time = { workspace = true }
-itertools = "0.14.0"
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]

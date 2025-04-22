@@ -3,7 +3,6 @@ use crate::{
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     utils,
 };
-use itertools::{Itertools, iproduct};
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
@@ -37,15 +36,64 @@ impl QualityUpperBoundSolver {
         }
     }
 
+    fn generate_precompute_templates(&self) -> Box<[(Template, i16)]> {
+        let mut templates = rustc_hash::FxHashMap::<Template, i16>::default();
+        let mut queue = std::collections::BinaryHeap::<Node>::default();
+
+        let initial_node = Node {
+            template: Template {
+                effects: Effects::initial(&self.settings.simulator_settings)
+                    .with_trained_perfection_available(false)
+                    .with_quick_innovation_available(false)
+                    .with_heart_and_soul_available(false)
+                    .with_combo(Combo::None),
+                compressed_unreliable_quality: 0,
+                progress_only: false,
+            },
+            required_cp: 0,
+        };
+        queue.push(initial_node);
+
+        while let Some(node) = queue.pop() {
+            if templates.contains_key(&node.template) {
+                continue;
+            }
+            templates.insert(node.template, node.required_cp);
+            let state = ReducedState {
+                cp: self.settings.max_cp(),
+                compressed_unreliable_quality: node.template.compressed_unreliable_quality,
+                progress_only: node.template.progress_only,
+                effects: node.template.effects,
+            };
+            for &action in FULL_SEARCH_ACTIONS {
+                if let Ok((new_state, _, _)) =
+                    state.use_action(action, &self.settings, self.durability_cost)
+                {
+                    let used_cp = self.settings.max_cp() - new_state.cp;
+                    let new_node = Node {
+                        template: Template {
+                            effects: new_state.effects,
+                            compressed_unreliable_quality: new_state.compressed_unreliable_quality,
+                            progress_only: new_state.progress_only,
+                        },
+                        required_cp: node.required_cp + used_cp,
+                    };
+                    if !templates.contains_key(&new_node.template) {
+                        queue.push(new_node);
+                    }
+                }
+            }
+        }
+
+        templates.into_iter().collect()
+    }
+
     pub fn precompute(&mut self, precompute_cp: i16) {
         if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
             return;
         }
-        let cost_per_inner_quiet_tick = minimum_cp_cost_per_inner_quiet_tick(
-            &self.settings.simulator_settings,
-            self.durability_cost,
-        );
-        let templates = templates_for_precompute(&self.settings.simulator_settings);
+
+        let templates = self.generate_precompute_templates();
         for cp in self.durability_cost..=precompute_cp {
             if self.interrupt_signal.is_set() {
                 return;
@@ -53,13 +101,22 @@ impl QualityUpperBoundSolver {
             let init = || {
                 ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality())
             };
+            let missing_cp = self.settings.max_cp() - cp;
             let solved_states = templates
                 .par_iter()
-                .filter(|state| {
-                    let missing_cp = self.settings.max_cp() - cp;
-                    minimum_cp_cost(state, cost_per_inner_quiet_tick) <= missing_cp
+                .filter_map(|(template, required_cp)| {
+                    if missing_cp >= *required_cp {
+                        Some(ReducedState {
+                            cp,
+                            compressed_unreliable_quality: template.compressed_unreliable_quality,
+                            progress_only: template.progress_only,
+                            effects: template.effects,
+                        })
+                    } else {
+                        None
+                    }
                 })
-                .map_init(init, |pareto_front_builder, &state| {
+                .map_init(init, |pareto_front_builder, state| {
                     let state = ReducedState { cp, ..state };
                     let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
                     (state, pareto_front)
@@ -69,6 +126,7 @@ impl QualityUpperBoundSolver {
                 self.solved_states.extend(thread_solved_states);
             }
         }
+
         log::debug!(
             "QualityUpperBoundSolver - templates: {}, precomputed_states: {}",
             templates.len(),
@@ -207,16 +265,20 @@ impl QualityUpperBoundSolver {
         }
         Ok(())
     }
+
+    pub fn computed_states(&self) -> usize {
+        self.solved_states.len()
+    }
+
+    pub fn computed_values(&self) -> usize {
+        self.solved_states.values().map(|value| value.len()).sum()
+    }
 }
 
 impl Drop for QualityUpperBoundSolver {
     fn drop(&mut self) {
-        let num_states = self.solved_states.len();
-        let num_values = self
-            .solved_states
-            .values()
-            .map(|value| value.len())
-            .sum::<usize>();
+        let num_states = self.computed_states();
+        let num_values = self.computed_values();
         log::debug!("QualityUpperBoundSolver - states: {num_states}, values: {num_values}");
     }
 }
@@ -239,129 +301,27 @@ fn durability_cost(settings: &Settings) -> i16 {
     cost
 }
 
-fn minimum_cp_cost_per_inner_quiet_tick(settings: &Settings, durability_cost: i16) -> i16 {
-    let mut cost_per_tick = BasicTouch::CP_COST + durability_cost;
-    if settings.is_action_allowed::<PreparatoryTouch>() {
-        cost_per_tick = std::cmp::min(
-            cost_per_tick,
-            (PreparatoryTouch::CP_COST + 2 * durability_cost) / 2,
-        );
-    }
-    if settings.is_action_allowed::<RefinedTouch>() {
-        cost_per_tick = std::cmp::min(
-            cost_per_tick,
-            (Observe::CP_COST + RefinedTouch::CP_COST + durability_cost) / 2,
-        );
-        cost_per_tick = std::cmp::min(
-            cost_per_tick,
-            (BasicTouch::CP_COST + RefinedTouch::CP_COST + 2 * durability_cost) / 3,
-        );
-    }
-    cost_per_tick
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct Template {
+    effects: Effects,
+    compressed_unreliable_quality: u8,
+    progress_only: bool,
 }
 
-/// Calculates a lower bound of the minimum CP cost to reach the given state from the initial state.
-fn minimum_cp_cost(state: &ReducedState, cost_per_inner_quiet_tick: i16) -> i16 {
-    let mut result = 0;
-    // InnerQuiet effect
-    result += state.effects.inner_quiet() as i16 * cost_per_inner_quiet_tick;
-    // WasteNot effect
-    if state.effects.waste_not() > 4 {
-        result += WasteNot2::CP_COST;
-    } else if state.effects.waste_not() > 0 {
-        result += WasteNot::CP_COST;
-    }
-    // Innovation effect
-    if state.effects.innovation() > 1 {
-        // Innovation = 1 could be because of QuickInnovation
-        result += Innovation::CP_COST;
-    }
-    // Veneration effect
-    if state.effects.veneration() > 0 {
-        result += Veneration::CP_COST;
-    }
-    // GreatStrides effect
-    if state.effects.great_strides() > 0 {
-        result += GreatStrides::CP_COST;
-    }
-    result
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct Node {
+    template: Template,
+    required_cp: i16,
 }
 
-fn templates_for_precompute(settings: &Settings) -> Box<[ReducedState]> {
-    let mut templates = rustc_hash::FxHashSet::<ReducedState>::default();
-    let mut add = |effects: Effects, compressed_unreliable_quality: u8| {
-        // TODO: add validity checks
-        if !settings.adversarial && (compressed_unreliable_quality != 0 || effects.guard() != 0) {
-            return;
-        }
-        if !settings.is_action_allowed::<QuickInnovation>() && effects.quick_innovation_available()
-        {
-            return;
-        }
-        let template = ReducedState {
-            effects,
-            compressed_unreliable_quality,
-            progress_only: false,
-            cp: 0,
-        };
-        templates.insert(template);
-        if template.has_no_quality_attributes() {
-            templates.insert(ReducedState {
-                progress_only: true,
-                ..template
-            });
-        }
-    };
-
-    for indices in (0..=8).permutations(3) {
-        let waste_not = 8u8.saturating_sub(indices[0]);
-        let innovation = 4u8.saturating_sub(indices[1]);
-        let veneration = 4u8.saturating_sub(indices[2]);
-        for (inner_quiet, great_strides) in iproduct!(0..=10, 0..=1) {
-            let effects = Effects::new()
-                .with_waste_not(waste_not)
-                .with_innovation(innovation)
-                .with_veneration(veneration)
-                .with_inner_quiet(inner_quiet)
-                .with_great_strides(great_strides * 3);
-
-            // TODO: handle quick innovation
-            // TODO: handle heart and soul
-
-            let max_compressed_unreliable_quality = if settings.adversarial {
-                // Maximum quality potency of the last quality-action based on current InnerQuiet
-                const MAX_QUALITY_POTENCY: [u32; 11] = [
-                    1500, // ByregotsBlessing at 10 InnerQuiet + Innovation + GreatStrides
-                    375,  // AdvancedTouch at 0 InnerQuiet + Innovation + GreatStrides
-                    500,  // PreparatoryTouch at 0 InnerQuiet + Innovation + GreatStrides
-                    550,  // PreparatoryTouch at 1 InnerQuiet + Innovation + GreatStrides
-                    600,  // PreparatoryTouch at 2 InnerQuiet + Innovation + GreatStrides
-                    650,  // PreparatoryTouch at 3 InnerQuiet + Innovation + GreatStrides
-                    700,  // PreparatoryTouch at 4 InnerQuiet + Innovation + GreatStrides
-                    750,  // PreparatoryTouch at 5 InnerQuiet + Innovation + GreatStrides
-                    800,  // PreparatoryTouch at 6 InnerQuiet + Innovation + GreatStrides
-                    850,  // PreparatoryTouch at 7 InnerQuiet + Innovation + GreatStrides
-                    1000, // PreparatoryTouch at 10 InnerQuiet + Innovation + GreatStrides
-                ];
-                // Unreliable quality is at most half of the last action's quality potency.
-                // Each point of compressed unreliable quality is equivalent to 200 unreliable quality potency.
-                let max_quality_potency = MAX_QUALITY_POTENCY[effects.inner_quiet() as usize];
-                max_quality_potency.div_ceil(2 * 200) as u8
-            } else {
-                0
-            };
-
-            for compressed_unreliable_quality in 0..=max_compressed_unreliable_quality {
-                add(effects, compressed_unreliable_quality);
-                if !indices.contains(&0) {
-                    // Use a quality-increasing action as the most recent action
-                    if settings.adversarial {
-                        add(effects.with_guard(1), compressed_unreliable_quality);
-                    }
-                }
-            }
-        }
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(other.required_cp.cmp(&self.required_cp))
     }
+}
 
-    templates.into_iter().collect()
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.required_cp.cmp(&self.required_cp)
+    }
 }
