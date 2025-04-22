@@ -74,15 +74,6 @@ impl ReducedState {
         }
     }
 
-    pub fn has_no_quality_attributes(&self) -> bool {
-        self.compressed_unreliable_quality == 0
-            && self.effects.inner_quiet() == 0
-            && self.effects.innovation() == 0
-            && self.effects.great_strides() == 0
-            && self.effects.guard() == 0
-            && !self.effects.quick_innovation_available()
-    }
-
     fn strip_quality_attributes(&mut self) {
         self.compressed_unreliable_quality = 0;
         self.effects.set_inner_quiet(0);
