@@ -231,6 +231,7 @@ impl Widget for RecipeSelect<'_> {
                         if ui.checkbox(&mut custom_recipe, "Custom").changed() {
                             if custom_recipe {
                                 self.recipe_config.recipe.item_id = 0;
+                                self.recipe_config.recipe.max_level_scaling = 0;
                                 self.recipe_config.recipe.material_quality_factor = 0;
                                 self.recipe_config.recipe.ingredients = [Ingredient::default(); 6];
                                 self.recipe_config.quality_source = QualitySource::Value(0);
