@@ -452,9 +452,11 @@ impl MacroSolverApp {
             self.solver_config.adversarial,
         );
         let initial_quality = match self.recipe_config.quality_source {
-            QualitySource::HqMaterialList(hq_materials) => {
-                raphael_data::get_initial_quality(self.recipe_config.recipe, hq_materials)
-            }
+            QualitySource::HqMaterialList(hq_materials) => raphael_data::get_initial_quality(
+                *self.crafter_config.active_stats(),
+                self.recipe_config.recipe,
+                hq_materials,
+            ),
             QualitySource::Value(quality) => quality,
         };
         let item = raphael_data::ITEMS
@@ -802,9 +804,11 @@ impl MacroSolverApp {
             .quality_target
             .get_target(game_settings.max_quality);
         let initial_quality = match self.recipe_config.quality_source {
-            QualitySource::HqMaterialList(hq_materials) => {
-                get_initial_quality(self.recipe_config.recipe, hq_materials)
-            }
+            QualitySource::HqMaterialList(hq_materials) => get_initial_quality(
+                *self.crafter_config.active_stats(),
+                self.recipe_config.recipe,
+                hq_materials,
+            ),
             QualitySource::Value(quality) => quality,
         };
 
