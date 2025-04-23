@@ -320,3 +320,69 @@ fn test_standard_indurate_rings_lv93() {
         }
     );
 }
+
+#[test]
+fn test_lunar_alloy_ingots_lv90() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825562688
+    let recipe = find_recipe("Lunar Alloy Ingots").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 90,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 80,
+            max_progress: 2345,
+            max_quality: 4248,
+            base_progress: 264,
+            base_quality: 267,
+            job_level: 90,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_standard_high_density_fiberboard_lv91() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825723068
+    let recipe = find_recipe("Standard High-density Fiberboard").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 91,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 40,
+            max_progress: 2440,
+            max_quality: 3936,
+            base_progress: 267,
+            base_quality: 315,
+            job_level: 91,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
