@@ -51,6 +51,7 @@ pub struct Recipe {
     pub material_quality_factor: u16,
     pub ingredients: [Ingredient; 6],
     pub is_expert: bool,
+    pub scales_with_level: bool,
 }
 
 pub const RLVLS: [RecipeLevel; 800] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));

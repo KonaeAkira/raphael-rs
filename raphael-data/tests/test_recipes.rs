@@ -60,6 +60,7 @@ fn test_medical_supplies() {
                 NO_INGREDIENT,
             ],
             is_expert: false,
+            scales_with_level: false,
         }
     );
 }
@@ -92,7 +93,8 @@ fn test_ipe_lumber() {
                 NO_INGREDIENT,
                 NO_INGREDIENT,
             ],
-            is_expert: false
+            is_expert: false,
+            scales_with_level: false,
         }
     );
 }
@@ -131,7 +133,54 @@ fn test_uncharted_course_resin() {
                 NO_INGREDIENT,
                 NO_INGREDIENT,
             ],
-            is_expert: true
+            is_expert: true,
+            scales_with_level: false,
+        }
+    );
+}
+
+#[test]
+fn test_habitat_chair() {
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    assert_eq!(
+        recipe,
+        Recipe {
+            job_id: 0,
+            item_id: 48295,
+            level: 100,
+            recipe_level: 690,
+            progress: 3564,
+            quality: 10440,
+            durability: 70,
+            material_quality_factor: 0,
+            ingredients: [
+                Ingredient {
+                    item_id: 48233,
+                    amount: 1
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                }
+            ],
+            is_expert: false,
+            scales_with_level: true,
         }
     );
 }
