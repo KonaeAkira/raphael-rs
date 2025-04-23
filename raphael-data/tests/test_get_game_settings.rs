@@ -223,6 +223,38 @@ fn test_claro_walnut_spinning_wheel() {
 }
 
 #[test]
+fn test_habitat_chair_lv100() {
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3849,
+        control: 4282,
+        cp: 614,
+        level: 100,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 614,
+            max_durability: 70,
+            max_progress: 3564,
+            max_quality: 10440,
+            base_progress: 205,
+            base_quality: 240,
+            job_level: 100,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
 fn test_habitat_chair_lv97() {
     // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825555081
     let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
