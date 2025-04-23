@@ -40,7 +40,10 @@ fn import_rlvl_records() -> Result<Vec<RecipeLevelRecord>, Box<dyn std::error::E
     for record in &rlvl_records {
         writeln!(
             writer,
-            "RecipeLevel {{ progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {}, conditions_flag: {} }},",
+            "RecipeLevel {{ job_level: {}, max_progress: {}, max_quality: {}, progress_div: {}, quality_div: {}, progress_mod: {}, quality_mod: {}, conditions_flag: {} }},",
+            record.level,
+            record.progress,
+            record.quality,
             record.progress_divider,
             record.quality_divider,
             record.progress_modifier,
@@ -94,13 +97,13 @@ fn import_recipe_records(
 
         let rlvl_record = &rlvls[recipe_record.recipe_level as usize];
         let recipe = format!(
-            "Recipe {{ job_id: {job_id}, item_id: {item_id}, level: {level}, recipe_level: {recipe_level}, progress: {progress}, quality: {quality}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients}, is_expert: {is_expert}, scales_with_level: {scales_with_level} }}",
+            "Recipe {{ job_id: {job_id}, item_id: {item_id}, level: {level}, recipe_level: {recipe_level}, progress_factor: {progress_factor}, quality_factor: {quality_factor}, durability: {durability}, material_quality_factor: {material_quality_factor}, ingredients: {ingredients}, is_expert: {is_expert}, scales_with_level: {scales_with_level} }}",
             job_id = recipe_record.job_id,
             item_id = recipe_record.resulting_item,
             level = rlvl_record.level,
             recipe_level = recipe_record.recipe_level,
-            progress = apply_factor(rlvl_record.progress, recipe_record.progress_factor),
-            quality = apply_factor(rlvl_record.quality, recipe_record.quality_factor),
+            progress_factor = recipe_record.progress_factor,
+            quality_factor = recipe_record.quality_factor,
             durability = apply_factor(rlvl_record.durability, recipe_record.durability_factor),
             material_quality_factor = recipe_record.material_quality_factor,
             ingredients = ingredients,

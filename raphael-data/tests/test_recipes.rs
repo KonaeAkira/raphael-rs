@@ -44,8 +44,8 @@ fn test_medical_supplies() {
             item_id: 33225,
             level: 72,
             recipe_level: 395,
-            progress: 1220,
-            quality: 3040,
+            progress_factor: 100,
+            quality_factor: 80,
             durability: 60,
             material_quality_factor: 0,
             ingredients: [
@@ -75,8 +75,8 @@ fn test_ipe_lumber() {
             item_id: 44149,
             level: 100,
             recipe_level: 710,
-            progress: 4125,
-            quality: 12000,
+            progress_factor: 55,
+            quality_factor: 80,
             durability: 35,
             material_quality_factor: 0,
             ingredients: [
@@ -109,8 +109,8 @@ fn test_uncharted_course_resin() {
             item_id: 39916,
             level: 90,
             recipe_level: 641,
-            progress: 8800,
-            quality: 18040,
+            progress_factor: 200,
+            quality_factor: 200,
             durability: 60,
             material_quality_factor: 0,
             ingredients: [
@@ -149,8 +149,8 @@ fn test_habitat_chair() {
             item_id: 48295,
             level: 100,
             recipe_level: 690,
-            progress: 3564,
-            quality: 10440,
+            progress_factor: 54,
+            quality_factor: 87,
             durability: 70,
             material_quality_factor: 0,
             ingredients: [

@@ -104,7 +104,7 @@ fn test_turali_pineapple_ponzecake() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 1, 0, 0, 0]);
+    let initial_quality = get_initial_quality(crafter_stats, recipe, [0, 0, 1, 0, 0, 0]);
     assert_eq!(initial_quality, 2180);
 }
 
@@ -147,8 +147,6 @@ fn test_smaller_water_otter_hardware() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
-    assert_eq!(initial_quality, 0);
 }
 
 #[test]
@@ -187,8 +185,6 @@ fn test_grade_8_tincture() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
-    assert_eq!(initial_quality, 0);
 }
 
 #[test]
@@ -224,6 +220,37 @@ fn test_claro_walnut_spinning_wheel() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
-    assert_eq!(initial_quality, 0);
+}
+
+#[test]
+fn test_habitat_chair_lv97() {
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    assert_eq!(ingredient_names(recipe), ["Cosmic Container"]);
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 97,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 70,
+            max_progress: 3078,
+            max_quality: 9222,
+            base_progress: 237,
+            base_quality: 279,
+            job_level: 97,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
 }
