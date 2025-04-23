@@ -224,8 +224,8 @@ fn test_claro_walnut_spinning_wheel() {
 
 #[test]
 fn test_habitat_chair_lv97() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825555081
     let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
-    assert_eq!(ingredient_names(recipe), ["Cosmic Container"]);
     let crafter_stats = CrafterStats {
         craftsmanship: 3796,
         control: 3447,
@@ -246,6 +246,72 @@ fn test_habitat_chair_lv97() {
             base_progress: 237,
             base_quality: 279,
             job_level: 97,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_habitat_chair_lv98() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825559687
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 98,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 70,
+            max_progress: 3240,
+            max_quality: 9570,
+            base_progress: 233,
+            base_quality: 274,
+            job_level: 98,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_standard_indurate_rings_lv93() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825560998
+    let recipe = find_recipe("Standard Indurate Rings").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 93,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 40,
+            max_progress: 2790,
+            max_quality: 4500,
+            base_progress: 256,
+            base_quality: 302,
+            job_level: 93,
             allowed_actions: ActionMask::all()
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul)

@@ -47,6 +47,7 @@ pub struct Recipe {
     pub job_id: u8,
     pub item_id: u32,
     pub level: u8,
+    pub max_level_scaling: u8,
     pub recipe_level: u16,
     pub progress_factor: u32,
     pub quality_factor: u32,
@@ -54,7 +55,6 @@ pub struct Recipe {
     pub material_quality_factor: u16,
     pub ingredients: [Ingredient; 6],
     pub is_expert: bool,
-    pub scales_with_level: bool,
 }
 
 pub const RLVLS: [RecipeLevel; 800] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));
@@ -69,12 +69,12 @@ pub fn get_game_settings(
     potion: Option<Consumable>,
     adversarial: bool,
 ) -> Settings {
-    let rlvl = if recipe.scales_with_level {
-        let scaled_rlvl = RLVLS
+    let rlvl = if recipe.max_level_scaling != 0 {
+        let job_level = std::cmp::min(recipe.max_level_scaling, crafter_stats.level);
+        RLVLS
             .iter()
-            .position(|rlvl_record| rlvl_record.job_level == crafter_stats.level)
-            .unwrap();
-        std::cmp::min(scaled_rlvl, recipe.recipe_level as usize)
+            .position(|rlvl_record| rlvl_record.job_level == job_level)
+            .unwrap()
     } else {
         recipe.recipe_level as usize
     };
@@ -142,12 +142,12 @@ pub fn get_initial_quality(
         }
     }
 
-    let rlvl = if recipe.scales_with_level {
-        let scaled_rlvl = RLVLS
+    let rlvl = if recipe.max_level_scaling != 0 {
+        let job_level = std::cmp::min(recipe.max_level_scaling, crafter_stats.level);
+        RLVLS
             .iter()
-            .position(|rlvl_record| rlvl_record.job_level == crafter_stats.level)
-            .unwrap();
-        std::cmp::min(scaled_rlvl, recipe.recipe_level as usize)
+            .position(|rlvl_record| rlvl_record.job_level == job_level)
+            .unwrap()
     } else {
         recipe.recipe_level as usize
     };

@@ -91,6 +91,8 @@ pub struct RecipeRecord {
     pub resulting_item: u32,
     #[serde(rename = "CraftType")]
     pub job_id: u8,
+    #[serde(rename = "MaxLevelScaling")]
+    pub max_level_scaling: u8,
 
     #[serde(rename = "RecipeLevelTable")]
     pub recipe_level: u32,
@@ -131,10 +133,6 @@ pub struct RecipeRecord {
     #[serde(rename = "IsExpert")]
     #[serde(deserialize_with = "bool_string")]
     pub is_expert: bool,
-
-    #[serde(rename = "Status{Required}")]
-    #[serde(deserialize_with = "bool_string")]
-    pub scales_with_level: bool,
 }
 
 #[derive(Deserialize)]

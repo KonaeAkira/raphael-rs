@@ -43,6 +43,7 @@ fn test_medical_supplies() {
             job_id: 0,
             item_id: 33225,
             level: 72,
+            max_level_scaling: 0,
             recipe_level: 395,
             progress_factor: 100,
             quality_factor: 80,
@@ -60,7 +61,6 @@ fn test_medical_supplies() {
                 NO_INGREDIENT,
             ],
             is_expert: false,
-            scales_with_level: false,
         }
     );
 }
@@ -74,6 +74,7 @@ fn test_ipe_lumber() {
             job_id: 0,
             item_id: 44149,
             level: 100,
+            max_level_scaling: 0,
             recipe_level: 710,
             progress_factor: 55,
             quality_factor: 80,
@@ -94,7 +95,6 @@ fn test_ipe_lumber() {
                 NO_INGREDIENT,
             ],
             is_expert: false,
-            scales_with_level: false,
         }
     );
 }
@@ -108,6 +108,7 @@ fn test_uncharted_course_resin() {
             job_id: 6,
             item_id: 39916,
             level: 90,
+            max_level_scaling: 0,
             recipe_level: 641,
             progress_factor: 200,
             quality_factor: 200,
@@ -134,7 +135,6 @@ fn test_uncharted_course_resin() {
                 NO_INGREDIENT,
             ],
             is_expert: true,
-            scales_with_level: false,
         }
     );
 }
@@ -148,6 +148,7 @@ fn test_habitat_chair() {
             job_id: 0,
             item_id: 48295,
             level: 100,
+            max_level_scaling: 100,
             recipe_level: 690,
             progress_factor: 54,
             quality_factor: 87,
@@ -180,7 +181,6 @@ fn test_habitat_chair() {
                 }
             ],
             is_expert: false,
-            scales_with_level: true,
         }
     );
 }
