@@ -125,6 +125,8 @@ impl<'a> RecipeSelect<'a> {
             false,
         );
 
+        ui.label(egui::RichText::new("⚠ Only use custom recipes if you are an advanced user or if new recipes haven't been added yet. Patch 7.21 recipes are now fully supported.").small().color(ui.visuals().warn_fg_color));
+        ui.separator();
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -172,6 +174,14 @@ impl<'a> RecipeSelect<'a> {
             ui.separator();
             ui.vertical(|ui| {
                 let mut rlvl = RLVLS[self.recipe_config.recipe.recipe_level as usize];
+                ui.horizontal(|ui| {
+                    ui.label("Progress");
+                    ui.add_enabled(false, egui::DragValue::new(&mut rlvl.max_progress));
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Quality");
+                    ui.add_enabled(false, egui::DragValue::new(&mut rlvl.max_quality));
+                });
                 ui.horizontal(|ui| {
                     ui.label("Progress divider");
                     ui.add_enabled(false, egui::DragValue::new(&mut rlvl.progress_div));
