@@ -91,6 +91,8 @@ pub struct RecipeRecord {
     pub resulting_item: u32,
     #[serde(rename = "CraftType")]
     pub job_id: u8,
+    #[serde(rename = "MaxLevelScaling")]
+    pub max_level_scaling: u8,
 
     #[serde(rename = "RecipeLevelTable")]
     pub recipe_level: u32,

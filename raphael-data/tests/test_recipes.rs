@@ -43,9 +43,10 @@ fn test_medical_supplies() {
             job_id: 0,
             item_id: 33225,
             level: 72,
+            max_level_scaling: 0,
             recipe_level: 395,
-            progress: 1220,
-            quality: 3040,
+            progress_factor: 100,
+            quality_factor: 80,
             durability: 60,
             material_quality_factor: 0,
             ingredients: [
@@ -73,9 +74,10 @@ fn test_ipe_lumber() {
             job_id: 0,
             item_id: 44149,
             level: 100,
+            max_level_scaling: 0,
             recipe_level: 710,
-            progress: 4125,
-            quality: 12000,
+            progress_factor: 55,
+            quality_factor: 80,
             durability: 35,
             material_quality_factor: 0,
             ingredients: [
@@ -92,7 +94,7 @@ fn test_ipe_lumber() {
                 NO_INGREDIENT,
                 NO_INGREDIENT,
             ],
-            is_expert: false
+            is_expert: false,
         }
     );
 }
@@ -106,9 +108,10 @@ fn test_uncharted_course_resin() {
             job_id: 6,
             item_id: 39916,
             level: 90,
+            max_level_scaling: 0,
             recipe_level: 641,
-            progress: 8800,
-            quality: 18040,
+            progress_factor: 200,
+            quality_factor: 200,
             durability: 60,
             material_quality_factor: 0,
             ingredients: [
@@ -131,7 +134,53 @@ fn test_uncharted_course_resin() {
                 NO_INGREDIENT,
                 NO_INGREDIENT,
             ],
-            is_expert: true
+            is_expert: true,
+        }
+    );
+}
+
+#[test]
+fn test_habitat_chair() {
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    assert_eq!(
+        recipe,
+        Recipe {
+            job_id: 0,
+            item_id: 48295,
+            level: 100,
+            max_level_scaling: 100,
+            recipe_level: 690,
+            progress_factor: 54,
+            quality_factor: 87,
+            durability: 70,
+            material_quality_factor: 0,
+            ingredients: [
+                Ingredient {
+                    item_id: 48233,
+                    amount: 1
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                },
+                Ingredient {
+                    item_id: 0,
+                    amount: 0
+                }
+            ],
+            is_expert: false,
         }
     );
 }

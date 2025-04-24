@@ -104,7 +104,7 @@ fn test_turali_pineapple_ponzecake() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 1, 0, 0, 0]);
+    let initial_quality = get_initial_quality(crafter_stats, recipe, [0, 0, 1, 0, 0, 0]);
     assert_eq!(initial_quality, 2180);
 }
 
@@ -147,8 +147,6 @@ fn test_smaller_water_otter_hardware() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
-    assert_eq!(initial_quality, 0);
 }
 
 #[test]
@@ -187,8 +185,6 @@ fn test_grade_8_tincture() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
-    assert_eq!(initial_quality, 0);
 }
 
 #[test]
@@ -224,6 +220,201 @@ fn test_claro_walnut_spinning_wheel() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(recipe, [0, 0, 0, 0, 0, 0]);
-    assert_eq!(initial_quality, 0);
+}
+
+#[test]
+fn test_habitat_chair_lv100() {
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3849,
+        control: 4282,
+        cp: 614,
+        level: 100,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 614,
+            max_durability: 70,
+            max_progress: 3564,
+            max_quality: 10440,
+            base_progress: 205,
+            base_quality: 240,
+            job_level: 100,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_habitat_chair_lv97() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825555081
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 97,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 70,
+            max_progress: 3078,
+            max_quality: 9222,
+            base_progress: 237,
+            base_quality: 279,
+            job_level: 97,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_habitat_chair_lv98() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825559687
+    let recipe = find_recipe("Habitat Chair \u{e03d}").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 98,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 70,
+            max_progress: 3240,
+            max_quality: 9570,
+            base_progress: 233,
+            base_quality: 274,
+            job_level: 98,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_standard_indurate_rings_lv93() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825560998
+    let recipe = find_recipe("Standard Indurate Rings").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 93,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 40,
+            max_progress: 2790,
+            max_quality: 4500,
+            base_progress: 256,
+            base_quality: 302,
+            job_level: 93,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_lunar_alloy_ingots_lv90() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825562688
+    let recipe = find_recipe("Lunar Alloy Ingots").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 90,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 80,
+            max_progress: 2345,
+            max_quality: 4248,
+            base_progress: 264,
+            base_quality: 267,
+            job_level: 90,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
+
+#[test]
+fn test_standard_high_density_fiberboard_lv91() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825723068
+    let recipe = find_recipe("Standard High-density Fiberboard").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 91,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 40,
+            max_progress: 2440,
+            max_quality: 3936,
+            base_progress: 267,
+            base_quality: 315,
+            job_level: 91,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
 }

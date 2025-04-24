@@ -1,5 +1,6 @@
 use std::{collections::VecDeque, io::BufRead, path::Path};
 
+#[track_caller]
 pub fn read_csv_data<RecordType>(path: impl AsRef<Path>) -> impl Iterator<Item = RecordType>
 where
     RecordType: serde::de::DeserializeOwned,

@@ -31,10 +31,13 @@ pub struct Ingredient {
 
 #[derive(Debug, Clone, Copy)]
 pub struct RecipeLevel {
-    pub progress_div: u16,
-    pub quality_div: u16,
-    pub progress_mod: u16,
-    pub quality_mod: u16,
+    pub job_level: u8,
+    pub max_progress: u32,
+    pub max_quality: u32,
+    pub progress_div: u32,
+    pub quality_div: u32,
+    pub progress_mod: u32,
+    pub quality_mod: u32,
     pub conditions_flag: u16,
 }
 
@@ -44,9 +47,10 @@ pub struct Recipe {
     pub job_id: u8,
     pub item_id: u32,
     pub level: u8,
+    pub max_level_scaling: u8,
     pub recipe_level: u16,
-    pub progress: u16,
-    pub quality: u16,
+    pub progress_factor: u32,
+    pub quality_factor: u32,
     pub durability: i16,
     pub material_quality_factor: u16,
     pub ingredients: [Ingredient; 6],
@@ -65,18 +69,27 @@ pub fn get_game_settings(
     potion: Option<Consumable>,
     adversarial: bool,
 ) -> Settings {
-    let rlvl = &RLVLS[recipe.recipe_level as usize];
+    let rlvl = if recipe.max_level_scaling != 0 {
+        let job_level = std::cmp::min(recipe.max_level_scaling, crafter_stats.level);
+        RLVLS
+            .iter()
+            .position(|rlvl_record| rlvl_record.job_level == job_level)
+            .unwrap()
+    } else {
+        recipe.recipe_level as usize
+    };
+    let rlvl_record = &RLVLS[rlvl];
 
     let craftsmanship = crafter_stats.craftsmanship
         + craftsmanship_bonus(crafter_stats.craftsmanship, &[food, potion]);
     let control = crafter_stats.control + control_bonus(crafter_stats.control, &[food, potion]);
     let cp = crafter_stats.cp + cp_bonus(crafter_stats.cp, &[food, potion]);
 
-    let mut base_progress = craftsmanship as f32 * 10.0 / rlvl.progress_div as f32 + 2.0;
-    let mut base_quality = control as f32 * 10.0 / rlvl.quality_div as f32 + 35.0;
+    let mut base_progress = craftsmanship as f32 * 10.0 / rlvl_record.progress_div as f32 + 2.0;
+    let mut base_quality = control as f32 * 10.0 / rlvl_record.quality_div as f32 + 35.0;
     if crafter_stats.level <= recipe.level {
-        base_progress = base_progress * rlvl.progress_mod as f32 / 100.0;
-        base_quality = base_quality * rlvl.quality_mod as f32 / 100.0;
+        base_progress = base_progress * rlvl_record.progress_mod as f32 / 100.0;
+        base_quality = base_quality * rlvl_record.quality_mod as f32 / 100.0;
     }
 
     let mut allowed_actions = ActionMask::all();
@@ -96,8 +109,8 @@ pub fn get_game_settings(
     Settings {
         max_cp: cp as _,
         max_durability: recipe.durability as _,
-        max_progress: recipe.progress,
-        max_quality: recipe.quality,
+        max_progress: (rlvl_record.max_progress * recipe.progress_factor / 100) as u16,
+        max_quality: (rlvl_record.max_quality * recipe.quality_factor / 100) as u16,
         base_progress: base_progress as u16,
         base_quality: base_quality as u16,
         job_level: crafter_stats.level,
@@ -106,7 +119,11 @@ pub fn get_game_settings(
     }
 }
 
-pub fn get_initial_quality(recipe: Recipe, hq_ingredients: [u8; 6]) -> u16 {
+pub fn get_initial_quality(
+    crafter_stats: CrafterStats,
+    recipe: Recipe,
+    hq_ingredients: [u8; 6],
+) -> u16 {
     let ingredients: Vec<(Item, u32)> = recipe
         .ingredients
         .iter()
@@ -125,8 +142,20 @@ pub fn get_initial_quality(recipe: Recipe, hq_ingredients: [u8; 6]) -> u16 {
         }
     }
 
+    let rlvl = if recipe.max_level_scaling != 0 {
+        let job_level = std::cmp::min(recipe.max_level_scaling, crafter_stats.level);
+        RLVLS
+            .iter()
+            .position(|rlvl_record| rlvl_record.job_level == job_level)
+            .unwrap()
+    } else {
+        recipe.recipe_level as usize
+    };
+    let rlvl_record = &RLVLS[rlvl];
+    let max_quality = rlvl_record.max_quality * recipe.quality_factor / 100;
+
     if max_ilvl != 0 {
-        (recipe.quality as u64 * recipe.material_quality_factor as u64 * provided_ilvl as u64
+        (max_quality as u64 * recipe.material_quality_factor as u64 * provided_ilvl as u64
             / max_ilvl as u64
             / 100) as u16
     } else {

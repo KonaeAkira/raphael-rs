@@ -141,24 +141,23 @@ impl<'a> RecipeSelect<'a> {
                     );
                 });
                 ui.horizontal(|ui| {
-                    ui.label("Progress:");
+                    ui.label("Progress Factor:");
                     ui.add(egui::DragValue::new(
-                        &mut self.recipe_config.recipe.progress,
+                        &mut self.recipe_config.recipe.progress_factor,
                     ));
                 });
                 ui.horizontal(|ui| {
-                    ui.label("Quality:");
-                    ui.add(egui::DragValue::new(&mut self.recipe_config.recipe.quality));
+                    ui.label("Quality Factor:");
+                    ui.add(egui::DragValue::new(
+                        &mut self.recipe_config.recipe.quality_factor,
+                    ));
                 });
                 if let QualitySource::Value(initial_quality) =
                     &mut self.recipe_config.quality_source
                 {
                     ui.horizontal(|ui| {
                         ui.label("Initial Quality:");
-                        ui.add(
-                            egui::DragValue::new(initial_quality)
-                                .range(0..=self.recipe_config.recipe.quality),
-                        );
+                        ui.add(egui::DragValue::new(initial_quality));
                     });
                 }
                 ui.horizontal(|ui| {
@@ -232,6 +231,7 @@ impl Widget for RecipeSelect<'_> {
                         if ui.checkbox(&mut custom_recipe, "Custom").changed() {
                             if custom_recipe {
                                 self.recipe_config.recipe.item_id = 0;
+                                self.recipe_config.recipe.max_level_scaling = 0;
                                 self.recipe_config.recipe.material_quality_factor = 0;
                                 self.recipe_config.recipe.ingredients = [Ingredient::default(); 6];
                                 self.recipe_config.quality_source = QualitySource::Value(0);

@@ -237,6 +237,7 @@ pub fn execute(args: &SolveArgs) {
                 hq_ingredients.resize(6, 0);
                 let amount_array = hq_ingredients.try_into().unwrap();
                 raphael_data::get_initial_quality(
+                    crafter_stats,
                     *recipe,
                     match args.skip_map_and_clamp_hq_ingredients {
                         true => amount_array,
