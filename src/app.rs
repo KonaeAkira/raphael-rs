@@ -10,7 +10,7 @@ use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
-use crate::config::{CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration};
+use crate::config::{CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget, RecipeConfiguration};
 use crate::widgets::*;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
@@ -37,6 +37,7 @@ pub struct SolverConfig {
 pub struct MacroSolverApp {
     locale: Locale,
     recipe_config: RecipeConfiguration,
+    custom_recipe_overrides_config: CustomRecipeOverridesConfiguration,
     selected_food: Option<Consumable>,
     selected_potion: Option<Consumable>,
     crafter_config: CrafterConfig,
@@ -89,6 +90,7 @@ impl MacroSolverApp {
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
+            custom_recipe_overrides_config: load(cc, "CUSTOM_RECIPE_OVERRIDES_CONFIG", CustomRecipeOverridesConfiguration::default()),
             selected_food: load(cc, "SELECTED_FOOD", None),
             selected_potion: load(cc, "SELECTED_POTION", None),
             crafter_config: load(cc, "CRAFTER_CONFIG", CrafterConfig::default()),
@@ -397,6 +399,7 @@ impl eframe::App for MacroSolverApp {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, "LOCALE", &self.locale);
         eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
+        eframe::set_value(storage, "CUSTOM_RECIPE_OVERRIDES_CONFIG", &self.custom_recipe_overrides_config);
         eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
         eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
         eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
@@ -446,6 +449,10 @@ impl MacroSolverApp {
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
         let game_settings = raphael_data::get_game_settings(
             self.recipe_config.recipe,
+            match self.custom_recipe_overrides_config.use_custom_recipe {
+                true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
+                false => None,
+            },
             *self.crafter_config.active_stats(),
             self.selected_food,
             self.selected_potion,
@@ -478,6 +485,7 @@ impl MacroSolverApp {
             ui.add(RecipeSelect::new(
                 &mut self.crafter_config,
                 &mut self.recipe_config,
+                &mut self.custom_recipe_overrides_config,
                 self.selected_food,
                 self.selected_potion,
                 self.locale,
@@ -687,6 +695,10 @@ impl MacroSolverApp {
                 ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
                 let game_settings = raphael_data::get_game_settings(
                     self.recipe_config.recipe,
+                    match self.custom_recipe_overrides_config.use_custom_recipe {
+                        true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
+                        false => None,
+                    },
                     self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
                     self.selected_food,
                     self.selected_potion,
@@ -794,6 +806,10 @@ impl MacroSolverApp {
         self.start_time = web_time::Instant::now();
         let mut game_settings = raphael_data::get_game_settings(
             self.recipe_config.recipe,
+            match self.custom_recipe_overrides_config.use_custom_recipe {
+                true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
+                false => None,
+            },
             self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
             self.selected_food,
             self.selected_potion,
