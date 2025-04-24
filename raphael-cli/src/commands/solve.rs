@@ -5,9 +5,13 @@ use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 #[derive(Args, Debug)]
 pub struct SolveArgs {
-    /// Item ID
-    #[arg(short, long)]
-    pub item_id: u32,
+    /// Recipe ID
+    #[arg(short, long, required_unless_present = "item_id")]
+    pub recipe_id: Option<u32>,
+
+    /// Item ID, in case multiple recipes for the same item exist, the one with the lowest recipe ID is selected
+    #[arg(short, long, required_unless_present = "recipe_id")]
+    pub item_id: Option<u32>,
 
     /// Craftsmanship rating
     #[arg(short, long, requires_all(["control", "cp"]), required_unless_present = "stats")]
@@ -144,13 +148,14 @@ fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [
 }
 
 pub fn execute(args: &SolveArgs) {
-    let recipe = RECIPES
+    let recipe: raphael_data::Recipe = if args.recipe_id.is_some() {
+        *raphael_data::RECIPES.get(&args.recipe_id.unwrap()).expect(&format!( "Unable to find Recipe with ID: {}", args.recipe_id.unwrap()))
+    } else {
+        *RECIPES
         .values()
-        .find(|recipe| recipe.item_id == args.item_id)
-        .expect(&format!(
-            "Unable to find Recipe for an item with item ID: {}",
-            args.item_id
-        ));
+        .find(|recipe| recipe.item_id == args.item_id.unwrap())
+        .expect(&format!("Unable to find Recipe for an item with item ID: {}", args.item_id.unwrap()))
+    }
     let food = match args.food {
         Some(food_arg) => {
             let item_id;
