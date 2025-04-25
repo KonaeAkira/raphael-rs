@@ -41,6 +41,15 @@ pub struct RecipeLevel {
     pub conditions_flag: u16,
 }
 
+#[derive(Debug, Default, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct CustomRecipeOverrides {
+    pub max_progress_override: u16,
+    pub max_quality_override: u16,
+    pub base_progress_override: Option<u16>,
+    pub base_quality_override: Option<u16>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Recipe {
@@ -64,6 +73,7 @@ pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"),
 
 pub fn get_game_settings(
     recipe: Recipe,
+    custom_recipe_overrides: Option<CustomRecipeOverrides>,
     crafter_stats: CrafterStats,
     food: Option<Consumable>,
     potion: Option<Consumable>,
@@ -106,17 +116,36 @@ pub fn get_game_settings(
         allowed_actions = allowed_actions.remove(Action::QuickInnovation);
     }
 
-    Settings {
-        max_cp: cp as _,
-        max_durability: recipe.durability as _,
-        max_progress: (rlvl_record.max_progress * recipe.progress_factor / 100) as u16,
-        max_quality: (rlvl_record.max_quality * recipe.quality_factor / 100) as u16,
-        base_progress: base_progress as u16,
-        base_quality: base_quality as u16,
-        job_level: crafter_stats.level,
-        allowed_actions,
-        adversarial,
-    }
+    match custom_recipe_overrides {
+        Some(overrides) => Settings {
+            max_cp: cp as _,
+            max_durability: recipe.durability as _,
+            max_progress: overrides.max_progress_override,
+            max_quality: overrides.max_quality_override,
+            base_progress: match overrides.base_progress_override {
+                Some(override_value) => override_value,
+                None => base_progress as u16,
+            },
+            base_quality: match overrides.base_quality_override {
+                Some(override_value) => override_value,
+                None => base_quality as u16,
+            },
+            job_level: crafter_stats.level,
+            allowed_actions,
+            adversarial,
+        },
+        None => Settings {
+            max_cp: cp as _,
+            max_durability: recipe.durability as _,
+            max_progress: (rlvl_record.max_progress * recipe.progress_factor / 100) as u16,
+            max_quality: (rlvl_record.max_quality * recipe.quality_factor / 100) as u16,
+            base_progress: base_progress as u16,
+            base_quality: base_quality as u16,
+            job_level: crafter_stats.level,
+            allowed_actions,
+            adversarial,
+        },
+    } 
 }
 
 pub fn get_initial_quality(

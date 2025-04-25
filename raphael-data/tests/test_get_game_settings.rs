@@ -45,7 +45,7 @@ fn test_roast_chicken() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -87,7 +87,7 @@ fn test_turali_pineapple_ponzecake() {
         heart_and_soul: true,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -128,7 +128,7 @@ fn test_smaller_water_otter_hardware() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -169,7 +169,7 @@ fn test_grade_8_tincture() {
         heart_and_soul: true,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -203,7 +203,7 @@ fn test_claro_walnut_spinning_wheel() {
         heart_and_soul: false,
         quick_innovation: true,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -234,7 +234,7 @@ fn test_habitat_chair_lv100() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -267,7 +267,7 @@ fn test_habitat_chair_lv97() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -300,7 +300,7 @@ fn test_habitat_chair_lv98() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -333,7 +333,7 @@ fn test_standard_indurate_rings_lv93() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -366,7 +366,7 @@ fn test_lunar_alloy_ingots_lv90() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {
@@ -399,7 +399,7 @@ fn test_standard_high_density_fiberboard_lv91() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
     assert_eq!(
         settings,
         Settings {

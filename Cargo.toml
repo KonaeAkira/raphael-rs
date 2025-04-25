@@ -32,7 +32,7 @@ web-time = "1.1.0"
 
 [package]
 name = "raphael-xiv"
-version = "0.19.5"
+version = "0.19.6"
 edition = "2024"
 default-run = "raphael-xiv"
 

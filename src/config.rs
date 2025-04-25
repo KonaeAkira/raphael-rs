@@ -1,10 +1,17 @@
-use raphael_data::{CrafterStats, Recipe};
+use raphael_data::{CrafterStats, CustomRecipeOverrides, Recipe};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum QualitySource {
     HqMaterialList([u8; 6]),
     Value(u16),
+}
+
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+pub struct CustomRecipeOverridesConfiguration {
+    pub use_custom_recipe: bool,
+    pub custom_recipe_overrides: CustomRecipeOverrides,
+    pub use_base_increase_overrides: bool,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
