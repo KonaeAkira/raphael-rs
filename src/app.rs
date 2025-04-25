@@ -156,7 +156,7 @@ impl eframe::App for MacroSolverApp {
                     SolverException::NoSolution => {
                         ui.label(egui::RichText::new("No solution").strong());
                         ui.separator();
-                        ui.label("Make sure your stats are enough to craft this item.");
+                        ui.label("Make sure that the recipe is set correctly and that your stats are enough to craft this item.");
                     }
                     SolverException::Interrupted => self.solver_error = None,
                     SolverException::InternalError(message) => {
