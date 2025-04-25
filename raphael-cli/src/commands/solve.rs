@@ -6,11 +6,11 @@ use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 #[derive(Args, Debug)]
 pub struct SolveArgs {
     /// Recipe ID
-    #[arg(short, long, required_unless_present_any(["item_id", "custom_recipe"]))]
+    #[arg(short, long, required_unless_present_any(["item_id", "custom_recipe"]), conflicts_with_all(["item_id", "item_id"]))]
     pub recipe_id: Option<u32>,
 
     /// Item ID, in case multiple recipes for the same item exist, the one with the lowest recipe ID is selected
-    #[arg(short, long, required_unless_present_any(["recipe_id, custom_recipe"]))]
+    #[arg(short, long, required_unless_present_any(["recipe_id, custom_recipe"]), conflicts_with_all(["recipe_id", "custom_recipe"]))]
     pub item_id: Option<u32>,
 
     /// Custom recipe. Base progress/quality are optional but must both be specified if one is provided, in which case, rlvl, crafstamnship, and control are ignored
@@ -91,7 +91,7 @@ pub struct SolveArgs {
 
     /// Output the provided list of variables. The output is deliminated by the output-field-separator
     ///
-    /// <IDENTIFIER> can be any of the following: `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
+    /// <IDENTIFIER> can be any of the following: `recipe_id`, `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
     /// While the output is mainly intended for generating CSVs, some output can contain `,` inside brackets that are not deliminating columns. For this reason they are wrapped in double quotes and the argument `output-field-separator` can be used to override the delimiter to something that is easier to parse and process
     #[arg(long, num_args = 1.., value_name = "IDENTIFIER")]
     pub output_variables: Vec<String>,
@@ -321,7 +321,7 @@ pub fn execute(args: &SolveArgs) {
     let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
 
     if args.output_variables.is_empty() {
-        println!("Item ID: {}", recipe.item_id);
+        println!("Recipe ID: {}", recipe.id);
         println!("Quality: {}/{}", final_quality, recipe_max_quality);
         println!(
             "Progress: {}/{}",
@@ -336,11 +336,10 @@ pub fn execute(args: &SolveArgs) {
     } else {
         let mut output_string = "".to_owned();
 
-        //let output_format = args.output_variables.clone().unwrap();
-        //let segments: Vec<&str> = args.output_variables;
         for identifier in &args.output_variables {
             let map_to_debug_str = |actions: Vec<raphael_sim::Action>| match &*(*identifier) {
-                "item_id" => format!("{:?}", args.item_id),
+                "recipe_id" => format!("{:?}", recipe.id),
+                "item_id" => format!("{:?}", recipe.item_id),
                 "recipe" => format!("\"{:?}\"", recipe),
                 "food" => format!("\"{:?}\"", food),
                 "potion" => format!("\"{:?}\"", potion),
