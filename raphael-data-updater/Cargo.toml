@@ -1,0 +1,14 @@
+[package]
+name = "raphael-data-updater"
+edition = "2024"
+
+[lints]
+workspace = true
+
+[dependencies]
+tokio = { version = "1.44.2", features = ["full"] }
+reqwest = "0.12.15"
+phf_codegen = "0.11.2"
+json = "0.12.4"
+log = { workspace = true }
+env_logger = "0.11.5"

@@ -34,11 +34,11 @@ pub struct RecipeLevel {
     pub job_level: u8,
     pub max_progress: u32,
     pub max_quality: u32,
+    pub max_durability: i16,
     pub progress_div: u32,
     pub quality_div: u32,
     pub progress_mod: u32,
     pub quality_mod: u32,
-    pub conditions_flag: u16,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -55,19 +55,18 @@ pub struct CustomRecipeOverrides {
 pub struct Recipe {
     pub job_id: u8,
     pub item_id: u32,
-    pub level: u8,
     pub max_level_scaling: u8,
     pub recipe_level: u16,
     pub progress_factor: u32,
     pub quality_factor: u32,
-    pub durability: i16,
-    pub material_quality_factor: u16,
-    pub ingredients: [Ingredient; 6],
+    pub durability_factor: i16,
+    pub material_factor: u16,
+    pub ingredients: &'static [Ingredient],
     pub is_expert: bool,
 }
 
-pub const RLVLS: [RecipeLevel; 800] = include!(concat!(env!("OUT_DIR"), "/rlvls.rs"));
-pub const RECIPES: &[Recipe] = include!(concat!(env!("OUT_DIR"), "/recipes.rs"));
+pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
+pub const RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
 
 pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
 
@@ -97,7 +96,7 @@ pub fn get_game_settings(
 
     let mut base_progress = craftsmanship as f32 * 10.0 / rlvl_record.progress_div as f32 + 2.0;
     let mut base_quality = control as f32 * 10.0 / rlvl_record.quality_div as f32 + 35.0;
-    if crafter_stats.level <= recipe.level {
+    if crafter_stats.level <= rlvl_record.job_level {
         base_progress = base_progress * rlvl_record.progress_mod as f32 / 100.0;
         base_quality = base_quality * rlvl_record.quality_mod as f32 / 100.0;
     }
@@ -106,7 +105,7 @@ pub fn get_game_settings(
     if !crafter_stats.manipulation {
         allowed_actions = allowed_actions.remove(Action::Manipulation);
     }
-    if recipe.is_expert || crafter_stats.level < recipe.level + 10 {
+    if recipe.is_expert || crafter_stats.level < rlvl_record.job_level + 10 {
         allowed_actions = allowed_actions.remove(Action::TrainedEye);
     }
     if !crafter_stats.heart_and_soul {
@@ -119,7 +118,7 @@ pub fn get_game_settings(
     match custom_recipe_overrides {
         Some(overrides) => Settings {
             max_cp: cp as _,
-            max_durability: recipe.durability as _,
+            max_durability: (rlvl_record.max_durability * recipe.durability_factor / 100) as i8,
             max_progress: overrides.max_progress_override,
             max_quality: overrides.max_quality_override,
             base_progress: match overrides.base_progress_override {
@@ -136,7 +135,7 @@ pub fn get_game_settings(
         },
         None => Settings {
             max_cp: cp as _,
-            max_durability: recipe.durability as _,
+            max_durability: (rlvl_record.max_durability * recipe.durability_factor / 100) as i8,
             max_progress: (rlvl_record.max_progress * recipe.progress_factor / 100) as u16,
             max_quality: (rlvl_record.max_quality * recipe.quality_factor / 100) as u16,
             base_progress: base_progress as u16,
@@ -145,7 +144,7 @@ pub fn get_game_settings(
             allowed_actions,
             adversarial,
         },
-    } 
+    }
 }
 
 pub fn get_initial_quality(
@@ -156,10 +155,7 @@ pub fn get_initial_quality(
     let ingredients: Vec<(Item, u32)> = recipe
         .ingredients
         .iter()
-        .filter_map(|ingredient| match ingredient.item_id {
-            0 => None,
-            id => Some((*ITEMS.get(&id).unwrap(), ingredient.amount)),
-        })
+        .filter_map(|ingredient| Some((*ITEMS.get(&ingredient.item_id)?, ingredient.amount)))
         .collect();
 
     let mut max_ilvl = 0;
@@ -184,7 +180,7 @@ pub fn get_initial_quality(
     let max_quality = rlvl_record.max_quality * recipe.quality_factor / 100;
 
     if max_ilvl != 0 {
-        (max_quality as u64 * recipe.material_quality_factor as u64 * provided_ilvl as u64
+        (max_quality as u64 * recipe.material_factor as u64 * provided_ilvl as u64
             / max_ilvl as u64
             / 100) as u16
     } else {

@@ -26,10 +26,10 @@ fn preprocess_pattern(pattern: &str) -> String {
 pub fn find_recipes(search_string: &str, locale: Locale) -> Vec<usize> {
     let pattern = preprocess_pattern(search_string);
     RECIPES
-        .iter()
+        .values()
         .enumerate()
         .filter_map(|(index, recipe)| {
-            let item_name = get_item_name(recipe.item_id, false, locale);
+            let item_name = get_item_name(recipe.item_id, false, locale)?;
             match contains_noncontiguous(&item_name.to_lowercase(), &pattern) {
                 true => Some(index),
                 false => None,
@@ -44,7 +44,7 @@ fn find_consumables(search_string: &str, locale: Locale, consumables: &[Consumab
         .iter()
         .enumerate()
         .filter_map(|(index, consumable)| {
-            let item_name = get_item_name(consumable.item_id, false, locale);
+            let item_name = get_item_name(consumable.item_id, false, locale)?;
             match contains_noncontiguous(&item_name.to_lowercase(), &pattern) {
                 true => Some(index),
                 false => None,

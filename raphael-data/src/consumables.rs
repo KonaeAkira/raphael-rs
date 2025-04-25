@@ -93,9 +93,12 @@ mod tests {
         MEALS
             .iter()
             .chain(POTIONS.iter())
-            .find(|consumable| {
-                get_item_name(consumable.item_id, consumable.hq, Locale::EN) == item_name
-            })
+            .find(
+                |consumable| match get_item_name(consumable.item_id, consumable.hq, Locale::EN) {
+                    None => false,
+                    Some(name) => name == item_name,
+                },
+            )
             .copied()
     }
 

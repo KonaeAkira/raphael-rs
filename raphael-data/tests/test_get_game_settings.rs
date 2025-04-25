@@ -2,9 +2,11 @@ use raphael_data::*;
 use raphael_sim::{Action, ActionMask, Settings};
 
 fn find_recipe(item_name: &'static str) -> Option<Recipe> {
-    for recipe in RECIPES.iter() {
-        if get_item_name(recipe.item_id, false, Locale::EN) == item_name {
-            return Some(*recipe);
+    for recipe in RECIPES.values() {
+        if let Some(name) = get_item_name(recipe.item_id, false, Locale::EN) {
+            if name == item_name {
+                return Some(*recipe);
+            }
         }
     }
     None
@@ -14,10 +16,7 @@ fn ingredient_names(recipe: Recipe) -> Vec<String> {
     recipe
         .ingredients
         .into_iter()
-        .filter_map(|ingr| match ingr.item_id {
-            0 => None,
-            item_id => Some(get_item_name(item_id, false, Locale::EN)),
-        })
+        .filter_map(|ingr| get_item_name(ingr.item_id, false, Locale::EN))
         .collect()
 }
 

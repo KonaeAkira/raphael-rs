@@ -1,12 +1,13 @@
 [workspace]
-resolver = "2"
 members = [
     "raphael-sim",
     "raphael-solver",
     "raphael-data",
+    "raphael-data-updater",
     "raphael-cli",
     "raphael-bindings",
 ]
+resolver = "2"
 
 [workspace.lints]
 clippy.assigning_clones = "warn"
