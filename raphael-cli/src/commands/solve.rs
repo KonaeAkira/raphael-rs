@@ -225,7 +225,8 @@ pub fn execute(args: &SolveArgs) {
         quick_innovation: args.quick_innovation,
     };
 
-    let mut settings = get_game_settings(*recipe, crafter_stats, food, potion, args.adversarial);
+    let mut settings =
+        get_game_settings(*recipe, None, crafter_stats, food, potion, args.adversarial);
     let target_quality = match args.target_quality {
         Some(target) => target.clamp(0, settings.max_quality),
         None => settings.max_quality,
