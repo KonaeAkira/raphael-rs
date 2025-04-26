@@ -15,7 +15,7 @@ use raphael_sim::{Action, ActionMask, Settings};
 pub const HQ_ICON_CHAR: char = '\u{e03c}';
 pub const CL_ICON_CHAR: char = '\u{e03d}';
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Item {
     pub item_level: u16,
     pub can_be_hq: bool,
