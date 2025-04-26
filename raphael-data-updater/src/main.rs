@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::io::Write;
 use std::{fs::File, io::BufWriter};
 
@@ -52,8 +53,27 @@ fn export_recipes(recipes: &[Recipe]) {
 #[tokio::main]
 async fn main() {
     env_logger::builder().format_timestamp(None).init();
-    let rlvls = fetch_and_parse::<RecipeLevel>().await;
+
+    let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>().await });
+    let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>().await });
+    let items = tokio::spawn(async { fetch_and_parse::<Item>().await });
+
+    let rlvls = rlvls.await.unwrap();
+    let mut recipes = recipes.await.unwrap();
+    let items = items.await.unwrap();
+
+    // Remove recipe ingredients that don't have a HQ variant
+    // as those are not used when calculating initial Quality.
+    let hq_items: HashSet<_> = items
+        .iter()
+        .filter_map(|item| if item.can_be_hq { Some(item.id) } else { None })
+        .collect();
+    for recipe in recipes.iter_mut() {
+        recipe
+            .ingredients
+            .retain(|ingredient| hq_items.contains(&ingredient.item_id));
+    }
+
     export_rlvls(&rlvls);
-    let recipes = fetch_and_parse::<Recipe>().await;
     export_recipes(&recipes);
 }

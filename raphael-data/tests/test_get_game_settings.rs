@@ -24,17 +24,7 @@ fn ingredient_names(recipe: Recipe) -> Vec<String> {
 /// Verified in-game (patch 7.05)
 fn test_roast_chicken() {
     let recipe = find_recipe("Roast Chicken").unwrap();
-    assert_eq!(
-        ingredient_names(recipe),
-        [
-            "Rumpless Chicken",
-            "Mountain Salt",
-            "Frantoio Oil",
-            "Yyasulani Garlic",
-            "Lemonette",
-            "Sungilt Aethersand",
-        ]
-    );
+    assert_eq!(ingredient_names(recipe), ["Mountain Salt", "Frantoio Oil",]);
     let crafter_stats = CrafterStats {
         craftsmanship: 4956,
         control: 4963,
@@ -69,13 +59,7 @@ fn test_turali_pineapple_ponzecake() {
     let recipe = find_recipe("Turali Pineapple Ponzecake").unwrap();
     assert_eq!(
         ingredient_names(recipe),
-        [
-            "Turali Pineapple",
-            "Whipped Cream",
-            "Garlean Cheese",
-            "Lemonette",
-            "Ovibos Milk"
-        ]
+        ["Whipped Cream", "Garlean Cheese",]
     );
     let crafter_stats = CrafterStats {
         craftsmanship: 4321,
@@ -103,21 +87,14 @@ fn test_turali_pineapple_ponzecake() {
             adversarial: false,
         }
     );
-    let initial_quality = get_initial_quality(crafter_stats, recipe, [0, 0, 1, 0, 0, 0]);
+    let initial_quality = get_initial_quality(crafter_stats, recipe, [0, 1, 0, 0, 0, 0]);
     assert_eq!(initial_quality, 2180);
 }
 
 #[test]
 fn test_smaller_water_otter_hardware() {
     let recipe = find_recipe("Smaller Water Otter Fountain Hardware").unwrap();
-    assert_eq!(
-        ingredient_names(recipe),
-        [
-            "Pure Igneous Glioaether",
-            "Manganese Ore",
-            "Raw Blue Zircon"
-        ]
-    );
+    assert!(ingredient_names(recipe).is_empty());
     let crafter_stats = CrafterStats {
         craftsmanship: 3858,
         control: 4057,
@@ -151,14 +128,7 @@ fn test_smaller_water_otter_hardware() {
 #[test]
 fn test_grade_8_tincture() {
     let recipe = find_recipe("Grade 8 Tincture of Intelligence").unwrap();
-    assert_eq!(
-        ingredient_names(recipe),
-        [
-            "Alche-mist",
-            "Grade 5 Intelligence Alkahest",
-            "Earthbreak Aethersand"
-        ]
-    );
+    assert_eq!(ingredient_names(recipe), ["Grade 5 Intelligence Alkahest",]);
     let crafter_stats = CrafterStats {
         craftsmanship: 3858,
         control: 4057,

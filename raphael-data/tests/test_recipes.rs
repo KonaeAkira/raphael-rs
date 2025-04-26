@@ -2,11 +2,13 @@ use raphael_data::*;
 
 #[track_caller]
 fn assert_item_exists(item_id: u32) {
-    assert!(ITEMS.contains_key(&item_id));
-    assert!(ITEM_NAMES_EN.contains_key(&item_id));
-    assert!(ITEM_NAMES_DE.contains_key(&item_id));
-    assert!(ITEM_NAMES_FR.contains_key(&item_id));
-    assert!(ITEM_NAMES_JP.contains_key(&item_id));
+    if item_id != 0 {
+        assert!(ITEMS.contains_key(&item_id));
+        assert!(ITEM_NAMES_EN.contains_key(&item_id));
+        assert!(ITEM_NAMES_DE.contains_key(&item_id));
+        assert!(ITEM_NAMES_FR.contains_key(&item_id));
+        assert!(ITEM_NAMES_JP.contains_key(&item_id));
+    }
 }
 
 #[test]
@@ -46,40 +48,7 @@ fn test_medical_supplies() {
             quality_factor: 80,
             durability_factor: 75,
             material_factor: 0,
-            ingredients: &[
-                Ingredient {
-                    item_id: 33235,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 10,
-                    amount: 4
-                },
-                Ingredient {
-                    item_id: 9,
-                    amount: 2
-                }
-            ],
+            ingredients: &[],
             is_expert: false
         }
     );
@@ -99,40 +68,7 @@ fn test_ipe_lumber() {
             quality_factor: 80,
             durability_factor: 50,
             material_factor: 0,
-            ingredients: &[
-                Ingredient {
-                    item_id: 44137,
-                    amount: 4
-                },
-                Ingredient {
-                    item_id: 44141,
-                    amount: 2
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 16,
-                    amount: 3
-                },
-                Ingredient {
-                    item_id: 15,
-                    amount: 3
-                }
-            ],
+            ingredients: &[],
             is_expert: false
         }
     );
@@ -152,40 +88,7 @@ fn test_uncharted_course_resin() {
             quality_factor: 200,
             durability_factor: 100,
             material_factor: 0,
-            ingredients: &[
-                Ingredient {
-                    item_id: 39913,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 36257,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 36091,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 36262,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 19,
-                    amount: 5
-                },
-                Ingredient {
-                    item_id: 18,
-                    amount: 5
-                }
-            ],
+            ingredients: &[],
             is_expert: true
         }
     );
@@ -205,32 +108,7 @@ fn test_habitat_chair() {
             quality_factor: 87,
             durability_factor: 88,
             material_factor: 0,
-            ingredients: &[
-                Ingredient {
-                    item_id: 48233,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                }
-            ],
+            ingredients: &[],
             is_expert: false
         }
     );
