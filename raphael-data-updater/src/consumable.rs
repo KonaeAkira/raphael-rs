@@ -138,7 +138,7 @@ pub fn instantiate_consumables(
         .collect();
     let mut meals = Vec::new();
     let mut potions = Vec::new();
-    for item in items {
+    for item in items.iter().rev() {
         if let Some(item_action) = item_actions.get(&item.item_action) {
             let consumables = if item_action.type_id == ITEM_ACTION_DOH_POTION_TYPE_ID {
                 &mut potions
@@ -146,10 +146,10 @@ pub fn instantiate_consumables(
                 &mut meals
             };
             let item_food = item_foods.get(&item_action.item_food_id).unwrap();
-            if let Some(consumable) = try_instantiate_consumable(item, item_food, false) {
+            if let Some(consumable) = try_instantiate_consumable(item, item_food, true) {
                 consumables.push(consumable);
             }
-            if let Some(consumable) = try_instantiate_consumable(item, item_food, true) {
+            if let Some(consumable) = try_instantiate_consumable(item, item_food, false) {
                 consumables.push(consumable);
             }
         }
