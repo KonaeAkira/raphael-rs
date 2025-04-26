@@ -34,43 +34,27 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     }
 }
 
-pub static ITEM_NAMES_EN: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_en.rs"));
-pub static ITEM_NAMES_DE: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_de.rs"));
-pub static ITEM_NAMES_FR: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_fr.rs"));
-pub static ITEM_NAMES_JP: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_jp.rs"));
+pub static ITEM_NAMES_EN: phf::Map<u32, &str> = include!("../data/item_names_en.rs");
+pub static ITEM_NAMES_DE: phf::Map<u32, &str> = include!("../data/item_names_de.rs");
+pub static ITEM_NAMES_FR: phf::Map<u32, &str> = include!("../data/item_names_fr.rs");
+pub static ITEM_NAMES_JP: phf::Map<u32, &str> = include!("../data/item_names_jp.rs");
 
-pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> String {
+pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     let item_name = match locale {
-        Locale::EN => ITEM_NAMES_EN
-            .get(&item_id)
-            .copied()
-            .unwrap_or("Unknown item"),
-        Locale::DE => ITEM_NAMES_DE
-            .get(&item_id)
-            .copied()
-            .unwrap_or("Unknown item"),
-        Locale::FR => ITEM_NAMES_FR
-            .get(&item_id)
-            .copied()
-            .unwrap_or("Unknown item"),
-        Locale::JP => ITEM_NAMES_JP
-            .get(&item_id)
-            .copied()
-            .unwrap_or("Unknown item"),
+        Locale::EN => ITEM_NAMES_EN.get(&item_id)?.to_owned(),
+        Locale::DE => ITEM_NAMES_DE.get(&item_id)?.to_owned(),
+        Locale::FR => ITEM_NAMES_FR.get(&item_id)?.to_owned(),
+        Locale::JP => ITEM_NAMES_JP.get(&item_id)?.to_owned(),
     };
     let item_entry = ITEMS.get(&item_id);
     let always_collectable = item_entry.is_some_and(|item| item.always_collectable);
     if !always_collectable {
         match hq {
-            true => format!("{} \u{e03c}", item_name),
-            false => item_name.to_string(),
+            true => Some(format!("{} \u{e03c}", item_name)),
+            false => Some(item_name.to_string()),
         }
     } else {
-        format!("{} \u{e03d}", item_name)
+        Some(format!("{} \u{e03d}", item_name))
     }
 }
 

@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
-pub const MEALS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/meals.rs"));
-pub const POTIONS: &[Consumable] = include!(concat!(env!("OUT_DIR"), "/potions.rs"));
+pub const MEALS: &[Consumable] = include!("../data/meals.rs");
+pub const POTIONS: &[Consumable] = include!("../data/potions.rs");
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -93,9 +93,12 @@ mod tests {
         MEALS
             .iter()
             .chain(POTIONS.iter())
-            .find(|consumable| {
-                get_item_name(consumable.item_id, consumable.hq, Locale::EN) == item_name
-            })
+            .find(
+                |consumable| match get_item_name(consumable.item_id, consumable.hq, Locale::EN) {
+                    None => false,
+                    Some(name) => name == item_name,
+                },
+            )
             .copied()
     }
 

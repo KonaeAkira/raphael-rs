@@ -4,10 +4,10 @@ use raphael_data::*;
 fn test_item_name_2341() {
     let item_id = 2341;
     let item_names = [
-        get_item_name(item_id, false, Locale::EN),
-        get_item_name(item_id, false, Locale::DE),
-        get_item_name(item_id, false, Locale::FR),
-        get_item_name(item_id, false, Locale::JP),
+        get_item_name(item_id, false, Locale::EN).unwrap(),
+        get_item_name(item_id, false, Locale::DE).unwrap(),
+        get_item_name(item_id, false, Locale::FR).unwrap(),
+        get_item_name(item_id, false, Locale::JP).unwrap(),
     ];
     assert_eq!(
         item_names,
@@ -24,10 +24,10 @@ fn test_item_name_2341() {
 fn test_item_name_44232_collectable() {
     let item_id = 44232;
     let item_names = [
-        get_item_name(item_id, false, Locale::EN),
-        get_item_name(item_id, true, Locale::DE),
-        get_item_name(item_id, false, Locale::FR),
-        get_item_name(item_id, true, Locale::JP),
+        get_item_name(item_id, false, Locale::EN).unwrap(),
+        get_item_name(item_id, true, Locale::DE).unwrap(),
+        get_item_name(item_id, false, Locale::FR).unwrap(),
+        get_item_name(item_id, true, Locale::JP).unwrap(),
     ];
     assert_eq!(
         item_names,
@@ -44,10 +44,10 @@ fn test_item_name_44232_collectable() {
 fn test_item_name_44104_hq() {
     let item_id = 44104;
     let item_names = [
-        get_item_name(item_id, true, Locale::EN),
-        get_item_name(item_id, true, Locale::DE),
-        get_item_name(item_id, true, Locale::FR),
-        get_item_name(item_id, true, Locale::JP),
+        get_item_name(item_id, true, Locale::EN).unwrap(),
+        get_item_name(item_id, true, Locale::DE).unwrap(),
+        get_item_name(item_id, true, Locale::FR).unwrap(),
+        get_item_name(item_id, true, Locale::JP).unwrap(),
     ];
     assert_eq!(
         item_names,

@@ -10,7 +10,10 @@ use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
-use crate::config::{CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget, RecipeConfiguration};
+use crate::config::{
+    CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
+    RecipeConfiguration,
+};
 use crate::widgets::*;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
@@ -90,7 +93,11 @@ impl MacroSolverApp {
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
-            custom_recipe_overrides_config: load(cc, "CUSTOM_RECIPE_OVERRIDES_CONFIG", CustomRecipeOverridesConfiguration::default()),
+            custom_recipe_overrides_config: load(
+                cc,
+                "CUSTOM_RECIPE_OVERRIDES_CONFIG",
+                CustomRecipeOverridesConfiguration::default(),
+            ),
             selected_food: load(cc, "SELECTED_FOOD", None),
             selected_potion: load(cc, "SELECTED_POTION", None),
             crafter_config: load(cc, "CRAFTER_CONFIG", CrafterConfig::default()),
@@ -399,7 +406,11 @@ impl eframe::App for MacroSolverApp {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, "LOCALE", &self.locale);
         eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
-        eframe::set_value(storage, "CUSTOM_RECIPE_OVERRIDES_CONFIG", &self.custom_recipe_overrides_config);
+        eframe::set_value(
+            storage,
+            "CUSTOM_RECIPE_OVERRIDES_CONFIG",
+            &self.custom_recipe_overrides_config,
+        );
         eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
         eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
         eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
@@ -430,7 +441,8 @@ impl MacroSolverApp {
                                 self.recipe_config.recipe.item_id,
                                 false,
                                 self.locale,
-                            ),
+                            )
+                            .unwrap_or("Unknown item".to_owned()),
                             self.actions.clone(),
                             &self.recipe_config.recipe,
                             self.selected_food,
@@ -468,14 +480,15 @@ impl MacroSolverApp {
         };
         let item = raphael_data::ITEMS
             .get(&self.recipe_config.recipe.item_id)
-            .unwrap();
+            .copied()
+            .unwrap_or_default();
         ui.add(Simulator::new(
             &game_settings,
             initial_quality,
             self.solver_config,
             &self.crafter_config,
             &self.actions,
-            item,
+            &item,
             self.locale,
         ));
     }

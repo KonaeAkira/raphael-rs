@@ -23,7 +23,7 @@ pub struct RecipeConfiguration {
 impl Default for RecipeConfiguration {
     fn default() -> Self {
         Self {
-            recipe: *raphael_data::RECIPES.last().unwrap(),
+            recipe: *raphael_data::RECIPES.values().next().unwrap(),
             quality_source: QualitySource::HqMaterialList([0; 6]),
         }
     }
