@@ -1,20 +1,23 @@
 use clap::Args;
-use raphael_data::{get_game_settings, CrafterStats, CustomRecipeOverrides, MEALS, POTIONS, RECIPES};
+use log::error;
+use raphael_data::{
+    CrafterStats, CustomRecipeOverrides, MEALS, POTIONS, RECIPES, get_game_settings,
+};
 use raphael_sim::SimulationState;
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 #[derive(Args, Debug)]
 pub struct SolveArgs {
     /// Recipe ID
-    #[arg(short, long, required_unless_present_any(["item_id", "custom_recipe"]), conflicts_with_all(["item_id", "item_id"]))]
+    #[arg(short, long, /*required_unless_present_any(["item_id", "custom_recipe"]),*/ conflicts_with_all(["item_id", "custom_recipe"]))]
     pub recipe_id: Option<u32>,
 
     /// Item ID, in case multiple recipes for the same item exist, the one with the lowest recipe ID is selected
-    #[arg(short, long, required_unless_present_any(["recipe_id, custom_recipe"]), conflicts_with_all(["recipe_id", "custom_recipe"]))]
+    #[arg(short, long, /*required_unless_present_any(["recipe_id, custom_recipe"]),*/ conflicts_with = "custom_recipe")]
     pub item_id: Option<u32>,
 
     /// Custom recipe. Base progress/quality are optional but must both be specified if one is provided, in which case, rlvl, crafstamnship, and control are ignored
-    #[arg(long, num_args = 4, value_names = ["RLVL", "PROGRESS", "QUALITY", "DURABILITY"], required_unless_present_any(["recipe_id", "item_id"]), conflicts_with_all(["recipe_id", "item_id"]))]
+    #[arg(long, num_args = 4, value_names = ["RLVL", "PROGRESS", "QUALITY", "DURABILITY"], /*required_unless_present_any(["recipe_id", "item_id"])*/)]
     pub custom_recipe: Vec<u16>,
 
     /// Overrides base progress/quality, i.e. "progress/quality per 100% efficiency". rlvl, crafstamnship, and control are ignored if this argument is provided
@@ -156,6 +159,11 @@ fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [
 }
 
 pub fn execute(args: &SolveArgs) {
+    if args.recipe_id.is_none() && args.item_id.is_none() && args.custom_recipe.is_empty() {
+        error!("One of the arguments '--recipe-id', '--item-id', or '--custom-recipe' must be provided");
+        panic!();
+    }
+    
     let use_custom_recipe = !args.custom_recipe.is_empty();
     let recipe: raphael_data::Recipe = if use_custom_recipe {
          raphael_data::Recipe{

@@ -4,15 +4,15 @@ use raphael_data::{Locale, RECIPES, Recipe, get_item_name};
 #[derive(Args, Debug)]
 pub struct SearchArgs {
     /// Search pattern to use for search though names, can be partial name
-    #[arg(short, long, required_unless_present_any(["recipe_id", "item_id"]), required_unless_present_any(["recipe_id", "item_id"]))]
+    #[arg(short, long, required_unless_present_any(["recipe_id", "item_id"]), conflicts_with_all(["recipe_id", "item_id"]))]
     pub pattern: Option<String>,
 
     /// Recipe ID to search for
-    #[arg(short, long, required_unless_present_any(["pattern", "item_id"]), required_unless_present_any(["pattern", "item_id"]))]
+    #[arg(short, long, required_unless_present_any(["pattern", "item_id"]), conflicts_with = "item_id")]
     pub recipe_id: Option<u32>,
 
     /// Recipe ID to search for
-    #[arg(short, long, required_unless_present_any(["pattern", "recipe_id"]), required_unless_present_any(["pattern", "recipe_id"]))]
+    #[arg(short, long, required_unless_present_any(["pattern", "recipe_id"]))]
     pub item_id: Option<u32>,
 
     /// The delimiter the output uses between fields
