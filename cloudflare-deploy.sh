@@ -22,7 +22,10 @@ cp --no-target-directory ./.cargo/config.toml ./.cargo/config.toml.backup
 cp --no-target-directory ./.cargo/config_wasm.toml ./.cargo/config.toml
 trap "mv --no-target-directory ./.cargo/config.toml.backup ./.cargo/config.toml" EXIT
 
-cargo install --locked trunk
+# install cargo-binstall
+curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+# install trunk
+cargo-binstall --locked trunk
 
 # web_sys unstable APIs needed for copy to clipboard functionality
 export RUSTFLAGS="--cfg=web_sys_unstable_apis -Ctarget-feature=+atomics,+bulk-memory -Clink-arg=--max-memory=4294967296"
