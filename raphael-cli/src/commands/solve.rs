@@ -173,10 +173,11 @@ pub fn execute(args: &SolveArgs) {
     } else if args.recipe_id.is_some() {
         *raphael_data::RECIPES.get(&args.recipe_id.unwrap()).expect(&format!( "Unable to find Recipe with ID: {}", args.recipe_id.unwrap()))
     } else {
+        log::warn!("Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead.\nThe first match, i.e. the recipe with the lowest ID, will be selected.");
         *RECIPES
-        .values()
-        .find(|recipe| recipe.item_id == args.item_id.unwrap())
-        .expect(&format!("Unable to find Recipe for an item with item ID: {}", args.item_id.unwrap()))
+            .values()
+            .find(|recipe| recipe.item_id == args.item_id.unwrap())
+            .expect(&format!("Unable to find Recipe for an item with item ID: {}", args.item_id.unwrap()))
     };
     let food = match args.food {
         Some(food_arg) => {

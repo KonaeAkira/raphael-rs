@@ -52,6 +52,7 @@ pub fn execute(args: &SearchArgs) {
         matches = Vec::new();
         matches.push(*raphael_data::RECIPES.entries().find(|(id, _)| **id == args.recipe_id.unwrap()).map(|(_, recipe)| recipe).unwrap());
     } else {
+        log::warn!("Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead.");
         matches = raphael_data::RECIPES.values().filter(|recipe| recipe.item_id == args.item_id.unwrap()).map(|recipe| *recipe).collect();
     }
     if matches.is_empty() {
