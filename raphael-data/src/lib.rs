@@ -87,7 +87,12 @@ pub fn get_game_settings(
     } else {
         recipe.recipe_level as usize
     };
-    let rlvl_record = &RLVLS[rlvl];
+
+    let mut rlvl_record = RLVLS[rlvl];
+    if recipe.max_level_scaling != 0 {
+        // https://github.com/KonaeAkira/raphael-rs/pull/126#issuecomment-2832041490
+        rlvl_record.max_durability = 80;
+    }
 
     let craftsmanship = crafter_stats.craftsmanship
         + craftsmanship_bonus(crafter_stats.craftsmanship, &[food, potion]);

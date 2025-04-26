@@ -387,3 +387,35 @@ fn test_standard_high_density_fiberboard_lv91() {
         }
     );
 }
+
+#[test]
+fn test_lunar_alloy_ingots_lv10() {
+    let recipe = find_recipe("Lunar Alloy Ingots").unwrap();
+    let crafter_stats = CrafterStats {
+        craftsmanship: 3796,
+        control: 3447,
+        cp: 504,
+        level: 10,
+        manipulation: true,
+        heart_and_soul: false,
+        quick_innovation: false,
+    };
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    assert_eq!(
+        settings,
+        Settings {
+            max_cp: 504,
+            max_durability: 80, // test that durability is correct at low levels
+            max_progress: 30,
+            max_quality: 147,
+            base_progress: 761,
+            base_quality: 1184,
+            job_level: 10,
+            allowed_actions: ActionMask::all()
+                .remove(Action::TrainedEye)
+                .remove(Action::HeartAndSoul)
+                .remove(Action::QuickInnovation),
+            adversarial: false,
+        }
+    );
+}
