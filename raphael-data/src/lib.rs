@@ -46,6 +46,7 @@ pub struct RecipeLevel {
 pub struct CustomRecipeOverrides {
     pub max_progress_override: u16,
     pub max_quality_override: u16,
+    pub max_durability_override: i8,
     pub base_progress_override: Option<u16>,
     pub base_quality_override: Option<u16>,
 }
@@ -117,7 +118,7 @@ pub fn get_game_settings(
     match custom_recipe_overrides {
         Some(overrides) => Settings {
             max_cp: cp as _,
-            max_durability: (rlvl_record.max_durability * recipe.durability_factor / 100) as i8,
+            max_durability: overrides.max_durability_override,
             max_progress: overrides.max_progress_override,
             max_quality: overrides.max_quality_override,
             base_progress: match overrides.base_progress_override {
