@@ -331,11 +331,11 @@ pub fn execute(args: &SolveArgs) {
 
     if args.output_variables.is_empty() {
         println!("Recipe ID: {}", recipe.id);
-        println!("Quality: {}/{}", final_quality, recipe_max_quality);
         println!(
             "Progress: {}/{}",
             final_state.progress, settings.max_progress
         );
+        println!("Quality: {}/{}", final_quality, recipe_max_quality);
         println!("Steps: {}", steps);
         println!("Duration: {} seconds", duration);
         println!("\nActions:");
