@@ -61,12 +61,12 @@ pub struct Recipe {
     pub quality_factor: u32,
     pub durability_factor: i16,
     pub material_factor: u16,
-    pub ingredients: &'static [Ingredient],
+    pub ingredients: [Ingredient; 6],
     pub is_expert: bool,
 }
 
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
-pub const RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
+pub static RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
 pub const ITEMS: phf::OrderedMap<u32, Item> = include!("../data/items.rs");
 
 pub fn get_game_settings(

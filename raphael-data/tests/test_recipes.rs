@@ -46,7 +46,7 @@ fn test_medical_supplies() {
             quality_factor: 80,
             durability_factor: 75,
             material_factor: 0,
-            ingredients: &[],
+            ingredients: [Ingredient::default(); 6],
             is_expert: false
         }
     );
@@ -66,7 +66,7 @@ fn test_ipe_lumber() {
             quality_factor: 80,
             durability_factor: 50,
             material_factor: 0,
-            ingredients: &[],
+            ingredients: [Ingredient::default(); 6],
             is_expert: false
         }
     );
@@ -86,7 +86,7 @@ fn test_uncharted_course_resin() {
             quality_factor: 200,
             durability_factor: 100,
             material_factor: 0,
-            ingredients: &[],
+            ingredients: [Ingredient::default(); 6],
             is_expert: true
         }
     );
@@ -106,7 +106,7 @@ fn test_habitat_chair() {
             quality_factor: 87,
             durability_factor: 88,
             material_factor: 0,
-            ingredients: &[],
+            ingredients: [Ingredient::default(); 6],
             is_expert: false
         }
     );

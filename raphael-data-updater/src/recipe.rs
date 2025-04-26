@@ -1,6 +1,8 @@
+use std::iter::repeat;
+
 use crate::SheetData;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Ingredient {
     pub item_id: u32,
     pub amount: u32,
@@ -80,8 +82,13 @@ impl std::fmt::Display for Recipe {
         write!(f, "quality_factor: {}, ", self.quality_factor)?;
         write!(f, "durability_factor: {}, ", self.durability_factor)?;
         write!(f, "material_factor: {}, ", self.material_factor)?;
-        write!(f, "ingredients: &[")?;
-        for ingredient in self.ingredients.iter() {
+        write!(f, "ingredients: [")?;
+        for ingredient in self
+            .ingredients
+            .iter()
+            .chain(repeat(&Ingredient::default()))
+            .take(6)
+        {
             write!(
                 f,
                 "Ingredient {{ item_id: {}, amount: {} }}, ",
