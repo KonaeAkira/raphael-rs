@@ -67,8 +67,7 @@ pub struct Recipe {
 
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
 pub const RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
-
-pub static ITEMS: phf::OrderedMap<u32, Item> = include!(concat!(env!("OUT_DIR"), "/items.rs"));
+pub const ITEMS: phf::OrderedMap<u32, Item> = include!("../data/items.rs");
 
 pub fn get_game_settings(
     recipe: Recipe,

@@ -5,7 +5,7 @@ mod rlvl;
 pub use rlvl::RecipeLevel;
 
 mod item;
-pub use item::Item;
+pub use item::{Item, ItemName};
 
 mod consumable;
 pub use consumable::{Consumable, ItemAction, ItemFood, instantiate_consumables};

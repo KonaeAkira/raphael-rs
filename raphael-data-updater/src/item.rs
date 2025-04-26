@@ -39,3 +39,26 @@ impl std::fmt::Display for Item {
         Ok(())
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct ItemName {
+    pub id: u32,
+    pub name: String,
+}
+
+impl SheetData for ItemName {
+    const SHEET: &'static str = "Item";
+    const REQUIRED_FIELDS: &[&str] = &["Name"];
+
+    fn row_id(&self) -> u32 {
+        self.id
+    }
+
+    fn from_json(value: &json::JsonValue) -> Option<Self> {
+        let fields = &value["fields"];
+        Some(Self {
+            id: value["row_id"].as_u32().unwrap(),
+            name: fields["Name"].as_str().unwrap().replace('­', ""),
+        })
+    }
+}

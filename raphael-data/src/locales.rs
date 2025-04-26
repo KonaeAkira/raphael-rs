@@ -34,14 +34,10 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     }
 }
 
-pub static ITEM_NAMES_EN: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_en.rs"));
-pub static ITEM_NAMES_DE: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_de.rs"));
-pub static ITEM_NAMES_FR: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_fr.rs"));
-pub static ITEM_NAMES_JP: phf::Map<u32, &'static str> =
-    include!(concat!(env!("OUT_DIR"), "/item_names_jp.rs"));
+pub static ITEM_NAMES_EN: phf::Map<u32, &str> = include!("../data/item_names_en.rs");
+pub static ITEM_NAMES_DE: phf::Map<u32, &str> = include!("../data/item_names_de.rs");
+pub static ITEM_NAMES_FR: phf::Map<u32, &str> = include!("../data/item_names_fr.rs");
+pub static ITEM_NAMES_JP: phf::Map<u32, &str> = include!("../data/item_names_jp.rs");
 
 pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     let item_name = match locale {
