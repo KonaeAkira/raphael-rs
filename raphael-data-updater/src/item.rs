@@ -4,13 +4,14 @@ use crate::SheetData;
 pub struct Item {
     pub id: u32,
     pub item_level: u32,
+    pub item_action: u32,
     pub can_be_hq: bool,
     pub always_collectable: bool,
 }
 
 impl SheetData for Item {
     const SHEET: &'static str = "Item";
-    const REQUIRED_FIELDS: &[&str] = &["LevelItem", "CanBeHq", "AlwaysCollectable"];
+    const REQUIRED_FIELDS: &[&str] = &["LevelItem", "ItemAction", "CanBeHq", "AlwaysCollectable"];
 
     fn row_id(&self) -> u32 {
         self.id
@@ -21,6 +22,7 @@ impl SheetData for Item {
         Some(Self {
             id: value["row_id"].as_u32().unwrap(),
             item_level: fields["LevelItem"]["value"].as_u32().unwrap(),
+            item_action: fields["ItemAction"]["value"].as_u32().unwrap(),
             can_be_hq: fields["CanBeHq"].as_bool().unwrap(),
             always_collectable: fields["AlwaysCollectable"].as_bool().unwrap(),
         })

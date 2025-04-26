@@ -50,6 +50,28 @@ fn export_recipes(recipes: &[Recipe]) {
     log::info!("recipes exported to \"{}\"", path.display());
 }
 
+fn export_meals(consumables: &[Consumable]) {
+    let path = std::path::absolute("./raphael-data/data/meals.rs").unwrap();
+    let mut writer = BufWriter::new(File::create(&path).unwrap());
+    writeln!(&mut writer, "&[").unwrap();
+    for consumable in consumables.iter() {
+        writeln!(&mut writer, "{consumable},").unwrap();
+    }
+    writeln!(&mut writer, "]").unwrap();
+    log::info!("meals exported to \"{}\"", path.display());
+}
+
+fn export_potions(consumables: &[Consumable]) {
+    let path = std::path::absolute("./raphael-data/data/potions.rs").unwrap();
+    let mut writer = BufWriter::new(File::create(&path).unwrap());
+    writeln!(&mut writer, "&[").unwrap();
+    for consumable in consumables.iter() {
+        writeln!(&mut writer, "{consumable},").unwrap();
+    }
+    writeln!(&mut writer, "]").unwrap();
+    log::info!("meals exported to \"{}\"", path.display());
+}
+
 #[tokio::main]
 async fn main() {
     env_logger::builder().format_timestamp(None).init();
@@ -57,10 +79,19 @@ async fn main() {
     let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>().await });
     let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>().await });
     let items = tokio::spawn(async { fetch_and_parse::<Item>().await });
+    let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>().await });
+    let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>().await });
 
     let rlvls = rlvls.await.unwrap();
     let mut recipes = recipes.await.unwrap();
     let items = items.await.unwrap();
+
+    let item_actions = item_actions.await.unwrap();
+    let item_foods = item_foods.await.unwrap();
+    let (meals, potions) = instantiate_consumables(&items, item_actions, item_foods);
+
+    // For some reason some recipes have items with ID 0 as their result
+    recipes.retain(|recipe| recipe.item_id != 0);
 
     // Remove recipe ingredients that don't have a HQ variant
     // as those are not used when calculating initial Quality.
@@ -76,4 +107,6 @@ async fn main() {
 
     export_rlvls(&rlvls);
     export_recipes(&recipes);
+    export_meals(&meals);
+    export_potions(&potions);
 }

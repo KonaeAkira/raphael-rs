@@ -2,13 +2,11 @@ use raphael_data::*;
 
 #[track_caller]
 fn assert_item_exists(item_id: u32) {
-    if item_id != 0 {
-        assert!(ITEMS.contains_key(&item_id));
-        assert!(ITEM_NAMES_EN.contains_key(&item_id));
-        assert!(ITEM_NAMES_DE.contains_key(&item_id));
-        assert!(ITEM_NAMES_FR.contains_key(&item_id));
-        assert!(ITEM_NAMES_JP.contains_key(&item_id));
-    }
+    assert!(ITEMS.contains_key(&item_id));
+    assert!(ITEM_NAMES_EN.contains_key(&item_id));
+    assert!(ITEM_NAMES_DE.contains_key(&item_id));
+    assert!(ITEM_NAMES_FR.contains_key(&item_id));
+    assert!(ITEM_NAMES_JP.contains_key(&item_id));
 }
 
 #[test]
