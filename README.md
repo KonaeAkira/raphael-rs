@@ -63,8 +63,8 @@ cargo run --release --package raphael-cli -- solve --help
 
 Some basic examples:
 ```
-cargo run --release --package raphael-cli -- search "Archeo Fending"
-cargo run --release --package raphael-cli -- solve --item-id 8548 --stats 5000 4000 500
+cargo run --release --package raphael-cli -- search --pattern "Fiberboard"
+cargo run --release --package raphael-cli -- solve --recipe-id 36183 --stats 5400 4900 600
 ```
 
 The CLI can also be installed so that it can be called from anywhere:

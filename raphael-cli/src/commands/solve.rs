@@ -1,13 +1,28 @@
 use clap::Args;
-use raphael_data::{CrafterStats, MEALS, POTIONS, RECIPES, get_game_settings};
+use log::error;
+use raphael_data::{
+    CrafterStats, CustomRecipeOverrides, MEALS, POTIONS, RECIPES, get_game_settings,
+};
 use raphael_sim::SimulationState;
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 #[derive(Args, Debug)]
 pub struct SolveArgs {
-    /// Item ID
-    #[arg(short, long)]
-    pub item_id: u32,
+    /// Recipe ID
+    #[arg(short, long, /*required_unless_present_any(["item_id", "custom_recipe"]),*/ conflicts_with_all(["item_id", "custom_recipe"]))]
+    pub recipe_id: Option<u32>,
+
+    /// Item ID, in case multiple recipes for the same item exist, the one with the lowest recipe ID is selected
+    #[arg(short, long, /*required_unless_present_any(["recipe_id, custom_recipe"]),*/ conflicts_with = "custom_recipe")]
+    pub item_id: Option<u32>,
+
+    /// Custom recipe. Base progress/quality are optional but must both be specified if one is provided, in which case, rlvl, crafstamnship, and control are ignored
+    #[arg(long, num_args = 4, value_names = ["RLVL", "PROGRESS", "QUALITY", "DURABILITY"], /*required_unless_present_any(["recipe_id", "item_id"])*/)]
+    pub custom_recipe: Vec<u16>,
+
+    /// Overrides base progress/quality, i.e. "progress/quality per 100% efficiency". rlvl, crafstamnship, and control are ignored if this argument is provided
+    #[arg(long, num_args = 3, value_names = ["LEVEL", "BASE_PROGRESS", "BASE_QUALITY"], requires = "custom_recipe")]
+    pub override_base_increases: Vec<u16>,
 
     /// Craftsmanship rating
     #[arg(short, long, requires_all(["control", "cp"]), required_unless_present = "stats")]
@@ -54,7 +69,7 @@ pub struct SolveArgs {
     pub initial_quality: Option<u16>,
 
     /// Set HQ ingredient amounts and calculate initial quality from them
-    #[arg(long, num_args = 1..=6, value_name = "AMOUNT", conflicts_with = "initial_quality")]
+    #[arg(long, num_args = 1..=6, value_name = "AMOUNT", conflicts_with_all = ["initial_quality", "custom_recipe"])]
     pub hq_ingredients: Option<Vec<u8>>,
 
     /// Skip mapping HQ ingredients to entries that can actually be HQ and clamping the amount to the max allowed for the recipe
@@ -79,7 +94,7 @@ pub struct SolveArgs {
 
     /// Output the provided list of variables. The output is deliminated by the output-field-separator
     ///
-    /// <IDENTIFIER> can be any of the following: `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
+    /// <IDENTIFIER> can be any of the following: `recipe_id`, `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
     /// While the output is mainly intended for generating CSVs, some output can contain `,` inside brackets that are not deliminating columns. For this reason they are wrapped in double quotes and the argument `output-field-separator` can be used to override the delimiter to something that is easier to parse and process
     #[arg(long, num_args = 1.., value_name = "IDENTIFIER")]
     pub output_variables: Vec<String>,
@@ -90,15 +105,14 @@ pub struct SolveArgs {
 }
 
 fn parse_consumable(s: &str) -> Result<ConsumableArg, String> {
-    const PARSE_ERROR_STRING: &'static str =
+    const PARSE_ERROR_STRING: &str =
         "Consumable is not parsable. Consumables must have the format '<ITEM_ID>[,HQ]'";
     let segments: Vec<&str> = s.split(",").collect();
-    let item_id_str = segments.get(0);
-    let item_id: u32;
-    match item_id_str {
-        Some(&str) => item_id = str.parse().map_err(|_| PARSE_ERROR_STRING.to_owned())?,
+    let item_id_str = segments.first();
+    let item_id = match item_id_str {
+        Some(&str) => str.parse().map_err(|_| PARSE_ERROR_STRING.to_owned())?,
         None => return Err(PARSE_ERROR_STRING.to_owned()),
-    }
+    };
     match segments.len() {
         1 => Ok(ConsumableArg::NQ(item_id)),
         2 => {
@@ -144,13 +158,49 @@ fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [
 }
 
 pub fn execute(args: &SolveArgs) {
-    let recipe = RECIPES
-        .values()
-        .find(|recipe| recipe.item_id == args.item_id)
-        .expect(&format!(
-            "Unable to find Recipe for an item with item ID: {}",
-            args.item_id
-        ));
+    if args.recipe_id.is_none() && args.item_id.is_none() && args.custom_recipe.is_empty() {
+        error!(
+            "One of the arguments '--recipe-id', '--item-id', or '--custom-recipe' must be provided"
+        );
+        panic!();
+    }
+
+    let use_custom_recipe = !args.custom_recipe.is_empty();
+    let mut recipe: raphael_data::Recipe = if use_custom_recipe {
+        raphael_data::Recipe {
+            job_id: 0,
+            item_id: 0,
+            max_level_scaling: 0,
+            recipe_level: args.custom_recipe[0],
+            progress_factor: 0,
+            quality_factor: 0,
+            durability_factor: 0,
+            material_factor: 0,
+            ingredients: Default::default(),
+            is_expert: false,
+        }
+    } else if args.recipe_id.is_some() {
+        *RECIPES.get(&args.recipe_id.unwrap()).expect(&format!(
+            "Unable to find Recipe with ID: {}",
+            args.recipe_id.unwrap()
+        ))
+    } else {
+        log::warn!(
+            "Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead.\nThe first match, i.e. the recipe with the lowest ID, will be selected."
+        );
+        *RECIPES
+            .values()
+            .find(|recipe| recipe.item_id == args.item_id.unwrap())
+            .expect(&format!(
+                "Unable to find Recipe for an item with item ID: {}",
+                args.item_id.unwrap()
+            ))
+    };
+    let recipe_id = RECIPES
+        .entries()
+        .find(|(_, entry_recipe)| **entry_recipe == recipe)
+        .map(|(recipe_id, _)| *recipe_id)
+        .unwrap_or_default();
     let food = match args.food {
         Some(food_arg) => {
             let item_id;
@@ -204,29 +254,55 @@ pub fn execute(args: &SolveArgs) {
 
     let craftsmanship = match args.craftsmanship {
         Some(stat) => stat,
-        None => args.stats.get(0).unwrap().to_owned(),
+        None => args.stats[0],
     };
     let control = match args.control {
         Some(stat) => stat,
-        None => args.stats.get(1).unwrap().to_owned(),
+        None => args.stats[1],
     };
     let cp = match args.cp {
         Some(stat) => stat,
-        None => args.stats.get(2).unwrap().to_owned(),
+        None => args.stats[2],
     };
 
     let crafter_stats = CrafterStats {
-        craftsmanship: craftsmanship,
-        control: control,
-        cp: cp,
+        craftsmanship,
+        control,
+        cp,
         level: args.level,
         manipulation: args.manipulation,
         heart_and_soul: args.heart_and_soul,
         quick_innovation: args.quick_innovation,
     };
 
-    let mut settings =
-        get_game_settings(*recipe, None, crafter_stats, food, potion, args.adversarial);
+    let custom_recipe_overrides = if !use_custom_recipe {
+        None
+    } else if args.override_base_increases.is_empty() {
+        Some(CustomRecipeOverrides {
+            max_progress_override: args.custom_recipe[1],
+            max_quality_override: args.custom_recipe[2],
+            max_durability_override: args.custom_recipe[3],
+            ..Default::default()
+        })
+    } else {
+        recipe.recipe_level = raphael_data::LEVEL_ADJUST_TABLE[args.override_base_increases[0] as usize];
+        Some(CustomRecipeOverrides {
+            max_progress_override: args.custom_recipe[1],
+            max_quality_override: args.custom_recipe[2],
+            max_durability_override: args.custom_recipe[3],
+            base_progress_override: Some(args.override_base_increases[1]),
+            base_quality_override: Some(args.override_base_increases[2]),
+        })
+    };
+    let mut settings = get_game_settings(
+        recipe,
+        custom_recipe_overrides,
+        crafter_stats,
+        food,
+        potion,
+        args.adversarial,
+    );
+
     let target_quality = match args.target_quality {
         Some(target) => target.clamp(0, settings.max_quality),
         None => settings.max_quality,
@@ -239,10 +315,10 @@ pub fn execute(args: &SolveArgs) {
                 let amount_array = hq_ingredients.try_into().unwrap();
                 raphael_data::get_initial_quality(
                     crafter_stats,
-                    *recipe,
+                    recipe,
                     match args.skip_map_and_clamp_hq_ingredients {
                         true => amount_array,
-                        false => map_and_clamp_hq_ingredients(recipe, amount_array),
+                        false => map_and_clamp_hq_ingredients(&recipe, amount_array),
                     },
                 )
             }
@@ -273,11 +349,15 @@ pub fn execute(args: &SolveArgs) {
     let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
 
     if args.output_variables.is_empty() {
-        println!("Item ID: {}", recipe.item_id);
-        println!("Quality: {}/{}", final_quality, recipe_max_quality);
+        println!("Recipe ID: {}", recipe_id);
         println!(
             "Progress: {}/{}",
             final_state.progress, settings.max_progress
+        );
+        println!("Quality: {}/{}", final_quality, recipe_max_quality);
+        println!(
+            "Durability: {}/{}",
+            final_state.durability, settings.max_durability
         );
         println!("Steps: {}", steps);
         println!("Duration: {} seconds", duration);
@@ -288,11 +368,10 @@ pub fn execute(args: &SolveArgs) {
     } else {
         let mut output_string = "".to_owned();
 
-        //let output_format = args.output_variables.clone().unwrap();
-        //let segments: Vec<&str> = args.output_variables;
         for identifier in &args.output_variables {
             let map_to_debug_str = |actions: Vec<raphael_sim::Action>| match &*(*identifier) {
-                "item_id" => format!("{:?}", args.item_id),
+                "recipe_id" => format!("{:?}", recipe_id),
+                "item_id" => format!("{:?}", recipe.item_id),
                 "recipe" => format!("\"{:?}\"", recipe),
                 "food" => format!("\"{:?}\"", food),
                 "potion" => format!("\"{:?}\"", potion),

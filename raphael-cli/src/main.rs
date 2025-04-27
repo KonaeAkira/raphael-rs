@@ -7,7 +7,6 @@ mod commands;
     version,
     about = "A command-line interface for the Raphael-XIV crafting solver."
 )]
-
 struct Cli {
     #[command(subcommand)]
     command: Commands,

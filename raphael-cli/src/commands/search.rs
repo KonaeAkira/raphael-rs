@@ -1,10 +1,19 @@
 use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, Recipe, get_item_name};
+use raphael_data::{Locale, RECIPES, get_item_name, get_job_name};
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
-    /// Search pattern, <PATTERN> can be a string or an item ID
-    pub pattern: String,
+    /// Search string to use, can be partial name
+    #[arg(short, long, required_unless_present_any(["recipe_id", "item_id"]), conflicts_with_all(["recipe_id", "item_id"]))]
+    pub pattern: Option<String>,
+
+    /// Recipe ID to search for
+    #[arg(short, long, required_unless_present_any(["pattern", "item_id"]), conflicts_with = "item_id")]
+    pub recipe_id: Option<u32>,
+
+    /// Item ID to search for
+    #[arg(short, long, required_unless_present_any(["pattern", "recipe_id"]))]
+    pub item_id: Option<u32>,
 
     /// The delimiter the output uses between fields
     #[arg(long, alias = "OFS", default_value = " ", env = "OFS")]
@@ -23,9 +32,9 @@ pub enum SearchLanguage {
     JP,
 }
 
-impl Into<Locale> for SearchLanguage {
-    fn into(self) -> Locale {
-        match self {
+impl From<SearchLanguage> for Locale {
+    fn from(val: SearchLanguage) -> Self {
+        match val {
             SearchLanguage::EN => Locale::EN,
             SearchLanguage::DE => Locale::DE,
             SearchLanguage::FR => Locale::FR,
@@ -36,31 +45,44 @@ impl Into<Locale> for SearchLanguage {
 
 pub fn execute(args: &SearchArgs) {
     let locale = args.language.into();
-    let matches: Vec<Recipe> = if let Ok(item_id) = u32::from_str_radix(&args.pattern, 10) {
-        match RECIPES.values().find(|recipe| recipe.item_id == item_id) {
-            Some(recipe) => vec![*recipe],
-            None => Vec::new(),
+    let matches = if args.pattern.is_some() {
+        raphael_data::find_recipes(&args.pattern.clone().unwrap(), locale)
+            .iter()
+            .map(|recipe_id| RECIPES.get_entry(recipe_id).unwrap())
+            .collect()
+    } else if args.recipe_id.is_some() {
+        if let Some(entry) = RECIPES
+            .entries()
+            .find(|(id, _)| **id == args.recipe_id.unwrap())
+        {
+            vec![entry]
+        } else {
+            Vec::new()
         }
     } else {
-        raphael_data::find_recipes(&args.pattern, locale)
-            .into_iter()
-            .map(|recipe_id| RECIPES[&recipe_id])
+        log::warn!(
+            "Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead."
+        );
+        raphael_data::RECIPES
+            .entries()
+            .filter(|(_, recipe)| recipe.item_id == args.item_id.unwrap())
             .collect()
     };
-
     if matches.is_empty() {
         println!("No matches found");
         return;
     }
 
-    for recipe in matches {
+    for (recipe_id, recipe) in matches {
         let name =
             get_item_name(recipe.item_id, false, locale).unwrap_or("Unknown item".to_owned());
         println!(
-            "{item_id}{separator}{name}",
+            "{recipe_id}{separator}{job_name}{separator}{item_id}{separator}{name}",
+            recipe_id = recipe_id,
+            job_name = get_job_name(recipe.job_id, locale),
             item_id = recipe.item_id,
             separator = args.output_field_separator,
-            name = name.trim_end_matches(&[' ', raphael_data::CL_ICON_CHAR])
+            name = name.trim_end_matches([' ', raphael_data::CL_ICON_CHAR])
         );
     }
 }
