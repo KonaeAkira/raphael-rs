@@ -3,7 +3,7 @@ use raphael_data::{Locale, RECIPES, get_item_name, get_job_name};
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
-    /// Search pattern to use for search though names, can be partial name
+    /// Search string to use, can be partial name
     #[arg(short, long, required_unless_present_any(["recipe_id", "item_id"]), conflicts_with_all(["recipe_id", "item_id"]))]
     pub pattern: Option<String>,
 
@@ -11,7 +11,7 @@ pub struct SearchArgs {
     #[arg(short, long, required_unless_present_any(["pattern", "item_id"]), conflicts_with = "item_id")]
     pub recipe_id: Option<u32>,
 
-    /// Recipe ID to search for
+    /// Item ID to search for
     #[arg(short, long, required_unless_present_any(["pattern", "recipe_id"]))]
     pub item_id: Option<u32>,
 
