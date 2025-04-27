@@ -108,9 +108,9 @@ pub struct RawSolveArgs {
     #[arg(long, default_value_t = false)]
     pub heart_and_soul_active: bool,
 
-    /// Indicates that the heart and soul can still be used
-    #[arg(long, default_value_t = true)]
-    pub heart_and_soul_available: bool,
+    /// Indicates that the heart and soul is not longer available
+    #[arg(long, default_value_t = false)]
+    pub heart_and_soul_unavailable: bool,
 
     /// Number of remaining steps the innovation buff is still active
     #[arg(long, default_value_t = 0)]
@@ -128,17 +128,17 @@ pub struct RawSolveArgs {
     #[arg(long, default_value_t = 0)]
     pub muscle_memory_steps: u8,
 
-    /// Indicates that quick innovation can still be used
-    #[arg(long, default_value_t = true)]
-    pub quick_innovation_available: bool,
+    /// Indicates that quick innovation is not longer available
+    #[arg(long, default_value_t = false)]
+    pub quick_innovation_unavailable: bool,
 
     /// Indicates that trained perfection buff is currently active
     #[arg(long, default_value_t = false)]
     pub trained_perfection_active: bool,
 
-    /// Indicates that trained perfection can still be used
-    #[arg(long, default_value_t = true)]
-    pub trained_perfection_available: bool,
+    /// Indicates that trained perfection is not longer available
+    #[arg(long, default_value_t = false)]
+    pub trained_perfection_unavailable: bool,
 
     /// Number of remaining steps veneration buff is still active
     #[arg(long, default_value_t = 0)]
@@ -208,7 +208,7 @@ pub fn execute(args: &RawSolveArgs) {
     if !args.heart_and_soul {
         allowed_actions = allowed_actions.remove(Action::HeartAndSoul);
     }
-    if !args.quick_innovation_available {
+    if !args.quick_innovation_unavailable {
         allowed_actions = allowed_actions.remove(Action::QuickInnovation);
     }
     if !args.trained_eye {
@@ -231,16 +231,17 @@ pub fn execute(args: &RawSolveArgs) {
         .with_combo(args.combo.into())
         .with_condition(args.condition.into())
         .with_heart_and_soul_active(args.heart_and_soul_active)
-        .with_heart_and_soul_available(args.heart_and_soul_available)
+        .with_heart_and_soul_available(!args.heart_and_soul_unavailable)
         .with_great_strides(args.great_strides_steps)
         .with_inner_quiet(args.inner_quiet_stacks)
         .with_innovation(args.innovation_steps)
         .with_manipulation(args.manipulation_steps)
         .with_muscle_memory(args.muscle_memory_steps)
-        .with_quick_innovation_available(args.quick_innovation_available)
+        .with_quick_innovation_available(!args.quick_innovation_unavailable)
         .with_trained_perfection_active(args.trained_perfection_active)
-        .with_trained_perfection_available(args.trained_perfection_available)
-        .with_waste_not(args.waste_not_steps);
+        .with_trained_perfection_available(!args.trained_perfection_unavailable)
+        .with_waste_not(args.waste_not_steps)
+        .with_veneration(args.veneration_steps);
 
     let initial_state = SimulationState {
         cp: args.current_cp.unwrap_or(args.max_cp),
