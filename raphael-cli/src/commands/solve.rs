@@ -166,7 +166,7 @@ pub fn execute(args: &SolveArgs) {
     }
 
     let use_custom_recipe = !args.custom_recipe.is_empty();
-    let recipe: raphael_data::Recipe = if use_custom_recipe {
+    let mut recipe: raphael_data::Recipe = if use_custom_recipe {
         raphael_data::Recipe {
             job_id: 0,
             item_id: 0,
@@ -285,11 +285,12 @@ pub fn execute(args: &SolveArgs) {
             ..Default::default()
         })
     } else {
+        recipe.recipe_level = raphael_data::LEVEL_ADJUST_TABLE[args.override_base_increases[0] as usize];
         Some(CustomRecipeOverrides {
             max_progress_override: args.custom_recipe[1],
             max_quality_override: args.custom_recipe[2],
             max_durability_override: args.custom_recipe[3],
-            base_progress_override: Some(args.override_base_increases[1]), // TODO use level, at args.override_base_increases[0]
+            base_progress_override: Some(args.override_base_increases[1]),
             base_quality_override: Some(args.override_base_increases[2]),
         })
     };
