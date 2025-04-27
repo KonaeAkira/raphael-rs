@@ -311,6 +311,7 @@ impl Widget for RecipeSelect<'_> {
                                     CustomRecipeOverrides {
                                         max_progress_override: default_game_settings.max_progress,
                                         max_quality_override: default_game_settings.max_quality,
+                                        max_durability_override: default_game_settings.max_durability,
                                         ..Default::default()
                                     };
                                 if self
