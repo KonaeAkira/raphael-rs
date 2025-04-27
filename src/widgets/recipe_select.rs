@@ -158,7 +158,8 @@ impl<'a> RecipeSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.add_enabled_ui(!use_base_increase_overrides, |ui| {
                         ui.label("Recipe Level:");
-                        let mut rlvl_drag_value_widget = egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
+                        let mut rlvl_drag_value_widget =
+                            egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
                                 .range(1..=RLVLS.len() - 1);
                         if use_base_increase_overrides && recipe_job_level >= 50 {
                             rlvl_drag_value_widget = rlvl_drag_value_widget.suffix("+");
@@ -302,19 +303,23 @@ impl Widget for RecipeSelect<'_> {
                                     self.selected_potion,
                                     false,
                                 );
-                                
+
+                                self.recipe_config.recipe.req_craftsmanship = 0;
+                                self.recipe_config.recipe.req_control = 0;
                                 self.recipe_config.recipe.max_level_scaling = 0;
                                 self.recipe_config.recipe.material_factor = 0;
                                 self.recipe_config.recipe.ingredients = [Ingredient::default(); 6];
-                                
+
                                 // Only set appropriate overrides when switching from normal to custom recipe
                                 // Switching back does not currently restore the other parameters, e.g. rlvl back to default
-                                if self.recipe_config.recipe.item_id != 0 { 
+                                if self.recipe_config.recipe.item_id != 0 {
                                     self.custom_recipe_overrides_config.custom_recipe_overrides =
                                         CustomRecipeOverrides {
-                                            max_progress_override: default_game_settings.max_progress,
+                                            max_progress_override: default_game_settings
+                                                .max_progress,
                                             max_quality_override: default_game_settings.max_quality,
-                                            max_durability_override: default_game_settings.max_durability,
+                                            max_durability_override: default_game_settings
+                                                .max_durability,
                                             ..Default::default()
                                         };
                                     if self
