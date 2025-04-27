@@ -440,6 +440,27 @@ fn test_11() {
 }
 
 #[test]
+fn test_manipulation_refund() {
+    // https://github.com/KonaeAkira/raphael-rs/pull/128#discussion_r2062585163
+    let settings = Settings {
+        max_cp: 500,
+        max_durability: 80,
+        max_progress: 700,
+        max_quality: 20000,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+    };
+    let result = solve(settings, &[Action::Manipulation]);
+    assert_eq!(result, 4975);
+}
+
+#[test]
 fn test_issue_113() {
     // Ceremonial Gunblade
     // 5428/5236/645 + HQ Ceviche + HQ Cunning Tisane
