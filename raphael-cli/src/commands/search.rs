@@ -32,9 +32,9 @@ pub enum SearchLanguage {
     JP,
 }
 
-impl Into<Locale> for SearchLanguage {
-    fn into(self) -> Locale {
-        match self {
+impl From<SearchLanguage> for Locale {
+    fn from(val: SearchLanguage) -> Self {
+        match val {
             SearchLanguage::EN => Locale::EN,
             SearchLanguage::DE => Locale::DE,
             SearchLanguage::FR => Locale::FR,
@@ -46,18 +46,27 @@ impl Into<Locale> for SearchLanguage {
 pub fn execute(args: &SearchArgs) {
     let locale = args.language.into();
     let matches = if args.pattern.is_some() {
-        raphael_data::find_recipes(&args.pattern.clone().unwrap(), locale).iter()
+        raphael_data::find_recipes(&args.pattern.clone().unwrap(), locale)
+            .iter()
             .map(|recipe_id| RECIPES.get_entry(recipe_id).unwrap())
             .collect()
     } else if args.recipe_id.is_some() {
-        if let Some(entry) = RECIPES.entries().find(|(id, _)| **id == args.recipe_id.unwrap()) {
-            vec!(entry)
+        if let Some(entry) = RECIPES
+            .entries()
+            .find(|(id, _)| **id == args.recipe_id.unwrap())
+        {
+            vec![entry]
         } else {
             Vec::new()
         }
     } else {
-        log::warn!("Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead.");
-        raphael_data::RECIPES.entries().filter(|(_, recipe)| recipe.item_id == args.item_id.unwrap()).collect()
+        log::warn!(
+            "Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead."
+        );
+        raphael_data::RECIPES
+            .entries()
+            .filter(|(_, recipe)| recipe.item_id == args.item_id.unwrap())
+            .collect()
     };
     if matches.is_empty() {
         println!("No matches found");
@@ -73,7 +82,7 @@ pub fn execute(args: &SearchArgs) {
             job_name = get_job_name(recipe.job_id, locale),
             item_id = recipe.item_id,
             separator = args.output_field_separator,
-            name = name.trim_end_matches(&[' ', raphael_data::CL_ICON_CHAR])
+            name = name.trim_end_matches([' ', raphael_data::CL_ICON_CHAR])
         );
     }
 }

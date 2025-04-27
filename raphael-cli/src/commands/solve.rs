@@ -105,15 +105,14 @@ pub struct SolveArgs {
 }
 
 fn parse_consumable(s: &str) -> Result<ConsumableArg, String> {
-    const PARSE_ERROR_STRING: &'static str =
+    const PARSE_ERROR_STRING: &str =
         "Consumable is not parsable. Consumables must have the format '<ITEM_ID>[,HQ]'";
     let segments: Vec<&str> = s.split(",").collect();
-    let item_id_str = segments.get(0);
-    let item_id: u32;
-    match item_id_str {
-        Some(&str) => item_id = str.parse().map_err(|_| PARSE_ERROR_STRING.to_owned())?,
+    let item_id_str = segments.first();
+    let item_id = match item_id_str {
+        Some(&str) => str.parse().map_err(|_| PARSE_ERROR_STRING.to_owned())?,
         None => return Err(PARSE_ERROR_STRING.to_owned()),
-    }
+    };
     match segments.len() {
         1 => Ok(ConsumableArg::NQ(item_id)),
         2 => {
@@ -160,13 +159,15 @@ fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [
 
 pub fn execute(args: &SolveArgs) {
     if args.recipe_id.is_none() && args.item_id.is_none() && args.custom_recipe.is_empty() {
-        error!("One of the arguments '--recipe-id', '--item-id', or '--custom-recipe' must be provided");
+        error!(
+            "One of the arguments '--recipe-id', '--item-id', or '--custom-recipe' must be provided"
+        );
         panic!();
     }
-    
+
     let use_custom_recipe = !args.custom_recipe.is_empty();
     let recipe: raphael_data::Recipe = if use_custom_recipe {
-         raphael_data::Recipe{
+        raphael_data::Recipe {
             job_id: 0,
             item_id: 0,
             max_level_scaling: 0,
@@ -179,15 +180,27 @@ pub fn execute(args: &SolveArgs) {
             is_expert: false,
         }
     } else if args.recipe_id.is_some() {
-        *RECIPES.get(&args.recipe_id.unwrap()).expect(&format!( "Unable to find Recipe with ID: {}", args.recipe_id.unwrap()))
+        *RECIPES.get(&args.recipe_id.unwrap()).expect(&format!(
+            "Unable to find Recipe with ID: {}",
+            args.recipe_id.unwrap()
+        ))
     } else {
-        log::warn!("Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead.\nThe first match, i.e. the recipe with the lowest ID, will be selected.");
+        log::warn!(
+            "Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead.\nThe first match, i.e. the recipe with the lowest ID, will be selected."
+        );
         *RECIPES
             .values()
             .find(|recipe| recipe.item_id == args.item_id.unwrap())
-            .expect(&format!("Unable to find Recipe for an item with item ID: {}", args.item_id.unwrap()))
+            .expect(&format!(
+                "Unable to find Recipe for an item with item ID: {}",
+                args.item_id.unwrap()
+            ))
     };
-    let recipe_id = RECIPES.entries().find(|(_, entry_recipe)| **entry_recipe == recipe).map(|(recipe_id, _)| *recipe_id).unwrap_or_default();
+    let recipe_id = RECIPES
+        .entries()
+        .find(|(_, entry_recipe)| **entry_recipe == recipe)
+        .map(|(recipe_id, _)| *recipe_id)
+        .unwrap_or_default();
     let food = match args.food {
         Some(food_arg) => {
             let item_id;
@@ -241,21 +254,21 @@ pub fn execute(args: &SolveArgs) {
 
     let craftsmanship = match args.craftsmanship {
         Some(stat) => stat,
-        None => args.stats.get(0).unwrap().to_owned(),
+        None => args.stats[0],
     };
     let control = match args.control {
         Some(stat) => stat,
-        None => args.stats.get(1).unwrap().to_owned(),
+        None => args.stats[1],
     };
     let cp = match args.cp {
         Some(stat) => stat,
-        None => args.stats.get(2).unwrap().to_owned(),
+        None => args.stats[2],
     };
 
     let crafter_stats = CrafterStats {
-        craftsmanship: craftsmanship,
-        control: control,
-        cp: cp,
+        craftsmanship,
+        control,
+        cp,
         level: args.level,
         manipulation: args.manipulation,
         heart_and_soul: args.heart_and_soul,
@@ -264,26 +277,30 @@ pub fn execute(args: &SolveArgs) {
 
     let custom_recipe_overrides = if !use_custom_recipe {
         None
+    } else if args.override_base_increases.is_empty() {
+        Some(CustomRecipeOverrides {
+            max_progress_override: args.custom_recipe[1],
+            max_quality_override: args.custom_recipe[2],
+            max_durability_override: args.custom_recipe[3],
+            ..Default::default()
+        })
     } else {
-        if args.override_base_increases.is_empty(){
-            Some(CustomRecipeOverrides {
-                max_progress_override: args.custom_recipe[1],
-                max_quality_override: args.custom_recipe[2],
-                max_durability_override: args.custom_recipe[3],
-                ..Default::default()
-            })
-        } else {
-            Some(CustomRecipeOverrides {
-                max_progress_override: args.custom_recipe[1],
-                max_quality_override: args.custom_recipe[2],
-                max_durability_override: args.custom_recipe[3],
-                base_progress_override: Some(args.override_base_increases[1]), // TODO use level, at args.override_base_increases[0]
-                base_quality_override: Some(args.override_base_increases[2]),
-            })
-        }
+        Some(CustomRecipeOverrides {
+            max_progress_override: args.custom_recipe[1],
+            max_quality_override: args.custom_recipe[2],
+            max_durability_override: args.custom_recipe[3],
+            base_progress_override: Some(args.override_base_increases[1]), // TODO use level, at args.override_base_increases[0]
+            base_quality_override: Some(args.override_base_increases[2]),
+        })
     };
-    let mut settings  =
-            get_game_settings(recipe, custom_recipe_overrides, crafter_stats, food, potion, args.adversarial);
+    let mut settings = get_game_settings(
+        recipe,
+        custom_recipe_overrides,
+        crafter_stats,
+        food,
+        potion,
+        args.adversarial,
+    );
 
     let target_quality = match args.target_quality {
         Some(target) => target.clamp(0, settings.max_quality),
@@ -337,7 +354,10 @@ pub fn execute(args: &SolveArgs) {
             final_state.progress, settings.max_progress
         );
         println!("Quality: {}/{}", final_quality, recipe_max_quality);
-        println!("Durability: {}/{}", final_state.durability, settings.max_durability);
+        println!(
+            "Durability: {}/{}",
+            final_state.durability, settings.max_durability
+        );
         println!("Steps: {}", steps);
         println!("Duration: {} seconds", duration);
         println!("\nActions:");
