@@ -7,6 +7,7 @@ mod quality_upper_bound_solver;
 use quality_upper_bound_solver::QualityUpperBoundSolver;
 
 mod step_lower_bound_solver;
+use raphael_sim::{Condition, SimulationState};
 use step_lower_bound_solver::StepLowerBoundSolver;
 
 mod macro_solver;
@@ -24,8 +25,15 @@ pub enum SolverException {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub struct SolverInitialState {
+    state: SimulationState,
+    condition: Option<Condition>,
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct SolverSettings {
     pub simulator_settings: raphael_sim::Settings,
+    pub simulator_initial_state: Option<SolverInitialState>,
     pub backload_progress: bool,
     pub allow_unsound_branch_pruning: bool,
 }
@@ -60,6 +68,19 @@ impl SolverSettings {
         #[allow(clippy::useless_conversion)]
         u32::from(self.simulator_settings.base_quality)
     }
+
+    pub fn initial_state(&self) -> SimulationState {
+        self.simulator_initial_state
+            .map(|s| s.state)
+            .unwrap_or_else(|| SimulationState::new(&self.simulator_settings))
+    }
+
+    pub fn initial_condition(&self) -> Condition {
+        self.simulator_initial_state
+            .map(|s| s.condition)
+            .flatten()
+            .unwrap_or(Condition::Normal)
+    }
 }
 
 pub mod test_utils {
@@ -73,6 +94,7 @@ pub mod test_utils {
     ) -> Result<Vec<Action>, SolverException> {
         let solver_settings = SolverSettings {
             simulator_settings: *settings,
+            simulator_initial_state: None,
             backload_progress,
             allow_unsound_branch_pruning,
         };

@@ -287,7 +287,8 @@ impl Drop for QualityUpperBoundSolver {
 fn durability_cost(settings: &Settings) -> i16 {
     let mut cost = 100;
     if settings.is_action_allowed::<MasterMend>() {
-        let cost_per_five = MasterMend::CP_COST / std::cmp::min(6, settings.max_durability as i16 / 5 - 1);
+        let cost_per_five =
+            MasterMend::CP_COST / std::cmp::min(6, settings.max_durability as i16 / 5 - 1);
         cost = std::cmp::min(cost, cost_per_five);
     }
     if settings.is_action_allowed::<Manipulation>() {

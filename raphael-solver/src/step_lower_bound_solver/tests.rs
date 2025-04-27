@@ -13,6 +13,7 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u8 {
     state.effects.set_combo(Combo::None);
     let solver_settings = SolverSettings {
         simulator_settings,
+        simulator_initial_state: None,
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
@@ -494,6 +495,7 @@ fn random_state(settings: &Settings) -> SimulationState {
 fn monotonic_fuzz_check(simulator_settings: Settings) {
     let solver_settings = SolverSettings {
         simulator_settings,
+        simulator_initial_state: None,
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };

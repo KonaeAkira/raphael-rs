@@ -254,6 +254,7 @@ pub fn execute(args: &SolveArgs) {
 
     let solver_settings = SolverSettings {
         simulator_settings: settings,
+        simulator_initial_state: None,
         backload_progress: args.backload_progress,
         allow_unsound_branch_pruning: args.unsound,
     };

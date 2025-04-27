@@ -26,6 +26,7 @@ fn main() {
 
     let solver_settings = SolverSettings {
         simulator_settings,
+        simulator_initial_state: None,
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };

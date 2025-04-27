@@ -69,7 +69,7 @@ impl<'a> MacroSolver<'a> {
         );
 
         let _total_time = ScopedTimer::new("Total Time");
-        let initial_state = SimulationState::new(&self.settings.simulator_settings);
+        let initial_state = self.settings.initial_state();
 
         let timer = ScopedTimer::new("Finish Solver");
         if !self.finish_solver.can_finish(&initial_state) {

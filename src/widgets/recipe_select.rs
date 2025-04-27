@@ -4,10 +4,13 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{
-    find_recipes, get_game_settings, get_job_name, Consumable, CustomRecipeOverrides, Ingredient, Locale, RLVLS
+    Consumable, CustomRecipeOverrides, Ingredient, Locale, RLVLS, find_recipes, get_game_settings,
+    get_job_name,
 };
 
-use crate::config::{CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration};
+use crate::config::{
+    CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
+};
 
 use super::{ItemNameLabel, util};
 
@@ -120,7 +123,8 @@ impl<'a> RecipeSelect<'a> {
     }
 
     fn draw_custom_recipe_select(self, ui: &mut egui::Ui) {
-        let custom_recipe_overrides = &mut self.custom_recipe_overrides_config.custom_recipe_overrides;
+        let custom_recipe_overrides =
+            &mut self.custom_recipe_overrides_config.custom_recipe_overrides;
         let default_game_settings = get_game_settings(
             self.recipe_config.recipe,
             None,
@@ -136,21 +140,26 @@ impl<'a> RecipeSelect<'a> {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     ui.label("Level:");
-                        ui.add(
-                            egui::DragValue::new(&mut self.recipe_config.recipe.level).range(1..=100),
-                        );
-                    });
-
-                ui.add_enabled_ui(!self.custom_recipe_overrides_config.use_base_increase_overrides, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Recipe Level:");
-                        ui.add(
-                            egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
-                                .range(1..=RLVLS.len() - 1),
-                        );
-                    });
+                    ui.add(
+                        egui::DragValue::new(&mut self.recipe_config.recipe.level).range(1..=100),
+                    );
                 });
-                
+
+                ui.add_enabled_ui(
+                    !self
+                        .custom_recipe_overrides_config
+                        .use_base_increase_overrides,
+                    |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Recipe Level:");
+                            ui.add(
+                                egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
+                                    .range(1..=RLVLS.len() - 1),
+                            );
+                        });
+                    },
+                );
+
                 ui.horizontal(|ui| {
                     ui.label("Progress:");
                     ui.add(egui::DragValue::new(
@@ -183,54 +192,83 @@ impl<'a> RecipeSelect<'a> {
             ui.separator();
             ui.vertical(|ui| {
                 let mut rlvl = RLVLS[self.recipe_config.recipe.recipe_level as usize];
-                ui.add_enabled_ui(!self.custom_recipe_overrides_config.use_base_increase_overrides, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Progress divider");
-                        ui.add_enabled(false, egui::DragValue::new(&mut rlvl.progress_div));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Quality divider");
-                        ui.add_enabled(false, egui::DragValue::new(&mut rlvl.quality_div));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Progress modifier");
-                        ui.add_enabled(false, egui::DragValue::new(&mut rlvl.progress_mod));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Quality modifier");
-                        ui.add_enabled(false, egui::DragValue::new(&mut rlvl.quality_mod));
-                    });
-                });
-                
+                ui.add_enabled_ui(
+                    !self
+                        .custom_recipe_overrides_config
+                        .use_base_increase_overrides,
+                    |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Progress divider");
+                            ui.add_enabled(false, egui::DragValue::new(&mut rlvl.progress_div));
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Quality divider");
+                            ui.add_enabled(false, egui::DragValue::new(&mut rlvl.quality_div));
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Progress modifier");
+                            ui.add_enabled(false, egui::DragValue::new(&mut rlvl.progress_mod));
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Quality modifier");
+                            ui.add_enabled(false, egui::DragValue::new(&mut rlvl.quality_mod));
+                        });
+                    },
+                );
+
                 ui.horizontal(|ui| {
                     ui.label("Progress per 100% efficiency:");
-                    if !self.custom_recipe_overrides_config.use_base_increase_overrides {
-                        ui.label(egui::RichText::new(default_game_settings.base_progress.to_string()).strong());
-                    } else {
-                        let mut base_progress_override_value = custom_recipe_overrides.base_progress_override.unwrap();
-                        ui.add(
-                        egui::DragValue::new(&mut base_progress_override_value)
-                            .range(0..=999),
+                    if !self
+                        .custom_recipe_overrides_config
+                        .use_base_increase_overrides
+                    {
+                        ui.label(
+                            egui::RichText::new(default_game_settings.base_progress.to_string())
+                                .strong(),
                         );
-                        custom_recipe_overrides.base_progress_override = Some(base_progress_override_value);
+                    } else {
+                        let mut base_progress_override_value =
+                            custom_recipe_overrides.base_progress_override.unwrap();
+                        ui.add(
+                            egui::DragValue::new(&mut base_progress_override_value).range(0..=999),
+                        );
+                        custom_recipe_overrides.base_progress_override =
+                            Some(base_progress_override_value);
                     }
                 });
                 ui.horizontal(|ui| {
                     ui.label("Quality per 100% efficiency:");
-                    if !self.custom_recipe_overrides_config.use_base_increase_overrides {
-                        ui.label(egui::RichText::new(default_game_settings.base_quality.to_string()).strong());
-                    } else {
-                        let mut base_quality_override_value = custom_recipe_overrides.base_quality_override.unwrap();
-                        ui.add(
-                        egui::DragValue::new(&mut base_quality_override_value)
-                            .range(0..=999),
+                    if !self
+                        .custom_recipe_overrides_config
+                        .use_base_increase_overrides
+                    {
+                        ui.label(
+                            egui::RichText::new(default_game_settings.base_quality.to_string())
+                                .strong(),
                         );
-                        custom_recipe_overrides.base_quality_override = Some(base_quality_override_value);
+                    } else {
+                        let mut base_quality_override_value =
+                            custom_recipe_overrides.base_quality_override.unwrap();
+                        ui.add(
+                            egui::DragValue::new(&mut base_quality_override_value).range(0..=999),
+                        );
+                        custom_recipe_overrides.base_quality_override =
+                            Some(base_quality_override_value);
                     }
                 });
-                if ui.checkbox(&mut self.custom_recipe_overrides_config.use_base_increase_overrides, "Override per 100% efficiency values").changed() {
-                    custom_recipe_overrides.base_progress_override = Some(default_game_settings.base_progress);
-                    custom_recipe_overrides.base_quality_override = Some(default_game_settings.base_quality);
+                if ui
+                    .checkbox(
+                        &mut self
+                            .custom_recipe_overrides_config
+                            .use_base_increase_overrides,
+                        "Override per 100% efficiency values",
+                    )
+                    .changed()
+                {
+                    custom_recipe_overrides.base_progress_override =
+                        Some(default_game_settings.base_progress);
+                    custom_recipe_overrides.base_quality_override =
+                        Some(default_game_settings.base_quality);
                 };
             });
         });
@@ -242,7 +280,6 @@ impl Widget for RecipeSelect<'_> {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
-
                 let mut collapsed = false;
 
                 ui.horizontal(|ui| {
@@ -258,7 +295,8 @@ impl Widget for RecipeSelect<'_> {
                         self.locale,
                     ));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        let use_custom_recipe= &mut self.custom_recipe_overrides_config.use_custom_recipe;
+                        let use_custom_recipe =
+                            &mut self.custom_recipe_overrides_config.use_custom_recipe;
                         if ui.checkbox(use_custom_recipe, "Custom").changed() {
                             if *use_custom_recipe {
                                 let default_game_settings = get_game_settings(
@@ -273,15 +311,25 @@ impl Widget for RecipeSelect<'_> {
                                 self.recipe_config.recipe.max_level_scaling = 0;
                                 self.recipe_config.recipe.material_quality_factor = 0;
                                 self.recipe_config.recipe.ingredients = [Ingredient::default(); 6];
-                                
-                                self.custom_recipe_overrides_config.custom_recipe_overrides = CustomRecipeOverrides {
-                                    max_progress_override: default_game_settings.max_progress,
-                                    max_quality_override: default_game_settings.max_quality,
-                                    ..Default::default()
-                                };
-                                if self.custom_recipe_overrides_config.use_base_increase_overrides {
-                                    self.custom_recipe_overrides_config.custom_recipe_overrides.base_progress_override = Some(default_game_settings.base_progress);
-                                    self.custom_recipe_overrides_config.custom_recipe_overrides.base_quality_override = Some(default_game_settings.base_quality);
+
+                                self.custom_recipe_overrides_config.custom_recipe_overrides =
+                                    CustomRecipeOverrides {
+                                        max_progress_override: default_game_settings.max_progress,
+                                        max_quality_override: default_game_settings.max_quality,
+                                        ..Default::default()
+                                    };
+                                if self
+                                    .custom_recipe_overrides_config
+                                    .use_base_increase_overrides
+                                {
+                                    self.custom_recipe_overrides_config
+                                        .custom_recipe_overrides
+                                        .base_progress_override =
+                                        Some(default_game_settings.base_progress);
+                                    self.custom_recipe_overrides_config
+                                        .custom_recipe_overrides
+                                        .base_quality_override =
+                                        Some(default_game_settings.base_quality);
                                 }
 
                                 self.recipe_config.quality_source = QualitySource::Value(0);

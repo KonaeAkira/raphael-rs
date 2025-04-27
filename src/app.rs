@@ -10,7 +10,10 @@ use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
-use crate::config::{CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget, RecipeConfiguration};
+use crate::config::{
+    CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
+    RecipeConfiguration,
+};
 use crate::widgets::*;
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
@@ -90,7 +93,11 @@ impl MacroSolverApp {
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
-            custom_recipe_overrides_config: load(cc, "CUSTOM_RECIPE_OVERRIDES_CONFIG", CustomRecipeOverridesConfiguration::default()),
+            custom_recipe_overrides_config: load(
+                cc,
+                "CUSTOM_RECIPE_OVERRIDES_CONFIG",
+                CustomRecipeOverridesConfiguration::default(),
+            ),
             selected_food: load(cc, "SELECTED_FOOD", None),
             selected_potion: load(cc, "SELECTED_POTION", None),
             crafter_config: load(cc, "CRAFTER_CONFIG", CrafterConfig::default()),
@@ -399,7 +406,11 @@ impl eframe::App for MacroSolverApp {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, "LOCALE", &self.locale);
         eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
-        eframe::set_value(storage, "CUSTOM_RECIPE_OVERRIDES_CONFIG", &self.custom_recipe_overrides_config);
+        eframe::set_value(
+            storage,
+            "CUSTOM_RECIPE_OVERRIDES_CONFIG",
+            &self.custom_recipe_overrides_config,
+        );
         eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
         eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
         eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
@@ -959,6 +970,7 @@ fn spawn_solver(
             // If we find a max-quality solution here, we can return early.
             let solver_settings = raphael_solver::SolverSettings {
                 simulator_settings,
+                simulator_initial_state: None,
                 backload_progress: true,
                 allow_unsound_branch_pruning: true,
             };
@@ -991,6 +1003,7 @@ fn spawn_solver(
 
         let solver_settings = raphael_solver::SolverSettings {
             simulator_settings,
+            simulator_initial_state: None,
             backload_progress: solver_config.backload_progress,
             allow_unsound_branch_pruning: false,
         };

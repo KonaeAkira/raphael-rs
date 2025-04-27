@@ -145,7 +145,7 @@ pub fn get_game_settings(
             allowed_actions,
             adversarial,
         },
-    } 
+    }
 }
 
 pub fn get_initial_quality(

@@ -111,6 +111,7 @@ impl From<SolveArgs> for SolverSettings {
         };
         Self {
             simulator_settings,
+            simulator_initial_state: None,
             backload_progress: value.backload_progress,
             allow_unsound_branch_pruning: value.unsound_branch_pruning,
         }
