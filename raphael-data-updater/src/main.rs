@@ -40,6 +40,18 @@ fn export_rlvls(rlvls: &[RecipeLevel]) {
     log::info!("rlvls exported to \"{}\"", path.display());
 }
 
+fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry]) {
+    let path = std::path::absolute("./raphael-data/data/level_adjust_table.rs").unwrap();
+    let mut writer = BufWriter::new(File::create(&path).unwrap());
+    writeln!(&mut writer, "&[").unwrap();
+    writeln!(&mut writer, "{},", u16::default()).unwrap(); // index 0
+    for entry in level_adjust_table_entries.iter() {
+        writeln!(&mut writer, "{entry},").unwrap();
+    }
+    writeln!(&mut writer, "]").unwrap();
+    log::info!("Level adjust table exported to \"{}\"", path.display());
+}
+
 fn export_recipes(recipes: &[Recipe]) {
     let mut phf_map = phf_codegen::OrderedMap::new();
     for recipe in recipes {
@@ -100,6 +112,7 @@ async fn main() {
     env_logger::builder().format_timestamp(None).init();
 
     let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>("en").await });
+    let level_adjust_table_entries = tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>("en").await });
     let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>("en").await });
     let items = tokio::spawn(async { fetch_and_parse::<Item>("en").await });
     let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>("en").await });
@@ -111,6 +124,7 @@ async fn main() {
     let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja").await });
 
     let rlvls = rlvls.await.unwrap();
+    let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
     let mut recipes = recipes.await.unwrap();
     let mut items = items.await.unwrap();
 
@@ -162,6 +176,7 @@ async fn main() {
     item_names_jp.retain(|item_name| necessary_items.contains(&item_name.id));
 
     export_rlvls(&rlvls);
+    export_level_adjust_table(&level_adjust_table_entries);
     export_recipes(&recipes);
     export_meals(&meals);
     export_potions(&potions);

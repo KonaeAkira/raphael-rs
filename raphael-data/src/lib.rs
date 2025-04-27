@@ -67,6 +67,7 @@ pub struct Recipe {
 }
 
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
+pub const LEVEL_ADJUST_TABLE: &[u16] = include!("../data/level_adjust_table.rs");
 pub static RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
 pub const ITEMS: phf::OrderedMap<u32, Item> = include!("../data/items.rs");
 
@@ -80,10 +81,7 @@ pub fn get_game_settings(
 ) -> Settings {
     let rlvl = if recipe.max_level_scaling != 0 {
         let job_level = std::cmp::min(recipe.max_level_scaling, crafter_stats.level);
-        RLVLS
-            .iter()
-            .position(|rlvl_record| rlvl_record.job_level == job_level)
-            .unwrap()
+        LEVEL_ADJUST_TABLE[job_level as usize] as usize
     } else {
         recipe.recipe_level as usize
     };
