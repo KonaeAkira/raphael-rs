@@ -47,7 +47,9 @@ fn test_medical_supplies() {
             durability_factor: 75,
             material_factor: 0,
             ingredients: [Ingredient::default(); 6],
-            is_expert: false
+            is_expert: false,
+            req_craftsmanship: 0,
+            req_control: 0,
         }
     );
 }
@@ -67,7 +69,9 @@ fn test_ipe_lumber() {
             durability_factor: 50,
             material_factor: 0,
             ingredients: [Ingredient::default(); 6],
-            is_expert: false
+            is_expert: false,
+            req_craftsmanship: 4740,
+            req_control: 4400,
         }
     );
 }
@@ -87,7 +91,9 @@ fn test_uncharted_course_resin() {
             durability_factor: 100,
             material_factor: 0,
             ingredients: [Ingredient::default(); 6],
-            is_expert: true
+            is_expert: true,
+            req_craftsmanship: 3950,
+            req_control: 0,
         }
     );
 }
@@ -107,7 +113,9 @@ fn test_habitat_chair() {
             durability_factor: 88,
             material_factor: 0,
             ingredients: [Ingredient::default(); 6],
-            is_expert: false
+            is_expert: false,
+            req_craftsmanship: 0,
+            req_control: 0,
         }
     );
 }

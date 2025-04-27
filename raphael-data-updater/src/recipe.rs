@@ -21,6 +21,8 @@ pub struct Recipe {
     pub material_factor: u32,
     pub ingredients: Vec<Ingredient>,
     pub is_expert: bool,
+    pub req_craftsmanship: u32,
+    pub req_control: u32,
 }
 
 impl SheetData for Recipe {
@@ -37,6 +39,8 @@ impl SheetData for Recipe {
         "IsExpert",
         "Ingredient",
         "AmountIngredient",
+        "RequiredCraftsmanship",
+        "RequiredControl",
     ];
 
     fn row_id(&self) -> u32 {
@@ -67,6 +71,8 @@ impl SheetData for Recipe {
             material_factor: fields["MaterialQualityFactor"].as_u32().unwrap(),
             ingredients,
             is_expert: fields["IsExpert"].as_bool().unwrap(),
+            req_craftsmanship: fields["RequiredCraftsmanship"].as_u32().unwrap(),
+            req_control: fields["RequiredControl"].as_u32().unwrap(),
         })
     }
 }
@@ -97,6 +103,8 @@ impl std::fmt::Display for Recipe {
         }
         write!(f, "], ")?;
         write!(f, "is_expert: {}, ", self.is_expert)?;
+        write!(f, "req_craftsmanship: {}, ", self.req_craftsmanship)?;
+        write!(f, "req_control: {}, ", self.req_control)?;
         write!(f, "}}")?;
         Ok(())
     }

@@ -53,6 +53,7 @@ pub struct MacroSolverApp {
 
     stats_edit_window_open: bool,
     saved_rotations_window_open: bool,
+    missing_stats_error_window_open: bool,
 
     actions: Vec<Action>,
     solver_pending: bool,
@@ -110,6 +111,7 @@ impl MacroSolverApp {
 
             stats_edit_window_open: false,
             saved_rotations_window_open: false,
+            missing_stats_error_window_open: false,
 
             actions: Vec::new(),
             solver_pending: false,
@@ -151,6 +153,26 @@ impl eframe::App for MacroSolverApp {
                 ui.vertical_centered_justified(|ui| {
                     if ui.button("Close").clicked() {
                         *latest_version.deref_mut() = semver::Version::new(0, 0, 0);
+                    }
+                });
+            });
+        }
+
+        if self.missing_stats_error_window_open {
+            egui::Modal::new(egui::Id::new("min_stats_warning")).show(ctx, |ui| {
+                let req_cms = self.recipe_config.recipe.req_craftsmanship;
+                let req_ctrl = self.recipe_config.recipe.req_control;
+                ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
+                ui.label(egui::RichText::new("Error").strong());
+                ui.separator();
+                ui.label("Your stats are below the minimum requirement for this recipe.");
+                ui.label(format!(
+                    "Requirement: {req_cms} Craftsmanship, {req_ctrl} Control."
+                ));
+                ui.separator();
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button("Close").clicked() {
+                        self.missing_stats_error_window_open = false;
                     }
                 });
             });
@@ -812,6 +834,26 @@ impl MacroSolverApp {
     }
 
     fn on_solve_button_clicked(&mut self, ctx: &egui::Context) {
+        let craftsmanship_req = self.recipe_config.recipe.req_craftsmanship;
+        let control_req = self.recipe_config.recipe.req_control;
+        let craftsmanship = self.crafter_config.active_stats().craftsmanship;
+        let control = self.crafter_config.active_stats().control;
+        let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
+            craftsmanship,
+            &[self.selected_food, self.selected_potion],
+        );
+        let control_bonus =
+            raphael_data::control_bonus(control, &[self.selected_food, self.selected_potion]);
+        if craftsmanship + craftsmanship_bonus >= craftsmanship_req
+            && control + control_bonus >= control_req
+        {
+            self.solve(ctx);
+        } else {
+            self.missing_stats_error_window_open = true;
+        }
+    }
+
+    fn solve(&mut self, ctx: &egui::Context) {
         self.actions = Vec::new();
         self.solver_pending = true;
         self.solver_interrupt.clear();
@@ -823,7 +865,7 @@ impl MacroSolverApp {
                 true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
                 false => None,
             },
-            self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
+            *self.crafter_config.active_stats(),
             self.selected_food,
             self.selected_potion,
             self.solver_config.adversarial,
