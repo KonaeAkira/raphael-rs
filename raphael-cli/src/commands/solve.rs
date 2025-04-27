@@ -187,6 +187,7 @@ pub fn execute(args: &SolveArgs) {
             .find(|recipe| recipe.item_id == args.item_id.unwrap())
             .expect(&format!("Unable to find Recipe for an item with item ID: {}", args.item_id.unwrap()))
     };
+    let recipe_id = raphael_data::RECIPES.entries().find(|(_, entry_recipe)| **entry_recipe == recipe).map(|(recipe_id, _)| *recipe_id).unwrap_or_default();
     let food = match args.food {
         Some(food_arg) => {
             let item_id;
@@ -330,7 +331,7 @@ pub fn execute(args: &SolveArgs) {
     let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
 
     if args.output_variables.is_empty() {
-        println!("Recipe ID: {}", recipe.id);
+        println!("Recipe ID: {}", recipe_id);
         println!(
             "Progress: {}/{}",
             final_state.progress, settings.max_progress
@@ -347,7 +348,7 @@ pub fn execute(args: &SolveArgs) {
 
         for identifier in &args.output_variables {
             let map_to_debug_str = |actions: Vec<raphael_sim::Action>| match &*(*identifier) {
-                "recipe_id" => format!("{:?}", recipe.id),
+                "recipe_id" => format!("{:?}", recipe_id),
                 "item_id" => format!("{:?}", recipe.item_id),
                 "recipe" => format!("\"{:?}\"", recipe),
                 "food" => format!("\"{:?}\"", food),
