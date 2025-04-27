@@ -337,6 +337,7 @@ pub fn execute(args: &SolveArgs) {
             final_state.progress, settings.max_progress
         );
         println!("Quality: {}/{}", final_quality, recipe_max_quality);
+        println!("Durability: {}/{}", final_state.durability, settings.max_durability);
         println!("Steps: {}", steps);
         println!("Duration: {} seconds", duration);
         println!("\nActions:");
