@@ -60,22 +60,21 @@ pub trait ActionImpl {
             / 100_000_000) as u32
     }
 
-    fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> i16 {
+    fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> u16 {
         if state.effects.trained_perfection_active() {
             return 0;
         }
         // TODO: Check how rounding works
         match (state.effects.waste_not(), _condition) {
-            (0, Condition::Sturdy) => (Self::base_durability_cost(state, settings) + 1) / 2,
+            (0, Condition::Sturdy) => Self::base_durability_cost(state, settings).div_ceil(2),
             (0, _) => Self::base_durability_cost(state, settings),
-            (_, Condition::Sturdy) => (Self::base_durability_cost(state, settings) + 1) / 4,
-            (_, _) => (Self::base_durability_cost(state, settings) + 1) / 2,
+            (_, Condition::Sturdy) => Self::base_durability_cost(state, settings).div_ceil(4),
+            (_, _) => Self::base_durability_cost(state, settings).div_ceil(2),
         }
     }
 
-    fn cp_cost(state: &SimulationState, settings: &Settings, condition: Condition) -> i16 {
+    fn cp_cost(state: &SimulationState, settings: &Settings, condition: Condition) -> u16 {
         let mut base_cost = Self::base_cp_cost(state, settings);
-        // TODO: Check how rounding works
         if condition == Condition::Pliant {
             base_cost /= 2;
         }
@@ -88,10 +87,10 @@ pub trait ActionImpl {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         0
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         0
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         0
     }
 
@@ -110,14 +109,14 @@ impl ActionImpl for BasicSynthesis {
     fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u32 {
         if settings.job_level < 31 { 100 } else { 120 }
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
 }
 
 pub struct BasicTouch {}
 impl BasicTouch {
-    pub const CP_COST: i16 = 18;
+    pub const CP_COST: u16 = 18;
 }
 impl ActionImpl for BasicTouch {
     const LEVEL_REQUIREMENT: u8 = 5;
@@ -125,10 +124,10 @@ impl ActionImpl for BasicTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn combo(_state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
@@ -138,27 +137,27 @@ impl ActionImpl for BasicTouch {
 
 pub struct MasterMend {}
 impl MasterMend {
-    pub const CP_COST: i16 = 88;
+    pub const CP_COST: u16 = 88;
 }
 impl ActionImpl for MasterMend {
     const LEVEL_REQUIREMENT: u8 = 7;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::MasterMend);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
-        state.durability = std::cmp::min(i16::from(settings.max_durability), state.durability + 30);
+        state.durability = std::cmp::min(settings.max_durability, state.durability + 30);
     }
 }
 
 pub struct Observe {}
 impl Observe {
-    pub const CP_COST: i16 = 7;
+    pub const CP_COST: u16 = 7;
 }
 impl ActionImpl for Observe {
     const LEVEL_REQUIREMENT: u8 = 13;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Observe);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn combo(_state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
@@ -195,12 +194,12 @@ impl ActionImpl for TricksOfTheTrade {
 
 pub struct WasteNot {}
 impl WasteNot {
-    pub const CP_COST: i16 = 56;
+    pub const CP_COST: u16 = 56;
 }
 impl ActionImpl for WasteNot {
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
@@ -214,12 +213,12 @@ impl ActionImpl for WasteNot {
 
 pub struct Veneration {}
 impl Veneration {
-    pub const CP_COST: i16 = 18;
+    pub const CP_COST: u16 = 18;
 }
 impl ActionImpl for Veneration {
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Veneration);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
@@ -238,10 +237,10 @@ impl ActionImpl for StandardTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         125
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> u16 {
         match state.effects.combo() {
             Combo::BasicTouch => 18,
             _ => 32,
@@ -257,12 +256,12 @@ impl ActionImpl for StandardTouch {
 
 pub struct GreatStrides {}
 impl GreatStrides {
-    pub const CP_COST: i16 = 32;
+    pub const CP_COST: u16 = 32;
 }
 impl ActionImpl for GreatStrides {
     const LEVEL_REQUIREMENT: u8 = 21;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::GreatStrides);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
@@ -276,12 +275,12 @@ impl ActionImpl for GreatStrides {
 
 pub struct Innovation {}
 impl Innovation {
-    pub const CP_COST: i16 = 18;
+    pub const CP_COST: u16 = 18;
 }
 impl ActionImpl for Innovation {
     const LEVEL_REQUIREMENT: u8 = 26;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Innovation);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
@@ -295,12 +294,12 @@ impl ActionImpl for Innovation {
 
 pub struct WasteNot2 {}
 impl WasteNot2 {
-    pub const CP_COST: i16 = 98;
+    pub const CP_COST: u16 = 98;
 }
 impl ActionImpl for WasteNot2 {
     const LEVEL_REQUIREMENT: u8 = 47;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot2);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
@@ -329,10 +328,10 @@ impl ActionImpl for ByregotsBlessing {
     fn base_quality_increase(state: &SimulationState, _settings: &Settings) -> u32 {
         100 + 20 * state.effects.inner_quiet() as u32
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         24
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
@@ -360,10 +359,10 @@ impl ActionImpl for PreciseTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         150
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         18
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
@@ -392,10 +391,10 @@ impl ActionImpl for MuscleMemory {
     fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         300
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         6
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
@@ -413,22 +412,22 @@ impl ActionImpl for CarefulSynthesis {
             82.. => 180,
         }
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         7
     }
 }
 
 pub struct Manipulation {}
 impl Manipulation {
-    pub const CP_COST: i16 = 96;
+    pub const CP_COST: u16 = 96;
 }
 impl ActionImpl for Manipulation {
     const LEVEL_REQUIREMENT: u8 = 65;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Manipulation);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_pre(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
@@ -460,10 +459,10 @@ impl ActionImpl for PrudentTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         5
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         25
     }
 }
@@ -475,10 +474,10 @@ impl ActionImpl for AdvancedTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         150
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> u16 {
         match state.effects.combo() {
             Combo::StandardTouch => 18,
             _ => 46,
@@ -503,10 +502,10 @@ impl ActionImpl for Reflect {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         300
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         6
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
@@ -517,7 +516,7 @@ impl ActionImpl for Reflect {
 
 pub struct PreparatoryTouch {}
 impl PreparatoryTouch {
-    pub const CP_COST: i16 = 40;
+    pub const CP_COST: u16 = 40;
 }
 impl ActionImpl for PreparatoryTouch {
     const LEVEL_REQUIREMENT: u8 = 71;
@@ -525,10 +524,10 @@ impl ActionImpl for PreparatoryTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         200
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         20
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
@@ -551,10 +550,10 @@ impl ActionImpl for Groundwork {
         }
         base
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         20
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         18
     }
 }
@@ -572,10 +571,10 @@ impl ActionImpl for DelicateSynthesis {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         32
     }
 }
@@ -602,10 +601,10 @@ impl ActionImpl for IntensiveSynthesis {
     fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         400
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         6
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
@@ -639,10 +638,10 @@ impl ActionImpl for TrainedEye {
     fn base_quality_increase(_state: &SimulationState, settings: &Settings) -> u32 {
         u32::from(settings.max_quality)
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         250
     }
 }
@@ -685,10 +684,10 @@ impl ActionImpl for PrudentSynthesis {
     fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         180
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         5
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         18
     }
 }
@@ -710,14 +709,14 @@ impl ActionImpl for TrainedFinesse {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         32
     }
 }
 
 pub struct RefinedTouch {}
 impl RefinedTouch {
-    pub const CP_COST: i16 = 24;
+    pub const CP_COST: u16 = 24;
 }
 impl ActionImpl for RefinedTouch {
     const LEVEL_REQUIREMENT: u8 = 92;
@@ -735,10 +734,10 @@ impl ActionImpl for RefinedTouch {
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
-    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
@@ -773,16 +772,16 @@ impl ActionImpl for QuickInnovation {
 
 pub struct ImmaculateMend {}
 impl ImmaculateMend {
-    pub const CP_COST: i16 = 112;
+    pub const CP_COST: u16 = 112;
 }
 impl ActionImpl for ImmaculateMend {
     const LEVEL_REQUIREMENT: u8 = 98;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::ImmaculateMend);
-    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
+    fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
-        state.durability = i16::from(settings.max_durability);
+        state.durability = settings.max_durability;
     }
 }
 

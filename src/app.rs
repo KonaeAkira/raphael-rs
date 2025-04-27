@@ -441,7 +441,8 @@ impl MacroSolverApp {
                                 self.recipe_config.recipe.item_id,
                                 false,
                                 self.locale,
-                            ),
+                            )
+                            .unwrap_or("Unknown item".to_owned()),
                             self.actions.clone(),
                             &self.recipe_config.recipe,
                             self.selected_food,
@@ -479,14 +480,15 @@ impl MacroSolverApp {
         };
         let item = raphael_data::ITEMS
             .get(&self.recipe_config.recipe.item_id)
-            .unwrap();
+            .copied()
+            .unwrap_or_default();
         ui.add(Simulator::new(
             &game_settings,
             initial_quality,
             self.solver_config,
             &self.crafter_config,
             &self.actions,
-            item,
+            &item,
             self.locale,
         ));
     }

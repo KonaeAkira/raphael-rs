@@ -1,7 +1,6 @@
 [package]
 name = "raphael-data"
 edition = "2024"
-build = "build/main.rs"
 
 [lints]
 workspace = true
@@ -13,11 +12,6 @@ crate-type = ["rlib"]
 raphael-sim = { workspace = true }
 phf = "0.11.2"
 serde = { version = "1.0.215", features = ["derive"], optional = true }
-
-[build-dependencies]
-csv = "1.1.6"
-phf_codegen = "0.11.2"
-serde = { version = "1.0.215", features = ["derive"] }
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]

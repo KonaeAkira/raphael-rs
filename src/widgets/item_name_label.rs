@@ -9,7 +9,7 @@ impl ItemNameLabel {
     pub fn new(item_id: u32, hq: bool, locale: Locale) -> Self {
         Self {
             item_id,
-            text: get_item_name(item_id, hq, locale),
+            text: get_item_name(item_id, hq, locale).unwrap_or("Unknown item".to_owned()),
         }
     }
 }

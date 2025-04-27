@@ -12,7 +12,10 @@ fn find_consumable(consumables: &[Consumable], item_id: u32, hq: bool) -> Option
 #[test]
 fn test_rroneek_steak() {
     let item_id = 44091;
-    assert_eq!(get_item_name(item_id, false, Locale::EN), "Rroneek Steak");
+    assert_eq!(
+        get_item_name(item_id, false, Locale::EN).unwrap(),
+        "Rroneek Steak"
+    );
     let consumable = find_consumable(MEALS, item_id, false).unwrap();
     assert_eq!((consumable.craft_rel, consumable.craft_max), (0, 0));
     assert_eq!((consumable.control_rel, consumable.control_max), (4, 77));

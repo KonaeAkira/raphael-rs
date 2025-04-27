@@ -17,13 +17,13 @@ use super::{ItemNameLabel, util};
 #[derive(Default)]
 struct RecipeFinder {}
 
-impl ComputerMut<(&str, Locale), Vec<usize>> for RecipeFinder {
-    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<usize> {
+impl ComputerMut<(&str, Locale), Vec<u32>> for RecipeFinder {
+    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<u32> {
         find_recipes(text, locale)
     }
 }
 
-type SearchCache<'a> = FrameCache<Vec<usize>, RecipeFinder>;
+type SearchCache<'a> = FrameCache<Vec<u32>, RecipeFinder>;
 
 pub struct RecipeSelect<'a> {
     crafter_config: &'a mut CrafterConfig,
@@ -102,7 +102,8 @@ impl<'a> RecipeSelect<'a> {
             .max_scroll_height(table_height);
         table.body(|body| {
             body.rows(line_height, search_result.len(), |mut row| {
-                let recipe = raphael_data::RECIPES[search_result[row.index()]];
+                let recipe_id = search_result[row.index()];
+                let recipe = raphael_data::RECIPES[&recipe_id];
                 row.col(|ui| {
                     if ui.button("Select").clicked() {
                         self.crafter_config.selected_job = recipe.job_id;
@@ -141,7 +142,8 @@ impl<'a> RecipeSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label("Level:");
                     ui.add(
-                        egui::DragValue::new(&mut self.recipe_config.recipe.level).range(1..=100),
+                        egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
+                            .range(1..=100),
                     );
                 });
 
@@ -183,7 +185,7 @@ impl<'a> RecipeSelect<'a> {
                 ui.horizontal(|ui| {
                     ui.label("Durability:");
                     ui.add(
-                        egui::DragValue::new(&mut self.recipe_config.recipe.durability)
+                        egui::DragValue::new(&mut custom_recipe_overrides.max_durability_override)
                             .range(10..=100),
                     );
                 });
@@ -269,7 +271,7 @@ impl<'a> RecipeSelect<'a> {
                         Some(default_game_settings.base_progress);
                     custom_recipe_overrides.base_quality_override =
                         Some(default_game_settings.base_quality);
-                };
+                }
             });
         });
     }
@@ -309,7 +311,7 @@ impl Widget for RecipeSelect<'_> {
                                 );
                                 self.recipe_config.recipe.item_id = 0;
                                 self.recipe_config.recipe.max_level_scaling = 0;
-                                self.recipe_config.recipe.material_quality_factor = 0;
+                                self.recipe_config.recipe.material_factor = 0;
                                 self.recipe_config.recipe.ingredients = [Ingredient::default(); 6];
 
                                 self.custom_recipe_overrides_config.custom_recipe_overrides =

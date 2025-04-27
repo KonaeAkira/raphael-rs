@@ -33,14 +33,12 @@ pub struct SolverSettings {
 }
 
 impl SolverSettings {
-    pub fn max_durability(&self) -> i16 {
-        #[allow(clippy::useless_conversion)]
-        i16::from(self.simulator_settings.max_durability)
+    pub fn max_durability(&self) -> u16 {
+        self.simulator_settings.max_durability
     }
 
-    pub fn max_cp(&self) -> i16 {
-        #[allow(clippy::useless_conversion)]
-        i16::from(self.simulator_settings.max_cp)
+    pub fn max_cp(&self) -> u16 {
+        self.simulator_settings.max_cp
     }
 
     pub fn max_progress(&self) -> u32 {

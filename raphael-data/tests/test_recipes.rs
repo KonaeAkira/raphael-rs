@@ -1,10 +1,6 @@
 use raphael_data::*;
 
-const NO_INGREDIENT: Ingredient = Ingredient {
-    item_id: 0,
-    amount: 0,
-};
-
+#[track_caller]
 fn assert_item_exists(item_id: u32) {
     assert!(ITEMS.contains_key(&item_id));
     assert!(ITEM_NAMES_EN.contains_key(&item_id));
@@ -15,7 +11,7 @@ fn assert_item_exists(item_id: u32) {
 
 #[test]
 fn test_all_recipe_items_exist() {
-    for recipe in RECIPES.iter() {
+    for recipe in RECIPES.values() {
         assert_item_exists(recipe.item_id);
         for ingredient in recipe.ingredients.iter() {
             if ingredient.item_id != 0 {
@@ -26,9 +22,11 @@ fn test_all_recipe_items_exist() {
 }
 
 fn find_recipe(item_name: &'static str) -> Option<Recipe> {
-    for recipe in RECIPES.iter() {
-        if get_item_name(recipe.item_id, false, Locale::EN) == item_name {
-            return Some(*recipe);
+    for recipe in RECIPES.values() {
+        if let Some(name) = get_item_name(recipe.item_id, false, Locale::EN) {
+            if name == item_name {
+                return Some(*recipe);
+            }
         }
     }
     None
@@ -42,25 +40,14 @@ fn test_medical_supplies() {
         Recipe {
             job_id: 0,
             item_id: 33225,
-            level: 72,
             max_level_scaling: 0,
             recipe_level: 395,
             progress_factor: 100,
             quality_factor: 80,
-            durability: 60,
-            material_quality_factor: 0,
-            ingredients: [
-                Ingredient {
-                    item_id: 33235,
-                    amount: 1,
-                },
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-            ],
-            is_expert: false,
+            durability_factor: 75,
+            material_factor: 0,
+            ingredients: [Ingredient::default(); 6],
+            is_expert: false
         }
     );
 }
@@ -73,28 +60,14 @@ fn test_ipe_lumber() {
         Recipe {
             job_id: 0,
             item_id: 44149,
-            level: 100,
             max_level_scaling: 0,
             recipe_level: 710,
             progress_factor: 55,
             quality_factor: 80,
-            durability: 35,
-            material_quality_factor: 0,
-            ingredients: [
-                Ingredient {
-                    item_id: 44137,
-                    amount: 4
-                },
-                Ingredient {
-                    item_id: 44141,
-                    amount: 2
-                },
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-            ],
-            is_expert: false,
+            durability_factor: 50,
+            material_factor: 0,
+            ingredients: [Ingredient::default(); 6],
+            is_expert: false
         }
     );
 }
@@ -107,34 +80,14 @@ fn test_uncharted_course_resin() {
         Recipe {
             job_id: 6,
             item_id: 39916,
-            level: 90,
             max_level_scaling: 0,
             recipe_level: 641,
             progress_factor: 200,
             quality_factor: 200,
-            durability: 60,
-            material_quality_factor: 0,
-            ingredients: [
-                Ingredient {
-                    item_id: 39913,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 36257,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 36091,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 36262,
-                    amount: 1
-                },
-                NO_INGREDIENT,
-                NO_INGREDIENT,
-            ],
-            is_expert: true,
+            durability_factor: 100,
+            material_factor: 0,
+            ingredients: [Ingredient::default(); 6],
+            is_expert: true
         }
     );
 }
@@ -147,40 +100,14 @@ fn test_habitat_chair() {
         Recipe {
             job_id: 0,
             item_id: 48295,
-            level: 100,
             max_level_scaling: 100,
             recipe_level: 690,
             progress_factor: 54,
             quality_factor: 87,
-            durability: 70,
-            material_quality_factor: 0,
-            ingredients: [
-                Ingredient {
-                    item_id: 48233,
-                    amount: 1
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                },
-                Ingredient {
-                    item_id: 0,
-                    amount: 0
-                }
-            ],
-            is_expert: false,
+            durability_factor: 88,
+            material_factor: 0,
+            ingredients: [Ingredient::default(); 6],
+            is_expert: false
         }
     );
 }

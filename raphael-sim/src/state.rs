@@ -4,8 +4,8 @@ use crate::{Condition, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
-    pub cp: i16,
-    pub durability: i16,
+    pub cp: u16,
+    pub durability: u16,
     pub progress: u32,
     pub quality: u32,            // previous unguarded action = Poor
     pub unreliable_quality: u32, // previous unguarded action = Normal, diff with quality
@@ -16,7 +16,7 @@ impl SimulationState {
     pub fn new(settings: &Settings) -> Self {
         Self {
             cp: settings.max_cp,
-            durability: i16::from(settings.max_durability),
+            durability: settings.max_durability,
             progress: 0,
             quality: 0,
             unreliable_quality: 0,
@@ -29,7 +29,7 @@ impl SimulationState {
         actions: &[Action],
         initial_state: Option<SimulationState>,
     ) -> Result<Self, &'static str> {
-        let mut state = initial_state.unwrap_or_else(|| SimulationState::new(settings));
+        let mut state = initial_state.unwrap_or_else(|| Self::new(settings));
         for action in actions {
             state = state.use_action(*action, settings)?;
         }
@@ -58,7 +58,7 @@ impl SimulationState {
     }
 
     pub fn is_final(&self, settings: &Settings) -> bool {
-        self.durability <= 0 || self.progress >= u32::from(settings.max_progress)
+        self.durability == 0 || self.progress >= u32::from(settings.max_progress)
     }
 
     fn check_common_preconditions<A: ActionImpl>(
@@ -70,7 +70,6 @@ impl SimulationState {
         } else if !settings.allowed_actions.has_mask(A::ACTION_MASK) {
             Err("Action disabled by action mask")
         } else if self.is_final(settings) {
-            // println!("{:?}", self);
             Err("State is final")
         } else if A::cp_cost(self, settings, self.effects.condition()) > self.cp {
             Err("Not enough CP")
@@ -83,8 +82,8 @@ impl SimulationState {
         &self,
         settings: &Settings,
     ) -> Result<Self, &'static str> {
-        self.check_common_preconditions::<A>(settings)?;
         let condition = self.effects.condition();
+        self.check_common_preconditions::<A>(settings)?;
         A::precondition(self, settings, condition)?;
 
         let mut state = *self;
@@ -92,7 +91,9 @@ impl SimulationState {
         A::transform_pre(&mut state, settings, condition);
 
         if A::base_durability_cost(&state, settings) != 0 {
-            state.durability -= A::durability_cost(self, settings, condition);
+            state.durability = state
+                .durability
+                .saturating_sub(A::durability_cost(self, settings, condition));
             state.effects.set_trained_perfection_active(false);
         }
 
@@ -138,8 +139,7 @@ impl SimulationState {
 
         if A::TICK_EFFECTS {
             if state.effects.manipulation() != 0 {
-                state.durability =
-                    std::cmp::min(i16::from(settings.max_durability), state.durability + 5);
+                state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
             state.effects.tick_down();
         }

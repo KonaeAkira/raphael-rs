@@ -145,8 +145,8 @@ fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [
 
 pub fn execute(args: &SolveArgs) {
     let recipe = RECIPES
-        .iter()
-        .find(|r| r.item_id == args.item_id)
+        .values()
+        .find(|recipe| recipe.item_id == args.item_id)
         .expect(&format!(
             "Unable to find Recipe for an item with item ID: {}",
             args.item_id

@@ -181,7 +181,8 @@ impl<'a> RotationWidget<'a> {
 
     fn get_consumable_name(&self, consumable: Option<(u32, bool)>) -> String {
         match consumable {
-            Some((item_id, hq)) => raphael_data::get_item_name(item_id, hq, self.locale),
+            Some((item_id, hq)) => raphael_data::get_item_name(item_id, hq, self.locale)
+                .unwrap_or("Unknown item".to_owned()),
             None => "None".to_string(),
         }
     }
@@ -201,7 +202,8 @@ impl<'a> RotationWidget<'a> {
         self.show_info_row(
             ui,
             "Recipe",
-            raphael_data::get_item_name(self.rotation.item, false, self.locale),
+            raphael_data::get_item_name(self.rotation.item, false, self.locale)
+                .unwrap_or("Unknown item".to_owned()),
         );
         self.show_info_row(ui, "Crafter stats", stats_string);
         self.show_info_row(ui, "Job", job_string);

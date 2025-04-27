@@ -34,8 +34,8 @@ namespace Raphael
         public ushort quality;
         public ushort base_progress;
         public ushort base_quality;
-        public short cp;
-        public sbyte durability;
+        public ushort cp;
+        public ushort durability;
         public byte job_level;
         [MarshalAs(UnmanagedType.U1)] public bool adversarial;
         [MarshalAs(UnmanagedType.U1)] public bool backload_progress;

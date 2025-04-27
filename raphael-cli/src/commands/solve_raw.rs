@@ -70,7 +70,7 @@ pub struct RawSolveArgs {
 
     /// Maximum durability of the craft
     #[arg(long)]
-    pub max_durability: i8,
+    pub max_durability: u16,
 
     /// Progress per 100%. can be derived from craftsmanship and the level of the recipe normally. Must already include food and potion.
     #[arg(short = 'p', long)]
@@ -82,7 +82,7 @@ pub struct RawSolveArgs {
 
     /// Maximum crafting points. Must already include food and potion.
     #[arg(short = 'c', long)]
-    pub max_cp: i16,
+    pub max_cp: u16,
 
     /// Current progress of the recipe. It will be truncated to the maximum progress, if more than the maximum progress.
     #[arg(long, default_value_t = 0)]
@@ -94,11 +94,11 @@ pub struct RawSolveArgs {
 
     /// Current durability of the recipe. It will be truncated to the maximum durability, if more than the maximum durability.
     #[arg(long, default_value = None)]
-    pub current_durability: Option<i8>,
+    pub current_durability: Option<u16>,
 
     /// Currently remaining crafting points. It will be truncated to the maximum cp, if more than the maximum cp.
     #[arg(long, default_value = None)]
-    pub current_cp: Option<i16>,
+    pub current_cp: Option<u16>,
 
     /// Number of remaining steps the great strides buff is still active
     #[arg(long, default_value_t = 0)]
@@ -245,7 +245,7 @@ pub fn execute(args: &RawSolveArgs) {
 
     let initial_state = SimulationState {
         cp: args.current_cp.unwrap_or(args.max_cp),
-        durability: args.current_durability.unwrap_or(args.max_durability) as i16,
+        durability: args.current_durability.unwrap_or(args.max_durability),
         progress: args.current_progress,
         quality: args.current_quality,
         unreliable_quality: args.current_quality,
