@@ -151,7 +151,7 @@ impl<'a> RecipeSelect<'a> {
                         ui.add(egui::DragValue::new(&mut recipe_job_level).range(1..=100));
                         if use_base_increase_overrides {
                             self.recipe_config.recipe.recipe_level =
-                                raphael_data::LEVEL_ADJUST_TABLE[recipe_job_level.saturating_sub(1) as usize];
+                                raphael_data::LEVEL_ADJUST_TABLE[recipe_job_level as usize];
                         }
                     });
                 });

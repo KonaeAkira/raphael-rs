@@ -81,7 +81,7 @@ pub fn get_game_settings(
 ) -> Settings {
     let rlvl = if recipe.max_level_scaling != 0 {
         let job_level = std::cmp::min(recipe.max_level_scaling, crafter_stats.level);
-        LEVEL_ADJUST_TABLE[job_level.saturating_sub(1) as usize] as usize
+        LEVEL_ADJUST_TABLE[job_level as usize] as usize
     } else {
         recipe.recipe_level as usize
     };

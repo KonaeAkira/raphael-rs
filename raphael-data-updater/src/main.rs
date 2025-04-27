@@ -44,6 +44,7 @@ fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry
     let path = std::path::absolute("./raphael-data/data/level_adjust_table.rs").unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
     writeln!(&mut writer, "&[").unwrap();
+    writeln!(&mut writer, "{},", u16::default()).unwrap(); // index 0
     for entry in level_adjust_table_entries.iter() {
         writeln!(&mut writer, "{entry},").unwrap();
     }
