@@ -1,5 +1,5 @@
 use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, Recipe, get_item_name};
+use raphael_data::{Locale, RECIPES, get_item_name, get_job_name};
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
@@ -47,10 +47,10 @@ pub fn execute(args: &SearchArgs) {
     let locale = args.language.into();
     let matches = if args.pattern.is_some() {
         raphael_data::find_recipes(&args.pattern.clone().unwrap(), locale).iter()
-            .map(|recipe_id| raphael_data::RECIPES.get_entry(recipe_id).unwrap())
+            .map(|recipe_id| RECIPES.get_entry(recipe_id).unwrap())
             .collect()
     } else if args.recipe_id.is_some() {
-        if let Some(entry) = raphael_data::RECIPES.entries().find(|(id, _)| **id == args.recipe_id.unwrap()) {
+        if let Some(entry) = RECIPES.entries().find(|(id, _)| **id == args.recipe_id.unwrap()) {
             vec!(entry)
         } else {
             Vec::new()
@@ -70,7 +70,7 @@ pub fn execute(args: &SearchArgs) {
         println!(
             "{recipe_id}{separator}{job_name}{separator}{item_id}{separator}{name}",
             recipe_id = recipe_id,
-            job_name = raphael_data::get_job_name(recipe.job_id, locale),
+            job_name = get_job_name(recipe.job_id, locale),
             item_id = recipe.item_id,
             separator = args.output_field_separator,
             name = name.trim_end_matches(&[' ', raphael_data::CL_ICON_CHAR])
