@@ -467,7 +467,7 @@ fn test_issue_113() {
 
     solver.precompute(simulator_settings.max_cp);
     assert_eq!(solver.computed_states(), 5764187);
-    assert_eq!(solver.computed_values(), 210298380);
+    assert_eq!(solver.computed_values(), 209923334);
 }
 
 #[test]
@@ -496,7 +496,7 @@ fn test_issue_118() {
 
     solver.precompute(simulator_settings.max_cp);
     assert_eq!(solver.computed_states(), 3388741);
-    assert_eq!(solver.computed_values(), 37176017);
+    assert_eq!(solver.computed_values(), 36810126);
 }
 
 fn random_effects(adversarial: bool) -> Effects {
@@ -538,7 +538,7 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
     };
     let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
     solver.precompute(simulator_settings.max_cp);
-    for _ in 0..10000 {
+    for _ in 0..100000 {
         let state = random_state(&simulator_settings);
         let state_upper_bound = solver.quality_upper_bound(state).unwrap();
         for action in FULL_SEARCH_ACTIONS {

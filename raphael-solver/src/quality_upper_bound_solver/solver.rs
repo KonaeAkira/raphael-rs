@@ -107,7 +107,7 @@ impl QualityUpperBoundSolver {
                 .filter_map(|(template, required_cp)| {
                     if missing_cp >= *required_cp {
                         Some(ReducedState {
-                            cp,
+                            cp: cp + self.durability_cost,
                             compressed_unreliable_quality: template.compressed_unreliable_quality,
                             progress_only: template.progress_only,
                             effects: template.effects,
@@ -145,7 +145,7 @@ impl QualityUpperBoundSolver {
             if let Some((new_state, progress, quality)) =
                 state.use_action(action, &self.settings, self.durability_cost)
             {
-                if new_state.cp >= self.durability_cost {
+                if !new_state.is_final(self.durability_cost) {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
@@ -240,7 +240,7 @@ impl QualityUpperBoundSolver {
         if let Some((new_state, progress, quality)) =
             state.use_action(action, &self.settings, self.durability_cost)
         {
-            if new_state.cp >= self.durability_cost {
+            if !new_state.is_final(self.durability_cost) {
                 if let Some(pareto_front) = self.solved_states.get(&new_state) {
                     self.pareto_front_builder.push_slice(pareto_front);
                 } else {

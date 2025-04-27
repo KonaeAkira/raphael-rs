@@ -20,14 +20,15 @@ impl ReducedState {
         durability_cost: u16,
     ) -> Self {
         let mut refunded_durability = state.durability / 5 + 1;
+        // Assume Manipulation effect can be used to its full potential
         refunded_durability += u16::from(state.effects.manipulation());
+        state.effects.set_manipulation(0);
         // Assume TrainedPerfection can be used to its full potential (saving 20 durability)
-        if state.effects.trained_perfection_active() {
+        if state.effects.trained_perfection_active() || state.effects.trained_perfection_available()
+        {
+            refunded_durability += 4;
             state.effects.set_trained_perfection_active(false);
-            refunded_durability += 4;
-        } else if state.effects.trained_perfection_available() {
             state.effects.set_trained_perfection_available(false);
-            refunded_durability += 4;
         }
         state.cp += refunded_durability * durability_cost;
         state.durability = settings.max_durability();
@@ -57,9 +58,6 @@ impl ReducedState {
             state
                 .effects
                 .with_great_strides(if great_strides_active { 3 } else { 0 })
-                .with_trained_perfection_available(false)
-                .with_trained_perfection_active(false)
-                .with_manipulation(0)
         };
         Some(Self {
             cp: state.cp - used_durability_cost,
@@ -79,6 +77,10 @@ impl ReducedState {
                 * (2 * settings.base_quality()),
             effects: self.effects,
         }
+    }
+
+    pub fn is_final(&self, durability_cost: u16) -> bool {
+        self.cp < 2 * durability_cost
     }
 
     fn strip_quality_attributes(&mut self) {
