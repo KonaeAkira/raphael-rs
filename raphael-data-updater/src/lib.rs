@@ -4,6 +4,9 @@ pub use recipe::Recipe;
 mod rlvl;
 pub use rlvl::RecipeLevel;
 
+mod level_adjust_table;
+pub use level_adjust_table::LevelAdjustTableEntry;
+
 mod item;
 pub use item::{Item, ItemName};
 

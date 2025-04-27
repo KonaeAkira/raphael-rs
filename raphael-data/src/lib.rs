@@ -67,6 +67,7 @@ pub struct Recipe {
 }
 
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
+pub const LEVEL_ADJUST_TABLE: &[u16] = include!("../data/level_adjust_table.rs");
 pub static RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
 pub const ITEMS: phf::OrderedMap<u32, Item> = include!("../data/items.rs");
 
