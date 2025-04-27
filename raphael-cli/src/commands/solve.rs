@@ -92,6 +92,10 @@ pub struct SolveArgs {
     #[arg(long, default_value_t = false)]
     pub unsound: bool,
 
+    /// Maximum number of threads available to the solver
+    #[arg(long)]
+    pub threads: Option<usize>,
+
     /// Output the provided list of variables. The output is deliminated by the output-field-separator
     ///
     /// <IDENTIFIER> can be any of the following: `recipe_id`, `item_id`, `recipe`, `food`, `potion`, `craftsmanship`, `control`, `cp`, `crafter_stats`, `settings`, `initial_quality`, `target_quality`, `recipe_max_quality`, `actions`, `final_state`, `state_quality`, `final_quality`, `steps`, `duration`.
@@ -163,6 +167,13 @@ pub fn execute(args: &SolveArgs) {
             "One of the arguments '--recipe-id', '--item-id', or '--custom-recipe' must be provided"
         );
         panic!();
+    }
+
+    if let Some(threads) = args.threads {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()
+            .unwrap();
     }
 
     let use_custom_recipe = !args.custom_recipe.is_empty();
@@ -285,7 +296,8 @@ pub fn execute(args: &SolveArgs) {
             ..Default::default()
         })
     } else {
-        recipe.recipe_level = raphael_data::LEVEL_ADJUST_TABLE[args.override_base_increases[0] as usize];
+        recipe.recipe_level =
+            raphael_data::LEVEL_ADJUST_TABLE[args.override_base_increases[0] as usize];
         Some(CustomRecipeOverrides {
             max_progress_override: args.custom_recipe[1],
             max_quality_override: args.custom_recipe[2],

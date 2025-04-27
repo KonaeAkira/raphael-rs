@@ -7,6 +7,7 @@ edition = "2024"
 raphael-sim = { workspace = true }
 raphael-solver = { workspace = true }
 raphael-data = { workspace = true }
+rayon = { workspace = true }
 
 clap = { version = "4.4.11", features = ["derive", "wrap_help", "env"] }
 
