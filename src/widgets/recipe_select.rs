@@ -139,14 +139,6 @@ impl<'a> RecipeSelect<'a> {
         ui.separator();
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Level:");
-                    ui.add(
-                        egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
-                            .range(1..=100),
-                    );
-                });
-
                 ui.add_enabled_ui(
                     !self
                         .custom_recipe_overrides_config
@@ -161,7 +153,6 @@ impl<'a> RecipeSelect<'a> {
                         });
                     },
                 );
-
                 ui.horizontal(|ui| {
                     ui.label("Progress:");
                     ui.add(egui::DragValue::new(
