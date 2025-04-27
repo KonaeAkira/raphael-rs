@@ -61,7 +61,7 @@ pub trait ActionImpl {
         }
         match state.effects.waste_not() {
             0 => Self::base_durability_cost(state, settings),
-            _ => (Self::base_durability_cost(state, settings) + 1) / 2,
+            _ => Self::base_durability_cost(state, settings).div_ceil(2),
         }
     }
 
@@ -745,7 +745,7 @@ impl ActionImpl for ImmaculateMend {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
-        state.durability = u16::from(settings.max_durability);
+        state.durability = settings.max_durability;
     }
 }
 

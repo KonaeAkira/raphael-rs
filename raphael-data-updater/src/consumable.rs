@@ -22,14 +22,7 @@ impl SheetData for ItemAction {
         Some(Self {
             id: value["row_id"].as_u32().unwrap(),
             type_id: fields["Type"].as_u32().unwrap(),
-            // item_food_id = Data[1]
-            item_food_id: fields["Data"]
-                .members()
-                .skip(1)
-                .next()
-                .unwrap()
-                .as_u32()
-                .unwrap(),
+            item_food_id: fields["Data"].members().nth(1).unwrap().as_u32().unwrap(),
         })
     }
 }

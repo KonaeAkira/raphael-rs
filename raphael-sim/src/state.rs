@@ -54,7 +54,7 @@ impl SimulationState {
     }
 
     pub fn is_final(&self, settings: &Settings) -> bool {
-        self.durability <= 0 || self.progress >= u32::from(settings.max_progress)
+        self.durability == 0 || self.progress >= u32::from(settings.max_progress)
     }
 
     fn check_common_preconditions<A: ActionImpl>(
