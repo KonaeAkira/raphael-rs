@@ -24,8 +24,8 @@ impl SimulationState {
         }
     }
 
-    pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, &'static str> {
-        let mut state = Self::new(settings);
+    pub fn from_macro(settings: &Settings, actions: &[Action], initial_state: Option<SimulationState>) -> Result<Self, &'static str> {
+        let mut state = initial_state.unwrap_or_else(|| SimulationState::new(settings));
         for action in actions {
             state = state.use_action(*action, settings)?;
         }
@@ -66,6 +66,7 @@ impl SimulationState {
         } else if !settings.allowed_actions.has_mask(A::ACTION_MASK) {
             Err("Action disabled by action mask")
         } else if self.is_final(settings) {
+            // println!("{:?}", self);
             Err("State is final")
         } else if A::cp_cost(self, settings, self.effects.condition()) > self.cp {
             Err("Not enough CP")

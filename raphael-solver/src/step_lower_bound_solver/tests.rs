@@ -9,7 +9,7 @@ use crate::{
 use super::*;
 
 fn solve(simulator_settings: Settings, actions: &[Action]) -> u8 {
-    let mut state = SimulationState::from_macro(&simulator_settings, actions).unwrap();
+    let mut state = SimulationState::from_macro(&simulator_settings, actions, None).unwrap();
     state.effects.set_combo(Combo::None);
     let solver_settings = SolverSettings {
         simulator_settings,

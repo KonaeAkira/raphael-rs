@@ -62,7 +62,7 @@ fn test_simple() {
         Action::PreparatoryTouch,
         Action::BasicSynthesis,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 100);
         assert_eq!(state.quality, 100);
@@ -74,7 +74,7 @@ fn test_simple() {
 #[test]
 fn test_short_quality_opener() {
     let actions = [Action::Reflect];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 300);
         assert_eq!(state.quality, 300);
@@ -91,7 +91,7 @@ fn test_long_quality_opener() {
         Action::PreparatoryTouch,
         Action::PreparatoryTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 1140);
         assert_eq!(state.quality, 1140);
@@ -111,7 +111,7 @@ fn test_alternating_quality_actions() {
         Action::GreatStrides,
         Action::BasicTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 440);
         assert_eq!(state.quality, 440);
@@ -132,7 +132,7 @@ fn test_double_status_drops() {
         Action::GreatStrides,
         Action::BasicTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 525);
         assert_eq!(state.quality, 525);
@@ -153,7 +153,7 @@ fn test_two_action_drops() {
         Action::GreatStrides,
         Action::BasicTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 607);
         assert_eq!(state.quality, 607);
@@ -175,7 +175,7 @@ fn test_dp() {
         Action::GreatStrides,
         Action::PreparatoryTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 952);
         assert_eq!(state.quality, 952);
@@ -206,7 +206,7 @@ fn test_long_sequence() {
         Action::ByregotsBlessing,
         Action::CarefulSynthesis,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
+    let state = SimulationState::from_macro(&SETTINGS, &actions, None);
     if let Ok(state) = state {
         assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 2924);
         assert_eq!(state.quality, 2924);
@@ -226,7 +226,7 @@ fn test_exhaustive() {
                 _ => Action::PrudentTouch,
             })
             .collect();
-        let state = SimulationState::from_macro(&SETTINGS, &actions);
+        let state = SimulationState::from_macro(&SETTINGS, &actions, None);
         if let Ok(state) = state {
             dbg!(&actions);
             assert_eq!(
@@ -259,7 +259,7 @@ fn test_fuzz() {
             std::iter::repeat_with(|| ACTIONS[rand::random::<usize>() % ACTIONS.len()])
                 .take(STEPS)
                 .collect();
-        if let Ok(state) = SimulationState::from_macro(&SETTINGS, &actions) {
+        if let Ok(state) = SimulationState::from_macro(&SETTINGS, &actions, None) {
             dbg!(&actions);
             assert_eq!(
                 state.quality,

@@ -597,7 +597,7 @@ fn test_trained_eye() {
 #[test]
 fn test_prudent_synthesis() {
     let state =
-        SimulationState::from_macro(&SETTINGS, &[Action::WasteNot, Action::PrudentSynthesis]);
+        SimulationState::from_macro(&SETTINGS, &[Action::WasteNot, Action::PrudentSynthesis], None);
     assert_eq!(
         state,
         Err("Prudent Synthesis cannot be used while Waste Not is active.")
@@ -612,7 +612,8 @@ fn test_trained_finesse() {
             Action::PreparatoryTouch,
             Action::PreparatoryTouch,
             Action::TrainedFinesse,
-        ],
+        ], 
+        None
     );
     assert_eq!(
         state,
@@ -622,7 +623,7 @@ fn test_trained_finesse() {
 
 #[test]
 fn test_refined_touch() {
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::RefinedTouch]);
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::RefinedTouch], None);
     match state {
         Ok(state) => {
             assert_eq!(state.effects.inner_quiet(), 3);
@@ -630,7 +631,7 @@ fn test_refined_touch() {
         Err(e) => panic!("Unexpected error: {}", e),
     }
     assert!(matches!(state, Ok(_)));
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::RefinedTouch]);
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::RefinedTouch], None);
     assert_eq!(
         state,
         Err("Refined Touch can only be used after Observe or Basic Touch.")
@@ -647,6 +648,7 @@ fn test_immaculate_mend() {
             Action::Groundwork,
             Action::ImmaculateMend,
         ],
+         None
     );
     match state {
         Ok(state) => {
@@ -665,6 +667,7 @@ fn test_trained_perfection() {
             Action::Observe, // 0-durability actions don't proc Trained Perfection
             Action::Groundwork,
         ],
+         None
     );
     match state {
         Ok(state) => {
@@ -675,6 +678,7 @@ fn test_trained_perfection() {
     let state = SimulationState::from_macro(
         &SETTINGS,
         &[Action::TrainedPerfection, Action::TrainedPerfection],
+        None
     );
     assert_eq!(
         state,
@@ -695,6 +699,7 @@ fn test_heart_and_soul() {
             Action::BasicTouch,
             Action::HeartAndSoul,
         ],
+         None
     );
     match state {
         Ok(state) => {
@@ -713,6 +718,7 @@ fn test_heart_and_soul() {
             Action::PrudentSynthesis,
             Action::MasterMend,
         ],
+         None
     );
     match state {
         Ok(state) => {
@@ -723,6 +729,7 @@ fn test_heart_and_soul() {
     let state = SimulationState::from_macro(
         &settings,
         &[Action::HeartAndSoul, Action::IntensiveSynthesis],
+        None
     );
     match state {
         Ok(state) => {
@@ -731,7 +738,7 @@ fn test_heart_and_soul() {
         Err(e) => panic!("Unexpected error: {}", e),
     }
     let state =
-        SimulationState::from_macro(&settings, &[Action::HeartAndSoul, Action::PreciseTouch]);
+        SimulationState::from_macro(&settings, &[Action::HeartAndSoul, Action::PreciseTouch], None);
     match state {
         Ok(state) => {
             assert_eq!(state.effects.heart_and_soul_active(), false); // effect is used up
@@ -745,6 +752,7 @@ fn test_heart_and_soul() {
             Action::BasicTouch,
             Action::HeartAndSoul,
         ],
+        None
     );
     assert_eq!(
         state,
@@ -765,6 +773,7 @@ fn test_quick_innovation() {
             Action::BasicTouch,
             Action::QuickInnovation,
         ],
+        None
     );
     match state {
         Ok(state) => {
@@ -782,13 +791,14 @@ fn test_quick_innovation() {
             Action::BasicTouch,
             Action::QuickInnovation,
         ],
+        None
     );
     assert_eq!(
         state,
         Err("Quick Innovation can only be used once per synthesis.")
     );
     let state =
-        SimulationState::from_macro(&setings, &[Action::Innovation, Action::QuickInnovation]);
+        SimulationState::from_macro(&setings, &[Action::Innovation, Action::QuickInnovation], None);
     assert_eq!(
         state,
         Err("Quick Innovation cannot be used while Innovation is active.")

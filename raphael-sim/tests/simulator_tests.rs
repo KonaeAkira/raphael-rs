@@ -61,7 +61,7 @@ fn test_random_926ae85b() {
         Action::BasicTouch,
         Action::BasicTouch,
     ];
-    let state = SimulationState::from_macro(&settings, &actions).unwrap();
+    let state = SimulationState::from_macro(&settings, &actions, None).unwrap();
     assert_eq!(state.cp, 14);
     assert_eq!(state.durability, 30);
     assert_eq!(state.progress, 4);
@@ -94,7 +94,7 @@ fn test_random_3c721e47() {
         Action::PreparatoryTouch,
         Action::PrudentTouch,
     ];
-    let state = SimulationState::from_macro(&settings, &actions).unwrap();
+    let state = SimulationState::from_macro(&settings, &actions, None).unwrap();
     assert_eq!(state.cp, 223);
     assert_eq!(state.durability, 60);
     assert_eq!(state.progress, 2520);
@@ -127,7 +127,7 @@ fn test_random_3ba90d3a() {
         Action::BasicTouch,
         Action::StandardTouch,
     ];
-    let state = SimulationState::from_macro(&settings, &actions).unwrap();
+    let state = SimulationState::from_macro(&settings, &actions, None).unwrap();
     assert_eq!(state.cp, 188);
     assert_eq!(state.durability, 25);
     assert_eq!(state.progress, 918);
@@ -179,7 +179,7 @@ fn test_random_bce2650c() {
         Action::GreatStrides,
         Action::ByregotsBlessing,
     ];
-    let state = SimulationState::from_macro(&settings, &actions).unwrap();
+    let state = SimulationState::from_macro(&settings, &actions, None).unwrap();
     assert_eq!(state.cp, 1);
     assert_eq!(state.durability, 5);
     assert_eq!(state.progress, 6323);

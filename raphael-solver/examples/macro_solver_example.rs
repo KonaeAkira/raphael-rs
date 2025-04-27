@@ -39,7 +39,7 @@ fn main() {
     );
     let actions = solver.solve().unwrap();
 
-    let quality = SimulationState::from_macro(&simulator_settings, &actions)
+    let quality = SimulationState::from_macro(&simulator_settings, &actions, None)
         .unwrap()
         .quality;
     let steps = actions.len();
