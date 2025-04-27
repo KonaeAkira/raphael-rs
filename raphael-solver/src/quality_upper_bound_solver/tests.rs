@@ -440,6 +440,27 @@ fn test_11() {
 }
 
 #[test]
+fn test_manipulation_refund() {
+    // https://github.com/KonaeAkira/raphael-rs/pull/128#discussion_r2062585163
+    let settings = Settings {
+        max_cp: 500,
+        max_durability: 80,
+        max_progress: 700,
+        max_quality: 20000,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+    };
+    let result = solve(settings, &[Action::Manipulation]);
+    assert_eq!(result, 4975);
+}
+
+#[test]
 fn test_issue_113() {
     // Ceremonial Gunblade
     // 5428/5236/645 + HQ Ceviche + HQ Cunning Tisane
@@ -466,8 +487,8 @@ fn test_issue_113() {
     let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
 
     solver.precompute(simulator_settings.max_cp);
-    assert_eq!(solver.computed_states(), 5_764_187);
-    assert_eq!(solver.computed_values(), 214_671_922);
+    assert_eq!(solver.computed_states(), 5764187);
+    assert_eq!(solver.computed_values(), 209923334);
 }
 
 #[test]
@@ -495,8 +516,8 @@ fn test_issue_118() {
     let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
 
     solver.precompute(simulator_settings.max_cp);
-    assert_eq!(solver.computed_states(), 3_388_741);
-    assert_eq!(solver.computed_values(), 39_470_337);
+    assert_eq!(solver.computed_states(), 3388741);
+    assert_eq!(solver.computed_values(), 36810126);
 }
 
 fn random_effects(adversarial: bool) -> Effects {
@@ -518,7 +539,7 @@ fn random_effects(adversarial: bool) -> Effects {
 fn random_state(settings: &Settings) -> SimulationState {
     SimulationState {
         cp: rand::thread_rng().gen_range(0..=settings.max_cp),
-        durability: rand::thread_rng().gen_range(1..=(i16::from(settings.max_durability) / 5)) * 5,
+        durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
         progress: rand::thread_rng().gen_range(0..u32::from(settings.max_progress)),
         quality: 0,
         unreliable_quality: 0,
@@ -538,7 +559,7 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
     };
     let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
     solver.precompute(simulator_settings.max_cp);
-    for _ in 0..10000 {
+    for _ in 0..100000 {
         let state = random_state(&simulator_settings);
         let state_upper_bound = solver.quality_upper_bound(state).unwrap();
         for action in FULL_SEARCH_ACTIONS {

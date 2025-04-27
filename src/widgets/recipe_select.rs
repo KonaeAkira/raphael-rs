@@ -262,7 +262,7 @@ impl<'a> RecipeSelect<'a> {
                         Some(default_game_settings.base_progress);
                     custom_recipe_overrides.base_quality_override =
                         Some(default_game_settings.base_quality);
-                };
+                }
             });
         });
     }

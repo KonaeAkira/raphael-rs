@@ -49,8 +49,8 @@ struct SolveArgs {
   uint16_t quality;
   uint16_t base_progress;
   uint16_t base_quality;
-  int16_t cp;
-  int8_t durability;
+  uint16_t cp;
+  uint16_t durability;
   uint8_t job_level;
   bool adversarial;
   bool backload_progress;

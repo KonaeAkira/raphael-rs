@@ -3,8 +3,8 @@ use crate::{Action, ActionImpl};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Settings {
-    pub max_cp: i16,
-    pub max_durability: i8,
+    pub max_cp: u16,
+    pub max_durability: u16,
     pub max_progress: u16,
     pub max_quality: u16,
     pub base_progress: u16,
