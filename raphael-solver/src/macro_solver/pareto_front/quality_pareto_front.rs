@@ -5,11 +5,11 @@ use super::{Dominate, ParetoFront};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Value {
-    cp: i16,
+    cp: u16,
     quality: u32,
     unreliable_quality: u32,
     inner_quiet: u8,
-    durability: i16,
+    durability: u16,
 }
 
 impl Value {

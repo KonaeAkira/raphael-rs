@@ -4,8 +4,8 @@ use crate::{Condition, Settings};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SimulationState {
-    pub cp: i16,
-    pub durability: i16,
+    pub cp: u16,
+    pub durability: u16,
     pub progress: u32,
     pub quality: u32,            // previous unguarded action = Poor
     pub unreliable_quality: u32, // previous unguarded action = Normal, diff with quality
@@ -16,7 +16,7 @@ impl SimulationState {
     pub fn new(settings: &Settings) -> Self {
         Self {
             cp: settings.max_cp,
-            durability: i16::from(settings.max_durability),
+            durability: settings.max_durability,
             progress: 0,
             quality: 0,
             unreliable_quality: 0,
@@ -88,7 +88,9 @@ impl SimulationState {
         A::transform_pre(&mut state, settings, condition);
 
         if A::base_durability_cost(&state, settings) != 0 {
-            state.durability -= A::durability_cost(self, settings, condition);
+            state.durability = state
+                .durability
+                .saturating_sub(A::durability_cost(self, settings, condition));
             state.effects.set_trained_perfection_active(false);
         }
 
@@ -134,8 +136,7 @@ impl SimulationState {
 
         if A::TICK_EFFECTS {
             if state.effects.manipulation() != 0 {
-                state.durability =
-                    std::cmp::min(i16::from(settings.max_durability), state.durability + 5);
+                state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
             state.effects.tick_down();
         }

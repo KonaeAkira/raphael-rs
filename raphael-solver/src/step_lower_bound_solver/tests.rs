@@ -479,7 +479,7 @@ fn random_effects(adversarial: bool) -> Effects {
 fn random_state(settings: &Settings) -> SimulationState {
     SimulationState {
         cp: rand::thread_rng().gen_range(0..=settings.max_cp),
-        durability: rand::thread_rng().gen_range(1..=(i16::from(settings.max_durability) / 5)) * 5,
+        durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
         progress: rand::thread_rng().gen_range(0..u32::from(settings.max_progress)),
         quality: 0,
         unreliable_quality: 0,

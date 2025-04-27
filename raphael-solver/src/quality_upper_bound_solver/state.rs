@@ -7,7 +7,7 @@ use raphael_sim::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
-    pub cp: i16,
+    pub cp: u16,
     pub compressed_unreliable_quality: u8,
     pub progress_only: bool,
     pub effects: Effects,
@@ -17,27 +17,34 @@ impl ReducedState {
     pub fn from_simulation_state(
         mut state: SimulationState,
         settings: &SolverSettings,
-        durability_cost: i16,
+        durability_cost: u16,
     ) -> Self {
-        state.cp += state.effects.manipulation() as i16
-            * (Manipulation::base_cp_cost(&state, &settings.simulator_settings) / 8);
-        if state.effects.trained_perfection_active() || state.effects.trained_perfection_available()
-        {
-            state.cp += durability_cost * 4;
+        let mut refunded_durability = state.durability / 5 + 1;
+        refunded_durability += u16::from(state.effects.manipulation());
+        // Assume TrainedPerfection can be used to its full potential (saving 20 durability)
+        if state.effects.trained_perfection_active() {
+            state.effects.set_trained_perfection_active(false);
+            refunded_durability += 4;
+        } else if state.effects.trained_perfection_available() {
+            state.effects.set_trained_perfection_available(false);
+            refunded_durability += 4;
         }
-        state.cp += state.durability / 5 * durability_cost;
+        state.cp += refunded_durability * durability_cost;
         state.durability = settings.max_durability();
-        Self::from_simulation_state_inner(&state, settings, durability_cost)
+        Self::from_simulation_state_inner(&state, settings, durability_cost).unwrap()
     }
 
     fn from_simulation_state_inner(
         state: &SimulationState,
         settings: &SolverSettings,
-        durability_cost: i16,
-    ) -> Self {
+        durability_cost: u16,
+    ) -> Option<Self> {
         let progress_only = is_progress_only_state(settings, state);
-        let used_durability = settings.max_durability() - state.durability;
-        let cp = state.cp - used_durability / 5 * durability_cost;
+        let used_durability_cost =
+            (settings.max_durability() - state.durability) / 5 * durability_cost;
+        if used_durability_cost > state.cp {
+            return None;
+        }
         let compressed_unreliable_quality = if progress_only {
             0
         } else {
@@ -54,12 +61,12 @@ impl ReducedState {
                 .with_trained_perfection_active(false)
                 .with_manipulation(0)
         };
-        Self {
-            cp,
+        Some(Self {
+            cp: state.cp - used_durability_cost,
             compressed_unreliable_quality,
             progress_only,
             effects,
-        }
+        })
     }
 
     fn to_simulation_state(self, settings: &SolverSettings) -> SimulationState {
@@ -87,26 +94,26 @@ impl ReducedState {
         &self,
         action: ActionCombo,
         settings: &SolverSettings,
-        durability_cost: i16,
-    ) -> Result<(Self, u32, u32), &'static str> {
+        durability_cost: u16,
+    ) -> Option<(Self, u32, u32)> {
         match action {
             ActionCombo::Single(
                 Action::MasterMend | Action::ImmaculateMend | Action::Manipulation,
-            ) => Err("Action not supported"),
+            ) => None,
             _ => {
                 let progress_only = self.progress_only;
                 let state = self.to_simulation_state(settings);
                 match use_action_combo(settings, state, action) {
                     Ok(state) => {
                         let mut solver_state =
-                            Self::from_simulation_state_inner(&state, settings, durability_cost);
+                            Self::from_simulation_state_inner(&state, settings, durability_cost)?;
                         if progress_only || solver_state.progress_only {
                             solver_state.progress_only = true;
                             solver_state.strip_quality_attributes();
                         }
-                        Ok((solver_state, state.progress, state.quality))
+                        Some((solver_state, state.progress, state.quality))
                     }
-                    Err(err) => Err(err),
+                    Err(_) => None,
                 }
             }
         }

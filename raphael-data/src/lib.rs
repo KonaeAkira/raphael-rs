@@ -34,7 +34,7 @@ pub struct RecipeLevel {
     pub job_level: u8,
     pub max_progress: u32,
     pub max_quality: u32,
-    pub max_durability: i16,
+    pub max_durability: u16,
     pub progress_div: u32,
     pub quality_div: u32,
     pub progress_mod: u32,
@@ -46,7 +46,7 @@ pub struct RecipeLevel {
 pub struct CustomRecipeOverrides {
     pub max_progress_override: u16,
     pub max_quality_override: u16,
-    pub max_durability_override: i8,
+    pub max_durability_override: u16,
     pub base_progress_override: Option<u16>,
     pub base_quality_override: Option<u16>,
 }
@@ -60,7 +60,7 @@ pub struct Recipe {
     pub recipe_level: u16,
     pub progress_factor: u32,
     pub quality_factor: u32,
-    pub durability_factor: i16,
+    pub durability_factor: u16,
     pub material_factor: u16,
     pub ingredients: [Ingredient; 6],
     pub is_expert: bool,
@@ -140,7 +140,7 @@ pub fn get_game_settings(
         },
         None => Settings {
             max_cp: cp as _,
-            max_durability: (rlvl_record.max_durability * recipe.durability_factor / 100) as i8,
+            max_durability: rlvl_record.max_durability * recipe.durability_factor / 100,
             max_progress: (rlvl_record.max_progress * recipe.progress_factor / 100) as u16,
             max_quality: (rlvl_record.max_quality * recipe.quality_factor / 100) as u16,
             base_progress: base_progress as u16,

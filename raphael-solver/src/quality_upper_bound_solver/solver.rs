@@ -17,7 +17,7 @@ pub struct QualityUpperBoundSolver {
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
     pareto_front_builder: ParetoFrontBuilder,
-    durability_cost: i16,
+    durability_cost: u16,
 }
 
 impl QualityUpperBoundSolver {
@@ -36,8 +36,8 @@ impl QualityUpperBoundSolver {
         }
     }
 
-    fn generate_precompute_templates(&self) -> Box<[(Template, i16)]> {
-        let mut templates = rustc_hash::FxHashMap::<Template, i16>::default();
+    fn generate_precompute_templates(&self) -> Box<[(Template, u16)]> {
+        let mut templates = rustc_hash::FxHashMap::<Template, u16>::default();
         let mut queue = std::collections::BinaryHeap::<Node>::default();
 
         let initial_node = Node {
@@ -66,7 +66,7 @@ impl QualityUpperBoundSolver {
                 effects: node.template.effects,
             };
             for &action in FULL_SEARCH_ACTIONS {
-                if let Ok((new_state, _, _)) =
+                if let Some((new_state, _, _)) =
                     state.use_action(action, &self.settings, self.durability_cost)
                 {
                     let used_cp = self.settings.max_cp() - new_state.cp;
@@ -88,7 +88,7 @@ impl QualityUpperBoundSolver {
         templates.into_iter().collect()
     }
 
-    pub fn precompute(&mut self, precompute_cp: i16) {
+    pub fn precompute(&mut self, precompute_cp: u16) {
         if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
             return;
         }
@@ -142,7 +142,7 @@ impl QualityUpperBoundSolver {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
         for &action in FULL_SEARCH_ACTIONS {
-            if let Ok((new_state, progress, quality)) =
+            if let Some((new_state, progress, quality)) =
                 state.use_action(action, &self.settings, self.durability_cost)
             {
                 if new_state.cp >= self.durability_cost {
@@ -163,7 +163,7 @@ impl QualityUpperBoundSolver {
                             value.second += quality;
                         });
                     pareto_front_builder.merge();
-                } else if new_state.cp >= -self.durability_cost && progress != 0 {
+                } else if progress != 0 {
                     pareto_front_builder.push_slice(&[ParetoValue::new(progress, quality)]);
                     pareto_front_builder.merge();
                 }
@@ -237,7 +237,7 @@ impl QualityUpperBoundSolver {
         state: ReducedState,
         action: ActionCombo,
     ) -> Result<(), SolverException> {
-        if let Ok((new_state, progress, quality)) =
+        if let Some((new_state, progress, quality)) =
             state.use_action(action, &self.settings, self.durability_cost)
         {
             if new_state.cp >= self.durability_cost {
@@ -255,8 +255,7 @@ impl QualityUpperBoundSolver {
                         value.second += quality;
                     });
                 self.pareto_front_builder.merge();
-            } else if new_state.cp >= -self.durability_cost && progress != 0 {
-                // "durability" must not go lower than -5
+            } else if progress != 0 {
                 // last action must be a progress increase
                 self.pareto_front_builder
                     .push_slice(&[ParetoValue::new(progress, quality)]);
@@ -284,10 +283,10 @@ impl Drop for QualityUpperBoundSolver {
 }
 
 /// Calculates the CP cost to "magically" restore 5 durability
-fn durability_cost(settings: &Settings) -> i16 {
+fn durability_cost(settings: &Settings) -> u16 {
     let mut cost = 100;
     if settings.is_action_allowed::<MasterMend>() {
-        let cost_per_five = MasterMend::CP_COST / std::cmp::min(6, settings.max_durability as i16 / 5 - 1);
+        let cost_per_five = MasterMend::CP_COST / std::cmp::min(6, settings.max_durability / 5 - 1);
         cost = std::cmp::min(cost, cost_per_five);
     }
     if settings.is_action_allowed::<Manipulation>() {
@@ -295,7 +294,7 @@ fn durability_cost(settings: &Settings) -> i16 {
         cost = std::cmp::min(cost, cost_per_five);
     }
     if settings.is_action_allowed::<ImmaculateMend>() {
-        let cost_per_five = ImmaculateMend::CP_COST / (settings.max_durability as i16 / 5 - 1);
+        let cost_per_five = ImmaculateMend::CP_COST / (settings.max_durability / 5 - 1);
         cost = std::cmp::min(cost, cost_per_five);
     }
     cost
@@ -311,7 +310,7 @@ struct Template {
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Node {
     template: Template,
-    required_cp: i16,
+    required_cp: u16,
 }
 
 impl PartialOrd for Node {

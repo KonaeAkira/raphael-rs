@@ -466,8 +466,8 @@ fn test_issue_113() {
     let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
 
     solver.precompute(simulator_settings.max_cp);
-    assert_eq!(solver.computed_states(), 5_764_187);
-    assert_eq!(solver.computed_values(), 214_671_922);
+    assert_eq!(solver.computed_states(), 5764187);
+    assert_eq!(solver.computed_values(), 210298380);
 }
 
 #[test]
@@ -495,8 +495,8 @@ fn test_issue_118() {
     let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
 
     solver.precompute(simulator_settings.max_cp);
-    assert_eq!(solver.computed_states(), 3_388_741);
-    assert_eq!(solver.computed_values(), 39_470_337);
+    assert_eq!(solver.computed_states(), 3388741);
+    assert_eq!(solver.computed_values(), 37176017);
 }
 
 fn random_effects(adversarial: bool) -> Effects {
@@ -518,7 +518,7 @@ fn random_effects(adversarial: bool) -> Effects {
 fn random_state(settings: &Settings) -> SimulationState {
     SimulationState {
         cp: rand::thread_rng().gen_range(0..=settings.max_cp),
-        durability: rand::thread_rng().gen_range(1..=(i16::from(settings.max_durability) / 5)) * 5,
+        durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
         progress: rand::thread_rng().gen_range(0..u32::from(settings.max_progress)),
         quality: 0,
         unreliable_quality: 0,

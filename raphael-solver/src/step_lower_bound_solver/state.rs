@@ -6,7 +6,7 @@ use raphael_sim::*;
 pub struct ReducedState {
     pub steps_budget: NonZeroU8,
     pub progress_only: bool,
-    pub durability: i16,
+    pub durability: u16,
     pub effects: Effects,
 }
 
@@ -59,13 +59,13 @@ impl ReducedState {
         }
     }
 
-    fn optimize_durability(effects: Effects, durability: i16, step_budget: NonZeroU8) -> i16 {
-        let mut usable_durability: i32 = step_budget.get() as i32 * 20;
+    fn optimize_durability(effects: Effects, durability: u16, step_budget: NonZeroU8) -> u16 {
+        let mut usable_durability = u16::from(step_budget.get()) * 20;
         let usable_manipulation = std::cmp::min(effects.manipulation(), step_budget.get() - 1);
-        usable_durability -= usable_manipulation as i32 * 5;
+        usable_durability -= u16::from(usable_manipulation) * 5;
         let usable_waste_not = std::cmp::min(effects.waste_not(), step_budget.get());
-        usable_durability -= usable_waste_not as i32 * 10;
-        std::cmp::min(usable_durability, durability as _) as _
+        usable_durability -= u16::from(usable_waste_not) * 10;
+        std::cmp::min(usable_durability, durability)
     }
 
     fn optimize_effects(
