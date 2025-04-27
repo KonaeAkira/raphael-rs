@@ -266,7 +266,8 @@ pub fn execute(args: &RawSolveArgs) {
     );
     let actions = solver.solve().expect("Failed to solve");
 
-    let final_state = SimulationState::from_macro(&settings, &actions, Some(initial_state)).unwrap();
+    let final_state =
+        SimulationState::from_macro(&settings, &actions, Some(initial_state)).unwrap();
     let state_quality = final_state.quality;
     let final_quality = state_quality;
     let steps = actions.len();

@@ -24,7 +24,11 @@ impl SimulationState {
         }
     }
 
-    pub fn from_macro(settings: &Settings, actions: &[Action], initial_state: Option<SimulationState>) -> Result<Self, &'static str> {
+    pub fn from_macro(
+        settings: &Settings,
+        actions: &[Action],
+        initial_state: Option<SimulationState>,
+    ) -> Result<Self, &'static str> {
         let mut state = initial_state.unwrap_or_else(|| SimulationState::new(settings));
         for action in actions {
             state = state.use_action(*action, settings)?;

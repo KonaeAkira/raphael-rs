@@ -19,7 +19,7 @@ enum Commands {
     Search(commands::search::SearchArgs),
     /// Solve a crafting rotation
     Solve(commands::solve::SolveArgs),
-    RawSolve(commands::raw_solve::RawSolveArgs),
+    SolveRaw(commands::solve_raw::RawSolveArgs),
 }
 
 fn main() {
@@ -33,6 +33,6 @@ fn main() {
     match &cli.command {
         Commands::Search(args) => commands::search::execute(args),
         Commands::Solve(args) => commands::solve::execute(args),
-        Commands::RawSolve(args) => commands::raw_solve::execute(args),
+        Commands::SolveRaw(args) => commands::solve_raw::execute(args),
     }
 }
