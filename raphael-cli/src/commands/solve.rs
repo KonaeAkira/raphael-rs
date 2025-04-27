@@ -189,6 +189,8 @@ pub fn execute(args: &SolveArgs) {
             material_factor: 0,
             ingredients: Default::default(),
             is_expert: false,
+            req_craftsmanship: 0,
+            req_control: 0,
         }
     } else if args.recipe_id.is_some() {
         *RECIPES.get(&args.recipe_id.unwrap()).expect(&format!(

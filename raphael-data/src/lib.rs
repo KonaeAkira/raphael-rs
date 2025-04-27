@@ -64,6 +64,8 @@ pub struct Recipe {
     pub material_factor: u16,
     pub ingredients: [Ingredient; 6],
     pub is_expert: bool,
+    pub req_craftsmanship: u16,
+    pub req_control: u16,
 }
 
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
