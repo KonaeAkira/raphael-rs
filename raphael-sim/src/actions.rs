@@ -28,7 +28,12 @@ pub trait ActionImpl {
         if state.effects.veneration() != 0 {
             effect_mod += 50;
         }
-        (settings.base_progress as u64 * efficiency_mod * effect_mod / 10000) as u32
+        let condition_mod = match _condition {
+            Condition::Malleable => 150,
+            _ => 100,
+        };
+        (settings.base_progress as u64 * efficiency_mod * effect_mod * condition_mod / 1_00_00_00)
+            as u32
     }
 
     fn quality_increase(state: &SimulationState, settings: &Settings, condition: Condition) -> u32 {
@@ -59,14 +64,22 @@ pub trait ActionImpl {
         if state.effects.trained_perfection_active() {
             return 0;
         }
-        match state.effects.waste_not() {
-            0 => Self::base_durability_cost(state, settings),
-            _ => (Self::base_durability_cost(state, settings) + 1) / 2,
+        // TODO: Check how rounding works
+        match (state.effects.waste_not(), _condition) {
+            (0, Condition::Sturdy) => (Self::base_durability_cost(state, settings) + 1) / 2,
+            (0, _) => Self::base_durability_cost(state, settings),
+            (_, Condition::Sturdy) => (Self::base_durability_cost(state, settings) + 1) / 4,
+            (_, _) => (Self::base_durability_cost(state, settings) + 1) / 2,
         }
     }
 
-    fn cp_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> i16 {
-        Self::base_cp_cost(state, settings)
+    fn cp_cost(state: &SimulationState, settings: &Settings, condition: Condition) -> i16 {
+        let mut base_cost = Self::base_cp_cost(state, settings);
+        // TODO: Check how rounding works
+        if condition == Condition::Pliant {
+            base_cost /= 2;
+        }
+        base_cost
     }
 
     fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -190,8 +203,12 @@ impl ActionImpl for WasteNot {
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         Self::CP_COST
     }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_waste_not(4);
+    fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
+        let mut waste_not_duration = 4;
+        if condition == Condition::Primed {
+            waste_not_duration += 2;
+        }
+        state.effects.set_waste_not(waste_not_duration);
     }
 }
 
@@ -205,8 +222,12 @@ impl ActionImpl for Veneration {
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         Self::CP_COST
     }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_veneration(4);
+    fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
+        let mut veneration_duration = 4;
+        if condition == Condition::Primed {
+            veneration_duration += 2;
+        }
+        state.effects.set_veneration(veneration_duration);
     }
 }
 
@@ -244,8 +265,12 @@ impl ActionImpl for GreatStrides {
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         Self::CP_COST
     }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_great_strides(3);
+    fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
+        let mut great_strides_duration = 3;
+        if condition == Condition::Primed {
+            great_strides_duration += 2;
+        }
+        state.effects.set_great_strides(great_strides_duration);
     }
 }
 
@@ -259,8 +284,12 @@ impl ActionImpl for Innovation {
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> i16 {
         Self::CP_COST
     }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_innovation(4);
+    fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
+        let mut innovation_duration = 4;
+        if condition == Condition::Primed {
+            innovation_duration += 2;
+        }
+        state.effects.set_innovation(innovation_duration);
     }
 }
 
@@ -275,7 +304,11 @@ impl ActionImpl for WasteNot2 {
         Self::CP_COST
     }
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_waste_not(8);
+        let mut waste_not_duration = 8;
+        if _condition == Condition::Primed {
+            waste_not_duration += 2;
+        }
+        state.effects.set_waste_not(waste_not_duration);
     }
 }
 
@@ -401,8 +434,12 @@ impl ActionImpl for Manipulation {
     fn transform_pre(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         state.effects.set_manipulation(0);
     }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_manipulation(8);
+    fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
+        let mut manipulation_duration = 8;
+        if condition == Condition::Primed {
+            manipulation_duration += 2;
+        }
+        state.effects.set_manipulation(manipulation_duration);
     }
 }
 

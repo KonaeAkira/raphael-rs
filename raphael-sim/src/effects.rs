@@ -1,6 +1,6 @@
 use crate::{Combo, Settings};
 
-#[bitfield_struct::bitfield(u32, default = false)]
+#[bitfield_struct::bitfield(u64, default = false)]
 #[derive(PartialEq, Eq, Hash)]
 pub struct Effects {
     #[bits(4)]
@@ -11,7 +11,7 @@ pub struct Effects {
     pub innovation: u8,
     #[bits(3)]
     pub veneration: u8,
-    #[bits(2)]
+    #[bits(3)]
     pub great_strides: u8,
     #[bits(3)]
     pub muscle_memory: u8,
@@ -28,6 +28,9 @@ pub struct Effects {
 
     #[bits(2)]
     pub combo: Combo,
+
+    #[bits(31)]
+    pub _padding: i32,
 }
 
 impl Effects {
