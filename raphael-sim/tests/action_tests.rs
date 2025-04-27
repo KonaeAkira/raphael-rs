@@ -140,6 +140,16 @@ fn test_waste_not() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 56));
     assert_eq!(state.effects.waste_not(), 4);
+
+    let initial_state = SimulationState {
+        effects: Effects::new().with_condition(Condition::Primed),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::WasteNot, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 56));
+    assert_eq!(state.effects.waste_not(), 6);
 }
 
 #[test]
@@ -149,6 +159,16 @@ fn test_veneration() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 18));
     assert_eq!(state.effects.veneration(), 4);
+
+    let initial_state = SimulationState {
+        effects: Effects::new().with_condition(Condition::Primed),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::Veneration, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 18));
+    assert_eq!(state.effects.veneration(), 6);
 }
 
 #[test]
@@ -178,6 +198,16 @@ fn test_great_strides() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 32));
     assert_eq!(state.effects.great_strides(), 3);
+
+    let initial_state = SimulationState {
+        effects: Effects::new().with_condition(Condition::Primed),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::GreatStrides, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 32));
+    assert_eq!(state.effects.great_strides(), 5);
 }
 
 #[test]
@@ -187,6 +217,16 @@ fn test_innovation() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 18));
     assert_eq!(state.effects.innovation(), 4);
+
+    let initial_state = SimulationState {
+        effects: Effects::new().with_condition(Condition::Primed),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::Innovation, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 18));
+    assert_eq!(state.effects.innovation(), 6);
 }
 
 #[test]
@@ -196,6 +236,16 @@ fn test_waste_not_2() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 98));
     assert_eq!(state.effects.waste_not(), 8);
+
+    let initial_state = SimulationState {
+        effects: Effects::new().with_condition(Condition::Primed),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::WasteNot2, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 98));
+    assert_eq!(state.effects.waste_not(), 10);
 }
 
 #[test]
@@ -329,6 +379,16 @@ fn test_manipulation() {
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 5, 96));
     assert_eq!(state.effects.manipulation(), 8);
+
+    let initial_state = SimulationState {
+        effects: Effects::new().with_condition(Condition::Primed),
+        ..SimulationState::new(&SETTINGS)
+    };
+    let state = initial_state
+        .use_action(Action::Manipulation, &SETTINGS)
+        .unwrap();
+    assert_eq!(primary_stats(&state, &SETTINGS), (0, 0, 0, 96));
+    assert_eq!(state.effects.manipulation(), 10);
 }
 
 #[test]
