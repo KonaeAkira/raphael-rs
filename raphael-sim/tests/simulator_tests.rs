@@ -7,9 +7,8 @@ fn simulate(
     let mut current_state = SimulationState::new(&settings);
     let mut states = Vec::new();
     for (action, condition) in steps {
-        current_state = current_state
-            .use_action(action, condition, &settings)
-            .unwrap();
+        current_state.effects.set_condition(condition);
+        current_state = current_state.use_action(action, &settings).unwrap();
         states.push(current_state);
     }
     states
@@ -37,7 +36,7 @@ fn test_level_requirement() {
         adversarial: false,
     };
     let error = SimulationState::new(&settings)
-        .use_action(Action::ImmaculateMend, Condition::Normal, &settings)
+        .use_action(Action::ImmaculateMend, &settings)
         .unwrap_err();
     assert_eq!(error, "Level not high enough");
 }

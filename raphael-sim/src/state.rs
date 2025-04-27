@@ -27,7 +27,7 @@ impl SimulationState {
     pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, &'static str> {
         let mut state = Self::new(settings);
         for action in actions {
-            state = state.use_action(*action, Condition::Normal, settings)?;
+            state = state.use_action(*action, settings)?;
         }
         Ok(state)
     }
@@ -39,7 +39,7 @@ impl SimulationState {
         let mut state = Self::new(settings);
         let mut errors = Vec::new();
         for action in actions {
-            state = match state.use_action(*action, Condition::Normal, settings) {
+            state = match state.use_action(*action, settings) {
                 Ok(new_state) => {
                     errors.push(Ok(()));
                     new_state
@@ -60,7 +60,6 @@ impl SimulationState {
     fn check_common_preconditions<A: ActionImpl>(
         &self,
         settings: &Settings,
-        condition: Condition,
     ) -> Result<(), &'static str> {
         if settings.job_level < A::LEVEL_REQUIREMENT {
             Err("Level not high enough")
@@ -68,7 +67,7 @@ impl SimulationState {
             Err("Action disabled by action mask")
         } else if self.is_final(settings) {
             Err("State is final")
-        } else if A::cp_cost(self, settings, condition) > self.cp {
+        } else if A::cp_cost(self, settings, self.effects.condition()) > self.cp {
             Err("Not enough CP")
         } else {
             Ok(())
@@ -78,9 +77,9 @@ impl SimulationState {
     pub fn use_action_impl<A: ActionImpl>(
         &self,
         settings: &Settings,
-        condition: Condition,
     ) -> Result<Self, &'static str> {
-        self.check_common_preconditions::<A>(settings, condition)?;
+        self.check_common_preconditions::<A>(settings)?;
+        let condition = self.effects.condition();
         A::precondition(self, settings, condition)?;
 
         let mut state = *self;
@@ -150,63 +149,46 @@ impl SimulationState {
             .effects
             .set_combo(A::combo(&state, settings, condition));
 
+        state
+            .effects
+            .set_condition(self.effects.condition().follow_up_condition());
+
         Ok(state)
     }
 
-    pub fn use_action(
-        &self,
-        action: Action,
-        condition: Condition,
-        settings: &Settings,
-    ) -> Result<Self, &'static str> {
+    pub fn use_action(&self, action: Action, settings: &Settings) -> Result<Self, &'static str> {
         match action {
-            Action::BasicSynthesis => self.use_action_impl::<BasicSynthesis>(settings, condition),
-            Action::BasicTouch => self.use_action_impl::<BasicTouch>(settings, condition),
-            Action::MasterMend => self.use_action_impl::<MasterMend>(settings, condition),
-            Action::Observe => self.use_action_impl::<Observe>(settings, condition),
-            Action::TricksOfTheTrade => {
-                self.use_action_impl::<TricksOfTheTrade>(settings, condition)
-            }
-            Action::WasteNot => self.use_action_impl::<WasteNot>(settings, condition),
-            Action::Veneration => self.use_action_impl::<Veneration>(settings, condition),
-            Action::StandardTouch => self.use_action_impl::<StandardTouch>(settings, condition),
-            Action::GreatStrides => self.use_action_impl::<GreatStrides>(settings, condition),
-            Action::Innovation => self.use_action_impl::<Innovation>(settings, condition),
-            Action::WasteNot2 => self.use_action_impl::<WasteNot2>(settings, condition),
-            Action::ByregotsBlessing => {
-                self.use_action_impl::<ByregotsBlessing>(settings, condition)
-            }
-            Action::PreciseTouch => self.use_action_impl::<PreciseTouch>(settings, condition),
-            Action::MuscleMemory => self.use_action_impl::<MuscleMemory>(settings, condition),
-            Action::CarefulSynthesis => {
-                self.use_action_impl::<CarefulSynthesis>(settings, condition)
-            }
-            Action::Manipulation => self.use_action_impl::<Manipulation>(settings, condition),
-            Action::PrudentTouch => self.use_action_impl::<PrudentTouch>(settings, condition),
-            Action::AdvancedTouch => self.use_action_impl::<AdvancedTouch>(settings, condition),
-            Action::Reflect => self.use_action_impl::<Reflect>(settings, condition),
-            Action::PreparatoryTouch => {
-                self.use_action_impl::<PreparatoryTouch>(settings, condition)
-            }
-            Action::Groundwork => self.use_action_impl::<Groundwork>(settings, condition),
-            Action::DelicateSynthesis => {
-                self.use_action_impl::<DelicateSynthesis>(settings, condition)
-            }
-            Action::IntensiveSynthesis => {
-                self.use_action_impl::<IntensiveSynthesis>(settings, condition)
-            }
-            Action::TrainedEye => self.use_action_impl::<TrainedEye>(settings, condition),
-            Action::HeartAndSoul => self.use_action_impl::<HeartAndSoul>(settings, condition),
-            Action::PrudentSynthesis => {
-                self.use_action_impl::<PrudentSynthesis>(settings, condition)
-            }
-            Action::TrainedFinesse => self.use_action_impl::<TrainedFinesse>(settings, condition),
-            Action::RefinedTouch => self.use_action_impl::<RefinedTouch>(settings, condition),
-            Action::QuickInnovation => self.use_action_impl::<QuickInnovation>(settings, condition),
-            Action::ImmaculateMend => self.use_action_impl::<ImmaculateMend>(settings, condition),
-            Action::TrainedPerfection => {
-                self.use_action_impl::<TrainedPerfection>(settings, condition)
-            }
+            Action::BasicSynthesis => self.use_action_impl::<BasicSynthesis>(settings),
+            Action::BasicTouch => self.use_action_impl::<BasicTouch>(settings),
+            Action::MasterMend => self.use_action_impl::<MasterMend>(settings),
+            Action::Observe => self.use_action_impl::<Observe>(settings),
+            Action::TricksOfTheTrade => self.use_action_impl::<TricksOfTheTrade>(settings),
+            Action::WasteNot => self.use_action_impl::<WasteNot>(settings),
+            Action::Veneration => self.use_action_impl::<Veneration>(settings),
+            Action::StandardTouch => self.use_action_impl::<StandardTouch>(settings),
+            Action::GreatStrides => self.use_action_impl::<GreatStrides>(settings),
+            Action::Innovation => self.use_action_impl::<Innovation>(settings),
+            Action::WasteNot2 => self.use_action_impl::<WasteNot2>(settings),
+            Action::ByregotsBlessing => self.use_action_impl::<ByregotsBlessing>(settings),
+            Action::PreciseTouch => self.use_action_impl::<PreciseTouch>(settings),
+            Action::MuscleMemory => self.use_action_impl::<MuscleMemory>(settings),
+            Action::CarefulSynthesis => self.use_action_impl::<CarefulSynthesis>(settings),
+            Action::Manipulation => self.use_action_impl::<Manipulation>(settings),
+            Action::PrudentTouch => self.use_action_impl::<PrudentTouch>(settings),
+            Action::AdvancedTouch => self.use_action_impl::<AdvancedTouch>(settings),
+            Action::Reflect => self.use_action_impl::<Reflect>(settings),
+            Action::PreparatoryTouch => self.use_action_impl::<PreparatoryTouch>(settings),
+            Action::Groundwork => self.use_action_impl::<Groundwork>(settings),
+            Action::DelicateSynthesis => self.use_action_impl::<DelicateSynthesis>(settings),
+            Action::IntensiveSynthesis => self.use_action_impl::<IntensiveSynthesis>(settings),
+            Action::TrainedEye => self.use_action_impl::<TrainedEye>(settings),
+            Action::HeartAndSoul => self.use_action_impl::<HeartAndSoul>(settings),
+            Action::PrudentSynthesis => self.use_action_impl::<PrudentSynthesis>(settings),
+            Action::TrainedFinesse => self.use_action_impl::<TrainedFinesse>(settings),
+            Action::RefinedTouch => self.use_action_impl::<RefinedTouch>(settings),
+            Action::QuickInnovation => self.use_action_impl::<QuickInnovation>(settings),
+            Action::ImmaculateMend => self.use_action_impl::<ImmaculateMend>(settings),
+            Action::TrainedPerfection => self.use_action_impl::<TrainedPerfection>(settings),
         }
     }
 }

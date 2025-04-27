@@ -19,19 +19,42 @@ pub enum Condition {
 }
 
 impl Condition {
-    pub fn follow_up_condition(self) -> Option<Condition> {
+    pub fn follow_up_condition(self) -> Condition {
         match self {
-            Condition::Excellent => Some(Condition::Poor),
-            Condition::GoodOmen => Some(Condition::Good),
-            _ => None,
+            Condition::Excellent => Condition::Poor,
+            Condition::GoodOmen => Condition::Good,
+            _ => Condition::Normal,
         }
     }
 
-    pub fn follow_up_condition_after_steps(self, num_steps: u8) -> Option<Condition> {
-        match num_steps {
-            0 => Some(self),
-            1 => self.follow_up_condition(),
-            _ => None,
+    pub const fn into_bits(self) -> u8 {
+        match self {
+            Self::Normal => 0,
+            Self::Good => 1,
+            Self::Excellent => 2,
+            Self::Poor => 3,
+            Self::GoodOmen => 5,
+            Self::Sturdy => 6,
+            Self::Centered => 7,
+            Self::Pliant => 8,
+            Self::Primed => 9,
+            Self::Malleable => 10,
+        }
+    }
+
+    pub const fn from_bits(value: u8) -> Self {
+        match value {
+            0 => Self::Normal,
+            1 => Self::Good,
+            2 => Self::Excellent,
+            3 => Self::Poor,
+            5 => Self::GoodOmen,
+            6 => Self::Sturdy,
+            7 => Self::Centered,
+            8 => Self::Pliant,
+            9 => Self::Primed,
+            10 => Self::Malleable,
+            _ => Self::Normal,
         }
     }
 }

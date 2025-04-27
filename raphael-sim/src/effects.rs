@@ -1,4 +1,4 @@
-use crate::{Combo, Settings};
+use crate::{Combo, Condition, Settings};
 
 #[bitfield_struct::bitfield(u64, default = false)]
 #[derive(PartialEq, Eq, Hash)]
@@ -29,7 +29,10 @@ pub struct Effects {
     #[bits(2)]
     pub combo: Combo,
 
-    #[bits(31)]
+    #[bits(4)]
+    pub condition: Condition,
+
+    #[bits(27)]
     pub _padding: i32,
 }
 
@@ -47,6 +50,7 @@ impl Effects {
                 settings.is_action_allowed::<crate::actions::QuickInnovation>(),
             )
             .with_combo(Combo::SynthesisBegin)
+            .with_condition(Condition::Normal)
     }
 
     pub fn tick_down(&mut self) {

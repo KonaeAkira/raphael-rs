@@ -34,13 +34,13 @@ fn test_trained_perfection() {
     };
     // No durability cost when trained perfection is active
     let state = initial_state
-        .use_action(Action::BasicSynthesis, Condition::Normal, &SETTINGS)
+        .use_action(Action::BasicSynthesis, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (120, 0, 0, 0));
     assert_eq!(state.effects.trained_perfection_active(), false);
     // Trained Perfection effect doesn't wear off if durability cost is zero
     let state = initial_state
-        .use_action(Action::Observe, Condition::Normal, &SETTINGS)
+        .use_action(Action::Observe, &SETTINGS)
         .unwrap();
     assert_eq!(state.effects.trained_perfection_active(), true);
 }

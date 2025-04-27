@@ -46,7 +46,8 @@ fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u32,
             } else {
                 Condition::Poor
             };
-            state = state.use_action(*action, condition, &settings)?;
+            state.effects.set_condition(condition);
+            state = state.use_action(*action, &settings)?;
         }
         min_quality = std::cmp::min(min_quality, state.quality);
     }

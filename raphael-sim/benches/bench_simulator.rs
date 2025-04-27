@@ -30,7 +30,7 @@ fn bench_use_action(c: &mut Criterion) {
     for &action in bench_actions {
         let bench_id = BenchmarkId::from_parameter(format!("{:?}", action));
         group.bench_function(bench_id, |b| {
-            b.iter(|| state.use_action(black_box(action), Condition::Normal, &settings));
+            b.iter(|| state.use_action(black_box(action), &settings));
         });
     }
     group.finish();

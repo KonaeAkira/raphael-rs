@@ -182,7 +182,7 @@ pub fn use_action_combo(
     action_combo: ActionCombo,
 ) -> Result<SimulationState, &'static str> {
     for action in action_combo.actions() {
-        state = state.use_action(*action, Condition::Normal, &settings.simulator_settings)?;
+        state = state.use_action(*action, &settings.simulator_settings)?;
     }
     if is_progress_only_state(settings, &state) {
         // strip all quality-only data
