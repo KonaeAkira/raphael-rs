@@ -41,6 +41,8 @@ pub struct MacroNotificationConfig {
     different_last_notification: bool,
     #[serde(default)]
     custom_last_notification_format: String,
+    #[serde(default)]
+    avoid_single_action_macro: bool,
 }
 
 impl Default for MacroNotificationConfig {
@@ -51,6 +53,7 @@ impl Default for MacroNotificationConfig {
             custom_notification_format: String::new(),
             different_last_notification: false,
             custom_last_notification_format: String::new(),
+            avoid_single_action_macro: false,
         }
     }
 }
@@ -89,7 +92,7 @@ impl MacroTextBox {
                 format!("/ac \"{}\"", action_name(*action, locale))
             }
         }));
-        if config.notification_enabled {
+        if config.notification_enabled && lines.len() < 15 {
             if config.notification_config.default_notification {
                 lines.push(format!(
                     "/echo Macro finished ({}/{}) <se.{}>",
@@ -172,29 +175,50 @@ impl MacroView<'_> {
                     .suffix(">"),
             );
         });
-        ui.separator();
         ui.radio_value(
             &mut notification_cfg.default_notification,
             false,
             "Use custom notification format",
         );
-        ui.add_enabled_ui(!notification_cfg.default_notification, |ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut notification_cfg.custom_notification_format)
-                    .font(egui::TextStyle::Monospace)
-                    .hint_text("/echo Done {index}/{max_index} <se.1>"),
-            );
-            ui.add_space(2.0);
-            ui.checkbox(
-                &mut notification_cfg.different_last_notification,
-                "Use different format for last notification",
-            );
-            ui.add_enabled(
-                notification_cfg.different_last_notification,
-                egui::TextEdit::singleline(&mut notification_cfg.custom_last_notification_format)
-                    .font(egui::TextStyle::Monospace)
-                    .hint_text("/echo All macros done <se.2>"),
-            );
+        ui.horizontal(|ui| {
+            ui.add_space(18.0);
+            ui.vertical(|ui| {
+                ui.add_enabled_ui(!notification_cfg.default_notification, |ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(
+                            &mut notification_cfg.custom_notification_format,
+                        )
+                        .font(egui::TextStyle::Monospace)
+                        .hint_text("/echo Done {index}/{max_index} <se.1>"),
+                    );
+                    ui.add_space(2.0);
+                    ui.checkbox(
+                        &mut notification_cfg.different_last_notification,
+                        "Use different format for last notification",
+                    );
+                    ui.add_enabled(
+                        notification_cfg.different_last_notification,
+                        egui::TextEdit::singleline(
+                            &mut notification_cfg.custom_last_notification_format,
+                        )
+                        .font(egui::TextStyle::Monospace)
+                        .hint_text("/echo All macros done <se.2>"),
+                    );
+                });
+            });
+        });
+        ui.separator();
+        ui.checkbox(
+            &mut notification_cfg.avoid_single_action_macro,
+            "Avoid single-action macros",
+        );
+        ui.horizontal(|ui| {
+            ui.add_space(18.0);
+            ui.vertical(|ui| {
+                ui.label(
+                    "Skip last notification if doing so avoids creating a macro with a single action.",
+                )
+            });
         });
     }
 }
@@ -244,6 +268,7 @@ impl Widget for MacroView<'_> {
                             )
                             .ui(ui, |ui| {
                                 ui.reset_style(); // prevent egui::DragValue from looking weird
+                                ui.set_max_width(305.0);
                                 Self::macro_notification_menu(
                                     ui,
                                     &mut self.config.notification_config,
@@ -252,28 +277,39 @@ impl Widget for MacroView<'_> {
                     });
                 });
                 ui.separator();
-                let chunk_size = match self.config.split_macro {
-                    true => {
-                        let mut chunk_size = 15;
-                        if self.config.notification_enabled {
-                            chunk_size -= 1;
-                        }
-                        if self.config.macro_lock {
-                            chunk_size -= 1;
-                        }
-                        chunk_size
+
+                let chunk_size = if self.config.split_macro {
+                    let mut chunk_size = 15;
+                    if self.config.notification_enabled {
+                        chunk_size -= 1;
                     }
-                    false => usize::MAX,
+                    if self.config.macro_lock {
+                        chunk_size -= 1;
+                    }
+                    chunk_size
+                } else {
+                    usize::MAX
                 };
-                let count = self.actions.chunks(chunk_size).count();
+                let num_chunks = if self.config.notification_config.avoid_single_action_macro {
+                    self.actions.len().saturating_sub(1).div_ceil(chunk_size)
+                } else {
+                    self.actions.len().div_ceil(chunk_size)
+                };
+
                 let newline = match ui.ctx().os() {
                     egui::os::OperatingSystem::Mac => "\n",
                     _ => "\r\n",
                 };
-                for (index, actions) in self.actions.chunks(chunk_size).enumerate() {
+                for chunk_index in 0..num_chunks {
+                    let action_index = chunk_index * chunk_size;
+                    let actions = if chunk_index + 1 == num_chunks {
+                        &self.actions[action_index..]
+                    } else {
+                        &self.actions[action_index..action_index + chunk_size]
+                    };
                     ui.add(MacroTextBox::new(
-                        index + 1,
-                        count,
+                        chunk_index + 1,
+                        num_chunks,
                         actions,
                         self.config,
                         newline,
