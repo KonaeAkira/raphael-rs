@@ -229,8 +229,18 @@ impl<'a> RecipeSelect<'a> {
                     }
                 });
                 if ui.checkbox(&mut self.custom_recipe_overrides_config.use_base_increase_overrides, "Override per 100% efficiency values").changed() {
-                    custom_recipe_overrides.base_progress_override = Some(default_game_settings.base_progress);
-                    custom_recipe_overrides.base_quality_override = Some(default_game_settings.base_quality);
+                    if self
+                        .custom_recipe_overrides_config
+                        .use_base_increase_overrides
+                    {
+                        custom_recipe_overrides.base_progress_override =
+                            Some(default_game_settings.base_progress);
+                        custom_recipe_overrides.base_quality_override =
+                            Some(default_game_settings.base_quality);
+                    } else {
+                        custom_recipe_overrides.base_progress_override = None;
+                        custom_recipe_overrides.base_quality_override = None;
+                    }
                 };
             });
         });
