@@ -10,6 +10,8 @@ crate-type = ["cdylib"]
 [dependencies]
 raphael-sim = { workspace = true }
 raphael-solver = { workspace = true }
+rayon = { workspace = true }
+log = { workspace = true }
 
 [build-dependencies]
 cbindgen = "0.28.0"

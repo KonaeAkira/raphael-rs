@@ -29,6 +29,9 @@ namespace Raphael
         public delegate* unmanaged[Cdecl]<Action*, nuint, void> on_finish;
         public delegate* unmanaged[Cdecl]<Action*, nuint, void> on_suggest_solution;
         public delegate* unmanaged[Cdecl]<nuint, void> on_progress;
+        public delegate* unmanaged[Cdecl]<byte*, nuint, void> on_log;
+        public LevelFilter log_level;
+        public ushort thread_count;
         public ulong action_mask;
         public ushort progress;
         public ushort quality;
@@ -76,6 +79,16 @@ namespace Raphael
         QuickInnovation,
         ImmaculateMend,
         TrainedPerfection,
+    }
+
+    public enum LevelFilter : byte
+    {
+        Off,
+        Error,
+        Warn,
+        Info,
+        Debug,
+        Trace,
     }
 
 

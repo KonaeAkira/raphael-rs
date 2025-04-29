@@ -1,3 +1,6 @@
+use std::sync::{Arc, LazyLock, Mutex};
+
+use log::Log;
 use raphael_sim::{ActionMask, Settings};
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
@@ -8,6 +11,9 @@ pub struct SolveArgs {
     pub on_finish: extern "C" fn(*const Action, usize),
     pub on_suggest_solution: Option<extern "C" fn(*const Action, usize)>,
     pub on_progress: Option<extern "C" fn(usize)>,
+    pub on_log: Option<extern "C" fn(*const u8, usize)>,
+    pub log_level: LevelFilter,
+    pub thread_count: u16,
     pub action_mask: u64,
     pub progress: u16,
     pub quality: u16,
@@ -96,6 +102,30 @@ impl From<raphael_sim::Action> for Action {
     }
 }
 
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub enum LevelFilter {
+    Off,
+    Error,
+    Warn,
+    Info,
+    Debug,
+    Trace,
+}
+
+impl From<LevelFilter> for log::LevelFilter {
+    fn from(value: LevelFilter) -> Self {
+        match value {
+            LevelFilter::Off => log::LevelFilter::Off,
+            LevelFilter::Error => log::LevelFilter::Error,
+            LevelFilter::Warn => log::LevelFilter::Warn,
+            LevelFilter::Info => log::LevelFilter::Info,
+            LevelFilter::Debug => log::LevelFilter::Debug,
+            LevelFilter::Trace => log::LevelFilter::Trace,
+        }
+    }
+}
+
 impl From<SolveArgs> for SolverSettings {
     fn from(value: SolveArgs) -> Self {
         let simulator_settings = Settings {
@@ -117,29 +147,95 @@ impl From<SolveArgs> for SolverSettings {
     }
 }
 
+#[derive(Clone)]
+struct CallbackLogger(Arc<Mutex<Option<CallbackLoggerImpl>>>);
+
+struct CallbackLoggerImpl {
+    on_log: extern "C" fn(*const u8, usize),
+}
+
+impl Log for CallbackLogger {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        log::max_level() >= metadata.level()
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            if let Some(logger) = self.0.lock().unwrap().as_ref() {
+                let message = format!("{} - {}", record.level(), record.args());
+                let message = message.as_bytes();
+                (logger.on_log)(message.as_ptr(), message.len());
+            }
+        }
+    }
+
+    fn flush(&self) {}
+}
+
+impl CallbackLogger {
+    fn new() -> Self {
+        let logger = Arc::new(Mutex::new(None));
+        let logger = CallbackLogger(logger);
+        log::set_max_level(log::LevelFilter::Off);
+        log::set_boxed_logger(Box::new(logger.clone())).unwrap();
+        logger
+    }
+
+    fn clear(&self) {
+        log::set_max_level(log::LevelFilter::Off);
+        self.0.lock().unwrap().take();
+    }
+
+    fn set_callback(&self, on_log: extern "C" fn(*const u8, usize), log_level: log::LevelFilter) {
+        let mut logger = self.0.lock().unwrap();
+        *logger = Some(CallbackLoggerImpl { on_log });
+        log::set_max_level(log_level);
+    }
+}
+
+static LOG: LazyLock<CallbackLogger> = LazyLock::new(|| CallbackLogger::new());
+
 #[unsafe(no_mangle)]
 pub extern "C" fn solve(args: &SolveArgs) {
-    let flag = AtomicFlag::new();
-    (args.on_start)(flag.as_ptr());
+    let logger = LOG.clone();
 
-    let settings = SolverSettings::from(*args);
-    let solution_callback: Box<dyn Fn(&[raphael_sim::Action])> =
-        if let Some(cb) = args.on_suggest_solution {
-            Box::new(move |actions| {
-                cb(actions.as_ptr() as *const Action, actions.len());
-            })
-        } else {
-            Box::new(|_| {})
-        };
-    let progress_callback: Box<dyn Fn(usize)> = if let Some(cb) = args.on_progress {
-        Box::new(move |progress| {
-            cb(progress);
-        })
-    } else {
-        Box::new(|_| {})
-    };
+    if let Some(on_log) = args.on_log {
+        let log_level = args.log_level.into();
+        if log_level != log::LevelFilter::Off {
+            logger.set_callback(on_log, log_level);
+        }
+    }
 
-    let mut solver = MacroSolver::new(settings, solution_callback, progress_callback, flag.clone());
-    let actions = solver.solve().unwrap_or_default();
-    (args.on_finish)(actions.as_ptr() as *const Action, actions.len());
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(args.thread_count.into())
+        .build()
+        .unwrap()
+        .install(|| {
+            let flag = AtomicFlag::new();
+            (args.on_start)(flag.as_ptr());
+
+            let settings = SolverSettings::from(*args);
+            let solution_callback: Box<dyn Fn(&[raphael_sim::Action])> =
+                if let Some(cb) = args.on_suggest_solution {
+                    Box::new(move |actions| {
+                        cb(actions.as_ptr() as *const Action, actions.len());
+                    })
+                } else {
+                    Box::new(|_| {})
+                };
+            let progress_callback: Box<dyn Fn(usize)> = if let Some(cb) = args.on_progress {
+                Box::new(move |progress| {
+                    cb(progress);
+                })
+            } else {
+                Box::new(|_| {})
+            };
+
+            let mut solver =
+                MacroSolver::new(settings, solution_callback, progress_callback, flag.clone());
+            let actions = solver.solve().unwrap_or_default();
+            (args.on_finish)(actions.as_ptr() as *const Action, actions.len());
+        });
+
+    logger.clear();
 }
