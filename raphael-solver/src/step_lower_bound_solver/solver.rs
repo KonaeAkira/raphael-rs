@@ -16,6 +16,12 @@ type ParetoValue = utils::ParetoValue<u32, u32>;
 type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
 type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
+#[derive(Debug, Clone, Copy)]
+pub struct StepLbSolverStats {
+    pub states: usize,
+    pub pareto_values: usize,
+}
+
 pub struct StepLbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
@@ -166,16 +172,11 @@ impl StepLbSolver {
         }
         Ok(())
     }
-}
 
-impl Drop for StepLbSolver {
-    fn drop(&mut self) {
-        let num_states = self.solved_states.len();
-        let num_values = self
-            .solved_states
-            .values()
-            .map(|value| value.len())
-            .sum::<usize>();
-        log::debug!("StepLbSolver - states: {num_states}, values: {num_values}");
+    pub fn runtime_stats(&self) -> StepLbSolverStats {
+        StepLbSolverStats {
+            states: self.solved_states.len(),
+            pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
+        }
     }
 }

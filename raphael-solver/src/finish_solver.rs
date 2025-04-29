@@ -90,6 +90,10 @@ impl FinishSolver {
             }
         }
     }
+
+    pub fn num_states(&self) -> usize {
+        self.max_progress.len()
+    }
 }
 
 impl Drop for FinishSolver {

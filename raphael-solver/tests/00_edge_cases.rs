@@ -1,9 +1,63 @@
+use expect_test::expect;
 use raphael_sim::*;
-use raphael_solver::{SolverException, test_utils::*};
+use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
+
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+struct SolutionScore {
+    pub capped_quality: u32,
+    pub steps: u8,
+    pub duration: u8,
+    pub overflow_quality: u32,
+}
+
+fn is_progress_backloaded(settings: &SolverSettings, actions: &[Action]) -> bool {
+    let mut state = SimulationState::new(&settings.simulator_settings);
+    let mut quality_lock = None;
+    for action in actions {
+        state = state
+            .use_action(*action, Condition::Normal, &settings.simulator_settings)
+            .unwrap();
+        if state.progress != 0 && quality_lock.is_none() {
+            quality_lock = Some(state.quality);
+        }
+    }
+    quality_lock.is_none_or(|quality| state.quality == quality)
+}
+
+fn test_with_settings(
+    settings: SolverSettings,
+    expected_score: expect_test::Expect,
+    expected_runtime_stats: expect_test::Expect,
+) {
+    let mut solver = MacroSolver::new(
+        settings,
+        Box::new(|_| {}),
+        Box::new(|_| {}),
+        AtomicFlag::new(),
+    );
+    let result = solver.solve();
+    let score = result.map_or(None, |actions| {
+        let final_state =
+            SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
+        assert!(final_state.progress >= settings.max_progress());
+        if settings.backload_progress {
+            assert!(is_progress_backloaded(&settings, &actions));
+        }
+        Some(SolutionScore {
+            capped_quality: std::cmp::min(final_state.quality, settings.max_quality()),
+            steps: actions.len() as u8,
+            duration: actions.iter().map(|action| action.time_cost()).sum(),
+            overflow_quality: final_state.quality.saturating_sub(settings.max_quality()),
+        })
+    });
+    expected_score.assert_debug_eq(&score);
+    expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
+}
 
 #[test]
 fn unsolvable() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 100,
         max_durability: 60,
         max_progress: 4000,
@@ -17,13 +71,33 @@ fn unsolvable() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false);
-    assert_eq!(actions, Err(SolverException::NoSolution));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        None
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 4042,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 0,
+                pareto_values: 0,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 0,
+                pareto_values: 0,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn zero_quality() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 80,
         max_durability: 60,
         max_progress: 1920,
@@ -37,14 +111,40 @@ fn zero_quality() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (0, 5, 14, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 0,
+                steps: 5,
+                duration: 14,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 1867,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 52001,
+                pareto_values: 91291,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 25627,
+                pareto_values: 230025,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn max_quality() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 400,
         max_durability: 60,
         max_progress: 2000,
@@ -58,14 +158,40 @@ fn max_quality() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (1000, 11, 28, 100));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 1000,
+                steps: 11,
+                duration: 28,
+                overflow_quality: 100,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 239513,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 878613,
+                pareto_values: 6272058,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 107515,
+                pareto_values: 963403,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn large_progress_quality_increase() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 300,
         max_durability: 40,
         max_progress: 100,
@@ -76,7 +202,33 @@ fn large_progress_quality_increase() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (100, 1, 3, u32::from(u16::MAX) - 100));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 100,
+                steps: 1,
+                duration: 3,
+                overflow_quality: 65435,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 65,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 412810,
+                pareto_values: 407290,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 13,
+                pareto_values: 13,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }

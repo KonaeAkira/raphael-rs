@@ -7,6 +7,8 @@ use crate::actions::{
 };
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
+use crate::quality_upper_bound_solver::QualityUbSolverStats;
+use crate::step_lower_bound_solver::StepLbSolverStats;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
 use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
@@ -31,6 +33,13 @@ impl Solution {
 
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
 type ProgressCallback<'a> = dyn Fn(usize) + 'a;
+
+#[derive(Debug, Clone, Copy)]
+pub struct MacroSolverStats {
+    pub finish_states: usize,
+    pub quality_ub_stats: QualityUbSolverStats,
+    pub step_lb_stats: StepLbSolverStats,
+}
 
 pub struct MacroSolver<'a> {
     settings: SolverSettings,
@@ -208,5 +217,13 @@ impl<'a> MacroSolver<'a> {
         }
 
         solution.ok_or(SolverException::NoSolution)
+    }
+
+    pub fn runtime_stats(&self) -> MacroSolverStats {
+        MacroSolverStats {
+            finish_states: self.finish_solver.num_states(),
+            quality_ub_stats: self.quality_ub_solver.runtime_stats(),
+            step_lb_stats: self.step_lb_solver.runtime_stats(),
+        }
     }
 }
