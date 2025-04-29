@@ -16,7 +16,7 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u8 {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    StepLowerBoundSolver::new(solver_settings, Default::default())
+    StepLbSolver::new(solver_settings, Default::default())
         .step_lower_bound(state, 0)
         .unwrap()
 }
@@ -497,7 +497,7 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = StepLowerBoundSolver::new(solver_settings, Default::default());
+    let mut solver = StepLbSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {
         let state = random_state(&simulator_settings);
         let state_lower_bound = solver.step_lower_bound(state, 0).unwrap();

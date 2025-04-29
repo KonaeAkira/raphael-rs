@@ -9,9 +9,7 @@ use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
-use crate::{
-    FinishSolver, QualityUpperBoundSolver, SolverException, SolverSettings, StepLowerBoundSolver,
-};
+use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
 use std::vec::Vec;
 
@@ -39,8 +37,8 @@ pub struct MacroSolver<'a> {
     solution_callback: Box<SolutionCallback<'a>>,
     progress_callback: Box<ProgressCallback<'a>>,
     finish_solver: FinishSolver,
-    quality_ub_solver: QualityUpperBoundSolver,
-    step_lb_solver: StepLowerBoundSolver,
+    quality_ub_solver: QualityUbSolver,
+    step_lb_solver: StepLbSolver,
     interrupt_signal: AtomicFlag,
 }
 
@@ -56,8 +54,8 @@ impl<'a> MacroSolver<'a> {
             solution_callback,
             progress_callback,
             finish_solver: FinishSolver::new(settings),
-            quality_ub_solver: QualityUpperBoundSolver::new(settings, interrupt_signal.clone()),
-            step_lb_solver: StepLowerBoundSolver::new(settings, interrupt_signal.clone()),
+            quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
+            step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
             interrupt_signal,
         }
     }

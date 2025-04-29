@@ -6,7 +6,7 @@ use crate::{
     actions::{FULL_SEARCH_ACTIONS, use_action_combo},
 };
 
-use super::QualityUpperBoundSolver;
+use super::QualityUbSolver;
 
 fn solve(simulator_settings: Settings, actions: &[Action]) -> u32 {
     let mut state = SimulationState::from_macro(&simulator_settings, actions).unwrap();
@@ -16,7 +16,7 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u32 {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.quality_upper_bound(state).unwrap()
 }
 
@@ -484,7 +484,7 @@ fn test_issue_113() {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    let mut solver = QualityUbSolver::new(solver_settings, Default::default());
 
     solver.precompute(simulator_settings.max_cp);
     assert_eq!(solver.computed_states(), 5764187);
@@ -513,7 +513,7 @@ fn test_issue_118() {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    let mut solver = QualityUbSolver::new(solver_settings, Default::default());
 
     solver.precompute(simulator_settings.max_cp);
     assert_eq!(solver.computed_states(), 3388741);
@@ -557,7 +557,7 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
-    let mut solver = QualityUpperBoundSolver::new(solver_settings, Default::default());
+    let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.precompute(simulator_settings.max_cp);
     for _ in 0..100000 {
         let state = random_state(&simulator_settings);
