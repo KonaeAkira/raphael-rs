@@ -1,3 +1,4 @@
+use expect_test::expect;
 use rand::Rng;
 use raphael_sim::*;
 
@@ -478,17 +479,20 @@ fn test_issue_113() {
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
-
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-
     solver.precompute(simulator_settings.max_cp);
-    assert_eq!(solver.computed_states(), 5764187);
-    assert_eq!(solver.computed_values(), 209923334);
+    let expected_runtime_stats = expect![[r#"
+        QualityUbSolverStats {
+            states: 5764187,
+            pareto_values: 209923334,
+        }
+    "#]];
+    expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
 }
 
 #[test]
@@ -507,17 +511,21 @@ fn test_issue_118() {
             .remove(Action::QuickInnovation),
         adversarial: true,
     };
-
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
         allow_unsound_branch_pruning: false,
     };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-
     solver.precompute(simulator_settings.max_cp);
-    assert_eq!(solver.computed_states(), 3388741);
-    assert_eq!(solver.computed_values(), 36810126);
+    solver.precompute(simulator_settings.max_cp);
+    let expected_runtime_stats = expect![[r#"
+        QualityUbSolverStats {
+            states: 3388741,
+            pareto_values: 36810126,
+        }
+    "#]];
+    expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
 }
 
 fn random_effects(adversarial: bool) -> Effects {
