@@ -59,21 +59,3 @@ impl SolverSettings {
         u32::from(self.simulator_settings.base_quality)
     }
 }
-
-pub mod test_utils {
-    use raphael_sim::*;
-
-    pub fn is_progress_backloaded(actions: &[Action], settings: &Settings) -> bool {
-        let mut state = SimulationState::new(settings);
-        let mut quality_lock = None;
-        for action in actions {
-            state = state
-                .use_action(*action, Condition::Normal, settings)
-                .unwrap();
-            if state.progress != 0 && quality_lock.is_none() {
-                quality_lock = Some(state.quality);
-            }
-        }
-        quality_lock.is_none_or(|quality| state.quality == quality)
-    }
-}
