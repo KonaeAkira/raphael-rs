@@ -12,7 +12,13 @@ type ParetoValue = utils::ParetoValue<u32, u32>;
 type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
 type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
-pub struct QualityUpperBoundSolver {
+#[derive(Debug, Clone, Copy)]
+pub struct QualityUbSolverStats {
+    pub states: usize,
+    pub pareto_values: usize,
+}
+
+pub struct QualityUbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
@@ -20,7 +26,7 @@ pub struct QualityUpperBoundSolver {
     durability_cost: u16,
 }
 
-impl QualityUpperBoundSolver {
+impl QualityUbSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         let durability_cost = durability_cost(&settings.simulator_settings);
         settings.simulator_settings.max_cp += durability_cost * (settings.max_durability() / 5);
@@ -128,7 +134,7 @@ impl QualityUpperBoundSolver {
         }
 
         log::debug!(
-            "QualityUpperBoundSolver - templates: {}, precomputed_states: {}",
+            "QualityUbSolver - templates: {}, precomputed_states: {}",
             templates.len(),
             self.solved_states.len()
         );
@@ -265,20 +271,22 @@ impl QualityUpperBoundSolver {
         Ok(())
     }
 
-    pub fn computed_states(&self) -> usize {
-        self.solved_states.len()
-    }
-
-    pub fn computed_values(&self) -> usize {
-        self.solved_states.values().map(|value| value.len()).sum()
+    pub fn runtime_stats(&self) -> QualityUbSolverStats {
+        QualityUbSolverStats {
+            states: self.solved_states.len(),
+            pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
+        }
     }
 }
 
-impl Drop for QualityUpperBoundSolver {
+impl Drop for QualityUbSolver {
     fn drop(&mut self) {
-        let num_states = self.computed_states();
-        let num_values = self.computed_values();
-        log::debug!("QualityUpperBoundSolver - states: {num_states}, values: {num_values}");
+        let runtime_stats = self.runtime_stats();
+        log::debug!(
+            "QualityUbSolver - states: {}, values: {}",
+            runtime_stats.states,
+            runtime_stats.pareto_values
+        );
     }
 }
 

@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
 use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
 
-use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
+use raphael_sim::{
+    Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, SimulationState,
+};
 
 use crate::config::{
     CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
@@ -1028,10 +1030,10 @@ fn spawn_solver(
             let mut solver_events = solver_events.lock().unwrap();
             match result {
                 Ok(actions) => {
-                    let quality =
-                        raphael_solver::test_utils::get_quality(&simulator_settings, &actions);
+                    let final_state =
+                        SimulationState::from_macro(&simulator_settings, &actions).unwrap();
                     solver_events.push_back(SolverEvent::Actions(actions));
-                    if quality >= u32::from(simulator_settings.max_quality) {
+                    if final_state.quality >= u32::from(simulator_settings.max_quality) {
                         solver_events.push_back(SolverEvent::Finished(None));
                         return;
                     }

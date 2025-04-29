@@ -7,11 +7,11 @@ use crate::actions::{
 };
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
+use crate::quality_upper_bound_solver::QualityUbSolverStats;
+use crate::step_lower_bound_solver::StepLbSolverStats;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
-use crate::{
-    FinishSolver, QualityUpperBoundSolver, SolverException, SolverSettings, StepLowerBoundSolver,
-};
+use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
 use std::vec::Vec;
 
@@ -34,13 +34,20 @@ impl Solution {
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
 type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
+#[derive(Debug, Clone, Copy)]
+pub struct MacroSolverStats {
+    pub finish_states: usize,
+    pub quality_ub_stats: QualityUbSolverStats,
+    pub step_lb_stats: StepLbSolverStats,
+}
+
 pub struct MacroSolver<'a> {
     settings: SolverSettings,
     solution_callback: Box<SolutionCallback<'a>>,
     progress_callback: Box<ProgressCallback<'a>>,
     finish_solver: FinishSolver,
-    quality_ub_solver: QualityUpperBoundSolver,
-    step_lb_solver: StepLowerBoundSolver,
+    quality_ub_solver: QualityUbSolver,
+    step_lb_solver: StepLbSolver,
     interrupt_signal: AtomicFlag,
 }
 
@@ -56,8 +63,8 @@ impl<'a> MacroSolver<'a> {
             solution_callback,
             progress_callback,
             finish_solver: FinishSolver::new(settings),
-            quality_ub_solver: QualityUpperBoundSolver::new(settings, interrupt_signal.clone()),
-            step_lb_solver: StepLowerBoundSolver::new(settings, interrupt_signal.clone()),
+            quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
+            step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
             interrupt_signal,
         }
     }
@@ -210,5 +217,13 @@ impl<'a> MacroSolver<'a> {
         }
 
         solution.ok_or(SolverException::NoSolution)
+    }
+
+    pub fn runtime_stats(&self) -> MacroSolverStats {
+        MacroSolverStats {
+            finish_states: self.finish_solver.num_states(),
+            quality_ub_stats: self.quality_ub_solver.runtime_stats(),
+            step_lb_stats: self.step_lb_solver.runtime_stats(),
+        }
     }
 }

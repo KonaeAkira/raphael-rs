@@ -16,14 +16,20 @@ type ParetoValue = utils::ParetoValue<u32, u32>;
 type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
 type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
-pub struct StepLowerBoundSolver {
+#[derive(Debug, Clone, Copy)]
+pub struct StepLbSolverStats {
+    pub states: usize,
+    pub pareto_values: usize,
+}
+
+pub struct StepLbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
     pareto_front_builder: ParetoFrontBuilder,
 }
 
-impl StepLowerBoundSolver {
+impl StepLbSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
@@ -166,16 +172,22 @@ impl StepLowerBoundSolver {
         }
         Ok(())
     }
+
+    pub fn runtime_stats(&self) -> StepLbSolverStats {
+        StepLbSolverStats {
+            states: self.solved_states.len(),
+            pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
+        }
+    }
 }
 
-impl Drop for StepLowerBoundSolver {
+impl Drop for StepLbSolver {
     fn drop(&mut self) {
-        let num_states = self.solved_states.len();
-        let num_values = self
-            .solved_states
-            .values()
-            .map(|value| value.len())
-            .sum::<usize>();
-        log::debug!("StepLowerBoundSolver - states: {num_states}, values: {num_values}");
+        let runtime_stats = self.runtime_stats();
+        log::debug!(
+            "StepLbSolver - states: {}, values: {}",
+            runtime_stats.states,
+            runtime_stats.pareto_values
+        );
     }
 }

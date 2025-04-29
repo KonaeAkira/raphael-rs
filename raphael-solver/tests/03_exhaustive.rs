@@ -1,9 +1,63 @@
+use expect_test::expect;
 use raphael_sim::*;
-use raphael_solver::test_utils::*;
+use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
+
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+struct SolutionScore {
+    pub capped_quality: u32,
+    pub steps: u8,
+    pub duration: u8,
+    pub overflow_quality: u32,
+}
+
+fn is_progress_backloaded(settings: &SolverSettings, actions: &[Action]) -> bool {
+    let mut state = SimulationState::new(&settings.simulator_settings);
+    let mut quality_lock = None;
+    for action in actions {
+        state = state
+            .use_action(*action, Condition::Normal, &settings.simulator_settings)
+            .unwrap();
+        if state.progress != 0 && quality_lock.is_none() {
+            quality_lock = Some(state.quality);
+        }
+    }
+    quality_lock.is_none_or(|quality| state.quality == quality)
+}
+
+fn test_with_settings(
+    settings: SolverSettings,
+    expected_score: expect_test::Expect,
+    expected_runtime_stats: expect_test::Expect,
+) {
+    let mut solver = MacroSolver::new(
+        settings,
+        Box::new(|_| {}),
+        Box::new(|_| {}),
+        AtomicFlag::new(),
+    );
+    let result = solver.solve();
+    let score = result.map_or(None, |actions| {
+        let final_state =
+            SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
+        assert!(final_state.progress >= settings.max_progress());
+        if settings.backload_progress {
+            assert!(is_progress_backloaded(&settings, &actions));
+        }
+        Some(SolutionScore {
+            capped_quality: std::cmp::min(final_state.quality, settings.max_quality()),
+            steps: actions.len() as u8,
+            duration: actions.iter().map(|action| action.time_cost()).sum(),
+            overflow_quality: final_state.quality.saturating_sub(settings.max_quality()),
+        })
+    });
+    expected_score.assert_debug_eq(&score);
+    expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
+}
 
 #[test]
 fn rinascita_3700_3280() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 680,
         max_durability: 70,
         max_progress: 5060,
@@ -17,14 +71,40 @@ fn rinascita_3700_3280() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (10623, 26, 70, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 10623,
+                steps: 26,
+                duration: 70,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 286068,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1982938,
+                pareto_values: 45486067,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 795538,
+                pareto_values: 15316958,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn pactmaker_3240_3130() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 600,
         max_durability: 70,
         max_progress: 4300,
@@ -38,14 +118,40 @@ fn pactmaker_3240_3130() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (8912, 21, 55, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 8912,
+                steps: 21,
+                duration: 55,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 285099,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1707402,
+                pareto_values: 34644852,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 829035,
+                pareto_values: 15439769,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn pactmaker_3240_3130_heart_and_soul() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 600,
         max_durability: 70,
         max_progress: 4300,
@@ -58,14 +164,40 @@ fn pactmaker_3240_3130_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (9608, 24, 65, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 9608,
+                steps: 24,
+                duration: 65,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 240392,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 3455899,
+                pareto_values: 73184655,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 1582899,
+                pareto_values: 29777152,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn diadochos_4021_3660() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 640,
         max_durability: 70,
         max_progress: 6600,
@@ -79,14 +211,40 @@ fn diadochos_4021_3660() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (9688, 25, 68, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 9688,
+                steps: 25,
+                duration: 68,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 470600,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1847123,
+                pareto_values: 46078953,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 958195,
+                pareto_values: 20582553,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn indagator_3858_4057() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 687,
         max_durability: 70,
         max_progress: 5720,
@@ -100,14 +258,40 @@ fn indagator_3858_4057() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (12793, 27, 72, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 12793,
+                steps: 27,
+                duration: 72,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 359128,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 2008872,
+                pareto_values: 46441910,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 675136,
+                pareto_values: 13435389,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn rarefied_tacos_de_carne_asada_4785_4758() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 646,
         max_durability: 80,
         max_progress: 6600,
@@ -121,16 +305,42 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (12000, 21, 56, 123));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 12000,
+                steps: 21,
+                duration: 56,
+                overflow_quality: 123,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 2080695,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1901560,
+                pareto_values: 48784449,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 1620921,
+                pareto_values: 35840138,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn stuffed_peppers_2() {
     // lv99 Rarefied Stuffed Peppers
     // 4785 CMS, 4758 Ctrl, 646 CP
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 646,
         max_durability: 80,
         max_progress: 6300,
@@ -144,16 +354,42 @@ fn stuffed_peppers_2() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (20177, 31, 85, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 20177,
+                steps: 31,
+                duration: 85,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 764711,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1902638,
+                pareto_values: 48583224,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 2132960,
+                pareto_values: 49259139,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn stuffed_peppers_2_heart_and_soul() {
     // lv99 Rarefied Stuffed Peppers
     // 4785 CMS, 4758 Ctrl, 646 CP
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 646,
         max_durability: 80,
         max_progress: 6300,
@@ -166,16 +402,42 @@ fn stuffed_peppers_2_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (21536, 30, 83, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 21536,
+                steps: 30,
+                duration: 83,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 789565,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 3867407,
+                pareto_values: 101951274,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 4208974,
+                pareto_values: 97339814,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn stuffed_peppers_2_quick_innovation() {
     // lv99 Rarefied Stuffed Peppers
     // 4785 CMS, 4758 Ctrl, 646 CP
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 646,
         max_durability: 80,
         max_progress: 6300,
@@ -188,14 +450,40 @@ fn stuffed_peppers_2_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (20502, 28, 77, 0));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 20502,
+                steps: 28,
+                duration: 77,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 792774,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 3944524,
+                pareto_values: 100829366,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 4335937,
+                pareto_values: 100272946,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn rakaznar_lapidary_hammer_4462_4391() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 569,
         max_durability: 80,
         max_progress: 6600,
@@ -209,14 +497,40 @@ fn rakaznar_lapidary_hammer_4462_4391() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (6500, 16, 43, 369));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 6500,
+                steps: 16,
+                duration: 43,
+                overflow_quality: 369,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 1213044,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1520329,
+                pareto_values: 27010078,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 747281,
+                pareto_values: 13767633,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn black_star_4048_3997() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 596,
         max_durability: 40,
         max_progress: 3000,
@@ -230,14 +544,40 @@ fn black_star_4048_3997() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (5500, 11, 29, 302));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 5500,
+                steps: 11,
+                duration: 29,
+                overflow_quality: 302,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 42765,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1337547,
+                pareto_values: 7808651,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 84390,
+                pareto_values: 850694,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn claro_walnut_lumber_4900_4800() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 620,
         max_durability: 40,
         max_progress: 3000,
@@ -251,14 +591,40 @@ fn claro_walnut_lumber_4900_4800() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (11000, 13, 35, 627));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 11000,
+                steps: 13,
+                duration: 35,
+                overflow_quality: 627,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 79185,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1522551,
+                pareto_values: 12435109,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 225680,
+                pareto_values: 2235033,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn rakaznar_lapidary_hammer_4900_4800() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 620,
         max_durability: 80,
         max_progress: 6600,
@@ -272,14 +638,40 @@ fn rakaznar_lapidary_hammer_4900_4800() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (6000, 14, 40, 455));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 6000,
+                steps: 14,
+                duration: 40,
+                overflow_quality: 455,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 365164,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1684933,
+                pareto_values: 20239095,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 331083,
+                pareto_values: 5695325,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn rarefied_tacos_de_carne_asada_4966_4817() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 626,
         max_durability: 80,
         max_progress: 6600,
@@ -293,14 +685,40 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (5400, 14, 38, 638));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 5400,
+                steps: 14,
+                duration: 38,
+                overflow_quality: 638,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 714672,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 1711194,
+                pareto_values: 17518103,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 432596,
+                pareto_values: 6611324,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
 fn archeo_kingdom_broadsword_4966_4914() {
-    let settings = Settings {
+    let simulator_settings = Settings {
         max_cp: 745,
         max_durability: 70,
         max_progress: 7500,
@@ -314,7 +732,33 @@ fn archeo_kingdom_broadsword_4966_4914() {
             .remove(Action::QuickInnovation),
         adversarial: false,
     };
-    let actions = solve(&settings, false, false).unwrap();
-    let score = get_score_quad(&settings, &actions);
-    assert_eq!(score, (8250, 17, 46, 339));
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        backload_progress: false,
+        allow_unsound_branch_pruning: false,
+    };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 8250,
+                steps: 17,
+                duration: 46,
+                overflow_quality: 339,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 970963,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 2099391,
+                pareto_values: 37985636,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 793368,
+                pareto_values: 15975235,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }

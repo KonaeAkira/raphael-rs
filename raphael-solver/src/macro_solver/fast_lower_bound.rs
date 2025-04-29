@@ -1,7 +1,7 @@
 use raphael_sim::*;
 
 use crate::{
-    AtomicFlag, QualityUpperBoundSolver, SolverException, SolverSettings,
+    AtomicFlag, QualityUbSolver, SolverException, SolverSettings,
     actions::{ActionCombo, QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo},
     finish_solver::FinishSolver,
     utils::ScopedTimer,
@@ -32,7 +32,7 @@ pub fn fast_lower_bound(
     settings: SolverSettings,
     interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
-    quality_ub_solver: &mut QualityUpperBoundSolver,
+    quality_ub_solver: &mut QualityUbSolver,
 ) -> Result<u32, SolverException> {
     let _timer = ScopedTimer::new("Fast lower bound");
 
