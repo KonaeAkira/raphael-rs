@@ -39,11 +39,23 @@ enum class Action : uint8_t {
   TrainedPerfection,
 };
 
+enum class LevelFilter : uint8_t {
+  Off,
+  Error,
+  Warn,
+  Info,
+  Debug,
+  Trace,
+};
+
 struct SolveArgs {
   void (*on_start)(bool*);
   void (*on_finish)(const Action*, size_t);
   void (*on_suggest_solution)(const Action*, size_t);
   void (*on_progress)(size_t);
+  void (*on_log)(const uint8_t*, size_t);
+  LevelFilter log_level;
+  uint16_t thread_count;
   uint64_t action_mask;
   uint16_t progress;
   uint16_t quality;
