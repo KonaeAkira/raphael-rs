@@ -180,3 +180,14 @@ impl StepLbSolver {
         }
     }
 }
+
+impl Drop for StepLbSolver {
+    fn drop(&mut self) {
+        let runtime_stats = self.runtime_stats();
+        log::debug!(
+            "StepLbSolver - states: {}, values: {}",
+            runtime_stats.states,
+            runtime_stats.pareto_values
+        );
+    }
+}

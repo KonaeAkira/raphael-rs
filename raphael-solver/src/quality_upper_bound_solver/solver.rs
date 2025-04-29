@@ -279,6 +279,17 @@ impl QualityUbSolver {
     }
 }
 
+impl Drop for QualityUbSolver {
+    fn drop(&mut self) {
+        let runtime_stats = self.runtime_stats();
+        log::debug!(
+            "QualityUbSolver - states: {}, values: {}",
+            runtime_stats.states,
+            runtime_stats.pareto_values
+        );
+    }
+}
+
 /// Calculates the CP cost to "magically" restore 5 durability
 fn durability_cost(settings: &Settings) -> u16 {
     let mut cost = 100;
