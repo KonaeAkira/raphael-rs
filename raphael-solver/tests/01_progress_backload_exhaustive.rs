@@ -74,7 +74,6 @@ fn rinascita_3700_3280() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -121,7 +120,6 @@ fn pactmaker_3240_3130() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -167,7 +165,6 @@ fn pactmaker_3240_3130_heart_and_soul() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -214,7 +211,6 @@ fn diadochos_4021_3660() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -261,7 +257,6 @@ fn indagator_3858_4057() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -308,7 +303,6 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -357,7 +351,6 @@ fn stuffed_peppers_2() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -405,7 +398,6 @@ fn stuffed_peppers_2_heart_and_soul() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -453,7 +445,6 @@ fn stuffed_peppers_2_quick_innovation() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -500,7 +491,6 @@ fn rakaznar_lapidary_hammer_4462_4391() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -547,7 +537,6 @@ fn black_star_4048_3997() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -594,7 +583,6 @@ fn claro_walnut_lumber_4900_4800() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -641,7 +629,6 @@ fn rakaznar_lapidary_hammer_4900_4800() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -688,7 +675,6 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -735,7 +721,6 @@ fn archeo_kingdom_broadsword_4966_4914() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: true,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(

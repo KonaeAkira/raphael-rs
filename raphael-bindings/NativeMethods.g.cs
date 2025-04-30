@@ -42,7 +42,6 @@ namespace Raphael
         public byte job_level;
         [MarshalAs(UnmanagedType.U1)] public bool adversarial;
         [MarshalAs(UnmanagedType.U1)] public bool backload_progress;
-        [MarshalAs(UnmanagedType.U1)] public bool unsound_branch_pruning;
     }
 
 

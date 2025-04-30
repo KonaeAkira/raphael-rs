@@ -15,7 +15,6 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u32 {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.quality_upper_bound(state).unwrap()
@@ -482,7 +481,6 @@ fn test_issue_113() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.precompute(simulator_settings.max_cp);
@@ -514,7 +512,6 @@ fn test_issue_118() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.precompute(simulator_settings.max_cp);
@@ -563,7 +560,6 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.precompute(simulator_settings.max_cp);

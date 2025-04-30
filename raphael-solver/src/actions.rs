@@ -164,15 +164,6 @@ pub fn is_progress_only_state(settings: &SolverSettings, state: &SimulationState
     if settings.backload_progress && state.progress != 0 {
         return true;
     }
-    if settings.allow_unsound_branch_pruning {
-        if settings.backload_progress && state.effects.veneration() != 0 {
-            return true;
-        }
-        if state.quality != 0 && state.effects.inner_quiet() == 0 {
-            // Byregot's Blessing was used
-            return true;
-        }
-    }
     false
 }
 

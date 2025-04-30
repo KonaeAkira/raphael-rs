@@ -14,7 +14,6 @@ fn solve(simulator_settings: Settings, actions: &[Action]) -> u8 {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     StepLbSolver::new(solver_settings, Default::default())
         .step_lower_bound(state, 0)
@@ -495,7 +494,6 @@ fn monotonic_fuzz_check(simulator_settings: Settings) {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let mut solver = StepLbSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {

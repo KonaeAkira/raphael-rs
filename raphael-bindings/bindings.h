@@ -66,7 +66,6 @@ struct SolveArgs {
   uint8_t job_level;
   bool adversarial;
   bool backload_progress;
-  bool unsound_branch_pruning;
 };
 
 extern "C" {

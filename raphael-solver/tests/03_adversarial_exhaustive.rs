@@ -86,7 +86,6 @@ fn stuffed_peppers() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -135,7 +134,6 @@ fn test_rare_tacos_2() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -185,7 +183,6 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -232,7 +229,6 @@ fn test_indagator_3858_4057() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -280,7 +276,6 @@ fn test_rare_tacos_4628_4410() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
