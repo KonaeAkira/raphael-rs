@@ -21,6 +21,8 @@ pub enum SolverException {
     NoSolution,
     Interrupted,
     InternalError(String),
+    #[cfg(target_arch = "wasm32")]
+    AllocError,
 }
 
 #[derive(Clone, Copy, Debug)]
