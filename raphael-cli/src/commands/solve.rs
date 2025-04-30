@@ -88,10 +88,6 @@ pub struct SolveArgs {
     #[arg(long, default_value_t = false)]
     pub backload_progress: bool,
 
-    /// Enable unsound branch pruning
-    #[arg(long, default_value_t = false)]
-    pub unsound: bool,
-
     /// Maximum number of threads available to the solver
     #[arg(long)]
     pub threads: Option<usize>,
@@ -345,7 +341,6 @@ pub fn execute(args: &SolveArgs) {
     let solver_settings = SolverSettings {
         simulator_settings: settings,
         backload_progress: args.backload_progress,
-        allow_unsound_branch_pruning: args.unsound,
     };
 
     let mut solver = MacroSolver::new(

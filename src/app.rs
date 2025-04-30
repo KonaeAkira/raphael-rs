@@ -1011,13 +1011,12 @@ fn spawn_solver(
     };
 
     rayon::spawn(move || {
-        if !solver_config.minimize_steps {
-            // If "minimize steps" is not active, we first try backload progress + unsound.
+        if !solver_config.minimize_steps && !solver_config.backload_progress {
+            // If "minimize steps" is not active, we first try backload progress.
             // If we find a max-quality solution here, we can return early.
             let solver_settings = raphael_solver::SolverSettings {
                 simulator_settings,
                 backload_progress: true,
-                allow_unsound_branch_pruning: true,
             };
             log::debug!("Spawning solver: {solver_settings:?}");
             let mut macro_solver = raphael_solver::MacroSolver::new(
@@ -1049,7 +1048,6 @@ fn spawn_solver(
         let solver_settings = raphael_solver::SolverSettings {
             simulator_settings,
             backload_progress: solver_config.backload_progress,
-            allow_unsound_branch_pruning: false,
         };
         log::debug!("Spawning solver: {solver_settings:?}");
         let mut macro_solver = raphael_solver::MacroSolver::new(

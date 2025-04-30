@@ -74,7 +74,6 @@ fn unsolvable() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         None
@@ -114,7 +113,6 @@ fn zero_quality() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -161,7 +159,6 @@ fn max_quality() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(
@@ -205,7 +202,6 @@ fn large_progress_quality_increase() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
     let expected_score = expect![[r#"
         Some(

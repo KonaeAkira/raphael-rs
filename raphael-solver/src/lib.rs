@@ -27,7 +27,6 @@ pub enum SolverException {
 pub struct SolverSettings {
     pub simulator_settings: raphael_sim::Settings,
     pub backload_progress: bool,
-    pub allow_unsound_branch_pruning: bool,
 }
 
 impl SolverSettings {

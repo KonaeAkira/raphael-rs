@@ -27,7 +27,6 @@ fn main() {
     let solver_settings = SolverSettings {
         simulator_settings,
         backload_progress: false,
-        allow_unsound_branch_pruning: false,
     };
 
     let mut solver = MacroSolver::new(

@@ -24,7 +24,6 @@ pub struct SolveArgs {
     pub job_level: u8,
     pub adversarial: bool,
     pub backload_progress: bool,
-    pub unsound_branch_pruning: bool,
 }
 
 // repr should be identical to raphael_sim::Action
@@ -142,7 +141,6 @@ impl From<SolveArgs> for SolverSettings {
         Self {
             simulator_settings,
             backload_progress: value.backload_progress,
-            allow_unsound_branch_pruning: value.unsound_branch_pruning,
         }
     }
 }
