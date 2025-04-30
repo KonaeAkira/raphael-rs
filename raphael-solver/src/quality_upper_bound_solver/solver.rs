@@ -151,10 +151,9 @@ impl QualityUbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        log::error!("Parent: {state:?}");
-                        log::error!("Child: {new_state:?}");
-                        log::error!("Action: {action:?}");
-                        unreachable!("Precompute child state {new_state:?} does not exist.");
+                        unreachable!(
+                            "Child state does not exist.\nParent state: {state:?}.\nChild state: {new_state:?}.\nAction: {action:?}."
+                        );
                     }
                     pareto_front_builder
                         .peek_mut()

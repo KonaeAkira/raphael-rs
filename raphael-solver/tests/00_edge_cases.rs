@@ -136,8 +136,8 @@ fn zero_quality() {
                 pareto_values: 91291,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 25627,
-                pareto_values: 230025,
+                states: 300982,
+                pareto_values: 1585983,
             },
         }
     "#]];
@@ -184,8 +184,8 @@ fn max_quality() {
                 pareto_values: 6272058,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 107515,
-                pareto_values: 963403,
+                states: 317752,
+                pareto_values: 1806073,
             },
         }
     "#]];
@@ -229,8 +229,8 @@ fn large_progress_quality_increase() {
                 pareto_values: 407290,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 13,
-                pareto_values: 13,
+                states: 253717,
+                pareto_values: 224413,
             },
         }
     "#]];
@@ -277,8 +277,8 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_values: 11167,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 9,
-                pareto_values: 9,
+                states: 203814,
+                pareto_values: 163572,
             },
         }
     "#]];

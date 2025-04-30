@@ -53,7 +53,7 @@ impl ReducedState {
         }
     }
 
-    fn optimize_durability(effects: Effects, durability: u16, step_budget: NonZeroU8) -> u16 {
+    pub fn optimize_durability(effects: Effects, durability: u16, step_budget: NonZeroU8) -> u16 {
         let mut usable_durability = u16::from(step_budget.get()) * 20;
         let usable_manipulation = std::cmp::min(effects.manipulation(), step_budget.get() - 1);
         usable_durability -= u16::from(usable_manipulation) * 5;
@@ -62,7 +62,7 @@ impl ReducedState {
         std::cmp::min(usable_durability, durability)
     }
 
-    fn optimize_effects(mut effects: Effects, step_budget: NonZeroU8) -> Effects {
+    pub fn optimize_effects(mut effects: Effects, step_budget: NonZeroU8) -> Effects {
         if effects.manipulation() > step_budget.get() - 1 {
             effects.set_manipulation(step_budget.get() - 1);
         }
