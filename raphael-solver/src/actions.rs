@@ -181,7 +181,7 @@ pub fn use_action_combo(
         state.effects.set_inner_quiet(0);
         state.effects.set_innovation(0);
         state.effects.set_great_strides(0);
-        state.effects.set_guard(0);
+        state.effects.set_adversarial_guard(false);
         state.effects.set_quick_innovation_available(false);
     }
     state.effects.set_combo(Combo::None);

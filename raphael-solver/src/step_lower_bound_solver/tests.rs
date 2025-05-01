@@ -468,11 +468,7 @@ fn random_effects(adversarial: bool) -> Effects {
         .with_waste_not(rand::thread_rng().gen_range(0..=8))
         .with_manipulation(rand::thread_rng().gen_range(0..=8))
         .with_quick_innovation_available(rand::random())
-        .with_guard(if adversarial {
-            rand::thread_rng().gen_range(0..=1)
-        } else {
-            0
-        })
+        .with_adversarial_guard(if adversarial { rand::random() } else { false })
 }
 
 fn random_state(settings: &Settings) -> SimulationState {

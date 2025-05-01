@@ -486,8 +486,8 @@ fn test_issue_113() {
     solver.precompute(simulator_settings.max_cp);
     let expected_runtime_stats = expect![[r#"
         QualityUbSolverStats {
-            states: 5764187,
-            pareto_values: 209923334,
+            states: 5759474,
+            pareto_values: 209671685,
         }
     "#]];
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -518,8 +518,8 @@ fn test_issue_118() {
     solver.precompute(simulator_settings.max_cp);
     let expected_runtime_stats = expect![[r#"
         QualityUbSolverStats {
-            states: 3388741,
-            pareto_values: 36810126,
+            states: 3374869,
+            pareto_values: 36634616,
         }
     "#]];
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -534,11 +534,7 @@ fn random_effects(adversarial: bool) -> Effects {
         .with_waste_not(rand::thread_rng().gen_range(0..=8))
         .with_manipulation(rand::thread_rng().gen_range(0..=8))
         .with_quick_innovation_available(rand::random())
-        .with_guard(if adversarial {
-            rand::thread_rng().gen_range(0..=1)
-        } else {
-            0
-        })
+        .with_adversarial_guard(if adversarial { rand::random() } else { false })
 }
 
 fn random_state(settings: &Settings) -> SimulationState {

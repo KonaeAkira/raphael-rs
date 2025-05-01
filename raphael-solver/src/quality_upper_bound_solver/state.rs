@@ -88,7 +88,7 @@ impl ReducedState {
         self.effects.set_inner_quiet(0);
         self.effects.set_innovation(0);
         self.effects.set_great_strides(0);
-        self.effects.set_guard(0);
+        self.effects.set_adversarial_guard(false);
         self.effects.set_quick_innovation_available(false);
     }
 

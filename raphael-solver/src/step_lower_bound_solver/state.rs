@@ -100,9 +100,9 @@ impl ReducedState {
                 .with_innovation(0)
                 .with_great_strides(0)
                 .with_quick_innovation_available(false)
-                .with_guard(1)
+                .with_adversarial_guard(true)
         } else {
-            effects.with_guard(1)
+            effects.with_adversarial_guard(true)
         }
     }
 }

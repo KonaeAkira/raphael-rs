@@ -101,8 +101,8 @@ fn stuffed_peppers() {
         MacroSolverStats {
             finish_states: 811236,
             quality_ub_stats: QualityUbSolverStats {
-                states: 4715101,
-                pareto_values: 77795158,
+                states: 4711180,
+                pareto_values: 77733317,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 830886,
@@ -149,8 +149,8 @@ fn test_rare_tacos_2() {
         MacroSolverStats {
             finish_states: 1270583,
             quality_ub_stats: QualityUbSolverStats {
-                states: 5033261,
-                pareto_values: 135360389,
+                states: 5029860,
+                pareto_values: 135247581,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 1388863,
@@ -198,8 +198,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
         MacroSolverStats {
             finish_states: 69040,
             quality_ub_stats: QualityUbSolverStats {
-                states: 3772420,
-                pareto_values: 33045924,
+                states: 3768152,
+                pareto_values: 33008292,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 58379,
@@ -244,8 +244,8 @@ fn test_indagator_3858_4057() {
         MacroSolverStats {
             finish_states: 423088,
             quality_ub_stats: QualityUbSolverStats {
-                states: 5301382,
-                pareto_values: 125209173,
+                states: 5297705,
+                pareto_values: 125105998,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 675136,
@@ -291,8 +291,8 @@ fn test_rare_tacos_4628_4410() {
         MacroSolverStats {
             finish_states: 457250,
             quality_ub_stats: QualityUbSolverStats {
-                states: 5301245,
-                pareto_values: 151087149,
+                states: 5297728,
+                pareto_values: 150961583,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 319245,

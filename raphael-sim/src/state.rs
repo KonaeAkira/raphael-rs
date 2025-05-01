@@ -104,14 +104,14 @@ impl SimulationState {
 
         let quality_increase = A::quality_increase(self, settings, condition);
         if settings.adversarial {
-            let adversarial_quality_increase = if state.effects.guard() != 0 {
+            let adversarial_quality_increase = if state.effects.adversarial_guard() {
                 quality_increase
             } else {
                 A::quality_increase(self, settings, Condition::Poor)
             };
-            if state.effects.guard() == 0 && adversarial_quality_increase == 0 {
+            if !state.effects.adversarial_guard() && adversarial_quality_increase == 0 {
                 state.unreliable_quality = 0;
-            } else if state.effects.guard() != 0 && adversarial_quality_increase != 0 {
+            } else if state.effects.adversarial_guard() && adversarial_quality_increase != 0 {
                 state.quality += adversarial_quality_increase;
                 state.unreliable_quality = 0;
             } else if adversarial_quality_increase != 0 {
@@ -142,7 +142,7 @@ impl SimulationState {
         }
 
         if settings.adversarial && quality_increase != 0 {
-            state.effects.set_guard(1);
+            state.effects.set_adversarial_guard(true);
         }
 
         A::transform_post(&mut state, settings, condition);
