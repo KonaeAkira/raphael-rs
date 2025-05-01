@@ -48,8 +48,16 @@ raphael-data = { workspace = true, features = ["serde"] }
 # This revision includes the fix for tab-navigating over disabled widgets.
 # Switch back to version number once new egui version is released.
 egui = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29" }
-eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", features = [
+# Default features of `eframe` include the "glow" renderer which is not needed if "wgpu" is enabled.
+# To avoid including both in the binary, default features have to be disabled
+eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", default-features = false, features = [
+    "accesskit", # default
+    "default_fonts", # default
+    "wayland", # default
+    "web_screen_reader", # default
+    "x11", # default
     "persistence",
+    "wgpu",
 ] }
 egui_extras = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", features = [
     "http",
@@ -72,6 +80,7 @@ wasm-bindgen-rayon = { version = "1.2", features = ["no-bundler"] }
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 web-sys = "0.3"
+wgpu = { version = "*", features = ["webgpu", "webgl"] }
 
 [profile.release]
 opt-level = 3
