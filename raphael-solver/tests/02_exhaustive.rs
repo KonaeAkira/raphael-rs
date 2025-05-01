@@ -777,3 +777,51 @@ fn archeo_kingdom_broadsword_4966_4914() {
     "#]];
     test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
+
+#[test]
+fn test_hardened_survey_plank_5558_5216() {
+    let simulator_settings = Settings {
+        max_cp: 753,
+        max_durability: 20,
+        max_progress: 4700,
+        max_quality: 14900,
+        base_progress: 310,
+        base_quality: 324,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: false,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 14900,
+                steps: 21,
+                duration: 53,
+                overflow_quality: 439,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 864643,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 1855695,
+                dropped_nodes: 12311365,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states: 2041117,
+                pareto_values: 34763925,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 342999,
+                pareto_values: 5334773,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
