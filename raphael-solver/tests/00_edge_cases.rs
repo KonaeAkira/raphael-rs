@@ -78,7 +78,7 @@ fn unsolvable() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 4042,
+            finish_states: 2864,
             quality_ub_stats: QualityUbSolverStats {
                 states: 0,
                 pareto_values: 0,
@@ -122,7 +122,7 @@ fn zero_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1867,
+            finish_states: 1660,
             quality_ub_stats: QualityUbSolverStats {
                 states: 52001,
                 pareto_values: 91291,
@@ -166,7 +166,7 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 239513,
+            finish_states: 236825,
             quality_ub_stats: QualityUbSolverStats {
                 states: 878613,
                 pareto_values: 6272058,
@@ -207,7 +207,7 @@ fn large_progress_quality_increase() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 65,
+            finish_states: 24,
             quality_ub_stats: QualityUbSolverStats {
                 states: 412810,
                 pareto_values: 407290,
