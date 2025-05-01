@@ -22,12 +22,10 @@ fn main() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
-    };
-
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+
+    let solver_settings = SolverSettings { simulator_settings };
 
     let mut solver = MacroSolver::new(
         solver_settings,

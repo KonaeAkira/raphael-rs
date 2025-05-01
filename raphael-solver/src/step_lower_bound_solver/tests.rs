@@ -11,10 +11,7 @@ use super::*;
 fn solve(simulator_settings: Settings, actions: &[Action]) -> u8 {
     let mut state = SimulationState::from_macro(&simulator_settings, actions).unwrap();
     state.effects.set_combo(Combo::None);
-    let solver_settings = SolverSettings {
-        simulator_settings,
-        backload_progress: false,
-    };
+    let solver_settings = SolverSettings { simulator_settings };
     StepLbSolver::new(solver_settings, Default::default())
         .step_lower_bound(state, 0)
         .unwrap()
@@ -35,6 +32,7 @@ fn test_01() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(
         settings,
@@ -68,6 +66,7 @@ fn test_adversarial_01() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
+        backload_progress: false,
     };
     let result = solve(
         settings,
@@ -101,6 +100,7 @@ fn test_02() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(
         settings,
@@ -131,6 +131,7 @@ fn test_adversarial_02() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
+        backload_progress: false,
     };
     let result = solve(
         settings,
@@ -161,6 +162,7 @@ fn test_03() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(
         settings,
@@ -196,6 +198,7 @@ fn test_adversarial_03() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
+        backload_progress: false,
     };
     let result = solve(
         settings,
@@ -231,6 +234,7 @@ fn test_04() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::MuscleMemory]);
     assert_eq!(result, 19);
@@ -251,6 +255,7 @@ fn test_adversarial_04() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::MuscleMemory]);
     assert_eq!(result, 14);
@@ -271,6 +276,7 @@ fn test_05() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::MuscleMemory]);
     assert_eq!(result, 12);
@@ -291,6 +297,7 @@ fn test_adversarial_05() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::MuscleMemory]);
     assert_eq!(result, 12);
@@ -311,6 +318,7 @@ fn test_06() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::MuscleMemory]);
     assert_eq!(result, 16);
@@ -331,6 +339,7 @@ fn test_adversarial_06() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::MuscleMemory]);
     assert_eq!(result, 11);
@@ -351,6 +360,7 @@ fn test_07() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::Reflect]);
     assert_eq!(result, 15);
@@ -371,6 +381,7 @@ fn test_08() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[Action::PrudentTouch]);
     assert_eq!(result, 1);
@@ -392,6 +403,7 @@ fn test_09() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[]);
     assert_eq!(result, 17);
@@ -413,6 +425,7 @@ fn test_10() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[]);
     assert_eq!(result, 11);
@@ -434,6 +447,7 @@ fn test_11() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[]);
     assert_eq!(result, 11);
@@ -454,6 +468,7 @@ fn test_12() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
+        backload_progress: false,
     };
     let result = solve(settings, &[]);
     assert_eq!(result, 11);
@@ -461,6 +476,7 @@ fn test_12() {
 
 fn random_effects(adversarial: bool) -> Effects {
     Effects::new()
+        .with_allow_quality_actions(true)
         .with_inner_quiet(rand::thread_rng().gen_range(0..=10))
         .with_great_strides(rand::thread_rng().gen_range(0..=3))
         .with_innovation(rand::thread_rng().gen_range(0..=4))
@@ -487,10 +503,7 @@ fn random_state(settings: &Settings) -> SimulationState {
 /// Test that the upper-bound solver is monotonic,
 /// i.e. the quality UB of a state is never less than the quality UB of any of its children.
 fn monotonic_fuzz_check(simulator_settings: Settings) {
-    let solver_settings = SolverSettings {
-        simulator_settings,
-        backload_progress: false,
-    };
+    let solver_settings = SolverSettings { simulator_settings };
     let mut solver = StepLbSolver::new(solver_settings, Default::default());
     for _ in 0..10000 {
         let state = random_state(&simulator_settings);
@@ -528,6 +541,7 @@ fn test_monotonic_normal_sim() {
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     monotonic_fuzz_check(settings);
 }
@@ -544,6 +558,7 @@ fn test_monotonic_adversarial_sim() {
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: true,
+        backload_progress: false,
     };
     monotonic_fuzz_check(settings);
 }

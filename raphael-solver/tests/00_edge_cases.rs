@@ -41,7 +41,7 @@ fn test_with_settings(
         let final_state =
             SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
         assert!(final_state.progress >= settings.max_progress());
-        if settings.backload_progress {
+        if settings.simulator_settings.backload_progress {
             assert!(is_progress_backloaded(&settings, &actions));
         }
         Some(SolutionScore {
@@ -70,11 +70,9 @@ fn unsolvable() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         None
     "#]];
@@ -109,11 +107,9 @@ fn zero_quality() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -155,11 +151,9 @@ fn max_quality() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -198,11 +192,9 @@ fn large_progress_quality_increase() {
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {

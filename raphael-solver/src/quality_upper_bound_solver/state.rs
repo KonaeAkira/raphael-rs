@@ -1,6 +1,6 @@
 use crate::{
     SolverSettings,
-    actions::{ActionCombo, is_progress_only_state, use_action_combo},
+    actions::{ActionCombo, use_action_combo},
 };
 
 use raphael_sim::*;
@@ -9,7 +9,6 @@ use raphael_sim::*;
 pub struct ReducedState {
     pub cp: u16,
     pub compressed_unreliable_quality: u8,
-    pub progress_only: bool,
     pub effects: Effects,
 }
 
@@ -40,19 +39,15 @@ impl ReducedState {
         settings: &SolverSettings,
         durability_cost: u16,
     ) -> Option<Self> {
-        let progress_only = is_progress_only_state(settings, state);
         let used_durability_cost =
             (settings.max_durability() - state.durability) / 5 * durability_cost;
         if used_durability_cost > state.cp {
             return None;
         }
-        let compressed_unreliable_quality = if progress_only {
-            0
-        } else {
-            state
-                .unreliable_quality
-                .div_ceil(2 * settings.base_quality()) as u8
-        };
+        let compressed_unreliable_quality = state
+            .unreliable_quality
+            .div_ceil(2 * settings.base_quality())
+            as u8;
         let effects = {
             let great_strides_active = state.effects.great_strides() != 0;
             state
@@ -62,7 +57,6 @@ impl ReducedState {
         Some(Self {
             cp: state.cp - used_durability_cost,
             compressed_unreliable_quality,
-            progress_only,
             effects,
         })
     }
@@ -83,15 +77,6 @@ impl ReducedState {
         self.cp < 2 * durability_cost
     }
 
-    fn strip_quality_attributes(&mut self) {
-        self.compressed_unreliable_quality = 0;
-        self.effects.set_inner_quiet(0);
-        self.effects.set_innovation(0);
-        self.effects.set_great_strides(0);
-        self.effects.set_adversarial_guard(false);
-        self.effects.set_quick_innovation_available(false);
-    }
-
     pub fn use_action(
         &self,
         action: ActionCombo,
@@ -103,16 +88,11 @@ impl ReducedState {
                 Action::MasterMend | Action::ImmaculateMend | Action::Manipulation,
             ) => None,
             _ => {
-                let progress_only = self.progress_only;
                 let state = self.to_simulation_state(settings);
                 match use_action_combo(settings, state, action) {
                     Ok(state) => {
-                        let mut solver_state =
+                        let solver_state =
                             Self::from_simulation_state_inner(&state, settings, durability_cost)?;
-                        if progress_only || solver_state.progress_only {
-                            solver_state.progress_only = true;
-                            solver_state.strip_quality_attributes();
-                        }
                         Some((solver_state, state.progress, state.quality))
                     }
                     Err(_) => None,

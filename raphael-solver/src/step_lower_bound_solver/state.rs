@@ -5,7 +5,6 @@ use raphael_sim::*;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
     pub steps_budget: NonZeroU8,
-    pub progress_only: bool,
     pub durability: u16,
     pub effects: Effects,
 }
@@ -35,16 +34,11 @@ impl ReducedState {
         }
     }
 
-    pub fn from_state(
-        state: SimulationState,
-        steps_budget: NonZeroU8,
-        progress_only: bool,
-    ) -> Self {
+    pub fn from_state(state: SimulationState, steps_budget: NonZeroU8) -> Self {
         Self {
             steps_budget,
-            progress_only,
             durability: Self::optimize_durability(state.effects, state.durability, steps_budget),
-            effects: Self::optimize_effects(state.effects, steps_budget, progress_only),
+            effects: Self::optimize_effects(state.effects, steps_budget),
         }
     }
 
@@ -68,11 +62,7 @@ impl ReducedState {
         std::cmp::min(usable_durability, durability)
     }
 
-    fn optimize_effects(
-        mut effects: Effects,
-        step_budget: NonZeroU8,
-        progress_only: bool,
-    ) -> Effects {
+    fn optimize_effects(mut effects: Effects, step_budget: NonZeroU8) -> Effects {
         if effects.manipulation() > step_budget.get() - 1 {
             effects.set_manipulation(step_budget.get() - 1);
         }
@@ -93,16 +83,6 @@ impl ReducedState {
             // this gives a looser bound but decreases the number of states
             effects.set_great_strides(3);
         }
-
-        if progress_only {
-            effects
-                .with_inner_quiet(0)
-                .with_innovation(0)
-                .with_great_strides(0)
-                .with_quick_innovation_available(false)
-                .with_adversarial_guard(true)
-        } else {
-            effects.with_adversarial_guard(true)
-        }
+        effects.with_adversarial_guard(true)
     }
 }
