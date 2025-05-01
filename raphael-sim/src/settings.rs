@@ -12,6 +12,8 @@ pub struct Settings {
     pub job_level: u8,
     pub allowed_actions: ActionMask,
     pub adversarial: bool,
+    /// If `backload_progress` is set, after using any action that increases Progress, the simulator will forbid the use of actions that directly increase Quality.
+    pub backload_progress: bool,
 }
 
 impl Settings {

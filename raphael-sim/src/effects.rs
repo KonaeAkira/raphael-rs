@@ -18,18 +18,17 @@ pub struct Effects {
     #[bits(4)]
     pub manipulation: u8,
 
-    pub adversarial_guard: bool,
     pub trained_perfection_available: bool,
     pub heart_and_soul_available: bool,
     pub quick_innovation_available: bool,
     pub trained_perfection_active: bool,
     pub heart_and_soul_active: bool,
 
+    pub adversarial_guard: bool,
+    pub allow_quality_actions: bool,
+
     #[bits(2)]
     pub combo: Combo,
-
-    #[bits(1)]
-    _padding: u8,
 }
 
 impl Effects {
@@ -37,6 +36,7 @@ impl Effects {
     pub fn initial(settings: &Settings) -> Self {
         Self::new()
             .with_adversarial_guard(settings.adversarial)
+            .with_allow_quality_actions(true)
             .with_trained_perfection_available(
                 settings.is_action_allowed::<crate::actions::TrainedPerfection>(),
             )

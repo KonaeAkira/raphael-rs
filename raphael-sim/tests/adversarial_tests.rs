@@ -9,6 +9,7 @@ const SETTINGS: Settings = Settings {
     job_level: 100,
     allowed_actions: ActionMask::all(),
     adversarial: true,
+    backload_progress: false,
 };
 
 /// Calculate the minimum achievable Quality across all possible Condition rolls

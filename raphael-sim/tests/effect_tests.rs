@@ -10,6 +10,7 @@ const SETTINGS: Settings = Settings {
     job_level: 100,
     allowed_actions: ActionMask::all(),
     adversarial: false,
+    backload_progress: false,
 };
 
 /// Returns the 4 primary stats of a state:
