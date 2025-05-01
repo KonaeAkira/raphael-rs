@@ -27,7 +27,4 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 # install trunk
 cargo-binstall --no-confirm --locked trunk
 
-# web_sys unstable APIs needed for copy to clipboard functionality
-export RUSTFLAGS="--cfg=web_sys_unstable_apis -Ctarget-feature=+atomics,+bulk-memory -Clink-arg=--max-memory=4294967296"
-
 trunk build index.html --release

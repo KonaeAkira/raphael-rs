@@ -1,2 +1,10 @@
+
+[build]
+target = "wasm32-unknown-unknown"
+
+[target.wasm32-unknown-unknown]
+# web_sys unstable APIs needed for copy to clipboard functionality
+rustflags = ["--cfg=web_sys_unstable_apis", "-C", "target-feature=+atomics,+bulk-memory", "-C", "link-arg=--max-memory=4294967296"]
+
 [unstable]
 build-std = ["panic_abort", "std"]
