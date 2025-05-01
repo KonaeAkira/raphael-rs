@@ -79,6 +79,10 @@ fn unsolvable() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 2864,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 0,
+                dropped_nodes: 0,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 0,
                 pareto_values: 0,
@@ -123,6 +127,10 @@ fn zero_quality() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 1660,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 40,
+                dropped_nodes: 10,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 52001,
                 pareto_values: 91291,
@@ -167,6 +175,10 @@ fn max_quality() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 236825,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 4890,
+                dropped_nodes: 56054,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 878613,
                 pareto_values: 6272058,
@@ -208,6 +220,10 @@ fn large_progress_quality_increase() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 24,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 0,
+                dropped_nodes: 23,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 412810,
                 pareto_values: 407290,
@@ -252,6 +268,10 @@ fn backload_progress_single_delicate_synthesis() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 15,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 0,
+                dropped_nodes: 14,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 13641,
                 pareto_values: 11167,

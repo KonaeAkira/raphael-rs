@@ -57,6 +57,12 @@ struct SearchNode {
     parent_id: usize,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct SearchQueueStats {
+    pub processed_nodes: usize,
+    pub dropped_nodes: usize,
+}
+
 pub struct SearchQueue {
     quality_pareto_front: QualityParetoFront,
     effect_pareto_front: EffectParetoFront,
@@ -65,6 +71,7 @@ pub struct SearchQueue {
     current_score: SearchScore,
     current_nodes: Vec<(SimulationState, usize)>,
     minimum_score: SearchScore,
+    stats: SearchQueueStats,
 }
 
 impl SearchQueue {
@@ -78,6 +85,7 @@ impl SearchQueue {
             current_score: SearchScore::MAX,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
             minimum_score,
+            stats: SearchQueueStats::default(),
         }
     }
 
@@ -93,6 +101,7 @@ impl SearchQueue {
             }
             dropped += self.buckets.pop_first().unwrap().1.len();
         }
+        self.stats.dropped_nodes += dropped;
         log::debug!("New minimum score: {:?}", score);
         log::debug!("Nodes dropped: {}", dropped);
     }
@@ -134,6 +143,7 @@ impl SearchQueue {
                         (node.state, backtrack_id)
                     })
                     .collect();
+                self.stats.processed_nodes += self.current_nodes.len();
             } else {
                 return None;
             }
@@ -144,6 +154,10 @@ impl SearchQueue {
 
     pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = ActionCombo> {
         self.backtracking.get_items(backtrack_id)
+    }
+
+    pub fn runtime_stats(&self) -> SearchQueueStats {
+        self.stats
     }
 }
 

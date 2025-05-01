@@ -98,6 +98,10 @@ fn stuffed_peppers() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 878840,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 85020,
+                dropped_nodes: 1601394,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 4711174,
                 pareto_values: 77733312,
@@ -144,6 +148,10 @@ fn test_rare_tacos_2() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 1374764,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 2500739,
+                dropped_nodes: 563167,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 5029860,
                 pareto_values: 135247584,
@@ -191,6 +199,10 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 75525,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 31377,
+                dropped_nodes: 348653,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 3768152,
                 pareto_values: 33008292,
@@ -235,6 +247,10 @@ fn test_indagator_3858_4057() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 449529,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 8976,
+                dropped_nodes: 10747,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 5297705,
                 pareto_values: 125105998,
@@ -280,6 +296,10 @@ fn test_rare_tacos_4628_4410() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             finish_states: 501199,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 588678,
+                dropped_nodes: 0,
+            },
             quality_ub_stats: QualityUbSolverStats {
                 states: 5297728,
                 pareto_values: 150961583,
