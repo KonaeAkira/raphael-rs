@@ -8,6 +8,4 @@ mod config;
 mod widgets;
 
 #[cfg(target_arch = "wasm32")]
-pub const OOM_STATUS: usize = usize::MAX;
-#[cfg(target_arch = "wasm32")]
-pub static ATOMIC_STATUS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+pub static OOM_PANIC_OCCURED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);

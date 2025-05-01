@@ -70,7 +70,7 @@ fn main() -> eframe::Result<()> {
 #[cfg(target_arch = "wasm32")]
 fn main() {
     fn custom_alloc_error_hook(_layout: std::alloc::Layout) {
-        raphael_xiv::ATOMIC_STATUS.store(usize::MAX, std::sync::atomic::Ordering::Relaxed);
+        raphael_xiv::OOM_PANIC_OCCURED.store(true, std::sync::atomic::Ordering::Relaxed);
     }
     std::alloc::set_alloc_error_hook(custom_alloc_error_hook);
 

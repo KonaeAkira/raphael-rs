@@ -181,7 +181,7 @@ impl eframe::App for MacroSolverApp {
         }
 
         #[cfg(target_arch = "wasm32")]
-        if crate::ATOMIC_STATUS.load(std::sync::atomic::Ordering::Relaxed) == crate::OOM_STATUS {
+        if crate::OOM_PANIC_OCCURED.load(std::sync::atomic::Ordering::Relaxed) {
             self.solver_error = Some(SolverException::AllocError);
         }
         if let Some(error) = self.solver_error.clone() {
