@@ -13,6 +13,7 @@ fn bench_use_action(c: &mut Criterion) {
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let state = SimulationState::new(&settings);
 
