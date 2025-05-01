@@ -96,15 +96,6 @@ impl SimulationState {
 
         state.cp -= A::cp_cost(self, settings, condition);
 
-        let progress_increase = A::progress_increase(self, settings, condition);
-        state.progress += progress_increase;
-        if progress_increase != 0 {
-            state.effects = state
-                .effects
-                .with_muscle_memory(0)
-                .with_allow_quality_actions(!settings.backload_progress);
-        }
-
         let quality_increase = A::quality_increase(self, settings, condition);
         if !state.effects.allow_quality_actions() && quality_increase != 0 {
             return Err("Forbidden by backload_progress setting");
@@ -134,6 +125,15 @@ impl SimulationState {
             state
                 .effects
                 .set_inner_quiet(std::cmp::min(10, state.effects.inner_quiet() + 1));
+        }
+
+        let progress_increase = A::progress_increase(self, settings, condition);
+        state.progress += progress_increase;
+        if progress_increase != 0 {
+            state.effects = state
+                .effects
+                .with_muscle_memory(0)
+                .with_allow_quality_actions(!settings.backload_progress);
         }
 
         if state.is_final(settings) {

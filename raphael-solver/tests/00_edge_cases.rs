@@ -220,3 +220,47 @@ fn large_progress_quality_increase() {
     "#]];
     test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
+
+#[test]
+fn backload_progress_single_delicate_synthesis() {
+    let simulator_settings = Settings {
+        max_cp: 100,
+        max_durability: 20,
+        max_progress: 100,
+        max_quality: 100,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: true,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 100,
+                steps: 1,
+                duration: 3,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 15,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 13641,
+                pareto_values: 11167,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 9,
+                pareto_values: 9,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}

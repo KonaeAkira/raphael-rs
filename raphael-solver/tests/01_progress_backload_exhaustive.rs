@@ -88,11 +88,11 @@ fn rinascita_3700_3280() {
             finish_states: 194540,
             quality_ub_stats: QualityUbSolverStats {
                 states: 1983239,
-                pareto_values: 31442076,
+                pareto_values: 32414516,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 815631,
-                pareto_values: 6393486,
+                pareto_values: 10090940,
             },
         }
     "#]];
@@ -132,11 +132,11 @@ fn pactmaker_3240_3130() {
             finish_states: 259052,
             quality_ub_stats: QualityUbSolverStats {
                 states: 1705998,
-                pareto_values: 23884627,
+                pareto_values: 24826260,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 782395,
-                pareto_values: 5573585,
+                pareto_values: 9193771,
             },
         }
     "#]];
@@ -174,12 +174,12 @@ fn pactmaker_3240_3130_heart_and_soul() {
         MacroSolverStats {
             finish_states: 213985,
             quality_ub_stats: QualityUbSolverStats {
-                states: 3443391,
-                pareto_values: 50223795,
+                states: 3443396,
+                pareto_values: 51945038,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 1494941,
-                pareto_values: 11742609,
+                pareto_values: 18435656,
             },
         }
     "#]];
@@ -219,11 +219,11 @@ fn diadochos_4021_3660() {
             finish_states: 405309,
             quality_ub_stats: QualityUbSolverStats {
                 states: 1843549,
-                pareto_values: 31682429,
+                pareto_values: 32873770,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 949178,
-                pareto_values: 8268405,
+                pareto_values: 13682643,
             },
         }
     "#]];
@@ -263,11 +263,11 @@ fn indagator_3858_4057() {
             finish_states: 339028,
             quality_ub_stats: QualityUbSolverStats {
                 states: 2008164,
-                pareto_values: 32425015,
+                pareto_values: 33517257,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 689966,
-                pareto_values: 5392645,
+                pareto_values: 8924833,
             },
         }
     "#]];
@@ -304,14 +304,14 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 997046,
+            finish_states: 1059087,
             quality_ub_stats: QualityUbSolverStats {
-                states: 1886216,
-                pareto_values: 34885845,
+                states: 1887414,
+                pareto_values: 36405757,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1312401,
-                pareto_values: 9884827,
+                states: 1299860,
+                pareto_values: 16334806,
             },
         }
     "#]];
@@ -350,14 +350,14 @@ fn stuffed_peppers_2() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 522246,
+            finish_states: 523249,
             quality_ub_stats: QualityUbSolverStats {
                 states: 1885014,
-                pareto_values: 34998486,
+                pareto_values: 36229672,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 2166828,
-                pareto_values: 17907386,
+                states: 2095532,
+                pareto_values: 29062560,
             },
         }
     "#]];
@@ -398,11 +398,11 @@ fn stuffed_peppers_2_heart_and_soul() {
             finish_states: 540013,
             quality_ub_stats: QualityUbSolverStats {
                 states: 3823879,
-                pareto_values: 74276531,
+                pareto_values: 76383179,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 4146485,
-                pareto_values: 37088159,
+                states: 4102033,
+                pareto_values: 58818959,
             },
         }
     "#]];
@@ -440,14 +440,14 @@ fn stuffed_peppers_2_quick_innovation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 541240,
+            finish_states: 542405,
             quality_ub_stats: QualityUbSolverStats {
                 states: 3856930,
-                pareto_values: 72262381,
+                pareto_values: 74832825,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 4381407,
-                pareto_values: 36478178,
+                states: 4233011,
+                pareto_values: 59096571,
             },
         }
     "#]];
@@ -487,11 +487,11 @@ fn rakaznar_lapidary_hammer_4462_4391() {
             finish_states: 614119,
             quality_ub_stats: QualityUbSolverStats {
                 states: 1526659,
-                pareto_values: 21279680,
+                pareto_values: 22673054,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 511706,
-                pareto_values: 3577155,
+                states: 511703,
+                pareto_values: 5852073,
             },
         }
     "#]];
@@ -522,20 +522,20 @@ fn black_star_4048_3997() {
                 capped_quality: 5500,
                 steps: 12,
                 duration: 31,
-                overflow_quality: 614,
+                overflow_quality: 926,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 106276,
+            finish_states: 141279,
             quality_ub_stats: QualityUbSolverStats {
-                states: 1359478,
-                pareto_values: 6561452,
+                states: 1362322,
+                pareto_values: 7045910,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 107222,
-                pareto_values: 494567,
+                states: 105081,
+                pareto_values: 699822,
             },
         }
     "#]];
@@ -572,14 +572,14 @@ fn claro_walnut_lumber_4900_4800() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 308592,
+            finish_states: 309050,
             quality_ub_stats: QualityUbSolverStats {
-                states: 1566592,
-                pareto_values: 9719522,
+                states: 1566609,
+                pareto_values: 10547981,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 252613,
-                pareto_values: 1072779,
+                states: 252537,
+                pareto_values: 1735508,
             },
         }
     "#]];
@@ -616,14 +616,14 @@ fn rakaznar_lapidary_hammer_4900_4800() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 331374,
+            finish_states: 386246,
             quality_ub_stats: QualityUbSolverStats {
-                states: 1699205,
-                pareto_values: 16791482,
+                states: 1699729,
+                pareto_values: 17982105,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 372870,
-                pareto_values: 2265396,
+                states: 407802,
+                pareto_values: 4038047,
             },
         }
     "#]];
@@ -662,12 +662,12 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
         MacroSolverStats {
             finish_states: 431469,
             quality_ub_stats: QualityUbSolverStats {
-                states: 1721504,
-                pareto_values: 14506897,
+                states: 1721505,
+                pareto_values: 15645407,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 328824,
-                pareto_values: 1852181,
+                pareto_values: 3108256,
             },
         }
     "#]];
@@ -704,14 +704,14 @@ fn archeo_kingdom_broadsword_4966_4914() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1147908,
+            finish_states: 1152788,
             quality_ub_stats: QualityUbSolverStats {
-                states: 2129245,
-                pareto_values: 29712851,
+                states: 2129253,
+                pareto_values: 31409098,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 821908,
-                pareto_values: 5505040,
+                states: 822734,
+                pareto_values: 9165718,
             },
         }
     "#]];

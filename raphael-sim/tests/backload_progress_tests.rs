@@ -48,3 +48,11 @@ fn test_quality_actions_forbidden() {
     let result = state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS);
     assert_eq!(result, Err("Forbidden by backload_progress setting"));
 }
+
+#[test]
+/// Test that Delicate Synthesis can be used under `backload_progress`.
+/// It is the only action that increases Progress and Quality at the same time.
+fn test_delicate_synthesis() {
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::DelicateSynthesis]).unwrap();
+    assert_eq!(state.effects.allow_quality_actions(), false);
+}
