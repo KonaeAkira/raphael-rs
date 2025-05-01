@@ -128,7 +128,7 @@ fn zero_quality() {
         MacroSolverStats {
             finish_states: 1660,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 40,
+                processed_nodes: 43,
                 dropped_nodes: 10,
             },
             quality_ub_stats: QualityUbSolverStats {
@@ -174,18 +174,18 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 225965,
+            finish_states: 233994,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 4310,
-                dropped_nodes: 49847,
+                processed_nodes: 4728,
+                dropped_nodes: 52666,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 886827,
-                pareto_values: 6280212,
+                states: 886944,
+                pareto_values: 6281290,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 107635,
-                pareto_values: 957332,
+                states: 109139,
+                pareto_values: 968098,
             },
         }
     "#]];
