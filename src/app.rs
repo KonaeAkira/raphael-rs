@@ -212,7 +212,8 @@ impl eframe::App for MacroSolverApp {
                         ui.separator();
                         ui.label("The solver reached the 4GB memory limit of 32-bit web assembly and crashed.");
                         ui.label("Consider enabling fewer memory intensive options.\n");
-                        ui.label("Alternatively, a native version is available from the release page on GitHub:");
+                        ui.label("Alternatively, a native version is available from the release page on GitHub.");
+                        ui.label("The native version doesn't have the 4GB limit, in addition to better performance.");
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
                                 "View latest release on GitHub",
