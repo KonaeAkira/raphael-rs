@@ -304,14 +304,10 @@ pub fn execute(args: &SolveArgs) {
             base_quality_override: Some(args.override_base_increases[2]),
         })
     };
-    let mut settings = get_game_settings(
-        recipe,
-        custom_recipe_overrides,
-        crafter_stats,
-        food,
-        potion,
-        args.adversarial,
-    );
+    let mut settings =
+        get_game_settings(recipe, custom_recipe_overrides, crafter_stats, food, potion);
+    settings.adversarial = args.adversarial;
+    settings.backload_progress = args.backload_progress;
 
     let target_quality = match args.target_quality {
         Some(target) => target.clamp(0, settings.max_quality),
@@ -340,7 +336,6 @@ pub fn execute(args: &SolveArgs) {
 
     let solver_settings = SolverSettings {
         simulator_settings: settings,
-        backload_progress: args.backload_progress,
     };
 
     let mut solver = MacroSolver::new(
