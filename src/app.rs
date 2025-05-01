@@ -483,7 +483,7 @@ impl MacroSolverApp {
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        let game_settings = raphael_data::get_game_settings(
+        let mut game_settings = raphael_data::get_game_settings(
             self.recipe_config.recipe,
             match self.custom_recipe_overrides_config.use_custom_recipe {
                 true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
@@ -492,8 +492,9 @@ impl MacroSolverApp {
             *self.crafter_config.active_stats(),
             self.selected_food,
             self.selected_potion,
-            self.solver_config.adversarial,
         );
+        game_settings.adversarial = self.solver_config.adversarial;
+        game_settings.backload_progress = self.solver_config.backload_progress;
         let initial_quality = match self.recipe_config.quality_source {
             QualitySource::HqMaterialList(hq_materials) => raphael_data::get_initial_quality(
                 *self.crafter_config.active_stats(),
@@ -739,7 +740,6 @@ impl MacroSolverApp {
                     self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
                     self.selected_food,
                     self.selected_potion,
-                    self.solver_config.adversarial,
                 );
                 let mut current_value = self
                     .solver_config
@@ -870,7 +870,6 @@ impl MacroSolverApp {
             *self.crafter_config.active_stats(),
             self.selected_food,
             self.selected_potion,
-            self.solver_config.adversarial,
         );
         let target_quality = self
             .solver_config
@@ -994,7 +993,7 @@ fn load_fonts(ctx: &egui::Context) {
 
 fn spawn_solver(
     solver_config: SolverConfig,
-    simulator_settings: raphael_sim::Settings,
+    mut simulator_settings: raphael_sim::Settings,
     solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
     solver_interrupt: raphael_solver::AtomicFlag,
 ) {
@@ -1014,10 +1013,9 @@ fn spawn_solver(
         if !solver_config.minimize_steps && !solver_config.backload_progress {
             // If "minimize steps" is not active, we first try backload progress.
             // If we find a max-quality solution here, we can return early.
-            let solver_settings = raphael_solver::SolverSettings {
-                simulator_settings,
-                backload_progress: true,
-            };
+            simulator_settings.adversarial = solver_config.adversarial;
+            simulator_settings.backload_progress = true;
+            let solver_settings = raphael_solver::SolverSettings { simulator_settings };
             log::debug!("Spawning solver: {solver_settings:?}");
             let mut macro_solver = raphael_solver::MacroSolver::new(
                 solver_settings,
@@ -1045,10 +1043,9 @@ fn spawn_solver(
             solver_events.push_back(SolverEvent::NodesVisited(0));
         }
 
-        let solver_settings = raphael_solver::SolverSettings {
-            simulator_settings,
-            backload_progress: solver_config.backload_progress,
-        };
+        simulator_settings.adversarial = solver_config.adversarial;
+        simulator_settings.backload_progress = solver_config.backload_progress;
+        let solver_settings = raphael_solver::SolverSettings { simulator_settings };
         log::debug!("Spawning solver: {solver_settings:?}");
         let mut macro_solver = raphael_solver::MacroSolver::new(
             solver_settings,
