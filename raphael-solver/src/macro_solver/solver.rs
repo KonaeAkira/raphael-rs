@@ -1,6 +1,6 @@
 use raphael_sim::*;
 
-use super::search_queue::SearchScore;
+use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{
     ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo,
 };
@@ -36,6 +36,7 @@ type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 #[derive(Debug, Clone, Copy)]
 pub struct MacroSolverStats {
     pub finish_states: usize,
+    pub search_queue_stats: SearchQueueStats,
     pub quality_ub_stats: QualityUbSolverStats,
     pub step_lb_stats: StepLbSolverStats,
 }
@@ -47,6 +48,7 @@ pub struct MacroSolver<'a> {
     finish_solver: FinishSolver,
     quality_ub_solver: QualityUbSolver,
     step_lb_solver: StepLbSolver,
+    search_queue_stats: SearchQueueStats, // stats of last solve
     interrupt_signal: AtomicFlag,
 }
 
@@ -64,6 +66,7 @@ impl<'a> MacroSolver<'a> {
             finish_solver: FinishSolver::new(settings),
             quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
             step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
+            search_queue_stats: SearchQueueStats::default(),
             interrupt_signal,
         }
     }
@@ -214,12 +217,14 @@ impl<'a> MacroSolver<'a> {
             }
         }
 
+        self.search_queue_stats = search_queue.runtime_stats();
         solution.ok_or(SolverException::NoSolution)
     }
 
     pub fn runtime_stats(&self) -> MacroSolverStats {
         MacroSolverStats {
             finish_states: self.finish_solver.num_states(),
+            search_queue_stats: self.search_queue_stats,
             quality_ub_stats: self.quality_ub_solver.runtime_stats(),
             step_lb_stats: self.step_lb_solver.runtime_stats(),
         }
