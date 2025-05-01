@@ -536,9 +536,8 @@ fn test_issue_118() {
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
 }
 
-fn random_effects(adversarial: bool) -> Effects {
+fn random_effects(settings: &Settings) -> Effects {
     Effects::new()
-        .with_allow_quality_actions(true)
         .with_inner_quiet(rand::thread_rng().gen_range(0..=10))
         .with_great_strides(rand::thread_rng().gen_range(0..=3))
         .with_innovation(rand::thread_rng().gen_range(0..=4))
@@ -546,7 +545,16 @@ fn random_effects(adversarial: bool) -> Effects {
         .with_waste_not(rand::thread_rng().gen_range(0..=8))
         .with_manipulation(rand::thread_rng().gen_range(0..=8))
         .with_quick_innovation_available(rand::random())
-        .with_adversarial_guard(if adversarial { rand::random() } else { false })
+        .with_adversarial_guard(if settings.adversarial {
+            rand::random()
+        } else {
+            false
+        })
+        .with_allow_quality_actions(if settings.backload_progress {
+            rand::random()
+        } else {
+            true
+        })
 }
 
 fn random_state(settings: &Settings) -> SimulationState {
@@ -556,7 +564,7 @@ fn random_state(settings: &Settings) -> SimulationState {
         progress: rand::thread_rng().gen_range(0..u32::from(settings.max_progress)),
         quality: 0,
         unreliable_quality: 0,
-        effects: random_effects(settings.adversarial),
+        effects: random_effects(settings),
     }
     .try_into()
     .unwrap()
@@ -603,6 +611,23 @@ fn test_monotonic_normal_sim() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+    };
+    monotonic_fuzz_check(settings);
+}
+
+#[test]
+fn test_monotonic_backload_progress_sim() {
+    let settings = Settings {
+        max_cp: 360,
+        max_durability: 70,
+        max_progress: 1000,
+        max_quality: 20000,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 100,
+        allowed_actions: ActionMask::all(),
+        adversarial: false,
+        backload_progress: true,
     };
     monotonic_fuzz_check(settings);
 }

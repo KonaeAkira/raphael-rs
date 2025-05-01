@@ -42,11 +42,19 @@ fn test_effects() {
 fn test_quality_actions_forbidden() {
     let state = SimulationState::from_macro(
         &SETTINGS,
-        &[Action::MuscleMemory, Action::Observe, Action::Observe],
+        &[Action::Reflect, Action::BasicSynthesis, Action::Observe],
     )
     .unwrap();
     let result = state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS);
     assert_eq!(result, Err("Forbidden by backload_progress setting"));
+    let result = state.use_action(Action::PreciseTouch, Condition::Good, &SETTINGS);
+    assert_eq!(result, Err("Forbidden by backload_progress setting"));
+    // Using a Progress-action resets Inner Quiet.
+    let result = state.use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS);
+    assert_eq!(
+        result,
+        Err("Cannot use Byregot's Blessing when Inner Quiet is 0.")
+    );
 }
 
 #[test]
