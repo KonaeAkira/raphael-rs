@@ -34,7 +34,7 @@ fn test_roast_chicken() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -50,6 +50,7 @@ fn test_roast_chicken() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -70,7 +71,7 @@ fn test_turali_pineapple_ponzecake() {
         heart_and_soul: true,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -85,6 +86,7 @@ fn test_turali_pineapple_ponzecake() {
                 .remove(Action::TrainedEye)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
     let initial_quality = get_initial_quality(crafter_stats, recipe, [0, 1, 0, 0, 0, 0]);
@@ -104,7 +106,7 @@ fn test_smaller_water_otter_hardware() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -121,6 +123,7 @@ fn test_smaller_water_otter_hardware() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -138,7 +141,7 @@ fn test_grade_8_tincture() {
         heart_and_soul: true,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -152,6 +155,7 @@ fn test_grade_8_tincture() {
             // Trained Eye is available
             allowed_actions: ActionMask::all().remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -172,7 +176,7 @@ fn test_claro_walnut_spinning_wheel() {
         heart_and_soul: false,
         quick_innovation: true,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -187,6 +191,7 @@ fn test_claro_walnut_spinning_wheel() {
                 .remove(Action::TrainedEye)
                 .remove(Action::HeartAndSoul),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -203,7 +208,7 @@ fn test_habitat_chair_lv100() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -219,6 +224,7 @@ fn test_habitat_chair_lv100() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -236,7 +242,7 @@ fn test_habitat_chair_lv97() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -252,6 +258,7 @@ fn test_habitat_chair_lv97() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -269,7 +276,7 @@ fn test_habitat_chair_lv98() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -285,6 +292,7 @@ fn test_habitat_chair_lv98() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -302,7 +310,7 @@ fn test_standard_indurate_rings_lv93() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -318,6 +326,7 @@ fn test_standard_indurate_rings_lv93() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -335,7 +344,7 @@ fn test_lunar_alloy_ingots_lv90() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -351,6 +360,7 @@ fn test_lunar_alloy_ingots_lv90() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -368,7 +378,7 @@ fn test_standard_high_density_fiberboard_lv91() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -384,6 +394,7 @@ fn test_standard_high_density_fiberboard_lv91() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }
@@ -400,7 +411,7 @@ fn test_lunar_alloy_ingots_lv10() {
         heart_and_soul: false,
         quick_innovation: false,
     };
-    let settings = get_game_settings(recipe, None, crafter_stats, None, None, false);
+    let settings = get_game_settings(recipe, None, crafter_stats, None, None);
     assert_eq!(
         settings,
         Settings {
@@ -416,6 +427,7 @@ fn test_lunar_alloy_ingots_lv10() {
                 .remove(Action::HeartAndSoul)
                 .remove(Action::QuickInnovation),
             adversarial: false,
+            backload_progress: false,
         }
     );
 }

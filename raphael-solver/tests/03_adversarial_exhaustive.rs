@@ -41,7 +41,7 @@ fn test_with_settings(
         let final_state =
             SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
         assert!(final_state.progress >= settings.max_progress());
-        if settings.backload_progress {
+        if settings.simulator_settings.backload_progress {
             assert!(is_progress_backloaded(&settings, &actions));
         }
         Some(SolutionScore {
@@ -68,6 +68,7 @@ const SETTINGS: Settings = Settings {
         .remove(Action::HeartAndSoul)
         .remove(Action::QuickInnovation),
     adversarial: true,
+    backload_progress: false,
 };
 
 #[test]
@@ -83,10 +84,7 @@ fn stuffed_peppers() {
         base_quality: 360,
         ..SETTINGS
     };
-    let solver_settings = SolverSettings {
-        simulator_settings,
-        backload_progress: false,
-    };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -99,14 +97,14 @@ fn stuffed_peppers() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 811236,
+            finish_states: 878840,
             quality_ub_stats: QualityUbSolverStats {
-                states: 4715101,
-                pareto_values: 77795158,
+                states: 4711174,
+                pareto_values: 77733312,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 830886,
-                pareto_values: 14689426,
+                states: 830988,
+                pareto_values: 14691059,
             },
         }
     "#]];
@@ -130,11 +128,9 @@ fn test_rare_tacos_2() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -147,14 +143,14 @@ fn test_rare_tacos_2() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1270583,
+            finish_states: 1374764,
             quality_ub_stats: QualityUbSolverStats {
-                states: 5033261,
-                pareto_values: 135360389,
+                states: 5029860,
+                pareto_values: 135247584,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1388863,
-                pareto_values: 31624049,
+                states: 1388877,
+                pareto_values: 31624257,
             },
         }
     "#]];
@@ -179,11 +175,9 @@ fn test_mountain_chromite_ingot_no_manipulation() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -196,10 +190,10 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 69040,
+            finish_states: 75525,
             quality_ub_stats: QualityUbSolverStats {
-                states: 3772420,
-                pareto_values: 33045924,
+                states: 3768152,
+                pareto_values: 33008292,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 58379,
@@ -225,11 +219,9 @@ fn test_indagator_3858_4057() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -242,10 +234,10 @@ fn test_indagator_3858_4057() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 423088,
+            finish_states: 449529,
             quality_ub_stats: QualityUbSolverStats {
-                states: 5301382,
-                pareto_values: 125209173,
+                states: 5297705,
+                pareto_values: 125105998,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 675136,
@@ -272,11 +264,9 @@ fn test_rare_tacos_4628_4410() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: true,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -289,14 +279,14 @@ fn test_rare_tacos_4628_4410() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 457250,
+            finish_states: 501199,
             quality_ub_stats: QualityUbSolverStats {
-                states: 5301245,
-                pareto_values: 151087149,
+                states: 5297728,
+                pareto_values: 150961583,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 319245,
-                pareto_values: 6969450,
+                states: 319267,
+                pareto_values: 6969733,
             },
         }
     "#]];

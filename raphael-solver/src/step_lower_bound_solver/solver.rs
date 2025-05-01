@@ -2,10 +2,7 @@ use std::num::NonZeroU8;
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{
-        ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, is_progress_only_state,
-        use_action_combo,
-    },
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
     utils,
 };
 use raphael_sim::*;
@@ -48,10 +45,7 @@ impl StepLbSolver {
         state: SimulationState,
         hint: u8,
     ) -> Result<u8, SolverException> {
-        if self.settings.backload_progress
-            && state.progress != 0
-            && state.quality < self.settings.max_quality()
-        {
+        if !state.effects.allow_quality_actions() && state.quality < self.settings.max_quality() {
             return Ok(u8::MAX);
         }
         let mut hint = NonZeroU8::try_from(std::cmp::max(hint, 1)).unwrap();
@@ -75,8 +69,7 @@ impl StepLbSolver {
             )));
         }
 
-        let progress_only = is_progress_only_state(&self.settings, &state);
-        let reduced_state = ReducedState::from_state(state, step_budget, progress_only);
+        let reduced_state = ReducedState::from_state(state, step_budget);
         let required_progress = self.settings.max_progress() - state.progress;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
@@ -105,9 +98,9 @@ impl StepLbSolver {
             return Err(SolverException::Interrupted);
         }
         self.pareto_front_builder.push_empty();
-        let search_actions = match reduced_state.progress_only {
-            true => PROGRESS_ONLY_SEARCH_ACTIONS,
-            false => FULL_SEARCH_ACTIONS,
+        let search_actions = match reduced_state.effects.allow_quality_actions() {
+            false => PROGRESS_ONLY_SEARCH_ACTIONS,
+            true => FULL_SEARCH_ACTIONS,
         };
         for &action in search_actions {
             if action.steps() <= reduced_state.steps_budget.get() {
@@ -135,14 +128,12 @@ impl StepLbSolver {
         {
             let action_progress = new_full_state.progress;
             let action_quality = new_full_state.quality;
-            let progress_only = reduced_state.progress_only
-                || is_progress_only_state(&self.settings, &new_full_state);
             let new_step_budget = reduced_state.steps_budget.get() - action.steps();
             match NonZeroU8::try_from(new_step_budget) {
                 Ok(new_step_budget) if new_full_state.durability > 0 => {
                     // New state is not final
                     let new_reduced_state =
-                        ReducedState::from_state(new_full_state, new_step_budget, progress_only);
+                        ReducedState::from_state(new_full_state, new_step_budget);
                     if let Some(pareto_front) = self.solved_states.get(&new_reduced_state) {
                         self.pareto_front_builder.push_slice(pareto_front);
                     } else {

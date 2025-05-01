@@ -17,8 +17,6 @@ pub struct Effects {
     pub muscle_memory: u8,
     #[bits(4)]
     pub manipulation: u8,
-    #[bits(2)]
-    pub guard: u8,
 
     pub trained_perfection_available: bool,
     pub heart_and_soul_available: bool,
@@ -26,14 +24,19 @@ pub struct Effects {
     pub trained_perfection_active: bool,
     pub heart_and_soul_active: bool,
 
+    pub adversarial_guard: bool,
+    pub allow_quality_actions: bool,
+
     #[bits(2)]
     pub combo: Combo,
 }
 
 impl Effects {
+    /// Effects at synthesis begin
     pub fn initial(settings: &Settings) -> Self {
         Self::new()
-            .with_guard(if settings.adversarial { 2 } else { 0 })
+            .with_adversarial_guard(settings.adversarial)
+            .with_allow_quality_actions(true)
             .with_trained_perfection_available(
                 settings.is_action_allowed::<crate::actions::TrainedPerfection>(),
             )
@@ -66,9 +69,10 @@ impl Effects {
         if self.manipulation() != 0 {
             effect_tick |= const { Self::from_bits(0).with_manipulation(1).into_bits() };
         }
-        if self.guard() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_guard(1).into_bits() };
-        }
         self.0 -= effect_tick;
+        if self.combo() != Combo::SynthesisBegin {
+            // Guard does not wear off because the first condition is guaranteed to be Normal
+            self.set_adversarial_guard(false);
+        }
     }
 }

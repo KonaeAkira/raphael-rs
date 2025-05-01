@@ -41,7 +41,7 @@ fn test_with_settings(
         let final_state =
             SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
         assert!(final_state.progress >= settings.max_progress());
-        if settings.backload_progress {
+        if settings.simulator_settings.backload_progress {
             assert!(is_progress_backloaded(&settings, &actions));
         }
         Some(SolutionScore {
@@ -70,17 +70,15 @@ fn unsolvable() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         None
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 4042,
+            finish_states: 2864,
             quality_ub_stats: QualityUbSolverStats {
                 states: 0,
                 pareto_values: 0,
@@ -109,11 +107,9 @@ fn zero_quality() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -126,7 +122,7 @@ fn zero_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1867,
+            finish_states: 1660,
             quality_ub_stats: QualityUbSolverStats {
                 states: 52001,
                 pareto_values: 91291,
@@ -155,11 +151,9 @@ fn max_quality() {
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -172,7 +166,7 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 239513,
+            finish_states: 236825,
             quality_ub_stats: QualityUbSolverStats {
                 states: 878613,
                 pareto_values: 6272058,
@@ -198,11 +192,9 @@ fn large_progress_quality_increase() {
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: false,
-    };
-    let solver_settings = SolverSettings {
-        simulator_settings,
         backload_progress: false,
     };
+    let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
@@ -215,7 +207,7 @@ fn large_progress_quality_increase() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 65,
+            finish_states: 24,
             quality_ub_stats: QualityUbSolverStats {
                 states: 412810,
                 pareto_values: 407290,
@@ -223,6 +215,50 @@ fn large_progress_quality_increase() {
             step_lb_stats: StepLbSolverStats {
                 states: 13,
                 pareto_values: 13,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+fn backload_progress_single_delicate_synthesis() {
+    let simulator_settings = Settings {
+        max_cp: 100,
+        max_durability: 20,
+        max_progress: 100,
+        max_quality: 100,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: true,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 100,
+                steps: 1,
+                duration: 3,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 15,
+            quality_ub_stats: QualityUbSolverStats {
+                states: 13641,
+                pareto_values: 11167,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 9,
+                pareto_values: 9,
             },
         }
     "#]];

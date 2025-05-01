@@ -54,7 +54,6 @@ impl QualityUbSolver {
                     .with_heart_and_soul_available(false)
                     .with_combo(Combo::None),
                 compressed_unreliable_quality: 0,
-                progress_only: false,
             },
             required_cp: 0,
         };
@@ -68,7 +67,6 @@ impl QualityUbSolver {
             let state = ReducedState {
                 cp: self.settings.max_cp(),
                 compressed_unreliable_quality: node.template.compressed_unreliable_quality,
-                progress_only: node.template.progress_only,
                 effects: node.template.effects,
             };
             for &action in FULL_SEARCH_ACTIONS {
@@ -80,7 +78,6 @@ impl QualityUbSolver {
                         template: Template {
                             effects: new_state.effects,
                             compressed_unreliable_quality: new_state.compressed_unreliable_quality,
-                            progress_only: new_state.progress_only,
                         },
                         required_cp: node.required_cp + used_cp,
                     };
@@ -115,7 +112,6 @@ impl QualityUbSolver {
                         Some(ReducedState {
                             cp: cp + self.durability_cost,
                             compressed_unreliable_quality: template.compressed_unreliable_quality,
-                            progress_only: template.progress_only,
                             effects: template.effects,
                         })
                     } else {
@@ -219,9 +215,9 @@ impl QualityUbSolver {
             return Err(SolverException::Interrupted);
         }
         self.pareto_front_builder.push_empty();
-        let search_actions = match state.progress_only {
-            true => PROGRESS_ONLY_SEARCH_ACTIONS,
-            false => FULL_SEARCH_ACTIONS,
+        let search_actions = match state.effects.allow_quality_actions() {
+            false => PROGRESS_ONLY_SEARCH_ACTIONS,
+            true => FULL_SEARCH_ACTIONS,
         };
         for &action in search_actions {
             self.build_child_front(state, action)?;
@@ -312,7 +308,6 @@ fn durability_cost(settings: &Settings) -> u16 {
 struct Template {
     effects: Effects,
     compressed_unreliable_quality: u8,
-    progress_only: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

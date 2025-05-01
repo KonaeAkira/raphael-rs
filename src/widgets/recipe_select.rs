@@ -132,7 +132,6 @@ impl<'a> RecipeSelect<'a> {
             *self.crafter_config.active_stats(),
             self.selected_food,
             self.selected_potion,
-            false,
         );
         let use_base_increase_overrides = self
             .custom_recipe_overrides_config
@@ -309,7 +308,6 @@ impl Widget for RecipeSelect<'_> {
                                     *self.crafter_config.active_stats(),
                                     self.selected_food,
                                     self.selected_potion,
-                                    false,
                                 );
 
                                 self.recipe_config.recipe.req_craftsmanship = 0;

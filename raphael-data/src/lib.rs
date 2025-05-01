@@ -79,7 +79,6 @@ pub fn get_game_settings(
     crafter_stats: CrafterStats,
     food: Option<Consumable>,
     potion: Option<Consumable>,
-    adversarial: bool,
 ) -> Settings {
     let rlvl = if recipe.max_level_scaling != 0 {
         let job_level = std::cmp::min(recipe.max_level_scaling, crafter_stats.level);
@@ -136,7 +135,8 @@ pub fn get_game_settings(
             },
             job_level: crafter_stats.level,
             allowed_actions,
-            adversarial,
+            adversarial: false,
+            backload_progress: false,
         },
         None => Settings {
             max_cp: cp as _,
@@ -147,7 +147,8 @@ pub fn get_game_settings(
             base_quality: base_quality as u16,
             job_level: crafter_stats.level,
             allowed_actions,
-            adversarial,
+            adversarial: false,
+            backload_progress: false,
         },
     }
 }

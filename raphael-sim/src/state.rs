@@ -96,22 +96,19 @@ impl SimulationState {
 
         state.cp -= A::cp_cost(self, settings, condition);
 
-        let progress_increase = A::progress_increase(self, settings, condition);
-        state.progress += progress_increase;
-        if progress_increase != 0 {
-            state.effects.set_muscle_memory(0);
-        }
-
         let quality_increase = A::quality_increase(self, settings, condition);
+        if !state.effects.allow_quality_actions() && quality_increase != 0 {
+            return Err("Forbidden by backload_progress setting");
+        }
         if settings.adversarial {
-            let adversarial_quality_increase = if state.effects.guard() != 0 {
+            let adversarial_quality_increase = if state.effects.adversarial_guard() {
                 quality_increase
             } else {
                 A::quality_increase(self, settings, Condition::Poor)
             };
-            if state.effects.guard() == 0 && adversarial_quality_increase == 0 {
+            if !state.effects.adversarial_guard() && adversarial_quality_increase == 0 {
                 state.unreliable_quality = 0;
-            } else if state.effects.guard() != 0 && adversarial_quality_increase != 0 {
+            } else if state.effects.adversarial_guard() && adversarial_quality_increase != 0 {
                 state.quality += adversarial_quality_increase;
                 state.unreliable_quality = 0;
             } else if adversarial_quality_increase != 0 {
@@ -130,6 +127,15 @@ impl SimulationState {
                 .set_inner_quiet(std::cmp::min(10, state.effects.inner_quiet() + 1));
         }
 
+        let progress_increase = A::progress_increase(self, settings, condition);
+        state.progress += progress_increase;
+        if progress_increase != 0 {
+            state.effects = state
+                .effects
+                .with_muscle_memory(0)
+                .with_allow_quality_actions(!settings.backload_progress);
+        }
+
         if state.is_final(settings) {
             return Ok(state);
         }
@@ -142,7 +148,7 @@ impl SimulationState {
         }
 
         if settings.adversarial && quality_increase != 0 {
-            state.effects.set_guard(1);
+            state.effects.set_adversarial_guard(true);
         }
 
         A::transform_post(&mut state, settings, condition);
@@ -150,6 +156,17 @@ impl SimulationState {
         state
             .effects
             .set_combo(A::combo(&state, settings, condition));
+
+        if !state.effects.allow_quality_actions() {
+            state.unreliable_quality = 0;
+            state.effects = state
+                .effects
+                .with_inner_quiet(0)
+                .with_innovation(0)
+                .with_great_strides(0)
+                .with_quick_innovation_available(false)
+                .with_adversarial_guard(false)
+        }
 
         Ok(state)
     }

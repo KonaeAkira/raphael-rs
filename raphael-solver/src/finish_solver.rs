@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap as HashMap;
 
 use crate::{
     SolverSettings,
-    actions::{FULL_SEARCH_ACTIONS, use_action_combo},
+    actions::{PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -21,10 +21,11 @@ impl ReducedState {
             cp: state.cp,
             effects: state
                 .effects
+                .with_allow_quality_actions(false)
                 .with_inner_quiet(0)
                 .with_innovation(0)
                 .with_great_strides(0)
-                .with_guard(0)
+                .with_adversarial_guard(false)
                 .with_quick_innovation_available(false),
         }
     }
@@ -65,7 +66,7 @@ impl FinishSolver {
             Some(max_progress) => *max_progress,
             None => {
                 let mut max_progress = 0;
-                for action in FULL_SEARCH_ACTIONS {
+                for action in PROGRESS_ONLY_SEARCH_ACTIONS {
                     if let Ok(new_state) =
                         use_action_combo(&self.settings, state.to_state(), *action)
                     {

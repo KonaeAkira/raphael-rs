@@ -35,6 +35,7 @@ fn test_level_requirement() {
         job_level: 50,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let error = SimulationState::new(&settings)
         .use_action(Action::ImmaculateMend, Condition::Normal, &settings)
@@ -56,6 +57,7 @@ fn test_random_926ae85b() {
         job_level: 10,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let actions = [
         Action::BasicSynthesis,
@@ -84,6 +86,7 @@ fn test_random_3c721e47() {
         job_level: 85,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let actions = [
         Action::MuscleMemory,
@@ -116,6 +119,7 @@ fn test_random_3ba90d3a() {
         job_level: 81,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let actions = [
         Action::Veneration,
@@ -151,6 +155,7 @@ fn test_random_bce2650c() {
         job_level: 90,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let actions = [
         Action::MuscleMemory,
@@ -201,6 +206,7 @@ fn test_ingame_be9fc5c2() {
         job_level: 90,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let states = simulate(
         &settings,
@@ -272,6 +278,7 @@ fn test_ingame_d11d9c68() {
         job_level: 94,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let actions = [
         Action::Reflect,
@@ -327,6 +334,7 @@ fn test_ingame_f9f0dac7() {
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: true,
+        backload_progress: false,
     };
     let actions = [
         Action::Reflect,
@@ -413,6 +421,7 @@ fn test_ingame_4866545e() {
         job_level: 100,
         allowed_actions: ActionMask::all(),
         adversarial: false,
+        backload_progress: false,
     };
     let actions = [
         Action::Reflect,

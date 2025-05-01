@@ -137,11 +137,9 @@ impl From<SolveArgs> for SolverSettings {
             job_level: value.job_level,
             allowed_actions: ActionMask::from_bits(value.action_mask),
             adversarial: value.adversarial,
-        };
-        Self {
-            simulator_settings,
             backload_progress: value.backload_progress,
-        }
+        };
+        Self { simulator_settings }
     }
 }
 

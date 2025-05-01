@@ -10,6 +10,7 @@ const SETTINGS: Settings = Settings {
     job_level: 100,
     allowed_actions: ActionMask::all(),
     adversarial: false,
+    backload_progress: false,
 };
 
 /// Returns the 4 primary stats of a state:
@@ -207,19 +208,15 @@ fn test_byregots_blessing() {
         "Cannot use Byregot's Blessing when Inner Quiet is 0."
     );
     // Quality efficiency scales with inner quiet
-    let initial_state = SimulationState {
-        effects: Effects::new().with_inner_quiet(5),
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_inner_quiet(5);
     let state = initial_state
         .use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 300, 10, 24));
     assert_eq!(state.effects.inner_quiet(), 0);
-    let initial_state = SimulationState {
-        effects: Effects::new().with_inner_quiet(10),
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_inner_quiet(10);
     let state = initial_state
         .use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS)
         .unwrap();
@@ -244,10 +241,8 @@ fn test_precise_touch() {
     assert_eq!(primary_stats(&state, &SETTINGS), (0, 225, 10, 18));
     assert_eq!(state.effects.inner_quiet(), 2);
     // Can use when Heart and Soul is active
-    let initial_state = SimulationState {
-        effects: Effects::new().with_heart_and_soul_active(true),
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_heart_and_soul_active(true);
     let state = initial_state
         .use_action(Action::PreciseTouch, Condition::Normal, &SETTINGS)
         .unwrap();
@@ -255,10 +250,8 @@ fn test_precise_touch() {
     assert_eq!(state.effects.inner_quiet(), 2);
     assert_eq!(state.effects.heart_and_soul_active(), false);
     // Heart and Soul effect isn't consumed when condition is Good or Excellent
-    let initial_state = SimulationState {
-        effects: Effects::new().with_heart_and_soul_active(true),
-        ..SimulationState::new(&SETTINGS)
-    };
+    let mut initial_state = SimulationState::new(&SETTINGS);
+    initial_state.effects.set_heart_and_soul_active(true);
     let state = initial_state
         .use_action(Action::PreciseTouch, Condition::Good, &SETTINGS)
         .unwrap();
@@ -631,7 +624,7 @@ fn test_heart_and_soul() {
     match state {
         Ok(state) => {
             assert_eq!(state.effects.combo(), Combo::None); // combo is removed
-            assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
+            assert!(state.effects.adversarial_guard()); // condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.heart_and_soul_available(), false);
             assert_eq!(state.effects.heart_and_soul_active(), true);
@@ -701,7 +694,7 @@ fn test_quick_innovation() {
     match state {
         Ok(state) => {
             assert_eq!(state.effects.combo(), Combo::None); // combo is removed
-            assert_eq!(state.effects.guard(), 1); // guard is unaffected because condition is not re-rolled
+            assert!(state.effects.adversarial_guard()); // condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.innovation(), 1);
         }

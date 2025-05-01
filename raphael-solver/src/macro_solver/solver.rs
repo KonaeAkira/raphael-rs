@@ -2,8 +2,7 @@ use raphael_sim::*;
 
 use super::search_queue::SearchScore;
 use crate::actions::{
-    ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, is_progress_only_state,
-    use_action_combo,
+    ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo,
 };
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
@@ -130,10 +129,9 @@ impl<'a> MacroSolver<'a> {
                 (self.progress_callback)(popped);
             }
 
-            let progress_only = is_progress_only_state(&self.settings, &state);
-            let search_actions = match progress_only {
-                true => PROGRESS_ONLY_SEARCH_ACTIONS,
-                false => FULL_SEARCH_ACTIONS,
+            let search_actions = match state.effects.allow_quality_actions() {
+                false => PROGRESS_ONLY_SEARCH_ACTIONS,
+                true => FULL_SEARCH_ACTIONS,
             };
 
             for action in search_actions {

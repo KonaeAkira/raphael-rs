@@ -160,13 +160,6 @@ pub const QUALITY_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
     ActionCombo::Single(Action::TrainedPerfection),
 ];
 
-pub fn is_progress_only_state(settings: &SolverSettings, state: &SimulationState) -> bool {
-    if settings.backload_progress && state.progress != 0 {
-        return true;
-    }
-    false
-}
-
 pub fn use_action_combo(
     settings: &SolverSettings,
     mut state: SimulationState,
@@ -174,15 +167,6 @@ pub fn use_action_combo(
 ) -> Result<SimulationState, &'static str> {
     for action in action_combo.actions() {
         state = state.use_action(*action, Condition::Normal, &settings.simulator_settings)?;
-    }
-    if is_progress_only_state(settings, &state) {
-        // strip all quality-only data
-        state.unreliable_quality = 0;
-        state.effects.set_inner_quiet(0);
-        state.effects.set_innovation(0);
-        state.effects.set_great_strides(0);
-        state.effects.set_guard(0);
-        state.effects.set_quick_innovation_available(false);
     }
     state.effects.set_combo(Combo::None);
     Ok(state)

@@ -28,7 +28,6 @@ pub enum SolverException {
 #[derive(Clone, Copy, Debug)]
 pub struct SolverSettings {
     pub simulator_settings: raphael_sim::Settings,
-    pub backload_progress: bool,
 }
 
 impl SolverSettings {
