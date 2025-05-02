@@ -10,6 +10,8 @@ pub struct MacroViewConfig {
     #[serde(default)]
     include_delay: bool,
     #[serde(default)]
+    extra_delay: u8,
+    #[serde(default)]
     notification_enabled: bool,
     #[serde(default)]
     notification_config: MacroNotificationConfig,
@@ -22,6 +24,7 @@ impl Default for MacroViewConfig {
         Self {
             split_macro: true,
             include_delay: true,
+            extra_delay: 0,
             notification_enabled: false,
             notification_config: MacroNotificationConfig::default(),
             macro_lock: false,
@@ -86,7 +89,7 @@ impl MacroTextBox {
                 format!(
                     "/ac \"{}\" <wait.{}>",
                     action_name(*action, locale),
-                    action.time_cost()
+                    action.time_cost() + config.extra_delay
                 )
             } else {
                 format!("/ac \"{}\"", action_name(*action, locale))
@@ -252,6 +255,12 @@ impl Widget for MacroView<'_> {
                 ui.separator();
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.config.include_delay, "Include delay");
+                    ui.add_enabled_ui(self.config.include_delay, |ui| {
+                        ui.label("Extra delay");
+                        ui.add(egui::DragValue::new(&mut self.config.extra_delay).range(0..=9));
+                    });
+                });
+                ui.horizontal(|ui| {
                     ui.checkbox(&mut self.config.split_macro, "Split macro");
                     ui.checkbox(&mut self.config.macro_lock, "Macro lock");
                 });
