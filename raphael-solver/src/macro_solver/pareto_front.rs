@@ -1,33 +1,35 @@
 use raphael_sim::{Effects, SimulationState};
 use rustc_hash::FxHashMap;
 
+const EFFECTS_MASK: u32 = Effects::new()
+    .with_inner_quiet(0b1110)
+    .with_muscle_memory(0b111)
+    .with_manipulation(0b1100)
+    .with_waste_not(0b1100)
+    .with_heart_and_soul_active(true)
+    .with_heart_and_soul_available(true)
+    .with_trained_perfection_active(true)
+    .with_trained_perfection_available(true)
+    .with_quick_innovation_available(true)
+    .into_bits();
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Key {
     progress: u32,
     quality_div: u16,
     cp_div: u16,
     durability_div: u16,
-    manipulation_div: u8,
-    waste_not_div: u8,
-    heart_and_soul_available: bool,
-    quick_innovation_available: bool,
-    trained_perfection_available: bool,
-    trained_perfection_active: bool,
+    effects_mask: u32,
 }
 
 impl From<&SimulationState> for Key {
     fn from(state: &SimulationState) -> Self {
         Self {
             progress: state.progress,
-            quality_div: (state.quality / 2048) as u16,
-            cp_div: state.cp / 32,
+            quality_div: (state.quality / 4096) as u16,
+            cp_div: state.cp / 64,
             durability_div: state.durability / 15,
-            manipulation_div: state.effects.manipulation() / 4,
-            waste_not_div: state.effects.waste_not() / 4,
-            heart_and_soul_available: state.effects.heart_and_soul_available(),
-            quick_innovation_available: state.effects.quick_innovation_available(),
-            trained_perfection_available: state.effects.trained_perfection_available(),
-            trained_perfection_active: state.effects.trained_perfection_active(),
+            effects_mask: state.effects.into_bits() & EFFECTS_MASK,
         }
     }
 }
@@ -94,11 +96,7 @@ pub struct ParetoFront {
 impl ParetoFront {
     pub fn insert(&mut self, state: SimulationState) -> bool {
         #[cfg(test)]
-        {
-            // These effects should not appear and are therefore not taken into account when determining Pareto-optimality.
-            assert_eq!(state.effects.heart_and_soul_active(), false);
-            assert_eq!(state.effects.combo(), raphael_sim::Combo::None);
-        }
+        assert_eq!(state.effects.combo(), raphael_sim::Combo::None);
         let bucket = self.buckets.entry(Key::from(&state)).or_default();
         let new_value = Value::from(&state);
         let is_dominated = bucket.iter().any(|value| value.dominates(&new_value));

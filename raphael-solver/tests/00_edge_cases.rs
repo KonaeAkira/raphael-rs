@@ -174,18 +174,18 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 233994,
+            finish_states: 229983,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 4728,
-                dropped_nodes: 52666,
+                processed_nodes: 4452,
+                dropped_nodes: 51229,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 886944,
-                pareto_values: 6281290,
+                states: 886940,
+                pareto_values: 6281275,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 109139,
-                pareto_values: 968098,
+                states: 108556,
+                pareto_values: 964068,
             },
         }
     "#]];
