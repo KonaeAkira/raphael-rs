@@ -779,7 +779,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
 }
 
 #[test]
-fn test_hardened_survey_plank_5558_5216() {
+fn hardened_survey_plank_5558_5216() {
     let simulator_settings = Settings {
         max_cp: 753,
         max_durability: 20,
