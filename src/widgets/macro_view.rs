@@ -257,7 +257,7 @@ impl Widget for MacroView<'_> {
                     ui.checkbox(&mut self.config.include_delay, "Include delay");
                     ui.add_enabled_ui(self.config.include_delay, |ui| {
                         ui.label("Extra delay");
-                        ui.add(egui::DragValue::new(&mut self.config.extra_delay).range(u8::MIN..=u8::MAX));
+                        ui.add(egui::DragValue::new(&mut self.config.extra_delay));
                     });
                     ui.checkbox(&mut self.config.split_macro, "Split macro");
                     ui.checkbox(&mut self.config.macro_lock, "Macro lock");
