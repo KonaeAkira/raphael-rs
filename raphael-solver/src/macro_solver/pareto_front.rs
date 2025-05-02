@@ -108,6 +108,15 @@ impl ParetoFront {
             true
         }
     }
+
+    /// Returns the sum of the squared size of all Pareto buckets.
+    /// This is a useful performance metric because the total insertion cost of each Pareto bucket scales with the square of its size.
+    pub fn buckets_squared_size_sum(&self) -> usize {
+        self.buckets
+            .values()
+            .map(|bucket| bucket.len() * bucket.len())
+            .sum()
+    }
 }
 
 impl Drop for ParetoFront {

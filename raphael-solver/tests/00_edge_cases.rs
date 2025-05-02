@@ -82,6 +82,7 @@ fn unsolvable() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 0,
+                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 0,
@@ -130,6 +131,7 @@ fn zero_quality() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 43,
                 dropped_nodes: 10,
+                pareto_buckets_squared_size_sum: 141,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 52001,
@@ -178,6 +180,7 @@ fn max_quality() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 4452,
                 dropped_nodes: 51229,
+                pareto_buckets_squared_size_sum: 39546,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 886940,
@@ -223,6 +226,7 @@ fn large_progress_quality_increase() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 20,
+                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 76819,
@@ -271,6 +275,7 @@ fn backload_progress_single_delicate_synthesis() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 14,
+                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 7918,

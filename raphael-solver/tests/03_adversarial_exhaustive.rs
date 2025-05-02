@@ -101,6 +101,7 @@ fn stuffed_peppers() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 79537,
                 dropped_nodes: 1498200,
+                pareto_buckets_squared_size_sum: 1304095,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 4715725,
@@ -151,6 +152,7 @@ fn test_rare_tacos_2() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 2328710,
                 dropped_nodes: 512376,
+                pareto_buckets_squared_size_sum: 151535309,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 5030017,
@@ -202,6 +204,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 26099,
                 dropped_nodes: 294242,
+                pareto_buckets_squared_size_sum: 619821,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 3768677,
@@ -250,6 +253,7 @@ fn test_indagator_3858_4057() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 8953,
                 dropped_nodes: 10680,
+                pareto_buckets_squared_size_sum: 99526,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 5297705,
@@ -299,6 +303,7 @@ fn test_rare_tacos_4628_4410() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 552797,
                 dropped_nodes: 0,
+                pareto_buckets_squared_size_sum: 24506646,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 5297697,
