@@ -856,18 +856,18 @@ fn ceviche_4900_4800_no_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1577600,
+            finish_states: 516117,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 106671,
-                dropped_nodes: 445477,
+                processed_nodes: 29,
+                dropped_nodes: 248,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 24753,
                 pareto_values: 24713,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 52,
-                pareto_values: 52,
+                states: 1245,
+                pareto_values: 1245,
             },
         }
     "#]];
