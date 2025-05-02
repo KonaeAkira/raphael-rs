@@ -129,11 +129,12 @@ impl SimulationState {
 
         let progress_increase = A::progress_increase(self, settings, condition);
         state.progress += progress_increase;
-        if progress_increase != 0 {
-            state.effects = state
-                .effects
-                .with_muscle_memory(0)
-                .with_allow_quality_actions(!settings.backload_progress);
+        if progress_increase != 0 && state.effects.muscle_memory() != 0 {
+            state.effects.set_muscle_memory(0);
+        }
+
+        if progress_increase != 0 && settings.backload_progress {
+            state.effects.set_allow_quality_actions(false);
         }
 
         if state.is_final(settings) {
@@ -158,17 +159,22 @@ impl SimulationState {
             .set_combo(A::combo(&state, settings, condition));
 
         if !state.effects.allow_quality_actions() {
-            state.unreliable_quality = 0;
-            state.effects = state
-                .effects
-                .with_inner_quiet(0)
-                .with_innovation(0)
-                .with_great_strides(0)
-                .with_quick_innovation_available(false)
-                .with_adversarial_guard(false)
+            state.strip_quality_effects();
         }
 
         Ok(state)
+    }
+
+    pub fn strip_quality_effects(&mut self) {
+        self.unreliable_quality = 0;
+        self.effects = self
+            .effects
+            .with_inner_quiet(0)
+            .with_innovation(0)
+            .with_great_strides(0)
+            .with_quick_innovation_available(false)
+            .with_adversarial_guard(false)
+            .with_allow_quality_actions(false)
     }
 
     pub fn use_action(

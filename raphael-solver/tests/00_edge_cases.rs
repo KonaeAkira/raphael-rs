@@ -136,8 +136,8 @@ fn zero_quality() {
                 pareto_values: 91291,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 25627,
-                pareto_values: 230025,
+                states: 25649,
+                pareto_values: 230047,
             },
         }
     "#]];
@@ -174,18 +174,18 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 236825,
+            finish_states: 225965,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 4890,
-                dropped_nodes: 56054,
+                processed_nodes: 4310,
+                dropped_nodes: 49847,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 878613,
-                pareto_values: 6272058,
+                states: 886827,
+                pareto_values: 6280212,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 107515,
-                pareto_values: 963403,
+                states: 107635,
+                pareto_values: 957332,
             },
         }
     "#]];
@@ -219,18 +219,18 @@ fn large_progress_quality_increase() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 24,
+            finish_states: 21,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
-                dropped_nodes: 23,
+                dropped_nodes: 20,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 412810,
-                pareto_values: 407290,
+                states: 76819,
+                pareto_values: 76399,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 13,
-                pareto_values: 13,
+                states: 10,
+                pareto_values: 10,
             },
         }
     "#]];
@@ -273,12 +273,12 @@ fn backload_progress_single_delicate_synthesis() {
                 dropped_nodes: 14,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 13641,
-                pareto_values: 11167,
+                states: 7918,
+                pareto_values: 7036,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 9,
-                pareto_values: 9,
+                states: 8,
+                pareto_values: 8,
             },
         }
     "#]];

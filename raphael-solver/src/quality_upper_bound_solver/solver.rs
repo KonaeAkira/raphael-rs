@@ -46,9 +46,15 @@ impl QualityUbSolver {
         let mut templates = rustc_hash::FxHashMap::<Template, u16>::default();
         let mut queue = std::collections::BinaryHeap::<Node>::default();
 
+        let mut initial_state = SimulationState::new(&self.settings.simulator_settings);
+        if initial_state.quality >= self.settings.max_quality() {
+            initial_state.strip_quality_effects();
+        }
+
         let initial_node = Node {
             template: Template {
-                effects: Effects::initial(&self.settings.simulator_settings)
+                effects: initial_state
+                    .effects
                     .with_trained_perfection_available(false)
                     .with_quick_innovation_available(false)
                     .with_heart_and_soul_available(false)

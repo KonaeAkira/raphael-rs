@@ -78,7 +78,11 @@ impl<'a> MacroSolver<'a> {
         );
 
         let _total_time = ScopedTimer::new("Total Time");
-        let initial_state = SimulationState::new(&self.settings.simulator_settings);
+
+        let mut initial_state = SimulationState::new(&self.settings.simulator_settings);
+        if initial_state.quality >= self.settings.max_quality() {
+            initial_state.strip_quality_effects();
+        }
 
         let timer = ScopedTimer::new("Finish Solver");
         if !self.finish_solver.can_finish(&initial_state) {
@@ -93,7 +97,7 @@ impl<'a> MacroSolver<'a> {
             },
             || {
                 let _timer = ScopedTimer::new("Step LB Solver");
-                let mut seed_state = SimulationState::new(&self.settings.simulator_settings);
+                let mut seed_state = initial_state;
                 seed_state.effects.set_combo(Combo::None);
                 self.step_lb_solver.step_lower_bound(seed_state, 0)
             },

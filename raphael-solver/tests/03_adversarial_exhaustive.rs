@@ -97,18 +97,18 @@ fn stuffed_peppers() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 878840,
+            finish_states: 878625,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 85020,
-                dropped_nodes: 1601394,
+                processed_nodes: 85013,
+                dropped_nodes: 1600850,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 4711174,
-                pareto_values: 77733312,
+                states: 4715168,
+                pareto_values: 77737306,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 830988,
-                pareto_values: 14691059,
+                states: 831904,
+                pareto_values: 14690343,
             },
         }
     "#]];
@@ -157,8 +157,8 @@ fn test_rare_tacos_2() {
                 pareto_values: 135247584,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1388877,
-                pareto_values: 31624257,
+                states: 1388879,
+                pareto_values: 31624259,
             },
         }
     "#]];
@@ -198,18 +198,18 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 75525,
+            finish_states: 75462,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 31377,
-                dropped_nodes: 348653,
+                processed_nodes: 31373,
+                dropped_nodes: 348447,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 3768152,
-                pareto_values: 33008292,
+                states: 3768978,
+                pareto_values: 33009118,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 58379,
-                pareto_values: 519966,
+                states: 58450,
+                pareto_values: 520010,
             },
         }
     "#]];
