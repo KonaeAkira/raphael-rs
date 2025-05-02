@@ -259,6 +259,8 @@ impl Widget for MacroView<'_> {
                         ui.label("Extra delay");
                         ui.add(egui::DragValue::new(&mut self.config.extra_delay).range(0..=9));
                     });
+                });
+                ui.horizontal(|ui| {
                     ui.checkbox(&mut self.config.split_macro, "Split macro");
                     ui.checkbox(&mut self.config.macro_lock, "Macro lock");
                 });
