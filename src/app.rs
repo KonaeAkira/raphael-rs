@@ -750,6 +750,21 @@ impl MacroSolverApp {
                 ),
             );
         }
+        let heart_and_soul_enabled = self.crafter_config.active_stats().level
+            >= HeartAndSoul::LEVEL_REQUIREMENT
+            && self.crafter_config.active_stats_mut().heart_and_soul;
+        let quick_innovation_enabled = self.crafter_config.active_stats().level
+            >= QuickInnovation::LEVEL_REQUIREMENT
+            && self.crafter_config.active_stats_mut().quick_innovation;
+        if heart_and_soul_enabled || quick_innovation_enabled {
+            ui.label(
+                egui::RichText::new(
+                    "⚠ Specialist actions substantially increase solve time and memory usage.",
+                )
+                .small()
+                .color(ui.visuals().warn_fg_color),
+            );
+        }
         ui.separator();
 
         ui.label(egui::RichText::new("Solver settings").strong());
@@ -835,8 +850,7 @@ impl MacroSolverApp {
                     "Ensure 100% reliability",
                 ),
             );
-            ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\n
-            The solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro."));
+            ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro."));
         });
         if self.solver_config.adversarial {
             ui.label(
@@ -923,7 +937,7 @@ impl MacroSolverApp {
 
     fn experimental_warning_text() -> &'static str {
         #[cfg(not(target_arch = "wasm32"))]
-        return "⚠ EXPERIMENTAL FEATURE\n This option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.";
+        return "⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.";
         #[cfg(target_arch = "wasm32")]
         return "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.";
     }
