@@ -225,8 +225,8 @@ fn large_progress_quality_increase() {
                 dropped_nodes: 20,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 108276,
-                pareto_values: 107604,
+                states: 76819,
+                pareto_values: 76399,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 10,

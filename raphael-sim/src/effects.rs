@@ -34,7 +34,9 @@ pub struct Effects {
 impl Effects {
     /// Effects at synthesis begin
     pub fn initial(settings: &Settings) -> Self {
-        let effects = Self::new()
+        Self::new()
+            .with_adversarial_guard(settings.adversarial)
+            .with_allow_quality_actions(true)
             .with_trained_perfection_available(
                 settings.is_action_allowed::<crate::actions::TrainedPerfection>(),
             )
@@ -44,14 +46,7 @@ impl Effects {
             .with_quick_innovation_available(
                 settings.is_action_allowed::<crate::actions::QuickInnovation>(),
             )
-            .with_combo(Combo::SynthesisBegin);
-        if settings.max_quality == 0 {
-            effects
-        } else {
-            effects
-                .with_adversarial_guard(settings.adversarial)
-                .with_allow_quality_actions(true)
-        }
+            .with_combo(Combo::SynthesisBegin)
     }
 
     pub fn tick_down(&mut self) {
