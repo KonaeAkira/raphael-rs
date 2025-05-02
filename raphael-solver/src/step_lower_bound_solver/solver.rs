@@ -75,9 +75,9 @@ impl StepLbSolver {
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
-            let quality_ub = pareto_front.get(index).map(|value| {
-                std::cmp::min(self.settings.max_quality(), state.quality + value.second)
-            });
+            let quality_ub = pareto_front
+                .get(index)
+                .map(|value| state.quality + value.second);
             return Ok(quality_ub);
         }
 
@@ -85,9 +85,9 @@ impl StepLbSolver {
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
-            let quality_ub = pareto_front.get(index).map(|value| {
-                std::cmp::min(self.settings.max_quality(), state.quality + value.second)
-            });
+            let quality_ub = pareto_front
+                .get(index)
+                .map(|value| state.quality + value.second);
             return Ok(quality_ub);
         } else {
             unreachable!("State must be in memoization table after solver")
