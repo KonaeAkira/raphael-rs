@@ -41,7 +41,7 @@ impl Rotation {
         solver_config: &SolverConfig,
     ) -> Self {
         let solver_params = format!(
-            "Raphael v{}{}{}{}",
+            "Raphael v{}{}{}",
             env!("CARGO_PKG_VERSION"),
             match solver_config.backload_progress {
                 true => " +backload",
@@ -51,10 +51,6 @@ impl Rotation {
                 true => " +adversarial",
                 false => "",
             },
-            match solver_config.minimize_steps {
-                true => " +min_step",
-                false => "",
-            }
         );
         Self {
             unique_id: generate_unique_rotation_id(),
