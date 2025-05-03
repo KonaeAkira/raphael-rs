@@ -178,17 +178,17 @@ fn max_quality() {
         MacroSolverStats {
             finish_states: 229983,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 4452,
-                dropped_nodes: 51229,
-                pareto_buckets_squared_size_sum: 39546,
+                processed_nodes: 4472,
+                dropped_nodes: 51456,
+                pareto_buckets_squared_size_sum: 32640,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 886940,
                 pareto_values: 6281275,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 108556,
-                pareto_values: 964068,
+                states: 108565,
+                pareto_values: 964182,
             },
         }
     "#]];
