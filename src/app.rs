@@ -757,6 +757,7 @@ impl MacroSolverApp {
             >= QuickInnovation::LEVEL_REQUIREMENT
             && self.crafter_config.active_stats_mut().quick_innovation;
         if heart_and_soul_enabled || quick_innovation_enabled {
+            #[cfg(not(target_arch = "wasm32"))]
             ui.label(
                 egui::RichText::new(
                     "⚠ Specialist actions substantially increase solve time and memory usage.",
@@ -764,6 +765,20 @@ impl MacroSolverApp {
                 .small()
                 .color(ui.visuals().warn_fg_color),
             );
+            #[cfg(target_arch = "wasm32")]
+            {
+                ui.label(
+                    egui::RichText::new(
+                        "⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions.",
+                    )
+                    .small()
+                    .color(ui.visuals().warn_fg_color),
+                );
+                ui.add(egui::Hyperlink::from_label_and_url(
+                    egui::RichText::new("Download latest release from GitHub").small(),
+                    "https://github.com/KonaeAkira/raphael-rs/releases/latest",
+                ));
+            }
         }
         ui.separator();
 
