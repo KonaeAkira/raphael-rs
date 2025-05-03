@@ -49,21 +49,31 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
-    pub fn tick_down(&mut self) {
-        let mask_0 = self.0 & MASK_0;
-        let mask_1 = (self.0 & MASK_1) >> 1;
-        let mask_2 = (self.0 & MASK_2) >> 2;
-        let mask_3 = (self.0 & MASK_3) >> 3;
-        let effect_tick = mask_0 | mask_1 | mask_2 | mask_3;
-        self.0 -= effect_tick;
-        if self.combo() != Combo::SynthesisBegin {
-            // Guard does not wear off because the first condition is guaranteed to be Normal
-            self.set_adversarial_guard(false);
+    pub const fn tick_down(&mut self) {
+        const {
+            assert!(Combo::SynthesisBegin.into_bits() == 0b11);
+            assert!((MASK_GUARD & (MASK_COMBO >> 2)) != 0);
+            assert!((MASK_GUARD & (MASK_COMBO >> 3)) != 0);
         }
+        // tick-mask for adversarial guard (needs updating in case any above assert fails)
+        let combo_bits = self.0 & MASK_COMBO;
+        let is_synth_begin = (combo_bits >> 2) & (combo_bits >> 3);
+        let guard_active = self.0 & MASK_GUARD;
+        let adversarial_guard_tick = guard_active & !is_synth_begin;
+        // tick-mask for normal effects
+        let mask_0 = self.0 & MASK_NORMAL_0;
+        let mask_1 = (self.0 & MASK_NORMAL_1) >> 1;
+        let mask_2 = (self.0 & MASK_NORMAL_2) >> 2;
+        let mask_3 = (self.0 & MASK_NORMAL_3) >> 3;
+        let normal_effects_tick = mask_0 | mask_1 | mask_2 | mask_3;
+        self.0 -= normal_effects_tick | adversarial_guard_tick;
     }
 }
 
-const MASK_0: u32 = Effects::new()
+const MASK_GUARD: u32 = Effects::new().with_adversarial_guard(true).into_bits();
+const MASK_COMBO: u32 = Effects::new().with_combo(Combo::SynthesisBegin).into_bits();
+
+const MASK_NORMAL_0: u32 = Effects::new()
     .with_waste_not(1)
     .with_innovation(1)
     .with_veneration(1)
@@ -72,7 +82,7 @@ const MASK_0: u32 = Effects::new()
     .with_manipulation(1)
     .into_bits();
 
-const MASK_1: u32 = Effects::new()
+const MASK_NORMAL_1: u32 = Effects::new()
     .with_waste_not(2)
     .with_innovation(2)
     .with_veneration(2)
@@ -81,7 +91,7 @@ const MASK_1: u32 = Effects::new()
     .with_manipulation(2)
     .into_bits();
 
-const MASK_2: u32 = Effects::new()
+const MASK_NORMAL_2: u32 = Effects::new()
     .with_waste_not(4)
     .with_innovation(4)
     .with_veneration(4)
@@ -89,7 +99,7 @@ const MASK_2: u32 = Effects::new()
     .with_manipulation(4)
     .into_bits();
 
-const MASK_3: u32 = Effects::new()
+const MASK_NORMAL_3: u32 = Effects::new()
     .with_waste_not(8)
     .with_manipulation(8)
     .into_bits();
