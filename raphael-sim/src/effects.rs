@@ -50,25 +50,11 @@ impl Effects {
     }
 
     pub fn tick_down(&mut self) {
-        let mut effect_tick = 0;
-        if self.waste_not() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_waste_not(1).into_bits() };
-        }
-        if self.innovation() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_innovation(1).into_bits() };
-        }
-        if self.veneration() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_veneration(1).into_bits() };
-        }
-        if self.great_strides() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_great_strides(1).into_bits() };
-        }
-        if self.muscle_memory() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_muscle_memory(1).into_bits() };
-        }
-        if self.manipulation() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_manipulation(1).into_bits() };
-        }
+        let mask_0 = self.0 & MASK_0;
+        let mask_1 = (self.0 & MASK_1) >> 1;
+        let mask_2 = (self.0 & MASK_2) >> 2;
+        let mask_3 = (self.0 & MASK_3) >> 3;
+        let effect_tick = mask_0 | mask_1 | mask_2 | mask_3;
         self.0 -= effect_tick;
         if self.combo() != Combo::SynthesisBegin {
             // Guard does not wear off because the first condition is guaranteed to be Normal
@@ -76,3 +62,34 @@ impl Effects {
         }
     }
 }
+
+const MASK_0: u32 = Effects::new()
+    .with_waste_not(1)
+    .with_innovation(1)
+    .with_veneration(1)
+    .with_great_strides(1)
+    .with_muscle_memory(1)
+    .with_manipulation(1)
+    .into_bits();
+
+const MASK_1: u32 = Effects::new()
+    .with_waste_not(2)
+    .with_innovation(2)
+    .with_veneration(2)
+    .with_great_strides(2)
+    .with_muscle_memory(2)
+    .with_manipulation(2)
+    .into_bits();
+
+const MASK_2: u32 = Effects::new()
+    .with_waste_not(4)
+    .with_innovation(4)
+    .with_veneration(4)
+    .with_muscle_memory(4)
+    .with_manipulation(4)
+    .into_bits();
+
+const MASK_3: u32 = Effects::new()
+    .with_waste_not(8)
+    .with_manipulation(8)
+    .into_bits();
