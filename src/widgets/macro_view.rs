@@ -299,7 +299,9 @@ impl Widget for MacroView<'_> {
                 } else {
                     usize::MAX
                 };
-                let num_chunks = if self.config.notification_config.avoid_single_action_macro {
+                let num_chunks = if self.config.notification_enabled
+                    && self.config.notification_config.avoid_single_action_macro
+                {
                     self.actions.len().saturating_sub(1).div_ceil(chunk_size)
                 } else {
                     self.actions.len().div_ceil(chunk_size)
