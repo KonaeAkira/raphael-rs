@@ -1,4 +1,4 @@
-use raphael_data::{Item, Locale};
+use raphael_data::{action_name, Item, Locale};
 use raphael_sim::{Action, Settings, SimulationState};
 
 use crate::{
@@ -190,28 +190,34 @@ impl Simulator<'_> {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             egui::ScrollArea::horizontal().show(ui, |ui| {
-                ui.set_height(30.0);
+                ui.set_height(35.0);
                 ui.set_width(ui.available_width());
                 ui.horizontal(|ui| {
-                    for (action, error) in self.actions.iter().zip(errors.iter()) {
-                        let image =
-                            util::get_action_icon(*action, self.crafter_config.selected_job)
-                                .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
-                                .corner_radius(4.0)
-                                .tint(match error {
-                                    Ok(_) => egui::Color32::WHITE,
-                                    Err(_) => egui::Color32::DARK_GRAY,
-                                });
-                        let response = ui
-                            .add(image)
-                            .on_hover_text(raphael_data::action_name(*action, self.locale));
-                        if error.is_err() {
-                            egui::Image::new(egui::include_image!(
-                                "../../assets/action-icons/disabled.webp"
-                            ))
-                            .tint(egui::Color32::GRAY)
-                            .paint_at(ui, response.rect);
-                        }
+                    for (step_index, (action, error)) in self.actions.iter().zip(errors.iter()).enumerate() {
+                        ui.vertical(|ui| {
+                            ui.set_width(30.0);
+                            ui.vertical_centered(|ui| {
+                                let image =
+                                    util::get_action_icon(*action, self.crafter_config.selected_job)
+                                        .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
+                                        .corner_radius(4.0)
+                                        .tint(match error {
+                                            Ok(_) => egui::Color32::WHITE,
+                                            Err(_) => egui::Color32::DARK_GRAY,
+                                        });
+                                let response = ui
+                                    .add(image)
+                                    .on_hover_text(action_name(*action, self.locale));
+                                if error.is_err() {
+                                    egui::Image::new(egui::include_image!(
+                                        "../../assets/action-icons/disabled.webp"
+                                    ))
+                                    .tint(egui::Color32::GRAY)
+                                    .paint_at(ui, response.rect);
+                                }
+                                ui.label(egui::RichText::new(format!("{}", step_index + 1)).small());
+                            });
+                        });
                     }
                 });
             });
