@@ -18,8 +18,8 @@ const EFFECTS_MASK: u32 = Effects::new()
 struct Key {
     progress: u32,
     quality_div: u16,
-    cp_div: u16,
-    durability_div: u16,
+    cp_div: u8,
+    durability_div: u8,
     effects_mask: u32,
 }
 
@@ -28,8 +28,8 @@ impl From<&SimulationState> for Key {
         Self {
             progress: state.progress,
             quality_div: (state.quality / 4096) as u16,
-            cp_div: state.cp / 64,
-            durability_div: state.durability / 15,
+            cp_div: (state.cp / 64) as u8,
+            durability_div: (state.durability / 15) as u8,
             effects_mask: state.effects.into_bits() & EFFECTS_MASK,
         }
     }
