@@ -82,6 +82,7 @@ fn unsolvable() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 0,
+                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 0,
@@ -128,8 +129,9 @@ fn zero_quality() {
         MacroSolverStats {
             finish_states: 1660,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 40,
+                processed_nodes: 43,
                 dropped_nodes: 10,
+                pareto_buckets_squared_size_sum: 141,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 52001,
@@ -174,18 +176,19 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 225965,
+            finish_states: 229983,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 4310,
-                dropped_nodes: 49847,
+                processed_nodes: 4472,
+                dropped_nodes: 51456,
+                pareto_buckets_squared_size_sum: 32640,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 886827,
-                pareto_values: 6280212,
+                states: 886940,
+                pareto_values: 6281275,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 107635,
-                pareto_values: 957332,
+                states: 108565,
+                pareto_values: 964182,
             },
         }
     "#]];
@@ -223,6 +226,7 @@ fn large_progress_quality_increase() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 20,
+                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 76819,
@@ -271,6 +275,7 @@ fn backload_progress_single_delicate_synthesis() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 14,
+                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states: 7918,

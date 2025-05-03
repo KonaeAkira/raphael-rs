@@ -33,7 +33,7 @@ web-time = "1.1.0"
 
 [package]
 name = "raphael-xiv"
-version = "0.20.0"
+version = "0.20.1"
 edition = "2024"
 default-run = "raphael-xiv"
 
@@ -66,11 +66,11 @@ ehttp = { version = "0.5.0", features = ["json"] }
 # Default features of `eframe` include the "glow" renderer which is not needed if "wgpu" is enabled.
 # To avoid including both in the binary, default features have to be disabled
 eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", default-features = false, features = [
-    "accesskit", # default
-    "default_fonts", # default
-    "wayland", # default
+    "accesskit",         # default
+    "default_fonts",     # default
+    "wayland",           # default
     "web_screen_reader", # default
-    "x11", # default
+    "x11",               # default
     "persistence",
     "wgpu",
 ] }
@@ -82,7 +82,7 @@ console_error_panic_hook = "0.1.7"
 web-sys = "0.3"
 eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", features = [
     "persistence",
-]}
+] }
 
 [profile.release]
 opt-level = 3
