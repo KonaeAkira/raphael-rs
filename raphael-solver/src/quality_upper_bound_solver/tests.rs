@@ -499,8 +499,8 @@ fn test_issue_113() {
     solver.precompute(simulator_settings.max_cp);
     let expected_runtime_stats = expect![[r#"
         QualityUbSolverStats {
-            states: 5759474,
-            pareto_values: 209671685,
+            states: 4704139,
+            pareto_values: 146877613,
         }
     "#]];
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -528,8 +528,8 @@ fn test_issue_118() {
     solver.precompute(simulator_settings.max_cp);
     let expected_runtime_stats = expect![[r#"
         QualityUbSolverStats {
-            states: 3374869,
-            pareto_values: 36634616,
+            states: 2909736,
+            pareto_values: 29290175,
         }
     "#]];
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
