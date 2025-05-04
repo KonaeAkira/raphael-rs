@@ -123,7 +123,6 @@ impl QualityUbSolver {
             } else {
                 precompute_cp
             };
-            dbg!(precompute_cp_ceiling);
             for cp in self.durability_cost..=precompute_cp_ceiling {
                 if self.interrupt_signal.is_set() {
                     return;
