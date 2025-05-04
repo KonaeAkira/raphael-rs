@@ -843,6 +843,52 @@ fn hardened_survey_plank_5558_5216() {
 }
 
 #[test]
+fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
+    let simulator_settings = Settings {
+        max_cp: 500,
+        max_durability: 20,
+        max_progress: 4700,
+        max_quality: 14900,
+        base_progress: 310,
+        base_quality: 324,
+        job_level: 100,
+        allowed_actions: ActionMask::all().remove(Action::TrainedEye),
+        adversarial: false,
+        backload_progress: false,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 11378,
+                steps: 23,
+                duration: 63,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 278336,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 20519,
+                dropped_nodes: 35735,
+                pareto_buckets_squared_size_sum: 221587,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states: 5201477,
+                pareto_values: 73810665,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 499215,
+                pareto_values: 8015140,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
 fn ceviche_4900_4800_no_quality() {
     let simulator_settings = Settings {
         max_cp: 620,
