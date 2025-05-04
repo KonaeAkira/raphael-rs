@@ -1,4 +1,6 @@
-# Raphael XIV [<img src="https://img.shields.io/discord/1244140502643904522?logo=discord&logoColor=white"/>](https://discord.com/invite/m2aCy3y8he)
+# Raphael XIV
+[<img src="https://img.shields.io/discord/1244140502643904522?label=Discord&logo=discord&logoColor=white"/>](https://discord.com/invite/m2aCy3y8he)
+[<img src="https://img.shields.io/github/downloads/KonaeAkira/raphael-rs/total?label=Downloads&color=%23dedede"/>](https://github.com/KonaeAkira/raphael-rs/releases)
 
 :link: [www.raphael-xiv.com](https://www.raphael-xiv.com/)
 
@@ -13,6 +15,7 @@ Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 * [Building from source](#building-from-source)
   * [Native GUI](#native-gui)
   * [Native CLI](#native-cli)
+* [Contributing](#contributing)
 
 ## Optimal macro selection
 
@@ -72,3 +75,19 @@ The CLI can also be installed so that it can be called from anywhere:
 ```
 cargo install --path raphael-cli
 ```
+
+## Contributing
+
+First of all, thank you for your interest in contributing to the project!
+
+If you are looking for things to help out on, the [Open Issues](https://github.com/KonaeAkira/raphael-rs/issues) are a good place to start.
+
+If you already have something in mind, feel free to open a pull request.
+Although ideally, you would discuss your idea on [Discord](https://discord.com/invite/m2aCy3y8he) beforehand to make sure it fits the general direction of the project and that no one else is already working on it.
+
+Before submitting a pull request, make sure all tests are ok by running:
+```
+cargo test --workspace
+```
+
+**Important:** Pull requests should be opened against the `preview` branch. The `main` branch is for releasing.
