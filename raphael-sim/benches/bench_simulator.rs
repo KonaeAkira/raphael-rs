@@ -47,14 +47,7 @@ fn bench_tick_effects(c: &mut Criterion) {
             .with_waste_not(rng.gen_range(0..=8))
     }
     c.bench_function("tick_effects", |b| {
-        b.iter_batched(
-            random_effects,
-            |mut effects| {
-                effects.tick_down();
-                effects // need to return result to prevent operation being optimized away
-            },
-            BatchSize::SmallInput,
-        );
+        b.iter_batched(random_effects, Effects::tick_down, BatchSize::SmallInput);
     });
 }
 

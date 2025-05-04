@@ -168,7 +168,8 @@ pub fn use_action_combo(
     for action in action_combo.actions() {
         state = state.use_action(*action, Condition::Normal, &settings.simulator_settings)?;
         if state.effects.allow_quality_actions() && state.quality >= settings.max_quality() {
-            state.strip_quality_effects();
+            state.unreliable_quality = 0;
+            state.effects = state.effects.strip_quality_effects();
         }
     }
     state.effects.set_combo(Combo::None);

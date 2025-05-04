@@ -81,7 +81,7 @@ impl<'a> MacroSolver<'a> {
 
         let mut initial_state = SimulationState::new(&self.settings.simulator_settings);
         if initial_state.quality >= self.settings.max_quality() {
-            initial_state.strip_quality_effects();
+            initial_state.effects = initial_state.effects.strip_quality_effects();
         }
 
         let timer = ScopedTimer::new("Finish Solver");

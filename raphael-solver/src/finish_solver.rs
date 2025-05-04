@@ -19,14 +19,7 @@ impl ReducedState {
         Self {
             durability: state.durability,
             cp: state.cp,
-            effects: state
-                .effects
-                .with_allow_quality_actions(false)
-                .with_inner_quiet(0)
-                .with_innovation(0)
-                .with_great_strides(0)
-                .with_adversarial_guard(false)
-                .with_quick_innovation_available(false),
+            effects: state.effects.strip_quality_effects(),
         }
     }
 

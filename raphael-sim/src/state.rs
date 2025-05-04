@@ -145,7 +145,7 @@ impl SimulationState {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
-            state.effects.tick_down();
+            state.effects = state.effects.tick_down();
         }
 
         if settings.adversarial && quality_increase != 0 {
@@ -159,22 +159,11 @@ impl SimulationState {
             .set_combo(A::combo(&state, settings, condition));
 
         if !state.effects.allow_quality_actions() {
-            state.strip_quality_effects();
+            state.unreliable_quality = 0;
+            state.effects = state.effects.strip_quality_effects();
         }
 
         Ok(state)
-    }
-
-    pub fn strip_quality_effects(&mut self) {
-        self.unreliable_quality = 0;
-        self.effects = self
-            .effects
-            .with_inner_quiet(0)
-            .with_innovation(0)
-            .with_great_strides(0)
-            .with_quick_innovation_available(false)
-            .with_adversarial_guard(false)
-            .with_allow_quality_actions(false)
     }
 
     pub fn use_action(

@@ -49,31 +49,44 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
-    pub const fn tick_down(&mut self) {
+    pub const fn tick_down(self) -> Self {
         const {
             assert!(Combo::SynthesisBegin.into_bits() == 0b11);
-            assert!((MASK_GUARD & (MASK_COMBO >> 2)) != 0);
-            assert!((MASK_GUARD & (MASK_COMBO >> 3)) != 0);
+            assert!(Self::COMBO_BITS == 2);
+            assert!(Self::ADVERSARIAL_GUARD_BITS == 1);
+            assert!(Self::COMBO_OFFSET == Self::ADVERSARIAL_GUARD_OFFSET + 2);
         }
-        // tick-mask for adversarial guard (needs updating in case any above assert fails)
-        let combo_bits = self.0 & MASK_COMBO;
-        let is_synth_begin = (combo_bits >> 2) & (combo_bits >> 3);
-        let guard_active = self.0 & MASK_GUARD;
-        let adversarial_guard_tick = guard_active & !is_synth_begin;
-        // tick-mask for normal effects
-        let mask_0 = self.0 & MASK_NORMAL_0;
-        let mask_1 = (self.0 & MASK_NORMAL_1) >> 1;
-        let mask_2 = (self.0 & MASK_NORMAL_2) >> 2;
-        let mask_3 = (self.0 & MASK_NORMAL_3) >> 3;
-        let normal_effects_tick = mask_0 | mask_1 | mask_2 | mask_3;
-        self.0 -= normal_effects_tick | adversarial_guard_tick;
+        // Calculate the decrement bit for the adversarial guard
+        // The bit corresponding to the adversarial guard effect is set if the guard should fall off.
+        // The guard should fall off if it is currently active and the combo is not `SynthesisBegin`.
+        let adversarial_guard_tick = {
+            let is_synth_begin = (self.into_bits() >> 2) & (self.into_bits() >> 3);
+            self.into_bits() & !is_synth_begin & (1 << Self::ADVERSARIAL_GUARD_OFFSET)
+        };
+        // Calculate the decrement bits for all ticking effects.
+        // The decrement contains the least-significant bit of all active ticking effects.
+        let normal_effects_tick = {
+            let mask_0 = self.into_bits() & EFFECTS_BIT_0;
+            let mask_1 = (self.into_bits() & EFFECTS_BIT_1) >> 1;
+            let mask_2 = (self.into_bits() & EFFECTS_BIT_2) >> 2;
+            let mask_3 = (self.into_bits() & EFFECTS_BIT_3) >> 3;
+            mask_0 | mask_1 | mask_2 | mask_3
+        };
+        Self::from_bits(self.into_bits() - (normal_effects_tick | adversarial_guard_tick))
+    }
+
+    /// Removes all effects that are only relevant for Quality.
+    pub const fn strip_quality_effects(self) -> Self {
+        self.with_allow_quality_actions(false)
+            .with_inner_quiet(0)
+            .with_innovation(0)
+            .with_great_strides(0)
+            .with_adversarial_guard(false)
+            .with_quick_innovation_available(false)
     }
 }
 
-const MASK_GUARD: u32 = Effects::new().with_adversarial_guard(true).into_bits();
-const MASK_COMBO: u32 = Effects::new().with_combo(Combo::SynthesisBegin).into_bits();
-
-const MASK_NORMAL_0: u32 = Effects::new()
+const EFFECTS_BIT_0: u32 = Effects::new()
     .with_waste_not(1)
     .with_innovation(1)
     .with_veneration(1)
@@ -82,7 +95,7 @@ const MASK_NORMAL_0: u32 = Effects::new()
     .with_manipulation(1)
     .into_bits();
 
-const MASK_NORMAL_1: u32 = Effects::new()
+const EFFECTS_BIT_1: u32 = Effects::new()
     .with_waste_not(2)
     .with_innovation(2)
     .with_veneration(2)
@@ -91,7 +104,7 @@ const MASK_NORMAL_1: u32 = Effects::new()
     .with_manipulation(2)
     .into_bits();
 
-const MASK_NORMAL_2: u32 = Effects::new()
+const EFFECTS_BIT_2: u32 = Effects::new()
     .with_waste_not(4)
     .with_innovation(4)
     .with_veneration(4)
@@ -99,7 +112,7 @@ const MASK_NORMAL_2: u32 = Effects::new()
     .with_manipulation(4)
     .into_bits();
 
-const MASK_NORMAL_3: u32 = Effects::new()
+const EFFECTS_BIT_3: u32 = Effects::new()
     .with_waste_not(8)
     .with_manipulation(8)
     .into_bits();
