@@ -229,8 +229,8 @@ fn large_progress_quality_increase() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 53728,
-                pareto_values: 53308,
+                states: 253944,
+                pareto_values: 252204,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 10,

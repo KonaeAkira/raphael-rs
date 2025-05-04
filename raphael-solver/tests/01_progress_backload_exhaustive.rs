@@ -189,8 +189,8 @@ fn pactmaker_3240_3130_heart_and_soul() {
                 pareto_buckets_squared_size_sum: 1101,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 3437773,
-                pareto_values: 51809018,
+                states: 3479713,
+                pareto_values: 51850958,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 1494941,
@@ -437,8 +437,8 @@ fn stuffed_peppers_2_heart_and_soul() {
                 pareto_buckets_squared_size_sum: 318868,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 3821401,
-                pareto_values: 76306552,
+                states: 3845866,
+                pareto_values: 76331017,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 4102033,
@@ -487,8 +487,8 @@ fn stuffed_peppers_2_quick_innovation() {
                 pareto_buckets_squared_size_sum: 1668192,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 3842881,
-                pareto_values: 74407766,
+                states: 3868907,
+                pareto_values: 74430404,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 4233011,

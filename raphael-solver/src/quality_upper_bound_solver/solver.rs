@@ -48,8 +48,6 @@ impl QualityUbSolver {
 
         let mut effects = Effects::initial(&self.settings.simulator_settings)
             .with_trained_perfection_available(false)
-            .with_quick_innovation_available(false)
-            .with_heart_and_soul_available(false)
             .with_combo(Combo::None);
         if self.settings.max_quality() == 0 {
             effects = effects.strip_quality_effects();
