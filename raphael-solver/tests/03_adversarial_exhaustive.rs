@@ -104,8 +104,8 @@ fn stuffed_peppers() {
                 pareto_buckets_squared_size_sum: 1172823,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 4715787,
-                pareto_values: 77740251,
+                states: 4722074,
+                pareto_values: 77746538,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 842949,
@@ -155,8 +155,8 @@ fn test_rare_tacos_2() {
                 pareto_buckets_squared_size_sum: 143370684,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 5030024,
-                pareto_values: 135254303,
+                states: 5030738,
+                pareto_values: 135274246,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 1388845,
@@ -207,8 +207,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_buckets_squared_size_sum: 463009,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 3768713,
-                pareto_values: 33007481,
+                states: 3772842,
+                pareto_values: 33011766,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 58468,
@@ -256,8 +256,8 @@ fn test_indagator_3858_4057() {
                 pareto_buckets_squared_size_sum: 99526,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 5297705,
-                pareto_values: 125105998,
+                states: 5310554,
+                pareto_values: 125659412,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 675136,
@@ -306,8 +306,8 @@ fn test_rare_tacos_4628_4410() {
                 pareto_buckets_squared_size_sum: 23891886,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 5297703,
-                pareto_values: 150960933,
+                states: 5298836,
+                pareto_values: 151000601,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 319254,
