@@ -101,42 +101,67 @@ impl QualityUbSolver {
             return;
         }
 
-        let templates = self.generate_precompute_templates();
-        for cp in self.durability_cost..=precompute_cp {
-            if self.interrupt_signal.is_set() {
-                return;
+        let all_templates = self.generate_precompute_templates();
+        for (heart_and_soul, quick_innovation) in
+            [(false, false), (false, true), (true, false), (true, true)]
+        {
+            let templates: Vec<_> = all_templates
+                .iter()
+                .filter(|(template, _)| {
+                    template.effects.heart_and_soul_available() == heart_and_soul
+                        && template.effects.quick_innovation_available() == quick_innovation
+                })
+                .collect();
+            if templates.is_empty() {
+                continue;
             }
-            let init = || {
-                ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality())
+            // States are computed in order of less CP to more CP.
+            // States currently being computed assume that child states have already been computed.
+            // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
+            // HeartAndSoul enables the use of TricksOfTrade, which restores CP.
+            // QuickInnovation requires no CP (and no durability, so durability cost in terms of CP is 0).
+            let precompute_cp_ceiling = if heart_and_soul {
+                precompute_cp.saturating_sub(20)
+            } else {
+                precompute_cp
             };
-            let missing_cp = self.settings.max_cp() - cp;
-            let solved_states = templates
-                .par_iter()
-                .filter_map(|(template, required_cp)| {
-                    if missing_cp >= *required_cp {
-                        Some(ReducedState {
-                            cp: cp + self.durability_cost,
-                            compressed_unreliable_quality: template.compressed_unreliable_quality,
-                            effects: template.effects,
-                        })
-                    } else {
-                        None
-                    }
-                })
-                .map_init(init, |pareto_front_builder, state| {
-                    let state = ReducedState { cp, ..state };
-                    let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                    (state, pareto_front)
-                })
-                .collect_vec_list();
-            for thread_solved_states in solved_states {
-                self.solved_states.extend(thread_solved_states);
+            dbg!(precompute_cp_ceiling);
+            for cp in self.durability_cost..=precompute_cp_ceiling {
+                if self.interrupt_signal.is_set() {
+                    return;
+                }
+                let missing_cp = precompute_cp_ceiling - cp;
+                let solved_states = templates
+                    .par_iter()
+                    .filter(|(_, required_cp)| missing_cp >= *required_cp)
+                    .map_init(
+                        || {
+                            ParetoFrontBuilder::new(
+                                self.settings.max_progress(),
+                                self.settings.max_quality(),
+                            )
+                        },
+                        |pareto_front_builder, (template, _)| {
+                            let state = ReducedState {
+                                cp,
+                                compressed_unreliable_quality: template
+                                    .compressed_unreliable_quality,
+                                effects: template.effects,
+                            };
+                            let pareto_front =
+                                self.solve_precompute_state(pareto_front_builder, state);
+                            (state, pareto_front)
+                        },
+                    )
+                    .collect_vec_list();
+                self.solved_states
+                    .extend(solved_states.into_iter().flatten());
             }
         }
 
         log::debug!(
             "QualityUbSolver - templates: {}, precomputed_states: {}",
-            templates.len(),
+            all_templates.len(),
             self.solved_states.len()
         );
     }
@@ -156,10 +181,9 @@ impl QualityUbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        log::error!("Parent: {state:?}");
-                        log::error!("Child: {new_state:?}");
-                        log::error!("Action: {action:?}");
-                        unreachable!("Precompute child state {new_state:?} does not exist.");
+                        unreachable!(
+                            "Precompute state does not exist.\nParent: {state:?}\nChild: {new_state:?}\nAction: {action:?}"
+                        );
                     }
                     pareto_front_builder
                         .peek_mut()

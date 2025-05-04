@@ -526,7 +526,6 @@ fn test_issue_118() {
     let solver_settings = SolverSettings { simulator_settings };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.precompute(simulator_settings.max_cp);
-    solver.precompute(simulator_settings.max_cp);
     let expected_runtime_stats = expect![[r#"
         QualityUbSolverStats {
             states: 3374869,
