@@ -49,30 +49,57 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
-    pub fn tick_down(&mut self) {
-        let mut effect_tick = 0;
-        if self.waste_not() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_waste_not(1).into_bits() };
+    pub const fn tick_down(&mut self) {
+        const {
+            assert!(Combo::SynthesisBegin.into_bits() == 0b11);
+            assert!((MASK_GUARD & (MASK_COMBO >> 2)) != 0);
+            assert!((MASK_GUARD & (MASK_COMBO >> 3)) != 0);
         }
-        if self.innovation() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_innovation(1).into_bits() };
-        }
-        if self.veneration() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_veneration(1).into_bits() };
-        }
-        if self.great_strides() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_great_strides(1).into_bits() };
-        }
-        if self.muscle_memory() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_muscle_memory(1).into_bits() };
-        }
-        if self.manipulation() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_manipulation(1).into_bits() };
-        }
-        self.0 -= effect_tick;
-        if self.combo() != Combo::SynthesisBegin {
-            // Guard does not wear off because the first condition is guaranteed to be Normal
-            self.set_adversarial_guard(false);
-        }
+        // tick-mask for adversarial guard (needs updating in case any above assert fails)
+        let combo_bits = self.0 & MASK_COMBO;
+        let is_synth_begin = (combo_bits >> 2) & (combo_bits >> 3);
+        let guard_active = self.0 & MASK_GUARD;
+        let adversarial_guard_tick = guard_active & !is_synth_begin;
+        // tick-mask for normal effects
+        let mask_0 = self.0 & MASK_NORMAL_0;
+        let mask_1 = (self.0 & MASK_NORMAL_1) >> 1;
+        let mask_2 = (self.0 & MASK_NORMAL_2) >> 2;
+        let mask_3 = (self.0 & MASK_NORMAL_3) >> 3;
+        let normal_effects_tick = mask_0 | mask_1 | mask_2 | mask_3;
+        self.0 -= normal_effects_tick | adversarial_guard_tick;
     }
 }
+
+const MASK_GUARD: u32 = Effects::new().with_adversarial_guard(true).into_bits();
+const MASK_COMBO: u32 = Effects::new().with_combo(Combo::SynthesisBegin).into_bits();
+
+const MASK_NORMAL_0: u32 = Effects::new()
+    .with_waste_not(1)
+    .with_innovation(1)
+    .with_veneration(1)
+    .with_great_strides(1)
+    .with_muscle_memory(1)
+    .with_manipulation(1)
+    .into_bits();
+
+const MASK_NORMAL_1: u32 = Effects::new()
+    .with_waste_not(2)
+    .with_innovation(2)
+    .with_veneration(2)
+    .with_great_strides(2)
+    .with_muscle_memory(2)
+    .with_manipulation(2)
+    .into_bits();
+
+const MASK_NORMAL_2: u32 = Effects::new()
+    .with_waste_not(4)
+    .with_innovation(4)
+    .with_veneration(4)
+    .with_muscle_memory(4)
+    .with_manipulation(4)
+    .into_bits();
+
+const MASK_NORMAL_3: u32 = Effects::new()
+    .with_waste_not(8)
+    .with_manipulation(8)
+    .into_bits();

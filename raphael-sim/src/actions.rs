@@ -817,19 +817,18 @@ impl Combo {
     pub const fn into_bits(self) -> u8 {
         match self {
             Self::None => 0,
-            Self::SynthesisBegin => 1,
-            Self::BasicTouch => 2,
-            Self::StandardTouch => 3,
+            Self::BasicTouch => 1,
+            Self::StandardTouch => 2,
+            Self::SynthesisBegin => 3,
         }
     }
 
     pub const fn from_bits(value: u8) -> Self {
         match value {
             0 => Self::None,
-            1 => Self::SynthesisBegin,
-            2 => Self::BasicTouch,
-            3 => Self::StandardTouch,
-            _ => Self::None,
+            1 => Self::BasicTouch,
+            2 => Self::StandardTouch,
+            _ => Self::SynthesisBegin,
         }
     }
 }
