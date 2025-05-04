@@ -94,7 +94,7 @@ impl QualityUbSolver {
         templates.into_iter().collect()
     }
 
-    pub fn precompute(&mut self, precompute_cp: u16) {
+    pub fn precompute(&mut self) {
         if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
             return;
         }
@@ -119,9 +119,9 @@ impl QualityUbSolver {
             // HeartAndSoul enables the use of TricksOfTrade, which restores CP.
             // QuickInnovation requires no CP (and no durability, so durability cost in terms of CP is 0).
             let precompute_cp_ceiling = if heart_and_soul {
-                precompute_cp.saturating_sub(20)
+                self.settings.max_cp().saturating_sub(20)
             } else {
-                precompute_cp
+                self.settings.max_cp()
             };
             for cp in self.durability_cost..=precompute_cp_ceiling {
                 if self.interrupt_signal.is_set() {

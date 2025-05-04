@@ -496,11 +496,11 @@ fn test_issue_113() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-    solver.precompute(simulator_settings.max_cp);
+    solver.precompute();
     let expected_runtime_stats = expect![[r#"
         QualityUbSolverStats {
-            states: 4704139,
-            pareto_values: 146877613,
+            states: 5766907,
+            pareto_values: 210329518,
         }
     "#]];
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -525,11 +525,11 @@ fn test_issue_118() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-    solver.precompute(simulator_settings.max_cp);
+    solver.precompute();
     let expected_runtime_stats = expect![[r#"
         QualityUbSolverStats {
-            states: 2909736,
-            pareto_values: 29290175,
+            states: 3375064,
+            pareto_values: 36637277,
         }
     "#]];
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -574,7 +574,7 @@ fn random_state(settings: &Settings) -> SimulationState {
 fn monotonic_fuzz_check(simulator_settings: Settings) {
     let solver_settings = SolverSettings { simulator_settings };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-    solver.precompute(simulator_settings.max_cp);
+    solver.precompute();
     for _ in 0..100000 {
         let state = random_state(&simulator_settings);
         let state_upper_bound = solver.quality_upper_bound(state).unwrap();

@@ -134,8 +134,8 @@ fn zero_quality() {
                 pareto_buckets_squared_size_sum: 141,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 18857,
-                pareto_values: 38738,
+                states: 63388,
+                pareto_values: 172523,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 25649,
@@ -183,8 +183,8 @@ fn max_quality() {
                 pareto_buckets_squared_size_sum: 32640,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 828904,
-                pareto_values: 6039116,
+                states: 898686,
+                pareto_values: 6304450,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 108565,
@@ -229,8 +229,8 @@ fn large_progress_quality_increase() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 253944,
-                pareto_values: 252204,
+                states: 413424,
+                pareto_values: 411684,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 10,
@@ -278,8 +278,8 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 1798,
-                pareto_values: 1326,
+                states: 8087,
+                pareto_values: 7205,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 8,
