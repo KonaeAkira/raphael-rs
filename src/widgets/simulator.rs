@@ -1,4 +1,3 @@
-use egui::text;
 use raphael_data::{Item, Locale};
 use raphael_sim::{Action, Settings, SimulationState};
 
