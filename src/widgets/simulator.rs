@@ -194,7 +194,9 @@ impl Simulator<'_> {
                 ui.set_width(ui.available_width());
                 ui.horizontal(|ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 8.0);
-                    for (step_index, (action, error)) in self.actions.iter().zip(errors.iter()).enumerate() {
+                    for (step_index, (action, error)) in
+                        self.actions.iter().zip(errors.iter()).enumerate()
+                    {
                         let image =
                             util::get_action_icon(*action, self.crafter_config.selected_job)
                                 .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
@@ -214,25 +216,30 @@ impl Simulator<'_> {
                             .paint_at(ui, response.rect);
                         }
                         let mut step_count_ui = ui.new_child(egui::UiBuilder::default());
-                        let step_count_text = egui::RichText::new(format!("{}", step_index + 1))
+                        let step_count_text = egui::RichText::new((step_index + 1).to_string())
                             .color(egui::Color32::BLACK)
                             .size(12.0);
-                        let text_len_correction = if (step_count_text.text().len() % 2) == 0 { 2.5 } else { 0.0 };
-                        let text_offset = [-10.0 + text_len_correction, 11.0];
-                        for translation in [
-                            [-0.5, -0.5], [-0.5, 0.0], [-0.5, 0.5],
-                            [ 0.5, -0.5], [ 0.5, 0.0], [ 0.5, 0.5],
-                            [ 0.0, -0.5], [ 0.0, 0.5],
+                        let text_offset_adjust = step_count_text.text().len() as f32 * 2.5;
+                        let text_offset = egui::Vec2::new(-12.5 + text_offset_adjust, 11.0);
+                        for shadow_offset in [
+                            egui::Vec2::new(-0.5, -0.5),
+                            egui::Vec2::new(-0.5, 0.0),
+                            egui::Vec2::new(-0.5, 0.5),
+                            egui::Vec2::new(0.5, -0.5),
+                            egui::Vec2::new(0.5, 0.0),
+                            egui::Vec2::new(0.5, 0.5),
+                            egui::Vec2::new(0.0, -0.5),
+                            egui::Vec2::new(0.0, 0.5),
                         ] {
-                            let translated_offset = [text_offset[0] + translation[0], text_offset[1] + translation[1]];
                             step_count_ui.put(
-                                response.rect.translate(translated_offset.into()),
-                                egui::Label::new(step_count_text.clone()).selectable(false)
+                                response.rect.translate(text_offset + shadow_offset),
+                                egui::Label::new(step_count_text.clone()).selectable(false),
                             );
                         }
                         step_count_ui.put(
-                            response.rect.translate(text_offset.into()),
-                            egui::Label::new(step_count_text.color(egui::Color32::WHITE)).selectable(false)
+                            response.rect.translate(text_offset),
+                            egui::Label::new(step_count_text.color(egui::Color32::WHITE))
+                                .selectable(false),
                         );
                     }
                 });
