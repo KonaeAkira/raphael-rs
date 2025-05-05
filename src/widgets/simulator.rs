@@ -192,8 +192,8 @@ impl Simulator<'_> {
             egui::ScrollArea::horizontal().show(ui, |ui| {
                 ui.set_height(30.0);
                 ui.set_width(ui.available_width());
-                let action_area_left_top = egui::Rect::from_pos(ui.min_rect().left_top());
                 ui.horizontal(|ui| {
+                    ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 8.0);
                     for (step_index, (action, error)) in self.actions.iter().zip(errors.iter()).enumerate() {
                         let image =
                             util::get_action_icon(*action, self.crafter_config.selected_job)
@@ -203,10 +203,8 @@ impl Simulator<'_> {
                                     Ok(_) => egui::Color32::WHITE,
                                     Err(_) => egui::Color32::DARK_GRAY,
                                 });
-                        let rect = action_area_left_top.translate([33.0*(step_index as f32) + 15.0, 0.0].into());
-                        let mut action_container = ui.new_child(egui::UiBuilder::default());
-                        let response = action_container
-                            .put(rect, image)
+                        let response = ui
+                            .add(image)
                             .on_hover_text(raphael_data::action_name(*action, self.locale));
                         if error.is_err() {
                             egui::Image::new(egui::include_image!(
@@ -215,6 +213,8 @@ impl Simulator<'_> {
                             .tint(egui::Color32::GRAY)
                             .paint_at(ui, response.rect);
                         }
+
+                        let mut step_count_ui = ui.new_child(egui::UiBuilder::default());
                         let step_count_text = egui::RichText::new(format!("{}", step_index + 1))
                             .color(egui::Color32::BLACK)
                             .size(12.0);
@@ -226,12 +226,12 @@ impl Simulator<'_> {
                             [ 0.0, -0.5], [ 0.0, 0.5],
                         ] {
                             let translated_offset = [text_offset[0] + translation[0], text_offset[1] + translation[1]];
-                            action_container.put(
+                            step_count_ui.put(
                                 response.rect.translate(translated_offset.into()),
                                 egui::Label::new(step_count_text.clone()).selectable(false)
                             );
                         }
-                        action_container.put(
+                        step_count_ui.put(
                             response.rect.translate(text_offset.into()),
                             egui::Label::new(step_count_text.color(egui::Color32::WHITE)).selectable(false)
                         );
