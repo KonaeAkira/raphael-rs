@@ -204,7 +204,7 @@ impl Simulator<'_> {
                                     Ok(_) => egui::Color32::WHITE,
                                     Err(_) => egui::Color32::DARK_GRAY,
                                 });
-                        let rect = action_area_left_top.translate([36.0*(step_index as f32) + 20.0, 0.0].into());
+                        let rect = action_area_left_top.translate([33.0*(step_index as f32) + 15.0, 0.0].into());
                         let mut action_container = ui.new_child(egui::UiBuilder::default());
                         let response = action_container
                             .put(rect, image)
@@ -220,7 +220,7 @@ impl Simulator<'_> {
                             .color(egui::Color32::BLACK)
                             .size(12.0);
                         let text_len_correction = if (step_count_text.text().len() % 2) == 0 { 2.5 } else { 0.0 };
-                        let text_offset = [-10.0 + text_len_correction, -12.0];
+                        let text_offset = [-10.0 + text_len_correction, 11.0];
                         for translation in [
                             [-0.5, -0.5], [-0.5, 0.0], [-0.5, 0.5],
                             [ 0.5, -0.5], [ 0.5, 0.0], [ 0.5, 0.5],
