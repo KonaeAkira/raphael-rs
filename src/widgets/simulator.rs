@@ -213,7 +213,6 @@ impl Simulator<'_> {
                             .tint(egui::Color32::GRAY)
                             .paint_at(ui, response.rect);
                         }
-
                         let mut step_count_ui = ui.new_child(egui::UiBuilder::default());
                         let step_count_text = egui::RichText::new(format!("{}", step_index + 1))
                             .color(egui::Color32::BLACK)
