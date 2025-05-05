@@ -1,3 +1,4 @@
+use egui::text;
 use raphael_data::{Item, Locale};
 use raphael_sim::{Action, Settings, SimulationState};
 
@@ -203,8 +204,9 @@ impl Simulator<'_> {
                                     Ok(_) => egui::Color32::WHITE,
                                     Err(_) => egui::Color32::DARK_GRAY,
                                 });
-                        let rect = action_area_left_top.translate([36.0*(step_index as f32) + 20.0, 5.0].into());
-                        let response = ui
+                        let rect = action_area_left_top.translate([36.0*(step_index as f32) + 20.0, 0.0].into());
+                        let mut action_container = ui.new_child(egui::UiBuilder::default());
+                        let response = action_container
                             .put(rect, image)
                             .on_hover_text(raphael_data::action_name(*action, self.locale));
                         if error.is_err() {
@@ -217,24 +219,21 @@ impl Simulator<'_> {
                         let step_count_text = egui::RichText::new(format!("{}", step_index + 1))
                             .color(egui::Color32::BLACK)
                             .size(12.0);
-                        ui.put(
-                            response.rect.translate([-10.5, -12.5].into()),
-                            egui::Label::new(step_count_text.clone()).selectable(false)
-                        );
-                        ui.put(
-                            response.rect.translate([-10.5, -11.5].into()),
-                            egui::Label::new(step_count_text.clone()).selectable(false)
-                        );
-                        ui.put(
-                            response.rect.translate([-9.5, -12.5].into()),
-                            egui::Label::new(step_count_text.clone()).selectable(false)
-                        );
-                        ui.put(
-                            response.rect.translate([-9.5, -11.5].into()),
-                            egui::Label::new(step_count_text.clone()).selectable(false)
-                        );
-                        ui.put(
-                            response.rect.translate([-10.0, -12.0].into()),
+                        let text_len_correction = if (step_count_text.text().len() % 2) == 0 { 2.5 } else { 0.0 };
+                        let text_offset = [-10.0 + text_len_correction, -12.0];
+                        for translation in [
+                            [-0.5, -0.5], [-0.5, 0.0], [-0.5, 0.5],
+                            [ 0.5, -0.5], [ 0.5, 0.0], [ 0.5, 0.5],
+                            [ 0.0, -0.5], [ 0.0, 0.5],
+                        ] {
+                            let translated_offset = [text_offset[0] + translation[0], text_offset[1] + translation[1]];
+                            action_container.put(
+                                response.rect.translate(translated_offset.into()),
+                                egui::Label::new(step_count_text.clone()).selectable(false)
+                            );
+                        }
+                        action_container.put(
+                            response.rect.translate(text_offset.into()),
                             egui::Label::new(step_count_text.color(egui::Color32::WHITE)).selectable(false)
                         );
                     }
