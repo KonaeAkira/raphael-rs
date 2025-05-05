@@ -190,34 +190,53 @@ impl Simulator<'_> {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             egui::ScrollArea::horizontal().show(ui, |ui| {
-                ui.set_height(35.0);
+                ui.set_height(30.0);
                 ui.set_width(ui.available_width());
+                let action_area_left_top = egui::Rect::from_pos(ui.min_rect().left_top());
                 ui.horizontal(|ui| {
                     for (step_index, (action, error)) in self.actions.iter().zip(errors.iter()).enumerate() {
-                        ui.vertical(|ui| {
-                            ui.set_width(30.0);
-                            ui.vertical_centered(|ui| {
-                                let image =
-                                    util::get_action_icon(*action, self.crafter_config.selected_job)
-                                        .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
-                                        .corner_radius(4.0)
-                                        .tint(match error {
-                                            Ok(_) => egui::Color32::WHITE,
-                                            Err(_) => egui::Color32::DARK_GRAY,
-                                        });
-                                let response = ui
-                                    .add(image)
-                                    .on_hover_text(action_name(*action, self.locale));
-                                if error.is_err() {
-                                    egui::Image::new(egui::include_image!(
-                                        "../../assets/action-icons/disabled.webp"
-                                    ))
-                                    .tint(egui::Color32::GRAY)
-                                    .paint_at(ui, response.rect);
-                                }
-                                ui.label(egui::RichText::new(format!("{}", step_index + 1)).small());
-                            });
-                        });
+                        let image =
+                            util::get_action_icon(*action, self.crafter_config.selected_job)
+                                .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
+                                .corner_radius(4.0)
+                                .tint(match error {
+                                    Ok(_) => egui::Color32::WHITE,
+                                    Err(_) => egui::Color32::DARK_GRAY,
+                                });
+                        let rect = action_area_left_top.translate([36.0*(step_index as f32) + 20.0, 5.0].into());
+                        let response = ui
+                            .put(rect, image)
+                            .on_hover_text(action_name(*action, self.locale));
+                        if error.is_err() {
+                            egui::Image::new(egui::include_image!(
+                                "../../assets/action-icons/disabled.webp"
+                            ))
+                            .tint(egui::Color32::GRAY)
+                            .paint_at(ui, response.rect);
+                        }
+                        let step_count_text = egui::RichText::new(format!("{}", step_index + 1))
+                            .color(egui::Color32::BLACK)
+                            .size(12.0);
+                        ui.put(
+                            response.rect.translate([-10.5, -12.5].into()),
+                            egui::Label::new(step_count_text.clone()).selectable(false)
+                        );
+                        ui.put(
+                            response.rect.translate([-10.5, -11.5].into()),
+                            egui::Label::new(step_count_text.clone()).selectable(false)
+                        );
+                        ui.put(
+                            response.rect.translate([-9.5, -12.5].into()),
+                            egui::Label::new(step_count_text.clone()).selectable(false)
+                        );
+                        ui.put(
+                            response.rect.translate([-9.5, -11.5].into()),
+                            egui::Label::new(step_count_text.clone()).selectable(false)
+                        );
+                        ui.put(
+                            response.rect.translate([-10.0, -12.0].into()),
+                            egui::Label::new(step_count_text.color(egui::Color32::WHITE)).selectable(false)
+                        );
                     }
                 });
             });
