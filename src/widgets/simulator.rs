@@ -1,4 +1,4 @@
-use raphael_data::{action_name, Item, Locale};
+use raphael_data::{Item, Locale};
 use raphael_sim::{Action, Settings, SimulationState};
 
 use crate::{
@@ -206,7 +206,7 @@ impl Simulator<'_> {
                         let rect = action_area_left_top.translate([36.0*(step_index as f32) + 20.0, 5.0].into());
                         let response = ui
                             .put(rect, image)
-                            .on_hover_text(action_name(*action, self.locale));
+                            .on_hover_text(raphael_data::action_name(*action, self.locale));
                         if error.is_err() {
                             egui::Image::new(egui::include_image!(
                                 "../../assets/action-icons/disabled.webp"
