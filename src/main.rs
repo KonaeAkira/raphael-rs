@@ -1,7 +1,6 @@
 // Prevents a console from being opened on Windows
 // This attribute is ignored for all other platforms
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
 #![cfg_attr(target_arch = "wasm32", feature(alloc_error_hook))]
 
 #[cfg(all(target_os = "windows", not(debug_assertions)))]
@@ -107,7 +106,14 @@ fn main() {
             .await;
         remove_loading_spinner();
         if let Err(error) = start_result {
-            panic!("Failed to start eframe: {error:?}");
+            let mut message = format!("Failed to start app: {error:?}");
+            log::error!("{message}");
+            message.push_str("\n\nIn case the error is \"WebGL not supported\":");
+            message.push_str("\nPlease enable WebGL support in your browser.");
+            web_sys::window()
+                .unwrap()
+                .alert_with_message(&message)
+                .unwrap();
         }
     });
 }
