@@ -16,8 +16,8 @@ pub struct SolveArgs {
     #[arg(short, long, /*required_unless_present_any(["recipe_id, custom_recipe"]),*/ conflicts_with = "custom_recipe")]
     pub item_id: Option<u32>,
 
-    /// Custom recipe. Base progress/quality are optional but must both be specified if one is provided, in which case, rlvl, crafstamnship, and control are ignored
-    #[arg(long, num_args = 4, value_names = ["RLVL", "PROGRESS", "QUALITY", "DURABILITY"], /*required_unless_present_any(["recipe_id", "item_id"])*/)]
+    /// Custom recipe. <EXPERT> must be >0 if the custom recipe is expert, 0 otherwise
+    #[arg(long, num_args = 5, value_names = ["RLVL", "PROGRESS", "QUALITY", "DURABILITY", "EXPERT"], /*required_unless_present_any(["recipe_id", "item_id"])*/)]
     pub custom_recipe: Vec<u16>,
 
     /// Overrides base progress/quality, i.e. "progress/quality per 100% efficiency". rlvl, crafstamnship, and control are ignored if this argument is provided
@@ -184,7 +184,7 @@ pub fn execute(args: &SolveArgs) {
             durability_factor: 0,
             material_factor: 0,
             ingredients: Default::default(),
-            is_expert: false,
+            is_expert: args.custom_recipe[4] != 0,
             req_craftsmanship: 0,
             req_control: 0,
         }
