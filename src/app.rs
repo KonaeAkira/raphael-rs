@@ -5,14 +5,14 @@ use std::sync::{Arc, Mutex};
 use raphael_solver::SolverException;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
+use egui::{Align, CursorIcon, Id, Layout, TextStyle};
 use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
 use crate::config::{
     CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
-    RecipeConfiguration,
+    RecipeConfiguration, UIConfiguration,
 };
 use crate::widgets::*;
 
@@ -38,6 +38,7 @@ pub struct SolverConfig {
 
 pub struct MacroSolverApp {
     locale: Locale,
+    ui_config: UIConfiguration,
     recipe_config: RecipeConfiguration,
     custom_recipe_overrides_config: CustomRecipeOverridesConfiguration,
     selected_food: Option<Consumable>,
@@ -68,16 +69,7 @@ pub struct MacroSolverApp {
 impl MacroSolverApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let dark_mode = cc
-            .egui_ctx
-            .data_mut(|data| *data.get_persisted_mut_or(Id::new("DARK_MODE"), true));
-        if dark_mode {
-            cc.egui_ctx.set_visuals(Visuals::dark());
-        } else {
-            cc.egui_ctx.set_visuals(Visuals::light());
-        }
-
-        cc.egui_ctx.style_mut(|style| {
+        cc.egui_ctx.all_styles_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
             style.url_in_tooltip = true;
             style.always_scroll_the_only_direction = false;
@@ -92,6 +84,7 @@ impl MacroSolverApp {
 
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
+            ui_config: load(cc, "UI_CONFIG", UIConfiguration::default()),
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
             custom_recipe_overrides_config: load(
                 cc,
@@ -314,15 +307,6 @@ impl eframe::App for MacroSolverApp {
                                 );
                             });
 
-                        let mut visuals = ctx.style().visuals.clone();
-                        ui.selectable_value(&mut visuals, Visuals::light(), "☀ Light");
-                        ui.selectable_value(&mut visuals, Visuals::dark(), "🌙 Dark");
-                        ctx.data_mut(|data| {
-                            *data.get_persisted_mut_or_default(Id::new("DARK_MODE")) =
-                                visuals.dark_mode;
-                        });
-                        ctx.set_visuals(visuals);
-
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
                                 "View source on GitHub",
@@ -346,10 +330,66 @@ impl eframe::App for MacroSolverApp {
                             )
                             .open_in_new_tab(true),
                         );
-                        ui.with_layout(
-                            Layout::right_to_left(Align::Center),
-                            egui::warn_if_debug_build,
-                        );
+                        // Allocate space to make sure the top bar has space for the menu button
+                        ui.allocate_space(egui::Vec2::new(5.0, 0.0));
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            ui.add_enabled_ui(true, |ui| {
+                                egui::containers::menu::MenuButton::new("⚙")
+                                    .config(
+                                        egui::containers::menu::MenuConfig::default()
+                                            .close_behavior(
+                                                egui::PopupCloseBehavior::CloseOnClickOutside,
+                                            ),
+                                    )
+                                    .ui(ui, |ui| {
+                                        ui.reset_style();
+                                        ui.horizontal(|ui| {
+                                            ui.label("Zoom");
+
+                                            let mut zoom_percentage =
+                                                (ctx.zoom_factor() * 100.0).round() as u16;
+                                            ui.horizontal(|ui| {
+                                                ui.style_mut().spacing.item_spacing.x = 4.0;
+                                                ui.add_enabled_ui(zoom_percentage > 20, |ui| {
+                                                    if ui.button("-").clicked() {
+                                                        zoom_percentage -= 10;
+                                                    }
+                                                });
+                                                ui.add_enabled_ui(zoom_percentage != 100, |ui| {
+                                                    if ui.button("Reset").clicked() {
+                                                        zoom_percentage = 100;
+                                                    }
+                                                });
+                                                ui.add_enabled_ui(zoom_percentage < 500, |ui| {
+                                                    if ui.button("+").clicked() {
+                                                        zoom_percentage += 10;
+                                                    }
+                                                });
+                                            });
+
+                                            ui.add(
+                                                egui::DragValue::new(&mut zoom_percentage)
+                                                    .range(20..=500)
+                                                    .suffix("%")
+                                                    // dragging would cause the UI scale to jump arround erratically
+                                                    .speed(0.0)
+                                                    .update_while_editing(false),
+                                            );
+                                            ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
+                                        });
+                                        ui.horizontal(|ui| {
+                                            let theme_preference = &mut self.ui_config.theme_preference;
+                                            ui.selectable_value(theme_preference, egui::ThemePreference::Light, "☀ Light");
+                                            ui.selectable_value(theme_preference, egui::ThemePreference::Dark, "🌙 Dark");
+                                            ui.selectable_value(theme_preference, egui::ThemePreference::System, "🖥 System");
+                                            
+                                            ctx.set_theme(*theme_preference);
+                                        });
+                                    })
+                            });
+
+                            egui::warn_if_debug_build(ui);
+                        });
                     });
                 });
         });
@@ -455,6 +495,7 @@ impl eframe::App for MacroSolverApp {
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, "LOCALE", &self.locale);
+        eframe::set_value(storage, "UI_CONFIG", &self.ui_config);
         eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
         eframe::set_value(
             storage,

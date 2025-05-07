@@ -8,6 +8,11 @@ pub enum QualitySource {
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+pub struct UIConfiguration {
+    pub theme_preference: egui::ThemePreference,
+}
+
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
 pub struct CustomRecipeOverridesConfiguration {
     pub use_custom_recipe: bool,
     pub custom_recipe_overrides: CustomRecipeOverrides,
