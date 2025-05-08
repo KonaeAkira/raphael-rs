@@ -12,6 +12,18 @@
             content="Raphael is a crafting rotation optimizer and macro generator for Final Fantasy XIV."
         />
 
+        <script>
+            document.createElement = (function (create) {
+                return function () {
+                    const e = create.apply(this, arguments);
+                    if (e.tagName === "IFRAME") {
+                        e.setAttribute("credentialless", "");
+                    }
+                    return e;
+                };
+            })(document.createElement);
+        </script>
+
         <!-- Google AdSense ownership verification -->
         <script
             async
