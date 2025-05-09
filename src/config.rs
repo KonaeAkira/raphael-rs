@@ -7,9 +7,19 @@ pub enum QualitySource {
     Value(u16),
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct UIConfiguration {
+    pub zoom_percentage: u16,
     pub theme_preference: egui::ThemePreference,
+}
+
+impl Default for UIConfiguration {
+    fn default() -> Self {
+        Self {
+            zoom_percentage: 100,
+            theme_preference: egui::ThemePreference::default(),
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]

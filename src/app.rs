@@ -69,6 +69,10 @@ pub struct MacroSolverApp {
 impl MacroSolverApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let ui_config = load(cc, "UI_CONFIG", UIConfiguration::default());
+        cc.egui_ctx
+            .set_zoom_factor(f32::from(ui_config.zoom_percentage) * 0.01);
+
         cc.egui_ctx.all_styles_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
             style.url_in_tooltip = true;
@@ -84,7 +88,7 @@ impl MacroSolverApp {
 
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
-            ui_config: load(cc, "UI_CONFIG", UIConfiguration::default()),
+            ui_config,
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
             custom_recipe_overrides_config: load(
                 cc,
@@ -346,43 +350,56 @@ impl eframe::App for MacroSolverApp {
                                         ui.horizontal(|ui| {
                                             ui.label("Zoom");
 
-                                            let mut zoom_percentage =
-                                                (ctx.zoom_factor() * 100.0).round() as u16;
+                                            let zoom_percentage =
+                                                &mut self.ui_config.zoom_percentage;
                                             ui.horizontal(|ui| {
                                                 ui.style_mut().spacing.item_spacing.x = 4.0;
-                                                ui.add_enabled_ui(zoom_percentage > 20, |ui| {
+                                                ui.add_enabled_ui(*zoom_percentage > 20, |ui| {
                                                     if ui.button("-").clicked() {
-                                                        zoom_percentage -= 10;
+                                                        *zoom_percentage -= 10;
                                                     }
                                                 });
-                                                ui.add_enabled_ui(zoom_percentage != 100, |ui| {
+                                                ui.add_enabled_ui(*zoom_percentage != 100, |ui| {
                                                     if ui.button("Reset").clicked() {
-                                                        zoom_percentage = 100;
+                                                        *zoom_percentage = 100;
                                                     }
                                                 });
-                                                ui.add_enabled_ui(zoom_percentage < 500, |ui| {
+                                                ui.add_enabled_ui(*zoom_percentage < 500, |ui| {
                                                     if ui.button("+").clicked() {
-                                                        zoom_percentage += 10;
+                                                        *zoom_percentage += 10;
                                                     }
                                                 });
                                             });
 
                                             ui.add(
-                                                egui::DragValue::new(&mut zoom_percentage)
+                                                egui::DragValue::new(zoom_percentage)
                                                     .range(20..=500)
                                                     .suffix("%")
                                                     // dragging would cause the UI scale to jump arround erratically
                                                     .speed(0.0)
                                                     .update_while_editing(false),
                                             );
-                                            ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
+                                            ctx.set_zoom_factor(f32::from(*zoom_percentage) * 0.01);
                                         });
                                         ui.horizontal(|ui| {
-                                            let theme_preference = &mut self.ui_config.theme_preference;
-                                            ui.selectable_value(theme_preference, egui::ThemePreference::Light, "☀ Light");
-                                            ui.selectable_value(theme_preference, egui::ThemePreference::Dark, "🌙 Dark");
-                                            ui.selectable_value(theme_preference, egui::ThemePreference::System, "🖥 System");
-                                            
+                                            let theme_preference =
+                                                &mut self.ui_config.theme_preference;
+                                            ui.selectable_value(
+                                                theme_preference,
+                                                egui::ThemePreference::Light,
+                                                "☀ Light",
+                                            );
+                                            ui.selectable_value(
+                                                theme_preference,
+                                                egui::ThemePreference::Dark,
+                                                "🌙 Dark",
+                                            );
+                                            ui.selectable_value(
+                                                theme_preference,
+                                                egui::ThemePreference::System,
+                                                "🖥 System",
+                                            );
+
                                             ctx.set_theme(*theme_preference);
                                         });
                                     })
