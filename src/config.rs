@@ -17,7 +17,7 @@ impl Default for UIConfiguration {
     fn default() -> Self {
         Self {
             zoom_percentage: 100,
-            theme_preference: egui::ThemePreference::default(),
+            theme_preference: egui::ThemePreference::System,
         }
     }
 }

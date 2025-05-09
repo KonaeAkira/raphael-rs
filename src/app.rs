@@ -72,6 +72,7 @@ impl MacroSolverApp {
         let ui_config = load(cc, "UI_CONFIG", UIConfiguration::default());
         cc.egui_ctx
             .set_zoom_factor(f32::from(ui_config.zoom_percentage) * 0.01);
+        cc.egui_ctx.set_theme(ui_config.theme_preference);
 
         cc.egui_ctx.all_styles_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
