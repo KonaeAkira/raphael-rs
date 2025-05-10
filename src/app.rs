@@ -14,9 +14,7 @@ use crate::config::{
     AppConfig, CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
     RecipeConfiguration,
 };
-use crate::widgets::*;
-
-static THREAD_POOL_INIT: std::sync::Once = std::sync::Once::new();
+use crate::{thread_pool, widgets::*};
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -548,7 +546,7 @@ impl MacroSolverApp {
                 ui.separator();
 
                 ui.label("Maximum # threads for solver");
-                ui.add_enabled(!THREAD_POOL_INIT.is_completed(), |ui: &mut egui::Ui| {
+                ui.add_enabled(!thread_pool::initialization_attempted(), |ui: &mut egui::Ui| {
                     ui.horizontal(|ui| {
                         ui.radio_value(&mut self.app_config.num_threads, 0, "Auto");
                         let manual_selected = self.app_config.num_threads != 0;
@@ -556,7 +554,7 @@ impl MacroSolverApp {
                             && self.app_config.num_threads == 0
                         {
                             // `rayon::current_num_threads()` cannot be used here since that would implicitly create the pool
-                            self.app_config.num_threads = default_thread_pool_size();
+                            self.app_config.num_threads = thread_pool::default_size();
                         }
                         ui.add_enabled(
                             manual_selected,
@@ -564,7 +562,7 @@ impl MacroSolverApp {
                                 .range(1..=64)
                                 .clamp_existing_to_range(false)
                                 .custom_formatter(|value, _| {
-                                    if thread_pool_is_initialized() {
+                                    if thread_pool::is_initialized() {
                                         format!("{}", rayon::current_num_threads())
                                     } else if value == 0.0 {
                                         "-".to_owned()
@@ -575,7 +573,7 @@ impl MacroSolverApp {
                         );
                     }).response
                 });
-                if THREAD_POOL_INIT.is_completed() {
+                if thread_pool::initialization_attempted() {
                     #[cfg(target_arch = "wasm32")]
                     let app_restart_text = "Reload the page";
                     #[cfg(not(target_arch = "wasm32"))]
@@ -974,7 +972,7 @@ impl MacroSolverApp {
     }
 
     fn on_solve_initiated(&mut self, ctx: &egui::Context) {
-        if thread_pool_is_initialized() {
+        if thread_pool::is_initialized() {
             ctx.data_mut(|data| {
                 data.insert_temp(Id::new("SOLVE_INITIATED"), false);
             });
@@ -997,9 +995,7 @@ impl MacroSolverApp {
                 self.missing_stats_error_window_open = true;
             }
         } else {
-            THREAD_POOL_INIT.call_once(|| {
-                self.initialize_thread_pool();
-            });
+            thread_pool::attempt_initialization(self.app_config.num_threads);
             ctx.request_repaint();
         }
     }
@@ -1047,42 +1043,6 @@ impl MacroSolverApp {
             self.solver_events.clone(),
             self.solver_interrupt.clone(),
         );
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    fn initialize_thread_pool(&mut self) {
-        match rayon::ThreadPoolBuilder::new()
-            .num_threads(self.app_config.num_threads)
-            .build_global()
-        {
-            Ok(()) => log::debug!(
-                "Created global thread pool with num_threads = {}",
-                self.app_config.num_threads
-            ),
-            Err(error) => log::debug!(
-                "Creation of global thread pool failed with error = {:?}",
-                error
-            ),
-        }
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn initialize_thread_pool(&mut self) {
-        let num_threads = if self.app_config.num_threads == 0 {
-            default_thread_pool_size()
-        } else {
-            self.app_config.num_threads
-        };
-        let future = wasm_bindgen_futures::JsFuture::from(crate::init_thread_pool(num_threads));
-        wasm_bindgen_futures::spawn_local(async move {
-            let result = future.await;
-            log::debug!(
-                "Initialized Pool with num_threas = {}, result = {:?}",
-                num_threads,
-                result
-            );
-            crate::THREAD_POOL_IS_INITIALIZED.store(true, std::sync::atomic::Ordering::Relaxed);
-        });
     }
 
     fn draw_macro_output_widget(&mut self, ui: &mut egui::Ui) {
@@ -1174,29 +1134,6 @@ fn load_fonts(ctx: &egui::Context) {
             },
         ],
     ));
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn default_thread_pool_size() -> usize {
-    std::thread::available_parallelism()
-        .unwrap_or(std::num::NonZero::new(8).unwrap())
-        .into()
-}
-
-#[cfg(target_arch = "wasm32")]
-fn default_thread_pool_size() -> usize {
-    let window = web_sys::window().unwrap();
-    window.navigator().hardware_concurrency() as usize
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn thread_pool_is_initialized() -> bool {
-    THREAD_POOL_INIT.is_completed()
-}
-
-#[cfg(target_arch = "wasm32")]
-fn thread_pool_is_initialized() -> bool {
-    crate::THREAD_POOL_IS_INITIALIZED.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 fn spawn_solver(
