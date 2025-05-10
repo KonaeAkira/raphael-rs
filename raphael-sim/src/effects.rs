@@ -49,30 +49,70 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
-    pub fn tick_down(&mut self) {
-        let mut effect_tick = 0;
-        if self.waste_not() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_waste_not(1).into_bits() };
+    pub const fn tick_down(self) -> Self {
+        const {
+            assert!(Combo::SynthesisBegin.into_bits() == 0b11);
+            assert!(Self::COMBO_BITS == 2);
+            assert!(Self::ADVERSARIAL_GUARD_BITS == 1);
+            assert!(Self::COMBO_OFFSET == Self::ADVERSARIAL_GUARD_OFFSET + 2);
         }
-        if self.innovation() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_innovation(1).into_bits() };
-        }
-        if self.veneration() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_veneration(1).into_bits() };
-        }
-        if self.great_strides() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_great_strides(1).into_bits() };
-        }
-        if self.muscle_memory() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_muscle_memory(1).into_bits() };
-        }
-        if self.manipulation() != 0 {
-            effect_tick |= const { Self::from_bits(0).with_manipulation(1).into_bits() };
-        }
-        self.0 -= effect_tick;
-        if self.combo() != Combo::SynthesisBegin {
-            // Guard does not wear off because the first condition is guaranteed to be Normal
-            self.set_adversarial_guard(false);
-        }
+        // Calculate the decrement bit for the adversarial guard
+        // The bit corresponding to the adversarial guard effect is set if the guard should fall off.
+        // The guard should fall off if it is currently active and the combo is not `SynthesisBegin`.
+        let adversarial_guard_tick = {
+            let is_synth_begin = (self.into_bits() >> 2) & (self.into_bits() >> 3);
+            self.into_bits() & !is_synth_begin & (1 << Self::ADVERSARIAL_GUARD_OFFSET)
+        };
+        // Calculate the decrement bits for all ticking effects.
+        // The decrement contains the least-significant bit of all active ticking effects.
+        let normal_effects_tick = {
+            let mask_0 = self.into_bits() & EFFECTS_BIT_0;
+            let mask_1 = (self.into_bits() & EFFECTS_BIT_1) >> 1;
+            let mask_2 = (self.into_bits() & EFFECTS_BIT_2) >> 2;
+            let mask_3 = (self.into_bits() & EFFECTS_BIT_3) >> 3;
+            mask_0 | mask_1 | mask_2 | mask_3
+        };
+        Self::from_bits(self.into_bits() - (normal_effects_tick | adversarial_guard_tick))
+    }
+
+    /// Removes all effects that are only relevant for Quality.
+    pub const fn strip_quality_effects(self) -> Self {
+        self.with_allow_quality_actions(false)
+            .with_inner_quiet(0)
+            .with_innovation(0)
+            .with_great_strides(0)
+            .with_adversarial_guard(false)
+            .with_quick_innovation_available(false)
     }
 }
+
+const EFFECTS_BIT_0: u32 = Effects::new()
+    .with_waste_not(1)
+    .with_innovation(1)
+    .with_veneration(1)
+    .with_great_strides(1)
+    .with_muscle_memory(1)
+    .with_manipulation(1)
+    .into_bits();
+
+const EFFECTS_BIT_1: u32 = Effects::new()
+    .with_waste_not(2)
+    .with_innovation(2)
+    .with_veneration(2)
+    .with_great_strides(2)
+    .with_muscle_memory(2)
+    .with_manipulation(2)
+    .into_bits();
+
+const EFFECTS_BIT_2: u32 = Effects::new()
+    .with_waste_not(4)
+    .with_innovation(4)
+    .with_veneration(4)
+    .with_muscle_memory(4)
+    .with_manipulation(4)
+    .into_bits();
+
+const EFFECTS_BIT_3: u32 = Effects::new()
+    .with_waste_not(8)
+    .with_manipulation(8)
+    .into_bits();

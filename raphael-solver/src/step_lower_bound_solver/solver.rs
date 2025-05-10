@@ -85,13 +85,13 @@ impl StepLbSolver {
         templates.into_iter().collect()
     }
 
-    pub fn precompute(&mut self, precompute_step_budget: NonZeroU8) {
+    pub fn precompute(&mut self) {
         if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
             return;
         }
 
         let templates = self.generate_precompute_templates();
-        for step_budget in 1..=precompute_step_budget.get() {
+        for step_budget in 1..=8 {
             let step_budget = NonZeroU8::try_from(step_budget).unwrap();
             if self.interrupt_signal.is_set() {
                 return;
@@ -185,10 +185,11 @@ impl StepLbSolver {
             return Ok(u8::MAX);
         }
         let mut hint = NonZeroU8::try_from(std::cmp::max(hint, 1)).unwrap();
-        while hint.get() != u8::MAX
-            && self.quality_upper_bound(state, hint)? < self.settings.max_quality()
+        while self
+            .quality_upper_bound(state, hint)?
+            .is_none_or(|quality_ub| quality_ub < self.settings.max_quality())
         {
-            hint = hint.saturating_add(1);
+            hint = hint.checked_add(1).unwrap();
         }
         Ok(hint.get())
     }
@@ -197,7 +198,7 @@ impl StepLbSolver {
         &mut self,
         state: SimulationState,
         step_budget: NonZeroU8,
-    ) -> Result<u32, SolverException> {
+    ) -> Result<Option<u32>, SolverException> {
         if state.effects.combo() != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in step lower bound solver",
@@ -210,20 +211,20 @@ impl StepLbSolver {
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
-            let quality = pareto_front
+            let quality_ub = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality + value.second);
-            return Ok(std::cmp::min(self.settings.max_quality(), quality));
+                .map(|value| state.quality + value.second);
+            return Ok(quality_ub);
         }
 
         self.solve_state(reduced_state)?;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
-            let quality = pareto_front
+            let quality_ub = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality + value.second);
-            Ok(std::cmp::min(self.settings.max_quality(), quality))
+                .map(|value| state.quality + value.second);
+            return Ok(quality_ub);
         } else {
             unreachable!("State must be in memoization table after solver")
         }

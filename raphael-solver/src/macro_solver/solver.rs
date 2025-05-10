@@ -78,7 +78,11 @@ impl<'a> MacroSolver<'a> {
         );
 
         let _total_time = ScopedTimer::new("Total Time");
-        let initial_state = SimulationState::new(&self.settings.simulator_settings);
+
+        let mut initial_state = SimulationState::new(&self.settings.simulator_settings);
+        if initial_state.quality >= self.settings.max_quality() {
+            initial_state.effects = initial_state.effects.strip_quality_effects();
+        }
 
         let timer = ScopedTimer::new("Finish Solver");
         if !self.finish_solver.can_finish(&initial_state) {
@@ -86,16 +90,13 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        _ = rayon::join(
-            || {
-                let _timer = ScopedTimer::new("Quality UB Solver");
-                self.quality_ub_solver.precompute(self.settings.max_cp())
-            },
-            || {
-                let _timer = ScopedTimer::new("Step LB Solver");
-                self.step_lb_solver.precompute(8.try_into().unwrap());
-            },
-        );
+        let timer = ScopedTimer::new("Quality UB Solver");
+        self.quality_ub_solver.precompute();
+        drop(timer);
+
+        let timer = ScopedTimer::new("Step LB Solver");
+        self.step_lb_solver.precompute();
+        drop(timer);
 
         let _timer = ScopedTimer::new("Search");
         Ok(self.do_solve(initial_state)?.actions())

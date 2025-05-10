@@ -4,7 +4,7 @@ use raphael_sim::{Action, SimulationState};
 
 use crate::{actions::ActionCombo, utils::Backtracking};
 
-use super::pareto_front::{EffectParetoFront, QualityParetoFront};
+use super::pareto_front::ParetoFront;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchScore {
@@ -61,31 +61,32 @@ struct SearchNode {
 pub struct SearchQueueStats {
     pub processed_nodes: usize,
     pub dropped_nodes: usize,
+    pub pareto_buckets_squared_size_sum: usize,
 }
 
 pub struct SearchQueue {
-    quality_pareto_front: QualityParetoFront,
-    effect_pareto_front: EffectParetoFront,
+    pareto_front: ParetoFront,
     buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<ActionCombo>,
     current_score: SearchScore,
     current_nodes: Vec<(SimulationState, usize)>,
     minimum_score: SearchScore,
-    stats: SearchQueueStats,
+    processed_nodes: usize,
+    dropped_nodes: usize,
 }
 
 impl SearchQueue {
     pub fn new(initial_state: SimulationState, minimum_score: SearchScore) -> Self {
         log::debug!("New minimum score: {:?}", minimum_score);
         Self {
-            quality_pareto_front: QualityParetoFront::default(),
-            effect_pareto_front: EffectParetoFront::default(),
+            pareto_front: ParetoFront::default(),
             backtracking: Backtracking::new(),
             buckets: BTreeMap::default(),
             current_score: SearchScore::MAX,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
             minimum_score,
-            stats: SearchQueueStats::default(),
+            processed_nodes: 0,
+            dropped_nodes: 0,
         }
     }
 
@@ -101,7 +102,7 @@ impl SearchQueue {
             }
             dropped += self.buckets.pop_first().unwrap().1.len();
         }
-        self.stats.dropped_nodes += dropped;
+        self.dropped_nodes += dropped;
         log::debug!("New minimum score: {:?}", score);
         log::debug!("Nodes dropped: {}", dropped);
     }
@@ -134,16 +135,13 @@ impl SearchQueue {
                 self.current_score = score;
                 self.current_nodes = bucket
                     .into_iter()
-                    .filter(|node| {
-                        self.quality_pareto_front.insert(node.state)
-                            && self.effect_pareto_front.insert(node.state)
-                    })
+                    .filter(|node| self.pareto_front.insert(node.state))
                     .map(|node| {
                         let backtrack_id = self.backtracking.push(node.action, node.parent_id);
                         (node.state, backtrack_id)
                     })
                     .collect();
-                self.stats.processed_nodes += self.current_nodes.len();
+                self.processed_nodes += self.current_nodes.len();
             } else {
                 return None;
             }
@@ -157,7 +155,11 @@ impl SearchQueue {
     }
 
     pub fn runtime_stats(&self) -> SearchQueueStats {
-        self.stats
+        SearchQueueStats {
+            processed_nodes: self.processed_nodes,
+            dropped_nodes: self.dropped_nodes,
+            pareto_buckets_squared_size_sum: self.pareto_front.buckets_squared_size_sum(),
+        }
     }
 }
 

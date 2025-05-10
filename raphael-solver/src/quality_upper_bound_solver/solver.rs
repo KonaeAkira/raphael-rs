@@ -46,13 +46,16 @@ impl QualityUbSolver {
         let mut templates = rustc_hash::FxHashMap::<Template, u16>::default();
         let mut queue = std::collections::BinaryHeap::<Node>::default();
 
+        let mut effects = Effects::initial(&self.settings.simulator_settings)
+            .with_trained_perfection_available(false)
+            .with_combo(Combo::None);
+        if self.settings.max_quality() == 0 {
+            effects = effects.strip_quality_effects();
+        }
+
         let initial_node = Node {
             template: Template {
-                effects: Effects::initial(&self.settings.simulator_settings)
-                    .with_trained_perfection_available(false)
-                    .with_quick_innovation_available(false)
-                    .with_heart_and_soul_available(false)
-                    .with_combo(Combo::None),
+                effects,
                 compressed_unreliable_quality: 0,
             },
             required_cp: 0,
@@ -91,47 +94,71 @@ impl QualityUbSolver {
         templates.into_iter().collect()
     }
 
-    pub fn precompute(&mut self, precompute_cp: u16) {
+    pub fn precompute(&mut self) {
         if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
             return;
         }
 
-        let templates = self.generate_precompute_templates();
-        for cp in self.durability_cost..=precompute_cp {
-            if self.interrupt_signal.is_set() {
-                return;
+        let all_templates = self.generate_precompute_templates();
+        for (heart_and_soul, quick_innovation) in
+            [(false, false), (false, true), (true, false), (true, true)]
+        {
+            let templates: Vec<_> = all_templates
+                .iter()
+                .filter(|(template, _)| {
+                    template.effects.heart_and_soul_available() == heart_and_soul
+                        && template.effects.quick_innovation_available() == quick_innovation
+                })
+                .collect();
+            if templates.is_empty() {
+                continue;
             }
-            let init = || {
-                ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality())
+            // States are computed in order of less CP to more CP.
+            // States currently being computed assume that child states have already been computed.
+            // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
+            // HeartAndSoul enables the use of TricksOfTrade, which restores CP.
+            // QuickInnovation requires no CP (and no durability, so durability cost in terms of CP is 0).
+            let precompute_cp_ceiling = if heart_and_soul {
+                self.settings.max_cp().saturating_sub(20)
+            } else {
+                self.settings.max_cp()
             };
-            let missing_cp = self.settings.max_cp() - cp;
-            let solved_states = templates
-                .par_iter()
-                .filter_map(|(template, required_cp)| {
-                    if missing_cp >= *required_cp {
-                        Some(ReducedState {
-                            cp: cp + self.durability_cost,
-                            compressed_unreliable_quality: template.compressed_unreliable_quality,
-                            effects: template.effects,
-                        })
-                    } else {
-                        None
-                    }
-                })
-                .map_init(init, |pareto_front_builder, state| {
-                    let state = ReducedState { cp, ..state };
-                    let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                    (state, pareto_front)
-                })
-                .collect_vec_list();
-            for thread_solved_states in solved_states {
-                self.solved_states.extend(thread_solved_states);
+            for cp in self.durability_cost..=precompute_cp_ceiling {
+                if self.interrupt_signal.is_set() {
+                    return;
+                }
+                let missing_cp = precompute_cp_ceiling - cp;
+                let solved_states = templates
+                    .par_iter()
+                    .filter(|(_, required_cp)| missing_cp >= *required_cp)
+                    .map_init(
+                        || {
+                            ParetoFrontBuilder::new(
+                                self.settings.max_progress(),
+                                self.settings.max_quality(),
+                            )
+                        },
+                        |pareto_front_builder, (template, _)| {
+                            let state = ReducedState {
+                                cp,
+                                compressed_unreliable_quality: template
+                                    .compressed_unreliable_quality,
+                                effects: template.effects,
+                            };
+                            let pareto_front =
+                                self.solve_precompute_state(pareto_front_builder, state);
+                            (state, pareto_front)
+                        },
+                    )
+                    .collect_vec_list();
+                self.solved_states
+                    .extend(solved_states.into_iter().flatten());
             }
         }
 
         log::debug!(
             "QualityUbSolver - templates: {}, precomputed_states: {}",
-            templates.len(),
+            all_templates.len(),
             self.solved_states.len()
         );
     }
@@ -152,7 +179,7 @@ impl QualityUbSolver {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
                         unreachable!(
-                            "Child state does not exist.\nParent state: {state:?}.\nChild state: {new_state:?}.\nAction: {action:?}."
+                            "Precompute state does not exist.\nParent: {state:?}\nChild: {new_state:?}\nAction: {action:?}"
                         );
                     }
                     pareto_front_builder

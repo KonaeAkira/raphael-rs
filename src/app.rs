@@ -8,9 +8,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
 use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
 
-use raphael_sim::{
-    Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, SimulationState,
-};
+use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
 use crate::config::{
     CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
@@ -36,7 +34,6 @@ pub struct SolverConfig {
     pub quality_target: QualityTarget,
     pub backload_progress: bool,
     pub adversarial: bool,
-    pub minimize_steps: bool,
 }
 
 pub struct MacroSolverApp {
@@ -753,6 +750,36 @@ impl MacroSolverApp {
                 ),
             );
         }
+        let heart_and_soul_enabled = self.crafter_config.active_stats().level
+            >= HeartAndSoul::LEVEL_REQUIREMENT
+            && self.crafter_config.active_stats_mut().heart_and_soul;
+        let quick_innovation_enabled = self.crafter_config.active_stats().level
+            >= QuickInnovation::LEVEL_REQUIREMENT
+            && self.crafter_config.active_stats_mut().quick_innovation;
+        if heart_and_soul_enabled || quick_innovation_enabled {
+            #[cfg(not(target_arch = "wasm32"))]
+            ui.label(
+                egui::RichText::new(
+                    "⚠ Specialist actions substantially increase solve time and memory usage.",
+                )
+                .small()
+                .color(ui.visuals().warn_fg_color),
+            );
+            #[cfg(target_arch = "wasm32")]
+            {
+                ui.label(
+                    egui::RichText::new(
+                        "⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions.",
+                    )
+                    .small()
+                    .color(ui.visuals().warn_fg_color),
+                );
+                ui.add(egui::Hyperlink::from_label_and_url(
+                    egui::RichText::new("Download latest release from GitHub").small(),
+                    "https://github.com/KonaeAkira/raphael-rs/releases/latest",
+                ));
+            }
+        }
         ui.separator();
 
         ui.label(egui::RichText::new("Solver settings").strong());
@@ -838,8 +865,7 @@ impl MacroSolverApp {
                     "Ensure 100% reliability",
                 ),
             );
-            ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\n
-            The solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro."));
+            ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro."));
         });
         if self.solver_config.adversarial {
             ui.label(
@@ -848,20 +874,7 @@ impl MacroSolverApp {
                     .color(ui.visuals().warn_fg_color),
             );
         }
-
-        ui.horizontal(|ui| {
-            ui.checkbox(&mut self.solver_config.minimize_steps, "Minimize steps");
-            ui.add(HelpText::new(
-                "Minimize the number of steps in the generated macro.\n  - Much longer solve time.",
-            ));
-        });
-        if self.solver_config.minimize_steps {
-            ui.label(
-                egui::RichText::new(Self::experimental_warning_text())
-                    .small()
-                    .color(ui.visuals().warn_fg_color),
-            );
-        }
+        ui.add_enabled(false, egui::Checkbox::new(&mut true, "Minimize steps"));
     }
 
     fn on_solve_button_clicked(&mut self, ctx: &egui::Context) {
@@ -939,7 +952,7 @@ impl MacroSolverApp {
 
     fn experimental_warning_text() -> &'static str {
         #[cfg(not(target_arch = "wasm32"))]
-        return "⚠ EXPERIMENTAL FEATURE\n This option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.";
+        return "⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.";
         #[cfg(target_arch = "wasm32")]
         return "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.";
     }
@@ -1031,47 +1044,12 @@ fn spawn_solver(
         let event = SolverEvent::Actions(actions.to_vec());
         events.lock().unwrap().push_back(event);
     };
-
     let events = solver_events.clone();
     let progress_callback = move |progress: usize| {
         let event = SolverEvent::NodesVisited(progress);
         events.lock().unwrap().push_back(event);
     };
-
     rayon::spawn(move || {
-        if !solver_config.minimize_steps && !solver_config.backload_progress {
-            // If "minimize steps" is not active, we first try backload progress.
-            // If we find a max-quality solution here, we can return early.
-            simulator_settings.adversarial = solver_config.adversarial;
-            simulator_settings.backload_progress = true;
-            let solver_settings = raphael_solver::SolverSettings { simulator_settings };
-            log::debug!("Spawning solver: {solver_settings:?}");
-            let mut macro_solver = raphael_solver::MacroSolver::new(
-                solver_settings,
-                Box::new(solution_callback.clone()),
-                Box::new(progress_callback.clone()),
-                solver_interrupt.clone(),
-            );
-            let result = macro_solver.solve();
-            let mut solver_events = solver_events.lock().unwrap();
-            match result {
-                Ok(actions) => {
-                    let final_state =
-                        SimulationState::from_macro(&simulator_settings, &actions).unwrap();
-                    solver_events.push_back(SolverEvent::Actions(actions));
-                    if final_state.quality >= u32::from(simulator_settings.max_quality) {
-                        solver_events.push_back(SolverEvent::Finished(None));
-                        return;
-                    }
-                }
-                Err(exception) => {
-                    solver_events.push_back(SolverEvent::Finished(Some(exception)));
-                    return;
-                }
-            }
-            solver_events.push_back(SolverEvent::NodesVisited(0));
-        }
-
         simulator_settings.adversarial = solver_config.adversarial;
         simulator_settings.backload_progress = solver_config.backload_progress;
         let solver_settings = raphael_solver::SolverSettings { simulator_settings };

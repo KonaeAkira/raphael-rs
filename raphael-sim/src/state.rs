@@ -129,11 +129,12 @@ impl SimulationState {
 
         let progress_increase = A::progress_increase(self, settings, condition);
         state.progress += progress_increase;
-        if progress_increase != 0 {
-            state.effects = state
-                .effects
-                .with_muscle_memory(0)
-                .with_allow_quality_actions(!settings.backload_progress);
+        if progress_increase != 0 && state.effects.muscle_memory() != 0 {
+            state.effects.set_muscle_memory(0);
+        }
+
+        if progress_increase != 0 && settings.backload_progress {
+            state.effects.set_allow_quality_actions(false);
         }
 
         if state.is_final(settings) {
@@ -144,7 +145,7 @@ impl SimulationState {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
-            state.effects.tick_down();
+            state.effects = state.effects.tick_down();
         }
 
         if settings.adversarial && quality_increase != 0 {
@@ -159,13 +160,7 @@ impl SimulationState {
 
         if !state.effects.allow_quality_actions() {
             state.unreliable_quality = 0;
-            state.effects = state
-                .effects
-                .with_inner_quiet(0)
-                .with_innovation(0)
-                .with_great_strides(0)
-                .with_quick_innovation_available(false)
-                .with_adversarial_guard(false)
+            state.effects = state.effects.strip_quality_effects();
         }
 
         Ok(state)
