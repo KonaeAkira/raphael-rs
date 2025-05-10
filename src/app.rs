@@ -564,7 +564,7 @@ impl MacroSolverApp {
                                 .range(1..=64)
                                 .clamp_existing_to_range(false)
                                 .custom_formatter(|value, _| {
-                                    if THREAD_POOL_INIT.is_completed() {
+                                    if thread_pool_is_initialized() {
                                         format!("{}", rayon::current_num_threads())
                                     } else if value == 0.0 {
                                         "-".to_owned()
@@ -665,9 +665,22 @@ impl MacroSolverApp {
                         let text_color = ui.ctx().style().visuals.selection.stroke.color;
                         let text = egui::RichText::new("Solve").color(text_color);
                         let fill_color = ui.ctx().style().visuals.selection.bg_fill;
-                        let button = ui.add(egui::Button::new(text).fill(fill_color));
+                        let id = egui::Id::new("SOLVE_INITIATED");
+                        let mut solve_initiated = ui
+                            .ctx()
+                            .data(|data| data.get_temp::<bool>(id).unwrap_or_default());
+                        let button = ui.add_enabled(
+                            !solve_initiated,
+                            egui::Button::new(text).fill(fill_color),
+                        );
                         if button.clicked() {
-                            self.on_solve_button_clicked(ui.ctx());
+                            ui.ctx().data_mut(|data| {
+                                data.insert_temp(id, true);
+                            });
+                            solve_initiated = true;
+                        }
+                        if solve_initiated {
+                            self.on_solve_initiated(ui.ctx());
                         }
                     });
                 });
@@ -960,19 +973,22 @@ impl MacroSolverApp {
         ui.add_enabled(false, egui::Checkbox::new(&mut true, "Minimize steps"));
     }
 
-    fn on_solve_button_clicked(&mut self, ctx: &egui::Context) {
-        let craftsmanship_req = self.recipe_config.recipe.req_craftsmanship;
-        let control_req = self.recipe_config.recipe.req_control;
-        let craftsmanship = self.crafter_config.active_stats().craftsmanship;
-        let control = self.crafter_config.active_stats().control;
-        let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
-            craftsmanship,
-            &[self.selected_food, self.selected_potion],
-        );
-        let control_bonus =
-            raphael_data::control_bonus(control, &[self.selected_food, self.selected_potion]);
-
+    fn on_solve_initiated(&mut self, ctx: &egui::Context) {
         if thread_pool_is_initialized() {
+            ctx.data_mut(|data| {
+                data.insert_temp(Id::new("SOLVE_INITIATED"), false);
+            });
+
+            let craftsmanship_req = self.recipe_config.recipe.req_craftsmanship;
+            let control_req = self.recipe_config.recipe.req_control;
+            let craftsmanship = self.crafter_config.active_stats().craftsmanship;
+            let control = self.crafter_config.active_stats().control;
+            let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
+                craftsmanship,
+                &[self.selected_food, self.selected_potion],
+            );
+            let control_bonus =
+                raphael_data::control_bonus(control, &[self.selected_food, self.selected_potion]);
             if craftsmanship + craftsmanship_bonus >= craftsmanship_req
                 && control + control_bonus >= control_req
             {
