@@ -34,7 +34,7 @@ fn initialize(num_threads: usize) {
 #[cfg(target_arch = "wasm32")]
 fn initialize(num_threads: usize) {
     let num_threads = if num_threads == 0 {
-        default_size()
+        default_thread_count()
     } else {
         num_threads
     };
@@ -51,16 +51,18 @@ fn initialize(num_threads: usize) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn default_size() -> usize {
+pub fn default_thread_count() -> usize {
     std::thread::available_parallelism()
-        .unwrap_or(std::num::NonZero::new(8).unwrap())
-        .into()
+        .map_or(4, |count| count.get() / 2)
+        .max(2)
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn default_size() -> usize {
+pub fn default_thread_count() -> usize {
     let window = web_sys::window().unwrap();
-    window.navigator().hardware_concurrency() as usize
+    let detected = window.navigator().hardware_concurrency() as usize;
+    // See https://github.com/KonaeAkira/raphael-rs/issues/169
+    (detected / 2).clamp(2, 8)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

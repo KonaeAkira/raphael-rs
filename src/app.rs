@@ -507,6 +507,7 @@ impl MacroSolverApp {
             )
             .ui(ui, |ui| {
                 ui.reset_style();
+                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.horizontal(|ui| {
                     ui.label("Zoom");
 
@@ -542,6 +543,9 @@ impl MacroSolverApp {
                     self.app_config.zoom_percentage = zoom_percentage;
                     ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
                 });
+
+                ui.separator();
+                ui.label("Theme");
                 egui::global_theme_preference_buttons(ui);
                 ui.separator();
 
@@ -553,8 +557,8 @@ impl MacroSolverApp {
                         if ui.radio(manual_selected, "Manual").clicked()
                             && self.app_config.num_threads == 0
                         {
-                            // `rayon::current_num_threads()` cannot be used here since that would implicitly create the pool
-                            self.app_config.num_threads = thread_pool::default_size();
+                            // `rayon::current_num_threads()` can't be used here since it implicitly creates the pool
+                            self.app_config.num_threads = thread_pool::default_thread_count();
                         }
                         ui.add_enabled(
                             manual_selected,
