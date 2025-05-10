@@ -7,21 +7,20 @@ fn main() {
         .format_target(false)
         .init();
 
-    // Ceremonial Gunblade
-    // 5428/5236/645 + HQ Ceviche + HQ Cunning Tisane
+    // rarefied_tacos_de_carne_asada_4785_4758
     let simulator_settings = Settings {
-        max_cp: 768,
-        max_durability: 70,
-        max_progress: 9000,
-        max_quality: 18700,
-        base_progress: 297,
-        base_quality: 288,
+        max_cp: 646,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12000,
+        base_progress: 256,
+        base_quality: 265,
         job_level: 100,
         allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
-        adversarial: true,
+        adversarial: false,
         backload_progress: false,
     };
 
