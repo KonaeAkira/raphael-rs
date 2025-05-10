@@ -6,6 +6,7 @@ use crate::{
     utils,
 };
 use raphael_sim::*;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use super::state::ReducedState;
 
@@ -15,6 +16,7 @@ type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
+    pub precomputed_states: usize,
     pub states: usize,
     pub pareto_values: usize,
 }
@@ -24,6 +26,9 @@ pub struct StepLbSolver {
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
     pareto_front_builder: ParetoFrontBuilder,
+    precompute_templates: Box<[Template]>,
+    next_precompute_step_budget: NonZeroU8,
+    precomputed_states: usize,
 }
 
 impl StepLbSolver {
@@ -37,7 +42,141 @@ impl StepLbSolver {
                 settings.max_progress(),
                 settings.max_quality(),
             ),
+            precompute_templates: Self::generate_precompute_templates(&settings),
+            next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
+            precomputed_states: 0,
         }
+    }
+
+    fn generate_precompute_templates(settings: &SolverSettings) -> Box<[Template]> {
+        let mut templates = rustc_hash::FxHashSet::<Template>::default();
+        let mut queue = std::collections::VecDeque::<Template>::new();
+
+        let initial_node = Template {
+            durability: settings.max_durability(),
+            effects: Effects::initial(&settings.simulator_settings)
+                .with_trained_perfection_available(false)
+                .with_quick_innovation_available(false)
+                .with_heart_and_soul_available(false)
+                .with_adversarial_guard(true)
+                .with_combo(Combo::None),
+        };
+        templates.insert(initial_node);
+        queue.push_back(initial_node);
+
+        while let Some(node) = queue.pop_front() {
+            let state = ReducedState {
+                steps_budget: NonZeroU8::MAX,
+                durability: node.durability,
+                effects: node.effects,
+            };
+            let search_actions = match node.effects.allow_quality_actions() {
+                false => PROGRESS_ONLY_SEARCH_ACTIONS,
+                true => FULL_SEARCH_ACTIONS,
+            };
+            for &action in search_actions {
+                if let Ok(new_state) = use_action_combo(settings, state.to_state(), action) {
+                    let new_state = ReducedState::from_state(new_state, NonZeroU8::MAX);
+                    let new_node = Template {
+                        durability: new_state.durability,
+                        effects: new_state.effects,
+                    };
+                    if !templates.contains(&new_node) {
+                        templates.insert(new_node);
+                        queue.push_back(new_node);
+                    }
+                }
+            }
+        }
+
+        templates.into_iter().collect()
+    }
+
+    fn precompute_next_step_budget(&mut self) {
+        let init =
+            || ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality());
+        let solved_templates = self
+            .precompute_templates
+            .par_iter()
+            .map_init(init, |pareto_front_builder, template| {
+                let state = template.instantiate(self.next_precompute_step_budget);
+                let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
+                // If this template can reach max progress and quality with the current step budget,
+                // then computing the same template with a higher step budget is unnecessary.
+                let next_template = if pareto_front.get(0).is_some_and(|value| {
+                    value.first >= self.settings.max_progress()
+                        && value.second >= self.settings.max_quality()
+                }) {
+                    None
+                } else {
+                    Some(*template)
+                };
+                (next_template, state, pareto_front)
+            })
+            .collect_vec_list();
+        self.precompute_templates = solved_templates
+            .iter()
+            .flatten()
+            .filter_map(|(next_template, _, _)| *next_template)
+            .collect();
+        let num_states_before = self.solved_states.len();
+        self.solved_states.extend(
+            solved_templates
+                .into_iter()
+                .flatten()
+                .map(|(_, state, solution)| (state, solution)),
+        );
+        self.precomputed_states += self.solved_states.len() - num_states_before;
+        self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
+        log::debug!(
+            "StepLbSolver - templates: {}, solved_states: {}",
+            self.precompute_templates.len(),
+            self.solved_states.len()
+        );
+    }
+
+    fn solve_precompute_state(
+        &self,
+        pareto_front_builder: &mut ParetoFrontBuilder,
+        state: ReducedState,
+    ) -> Box<[ParetoValue]> {
+        pareto_front_builder.clear();
+        pareto_front_builder.push_empty();
+        let search_actions = match state.effects.allow_quality_actions() {
+            false => PROGRESS_ONLY_SEARCH_ACTIONS,
+            true => FULL_SEARCH_ACTIONS,
+        };
+        for &action in search_actions {
+            if state.steps_budget.get() < action.steps() {
+                continue;
+            }
+            let new_step_budget = state.steps_budget.get() - action.steps();
+            if let Ok(new_state) = use_action_combo(&self.settings, state.to_state(), action) {
+                let progress = new_state.progress;
+                let quality = new_state.quality;
+                if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget) {
+                    let new_state = ReducedState::from_state(new_state, new_step_budget);
+                    if let Some(pareto_front) = self.solved_states.get(&new_state) {
+                        pareto_front_builder.push_slice(pareto_front);
+                    } else {
+                        unreachable!("Parent: {state:?}\nChild: {new_state:?}\nAction: {action:?}");
+                    }
+                    pareto_front_builder
+                        .peek_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .for_each(|value| {
+                            value.first += progress;
+                            value.second += quality;
+                        });
+                    pareto_front_builder.merge();
+                } else if progress != 0 {
+                    pareto_front_builder.push_slice(&[ParetoValue::new(progress, quality)]);
+                    pareto_front_builder.merge();
+                }
+            }
+        }
+        Box::from(pareto_front_builder.peek().unwrap())
     }
 
     pub fn step_lower_bound(
@@ -68,6 +207,10 @@ impl StepLbSolver {
                 "\"{:?}\" combo in step lower bound solver",
                 state.effects.combo()
             )));
+        }
+
+        while self.next_precompute_step_budget <= step_budget {
+            self.precompute_next_step_budget();
         }
 
         let reduced_state = ReducedState::from_state(state, step_budget);
@@ -167,6 +310,7 @@ impl StepLbSolver {
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
         StepLbSolverStats {
+            precomputed_states: self.precomputed_states,
             states: self.solved_states.len(),
             pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
         }
@@ -181,5 +325,25 @@ impl Drop for StepLbSolver {
             runtime_stats.states,
             runtime_stats.pareto_values
         );
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+struct Template {
+    durability: u16,
+    effects: Effects,
+}
+
+impl Template {
+    pub fn instantiate(&self, step_budget: NonZeroU8) -> ReducedState {
+        let state = SimulationState {
+            durability: self.durability,
+            effects: self.effects,
+            cp: 0,
+            progress: 0,
+            quality: 0,
+            unreliable_quality: 0,
+        };
+        ReducedState::from_state(state, step_budget)
     }
 }

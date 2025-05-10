@@ -96,8 +96,9 @@ fn rinascita_3700_3280() {
                 pareto_values: 32767785,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 815631,
-                pareto_values: 10090940,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -145,8 +146,9 @@ fn pactmaker_3240_3130() {
                 pareto_values: 25164851,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 782395,
-                pareto_values: 9193771,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -193,8 +195,9 @@ fn pactmaker_3240_3130_heart_and_soul() {
                 pareto_values: 52901313,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1494941,
-                pareto_values: 18435656,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -242,8 +245,9 @@ fn diadochos_4021_3660() {
                 pareto_values: 33337539,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 949178,
-                pareto_values: 13682643,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -291,8 +295,9 @@ fn indagator_3858_4057() {
                 pareto_values: 33757173,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 689966,
-                pareto_values: 8924833,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -340,8 +345,9 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
                 pareto_values: 36452805,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1393327,
-                pareto_values: 17537768,
+                precomputed_states: 1425760,
+                states: 1886955,
+                pareto_values: 18900914,
             },
         }
     "#]];
@@ -391,8 +397,9 @@ fn stuffed_peppers_2() {
                 pareto_values: 36307624,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 2095532,
-                pareto_values: 29062560,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -441,8 +448,9 @@ fn stuffed_peppers_2_heart_and_soul() {
                 pareto_values: 76805356,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 4102033,
-                pareto_values: 58818959,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -491,8 +499,9 @@ fn stuffed_peppers_2_quick_innovation() {
                 pareto_values: 75578405,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 4233011,
-                pareto_values: 59096571,
+                precomputed_states: 0,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -540,8 +549,9 @@ fn rakaznar_lapidary_hammer_4462_4391() {
                 pareto_values: 22678028,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 508270,
-                pareto_values: 5818910,
+                precomputed_states: 1011808,
+                states: 1051633,
+                pareto_values: 8029730,
             },
         }
     "#]];
@@ -589,8 +599,9 @@ fn black_star_4048_3997() {
                 pareto_values: 7047900,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 104612,
-                pareto_values: 699015,
+                precomputed_states: 283678,
+                states: 283678,
+                pareto_values: 1021436,
             },
         }
     "#]];
@@ -638,8 +649,9 @@ fn claro_walnut_lumber_4900_4800() {
                 pareto_values: 10548959,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 252324,
-                pareto_values: 1736040,
+                precomputed_states: 366375,
+                states: 436151,
+                pareto_values: 2105444,
             },
         }
     "#]];
@@ -687,8 +699,9 @@ fn rakaznar_lapidary_hammer_4900_4800() {
                 pareto_values: 17986508,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 405288,
-                pareto_values: 4016571,
+                precomputed_states: 893254,
+                states: 918145,
+                pareto_values: 5807683,
             },
         }
     "#]];
@@ -736,8 +749,9 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
                 pareto_values: 15649784,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 321078,
-                pareto_values: 3036636,
+                precomputed_states: 751808,
+                states: 786712,
+                pareto_values: 4776003,
             },
         }
     "#]];
@@ -785,8 +799,9 @@ fn archeo_kingdom_broadsword_4966_4914() {
                 pareto_values: 31413523,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 831864,
-                pareto_values: 9245422,
+                precomputed_states: 996402,
+                states: 1208027,
+                pareto_values: 10176050,
             },
         }
     "#]];
@@ -834,8 +849,9 @@ fn hardened_survey_plank_5558_5216() {
                 pareto_values: 23980767,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 294515,
-                pareto_values: 2737980,
+                precomputed_states: 337929,
+                states: 453110,
+                pareto_values: 2875233,
             },
         }
     "#]];
