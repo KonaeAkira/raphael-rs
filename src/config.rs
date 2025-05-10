@@ -7,6 +7,21 @@ pub enum QualitySource {
     Value(u16),
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct AppConfig {
+    pub zoom_percentage: u16,
+    pub num_threads: usize,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            zoom_percentage: 100,
+            num_threads: 0,
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
 pub struct CustomRecipeOverridesConfiguration {
     pub use_custom_recipe: bool,
