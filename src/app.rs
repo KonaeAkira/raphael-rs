@@ -553,8 +553,8 @@ impl MacroSolverApp {
                         if ui.radio(manual_selected, "Manual").clicked()
                             && self.app_config.num_threads == 0
                         {
-                            // `rayon::current_num_threads()` cannot be used here since that would implicitly create the pool
-                            self.app_config.num_threads = thread_pool::default_size();
+                            // `rayon::current_num_threads()` can't be used here since it implicitly creates the pool
+                            self.app_config.num_threads = thread_pool::default_thread_count();
                         }
                         ui.add_enabled(
                             manual_selected,
