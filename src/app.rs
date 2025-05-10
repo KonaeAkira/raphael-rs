@@ -514,7 +514,7 @@ impl MacroSolverApp {
                     ui.horizontal(|ui| {
                         ui.style_mut().spacing.item_spacing.x = 4.0;
                         ui.add_enabled_ui(zoom_percentage > 20, |ui| {
-                            if ui.button("-").clicked() {
+                            if ui.button(egui::RichText::new("-").monospace()).clicked() {
                                 zoom_percentage -= 10;
                             }
                         });
@@ -524,7 +524,7 @@ impl MacroSolverApp {
                             }
                         });
                         ui.add_enabled_ui(zoom_percentage < 500, |ui| {
-                            if ui.button("+").clicked() {
+                            if ui.button(egui::RichText::new("+").monospace()).clicked() {
                                 zoom_percentage += 10;
                             }
                         });
@@ -545,7 +545,7 @@ impl MacroSolverApp {
                 egui::global_theme_preference_buttons(ui);
                 ui.separator();
 
-                ui.label("Maximum # threads for solver");
+                ui.label("Max solver threads");
                 ui.add_enabled(!thread_pool::initialization_attempted(), |ui: &mut egui::Ui| {
                     ui.horizontal(|ui| {
                         ui.radio_value(&mut self.app_config.num_threads, 0, "Auto");
