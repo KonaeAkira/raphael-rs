@@ -93,23 +93,38 @@ impl StepLbSolver {
         if rayon::current_num_threads() <= 1 {
             return;
         }
-
         let init =
             || ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality());
-        let solved_states = self
+        let solved_templates = self
             .precompute_templates
             .par_iter()
             .map_init(init, |pareto_front_builder, template| {
                 let state = template.instantiate(step_budget);
                 let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                (state, pareto_front)
+                // If this template can reach max progress and quality with the current step budget,
+                // then computing the same template with a higher step budget is unnecessary.
+                let next_template = if pareto_front.get(0).is_some_and(|value| {
+                    value.first >= self.settings.max_progress()
+                        && value.second >= self.settings.max_quality()
+                }) {
+                    Some(*template)
+                } else {
+                    None
+                };
+                (next_template, state, pareto_front)
             })
             .collect_vec_list();
-
-        for thread_solved_states in solved_states {
-            self.solved_states.extend(thread_solved_states);
-        }
-
+        self.precompute_templates = solved_templates
+            .iter()
+            .flatten()
+            .filter_map(|(next_template, _, _)| *next_template)
+            .collect();
+        self.solved_states.extend(
+            solved_templates
+                .into_iter()
+                .flatten()
+                .map(|(_, state, solution)| (state, solution)),
+        );
         log::debug!(
             "StepLbSolver - templates: {}, solved_states: {}",
             self.precompute_templates.len(),
