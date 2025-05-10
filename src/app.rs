@@ -507,6 +507,7 @@ impl MacroSolverApp {
             )
             .ui(ui, |ui| {
                 ui.reset_style();
+                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.horizontal(|ui| {
                     ui.label("Zoom");
 
@@ -542,6 +543,9 @@ impl MacroSolverApp {
                     self.app_config.zoom_percentage = zoom_percentage;
                     ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
                 });
+
+                ui.separator();
+                ui.label("Theme");
                 egui::global_theme_preference_buttons(ui);
                 ui.separator();
 
