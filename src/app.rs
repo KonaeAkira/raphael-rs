@@ -556,9 +556,7 @@ impl MacroSolverApp {
                             && self.app_config.num_threads == 0
                         {
                             // `rayon::current_num_threads()` cannot be used here since that would implicitly create the pool
-                            self.app_config.num_threads = std::thread::available_parallelism()
-                                .unwrap_or(std::num::NonZero::new(8).unwrap())
-                                .into();
+                            self.app_config.num_threads = default_thread_pool_size();
                         }
                         ui.add_enabled(
                             manual_selected,
@@ -973,12 +971,20 @@ impl MacroSolverApp {
         );
         let control_bonus =
             raphael_data::control_bonus(control, &[self.selected_food, self.selected_potion]);
-        if craftsmanship + craftsmanship_bonus >= craftsmanship_req
-            && control + control_bonus >= control_req
-        {
-            self.solve(ctx);
+
+        if thread_pool_is_initialized() {
+            if craftsmanship + craftsmanship_bonus >= craftsmanship_req
+                && control + control_bonus >= control_req
+            {
+                self.solve(ctx);
+            } else {
+                self.missing_stats_error_window_open = true;
+            }
         } else {
-            self.missing_stats_error_window_open = true;
+            THREAD_POOL_INIT.call_once(|| {
+                self.initialize_thread_pool();
+            });
+            ctx.request_repaint();
         }
     }
 
@@ -1010,6 +1016,7 @@ impl MacroSolverApp {
             ),
             QualitySource::Value(quality) => quality,
         };
+        game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
 
         ctx.data_mut(|data| {
             data.insert_temp(
@@ -1018,29 +1025,48 @@ impl MacroSolverApp {
             );
         });
 
-        THREAD_POOL_INIT.call_once(|| {
-            match rayon::ThreadPoolBuilder::new()
-                .num_threads(self.app_config.num_threads)
-                .build_global()
-            {
-                Ok(()) => log::debug!(
-                    "Created global thread pool with num_threads = {}",
-                    self.app_config.num_threads
-                ),
-                Err(error) => log::debug!(
-                    "Creation of global thread pool failed with error = {:?}",
-                    error
-                ),
-            }
-        });
-
-        game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
         spawn_solver(
             self.solver_config,
             game_settings,
             self.solver_events.clone(),
             self.solver_interrupt.clone(),
         );
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn initialize_thread_pool(&mut self) {
+        match rayon::ThreadPoolBuilder::new()
+            .num_threads(self.app_config.num_threads)
+            .build_global()
+        {
+            Ok(()) => log::debug!(
+                "Created global thread pool with num_threads = {}",
+                self.app_config.num_threads
+            ),
+            Err(error) => log::debug!(
+                "Creation of global thread pool failed with error = {:?}",
+                error
+            ),
+        }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn initialize_thread_pool(&mut self) {
+        let num_threads = if self.app_config.num_threads == 0 {
+            default_thread_pool_size()
+        } else {
+            self.app_config.num_threads
+        };
+        let future = wasm_bindgen_futures::JsFuture::from(crate::init_thread_pool(num_threads));
+        wasm_bindgen_futures::spawn_local(async move {
+            let result = future.await;
+            log::debug!(
+                "Initialized Pool with num_threas = {}, result = {:?}",
+                num_threads,
+                result
+            );
+            crate::THREAD_POOL_IS_INITIALIZED.store(true, std::sync::atomic::Ordering::Relaxed);
+        });
     }
 
     fn draw_macro_output_widget(&mut self, ui: &mut egui::Ui) {
@@ -1132,6 +1158,29 @@ fn load_fonts(ctx: &egui::Context) {
             },
         ],
     ));
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn default_thread_pool_size() -> usize {
+    std::thread::available_parallelism()
+        .unwrap_or(std::num::NonZero::new(8).unwrap())
+        .into()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn default_thread_pool_size() -> usize {
+    let window = web_sys::window().unwrap();
+    window.navigator().hardware_concurrency() as usize
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn thread_pool_is_initialized() -> bool {
+    THREAD_POOL_INIT.is_completed()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn thread_pool_is_initialized() -> bool {
+    crate::THREAD_POOL_IS_INITIALIZED.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 fn spawn_solver(

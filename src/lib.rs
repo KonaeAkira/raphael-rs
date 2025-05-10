@@ -8,4 +8,9 @@ mod config;
 mod widgets;
 
 #[cfg(target_arch = "wasm32")]
-pub static OOM_PANIC_OCCURED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+pub static OOM_PANIC_OCCURED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(target_arch = "wasm32")]
+pub static THREAD_POOL_IS_INITIALIZED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
