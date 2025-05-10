@@ -107,9 +107,9 @@ impl StepLbSolver {
                     value.first >= self.settings.max_progress()
                         && value.second >= self.settings.max_quality()
                 }) {
-                    Some(*template)
-                } else {
                     None
+                } else {
+                    Some(*template)
                 };
                 (next_template, state, pareto_front)
             })
