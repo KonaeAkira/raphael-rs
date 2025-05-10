@@ -284,6 +284,7 @@ impl eframe::App for MacroSolverApp {
                     egui::containers::menu::Bar::new().ui(ui, |ui| {
                         ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                         ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+                        self.draw_app_config_menu_button(ui, ctx);
 
                         egui::ComboBox::from_id_salt("LOCALE")
                             .selected_text(format!("{}", self.locale))
@@ -334,10 +335,7 @@ impl eframe::App for MacroSolverApp {
                             )
                             .open_in_new_tab(true),
                         );
-                        // Allocate space to make sure the top bar has space for the menu button
-                        ui.allocate_space(egui::Vec2::new(5.0, 0.0));
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            self.draw_app_config_menu_button(ui, ctx);
                             egui::warn_if_debug_build(ui);
                         });
                     });
@@ -500,7 +498,9 @@ impl MacroSolverApp {
     }
 
     fn draw_app_config_menu_button(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        egui::containers::menu::MenuButton::new("⚙")
+        ui.add_enabled_ui(true, |ui| {
+            ui.reset_style();
+            egui::containers::menu::MenuButton::new("⚙ Settings")
             .config(
                 egui::containers::menu::MenuConfig::default()
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
@@ -587,6 +587,7 @@ impl MacroSolverApp {
                     );
                 }
             });
+        });
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
