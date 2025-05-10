@@ -513,35 +513,37 @@ impl MacroSolverApp {
                 ui.horizontal(|ui| {
                     ui.label("Zoom");
 
-                    let zoom_percentage = &mut self.app_config.zoom_percentage;
+                    let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
                     ui.horizontal(|ui| {
                         ui.style_mut().spacing.item_spacing.x = 4.0;
-                        ui.add_enabled_ui(*zoom_percentage > 20, |ui| {
+                        ui.add_enabled_ui(zoom_percentage > 20, |ui| {
                             if ui.button("-").clicked() {
-                                *zoom_percentage -= 10;
+                                zoom_percentage -= 10;
                             }
                         });
-                        ui.add_enabled_ui(*zoom_percentage != 100, |ui| {
+                        ui.add_enabled_ui(zoom_percentage != 100, |ui| {
                             if ui.button("Reset").clicked() {
-                                *zoom_percentage = 100;
+                                zoom_percentage = 100;
                             }
                         });
-                        ui.add_enabled_ui(*zoom_percentage < 500, |ui| {
+                        ui.add_enabled_ui(zoom_percentage < 500, |ui| {
                             if ui.button("+").clicked() {
-                                *zoom_percentage += 10;
+                                zoom_percentage += 10;
                             }
                         });
                     });
 
                     ui.add(
-                        egui::DragValue::new(zoom_percentage)
+                        egui::DragValue::new(&mut zoom_percentage)
                             .range(20..=500)
                             .suffix("%")
                             // dragging would cause the UI scale to jump arround erratically
                             .speed(0.0)
                             .update_while_editing(false),
                     );
-                    ctx.set_zoom_factor(f32::from(*zoom_percentage) * 0.01);
+
+                    self.app_config.zoom_percentage = zoom_percentage;
+                    ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
                 });
                 ui.horizontal(|ui| {
                     let theme_preference = &mut self.app_config.theme_preference;
