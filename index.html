@@ -12,7 +12,7 @@
             content="Raphael is a crafting rotation optimizer and macro generator for Final Fantasy XIV."
         />
 
-        <!-- Override createElement to attach "credentialless" to AdSense iframe so that it works with COEP -->
+        <!-- Attach "credentialless" to AdSense iframe so that it works with COEP -->
         <script>
             document.createElement = (function (create) {
                 return function () {
@@ -25,10 +25,12 @@
             })(document.createElement);
         </script>
 
-        <!-- Google AdSense ownership verification -->
+        <!-- Google AdSense -->
+        <!-- Anchor ads disabled at top of the page with data-overlays="bottom" -->
         <script
             async
             src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6789968305778981"
+            data-overlays="bottom"
             crossorigin="anonymous"
         ></script>
 
@@ -111,7 +113,7 @@
                 margin-left: auto;
                 display: block;
                 width: 100%;
-                height: calc(100% - 70px);
+                height: 100%;
             }
 
             /* Loading animation from https://cssloaders.github.io/ */
@@ -144,18 +146,6 @@
         <!-- The WASM code will resize the canvas dynamically -->
         <!-- the id is hardcoded in main.rs . so, make sure both match. -->
         <canvas id="the_canvas_id"></canvas>
-
-        <!-- Raphael Bottom Banner Ads -->
-        <ins
-            class="adsbygoogle"
-            style="display: block; height: 70px"
-            data-ad-client="ca-pub-6789968305778981"
-            data-ad-slot="4073997405"
-            data-full-width-responsive="true"
-        ></ins>
-        <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
     </body>
 </html>
 
