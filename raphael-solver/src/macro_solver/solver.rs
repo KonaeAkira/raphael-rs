@@ -144,20 +144,25 @@ impl<'a> MacroSolver<'a> {
                             ..SearchScore::MIN
                         });
 
-                        let quality_upper_bound = if state.quality >= self.settings.max_quality() {
-                            self.settings.max_quality()
-                        } else {
-                            std::cmp::min(
-                                score.quality_upper_bound,
-                                self.quality_ub_solver.quality_upper_bound(state)?,
-                            )
-                        };
+                        let score_ub = self
+                            .quality_ub_solver
+                            .score_upper_bound(state, score.current_steps + action.steps())?;
+                        assert!(score_ub.progress() >= self.settings.max_progress());
+
+                        // let quality_upper_bound = if state.quality >= self.settings.max_quality() {
+                        //     self.settings.max_quality()
+                        // } else {
+                        //     std::cmp::min(
+                        //         score.quality_upper_bound,
+                        //         self.quality_ub_solver.quality_upper_bound(state)?,
+                        //     )
+                        // };
 
                         search_queue.push(
                             state,
                             SearchScore {
-                                quality_upper_bound,
-                                steps_lower_bound: score.current_steps + action.steps() + 1,
+                                quality_upper_bound: score_ub.quality(),
+                                steps_lower_bound: score_ub.steps(),
                                 duration_lower_bound: score.current_duration
                                     + action.duration()
                                     + 3,

@@ -1,8 +1,5 @@
 mod atomic_flag;
-mod pareto_front_builder;
-
 pub use atomic_flag::AtomicFlag;
-pub use pareto_front_builder::{ParetoFrontBuilder, ParetoValue};
 
 pub struct ScopedTimer {
     name: &'static str,

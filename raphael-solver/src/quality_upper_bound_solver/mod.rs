@@ -1,3 +1,4 @@
+mod pareto_builder;
 mod solver;
 mod state;
 

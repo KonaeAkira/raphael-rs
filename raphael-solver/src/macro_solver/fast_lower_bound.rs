@@ -69,7 +69,8 @@ pub fn fast_lower_bound(
                     if *action == ActionCombo::Single(Action::ByregotsBlessing) {
                         continue;
                     }
-                    let quality_upper_bound = quality_ub_solver.quality_upper_bound(state)?;
+                    let quality_upper_bound =
+                        quality_ub_solver.score_upper_bound(state, 0)?.quality();
                     if quality_upper_bound <= best_achieved_quality {
                         continue;
                     }
