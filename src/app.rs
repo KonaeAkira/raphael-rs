@@ -11,10 +11,12 @@ use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
 use crate::config::{
-    CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
-    RecipeConfiguration, UIConfiguration,
+    AppConfig, CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
+    RecipeConfiguration,
 };
 use crate::widgets::*;
+
+static THREAD_POOL_INIT: std::sync::Once = std::sync::Once::new();
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -38,7 +40,7 @@ pub struct SolverConfig {
 
 pub struct MacroSolverApp {
     locale: Locale,
-    ui_config: UIConfiguration,
+    app_config: AppConfig,
     recipe_config: RecipeConfiguration,
     custom_recipe_overrides_config: CustomRecipeOverridesConfiguration,
     selected_food: Option<Consumable>,
@@ -69,10 +71,10 @@ pub struct MacroSolverApp {
 impl MacroSolverApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let ui_config = load(cc, "UI_CONFIG", UIConfiguration::default());
+        let app_config = load(cc, "APP_CONFIG", AppConfig::default());
         cc.egui_ctx
-            .set_zoom_factor(f32::from(ui_config.zoom_percentage) * 0.01);
-        cc.egui_ctx.set_theme(ui_config.theme_preference);
+            .set_zoom_factor(f32::from(app_config.zoom_percentage) * 0.01);
+        cc.egui_ctx.set_theme(app_config.theme_preference);
 
         cc.egui_ctx.all_styles_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
@@ -89,7 +91,7 @@ impl MacroSolverApp {
 
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
-            ui_config,
+            app_config,
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
             custom_recipe_overrides_config: load(
                 cc,
@@ -338,74 +340,7 @@ impl eframe::App for MacroSolverApp {
                         // Allocate space to make sure the top bar has space for the menu button
                         ui.allocate_space(egui::Vec2::new(5.0, 0.0));
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            ui.add_enabled_ui(true, |ui| {
-                                egui::containers::menu::MenuButton::new("⚙")
-                                    .config(
-                                        egui::containers::menu::MenuConfig::default()
-                                            .close_behavior(
-                                                egui::PopupCloseBehavior::CloseOnClickOutside,
-                                            ),
-                                    )
-                                    .ui(ui, |ui| {
-                                        ui.reset_style();
-                                        ui.horizontal(|ui| {
-                                            ui.label("Zoom");
-
-                                            let zoom_percentage =
-                                                &mut self.ui_config.zoom_percentage;
-                                            ui.horizontal(|ui| {
-                                                ui.style_mut().spacing.item_spacing.x = 4.0;
-                                                ui.add_enabled_ui(*zoom_percentage > 20, |ui| {
-                                                    if ui.button("-").clicked() {
-                                                        *zoom_percentage -= 10;
-                                                    }
-                                                });
-                                                ui.add_enabled_ui(*zoom_percentage != 100, |ui| {
-                                                    if ui.button("Reset").clicked() {
-                                                        *zoom_percentage = 100;
-                                                    }
-                                                });
-                                                ui.add_enabled_ui(*zoom_percentage < 500, |ui| {
-                                                    if ui.button("+").clicked() {
-                                                        *zoom_percentage += 10;
-                                                    }
-                                                });
-                                            });
-
-                                            ui.add(
-                                                egui::DragValue::new(zoom_percentage)
-                                                    .range(20..=500)
-                                                    .suffix("%")
-                                                    // dragging would cause the UI scale to jump arround erratically
-                                                    .speed(0.0)
-                                                    .update_while_editing(false),
-                                            );
-                                            ctx.set_zoom_factor(f32::from(*zoom_percentage) * 0.01);
-                                        });
-                                        ui.horizontal(|ui| {
-                                            let theme_preference =
-                                                &mut self.ui_config.theme_preference;
-                                            ui.selectable_value(
-                                                theme_preference,
-                                                egui::ThemePreference::Light,
-                                                "☀ Light",
-                                            );
-                                            ui.selectable_value(
-                                                theme_preference,
-                                                egui::ThemePreference::Dark,
-                                                "🌙 Dark",
-                                            );
-                                            ui.selectable_value(
-                                                theme_preference,
-                                                egui::ThemePreference::System,
-                                                "🖥 System",
-                                            );
-
-                                            ctx.set_theme(*theme_preference);
-                                        });
-                                    })
-                            });
-
+                            self.draw_app_config_menu_button(ui, ctx);
                             egui::warn_if_debug_build(ui);
                         });
                     });
@@ -513,7 +448,7 @@ impl eframe::App for MacroSolverApp {
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, "LOCALE", &self.locale);
-        eframe::set_value(storage, "UI_CONFIG", &self.ui_config);
+        eframe::set_value(storage, "APP_CONFIG", &self.app_config);
         eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
         eframe::set_value(
             storage,
@@ -565,6 +500,100 @@ impl MacroSolverApp {
                 }
             }
         }
+    }
+
+    fn draw_app_config_menu_button(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        egui::containers::menu::MenuButton::new("⚙")
+            .config(
+                egui::containers::menu::MenuConfig::default()
+                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
+            )
+            .ui(ui, |ui| {
+                ui.reset_style();
+                ui.horizontal(|ui| {
+                    ui.label("Zoom");
+
+                    let zoom_percentage = &mut self.app_config.zoom_percentage;
+                    ui.horizontal(|ui| {
+                        ui.style_mut().spacing.item_spacing.x = 4.0;
+                        ui.add_enabled_ui(*zoom_percentage > 20, |ui| {
+                            if ui.button("-").clicked() {
+                                *zoom_percentage -= 10;
+                            }
+                        });
+                        ui.add_enabled_ui(*zoom_percentage != 100, |ui| {
+                            if ui.button("Reset").clicked() {
+                                *zoom_percentage = 100;
+                            }
+                        });
+                        ui.add_enabled_ui(*zoom_percentage < 500, |ui| {
+                            if ui.button("+").clicked() {
+                                *zoom_percentage += 10;
+                            }
+                        });
+                    });
+
+                    ui.add(
+                        egui::DragValue::new(zoom_percentage)
+                            .range(20..=500)
+                            .suffix("%")
+                            // dragging would cause the UI scale to jump arround erratically
+                            .speed(0.0)
+                            .update_while_editing(false),
+                    );
+                    ctx.set_zoom_factor(f32::from(*zoom_percentage) * 0.01);
+                });
+                ui.horizontal(|ui| {
+                    let theme_preference = &mut self.app_config.theme_preference;
+                    ui.selectable_value(theme_preference, egui::ThemePreference::Light, "☀ Light");
+                    ui.selectable_value(theme_preference, egui::ThemePreference::Dark, "🌙 Dark");
+                    ui.selectable_value(
+                        theme_preference,
+                        egui::ThemePreference::System,
+                        "🖥 System",
+                    );
+
+                    ctx.set_theme(*theme_preference);
+                });
+                ui.separator();
+
+                ui.label("Maximum # threads for solver");
+                ui.add_enabled(!THREAD_POOL_INIT.is_completed(), |ui: &mut egui::Ui| {
+                    let mut response = ui.horizontal(|ui| {
+                        ui.radio_value(&mut self.app_config.num_threads, 0, "Auto");
+                        let manual_selected = self.app_config.num_threads != 0;
+                        if ui.radio(manual_selected, "Manual").clicked()
+                            && self.app_config.num_threads == 0
+                        {
+                            // `rayon::current_num_threads()` cannot be used here since that would implicitly create the pool
+                            self.app_config.num_threads = std::thread::available_parallelism()
+                                .unwrap_or(std::num::NonZero::new(8).unwrap())
+                                .into();
+                        }
+                        ui.add_enabled(
+                            manual_selected,
+                            egui::DragValue::new(&mut self.app_config.num_threads)
+                                .range(1..=64)
+                                .clamp_existing_to_range(false)
+                                .custom_formatter(|value, _| {
+                                    if THREAD_POOL_INIT.is_completed() {
+                                        format!("{}", rayon::current_num_threads())
+                                    } else if value == 0.0 {
+                                        "-".to_owned()
+                                    } else {
+                                        format!("{}", value as usize)
+                                    }
+                                }),
+                        );
+                    }).response;
+                    #[cfg(target_arch = "wasm32")]
+                    let app_restart_text = "Reload the page";
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let app_restart_text = "Restart the app";
+                    response = response.on_disabled_hover_text(egui::RichText::new(format!("⚠ Unavailable after the solver was started.\n{} to be able to edit again.", app_restart_text)).color(ui.visuals().warn_fg_color));
+                    response
+                });
+            });
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
@@ -990,6 +1019,22 @@ impl MacroSolverApp {
                 Id::new("LAST_SOLVE_PARAMS"),
                 (game_settings, initial_quality, self.solver_config),
             );
+        });
+
+        THREAD_POOL_INIT.call_once(|| {
+            match rayon::ThreadPoolBuilder::new()
+                .num_threads(self.app_config.num_threads)
+                .build_global()
+            {
+                Ok(()) => log::debug!(
+                    "Created global thread pool with num_threads = {}",
+                    self.app_config.num_threads
+                ),
+                Err(error) => log::debug!(
+                    "Creation of global thread pool failed with error = {:?}",
+                    error
+                ),
+            }
         });
 
         game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
