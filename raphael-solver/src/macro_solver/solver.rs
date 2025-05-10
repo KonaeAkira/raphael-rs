@@ -7,10 +7,9 @@ use crate::actions::{
 use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::quality_upper_bound_solver::QualityUbSolverStats;
-use crate::step_lower_bound_solver::StepLbSolverStats;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
-use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
+use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings};
 
 use std::vec::Vec;
 
@@ -38,7 +37,6 @@ pub struct MacroSolverStats {
     pub finish_states: usize,
     pub search_queue_stats: SearchQueueStats,
     pub quality_ub_stats: QualityUbSolverStats,
-    pub step_lb_stats: StepLbSolverStats,
 }
 
 pub struct MacroSolver<'a> {
@@ -47,7 +45,6 @@ pub struct MacroSolver<'a> {
     progress_callback: Box<ProgressCallback<'a>>,
     finish_solver: FinishSolver,
     quality_ub_solver: QualityUbSolver,
-    step_lb_solver: StepLbSolver,
     search_queue_stats: SearchQueueStats, // stats of last solve
     interrupt_signal: AtomicFlag,
 }
@@ -65,7 +62,6 @@ impl<'a> MacroSolver<'a> {
             progress_callback,
             finish_solver: FinishSolver::new(settings),
             quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
-            step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
             search_queue_stats: SearchQueueStats::default(),
             interrupt_signal,
         }
@@ -90,18 +86,9 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        _ = rayon::join(
-            || {
-                let _timer = ScopedTimer::new("Quality UB Solver");
-                self.quality_ub_solver.precompute()
-            },
-            || {
-                let _timer = ScopedTimer::new("Step LB Solver");
-                let mut seed_state = initial_state;
-                seed_state.effects.set_combo(Combo::None);
-                self.step_lb_solver.step_lower_bound(seed_state, 0)
-            },
-        );
+        let timer = ScopedTimer::new("Quality UB Solver");
+        self.quality_ub_solver.precompute();
+        drop(timer);
 
         let _timer = ScopedTimer::new("Search");
         Ok(self.do_solve(initial_state)?.actions())
@@ -166,23 +153,11 @@ impl<'a> MacroSolver<'a> {
                             )
                         };
 
-                        let step_lb_hint = score
-                            .steps_lower_bound
-                            .saturating_sub(score.current_steps + action.steps());
-                        let steps_lower_bound =
-                            match quality_upper_bound >= self.settings.max_quality() {
-                                true => self
-                                    .step_lb_solver
-                                    .step_lower_bound(state, step_lb_hint)?
-                                    .saturating_add(score.current_steps + action.steps()),
-                                false => score.current_steps + action.steps(),
-                            };
-
                         search_queue.push(
                             state,
                             SearchScore {
                                 quality_upper_bound,
-                                steps_lower_bound,
+                                steps_lower_bound: score.current_steps + action.steps() + 1,
                                 duration_lower_bound: score.current_duration
                                     + action.duration()
                                     + 3,
@@ -230,7 +205,6 @@ impl<'a> MacroSolver<'a> {
             finish_states: self.finish_solver.num_states(),
             search_queue_stats: self.search_queue_stats,
             quality_ub_stats: self.quality_ub_solver.runtime_stats(),
-            step_lb_stats: self.step_lb_solver.runtime_stats(),
         }
     }
 }
