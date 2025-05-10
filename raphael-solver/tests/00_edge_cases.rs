@@ -89,6 +89,7 @@ fn unsolvable() {
                 pareto_values: 0,
             },
             step_lb_stats: StepLbSolverStats {
+                precomputed_states: 0,
                 states: 0,
                 pareto_values: 0,
             },
@@ -138,6 +139,7 @@ fn zero_quality() {
                 pareto_values: 172523,
             },
             step_lb_stats: StepLbSolverStats {
+                precomputed_states: 0,
                 states: 0,
                 pareto_values: 0,
             },
@@ -187,6 +189,7 @@ fn max_quality() {
                 pareto_values: 6304450,
             },
             step_lb_stats: StepLbSolverStats {
+                precomputed_states: 720,
                 states: 105455,
                 pareto_values: 941052,
             },
@@ -233,6 +236,7 @@ fn large_progress_quality_increase() {
                 pareto_values: 411684,
             },
             step_lb_stats: StepLbSolverStats {
+                precomputed_states: 80,
                 states: 89,
                 pareto_values: 69,
             },
@@ -282,6 +286,7 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_values: 7205,
             },
             step_lb_stats: StepLbSolverStats {
+                precomputed_states: 98,
                 states: 99,
                 pareto_values: 75,
             },

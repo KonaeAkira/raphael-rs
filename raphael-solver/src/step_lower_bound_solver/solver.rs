@@ -16,6 +16,7 @@ type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
+    pub precomputed_states: usize,
     pub states: usize,
     pub pareto_values: usize,
 }
@@ -24,9 +25,10 @@ pub struct StepLbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
+    pareto_front_builder: ParetoFrontBuilder,
     precompute_templates: Box<[Template]>,
     next_precompute_step_budget: NonZeroU8,
-    pareto_front_builder: ParetoFrontBuilder,
+    precomputed_states: usize,
 }
 
 impl StepLbSolver {
@@ -36,12 +38,13 @@ impl StepLbSolver {
             settings,
             interrupt_signal,
             solved_states: SolvedStates::default(),
-            precompute_templates: Self::generate_precompute_templates(&settings),
-            next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress(),
                 settings.max_quality(),
             ),
+            precompute_templates: Self::generate_precompute_templates(&settings),
+            next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
+            precomputed_states: 0,
         }
     }
 
@@ -116,12 +119,14 @@ impl StepLbSolver {
             .flatten()
             .filter_map(|(next_template, _, _)| *next_template)
             .collect();
+        let num_states_before = self.solved_states.len();
         self.solved_states.extend(
             solved_templates
                 .into_iter()
                 .flatten()
                 .map(|(_, state, solution)| (state, solution)),
         );
+        self.precomputed_states += self.solved_states.len() - num_states_before;
         self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
         log::debug!(
             "StepLbSolver - templates: {}, solved_states: {}",
@@ -305,6 +310,7 @@ impl StepLbSolver {
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
         StepLbSolverStats {
+            precomputed_states: self.precomputed_states,
             states: self.solved_states.len(),
             pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
         }
