@@ -549,7 +549,7 @@ impl MacroSolverApp {
 
                 ui.label("Maximum # threads for solver");
                 ui.add_enabled(!THREAD_POOL_INIT.is_completed(), |ui: &mut egui::Ui| {
-                    let mut response = ui.horizontal(|ui| {
+                    ui.horizontal(|ui| {
                         ui.radio_value(&mut self.app_config.num_threads, 0, "Auto");
                         let manual_selected = self.app_config.num_threads != 0;
                         if ui.radio(manual_selected, "Manual").clicked()
@@ -575,14 +575,21 @@ impl MacroSolverApp {
                                     }
                                 }),
                         );
-                    }).response;
+                    }).response
+                });
+                if THREAD_POOL_INIT.is_completed() {
                     #[cfg(target_arch = "wasm32")]
                     let app_restart_text = "Reload the page";
                     #[cfg(not(target_arch = "wasm32"))]
                     let app_restart_text = "Restart the app";
-                    response = response.on_disabled_hover_text(egui::RichText::new(format!("⚠ Unavailable after the solver was started.\n{} to be able to edit again.", app_restart_text)).color(ui.visuals().warn_fg_color));
-                    response
-                });
+                    ui.label(
+                    egui::RichText::new(
+                            format!("⚠ Unavailable after the solver was started.\n{} to be able to edit again.", app_restart_text),
+                        )
+                        .small()
+                        .color(ui.visuals().warn_fg_color),
+                    );
+                }
             });
     }
 
