@@ -532,7 +532,7 @@ impl MacroSolverApp {
 
                     ui.add(
                         egui::DragValue::new(&mut zoom_percentage)
-                            .range(20..=500)
+                            .range(50..=500)
                             .suffix("%")
                             // dragging would cause the UI scale to jump arround erratically
                             .speed(0.0)
