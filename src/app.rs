@@ -513,7 +513,7 @@ impl MacroSolverApp {
                     let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
                     ui.horizontal(|ui| {
                         ui.style_mut().spacing.item_spacing.x = 4.0;
-                        ui.add_enabled_ui(zoom_percentage > 20, |ui| {
+                        ui.add_enabled_ui(zoom_percentage > 50, |ui| {
                             if ui.button(egui::RichText::new("-").monospace()).clicked() {
                                 zoom_percentage -= 10;
                             }
