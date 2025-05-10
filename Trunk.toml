@@ -1,12 +1,5 @@
 [build]
 dist = "distrib"
-pattern_script = """
-<script type="module">
-    import init, { initThreadPool } from '{base}{js}';
-    await init('{base}{wasm}');
-    await initThreadPool(navigator.hardwareConcurrency);
-</script>
-"""
 
 [serve]
 headers = { "Cross-Origin-Embedder-Policy" = "require-corp", "Cross-Origin-Opener-Policy" = "same-origin" }

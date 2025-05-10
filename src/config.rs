@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use raphael_data::{CrafterStats, CustomRecipeOverrides, Recipe};
 use serde::{Deserialize, Serialize};
 
@@ -5,6 +7,21 @@ use serde::{Deserialize, Serialize};
 pub enum QualitySource {
     HqMaterialList([u8; 6]),
     Value(u16),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct AppConfig {
+    pub zoom_percentage: u16,
+    pub num_threads: Option<NonZeroUsize>,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            zoom_percentage: 100,
+            num_threads: None,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]

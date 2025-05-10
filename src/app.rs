@@ -5,16 +5,16 @@ use std::sync::{Arc, Mutex};
 use raphael_solver::SolverException;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-use egui::{Align, CursorIcon, Id, Layout, TextStyle, Visuals};
+use egui::{Align, CursorIcon, Id, Layout, TextStyle};
 use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
 use crate::config::{
-    CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
+    AppConfig, CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
     RecipeConfiguration,
 };
-use crate::widgets::*;
+use crate::{thread_pool, widgets::*};
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -38,6 +38,7 @@ pub struct SolverConfig {
 
 pub struct MacroSolverApp {
     locale: Locale,
+    app_config: AppConfig,
     recipe_config: RecipeConfiguration,
     custom_recipe_overrides_config: CustomRecipeOverridesConfiguration,
     selected_food: Option<Consumable>,
@@ -68,16 +69,11 @@ pub struct MacroSolverApp {
 impl MacroSolverApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let dark_mode = cc
-            .egui_ctx
-            .data_mut(|data| *data.get_persisted_mut_or(Id::new("DARK_MODE"), true));
-        if dark_mode {
-            cc.egui_ctx.set_visuals(Visuals::dark());
-        } else {
-            cc.egui_ctx.set_visuals(Visuals::light());
-        }
+        let app_config = load(cc, "APP_CONFIG", AppConfig::default());
+        cc.egui_ctx
+            .set_zoom_factor(f32::from(app_config.zoom_percentage) * 0.01);
 
-        cc.egui_ctx.style_mut(|style| {
+        cc.egui_ctx.all_styles_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
             style.url_in_tooltip = true;
             style.always_scroll_the_only_direction = false;
@@ -92,6 +88,7 @@ impl MacroSolverApp {
 
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
+            app_config,
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
             custom_recipe_overrides_config: load(
                 cc,
@@ -287,6 +284,7 @@ impl eframe::App for MacroSolverApp {
                     egui::containers::menu::Bar::new().ui(ui, |ui| {
                         ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                         ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+                        self.draw_app_config_menu_button(ui, ctx);
 
                         egui::ComboBox::from_id_salt("LOCALE")
                             .selected_text(format!("{}", self.locale))
@@ -314,15 +312,6 @@ impl eframe::App for MacroSolverApp {
                                 );
                             });
 
-                        let mut visuals = ctx.style().visuals.clone();
-                        ui.selectable_value(&mut visuals, Visuals::light(), "☀ Light");
-                        ui.selectable_value(&mut visuals, Visuals::dark(), "🌙 Dark");
-                        ctx.data_mut(|data| {
-                            *data.get_persisted_mut_or_default(Id::new("DARK_MODE")) =
-                                visuals.dark_mode;
-                        });
-                        ctx.set_visuals(visuals);
-
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
                                 "View source on GitHub",
@@ -346,10 +335,9 @@ impl eframe::App for MacroSolverApp {
                             )
                             .open_in_new_tab(true),
                         );
-                        ui.with_layout(
-                            Layout::right_to_left(Align::Center),
-                            egui::warn_if_debug_build,
-                        );
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            egui::warn_if_debug_build(ui);
+                        });
                     });
                 });
         });
@@ -455,6 +443,7 @@ impl eframe::App for MacroSolverApp {
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, "LOCALE", &self.locale);
+        eframe::set_value(storage, "APP_CONFIG", &self.app_config);
         eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
         eframe::set_value(
             storage,
@@ -506,6 +495,107 @@ impl MacroSolverApp {
                 }
             }
         }
+    }
+
+    fn draw_app_config_menu_button(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        ui.add_enabled_ui(true, |ui| {
+            ui.reset_style();
+            egui::containers::menu::MenuButton::new("⚙ Settings")
+                .config(
+                    egui::containers::menu::MenuConfig::default()
+                        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
+                )
+                .ui(ui, |ui| {
+                    ui.reset_style();
+                    ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+                    ui.horizontal(|ui| {
+                        ui.label("Zoom");
+
+                        let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
+                        ui.horizontal(|ui| {
+                            ui.style_mut().spacing.item_spacing.x = 4.0;
+                            ui.add_enabled_ui(zoom_percentage > 50, |ui| {
+                                if ui.button(egui::RichText::new("-").monospace()).clicked() {
+                                    zoom_percentage -= 10;
+                                }
+                            });
+                            ui.add_enabled_ui(zoom_percentage != 100, |ui| {
+                                if ui.button("Reset").clicked() {
+                                    zoom_percentage = 100;
+                                }
+                            });
+                            ui.add_enabled_ui(zoom_percentage < 500, |ui| {
+                                if ui.button(egui::RichText::new("+").monospace()).clicked() {
+                                    zoom_percentage += 10;
+                                }
+                            });
+                        });
+
+                        ui.add(
+                            egui::DragValue::new(&mut zoom_percentage)
+                                .range(50..=500)
+                                .suffix("%")
+                                // dragging would cause the UI scale to jump arround erratically
+                                .speed(0.0)
+                                .update_while_editing(false),
+                        );
+
+                        self.app_config.zoom_percentage = zoom_percentage;
+                        ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
+                    });
+
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        ui.label("Theme");
+                        egui::global_theme_preference_buttons(ui);
+                    });
+                    ui.separator();
+
+                    ui.horizontal(|ui| {
+                        ui.label("Max solver threads");
+                        ui.add_enabled_ui(!thread_pool::initialization_attempted(), |ui| {
+                            let mut auto_thread_count = self.app_config.num_threads.is_none();
+                            if ui.checkbox(&mut auto_thread_count, "Auto").changed() {
+                                if auto_thread_count {
+                                    self.app_config.num_threads = None;
+                                } else {
+                                    self.app_config.num_threads =
+                                        Some(thread_pool::default_thread_count());
+                                }
+                            }
+                            if thread_pool::is_initialized() {
+                                ui.add_enabled(
+                                    false,
+                                    egui::DragValue::new(&mut rayon::current_num_threads()),
+                                );
+                            } else if let Some(num_threads) = self.app_config.num_threads.as_mut() {
+                                ui.add(egui::DragValue::new(num_threads));
+                            } else {
+                                ui.add_enabled(
+                                    false,
+                                    egui::DragValue::new(&mut thread_pool::default_thread_count()),
+                                );
+                            }
+                        });
+                    });
+                    if thread_pool::initialization_attempted() {
+                        #[cfg(target_arch = "wasm32")]
+                        let app_restart_text = "Reload the page to change max solver threads.";
+                        #[cfg(not(target_arch = "wasm32"))]
+                        let app_restart_text = "Restart the app to change max solver threads.";
+                        ui.label(
+                            egui::RichText::new("⚠ Unavailable after the solver was started.")
+                                .small()
+                                .color(ui.visuals().warn_fg_color),
+                        );
+                        ui.label(
+                            egui::RichText::new(app_restart_text)
+                                .small()
+                                .color(ui.visuals().warn_fg_color),
+                        );
+                    }
+                });
+        });
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
@@ -582,9 +672,22 @@ impl MacroSolverApp {
                         let text_color = ui.ctx().style().visuals.selection.stroke.color;
                         let text = egui::RichText::new("Solve").color(text_color);
                         let fill_color = ui.ctx().style().visuals.selection.bg_fill;
-                        let button = ui.add(egui::Button::new(text).fill(fill_color));
+                        let id = egui::Id::new("SOLVE_INITIATED");
+                        let mut solve_initiated = ui
+                            .ctx()
+                            .data(|data| data.get_temp::<bool>(id).unwrap_or_default());
+                        let button = ui.add_enabled(
+                            !solve_initiated,
+                            egui::Button::new(text).fill(fill_color),
+                        );
                         if button.clicked() {
-                            self.on_solve_button_clicked(ui.ctx());
+                            ui.ctx().data_mut(|data| {
+                                data.insert_temp(id, true);
+                            });
+                            solve_initiated = true;
+                        }
+                        if solve_initiated {
+                            self.on_solve_initiated(ui.ctx());
                         }
                     });
                 });
@@ -877,23 +980,32 @@ impl MacroSolverApp {
         ui.add_enabled(false, egui::Checkbox::new(&mut true, "Minimize steps"));
     }
 
-    fn on_solve_button_clicked(&mut self, ctx: &egui::Context) {
-        let craftsmanship_req = self.recipe_config.recipe.req_craftsmanship;
-        let control_req = self.recipe_config.recipe.req_control;
-        let craftsmanship = self.crafter_config.active_stats().craftsmanship;
-        let control = self.crafter_config.active_stats().control;
-        let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
-            craftsmanship,
-            &[self.selected_food, self.selected_potion],
-        );
-        let control_bonus =
-            raphael_data::control_bonus(control, &[self.selected_food, self.selected_potion]);
-        if craftsmanship + craftsmanship_bonus >= craftsmanship_req
-            && control + control_bonus >= control_req
-        {
-            self.solve(ctx);
+    fn on_solve_initiated(&mut self, ctx: &egui::Context) {
+        if thread_pool::is_initialized() {
+            ctx.data_mut(|data| {
+                data.insert_temp(Id::new("SOLVE_INITIATED"), false);
+            });
+
+            let craftsmanship_req = self.recipe_config.recipe.req_craftsmanship;
+            let control_req = self.recipe_config.recipe.req_control;
+            let craftsmanship = self.crafter_config.active_stats().craftsmanship;
+            let control = self.crafter_config.active_stats().control;
+            let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
+                craftsmanship,
+                &[self.selected_food, self.selected_potion],
+            );
+            let control_bonus =
+                raphael_data::control_bonus(control, &[self.selected_food, self.selected_potion]);
+            if craftsmanship + craftsmanship_bonus >= craftsmanship_req
+                && control + control_bonus >= control_req
+            {
+                self.solve(ctx);
+            } else {
+                self.missing_stats_error_window_open = true;
+            }
         } else {
-            self.missing_stats_error_window_open = true;
+            thread_pool::attempt_initialization(self.app_config.num_threads);
+            ctx.request_repaint();
         }
     }
 
@@ -925,6 +1037,7 @@ impl MacroSolverApp {
             ),
             QualitySource::Value(quality) => quality,
         };
+        game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
 
         ctx.data_mut(|data| {
             data.insert_temp(
@@ -933,7 +1046,6 @@ impl MacroSolverApp {
             );
         });
 
-        game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
         spawn_solver(
             self.solver_config,
             game_settings,
