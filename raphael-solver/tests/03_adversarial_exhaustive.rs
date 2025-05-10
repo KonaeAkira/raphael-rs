@@ -108,8 +108,8 @@ fn stuffed_peppers() {
                 pareto_values: 77746538,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 874432,
-                pareto_values: 14960763,
+                states: 1514616,
+                pareto_values: 16602508,
             },
         }
     "#]];
@@ -159,8 +159,8 @@ fn test_rare_tacos_2() {
                 pareto_values: 135274246,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1412743,
-                pareto_values: 31607366,
+                states: 2100394,
+                pareto_values: 35061245,
             },
         }
     "#]];
@@ -211,8 +211,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_values: 33011766,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 69197,
-                pareto_values: 549500,
+                states: 102360,
+                pareto_values: 589699,
             },
         }
     "#]];
@@ -260,8 +260,8 @@ fn test_indagator_3858_4057() {
                 pareto_values: 125659412,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 331716,
-                pareto_values: 5726156,
+                states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -310,8 +310,8 @@ fn test_rare_tacos_4628_4410() {
                 pareto_values: 151000601,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 324469,
-                pareto_values: 6963158,
+                states: 408767,
+                pareto_values: 7268447,
             },
         }
     "#]];

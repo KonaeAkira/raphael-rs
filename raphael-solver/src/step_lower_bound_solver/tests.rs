@@ -513,7 +513,6 @@ fn random_state(settings: &Settings) -> SimulationState {
 fn monotonic_fuzz_check(simulator_settings: Settings) {
     let solver_settings = SolverSettings { simulator_settings };
     let mut solver = StepLbSolver::new(solver_settings, Default::default());
-    solver.precompute();
     for _ in 0..10000 {
         let state = random_state(&simulator_settings);
         let state_lower_bound = solver.step_lower_bound(state, 0).unwrap();

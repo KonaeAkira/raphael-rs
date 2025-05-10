@@ -34,35 +34,9 @@ impl ReducedState {
         }
     }
 
-    pub fn from_state(state: SimulationState, steps_budget: NonZeroU8) -> Self {
-        Self {
-            steps_budget,
-            durability: Self::optimize_durability(state.effects, state.durability, steps_budget),
-            effects: Self::optimize_effects(state.effects, steps_budget),
-        }
-    }
-
-    pub fn to_state(self) -> SimulationState {
-        SimulationState {
-            durability: self.durability,
-            cp: 1000,
-            progress: 0,
-            quality: 0,
-            unreliable_quality: 0,
-            effects: self.effects,
-        }
-    }
-
-    pub fn optimize_durability(effects: Effects, durability: u16, step_budget: NonZeroU8) -> u16 {
-        let mut usable_durability = u16::from(step_budget.get()) * 20;
-        let usable_manipulation = std::cmp::min(effects.manipulation(), step_budget.get() - 1);
-        usable_durability -= u16::from(usable_manipulation) * 5;
-        let usable_waste_not = std::cmp::min(effects.waste_not(), step_budget.get());
-        usable_durability -= u16::from(usable_waste_not) * 10;
-        std::cmp::min(usable_durability, durability)
-    }
-
-    pub fn optimize_effects(mut effects: Effects, step_budget: NonZeroU8) -> Effects {
+    pub fn from_state(state: SimulationState, step_budget: NonZeroU8) -> Self {
+        // Optimize effects
+        let mut effects = state.effects;
         if effects.manipulation() > step_budget.get() - 1 {
             effects.set_manipulation(step_budget.get() - 1);
         }
@@ -83,6 +57,31 @@ impl ReducedState {
             // this gives a looser bound but decreases the number of states
             effects.set_great_strides(3);
         }
-        effects.with_adversarial_guard(true)
+        effects.set_adversarial_guard(true);
+        // Optimize durability
+        let durability = {
+            let mut usable_durability = u16::from(step_budget.get()) * 20;
+            let usable_manipulation = std::cmp::min(effects.manipulation(), step_budget.get() - 1);
+            usable_durability -= u16::from(usable_manipulation) * 5;
+            let usable_waste_not = std::cmp::min(effects.waste_not(), step_budget.get());
+            usable_durability -= u16::from(usable_waste_not) * 10;
+            std::cmp::min(usable_durability, state.durability)
+        };
+        Self {
+            steps_budget: step_budget,
+            durability,
+            effects,
+        }
+    }
+
+    pub fn to_state(self) -> SimulationState {
+        SimulationState {
+            durability: self.durability,
+            cp: 1000,
+            progress: 0,
+            quality: 0,
+            unreliable_quality: 0,
+            effects: self.effects,
+        }
     }
 }

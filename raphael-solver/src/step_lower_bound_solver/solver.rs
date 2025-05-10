@@ -24,6 +24,8 @@ pub struct StepLbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
+    precompute_templates: Box<[Template]>,
+    next_precompute_step_budget: NonZeroU8,
     pareto_front_builder: ParetoFrontBuilder,
 }
 
@@ -34,6 +36,8 @@ impl StepLbSolver {
             settings,
             interrupt_signal,
             solved_states: SolvedStates::default(),
+            precompute_templates: Self::generate_precompute_templates(&settings),
+            next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress(),
                 settings.max_quality(),
@@ -41,13 +45,13 @@ impl StepLbSolver {
         }
     }
 
-    fn generate_precompute_templates(&self) -> Box<[Template]> {
+    fn generate_precompute_templates(settings: &SolverSettings) -> Box<[Template]> {
         let mut templates = rustc_hash::FxHashSet::<Template>::default();
         let mut queue = std::collections::VecDeque::<Template>::new();
 
         let initial_node = Template {
-            durability: self.settings.max_durability(),
-            effects: Effects::initial(&self.settings.simulator_settings)
+            durability: settings.max_durability(),
+            effects: Effects::initial(&settings.simulator_settings)
                 .with_trained_perfection_available(false)
                 .with_quick_innovation_available(false)
                 .with_heart_and_soul_available(false)
@@ -68,7 +72,7 @@ impl StepLbSolver {
                 true => FULL_SEARCH_ACTIONS,
             };
             for &action in search_actions {
-                if let Ok(new_state) = use_action_combo(&self.settings, state.to_state(), action) {
+                if let Ok(new_state) = use_action_combo(settings, state.to_state(), action) {
                     let new_state = ReducedState::from_state(new_state, NonZeroU8::MAX);
                     let new_node = Template {
                         durability: new_state.durability,
@@ -85,47 +89,30 @@ impl StepLbSolver {
         templates.into_iter().collect()
     }
 
-    pub fn precompute(&mut self) {
-        if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
+    fn precompute(&mut self, step_budget: NonZeroU8) {
+        if rayon::current_num_threads() <= 1 {
             return;
         }
 
-        let templates = self.generate_precompute_templates();
-        for step_budget in 1..=8 {
-            let step_budget = NonZeroU8::try_from(step_budget).unwrap();
-            if self.interrupt_signal.is_set() {
-                return;
-            }
-            let init = || {
-                ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality())
-            };
-            let solved_states = templates
-                .par_iter()
-                .map_init(init, |pareto_front_builder, template| {
-                    let optimized_durability = ReducedState::optimize_durability(
-                        template.effects,
-                        template.durability,
-                        step_budget,
-                    );
-                    let optimized_effects =
-                        ReducedState::optimize_effects(template.effects, step_budget);
-                    let state = ReducedState {
-                        steps_budget: step_budget,
-                        durability: optimized_durability,
-                        effects: optimized_effects,
-                    };
-                    let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                    (state, pareto_front)
-                })
-                .collect_vec_list();
-            for thread_solved_states in solved_states {
-                self.solved_states.extend(thread_solved_states);
-            }
+        let init =
+            || ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality());
+        let solved_states = self
+            .precompute_templates
+            .par_iter()
+            .map_init(init, |pareto_front_builder, template| {
+                let state = template.instantiate(step_budget);
+                let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
+                (state, pareto_front)
+            })
+            .collect_vec_list();
+
+        for thread_solved_states in solved_states {
+            self.solved_states.extend(thread_solved_states);
         }
 
         log::debug!(
-            "StepLbSolver - templates: {}, precomputed_states: {}",
-            templates.len(),
+            "StepLbSolver - templates: {}, solved_states: {}",
+            self.precompute_templates.len(),
             self.solved_states.len()
         );
     }
@@ -154,9 +141,7 @@ impl StepLbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        unreachable!(
-                            "Child state does not exist.\nParent state: {state:?}.\nChild state: {new_state:?}.\nAction: {action:?}."
-                        );
+                        unreachable!("Parent: {state:?}\nChild: {new_state:?}\nAction: {action:?}");
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -204,6 +189,11 @@ impl StepLbSolver {
                 "\"{:?}\" combo in step lower bound solver",
                 state.effects.combo()
             )));
+        }
+
+        while self.next_precompute_step_budget <= step_budget {
+            self.precompute(self.next_precompute_step_budget);
+            self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
         }
 
         let reduced_state = ReducedState::from_state(state, step_budget);
@@ -324,4 +314,18 @@ impl Drop for StepLbSolver {
 struct Template {
     durability: u16,
     effects: Effects,
+}
+
+impl Template {
+    pub fn instantiate(&self, step_budget: NonZeroU8) -> ReducedState {
+        let state = SimulationState {
+            durability: self.durability,
+            effects: self.effects,
+            cp: 0,
+            progress: 0,
+            quality: 0,
+            unreliable_quality: 0,
+        };
+        ReducedState::from_state(state, step_budget)
+    }
 }
