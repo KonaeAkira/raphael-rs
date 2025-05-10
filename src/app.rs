@@ -74,7 +74,6 @@ impl MacroSolverApp {
         let app_config = load(cc, "APP_CONFIG", AppConfig::default());
         cc.egui_ctx
             .set_zoom_factor(f32::from(app_config.zoom_percentage) * 0.01);
-        cc.egui_ctx.set_theme(app_config.theme_preference);
 
         cc.egui_ctx.all_styles_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
@@ -545,18 +544,7 @@ impl MacroSolverApp {
                     self.app_config.zoom_percentage = zoom_percentage;
                     ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
                 });
-                ui.horizontal(|ui| {
-                    let theme_preference = &mut self.app_config.theme_preference;
-                    ui.selectable_value(theme_preference, egui::ThemePreference::Light, "☀ Light");
-                    ui.selectable_value(theme_preference, egui::ThemePreference::Dark, "🌙 Dark");
-                    ui.selectable_value(
-                        theme_preference,
-                        egui::ThemePreference::System,
-                        "🖥 System",
-                    );
-
-                    ctx.set_theme(*theme_preference);
-                });
+                egui::global_theme_preference_buttons(ui);
                 ui.separator();
 
                 ui.label("Maximum # threads for solver");
