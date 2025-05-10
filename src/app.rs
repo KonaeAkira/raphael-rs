@@ -501,96 +501,100 @@ impl MacroSolverApp {
         ui.add_enabled_ui(true, |ui| {
             ui.reset_style();
             egui::containers::menu::MenuButton::new("⚙ Settings")
-            .config(
-                egui::containers::menu::MenuConfig::default()
-                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
-            )
-            .ui(ui, |ui| {
-                ui.reset_style();
-                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-                ui.horizontal(|ui| {
-                    ui.label("Zoom");
-
-                    let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
+                .config(
+                    egui::containers::menu::MenuConfig::default()
+                        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
+                )
+                .ui(ui, |ui| {
+                    ui.reset_style();
+                    ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                     ui.horizontal(|ui| {
-                        ui.style_mut().spacing.item_spacing.x = 4.0;
-                        ui.add_enabled_ui(zoom_percentage > 50, |ui| {
-                            if ui.button(egui::RichText::new("-").monospace()).clicked() {
-                                zoom_percentage -= 10;
-                            }
+                        ui.label("Zoom");
+
+                        let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
+                        ui.horizontal(|ui| {
+                            ui.style_mut().spacing.item_spacing.x = 4.0;
+                            ui.add_enabled_ui(zoom_percentage > 50, |ui| {
+                                if ui.button(egui::RichText::new("-").monospace()).clicked() {
+                                    zoom_percentage -= 10;
+                                }
+                            });
+                            ui.add_enabled_ui(zoom_percentage != 100, |ui| {
+                                if ui.button("Reset").clicked() {
+                                    zoom_percentage = 100;
+                                }
+                            });
+                            ui.add_enabled_ui(zoom_percentage < 500, |ui| {
+                                if ui.button(egui::RichText::new("+").monospace()).clicked() {
+                                    zoom_percentage += 10;
+                                }
+                            });
                         });
-                        ui.add_enabled_ui(zoom_percentage != 100, |ui| {
-                            if ui.button("Reset").clicked() {
-                                zoom_percentage = 100;
+
+                        ui.add(
+                            egui::DragValue::new(&mut zoom_percentage)
+                                .range(50..=500)
+                                .suffix("%")
+                                // dragging would cause the UI scale to jump arround erratically
+                                .speed(0.0)
+                                .update_while_editing(false),
+                        );
+
+                        self.app_config.zoom_percentage = zoom_percentage;
+                        ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
+                    });
+
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        ui.label("Theme");
+                        egui::global_theme_preference_buttons(ui);
+                    });
+                    ui.separator();
+
+                    ui.horizontal(|ui| {
+                        ui.label("Max solver threads");
+                        ui.add_enabled_ui(!thread_pool::initialization_attempted(), |ui| {
+                            let mut auto_thread_count = self.app_config.num_threads.is_none();
+                            if ui.checkbox(&mut auto_thread_count, "Auto").changed() {
+                                if auto_thread_count {
+                                    self.app_config.num_threads = None;
+                                } else {
+                                    self.app_config.num_threads =
+                                        Some(thread_pool::default_thread_count());
+                                }
                             }
-                        });
-                        ui.add_enabled_ui(zoom_percentage < 500, |ui| {
-                            if ui.button(egui::RichText::new("+").monospace()).clicked() {
-                                zoom_percentage += 10;
+                            if thread_pool::is_initialized() {
+                                ui.add_enabled(
+                                    false,
+                                    egui::DragValue::new(&mut rayon::current_num_threads()),
+                                );
+                            } else if let Some(num_threads) = self.app_config.num_threads.as_mut() {
+                                ui.add(egui::DragValue::new(num_threads));
+                            } else {
+                                ui.add_enabled(
+                                    false,
+                                    egui::DragValue::new(&mut thread_pool::default_thread_count()),
+                                );
                             }
                         });
                     });
-
-                    ui.add(
-                        egui::DragValue::new(&mut zoom_percentage)
-                            .range(50..=500)
-                            .suffix("%")
-                            // dragging would cause the UI scale to jump arround erratically
-                            .speed(0.0)
-                            .update_while_editing(false),
-                    );
-
-                    self.app_config.zoom_percentage = zoom_percentage;
-                    ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
-                });
-
-                ui.separator();
-                ui.label("Theme");
-                egui::global_theme_preference_buttons(ui);
-                ui.separator();
-
-                ui.label("Max solver threads");
-                ui.add_enabled(!thread_pool::initialization_attempted(), |ui: &mut egui::Ui| {
-                    ui.horizontal(|ui| {
-                        ui.radio_value(&mut self.app_config.num_threads, 0, "Auto");
-                        let manual_selected = self.app_config.num_threads != 0;
-                        if ui.radio(manual_selected, "Manual").clicked()
-                            && self.app_config.num_threads == 0
-                        {
-                            // `rayon::current_num_threads()` can't be used here since it implicitly creates the pool
-                            self.app_config.num_threads = thread_pool::default_thread_count();
-                        }
-                        ui.add_enabled(
-                            manual_selected,
-                            egui::DragValue::new(&mut self.app_config.num_threads)
-                                .range(1..=64)
-                                .clamp_existing_to_range(false)
-                                .custom_formatter(|value, _| {
-                                    if thread_pool::is_initialized() {
-                                        format!("{}", rayon::current_num_threads())
-                                    } else if value == 0.0 {
-                                        "-".to_owned()
-                                    } else {
-                                        format!("{}", value as usize)
-                                    }
-                                }),
+                    if thread_pool::initialization_attempted() {
+                        #[cfg(target_arch = "wasm32")]
+                        let app_restart_text = "Reload the page to change max solver threads.";
+                        #[cfg(not(target_arch = "wasm32"))]
+                        let app_restart_text = "Restart the app to change max solver threads.";
+                        ui.label(
+                            egui::RichText::new("⚠ Unavailable after the solver was started.")
+                                .small()
+                                .color(ui.visuals().warn_fg_color),
                         );
-                    }).response
+                        ui.label(
+                            egui::RichText::new(app_restart_text)
+                                .small()
+                                .color(ui.visuals().warn_fg_color),
+                        );
+                    }
                 });
-                if thread_pool::initialization_attempted() {
-                    #[cfg(target_arch = "wasm32")]
-                    let app_restart_text = "Reload the page";
-                    #[cfg(not(target_arch = "wasm32"))]
-                    let app_restart_text = "Restart the app";
-                    ui.label(
-                    egui::RichText::new(
-                            format!("⚠ Unavailable after the solver was started.\n{} to be able to edit again.", app_restart_text),
-                        )
-                        .small()
-                        .color(ui.visuals().warn_fg_color),
-                    );
-                }
-            });
         });
     }
 

@@ -1,10 +1,12 @@
+use std::num::NonZeroUsize;
+
 static THREAD_POOL_INIT: std::sync::Once = std::sync::Once::new();
 
 #[cfg(target_arch = "wasm32")]
 static THREAD_POOL_IS_INITIALIZED: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
-pub fn attempt_initialization(num_threads: usize) {
+pub fn attempt_initialization(num_threads: Option<NonZeroUsize>) {
     THREAD_POOL_INIT.call_once(|| {
         initialize(num_threads);
     });
@@ -15,9 +17,13 @@ pub fn initialization_attempted() -> bool {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn initialize(num_threads: usize) {
+fn initialize(num_threads: Option<NonZeroUsize>) {
+    let num_threads = match num_threads {
+        Some(num_threads) => num_threads,
+        None => default_thread_count(),
+    };
     match rayon::ThreadPoolBuilder::new()
-        .num_threads(num_threads)
+        .num_threads(num_threads.get())
         .build_global()
     {
         Ok(()) => log::debug!(
@@ -32,13 +38,12 @@ fn initialize(num_threads: usize) {
 }
 
 #[cfg(target_arch = "wasm32")]
-fn initialize(num_threads: usize) {
-    let num_threads = if num_threads == 0 {
-        default_thread_count()
-    } else {
-        num_threads
+fn initialize(num_threads: Option<NonZeroUsize>) {
+    let num_threads = match num_threads {
+        Some(num_threads) => num_threads,
+        None => default_thread_count(),
     };
-    let future = wasm_bindgen_futures::JsFuture::from(crate::init_thread_pool(num_threads));
+    let future = wasm_bindgen_futures::JsFuture::from(crate::init_thread_pool(num_threads.get()));
     wasm_bindgen_futures::spawn_local(async move {
         let result = future.await;
         log::debug!(
@@ -51,18 +56,19 @@ fn initialize(num_threads: usize) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn default_thread_count() -> usize {
-    std::thread::available_parallelism()
-        .map_or(4, |count| count.get() / 2)
-        .max(2)
+pub fn default_thread_count() -> NonZeroUsize {
+    std::thread::available_parallelism().map_or(NonZeroUsize::new(4).unwrap(), |detected| {
+        let num_threads = std::cmp::max(2, detected.get() / 2);
+        NonZeroUsize::new(num_threads).unwrap()
+    })
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn default_thread_count() -> usize {
+pub fn default_thread_count() -> NonZeroUsize {
     let window = web_sys::window().unwrap();
     let detected = window.navigator().hardware_concurrency() as usize;
     // See https://github.com/KonaeAkira/raphael-rs/issues/169
-    (detected / 2).clamp(2, 8)
+    NonZeroUsize::new((detected / 2).clamp(2, 8)).unwrap()
 }
 
 #[cfg(not(target_arch = "wasm32"))]
