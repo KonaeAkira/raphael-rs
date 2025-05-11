@@ -405,6 +405,8 @@ impl eframe::App for MacroSolverApp {
                         });
                     },
                 );
+                #[cfg(target_arch = "wasm32")]
+                ui.add_space(120.0); // Extra space to prevent anchor ad from hiding something important
             });
         });
 

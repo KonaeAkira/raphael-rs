@@ -12,6 +12,28 @@
             content="Raphael is a crafting rotation optimizer and macro generator for Final Fantasy XIV."
         />
 
+        <!-- Attach "credentialless" to AdSense iframe so that it works with COEP -->
+        <script>
+            document.createElement = (function (create) {
+                return function () {
+                    const e = create.apply(this, arguments);
+                    if (e.tagName === "IFRAME") {
+                        e.setAttribute("credentialless", "");
+                    }
+                    return e;
+                };
+            })(document.createElement);
+        </script>
+
+        <!-- Google AdSense -->
+        <!-- Anchor ads disabled at top of the page with data-overlays="bottom" -->
+        <script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6789968305778981"
+            data-overlays="bottom"
+            crossorigin="anonymous"
+        ></script>
+
         <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
         <link
             data-trunk
@@ -27,6 +49,8 @@
         <link data-trunk rel="copy-file" href="assets/_headers" />
         <link data-trunk rel="copy-dir" href="assets/action-icons/" />
         <link data-trunk rel="copy-dir" href="assets/fonts/" />
+
+        <link data-trunk rel="copy-file" href="assets/ads.txt" />
 
         <meta
             name="theme-color"
@@ -88,9 +112,6 @@
                 margin-right: auto;
                 margin-left: auto;
                 display: block;
-                position: absolute;
-                top: 0;
-                left: 0;
                 width: 100%;
                 height: 100%;
             }

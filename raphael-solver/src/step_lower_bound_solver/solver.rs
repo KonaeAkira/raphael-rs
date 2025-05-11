@@ -109,10 +109,12 @@ impl StepLbSolver {
                 (state, pareto_front)
             })
             .collect_vec_list();
+
         let num_solved_states_before = self.solved_states.len();
         self.solved_states
             .extend(solved_templates.into_iter().flatten());
         self.precomputed_states += self.solved_states.len() - num_solved_states_before;
+
         let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
             let state = template.instantiate(self.next_precompute_step_budget);
             let pareto_front = self.solved_states.get(&state).unwrap();
@@ -129,7 +131,9 @@ impl StepLbSolver {
             value.first < self.settings.max_progress() || value.second < max_needed_quality
         });
         self.precompute_templates = Vec::from_par_iter(filtered_templates.copied());
+
         self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
+
         log::debug!(
             "StepLbSolver - templates: {}, solved_states: {}",
             self.precompute_templates.len(),
