@@ -2,7 +2,10 @@ use std::num::NonZeroU8;
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
+    actions::{
+        ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS,
+        QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo,
+    },
     utils,
 };
 use raphael_sim::*;
@@ -29,6 +32,9 @@ pub struct StepLbSolver {
     precompute_templates: Vec<Template>,
     next_precompute_step_budget: NonZeroU8,
     precomputed_states: usize,
+    /// Maps InnerQuiet to the minimum amount of Quality that
+    /// a state with the corresponding InnerQuiet can have.
+    iq_quality_lut: [u32; 11],
 }
 
 impl StepLbSolver {
@@ -45,6 +51,7 @@ impl StepLbSolver {
             precompute_templates: Self::generate_precompute_templates(&settings),
             next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             precomputed_states: 0,
+            iq_quality_lut: compute_iq_quality_lut(&settings),
         }
     }
 
@@ -109,8 +116,17 @@ impl StepLbSolver {
         let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
             let state = template.instantiate(self.next_precompute_step_budget);
             let pareto_front = self.solved_states.get(&state).unwrap();
-            let value = pareto_front.get(0).unwrap();
-            value.first < self.settings.max_progress() || value.second < self.settings.max_quality()
+            // Values are sorted Progress-increaasing and Quality-decreasing.
+            // The last value is the value with the most Progress.
+            let value = pareto_front.last().unwrap();
+            // Estimate the max quality that this state ever needs to achieve.
+            // Over-estimating the max needed quality leads to redundant states being precomputed.
+            // Under-estimating the max needed quality could lead to solver crash during precompute from templates being removed too early.
+            let max_needed_quality = {
+                let min_cur_quality = self.iq_quality_lut[usize::from(state.effects.inner_quiet())];
+                self.settings.max_quality().saturating_sub(min_cur_quality)
+            };
+            value.first < self.settings.max_progress() || value.second < max_needed_quality
         });
         self.precompute_templates = Vec::from_par_iter(filtered_templates.copied());
         self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
@@ -335,4 +351,35 @@ impl Template {
         };
         ReducedState::from_state(state, step_budget)
     }
+}
+
+fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
+    let mut result = [u32::MAX; 11];
+    result[0] = 0;
+    for iq in 0..10 {
+        let state = SimulationState {
+            cp: 500,
+            durability: 100,
+            progress: 0,
+            quality: 0,
+            unreliable_quality: 0,
+            effects: Effects::new()
+                .with_allow_quality_actions(true)
+                .with_adversarial_guard(true)
+                .with_inner_quiet(iq),
+        };
+        for &action in QUALITY_ONLY_SEARCH_ACTIONS {
+            if let Ok(new_state) = use_action_combo(settings, state, action) {
+                let new_iq = new_state.effects.inner_quiet();
+                if new_iq > iq {
+                    let action_quality = new_state.quality;
+                    result[usize::from(new_iq)] = std::cmp::min(
+                        result[usize::from(new_iq)],
+                        result[usize::from(iq)] + action_quality,
+                    );
+                }
+            }
+        }
+    }
+    result
 }

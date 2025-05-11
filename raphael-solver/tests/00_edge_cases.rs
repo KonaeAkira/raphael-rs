@@ -189,9 +189,9 @@ fn max_quality() {
                 pareto_values: 6304450,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 314830,
+                parallel_states: 244815,
                 sequential_states: 11955,
-                pareto_values: 1874688,
+                pareto_values: 1767271,
             },
         }
     "#]];
