@@ -189,7 +189,7 @@ fn max_quality() {
                 pareto_values: 6304450,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 357568,
+                parallel_states: 314830,
                 sequential_states: 11955,
                 pareto_values: 1874688,
             },
@@ -236,7 +236,7 @@ fn large_progress_quality_increase() {
                 pareto_values: 411684,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 80,
+                parallel_states: 60,
                 sequential_states: 9,
                 pareto_values: 69,
             },
@@ -286,7 +286,7 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_values: 7205,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 98,
+                parallel_states: 74,
                 sequential_states: 1,
                 pareto_values: 75,
             },

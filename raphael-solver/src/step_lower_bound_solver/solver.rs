@@ -6,7 +6,7 @@ use crate::{
     utils,
 };
 use raphael_sim::*;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{FromParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use super::state::ReducedState;
 
@@ -26,7 +26,7 @@ pub struct StepLbSolver {
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
     pareto_front_builder: ParetoFrontBuilder,
-    precompute_templates: Box<[Template]>,
+    precompute_templates: Vec<Template>,
     next_precompute_step_budget: NonZeroU8,
     precomputed_states: usize,
 }
@@ -48,11 +48,11 @@ impl StepLbSolver {
         }
     }
 
-    fn generate_precompute_templates(settings: &SolverSettings) -> Box<[Template]> {
+    fn generate_precompute_templates(settings: &SolverSettings) -> Vec<Template> {
         let mut templates = rustc_hash::FxHashSet::<Template>::default();
         let mut queue = std::collections::VecDeque::<Template>::new();
 
-        let initial_node = Template {
+        let seed_template = Template {
             durability: settings.max_durability(),
             effects: Effects::initial(&settings.simulator_settings)
                 .with_trained_perfection_available(false)
@@ -61,29 +61,27 @@ impl StepLbSolver {
                 .with_adversarial_guard(true)
                 .with_combo(Combo::None),
         };
-        templates.insert(initial_node);
-        queue.push_back(initial_node);
+        templates.insert(seed_template);
+        queue.push_back(seed_template);
 
-        while let Some(node) = queue.pop_front() {
-            let state = ReducedState {
-                steps_budget: NonZeroU8::MAX,
-                durability: node.durability,
-                effects: node.effects,
-            };
-            let search_actions = match node.effects.allow_quality_actions() {
+        while let Some(template) = queue.pop_front() {
+            let state = template.instantiate(NonZeroU8::MAX);
+            let search_actions = match state.effects.allow_quality_actions() {
                 false => PROGRESS_ONLY_SEARCH_ACTIONS,
                 true => FULL_SEARCH_ACTIONS,
             };
             for &action in search_actions {
                 if let Ok(new_state) = use_action_combo(settings, state.to_state(), action) {
                     let new_state = ReducedState::from_state(new_state, NonZeroU8::MAX);
-                    let new_node = Template {
-                        durability: new_state.durability,
-                        effects: new_state.effects,
-                    };
-                    if !templates.contains(&new_node) {
-                        templates.insert(new_node);
-                        queue.push_back(new_node);
+                    if new_state.durability > 0 {
+                        let new_template = Template {
+                            durability: new_state.durability,
+                            effects: new_state.effects,
+                        };
+                        if !templates.contains(&new_template) {
+                            templates.insert(new_template);
+                            queue.push_back(new_template);
+                        }
                     }
                 }
             }
@@ -98,35 +96,23 @@ impl StepLbSolver {
         let solved_templates = self
             .precompute_templates
             .par_iter()
-            .map_init(init, |pareto_front_builder, template| {
-                let state = template.instantiate(self.next_precompute_step_budget);
+            .map(|template| template.instantiate(self.next_precompute_step_budget))
+            .map_init(init, |pareto_front_builder, state| {
                 let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                // If this template can reach max progress and quality with the current step budget,
-                // then computing the same template with a higher step budget is unnecessary.
-                let next_template = if pareto_front.get(0).is_some_and(|value| {
-                    value.first >= self.settings.max_progress()
-                        && value.second >= self.settings.max_quality()
-                }) {
-                    None
-                } else {
-                    Some(*template)
-                };
-                (next_template, state, pareto_front)
+                (state, pareto_front)
             })
             .collect_vec_list();
-        self.precompute_templates = solved_templates
-            .iter()
-            .flatten()
-            .filter_map(|(next_template, _, _)| *next_template)
-            .collect();
-        let num_states_before = self.solved_states.len();
-        self.solved_states.extend(
-            solved_templates
-                .into_iter()
-                .flatten()
-                .map(|(_, state, solution)| (state, solution)),
-        );
-        self.precomputed_states += self.solved_states.len() - num_states_before;
+        let num_solved_states_before = self.solved_states.len();
+        self.solved_states
+            .extend(solved_templates.into_iter().flatten());
+        self.precomputed_states += self.solved_states.len() - num_solved_states_before;
+        let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
+            let state = template.instantiate(self.next_precompute_step_budget);
+            let pareto_front = self.solved_states.get(&state).unwrap();
+            let value = pareto_front.get(0).unwrap();
+            value.first < self.settings.max_progress() || value.second < self.settings.max_quality()
+        });
+        self.precompute_templates = Vec::from_par_iter(filtered_templates.copied());
         self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
         log::debug!(
             "StepLbSolver - templates: {}, solved_states: {}",
@@ -154,7 +140,9 @@ impl StepLbSolver {
             if let Ok(new_state) = use_action_combo(&self.settings, state.to_state(), action) {
                 let progress = new_state.progress;
                 let quality = new_state.quality;
-                if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget) {
+                if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget)
+                    && new_state.durability > 0
+                {
                     let new_state = ReducedState::from_state(new_state, new_step_budget);
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
