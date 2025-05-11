@@ -16,8 +16,8 @@ type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
-    pub precomputed_states: usize,
-    pub states: usize,
+    pub parallel_states: usize,
+    pub sequential_states: usize,
     pub pareto_values: usize,
 }
 
@@ -310,8 +310,8 @@ impl StepLbSolver {
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
         StepLbSolverStats {
-            precomputed_states: self.precomputed_states,
-            states: self.solved_states.len(),
+            parallel_states: self.precomputed_states,
+            sequential_states: self.solved_states.len() - self.precomputed_states,
             pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
         }
     }
@@ -321,8 +321,9 @@ impl Drop for StepLbSolver {
     fn drop(&mut self) {
         let runtime_stats = self.runtime_stats();
         log::debug!(
-            "StepLbSolver - states: {}, values: {}",
-            runtime_stats.states,
+            "StepLbSolver - par_states: {}, seq_states: {}, values: {}",
+            runtime_stats.parallel_states,
+            runtime_stats.sequential_states,
             runtime_stats.pareto_values
         );
     }
