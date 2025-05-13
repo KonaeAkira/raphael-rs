@@ -1,4 +1,5 @@
 [alias]
 tr = "test --package raphael-solver --test * -- -Z unstable-options --report-time"
+tr1 = "test --package raphael-solver --test * -- -Z unstable-options --report-time --test-threads=1"
 rr = "run --profile release-with-debug --package raphael-solver --example macro_solver_example"
 ud = "run --package raphael-data-updater"

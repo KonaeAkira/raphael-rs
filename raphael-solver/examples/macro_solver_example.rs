@@ -7,21 +7,19 @@ fn main() {
         .format_target(false)
         .init();
 
-    // Ceremonial Gunblade
-    // 5428/5236/645 + HQ Ceviche + HQ Cunning Tisane
     let simulator_settings = Settings {
-        max_cp: 768,
-        max_durability: 70,
-        max_progress: 9000,
-        max_quality: 18700,
-        base_progress: 297,
-        base_quality: 288,
+        max_cp: 753,
+        max_durability: 20,
+        max_progress: 4700,
+        max_quality: 14900,
+        base_progress: 310,
+        base_quality: 324,
         job_level: 100,
         allowed_actions: ActionMask::all()
             .remove(Action::TrainedEye)
             .remove(Action::HeartAndSoul)
             .remove(Action::QuickInnovation),
-        adversarial: true,
+        adversarial: false,
         backload_progress: false,
     };
 

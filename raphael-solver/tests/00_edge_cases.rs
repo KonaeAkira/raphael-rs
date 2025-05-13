@@ -89,7 +89,8 @@ fn unsolvable() {
                 pareto_values: 0,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
+                parallel_states: 0,
+                sequential_states: 0,
                 pareto_values: 0,
             },
         }
@@ -138,8 +139,9 @@ fn zero_quality() {
                 pareto_values: 172523,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 25649,
-                pareto_values: 230047,
+                parallel_states: 0,
+                sequential_states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
@@ -187,8 +189,9 @@ fn max_quality() {
                 pareto_values: 6304450,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 108565,
-                pareto_values: 964182,
+                parallel_states: 244815,
+                sequential_states: 11955,
+                pareto_values: 1767271,
             },
         }
     "#]];
@@ -233,8 +236,9 @@ fn large_progress_quality_increase() {
                 pareto_values: 411684,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 10,
-                pareto_values: 10,
+                parallel_states: 60,
+                sequential_states: 9,
+                pareto_values: 69,
             },
         }
     "#]];
@@ -282,8 +286,9 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_values: 7205,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 8,
-                pareto_values: 8,
+                parallel_states: 74,
+                sequential_states: 1,
+                pareto_values: 75,
             },
         }
     "#]];

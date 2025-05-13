@@ -90,18 +90,9 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        _ = rayon::join(
-            || {
-                let _timer = ScopedTimer::new("Quality UB Solver");
-                self.quality_ub_solver.precompute()
-            },
-            || {
-                let _timer = ScopedTimer::new("Step LB Solver");
-                let mut seed_state = initial_state;
-                seed_state.effects.set_combo(Combo::None);
-                self.step_lb_solver.step_lower_bound(seed_state, 0)
-            },
-        );
+        let timer = ScopedTimer::new("Quality UB Solver");
+        self.quality_ub_solver.precompute();
+        drop(timer);
 
         let _timer = ScopedTimer::new("Search");
         Ok(self.do_solve(initial_state)?.actions())

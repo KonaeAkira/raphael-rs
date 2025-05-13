@@ -95,10 +95,7 @@ impl QualityUbSolver {
     }
 
     pub fn precompute(&mut self) {
-        if !self.solved_states.is_empty() || rayon::current_num_threads() <= 1 {
-            return;
-        }
-
+        assert!(self.solved_states.is_empty());
         let all_templates = self.generate_precompute_templates();
         for (heart_and_soul, quick_innovation) in
             [(false, false), (false, true), (true, false), (true, true)]
