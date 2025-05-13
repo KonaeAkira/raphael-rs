@@ -1039,7 +1039,6 @@ impl MacroSolverApp {
             ),
             QualitySource::Value(quality) => quality,
         };
-        game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
         game_settings.adversarial = self.solver_config.adversarial;
         game_settings.backload_progress = self.solver_config.backload_progress;
 
@@ -1050,6 +1049,7 @@ impl MacroSolverApp {
             );
         });
 
+        game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
         spawn_solver(
             game_settings,
             self.solver_events.clone(),
