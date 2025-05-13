@@ -1040,6 +1040,8 @@ impl MacroSolverApp {
             QualitySource::Value(quality) => quality,
         };
         game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
+        game_settings.adversarial = self.solver_config.adversarial;
+        game_settings.backload_progress = self.solver_config.backload_progress;
 
         ctx.data_mut(|data| {
             data.insert_temp(
@@ -1049,7 +1051,6 @@ impl MacroSolverApp {
         });
 
         spawn_solver(
-            self.solver_config,
             game_settings,
             self.solver_events.clone(),
             self.solver_interrupt.clone(),
@@ -1148,8 +1149,7 @@ fn load_fonts(ctx: &egui::Context) {
 }
 
 fn spawn_solver(
-    solver_config: SolverConfig,
-    mut simulator_settings: raphael_sim::Settings,
+    simulator_settings: raphael_sim::Settings,
     solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
     solver_interrupt: raphael_solver::AtomicFlag,
 ) {
@@ -1164,8 +1164,6 @@ fn spawn_solver(
         events.lock().unwrap().push_back(event);
     };
     rayon::spawn(move || {
-        simulator_settings.adversarial = solver_config.adversarial;
-        simulator_settings.backload_progress = solver_config.backload_progress;
         let solver_settings = raphael_solver::SolverSettings { simulator_settings };
         log::debug!("Spawning solver: {solver_settings:?}");
         let mut macro_solver = raphael_solver::MacroSolver::new(
