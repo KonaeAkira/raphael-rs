@@ -65,7 +65,6 @@ impl StepLbSolver {
         let seed_template = Template {
             durability: settings.max_durability(),
             effects: Effects::initial(&settings.simulator_settings)
-                .with_trained_perfection_available(false)
                 .with_quick_innovation_available(false)
                 .with_heart_and_soul_available(false)
                 .with_adversarial_guard(true)

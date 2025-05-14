@@ -14,8 +14,7 @@ impl ReducedState {
         settings.allowed_actions = settings
             .allowed_actions
             .remove(Action::Observe)
-            .remove(Action::TricksOfTheTrade)
-            .remove(Action::TrainedPerfection);
+            .remove(Action::TricksOfTheTrade);
         // WasteNot2 is always better than WasteNot because there is no CP cost
         if settings.is_action_allowed::<WasteNot2>() {
             settings.allowed_actions = settings.allowed_actions.remove(Action::WasteNot);
@@ -45,7 +44,6 @@ impl ReducedState {
             // this gives a looser bound but decreases the number of states
             effects.set_waste_not(8);
         }
-        effects.set_trained_perfection_available(false);
         if effects.veneration() > step_budget.get() {
             effects.set_veneration(step_budget.get());
         }
