@@ -24,3 +24,4 @@ serde = ["dep:serde", "raphael-sim/serde"]
 rand = "0.8.5"
 env_logger = "0.11.5"
 expect-test = "1.5.1"
+test-case = "3.3.1"
