@@ -9,7 +9,10 @@ use crate::{
     utils,
 };
 use raphael_sim::*;
-use rayon::iter::{FromParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{
+    FromParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
+};
+use rustc_hash::FxHashSet;
 
 use super::state::ReducedState;
 
@@ -98,12 +101,18 @@ impl StepLbSolver {
     }
 
     fn precompute_next_step_budget(&mut self) {
+        // A lot of templates map to the same state at lower step budgets due to effect and durability optimizations.
+        // Here we deduplicate the instantiated templates to avoid solving duplicate states.
+        let instantiated_templates: FxHashSet<ReducedState> = self
+            .precompute_templates
+            .iter()
+            .map(|template| template.instantiate(self.next_precompute_step_budget))
+            .collect();
+
         let init =
             || ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality());
-        let solved_templates = self
-            .precompute_templates
-            .par_iter()
-            .map(|template| template.instantiate(self.next_precompute_step_budget))
+        let solved_templates = instantiated_templates
+            .into_par_iter()
             .map_init(init, |pareto_front_builder, state| {
                 let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
                 (state, pareto_front)
