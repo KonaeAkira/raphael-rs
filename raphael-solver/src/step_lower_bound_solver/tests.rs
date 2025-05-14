@@ -83,24 +83,27 @@ fn check_consistency(solver_settings: SolverSettings) {
 }
 
 #[test_matrix(
-    [1000, 2000],
-    [1000, 2000, 4000],
     [20, 35, 60, 80],
-    [90, 100]
+    [false, true],
+    [false, true]
 )]
-fn consistency(max_progress: u16, max_quality: u16, max_durability: u16, job_level: u8) {
+fn consistency(max_durability: u16, heart_and_soul: bool, quick_innovation: bool) {
+    let mut allowed_actions = ActionMask::all().remove(Action::TrainedEye);
+    if !heart_and_soul {
+        allowed_actions = allowed_actions.remove(Action::HeartAndSoul);
+    }
+    if !quick_innovation {
+        allowed_actions = allowed_actions.remove(Action::QuickInnovation);
+    }
     let simulator_settings = Settings {
-        max_progress,
-        max_quality,
+        max_progress: 2000,
+        max_quality: 2000,
         max_durability,
-        max_cp: 1000, // max_cp does not matter for StepLbSolver
+        max_cp: 1000,
         base_progress: 100,
         base_quality: 100,
-        job_level,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        job_level: 100,
+        allowed_actions,
         adversarial: false,
         backload_progress: false,
     };
