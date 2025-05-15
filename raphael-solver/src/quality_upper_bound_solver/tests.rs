@@ -537,12 +537,12 @@ fn test_issue_118() {
 
 fn random_effects(settings: &Settings) -> Effects {
     Effects::new()
-        .with_inner_quiet(rand::thread_rng().gen_range(0..=10))
-        .with_great_strides(rand::thread_rng().gen_range(0..=3))
-        .with_innovation(rand::thread_rng().gen_range(0..=4))
-        .with_veneration(rand::thread_rng().gen_range(0..=4))
-        .with_waste_not(rand::thread_rng().gen_range(0..=8))
-        .with_manipulation(rand::thread_rng().gen_range(0..=8))
+        .with_inner_quiet(rand::rng().random_range(0..=10))
+        .with_great_strides(rand::rng().random_range(0..=3))
+        .with_innovation(rand::rng().random_range(0..=4))
+        .with_veneration(rand::rng().random_range(0..=4))
+        .with_waste_not(rand::rng().random_range(0..=8))
+        .with_manipulation(rand::rng().random_range(0..=8))
         .with_quick_innovation_available(rand::random())
         .with_adversarial_guard(if settings.adversarial {
             rand::random()
@@ -558,9 +558,9 @@ fn random_effects(settings: &Settings) -> Effects {
 
 fn random_state(settings: &Settings) -> SimulationState {
     SimulationState {
-        cp: rand::thread_rng().gen_range(0..=settings.max_cp),
-        durability: rand::thread_rng().gen_range(1..=(settings.max_durability / 5)) * 5,
-        progress: rand::thread_rng().gen_range(0..u32::from(settings.max_progress)),
+        cp: rand::rng().random_range(0..=settings.max_cp),
+        durability: rand::rng().random_range(1..=(settings.max_durability / 5)) * 5,
+        progress: rand::rng().random_range(0..u32::from(settings.max_progress)),
         quality: 0,
         unreliable_quality: 0,
         effects: random_effects(settings),

@@ -10,42 +10,42 @@ use crate::{
 use super::*;
 
 fn random_effects(settings: &Settings) -> Effects {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut effects = Effects::new()
-        .with_inner_quiet(rng.gen_range(0..=10))
-        .with_great_strides(rng.gen_range(0..=3))
-        .with_innovation(rng.gen_range(0..=4))
-        .with_veneration(rng.gen_range(0..=4))
-        .with_waste_not(rng.gen_range(0..=8))
-        .with_manipulation(rng.gen_range(0..=8))
-        .with_adversarial_guard(rng.r#gen() && settings.adversarial)
-        .with_allow_quality_actions(rng.r#gen() || !settings.backload_progress);
+        .with_inner_quiet(rng.random_range(0..=10))
+        .with_great_strides(rng.random_range(0..=3))
+        .with_innovation(rng.random_range(0..=4))
+        .with_veneration(rng.random_range(0..=4))
+        .with_waste_not(rng.random_range(0..=8))
+        .with_manipulation(rng.random_range(0..=8))
+        .with_adversarial_guard(rng.random() && settings.adversarial)
+        .with_allow_quality_actions(rng.random() || !settings.backload_progress);
     if settings.is_action_allowed::<Manipulation>() {
-        effects.set_manipulation(rng.gen_range(0..=8));
+        effects.set_manipulation(rng.random_range(0..=8));
     }
     if settings.is_action_allowed::<TrainedPerfection>() {
-        effects.set_trained_perfection_available(rng.r#gen());
+        effects.set_trained_perfection_available(rng.random());
         effects
-            .set_trained_perfection_active(!effects.trained_perfection_available() && rng.r#gen());
+            .set_trained_perfection_active(!effects.trained_perfection_available() && rng.random());
     }
     if settings.is_action_allowed::<HeartAndSoul>() {
-        effects.set_heart_and_soul_available(rng.r#gen());
-        effects.set_heart_and_soul_active(!effects.heart_and_soul_available() && rng.r#gen());
+        effects.set_heart_and_soul_available(rng.random());
+        effects.set_heart_and_soul_active(!effects.heart_and_soul_available() && rng.random());
     }
     if settings.is_action_allowed::<QuickInnovation>() {
-        effects.set_quick_innovation_available(rng.r#gen());
+        effects.set_quick_innovation_available(rng.random());
     }
     effects
 }
 
 fn random_state(settings: &SolverSettings) -> SimulationState {
     SimulationState {
-        cp: rand::thread_rng().gen_range(0..=settings.max_cp()),
-        durability: rand::thread_rng()
-            .gen_range(1..=settings.max_durability())
+        cp: rand::rng().random_range(0..=settings.max_cp()),
+        durability: rand::rng()
+            .random_range(1..=settings.max_durability())
             .next_multiple_of(5),
-        progress: rand::thread_rng().gen_range(0..settings.max_progress()),
-        quality: rand::thread_rng().gen_range(0..=settings.max_quality()),
+        progress: rand::rng().random_range(0..settings.max_progress()),
+        quality: rand::rng().random_range(0..=settings.max_quality()),
         unreliable_quality: 0,
         effects: random_effects(&settings.simulator_settings),
     }

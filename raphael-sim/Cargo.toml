@@ -10,7 +10,7 @@ crate-type = ["rlib"]
 
 [dev-dependencies]
 criterion = "0.5.1"
-rand = "0.8.5"
+rand = "0.9.1"
 
 [dependencies]
 bitfield-struct = "0.8.0"
