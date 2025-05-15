@@ -256,7 +256,7 @@ fn test_fuzz() {
     ];
     for _ in 0..100000 {
         let actions: Vec<Action> =
-            std::iter::repeat_with(|| ACTIONS[rand::random::<usize>() % ACTIONS.len()])
+            std::iter::repeat_with(|| ACTIONS[rand::random_range(0..ACTIONS.len())])
                 .take(STEPS)
                 .collect();
         if let Ok(state) = SimulationState::from_macro(&SETTINGS, &actions) {
