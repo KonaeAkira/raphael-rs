@@ -1,4 +1,3 @@
-use rand::Rng;
 use raphael_sim::*;
 use test_case::test_matrix;
 
@@ -9,8 +8,7 @@ use crate::{
 
 use super::*;
 
-fn random_effects(settings: &Settings) -> Effects {
-    let mut rng = rand::rng();
+fn random_effects(settings: &Settings, rng: &mut impl rand::Rng) -> Effects {
     let mut effects = Effects::new()
         .with_inner_quiet(rng.random_range(0..=10))
         .with_great_strides(rng.random_range(0..=3))
@@ -38,16 +36,16 @@ fn random_effects(settings: &Settings) -> Effects {
     effects
 }
 
-fn random_state(settings: &SolverSettings) -> SimulationState {
+fn random_state(settings: &SolverSettings, rng: &mut impl rand::Rng) -> SimulationState {
     SimulationState {
-        cp: rand::rng().random_range(0..=settings.max_cp()),
-        durability: rand::rng()
+        cp: rng.random_range(0..=settings.max_cp()),
+        durability: rng
             .random_range(1..=settings.max_durability())
             .next_multiple_of(5),
-        progress: rand::rng().random_range(0..settings.max_progress()),
-        quality: rand::rng().random_range(0..=settings.max_quality()),
+        progress: rng.random_range(0..settings.max_progress()),
+        quality: rng.random_range(0..=settings.max_quality()),
         unreliable_quality: 0,
-        effects: random_effects(&settings.simulator_settings),
+        effects: random_effects(&settings.simulator_settings, rng),
     }
     .try_into()
     .unwrap()
@@ -57,8 +55,9 @@ fn random_state(settings: &SolverSettings) -> SimulationState {
 /// It is consistent if the step-lb of a parent state is never greater than the step-lb of a child state.
 fn check_consistency(solver_settings: SolverSettings) {
     let mut solver = StepLbSolver::new(solver_settings, AtomicFlag::default());
+    let mut rng = rand::rng();
     for _ in 0..100000 {
-        let state = random_state(&solver_settings);
+        let state = random_state(&solver_settings, &mut rng);
         let state_step_lb = solver.step_lower_bound(state, 0).unwrap();
         for action in FULL_SEARCH_ACTIONS {
             if let Ok(child_state) = use_action_combo(&solver_settings, state, *action) {
