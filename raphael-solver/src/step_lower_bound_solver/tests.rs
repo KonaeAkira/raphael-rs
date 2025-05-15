@@ -15,7 +15,6 @@ fn random_effects(settings: &Settings, rng: &mut impl rand::Rng) -> Effects {
         .with_innovation(rng.random_range(0..=4))
         .with_veneration(rng.random_range(0..=4))
         .with_waste_not(rng.random_range(0..=8))
-        .with_manipulation(rng.random_range(0..=8))
         .with_adversarial_guard(rng.random() && settings.adversarial)
         .with_allow_quality_actions(rng.random() || !settings.backload_progress);
     if settings.is_action_allowed::<Manipulation>() {
@@ -81,19 +80,20 @@ fn check_consistency(solver_settings: SolverSettings) {
     }
 }
 
+const REGULAR_ACTIONS: ActionMask = ActionMask::all()
+    .remove(Action::TrainedEye)
+    .remove(Action::HeartAndSoul)
+    .remove(Action::QuickInnovation);
+const NO_MANIPULATION: ActionMask = REGULAR_ACTIONS.remove(Action::Manipulation);
+const WITH_SPECIALIST_ACTIONS: ActionMask = REGULAR_ACTIONS
+    .add(Action::HeartAndSoul)
+    .add(Action::QuickInnovation);
+
 #[test_matrix(
     [20, 35, 60, 80],
-    [false, true],
-    [false, true]
+    [REGULAR_ACTIONS, NO_MANIPULATION, WITH_SPECIALIST_ACTIONS]
 )]
-fn consistency(max_durability: u16, heart_and_soul: bool, quick_innovation: bool) {
-    let mut allowed_actions = ActionMask::all().remove(Action::TrainedEye);
-    if !heart_and_soul {
-        allowed_actions = allowed_actions.remove(Action::HeartAndSoul);
-    }
-    if !quick_innovation {
-        allowed_actions = allowed_actions.remove(Action::QuickInnovation);
-    }
+fn consistency(max_durability: u16, allowed_actions: ActionMask) {
     let simulator_settings = Settings {
         max_progress: 2000,
         max_quality: 2000,
