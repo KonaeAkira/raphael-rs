@@ -7,7 +7,7 @@ use raphael_data::{Consumable, CrafterStats, Locale, Recipe};
 use raphael_sim::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{app::SolverConfig, config::CrafterConfig};
+use crate::config::CrafterConfig;
 
 use super::util;
 
@@ -21,9 +21,12 @@ fn generate_unique_rotation_id() -> u64 {
 pub struct Rotation {
     pub unique_id: u64,
     pub name: String,
-    pub solver: String,
+    pub solver_version: String,
     pub actions: Vec<Action>,
-    pub item: u32,
+    pub recipe_id: u32,
+    pub game_settings: Settings,
+    pub initial_quality: u16,
+    pub target_quality: u16,
     pub food: Option<(u32, bool)>,
     pub potion: Option<(u32, bool)>,
     pub crafter_stats: CrafterStats,
@@ -35,29 +38,31 @@ impl Rotation {
         name: impl Into<String>,
         actions: Vec<Action>,
         recipe: &Recipe,
+        game_settings: Settings,
+        initial_quality: u16,
+        target_quality: u16,
         food: Option<Consumable>,
         potion: Option<Consumable>,
         crafter_config: &CrafterConfig,
-        solver_config: &SolverConfig,
     ) -> Self {
-        let solver_params = format!(
-            "Raphael v{}{}{}",
-            env!("CARGO_PKG_VERSION"),
-            match solver_config.backload_progress {
-                true => " +backload",
-                false => "",
-            },
-            match solver_config.adversarial {
-                true => " +adversarial",
-                false => "",
-            },
-        );
         Self {
             unique_id: generate_unique_rotation_id(),
             name: name.into(),
-            solver: solver_params,
+            solver_version: env!("CARGO_PKG_VERSION").to_string(),
             actions,
-            item: recipe.item_id,
+            recipe_id: raphael_data::RECIPES
+                .entries()
+                .find_map(|(id, recipe_entry)| {
+                    if recipe == recipe_entry {
+                        Some(*id)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_default(),
+            game_settings,
+            initial_quality,
+            target_quality,
             food: food.map(|consumable| (consumable.item_id, consumable.hq)),
             potion: potion.map(|consumable| (consumable.item_id, consumable.hq)),
             crafter_stats: *crafter_config.active_stats(),
@@ -71,14 +76,33 @@ impl Clone for Rotation {
         Self {
             unique_id: generate_unique_rotation_id(),
             name: self.name.clone(),
-            solver: self.solver.clone(),
+            solver_version: self.solver_version.clone(),
             actions: self.actions.clone(),
-            item: self.item,
+            recipe_id: self.recipe_id,
+            game_settings: self.game_settings,
+            initial_quality: self.initial_quality,
+            target_quality: self.target_quality,
             food: self.food,
             potion: self.potion,
             crafter_stats: self.crafter_stats,
             job_id: self.job_id,
         }
+    }
+}
+
+impl PartialEq for Rotation {
+    fn eq(&self, other: &Self) -> bool {
+        // unique_id & name are skipped
+        self.solver_version == other.solver_version
+            && self.actions == other.actions
+            && self.recipe_id == other.recipe_id
+            && self.game_settings == other.game_settings
+            && self.initial_quality == other.initial_quality
+            && self.target_quality == other.target_quality
+            && self.food == other.food
+            && self.potion == other.potion
+            && self.crafter_stats == other.crafter_stats
+            && self.job_id == other.job_id
     }
 }
 
@@ -92,10 +116,53 @@ impl SavedRotationsData {
     const MAX_HISTORY_SIZE: usize = 50;
 
     pub fn add_solved_rotation(&mut self, rotation: Rotation) {
-        while self.solve_history.len() == Self::MAX_HISTORY_SIZE {
-            self.solve_history.pop_back();
+        if let Some(index) = self
+            .solve_history
+            .iter()
+            .position(|saved_rotation| *saved_rotation == rotation)
+        {
+            let existing_rotation = self.solve_history.remove(index).unwrap();
+            self.solve_history.push_front(existing_rotation);
+        } else {
+            while self.solve_history.len() >= Self::MAX_HISTORY_SIZE {
+                self.solve_history.pop_back();
+            }
+            self.solve_history.push_front(rotation);
         }
-        self.solve_history.push_front(rotation);
+    }
+
+    pub fn find_solved_rotation(
+        &self,
+        game_settings: &Settings,
+        initial_quality: u16,
+        target_quality: u16,
+    ) -> Option<Vec<Action>> {
+        let history_search_result = self.solve_history.iter().find_map(|rotation| {
+            if rotation.solver_version == env!("CARGO_PKG_VERSION").to_string()
+                && rotation.game_settings == *game_settings
+                && rotation.initial_quality == initial_quality
+                && rotation.target_quality == target_quality
+            {
+                Some(rotation.actions.clone())
+            } else {
+                None
+            }
+        });
+        if history_search_result.is_some() {
+            history_search_result
+        } else {
+            self.pinned.iter().find_map(|rotation| {
+                if rotation.solver_version == env!("CARGO_PKG_VERSION").to_string()
+                    && rotation.game_settings == *game_settings
+                    && rotation.initial_quality == initial_quality
+                    && rotation.target_quality == target_quality
+                {
+                    Some(rotation.actions.clone())
+                } else {
+                    None
+                }
+            })
+        }
     }
 }
 
@@ -195,17 +262,36 @@ impl<'a> RotationWidget<'a> {
             self.rotation.crafter_stats.level,
             raphael_data::get_job_name(self.rotation.job_id, self.locale)
         );
+        let solver_string = format!(
+            "Raphael v{}{}{}",
+            self.rotation.solver_version,
+            match self.rotation.game_settings.backload_progress {
+                true => " +backload",
+                false => "",
+            },
+            match self.rotation.game_settings.adversarial {
+                true => " +adversarial",
+                false => "",
+            },
+        );
         self.show_info_row(
             ui,
             "Recipe",
-            raphael_data::get_item_name(self.rotation.item, false, self.locale)
-                .unwrap_or("Unknown item".to_owned()),
+            raphael_data::get_item_name(
+                raphael_data::RECIPES
+                    .get(&self.rotation.recipe_id)
+                    .map(|recipe| recipe.item_id)
+                    .unwrap_or_default(),
+                false,
+                self.locale,
+            )
+            .unwrap_or("Unknown item".to_owned()),
         );
         self.show_info_row(ui, "Crafter stats", stats_string);
         self.show_info_row(ui, "Job", job_string);
         self.show_info_row(ui, "Food", self.get_consumable_name(self.rotation.food));
         self.show_info_row(ui, "Potion", self.get_consumable_name(self.rotation.potion));
-        self.show_info_row(ui, "Solver", &self.rotation.solver);
+        self.show_info_row(ui, "Solver", solver_string);
     }
 
     fn show_rotation_actions(&self, ui: &mut egui::Ui) {
