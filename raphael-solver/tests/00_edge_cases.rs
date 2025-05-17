@@ -236,9 +236,9 @@ fn large_progress_quality_increase() {
                 pareto_values: 411684,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 180,
+                parallel_states: 120,
                 sequential_states: 9,
-                pareto_values: 189,
+                pareto_values: 129,
             },
         }
     "#]];
@@ -286,9 +286,9 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_values: 7205,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 174,
+                parallel_states: 116,
                 sequential_states: 0,
-                pareto_values: 174,
+                pareto_values: 116,
             },
         }
     "#]];
