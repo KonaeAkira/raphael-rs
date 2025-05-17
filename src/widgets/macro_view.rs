@@ -287,39 +287,32 @@ impl Widget for MacroView<'_> {
                 });
                 ui.separator();
 
-                let chunk_size = if self.config.split_macro {
-                    let mut chunk_size = 15;
-                    if self.config.notification_enabled {
-                        chunk_size -= 1;
-                    }
-                    if self.config.macro_lock {
-                        chunk_size -= 1;
-                    }
-                    chunk_size
-                } else {
-                    usize::MAX
-                };
-                let num_chunks = if self.config.notification_enabled
-                    && self.config.notification_config.avoid_single_action_macro
-                {
-                    self.actions.len().saturating_sub(1).div_ceil(chunk_size)
-                } else {
-                    self.actions.len().div_ceil(chunk_size)
-                };
+                let mut chunks = Vec::new();
+                let mut remaining_actions = self.actions.as_slice();
+                while !remaining_actions.is_empty() {
+                    let max_chunk_size = if self.config.split_macro {
+                        let chunk_size = 15 - usize::from(self.config.macro_lock);
+                        let avoid_notif = self.config.notification_config.avoid_single_action_macro
+                            && remaining_actions.len() == chunk_size;
+                        let has_notif = self.config.notification_enabled && !avoid_notif;
+                        chunk_size - usize::from(has_notif)
+                    } else {
+                        usize::MAX
+                    };
+                    let (this_chunk, remaining) = remaining_actions
+                        .split_at(std::cmp::min(max_chunk_size, remaining_actions.len()));
+                    chunks.push(this_chunk);
+                    remaining_actions = remaining;
+                }
 
                 let newline = match ui.ctx().os() {
                     egui::os::OperatingSystem::Mac => "\n",
                     _ => "\r\n",
                 };
-                for chunk_index in 0..num_chunks {
-                    let action_index = chunk_index * chunk_size;
-                    let actions = if chunk_index + 1 == num_chunks {
-                        &self.actions[action_index..]
-                    } else {
-                        &self.actions[action_index..action_index + chunk_size]
-                    };
+                let num_chunks = chunks.len();
+                for (index, actions) in chunks.into_iter().enumerate() {
                     ui.add(MacroTextBox::new(
-                        chunk_index + 1,
+                        index + 1,
                         num_chunks,
                         actions,
                         self.config,
