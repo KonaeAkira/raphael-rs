@@ -14,8 +14,7 @@ impl ReducedState {
         settings.allowed_actions = settings
             .allowed_actions
             .remove(Action::Observe)
-            .remove(Action::TricksOfTheTrade)
-            .remove(Action::TrainedPerfection);
+            .remove(Action::TricksOfTheTrade);
         // WasteNot2 is always better than WasteNot because there is no CP cost
         if settings.is_action_allowed::<WasteNot2>() {
             settings.allowed_actions = settings.allowed_actions.remove(Action::WasteNot);
@@ -37,6 +36,10 @@ impl ReducedState {
     pub fn from_state(state: SimulationState, step_budget: NonZeroU8) -> Self {
         // Optimize effects
         let mut effects = state.effects;
+        // Make it so that TrainedPerfection can be used an arbitrary amount of times instead of just once.
+        // This decreases the number of possible states, as now there are only Active/Inactive states for TrainedPerfection instead of the usual Available/Active/Unavailable.
+        // This also technically loosens the step-lb, but testing shows that rarely has any impact on the number of pruned nodes.
+        effects.set_trained_perfection_available(true);
         if effects.manipulation() > step_budget.get() - 1 {
             effects.set_manipulation(step_budget.get() - 1);
         }
@@ -45,7 +48,6 @@ impl ReducedState {
             // this gives a looser bound but decreases the number of states
             effects.set_waste_not(8);
         }
-        effects.set_trained_perfection_available(false);
         if effects.veneration() > step_budget.get() {
             effects.set_veneration(step_budget.get());
         }

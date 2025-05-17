@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn test_merge_fuzz() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut values_first: Vec<usize> = (1..100).collect();
         let mut values_second: Vec<usize> = (1..100).collect();
         let mut random_values = |n: usize| -> Vec<ParetoValue<_, _>> {

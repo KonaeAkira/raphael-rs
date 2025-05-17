@@ -39,12 +39,12 @@ fn bench_use_action(c: &mut Criterion) {
 
 fn bench_tick_effects(c: &mut Criterion) {
     fn random_effects() -> Effects {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         Effects::new()
-            .with_veneration(rng.gen_range(0..=4))
-            .with_innovation(rng.gen_range(0..=4))
-            .with_manipulation(rng.gen_range(0..=8))
-            .with_waste_not(rng.gen_range(0..=8))
+            .with_veneration(rng.random_range(0..=4))
+            .with_innovation(rng.random_range(0..=4))
+            .with_manipulation(rng.random_range(0..=8))
+            .with_waste_not(rng.random_range(0..=8))
     }
     c.bench_function("tick_effects", |b| {
         b.iter_batched(random_effects, Effects::tick_down, BatchSize::SmallInput);
