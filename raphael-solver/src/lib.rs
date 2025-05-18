@@ -15,6 +15,9 @@ pub use macro_solver::MacroSolver;
 mod utils;
 pub use utils::AtomicFlag;
 
+#[cfg(test)]
+pub mod test_utils;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SolverException {
