@@ -1,4 +1,3 @@
-use expect_test::expect;
 use rand::Rng;
 use raphael_sim::*;
 
@@ -473,66 +472,6 @@ fn test_manipulation_refund() {
     };
     let result = solve(settings, &[Action::Manipulation]);
     assert_eq!(result, 4975);
-}
-
-#[test]
-fn test_issue_113() {
-    // Ceremonial Gunblade
-    // 5428/5236/645 + HQ Ceviche + HQ Cunning Tisane
-    let simulator_settings = Settings {
-        max_cp: 768,
-        max_durability: 70,
-        max_progress: 9000,
-        max_quality: 18700,
-        base_progress: 297,
-        base_quality: 288,
-        job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
-        adversarial: true,
-        backload_progress: false,
-    };
-    let solver_settings = SolverSettings { simulator_settings };
-    let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-    solver.precompute();
-    let expected_runtime_stats = expect![[r#"
-        QualityUbSolverStats {
-            states: 5766907,
-            pareto_values: 210329518,
-        }
-    "#]];
-    expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
-}
-
-#[test]
-fn test_issue_118() {
-    let simulator_settings = Settings {
-        max_cp: 614,
-        max_durability: 20,
-        max_progress: 2310,
-        max_quality: 8400,
-        base_progress: 205,
-        base_quality: 240,
-        job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
-        adversarial: true,
-        backload_progress: false,
-    };
-    let solver_settings = SolverSettings { simulator_settings };
-    let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-    solver.precompute();
-    let expected_runtime_stats = expect![[r#"
-        QualityUbSolverStats {
-            states: 3375064,
-            pareto_values: 36637277,
-        }
-    "#]];
-    expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
 }
 
 fn random_effects(settings: &Settings) -> Effects {

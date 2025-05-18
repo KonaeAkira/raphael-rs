@@ -14,7 +14,8 @@ type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct QualityUbSolverStats {
-    pub states: usize,
+    pub parallel_states: usize,
+    pub sequential_states: usize,
     pub pareto_values: usize,
 }
 
@@ -24,6 +25,7 @@ pub struct QualityUbSolver {
     solved_states: SolvedStates,
     pareto_front_builder: ParetoFrontBuilder,
     durability_cost: u16,
+    precomputed_states: usize,
 }
 
 impl QualityUbSolver {
@@ -39,6 +41,7 @@ impl QualityUbSolver {
                 settings.max_quality(),
             ),
             durability_cost,
+            precomputed_states: 0,
         }
     }
 
@@ -152,7 +155,7 @@ impl QualityUbSolver {
                     .extend(solved_states.into_iter().flatten());
             }
         }
-
+        self.precomputed_states = self.solved_states.len();
         log::debug!(
             "QualityUbSolver - templates: {}, precomputed_states: {}",
             all_templates.len(),
@@ -292,7 +295,8 @@ impl QualityUbSolver {
 
     pub fn runtime_stats(&self) -> QualityUbSolverStats {
         QualityUbSolverStats {
-            states: self.solved_states.len(),
+            parallel_states: self.precomputed_states,
+            sequential_states: self.solved_states.len() - self.precomputed_states,
             pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
         }
     }
@@ -302,8 +306,9 @@ impl Drop for QualityUbSolver {
     fn drop(&mut self) {
         let runtime_stats = self.runtime_stats();
         log::debug!(
-            "QualityUbSolver - states: {}, values: {}",
-            runtime_stats.states,
+            "QualityUbSolver - par_states: {}, seq_states: {}, values: {}",
+            runtime_stats.parallel_states,
+            runtime_stats.sequential_states,
             runtime_stats.pareto_values
         );
     }
