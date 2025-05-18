@@ -5,6 +5,9 @@ use crate::{
 
 use raphael_sim::*;
 
+/// A high enough value to make sure that no action combo fails due to missing durability.
+const MAX_DURABILITY: u16 = 100;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReducedState {
     pub cp: u16,
@@ -30,7 +33,7 @@ impl ReducedState {
             state.effects.set_trained_perfection_available(false);
         }
         state.cp += refunded_durability * durability_cost;
-        state.durability = settings.max_durability();
+        state.durability = MAX_DURABILITY;
         Self::from_simulation_state_inner(&state, settings, durability_cost).unwrap()
     }
 
@@ -39,8 +42,7 @@ impl ReducedState {
         settings: &SolverSettings,
         durability_cost: u16,
     ) -> Option<Self> {
-        let used_durability_cost =
-            (settings.max_durability() - state.durability) / 5 * durability_cost;
+        let used_durability_cost = (MAX_DURABILITY - state.durability) / 5 * durability_cost;
         if used_durability_cost > state.cp {
             return None;
         }
@@ -63,7 +65,7 @@ impl ReducedState {
 
     fn to_simulation_state(self, settings: &SolverSettings) -> SimulationState {
         SimulationState {
-            durability: settings.max_durability(),
+            durability: MAX_DURABILITY,
             cp: self.cp,
             progress: 0,
             quality: 0,
