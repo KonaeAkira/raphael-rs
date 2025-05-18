@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     app::SolverConfig,
-    config::{CrafterConfig, CustomRecipeOverridesConfiguration, RecipeConfiguration},
+    config::{
+        CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
+    },
 };
 
 use super::util;
@@ -393,7 +395,10 @@ impl<'a> RotationWidget<'a> {
             match recipe_configuration {
                 RecipeInputConfiguration::NormalRecipe(recipe_id) => {
                     if let Some(recipe) = raphael_data::RECIPES.get(recipe_id) {
-                        self.recipe_config.recipe = *recipe;
+                        *self.recipe_config = RecipeConfiguration {
+                            recipe: *recipe,
+                            quality_source: QualitySource::HqMaterialList([0; 6]),
+                        };
                         self.crafter_config.selected_job = self.rotation.job_id;
                         self.custom_recipe_overrides_config.use_custom_recipe = false;
                     } else {
@@ -401,7 +406,10 @@ impl<'a> RotationWidget<'a> {
                     }
                 }
                 RecipeInputConfiguration::CustomRecipe(recipe, custom_recipe_overrides_config) => {
-                    self.recipe_config.recipe = *recipe;
+                    *self.recipe_config = RecipeConfiguration {
+                        recipe: *recipe,
+                        quality_source: QualitySource::Value(0),
+                    };
                     *self.custom_recipe_overrides_config = *custom_recipe_overrides_config;
                     self.crafter_config.selected_job = self.rotation.job_id;
                 }
@@ -410,7 +418,10 @@ impl<'a> RotationWidget<'a> {
             if let Some(recipe) = raphael_data::RECIPES.values().find(|recipe| {
                 recipe.item_id == self.rotation.item && recipe.job_id == self.rotation.job_id
             }) {
-                self.recipe_config.recipe = *recipe;
+                *self.recipe_config = RecipeConfiguration {
+                    recipe: *recipe,
+                    quality_source: QualitySource::HqMaterialList([0; 6]),
+                };
                 self.crafter_config.selected_job = self.rotation.job_id;
                 self.custom_recipe_overrides_config.use_custom_recipe = false;
             } else {
