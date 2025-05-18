@@ -853,16 +853,16 @@ fn hardened_survey_plank_5558_5216() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 594271,
+            finish_states: 564208,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 166658,
-                dropped_nodes: 421345,
-                pareto_buckets_squared_size_sum: 39842952,
+                processed_nodes: 147786,
+                dropped_nodes: 365831,
+                pareto_buckets_squared_size_sum: 34054442,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 2025537,
-                sequential_states: 256121,
-                pareto_values: 23980771,
+                parallel_states: 1824780,
+                sequential_states: 196403,
+                pareto_values: 24755170,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 361555,

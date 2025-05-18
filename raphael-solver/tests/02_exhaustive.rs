@@ -853,21 +853,21 @@ fn hardened_survey_plank_5558_5216() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 867728,
+            finish_states: 850066,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1887006,
-                dropped_nodes: 12371425,
-                pareto_buckets_squared_size_sum: 186147222,
+                processed_nodes: 1758190,
+                dropped_nodes: 11419861,
+                pareto_buckets_squared_size_sum: 173684277,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1775123,
-                sequential_states: 267524,
-                pareto_values: 34781645,
+                parallel_states: 1804353,
+                sequential_states: 204768,
+                pareto_values: 35422963,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 386882,
-                sequential_states: 24974,
-                pareto_values: 6100754,
+                sequential_states: 24985,
+                pareto_values: 6100839,
             },
         }
     "#]];
@@ -901,16 +901,16 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 278336,
+            finish_states: 251474,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 20519,
-                dropped_nodes: 35735,
-                pareto_buckets_squared_size_sum: 221587,
+                processed_nodes: 17166,
+                dropped_nodes: 35034,
+                pareto_buckets_squared_size_sum: 182325,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 3790384,
-                sequential_states: 1415018,
-                pareto_values: 73874945,
+                parallel_states: 3887914,
+                sequential_states: 1122842,
+                pareto_values: 73566066,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,

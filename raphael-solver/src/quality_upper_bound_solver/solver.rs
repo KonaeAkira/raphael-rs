@@ -32,6 +32,8 @@ impl QualityUbSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         let durability_cost = durability_cost(&settings.simulator_settings);
         settings.simulator_settings.max_cp += durability_cost * (settings.max_durability() / 5);
+        // max_durability needs to be high enough so that no action combo fails due to missing durability.
+        settings.simulator_settings.max_durability = 100;
         Self {
             settings,
             interrupt_signal,

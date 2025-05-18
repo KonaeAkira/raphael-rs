@@ -413,21 +413,21 @@ fn issue_118() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 642232,
+            finish_states: 551297,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1865005,
-                dropped_nodes: 2864681,
-                pareto_buckets_squared_size_sum: 450180034,
+                processed_nodes: 1078966,
+                dropped_nodes: 1735775,
+                pareto_buckets_squared_size_sum: 205942420,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 3375064,
-                sequential_states: 759737,
-                pareto_values: 48206571,
+                parallel_states: 3389575,
+                sequential_states: 610465,
+                pareto_values: 49377405,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 258314,
-                sequential_states: 17995,
-                pareto_values: 2876218,
+                sequential_states: 17811,
+                pareto_values: 2875147,
             },
         }
     "#]];
