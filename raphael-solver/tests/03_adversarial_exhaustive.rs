@@ -104,7 +104,8 @@ fn stuffed_peppers() {
                 pareto_buckets_squared_size_sum: 1172823,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 4722074,
+                parallel_states: 4687721,
+                sequential_states: 34353,
                 pareto_values: 77746538,
             },
             step_lb_stats: StepLbSolverStats {
@@ -156,7 +157,8 @@ fn test_rare_tacos_2() {
                 pareto_buckets_squared_size_sum: 143370684,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 5030738,
+                parallel_states: 4687721,
+                sequential_states: 343017,
                 pareto_values: 135274246,
             },
             step_lb_stats: StepLbSolverStats {
@@ -209,7 +211,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_buckets_squared_size_sum: 463009,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 3772842,
+                parallel_states: 3634469,
+                sequential_states: 138373,
                 pareto_values: 33011766,
             },
             step_lb_stats: StepLbSolverStats {
@@ -259,7 +262,8 @@ fn test_indagator_3858_4057() {
                 pareto_buckets_squared_size_sum: 99526,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 5310554,
+                parallel_states: 4975741,
+                sequential_states: 334813,
                 pareto_values: 125659412,
             },
             step_lb_stats: StepLbSolverStats {
@@ -310,13 +314,120 @@ fn test_rare_tacos_4628_4410() {
                 pareto_buckets_squared_size_sum: 23891886,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states: 5298836,
+                parallel_states: 4962902,
+                sequential_states: 335934,
                 pareto_values: 151000601,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 420784,
                 sequential_states: 31396,
                 pareto_values: 8949978,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+fn issue_113() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/113
+    // Ceremonial Gunblade
+    // 5428/5236/645 + HQ Ceviche + HQ Cunning Tisane
+    let simulator_settings = Settings {
+        max_cp: 768,
+        max_durability: 70,
+        max_progress: 9000,
+        max_quality: 18700,
+        base_progress: 297,
+        base_quality: 288,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: true,
+        backload_progress: false,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 14070,
+                steps: 33,
+                duration: 93,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 1802668,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 689654,
+                dropped_nodes: 2387671,
+                pareto_buckets_squared_size_sum: 23983773,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                parallel_states: 5766907,
+                sequential_states: 477022,
+                pareto_values: 240066959,
+            },
+            step_lb_stats: StepLbSolverStats {
+                parallel_states: 0,
+                sequential_states: 0,
+                pareto_values: 0,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+fn issue_118() {
+    // https://github.com/KonaeAkira/raphael-rs/issues/118
+    let simulator_settings = Settings {
+        max_cp: 614,
+        max_durability: 20,
+        max_progress: 2310,
+        max_quality: 8400,
+        base_progress: 205,
+        base_quality: 240,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: true,
+        backload_progress: false,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 8400,
+                steps: 19,
+                duration: 52,
+                overflow_quality: 84,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 551297,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 1078966,
+                dropped_nodes: 1735775,
+                pareto_buckets_squared_size_sum: 205942420,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                parallel_states: 3389575,
+                sequential_states: 610465,
+                pareto_values: 49377405,
+            },
+            step_lb_stats: StepLbSolverStats {
+                parallel_states: 258314,
+                sequential_states: 17811,
+                pareto_values: 2875147,
             },
         }
     "#]];
