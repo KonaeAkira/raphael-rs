@@ -165,29 +165,67 @@ impl PartialEq for Rotation {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum SavedRotationLoadOperation {
+    LoadRotation,
+    LoadRotationRecipe,
+    LoadRotationRecipeConsumables,
+}
+
+impl std::fmt::Display for SavedRotationLoadOperation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let output_str = match self {
+            SavedRotationLoadOperation::LoadRotation => "Load rotation",
+            SavedRotationLoadOperation::LoadRotationRecipe => "Load rotation & recipe",
+            SavedRotationLoadOperation::LoadRotationRecipeConsumables => {
+                "Load rotation, recipe, & consumables"
+            }
+        };
+        write!(f, "{}", output_str)
+    }
+}
+
+impl Default for SavedRotationLoadOperation {
+    fn default() -> Self {
+        Self::LoadRotation
+    }
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct SavedRotationsConfig {
+    pub load_from_saved_rotations: bool,
+    pub default_saved_rotation_load_operation: SavedRotationLoadOperation,
+}
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SavedRotationsData {
     pinned: Vec<Rotation>,
     solve_history: VecDeque<Rotation>,
+    #[serde(default = "default_max_history_size")]
+    max_history_size: usize,
+}
+
+const DEFAULT_MAX_HISTORY_SIZE: usize = 50;
+fn default_max_history_size() -> usize {
+    DEFAULT_MAX_HISTORY_SIZE
 }
 
 impl SavedRotationsData {
-    const MAX_HISTORY_SIZE: usize = 50;
-
     pub fn add_solved_rotation(&mut self, rotation: Rotation) {
-        if let Some(index) = self
+        let rotation_to_push_front = if let Some(index) = self
             .solve_history
             .iter()
             .position(|saved_rotation| *saved_rotation == rotation)
         {
-            let existing_rotation = self.solve_history.remove(index).unwrap();
-            self.solve_history.push_front(existing_rotation);
+            self.solve_history.remove(index).unwrap()
         } else {
-            while self.solve_history.len() >= Self::MAX_HISTORY_SIZE {
-                self.solve_history.pop_back();
-            }
-            self.solve_history.push_front(rotation);
+            rotation
+        };
+
+        while self.solve_history.len() >= self.max_history_size {
+            self.solve_history.pop_back();
         }
+        self.solve_history.push_front(rotation_to_push_front);
     }
 
     pub fn find_solved_rotation(
@@ -222,6 +260,7 @@ impl SavedRotationsData {
 
 struct RotationWidget<'a> {
     locale: Locale,
+    config: &'a mut SavedRotationsConfig,
     pinned: &'a mut bool,
     deleted: &'a mut bool,
     rotation: &'a Rotation,
@@ -236,6 +275,7 @@ struct RotationWidget<'a> {
 impl<'a> RotationWidget<'a> {
     pub fn new(
         locale: Locale,
+        config: &'a mut SavedRotationsConfig,
         pinned: &'a mut bool,
         deleted: &'a mut bool,
         rotation: &'a Rotation,
@@ -248,6 +288,7 @@ impl<'a> RotationWidget<'a> {
     ) -> Self {
         Self {
             locale,
+            config,
             pinned,
             deleted,
             rotation,
@@ -281,27 +322,52 @@ impl<'a> RotationWidget<'a> {
                 }
                 ui.add_space(-3.0);
                 let load_button_response = ui.button("Load");
+                let mut selected_load_operation = None;
                 load_button_response.context_menu(|ui| {
                     if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                         ui.close();
                     }
-                    if ui.button("Load Rotation").clicked() {
-                        self.actions.clone_from(&self.rotation.actions);
+                    for saved_rotation_load_operation in [
+                        SavedRotationLoadOperation::LoadRotation,
+                        SavedRotationLoadOperation::LoadRotationRecipe,
+                        SavedRotationLoadOperation::LoadRotationRecipeConsumables,
+                    ] {
+                        let text = format!("{}", saved_rotation_load_operation);
+                        if ui.button(text).clicked() {
+                            selected_load_operation = Some(saved_rotation_load_operation);
+                        }
+                        if self.rotation.recipe_configuration.is_none() {
+                            ui.add(
+                                egui::Label::new(
+                                    egui::RichText::new("⚠ No recipe data stored for rotation")
+                                        .small()
+                                        .color(ui.visuals().warn_fg_color),
+                                )
+                                .wrap(),
+                            );
+                        }
                     }
-                    ui.add_enabled_ui(self.rotation.recipe_configuration.is_some(), |ui| {
-                        if ui.button("Load Rotation & Recipe").clicked() {
+                });
+                if load_button_response.clicked() {
+                    selected_load_operation =
+                        Some(self.config.default_saved_rotation_load_operation.clone());
+                    self.actions.clone_from(&self.rotation.actions);
+                }
+                if let Some(load_operation) = selected_load_operation {
+                    match load_operation {
+                        SavedRotationLoadOperation::LoadRotation => {
+                            self.actions.clone_from(&self.rotation.actions);
+                        }
+                        SavedRotationLoadOperation::LoadRotationRecipe => {
                             self.actions.clone_from(&self.rotation.actions);
                             self.load_saved_recipe();
                         }
-                        if ui.button("Load Rotation, Recipe, & Consumables").clicked() {
+                        SavedRotationLoadOperation::LoadRotationRecipeConsumables => {
                             self.actions.clone_from(&self.rotation.actions);
                             self.load_saved_recipe();
                             self.load_saved_consumables();
                         }
-                    });
-                });
-                if load_button_response.clicked() {
-                    self.actions.clone_from(&self.rotation.actions);
+                    }
                 }
                 let duration = self
                     .rotation
@@ -443,6 +509,7 @@ impl egui::Widget for RotationWidget<'_> {
 
 pub struct SavedRotationsWidget<'a> {
     locale: Locale,
+    config: &'a mut SavedRotationsConfig,
     rotations: &'a mut SavedRotationsData,
     actions: &'a mut Vec<Action>,
     crafter_config: &'a mut CrafterConfig,
@@ -455,6 +522,7 @@ pub struct SavedRotationsWidget<'a> {
 impl<'a> SavedRotationsWidget<'a> {
     pub fn new(
         locale: Locale,
+        config: &'a mut SavedRotationsConfig,
         rotations: &'a mut SavedRotationsData,
         actions: &'a mut Vec<Action>,
         crafter_config: &'a mut CrafterConfig,
@@ -465,6 +533,7 @@ impl<'a> SavedRotationsWidget<'a> {
     ) -> Self {
         Self {
             locale,
+            config,
             rotations,
             actions,
             crafter_config,
@@ -479,6 +548,52 @@ impl<'a> SavedRotationsWidget<'a> {
 impl egui::Widget for SavedRotationsWidget<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
+            ui.style_mut().visuals.collapsing_header_frame = true;
+            ui.collapsing("Settings", |ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+                ui.vertical(|ui| {
+                    ui.checkbox(
+                        &mut self.config.load_from_saved_rotations,
+                        "Load saved rotations when initiating solve",
+                    );
+                    ui.separator();
+                    ui.label("Default operation on clicking Load button:");
+                    for saved_rotation_load_operation in [
+                        SavedRotationLoadOperation::LoadRotation,
+                        SavedRotationLoadOperation::LoadRotationRecipe,
+                        SavedRotationLoadOperation::LoadRotationRecipeConsumables,
+                    ] {
+                        let text = format!("{}", saved_rotation_load_operation);
+                        ui.selectable_value(
+                            &mut self.config.default_saved_rotation_load_operation,
+                            saved_rotation_load_operation,
+                            text,
+                        );
+                    }
+
+                    ui.add(
+                        egui::Label::new(
+                            egui::RichText::new(
+                                "⚠ Rotations saved before v0.20.3 do not contain the necessary information to load recipe data.",
+                            )
+                            .small()
+                            .color(ui.visuals().warn_fg_color),
+                        )
+                        .wrap(),
+                    );
+                    ui.add(
+                        egui::Label::new(
+                            egui::RichText::new(
+                                "Using options that attempt to load the recipe will not load the recipe for such rotations.",
+                            )
+                            .small()
+                            .color(ui.visuals().warn_fg_color),
+                        )
+                        .wrap(),
+                    );
+                });
+            });
+            ui.separator();
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.group(|ui| {
                     ui.label(egui::RichText::new("Saved macros").strong());
@@ -490,6 +605,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                         let mut deleted = false;
                         ui.add(RotationWidget::new(
                             self.locale,
+                            self.config,
                             &mut true,
                             &mut deleted,
                             rotation,
@@ -509,11 +625,25 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                 ui.group(|ui| {
                     ui.horizontal(|ui| {
                         ui.label(egui::RichText::new("Solve history").strong());
-                        ui.label(format!(
-                            "({}/{})",
-                            self.rotations.solve_history.len(),
-                            SavedRotationsData::MAX_HISTORY_SIZE
-                        ));
+                        ui.label(format!("({}/", self.rotations.solve_history.len(),));
+                        ui.add(
+                            egui::DragValue::new(&mut self.rotations.max_history_size)
+                                .range(DEFAULT_MAX_HISTORY_SIZE..=200),
+                        );
+                        ui.label(")");
+
+                        if self.rotations.solve_history.len() > self.rotations.max_history_size {
+                            ui.add(
+                                egui::Label::new(
+                                    egui::RichText::new(
+                                        "⚠ Oldest rotations will be lost on next solve",
+                                    )
+                                    .small()
+                                    .color(ui.visuals().warn_fg_color),
+                                )
+                                .wrap(),
+                            );
+                        }
                     });
                     ui.separator();
                     if self.rotations.solve_history.is_empty() {
@@ -524,6 +654,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                         let mut deleted = false;
                         ui.add(RotationWidget::new(
                             self.locale,
+                            self.config,
                             &mut pinned,
                             &mut deleted,
                             rotation,

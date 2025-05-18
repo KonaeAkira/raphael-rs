@@ -47,6 +47,7 @@ pub struct MacroSolverApp {
     crafter_config: CrafterConfig,
     solver_config: SolverConfig,
     macro_view_config: MacroViewConfig,
+    saved_rotations_config: SavedRotationsConfig,
     saved_rotations_data: SavedRotationsData,
 
     latest_version: Arc<Mutex<semver::Version>>,
@@ -101,6 +102,11 @@ impl MacroSolverApp {
             crafter_config: load(cc, "CRAFTER_CONFIG", CrafterConfig::default()),
             solver_config: load(cc, "SOLVER_CONFIG", SolverConfig::default()),
             macro_view_config: load(cc, "MACRO_VIEW_CONFIG", MacroViewConfig::default()),
+            saved_rotations_config: load(
+                cc,
+                "SAVED_ROTATIONS_CONFIG",
+                SavedRotationsConfig::default(),
+            ),
             saved_rotations_data: load(cc, "SAVED_ROTATIONS", SavedRotationsData::default()),
 
             latest_version: latest_version.clone(),
@@ -438,6 +444,7 @@ impl eframe::App for MacroSolverApp {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(SavedRotationsWidget::new(
                 self.locale,
+                &mut self.saved_rotations_config,
                 &mut self.saved_rotations_data,
                 &mut self.actions,
                 &mut self.crafter_config,
@@ -463,6 +470,11 @@ impl eframe::App for MacroSolverApp {
         eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
         eframe::set_value(storage, "SOLVER_CONFIG", &self.solver_config);
         eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
+        eframe::set_value(
+            storage,
+            "SAVED_ROTATIONS_CONFIG",
+            &self.saved_rotations_config,
+        );
         eframe::set_value(storage, "SAVED_ROTATIONS", &self.saved_rotations_data);
     }
 
@@ -733,7 +745,7 @@ impl MacroSolverApp {
                 });
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     if self.solver_progress == usize::MAX {
-                        ui.label("Loaded from history");
+                        ui.label("Loaded from saved rotations");
                     } else if self.solver_progress > 0 {
                         ui.label(format!("Elapsed time: {:.2}s", self.duration.as_secs_f32()));
                     }
@@ -1088,11 +1100,13 @@ impl MacroSolverApp {
             );
         });
 
-        if let Some(actions) = self.saved_rotations_data.find_solved_rotation(
-            &game_settings,
-            initial_quality,
-            target_quality,
-        ) {
+        if self.saved_rotations_config.load_from_saved_rotations
+            && let Some(actions) = self.saved_rotations_data.find_solved_rotation(
+                &game_settings,
+                initial_quality,
+                target_quality,
+            )
+        {
             let mut solver_events = self.solver_events.lock().unwrap();
             solver_events.push_back(SolverEvent::Actions(actions));
             solver_events.push_back(SolverEvent::LoadedFromHistory());
