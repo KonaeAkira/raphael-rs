@@ -979,7 +979,6 @@ impl MacroSolverApp {
                     .color(ui.visuals().warn_fg_color),
             );
         }
-        ui.add_enabled(false, egui::Checkbox::new(&mut true, "Minimize steps"));
     }
 
     fn on_solve_initiated(&mut self, ctx: &egui::Context) {
