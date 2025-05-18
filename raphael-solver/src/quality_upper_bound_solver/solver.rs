@@ -210,8 +210,7 @@ impl QualityUbSolver {
             )));
         }
 
-        let reduced_state =
-            ReducedState::from_simulation_state(state, &self.settings, self.durability_cost);
+        let reduced_state = ReducedState::from_state(state, &self.settings, self.durability_cost);
         let required_progress = self.settings.max_progress() - state.progress;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {

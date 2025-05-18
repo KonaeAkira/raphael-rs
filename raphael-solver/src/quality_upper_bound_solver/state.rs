@@ -16,15 +16,21 @@ pub struct ReducedState {
 }
 
 impl ReducedState {
-    pub fn from_simulation_state(
+    pub fn from_state(
         mut state: SimulationState,
         settings: &SolverSettings,
         durability_cost: u16,
     ) -> Self {
+        // Turn all current durability +5 extra durability into CP.
+        // The +5 extra durability is to account for the possibility of a 10-durability action being used at the end while at 5 durability, resulting in -5 durability.
+        // A final value of -10 durability isn't considered because the last action has to be a Progress-increasing action, and the only Progress action with more than 10 durability cost is Groundwork.
+        // However, Groundwork has its efficiency halved when there is not enough durability to cover the full cost, which makes CarefulSynthesis a better option.
         let mut refunded_durability = state.durability / 5 + 1;
-        // Assume Manipulation effect can be used to its full potential
+
+        // Assume Manipulation effect can be used to its full potential (each tick restores 5 durability).
         refunded_durability += u16::from(state.effects.manipulation());
         state.effects.set_manipulation(0);
+
         // Assume TrainedPerfection can be used to its full potential (saving 20 durability)
         if state.effects.trained_perfection_active() || state.effects.trained_perfection_available()
         {
@@ -32,12 +38,13 @@ impl ReducedState {
             state.effects.set_trained_perfection_active(false);
             state.effects.set_trained_perfection_available(false);
         }
+
         state.cp += refunded_durability * durability_cost;
         state.durability = MAX_DURABILITY;
-        Self::from_simulation_state_inner(&state, settings, durability_cost).unwrap()
+        Self::from_state_inner(&state, settings, durability_cost).unwrap()
     }
 
-    fn from_simulation_state_inner(
+    fn from_state_inner(
         state: &SimulationState,
         settings: &SolverSettings,
         durability_cost: u16,
@@ -94,7 +101,7 @@ impl ReducedState {
                 match use_action_combo(settings, state, action) {
                     Ok(state) => {
                         let solver_state =
-                            Self::from_simulation_state_inner(&state, settings, durability_cost)?;
+                            Self::from_state_inner(&state, settings, durability_cost)?;
                         Some((solver_state, state.progress, state.quality))
                     }
                     Err(_) => None,
