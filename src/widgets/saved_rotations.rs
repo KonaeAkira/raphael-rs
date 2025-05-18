@@ -218,20 +218,18 @@ fn default_max_history_size() -> usize {
 
 impl SavedRotationsData {
     pub fn add_solved_rotation(&mut self, rotation: Rotation) {
-        let rotation_to_push_front = if let Some(index) = self
+        if let Some(index) = self
             .solve_history
             .iter()
             .position(|saved_rotation| *saved_rotation == rotation)
         {
-            self.solve_history.remove(index).unwrap()
-        } else {
-            rotation
-        };
+            self.solve_history.remove(index);
+        }
 
         while self.solve_history.len() >= self.max_history_size {
             self.solve_history.pop_back();
         }
-        self.solve_history.push_front(rotation_to_push_front);
+        self.solve_history.push_front(rotation);
     }
 
     pub fn find_solved_rotation(
