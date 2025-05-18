@@ -184,7 +184,7 @@ impl std::fmt::Display for SavedRotationLoadOperation {
             SavedRotationLoadOperation::LoadRotation => "Load rotation",
             SavedRotationLoadOperation::LoadRotationRecipe => "Load rotation & recipe",
             SavedRotationLoadOperation::LoadRotationRecipeConsumables => {
-                "Load rotation, recipe, & consumables"
+                "Load rotation, recipe & consumables"
             }
         };
         write!(f, "{}", output_str)
@@ -589,7 +589,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     ui.add(
                         egui::Label::new(
                             egui::RichText::new(
-                                "⚠ Rotations saved before v0.20.3 do not contain the necessary information to uniquely identify the recipe data.",
+                                "⚠ Rotations saved before v0.20.3 do not contain the necessary information to uniquely identify the recipe.",
                             )
                             .small()
                             .color(ui.visuals().warn_fg_color),
@@ -640,12 +640,18 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                 ui.group(|ui| {
                     ui.horizontal(|ui| {
                         ui.label(egui::RichText::new("Solve history").strong());
-                        ui.label(format!("({}/", self.rotations.solve_history.len(),));
-                        ui.add(
-                            egui::DragValue::new(&mut self.rotations.max_history_size)
-                                .range(DEFAULT_MAX_HISTORY_SIZE..=200),
-                        );
-                        ui.label(")");
+                        ui.horizontal(|ui| {
+                            ui.style_mut().spacing.item_spacing.x = 3.0;
+                            ui.label("(");
+                            ui.add_enabled(false, egui::DragValue::new(&mut self.rotations.solve_history.len()));
+                            ui.label("/");
+                            ui.add(
+                                egui::DragValue::new(&mut self.rotations.max_history_size)
+                                    .range(DEFAULT_MAX_HISTORY_SIZE..=200),
+                            );
+                            ui.label(")");
+                        });
+
 
                         if self.rotations.solve_history.len() > self.rotations.max_history_size {
                             ui.add(
