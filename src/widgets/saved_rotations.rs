@@ -7,7 +7,10 @@ use raphael_data::{Consumable, CrafterStats, Locale, Recipe};
 use raphael_sim::*;
 use serde::{Deserialize, Serialize};
 
-use crate::config::CrafterConfig;
+use crate::{
+    app::SolverConfig,
+    config::{CrafterConfig, CustomRecipeOverridesConfiguration, RecipeConfiguration},
+};
 
 use super::util;
 
@@ -17,16 +20,60 @@ fn generate_unique_rotation_id() -> u64 {
     hasher.finish()
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RecipeInputConfiguration {
+    pub recipe: Recipe,
+    pub custom_recipe_overrides_config: Option<CustomRecipeOverridesConfiguration>,
+}
+
+impl RecipeInputConfiguration {
+    pub fn new(
+        recipe: &Recipe,
+        custom_recipe_overrides_configuration: &CustomRecipeOverridesConfiguration,
+    ) -> Self {
+        Self {
+            recipe: *recipe,
+            custom_recipe_overrides_config: if custom_recipe_overrides_configuration
+                .use_custom_recipe
+            {
+                Some(*custom_recipe_overrides_configuration)
+            } else {
+                None
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SolverInputConfiguration {
+    pub game_settings: Settings,
+    pub initial_quality: u16,
+    pub target_quality: u16,
+}
+
+impl SolverInputConfiguration {
+    pub fn new(game_settings: &Settings, initial_quality: u16, target_quality: u16) -> Self {
+        Self {
+            game_settings: *game_settings,
+            initial_quality,
+            target_quality,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rotation {
     pub unique_id: u64,
     pub name: String,
-    pub solver_version: String,
+    pub solver: String,
+    #[serde(default)]
+    pub solver_version: Option<String>,
     pub actions: Vec<Action>,
-    pub recipe_id: u32,
-    pub game_settings: Settings,
-    pub initial_quality: u16,
-    pub target_quality: u16,
+    pub item: u32,
+    #[serde(default)]
+    pub recipe_configuration: Option<RecipeInputConfiguration>,
+    #[serde(default)]
+    pub solver_configuration: Option<SolverInputConfiguration>,
     pub food: Option<(u32, bool)>,
     pub potion: Option<(u32, bool)>,
     pub crafter_stats: CrafterStats,
@@ -38,31 +85,43 @@ impl Rotation {
         name: impl Into<String>,
         actions: Vec<Action>,
         recipe: &Recipe,
+        custom_recipe_overrides_configuration: &CustomRecipeOverridesConfiguration,
         game_settings: Settings,
         initial_quality: u16,
         target_quality: u16,
         food: Option<Consumable>,
         potion: Option<Consumable>,
         crafter_config: &CrafterConfig,
+        solver_config: &SolverConfig,
     ) -> Self {
+        let solver_params = format!(
+            "Raphael v{}{}{}",
+            env!("CARGO_PKG_VERSION"),
+            match solver_config.backload_progress {
+                true => " +backload",
+                false => "",
+            },
+            match solver_config.adversarial {
+                true => " +adversarial",
+                false => "",
+            },
+        );
         Self {
             unique_id: generate_unique_rotation_id(),
             name: name.into(),
-            solver_version: env!("CARGO_PKG_VERSION").to_string(),
+            solver: solver_params,
+            solver_version: Some(env!("CARGO_PKG_VERSION").to_string()),
             actions,
-            recipe_id: raphael_data::RECIPES
-                .entries()
-                .find_map(|(id, recipe_entry)| {
-                    if recipe == recipe_entry {
-                        Some(*id)
-                    } else {
-                        None
-                    }
-                })
-                .unwrap_or_default(),
-            game_settings,
-            initial_quality,
-            target_quality,
+            item: recipe.item_id,
+            recipe_configuration: Some(RecipeInputConfiguration::new(
+                recipe,
+                custom_recipe_overrides_configuration,
+            )),
+            solver_configuration: Some(SolverInputConfiguration::new(
+                &game_settings,
+                initial_quality,
+                target_quality,
+            )),
             food: food.map(|consumable| (consumable.item_id, consumable.hq)),
             potion: potion.map(|consumable| (consumable.item_id, consumable.hq)),
             crafter_stats: *crafter_config.active_stats(),
@@ -76,12 +135,12 @@ impl Clone for Rotation {
         Self {
             unique_id: generate_unique_rotation_id(),
             name: self.name.clone(),
+            solver: self.solver.clone(),
             solver_version: self.solver_version.clone(),
             actions: self.actions.clone(),
-            recipe_id: self.recipe_id,
-            game_settings: self.game_settings,
-            initial_quality: self.initial_quality,
-            target_quality: self.target_quality,
+            item: self.item,
+            recipe_configuration: self.recipe_configuration.clone(),
+            solver_configuration: self.solver_configuration.clone(),
             food: self.food,
             potion: self.potion,
             crafter_stats: self.crafter_stats,
@@ -93,12 +152,12 @@ impl Clone for Rotation {
 impl PartialEq for Rotation {
     fn eq(&self, other: &Self) -> bool {
         // unique_id & name are skipped
-        self.solver_version == other.solver_version
+        self.solver == other.solver
+            && self.solver_version == other.solver_version
             && self.actions == other.actions
-            && self.recipe_id == other.recipe_id
-            && self.game_settings == other.game_settings
-            && self.initial_quality == other.initial_quality
-            && self.target_quality == other.target_quality
+            && self.item == other.item
+            && self.recipe_configuration == other.recipe_configuration
+            && self.solver_configuration == other.solver_configuration
             && self.food == other.food
             && self.potion == other.potion
             && self.crafter_stats == other.crafter_stats
@@ -137,31 +196,26 @@ impl SavedRotationsData {
         initial_quality: u16,
         target_quality: u16,
     ) -> Option<Vec<Action>> {
-        let history_search_result = self.solve_history.iter().find_map(|rotation| {
-            if rotation.solver_version == env!("CARGO_PKG_VERSION").to_string()
-                && rotation.game_settings == *game_settings
-                && rotation.initial_quality == initial_quality
-                && rotation.target_quality == target_quality
-            {
-                Some(rotation.actions.clone())
-            } else {
-                None
+        let find_and_map_rotation = |rotation: &Rotation| {
+            if let (Some(saved_solver_version), Some(saved_solver_configuration)) = (
+                rotation.solver_version.clone(),
+                rotation.solver_configuration.clone(),
+            ) {
+                let solver_configuration =
+                    SolverInputConfiguration::new(game_settings, initial_quality, target_quality);
+                if saved_solver_version == env!("CARGO_PKG_VERSION").to_string()
+                    && saved_solver_configuration == solver_configuration
+                {
+                    return Some(rotation.actions.clone());
+                }
             }
-        });
+            None
+        };
+        let history_search_result = self.solve_history.iter().find_map(find_and_map_rotation);
         if history_search_result.is_some() {
             history_search_result
         } else {
-            self.pinned.iter().find_map(|rotation| {
-                if rotation.solver_version == env!("CARGO_PKG_VERSION").to_string()
-                    && rotation.game_settings == *game_settings
-                    && rotation.initial_quality == initial_quality
-                    && rotation.target_quality == target_quality
-                {
-                    Some(rotation.actions.clone())
-                } else {
-                    None
-                }
-            })
+            self.pinned.iter().find_map(find_and_map_rotation)
         }
     }
 }
@@ -172,6 +226,11 @@ struct RotationWidget<'a> {
     deleted: &'a mut bool,
     rotation: &'a Rotation,
     actions: &'a mut Vec<Action>,
+    crafter_config: &'a mut CrafterConfig,
+    recipe_config: &'a mut RecipeConfiguration,
+    custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
+    selected_food: &'a mut Option<Consumable>,
+    selected_potion: &'a mut Option<Consumable>,
 }
 
 impl<'a> RotationWidget<'a> {
@@ -181,6 +240,11 @@ impl<'a> RotationWidget<'a> {
         deleted: &'a mut bool,
         rotation: &'a Rotation,
         actions: &'a mut Vec<Action>,
+        crafter_config: &'a mut CrafterConfig,
+        recipe_config: &'a mut RecipeConfiguration,
+        custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
+        selected_food: &'a mut Option<Consumable>,
+        selected_potion: &'a mut Option<Consumable>,
     ) -> Self {
         Self {
             locale,
@@ -188,6 +252,11 @@ impl<'a> RotationWidget<'a> {
             deleted,
             rotation,
             actions,
+            crafter_config,
+            recipe_config,
+            custom_recipe_overrides_config,
+            selected_food,
+            selected_potion,
         }
     }
 
@@ -211,7 +280,27 @@ impl<'a> RotationWidget<'a> {
                     *self.pinned = true;
                 }
                 ui.add_space(-3.0);
-                if ui.button("Load").clicked() {
+                let load_button_response = ui.button("Load");
+                load_button_response.context_menu(|ui| {
+                    if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                        ui.close();
+                    }
+                    if ui.button("Load Rotation").clicked() {
+                        self.actions.clone_from(&self.rotation.actions);
+                    }
+                    ui.add_enabled_ui(self.rotation.recipe_configuration.is_some(), |ui| {
+                        if ui.button("Load Rotation & Recipe").clicked() {
+                            self.actions.clone_from(&self.rotation.actions);
+                            self.load_saved_recipe();
+                        }
+                        if ui.button("Load Rotation, Recipe, & Consumables").clicked() {
+                            self.actions.clone_from(&self.rotation.actions);
+                            self.load_saved_recipe();
+                            self.load_saved_consumables();
+                        }
+                    });
+                });
+                if load_button_response.clicked() {
                     self.actions.clone_from(&self.rotation.actions);
                 }
                 let duration = self
@@ -227,6 +316,39 @@ impl<'a> RotationWidget<'a> {
                 ));
             });
         });
+    }
+
+    fn load_saved_recipe(&mut self) {
+        if let Some(recipe_configuration) = &self.rotation.recipe_configuration {
+            self.recipe_config.recipe = recipe_configuration.recipe;
+            self.crafter_config.selected_job = self.rotation.job_id;
+            if let Some(custom_recipe_overrides_config) =
+                recipe_configuration.custom_recipe_overrides_config
+            {
+                *self.custom_recipe_overrides_config = custom_recipe_overrides_config;
+            } else {
+                self.custom_recipe_overrides_config.use_custom_recipe = false;
+            }
+        }
+    }
+
+    fn load_saved_consumables(&mut self) {
+        *self.selected_food = if let Some(saved_food) = self.rotation.food {
+            raphael_data::MEALS
+                .iter()
+                .find(|food| food.item_id == saved_food.0 && food.hq == saved_food.1)
+                .copied()
+        } else {
+            None
+        };
+        *self.selected_potion = if let Some(saved_potion) = self.rotation.potion {
+            raphael_data::POTIONS
+                .iter()
+                .find(|potion| potion.item_id == saved_potion.0 && potion.hq == saved_potion.1)
+                .copied()
+        } else {
+            None
+        };
     }
 
     fn show_info_row(
@@ -262,26 +384,15 @@ impl<'a> RotationWidget<'a> {
             self.rotation.crafter_stats.level,
             raphael_data::get_job_name(self.rotation.job_id, self.locale)
         );
-        let solver_string = format!(
-            "Raphael v{}{}{}",
-            self.rotation.solver_version,
-            match self.rotation.game_settings.backload_progress {
-                true => " +backload",
-                false => "",
-            },
-            match self.rotation.game_settings.adversarial {
-                true => " +adversarial",
-                false => "",
-            },
-        );
         self.show_info_row(
             ui,
             "Recipe",
             raphael_data::get_item_name(
-                raphael_data::RECIPES
-                    .get(&self.rotation.recipe_id)
-                    .map(|recipe| recipe.item_id)
-                    .unwrap_or_default(),
+                if let Some(recipe_configuration) = &self.rotation.recipe_configuration {
+                    recipe_configuration.recipe.item_id
+                } else {
+                    self.rotation.item
+                },
                 false,
                 self.locale,
             )
@@ -291,7 +402,7 @@ impl<'a> RotationWidget<'a> {
         self.show_info_row(ui, "Job", job_string);
         self.show_info_row(ui, "Food", self.get_consumable_name(self.rotation.food));
         self.show_info_row(ui, "Potion", self.get_consumable_name(self.rotation.potion));
-        self.show_info_row(ui, "Solver", solver_string);
+        self.show_info_row(ui, "Solver", &self.rotation.solver);
     }
 
     fn show_rotation_actions(&self, ui: &mut egui::Ui) {
@@ -334,6 +445,11 @@ pub struct SavedRotationsWidget<'a> {
     locale: Locale,
     rotations: &'a mut SavedRotationsData,
     actions: &'a mut Vec<Action>,
+    crafter_config: &'a mut CrafterConfig,
+    recipe_config: &'a mut RecipeConfiguration,
+    custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
+    selected_food: &'a mut Option<Consumable>,
+    selected_potion: &'a mut Option<Consumable>,
 }
 
 impl<'a> SavedRotationsWidget<'a> {
@@ -341,11 +457,21 @@ impl<'a> SavedRotationsWidget<'a> {
         locale: Locale,
         rotations: &'a mut SavedRotationsData,
         actions: &'a mut Vec<Action>,
+        crafter_config: &'a mut CrafterConfig,
+        recipe_config: &'a mut RecipeConfiguration,
+        custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
+        selected_food: &'a mut Option<Consumable>,
+        selected_potion: &'a mut Option<Consumable>,
     ) -> Self {
         Self {
             locale,
             rotations,
             actions,
+            crafter_config,
+            recipe_config,
+            custom_recipe_overrides_config,
+            selected_food,
+            selected_potion,
         }
     }
 }
@@ -368,6 +494,11 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                             &mut deleted,
                             rotation,
                             self.actions,
+                            self.crafter_config,
+                            self.recipe_config,
+                            self.custom_recipe_overrides_config,
+                            self.selected_food,
+                            self.selected_potion,
                         ));
                         !deleted
                     });
@@ -397,6 +528,11 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                             &mut deleted,
                             rotation,
                             self.actions,
+                            self.crafter_config,
+                            self.recipe_config,
+                            self.custom_recipe_overrides_config,
+                            self.selected_food,
+                            self.selected_potion,
                         ));
                         if pinned {
                             self.rotations.pinned.push(rotation.clone());

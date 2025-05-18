@@ -24,7 +24,7 @@ impl Default for AppConfig {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct CustomRecipeOverridesConfiguration {
     pub use_custom_recipe: bool,
     pub custom_recipe_overrides: CustomRecipeOverrides,

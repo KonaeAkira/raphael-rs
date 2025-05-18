@@ -440,6 +440,11 @@ impl eframe::App for MacroSolverApp {
                 self.locale,
                 &mut self.saved_rotations_data,
                 &mut self.actions,
+                &mut self.crafter_config,
+                &mut self.recipe_config,
+                &mut self.custom_recipe_overrides_config,
+                &mut self.selected_food,
+                &mut self.selected_potion,
             ));
         });
     }
@@ -513,6 +518,7 @@ impl MacroSolverApp {
                             .unwrap_or("Unknown item".to_owned()),
                             self.actions.clone(),
                             &self.recipe_config.recipe,
+                            &self.custom_recipe_overrides_config,
                             game_settings,
                             initial_quality,
                             self.solver_config
@@ -521,6 +527,7 @@ impl MacroSolverApp {
                             self.selected_food,
                             self.selected_potion,
                             &self.crafter_config,
+                            &self.solver_config,
                         ));
                     } else {
                         self.solver_error = exception;
