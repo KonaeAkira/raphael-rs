@@ -31,7 +31,10 @@ pub struct QualityUbSolver {
 impl QualityUbSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
         let durability_cost = durability_cost(&settings.simulator_settings);
-        settings.simulator_settings.max_cp += durability_cost * (settings.max_durability() / 5);
+        settings.simulator_settings.max_cp = {
+            let initial_state = SimulationState::new(&settings.simulator_settings);
+            ReducedState::from_state(initial_state, &settings, durability_cost).cp
+        };
         Self {
             settings,
             interrupt_signal,
@@ -100,6 +103,7 @@ impl QualityUbSolver {
     pub fn precompute(&mut self) {
         assert!(self.solved_states.is_empty());
         let all_templates = self.generate_precompute_templates();
+        dbg!(self.settings.max_cp());
         for (heart_and_soul, quick_innovation) in
             [(false, false), (false, true), (true, false), (true, true)]
         {

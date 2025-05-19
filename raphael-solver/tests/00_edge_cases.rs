@@ -136,9 +136,9 @@ fn zero_quality() {
                 pareto_buckets_squared_size_sum: 141,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 60311,
+                parallel_states: 73282,
                 sequential_states: 3077,
-                pareto_values: 172523,
+                pareto_values: 230745,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -187,9 +187,9 @@ fn max_quality() {
                 pareto_buckets_squared_size_sum: 32640,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 830760,
-                sequential_states: 67926,
-                pareto_values: 6304450,
+                parallel_states: 872628,
+                sequential_states: 44273,
+                pareto_values: 6361343,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 244815,
@@ -235,9 +235,9 @@ fn large_progress_quality_increase() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 412085,
-                sequential_states: 1339,
-                pareto_values: 411684,
+                parallel_states: 515045,
+                sequential_states: 145,
+                pareto_values: 513450,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 120,
@@ -286,9 +286,9 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 7906,
-                sequential_states: 181,
-                pareto_values: 7205,
+                parallel_states: 31837,
+                sequential_states: 0,
+                pareto_values: 30829,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 116,

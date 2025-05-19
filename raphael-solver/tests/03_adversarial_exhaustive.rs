@@ -104,9 +104,9 @@ fn stuffed_peppers() {
                 pareto_buckets_squared_size_sum: 1172823,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 4687721,
-                sequential_states: 34353,
-                pareto_values: 77746538,
+                parallel_states: 5019836,
+                sequential_states: 13813,
+                pareto_values: 79198339,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1414006,
@@ -157,9 +157,9 @@ fn test_rare_tacos_2() {
                 pareto_buckets_squared_size_sum: 143370684,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 4687721,
-                sequential_states: 343017,
-                pareto_values: 135274246,
+                parallel_states: 5019836,
+                sequential_states: 84338,
+                pareto_values: 137779123,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2225633,
@@ -211,9 +211,9 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_buckets_squared_size_sum: 463009,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 3634469,
-                sequential_states: 138373,
-                pareto_values: 33011766,
+                parallel_states: 3767315,
+                sequential_states: 79907,
+                pareto_values: 33483499,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 52311,
@@ -262,9 +262,9 @@ fn test_indagator_3858_4057() {
                 pareto_buckets_squared_size_sum: 99526,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 4975741,
-                sequential_states: 334813,
-                pareto_values: 125659412,
+                parallel_states: 5089609,
+                sequential_states: 242241,
+                pareto_values: 126572372,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -314,9 +314,9 @@ fn test_rare_tacos_4628_4410() {
                 pareto_buckets_squared_size_sum: 23891886,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 4962902,
-                sequential_states: 335934,
-                pareto_values: 151000601,
+                parallel_states: 5295017,
+                sequential_states: 81046,
+                pareto_values: 154020473,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 420784,
@@ -368,9 +368,9 @@ fn issue_113() {
                 pareto_buckets_squared_size_sum: 23983773,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 5766907,
-                sequential_states: 477022,
-                pareto_values: 240066959,
+                parallel_states: 6146467,
+                sequential_states: 131800,
+                pareto_values: 242744004,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -420,9 +420,9 @@ fn issue_118() {
                 pareto_buckets_squared_size_sum: 205942420,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 3389575,
-                sequential_states: 610465,
-                pareto_values: 49377405,
+                parallel_states: 3958915,
+                sequential_states: 98658,
+                pareto_values: 50363752,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 258314,
