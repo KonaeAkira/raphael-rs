@@ -92,9 +92,9 @@ fn rinascita_3700_3280() {
                 pareto_buckets_squared_size_sum: 8399,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1917936,
+                parallel_states: 1876488,
                 sequential_states: 83356,
-                pareto_values: 46209270,
+                pareto_values: 46173366,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -143,9 +143,9 @@ fn pactmaker_3240_3130() {
                 pareto_buckets_squared_size_sum: 31706,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1641616,
+                parallel_states: 1600168,
                 sequential_states: 84343,
-                pareto_values: 35376875,
+                pareto_values: 35340971,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -193,9 +193,9 @@ fn pactmaker_3240_3130_heart_and_soul() {
                 pareto_buckets_squared_size_sum: 1101,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 3390156,
+                parallel_states: 3307260,
                 sequential_states: 151491,
-                pareto_values: 74964736,
+                pareto_values: 74887384,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -244,9 +244,9 @@ fn diadochos_4021_3660() {
                 pareto_buckets_squared_size_sum: 13256,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1779776,
+                parallel_states: 1738328,
                 sequential_states: 85663,
-                pareto_values: 47013241,
+                pareto_values: 46977337,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -295,9 +295,9 @@ fn indagator_3858_4057() {
                 pareto_buckets_squared_size_sum: 382,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1942114,
+                parallel_states: 1900666,
                 sequential_states: 85124,
-                pareto_values: 46873194,
+                pareto_values: 46837290,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -346,9 +346,9 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
                 pareto_buckets_squared_size_sum: 70342159,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1901230,
+                parallel_states: 1877052,
                 sequential_states: 32860,
-                pareto_values: 49153126,
+                pareto_values: 49132182,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2227573,
@@ -399,9 +399,9 @@ fn stuffed_peppers_2() {
                 pareto_buckets_squared_size_sum: 9996352,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1901230,
+                parallel_states: 1877052,
                 sequential_states: 31638,
-                pareto_values: 49837324,
+                pareto_values: 49816380,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -451,9 +451,9 @@ fn stuffed_peppers_2_heart_and_soul() {
                 pareto_buckets_squared_size_sum: 961604,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 3886344,
+                parallel_states: 3837988,
                 sequential_states: 57998,
-                pareto_values: 104208424,
+                pareto_values: 104163302,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -503,9 +503,9 @@ fn stuffed_peppers_2_quick_innovation() {
                 pareto_buckets_squared_size_sum: 18751495,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 3964660,
+                parallel_states: 3914456,
                 sequential_states: 70615,
-                pareto_values: 103469934,
+                pareto_values: 103426352,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -554,9 +554,9 @@ fn rakaznar_lapidary_hammer_4462_4391() {
                 pareto_buckets_squared_size_sum: 209669,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1635272,
+                parallel_states: 1611094,
                 sequential_states: 9370,
-                pareto_values: 27445887,
+                pareto_values: 27424943,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1514037,
@@ -605,9 +605,9 @@ fn black_star_4048_3997() {
                 pareto_buckets_squared_size_sum: 15150,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1379112,
+                parallel_states: 1337664,
                 sequential_states: 8531,
-                pareto_values: 7868538,
+                pareto_values: 7832634,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 161900,
@@ -656,9 +656,9 @@ fn claro_walnut_lumber_4900_4800() {
                 pareto_buckets_squared_size_sum: 77195,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1718003,
+                parallel_states: 1676555,
                 sequential_states: 2693,
-                pareto_values: 12704811,
+                pareto_values: 12668907,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 456982,
@@ -707,9 +707,9 @@ fn rakaznar_lapidary_hammer_4900_4800() {
                 pareto_buckets_squared_size_sum: 100,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1811426,
+                parallel_states: 1787248,
                 sequential_states: 9710,
-                pareto_values: 20375897,
+                pareto_values: 20354953,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1229899,
@@ -758,9 +758,9 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
                 pareto_buckets_squared_size_sum: 29510,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1832150,
+                parallel_states: 1807972,
                 sequential_states: 2870,
-                pareto_values: 17641943,
+                pareto_values: 17620999,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1108877,
@@ -809,9 +809,9 @@ fn archeo_kingdom_broadsword_4966_4914() {
                 pareto_buckets_squared_size_sum: 41020,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 2235052,
+                parallel_states: 2207420,
                 sequential_states: 11923,
-                pareto_values: 38135376,
+                pareto_values: 38111440,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1517488,
@@ -860,9 +860,9 @@ fn hardened_survey_plank_5558_5216() {
                 pareto_buckets_squared_size_sum: 173684277,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 2011593,
+                parallel_states: 1970145,
                 sequential_states: 29325,
-                pareto_values: 35654654,
+                pareto_values: 35618750,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 386882,
@@ -908,9 +908,9 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
                 pareto_buckets_squared_size_sum: 182325,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 4945388,
+                parallel_states: 4773260,
                 sequential_states: 183740,
-                pareto_values: 77162082,
+                pareto_values: 77001306,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -959,9 +959,9 @@ fn ceviche_4900_4800_no_quality() {
                 pareto_buckets_squared_size_sum: 37,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 28026,
+                parallel_states: 27690,
                 sequential_states: 0,
-                pareto_values: 27978,
+                pareto_values: 27690,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 7478,

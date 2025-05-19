@@ -129,7 +129,9 @@ impl QualityUbSolver {
                         && template.effects.quick_innovation_available() == quick_innovation
                 })
                 .collect();
-            for cp in self.durability_cost..=self.settings.max_cp() {
+            // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
+            // See `ReducedState::is_final` for details.
+            for cp in 2 * self.durability_cost..=self.settings.max_cp() {
                 if self.interrupt_signal.is_set() {
                     return;
                 }

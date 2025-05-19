@@ -83,6 +83,11 @@ impl ReducedState {
     }
 
     pub fn is_final(&self, durability_cost: u16) -> bool {
+        // CP = 0 means this state has at most -5 durability.
+        // CP = durability_cost means this state has at most 0 durability.
+        // CP = 2 * durability_cost means this state has at most 5 durability.
+        // Because the smallest unit of durability is 5 (when excluding expert conditions),
+        // we consider a state as "final" if its CP is less than that required for 5 durability.
         self.cp < 2 * durability_cost
     }
 
