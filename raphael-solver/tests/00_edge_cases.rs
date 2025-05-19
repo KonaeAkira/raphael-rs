@@ -235,9 +235,9 @@ fn large_progress_quality_increase() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 515045,
-                sequential_states: 145,
-                pareto_values: 513450,
+                parallel_states: 537203,
+                sequential_states: 35,
+                pareto_values: 535498,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 120,

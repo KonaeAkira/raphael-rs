@@ -48,93 +48,94 @@ impl QualityUbSolver {
         }
     }
 
-    fn generate_precompute_templates(&self) -> Box<[(Template, u16)]> {
-        let mut templates = rustc_hash::FxHashMap::<Template, u16>::default();
-        let mut queue = std::collections::BinaryHeap::<Node>::default();
-
-        let mut effects = Effects::initial(&self.settings.simulator_settings)
-            .with_trained_perfection_available(false)
-            .with_combo(Combo::None);
-        if self.settings.max_quality() == 0 {
-            effects = effects.strip_quality_effects();
+    fn generate_precompute_templates(&self) -> Box<[Template]> {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        struct TemplateData {
+            effects: Effects,
+            compressed_unreliable_quality: u8,
         }
 
-        let initial_node = Node {
-            template: Template {
-                effects,
-                compressed_unreliable_quality: 0,
-            },
-            required_cp: 0,
-        };
-        queue.push(initial_node);
+        let mut templates = rustc_hash::FxHashMap::<TemplateData, u16>::default();
+        let mut heap = std::collections::BinaryHeap::<Template>::default();
 
-        while let Some(node) = queue.pop() {
-            if templates.contains_key(&node.template) {
-                continue;
+        let seed_template = {
+            let seed_effects = Effects::initial(&self.settings.simulator_settings)
+                .with_trained_perfection_available(false)
+                .with_combo(Combo::None);
+            Template {
+                max_cp: self.settings.max_cp(),
+                effects: seed_effects,
+                compressed_unreliable_quality: 0,
             }
-            templates.insert(node.template, node.required_cp);
-            let state = ReducedState {
-                cp: self.settings.max_cp(),
-                compressed_unreliable_quality: node.template.compressed_unreliable_quality,
-                effects: node.template.effects,
+        };
+        heap.push(seed_template);
+
+        while let Some(template) = heap.pop() {
+            let template_data = TemplateData {
+                effects: template.effects,
+                compressed_unreliable_quality: template.compressed_unreliable_quality,
             };
-            for &action in FULL_SEARCH_ACTIONS {
-                if let Some((new_state, _, _)) =
-                    state.use_action(action, &self.settings, self.durability_cost)
-                {
-                    let used_cp = self.settings.max_cp() - new_state.cp;
-                    let new_node = Node {
-                        template: Template {
+            let entry = templates.entry(template_data).or_default();
+            if template.max_cp > *entry {
+                *entry = template.max_cp;
+                let state = template.instantiate(template.max_cp).unwrap();
+                for &action in FULL_SEARCH_ACTIONS {
+                    if let Some((new_state, _, _)) =
+                        state.use_action(action, &self.settings, self.durability_cost)
+                    {
+                        let new_template_data = TemplateData {
                             effects: new_state.effects,
                             compressed_unreliable_quality: new_state.compressed_unreliable_quality,
-                        },
-                        required_cp: node.required_cp + used_cp,
-                    };
-                    if !templates.contains_key(&new_node.template) {
-                        queue.push(new_node);
+                        };
+                        let new_template = Template {
+                            max_cp: new_state.cp,
+                            effects: new_state.effects,
+                            compressed_unreliable_quality: new_state.compressed_unreliable_quality,
+                        };
+                        let new_entry = templates.entry(new_template_data).or_default();
+                        if new_template.max_cp > *new_entry {
+                            heap.push(new_template);
+                        }
                     }
                 }
             }
         }
 
-        templates.into_iter().collect()
+        templates
+            .into_iter()
+            .map(|(template_data, max_cp)| Template {
+                max_cp,
+                effects: template_data.effects,
+                compressed_unreliable_quality: template_data.compressed_unreliable_quality,
+            })
+            .collect()
     }
 
     pub fn precompute(&mut self) {
         assert!(self.solved_states.is_empty());
-        let all_templates = self.generate_precompute_templates();
-        dbg!(self.settings.max_cp());
+        let templates = self.generate_precompute_templates();
+        // States are computed in order of less CP to more CP.
+        // States currently being computed assume that child states have already been computed.
+        // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
+        // HeartAndSoul enables the use of TricksOfTrade, which restores CP.
+        // QuickInnovation requires no CP (and no durability, so durability cost in terms of CP is 0).
         for (heart_and_soul, quick_innovation) in
             [(false, false), (false, true), (true, false), (true, true)]
         {
-            let templates: Vec<_> = all_templates
+            let filtered_templates: Vec<_> = templates
                 .iter()
-                .filter(|(template, _)| {
+                .filter(|template| {
                     template.effects.heart_and_soul_available() == heart_and_soul
                         && template.effects.quick_innovation_available() == quick_innovation
                 })
                 .collect();
-            if templates.is_empty() {
-                continue;
-            }
-            // States are computed in order of less CP to more CP.
-            // States currently being computed assume that child states have already been computed.
-            // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
-            // HeartAndSoul enables the use of TricksOfTrade, which restores CP.
-            // QuickInnovation requires no CP (and no durability, so durability cost in terms of CP is 0).
-            let precompute_cp_ceiling = if heart_and_soul {
-                self.settings.max_cp().saturating_sub(20)
-            } else {
-                self.settings.max_cp()
-            };
-            for cp in self.durability_cost..=precompute_cp_ceiling {
+            for cp in self.durability_cost..=self.settings.max_cp() {
                 if self.interrupt_signal.is_set() {
                     return;
                 }
-                let missing_cp = precompute_cp_ceiling - cp;
-                let solved_states = templates
+                let solved_states = filtered_templates
                     .par_iter()
-                    .filter(|(_, required_cp)| missing_cp >= *required_cp)
+                    .filter_map(|template| template.instantiate(cp))
                     .map_init(
                         || {
                             ParetoFrontBuilder::new(
@@ -142,17 +143,7 @@ impl QualityUbSolver {
                                 self.settings.max_quality(),
                             )
                         },
-                        |pareto_front_builder, (template, _)| {
-                            let state = ReducedState {
-                                cp,
-                                compressed_unreliable_quality: template
-                                    .compressed_unreliable_quality,
-                                effects: template.effects,
-                            };
-                            let pareto_front =
-                                self.solve_precompute_state(pareto_front_builder, state);
-                            (state, pareto_front)
-                        },
+                        |pf_builder, state| (state, self.solve_precompute_state(pf_builder, state)),
                     )
                     .collect_vec_list();
                 self.solved_states
@@ -162,7 +153,7 @@ impl QualityUbSolver {
         self.precomputed_states = self.solved_states.len();
         log::debug!(
             "QualityUbSolver - templates: {}, precomputed_states: {}",
-            all_templates.len(),
+            templates.len(),
             self.solved_states.len()
         );
     }
@@ -335,26 +326,23 @@ fn durability_cost(settings: &Settings) -> u16 {
     cost
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Template {
+    max_cp: u16, // The template cannot be instantiated with CP above this value
     effects: Effects,
     compressed_unreliable_quality: u8,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct Node {
-    template: Template,
-    required_cp: u16,
-}
-
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(other.required_cp.cmp(&self.required_cp))
-    }
-}
-
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.required_cp.cmp(&self.required_cp)
+impl Template {
+    pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
+        if cp > self.max_cp {
+            None
+        } else {
+            Some(ReducedState {
+                cp,
+                compressed_unreliable_quality: self.compressed_unreliable_quality,
+                effects: self.effects,
+            })
+        }
     }
 }

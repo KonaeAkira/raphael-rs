@@ -1,7 +1,7 @@
 use crate::{Combo, Settings};
 
 #[bitfield_struct::bitfield(u32, default = false)]
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Effects {
     #[bits(4)]
     pub inner_quiet: u8,
