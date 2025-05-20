@@ -3,6 +3,12 @@ mod pareto_front_builder;
 
 pub use atomic_flag::AtomicFlag;
 pub use pareto_front_builder::{ParetoFrontBuilder, ParetoValue};
+use raphael_sim::*;
+
+use crate::{
+    SolverSettings,
+    actions::{QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo},
+};
 
 pub struct ScopedTimer {
     name: &'static str,
@@ -75,4 +81,36 @@ impl<T: Copy> Drop for Backtracking<T> {
     fn drop(&mut self) {
         log::debug!("Backtracking - nodes: {}", self.entries.len());
     }
+}
+
+/// Calculates a mapping from current InnerQuiet effect value to a lower-bound on the current quality of the state.
+pub fn min_quality_from_iq_lut(settings: &SolverSettings) -> [u32; 11] {
+    let mut result = [u32::MAX; 11];
+    result[0] = 0;
+    for iq in 0..10 {
+        let state = SimulationState {
+            cp: 500,
+            durability: 100,
+            progress: 0,
+            quality: 0,
+            unreliable_quality: 0,
+            effects: Effects::new()
+                .with_allow_quality_actions(true)
+                .with_adversarial_guard(true)
+                .with_inner_quiet(iq),
+        };
+        for &action in QUALITY_ONLY_SEARCH_ACTIONS {
+            if let Ok(new_state) = use_action_combo(settings, state, action) {
+                let new_iq = new_state.effects.inner_quiet();
+                if new_iq > iq {
+                    let action_quality = new_state.quality;
+                    result[usize::from(new_iq)] = std::cmp::min(
+                        result[usize::from(new_iq)],
+                        result[usize::from(iq)] + action_quality,
+                    );
+                }
+            }
+        }
+    }
+    result
 }

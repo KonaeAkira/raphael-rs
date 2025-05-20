@@ -2,10 +2,7 @@ use std::num::NonZeroU8;
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{
-        ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS,
-        QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo,
-    },
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
     utils,
 };
 use raphael_sim::*;
@@ -54,7 +51,7 @@ impl StepLbSolver {
             precompute_templates: Self::generate_precompute_templates(&settings),
             next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             precomputed_states: 0,
-            iq_quality_lut: compute_iq_quality_lut(&settings),
+            iq_quality_lut: utils::min_quality_from_iq_lut(&settings),
         }
     }
 
@@ -363,35 +360,4 @@ impl Template {
         };
         ReducedState::from_state(state, step_budget)
     }
-}
-
-fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
-    let mut result = [u32::MAX; 11];
-    result[0] = 0;
-    for iq in 0..10 {
-        let state = SimulationState {
-            cp: 500,
-            durability: 100,
-            progress: 0,
-            quality: 0,
-            unreliable_quality: 0,
-            effects: Effects::new()
-                .with_allow_quality_actions(true)
-                .with_adversarial_guard(true)
-                .with_inner_quiet(iq),
-        };
-        for &action in QUALITY_ONLY_SEARCH_ACTIONS {
-            if let Ok(new_state) = use_action_combo(settings, state, action) {
-                let new_iq = new_state.effects.inner_quiet();
-                if new_iq > iq {
-                    let action_quality = new_state.quality;
-                    result[usize::from(new_iq)] = std::cmp::min(
-                        result[usize::from(new_iq)],
-                        result[usize::from(iq)] + action_quality,
-                    );
-                }
-            }
-        }
-    }
-    result
 }
