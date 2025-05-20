@@ -1150,6 +1150,22 @@ fn load_fonts(ctx: &egui::Context) {
             },
         ],
     ));
+    ctx.add_font(FontInsert::new(
+        "NotoSansKR-Regular",
+        egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/Noto_Sans_KR/static/NotoSansKR-Regular.ttf"
+        )),
+        vec![
+            InsertFontFamily {
+                family: egui::FontFamily::Proportional,
+                priority: egui::epaint::text::FontPriority::Highest,
+            },
+            InsertFontFamily {
+                family: egui::FontFamily::Monospace,
+                priority: egui::epaint::text::FontPriority::Lowest,
+            },
+        ],
+    ));
 }
 
 fn spawn_solver(
