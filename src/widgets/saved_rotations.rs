@@ -74,10 +74,7 @@ pub struct Rotation {
     pub unique_id: u64,
     pub name: String,
     pub solver: String,
-    #[serde(default)]
-    pub solver_version: Option<String>,
     pub actions: Vec<Action>,
-    pub item: u32,
     #[serde(default)]
     pub recipe_configuration: Option<RecipeInputConfiguration>,
     #[serde(default)]
@@ -85,7 +82,6 @@ pub struct Rotation {
     pub food: Option<(u32, bool)>,
     pub potion: Option<(u32, bool)>,
     pub crafter_stats: CrafterStats,
-    pub job_id: u8,
 }
 
 impl Rotation {
@@ -118,9 +114,7 @@ impl Rotation {
             unique_id: generate_unique_rotation_id(),
             name: name.into(),
             solver: solver_params,
-            solver_version: Some(env!("CARGO_PKG_VERSION").to_string()),
             actions,
-            item: recipe.item_id,
             recipe_configuration: Some(RecipeInputConfiguration::create_from(
                 recipe,
                 custom_recipe_overrides_configuration,
@@ -133,7 +127,6 @@ impl Rotation {
             food: food.map(|consumable| (consumable.item_id, consumable.hq)),
             potion: potion.map(|consumable| (consumable.item_id, consumable.hq)),
             crafter_stats: *crafter_config.active_stats(),
-            job_id: crafter_config.selected_job,
         }
     }
 }
@@ -144,15 +137,12 @@ impl Clone for Rotation {
             unique_id: generate_unique_rotation_id(),
             name: self.name.clone(),
             solver: self.solver.clone(),
-            solver_version: self.solver_version.clone(),
             actions: self.actions.clone(),
-            item: self.item,
             recipe_configuration: self.recipe_configuration.clone(),
             solver_configuration: self.solver_configuration.clone(),
             food: self.food,
             potion: self.potion,
             crafter_stats: self.crafter_stats,
-            job_id: self.job_id,
         }
     }
 }
@@ -161,15 +151,12 @@ impl PartialEq for Rotation {
     fn eq(&self, other: &Self) -> bool {
         // unique_id & name are skipped
         self.solver == other.solver
-            && self.solver_version == other.solver_version
             && self.actions == other.actions
-            && self.item == other.item
             && self.recipe_configuration == other.recipe_configuration
             && self.solver_configuration == other.solver_configuration
             && self.food == other.food
             && self.potion == other.potion
             && self.crafter_stats == other.crafter_stats
-            && self.job_id == other.job_id
     }
 }
 
@@ -242,12 +229,12 @@ impl SavedRotationsData {
     ) -> Option<Vec<Action>> {
         let find_and_map_rotation = |rotation: &Rotation| {
             if let (Some(saved_solver_version), Some(saved_solver_configuration)) = (
-                rotation.solver_version.clone(),
+                rotation.solver.split(' ').nth(1),
                 rotation.solver_configuration.clone(),
             ) {
                 let solver_configuration =
                     SolverInputConfiguration::new(game_settings, initial_quality, target_quality);
-                if saved_solver_version == env!("CARGO_PKG_VERSION").to_string()
+                if saved_solver_version == format!("v{}", env!("CARGO_PKG_VERSION"))
                     && saved_solver_configuration == solver_configuration
                 {
                     return Some(rotation.actions.clone());
@@ -346,7 +333,7 @@ impl<'a> RotationWidget<'a> {
                     if self.rotation.recipe_configuration.is_none() {
                         ui.add(
                             egui::Label::new(
-                                egui::RichText::new("⚠ pre-v0.20.3 rotation. Incorrect recipe can be loaded in ambiguous cases.")
+                                egui::RichText::new("⚠ pre-v0.20.3 rotation. No recipe data.")
                                     .small()
                                     .color(ui.visuals().warn_fg_color),
                             )
@@ -399,7 +386,7 @@ impl<'a> RotationWidget<'a> {
                             recipe: *recipe,
                             quality_source: QualitySource::HqMaterialList([0; 6]),
                         };
-                        self.crafter_config.selected_job = self.rotation.job_id;
+                        self.crafter_config.selected_job = recipe.job_id;
                         self.custom_recipe_overrides_config.use_custom_recipe = false;
                     } else {
                         log::debug!("Unable to find recipe with recipe_id={:?}", recipe_id);
@@ -411,21 +398,8 @@ impl<'a> RotationWidget<'a> {
                         quality_source: QualitySource::Value(0),
                     };
                     *self.custom_recipe_overrides_config = *custom_recipe_overrides_config;
-                    self.crafter_config.selected_job = self.rotation.job_id;
+                    self.crafter_config.selected_job = recipe.job_id;
                 }
-            }
-        } else {
-            if let Some(recipe) = raphael_data::RECIPES.values().find(|recipe| {
-                recipe.item_id == self.rotation.item && recipe.job_id == self.rotation.job_id
-            }) {
-                *self.recipe_config = RecipeConfiguration {
-                    recipe: *recipe,
-                    quality_source: QualitySource::HqMaterialList([0; 6]),
-                };
-                self.crafter_config.selected_job = self.rotation.job_id;
-                self.custom_recipe_overrides_config.use_custom_recipe = false;
-            } else {
-                log::debug!("Unable to find recipe for item_id={:?}", self.rotation.item);
             }
         }
     }
@@ -477,17 +451,21 @@ impl<'a> RotationWidget<'a> {
             self.rotation.crafter_stats.control,
             self.rotation.crafter_stats.cp,
         );
+        let recipe = self.get_recipe();
+        let job_id = recipe.map(|recipe| recipe.job_id);
         let job_string = format!(
             "Level {} {}",
             self.rotation.crafter_stats.level,
-            raphael_data::get_job_name(self.rotation.job_id, self.locale)
+            job_id.map_or("", |job_id| raphael_data::get_job_name(job_id, self.locale))
         );
-        self.show_info_row(
-            ui,
-            "Recipe",
-            raphael_data::get_item_name(self.rotation.item, false, self.locale)
-                .unwrap_or("Unknown item".to_owned()),
-        );
+        if let Some(recipe) = recipe {
+            self.show_info_row(
+                ui,
+                "Recipe",
+                raphael_data::get_item_name(recipe.item_id, false, self.locale)
+                    .unwrap_or("Unknown item".to_owned()),
+            );
+        }
         self.show_info_row(ui, "Crafter stats", stats_string);
         self.show_info_row(ui, "Job", job_string);
         self.show_info_row(ui, "Food", self.get_consumable_name(self.rotation.food));
@@ -496,12 +474,13 @@ impl<'a> RotationWidget<'a> {
     }
 
     fn show_rotation_actions(&self, ui: &mut egui::Ui) {
+        let job_id = self.get_recipe().map_or(0, |recipe| recipe.job_id);
         egui::ScrollArea::horizontal()
             .id_salt(self.id_salt("scroll_area"))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     for action in &self.rotation.actions {
-                        let image = util::get_action_icon(*action, self.rotation.job_id)
+                        let image = util::get_action_icon(*action, job_id)
                             .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
                             .corner_radius(4.0);
                         ui.add(image)
@@ -509,6 +488,19 @@ impl<'a> RotationWidget<'a> {
                     }
                 });
             });
+    }
+
+    fn get_recipe(&self) -> Option<&Recipe> {
+        if let Some(recipe_config) = &self.rotation.recipe_configuration {
+            match recipe_config {
+                RecipeInputConfiguration::NormalRecipe(recipe_id) => {
+                    raphael_data::RECIPES.get(&recipe_id)
+                }
+                RecipeInputConfiguration::CustomRecipe(recipe, _) => Some(recipe),
+            }
+        } else {
+            None
+        }
     }
 }
 
@@ -598,17 +590,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     ui.add(
                         egui::Label::new(
                             egui::RichText::new(
-                                "⚠ Rotations saved before v0.20.3 do not contain the necessary information to uniquely identify the recipe.",
-                            )
-                            .small()
-                            .color(ui.visuals().warn_fg_color),
-                        )
-                        .wrap(),
-                    );
-                    ui.add(
-                        egui::Label::new(
-                            egui::RichText::new(
-                                "Using options that attempt to load the recipe will select the first match for these rotations.",
+                                "⚠ Rotations saved before v0.20.3 do not contain the necessary information to load recipe data.",
                             )
                             .small()
                             .color(ui.visuals().warn_fg_color),
@@ -660,8 +642,6 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                             );
                             ui.label(")");
                         });
-
-
                         if self.rotations.solve_history.len() > self.rotations.max_history_size {
                             ui.add(
                                 egui::Label::new(
