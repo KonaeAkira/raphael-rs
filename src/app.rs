@@ -1158,11 +1158,11 @@ fn load_fonts(ctx: &egui::Context) {
         vec![
             InsertFontFamily {
                 family: egui::FontFamily::Proportional,
-                priority: egui::epaint::text::FontPriority::Highest,
+                priority: FontPriority::Lowest,
             },
             InsertFontFamily {
                 family: egui::FontFamily::Monospace,
-                priority: egui::epaint::text::FontPriority::Lowest,
+                priority: FontPriority::Lowest,
             },
         ],
     ));
