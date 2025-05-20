@@ -310,6 +310,11 @@ impl eframe::App for MacroSolverApp {
                                     Locale::JP,
                                     format!("{}", Locale::JP),
                                 );
+                                ui.selectable_value(
+                                    &mut self.locale,
+                                    Locale::KR,
+                                    format!("{}", Locale::KR),
+                                );
                             });
 
                         ui.add(

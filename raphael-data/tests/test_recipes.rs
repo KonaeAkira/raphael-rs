@@ -7,6 +7,7 @@ fn assert_item_exists(item_id: u32) {
     assert!(ITEM_NAMES_DE.contains_key(&item_id));
     assert!(ITEM_NAMES_FR.contains_key(&item_id));
     assert!(ITEM_NAMES_JP.contains_key(&item_id));
+    assert!(ITEM_NAMES_KR.contains_key(&item_id));
 }
 
 #[test]
