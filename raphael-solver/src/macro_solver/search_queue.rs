@@ -76,15 +76,14 @@ pub struct SearchQueue {
 }
 
 impl SearchQueue {
-    pub fn new(initial_state: SimulationState, minimum_score: SearchScore) -> Self {
-        log::debug!("New minimum score: {:?}", minimum_score);
+    pub fn new(initial_state: SimulationState) -> Self {
         Self {
             pareto_front: ParetoFront::default(),
             backtracking: Backtracking::new(),
             buckets: BTreeMap::default(),
             current_score: SearchScore::MAX,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
-            minimum_score,
+            minimum_score: SearchScore::MIN,
             processed_nodes: 0,
             dropped_nodes: 0,
         }
@@ -103,8 +102,13 @@ impl SearchQueue {
             dropped += self.buckets.pop_first().unwrap().1.len();
         }
         self.dropped_nodes += dropped;
-        log::debug!("New minimum score: {:?}", score);
-        log::debug!("Nodes dropped: {}", dropped);
+        log::trace!(
+            "New minimum score: ({}, {}, {}). Nodes dropped: {}",
+            score.quality_upper_bound,
+            score.steps_lower_bound,
+            score.duration_lower_bound,
+            dropped
+        );
     }
 
     pub fn push(

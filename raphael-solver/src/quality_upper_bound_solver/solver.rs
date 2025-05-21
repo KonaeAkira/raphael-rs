@@ -337,14 +337,13 @@ struct Template {
 
 impl Template {
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
-        if cp > self.max_cp {
-            None
-        } else {
-            Some(ReducedState {
-                cp,
-                compressed_unreliable_quality: self.compressed_unreliable_quality,
-                effects: self.effects,
-            })
+        if cp > self.max_cp || !cp.is_multiple_of(2) {
+            return None;
         }
+        Some(ReducedState {
+            cp,
+            compressed_unreliable_quality: self.compressed_unreliable_quality,
+            effects: self.effects,
+        })
     }
 }

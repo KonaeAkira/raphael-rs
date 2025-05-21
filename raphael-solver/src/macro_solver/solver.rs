@@ -4,7 +4,6 @@ use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{
     ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo,
 };
-use crate::macro_solver::fast_lower_bound::fast_lower_bound;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::quality_upper_bound_solver::QualityUbSolverStats;
 use crate::step_lower_bound_solver::StepLbSolverStats;
@@ -94,26 +93,12 @@ impl<'a> MacroSolver<'a> {
         self.quality_ub_solver.precompute();
         drop(timer);
 
-        let _timer = ScopedTimer::new("Search");
         Ok(self.do_solve(initial_state)?.actions())
     }
 
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
-        let mut search_queue = {
-            let quality_lower_bound = fast_lower_bound(
-                state,
-                self.settings,
-                self.interrupt_signal.clone(),
-                &mut self.finish_solver,
-                &mut self.quality_ub_solver,
-            )?;
-            let minimum_score = SearchScore {
-                quality_upper_bound: quality_lower_bound,
-                ..SearchScore::MIN
-            };
-            SearchQueue::new(state, minimum_score)
-        };
-
+        let _timer = ScopedTimer::new("Search");
+        let mut search_queue = SearchQueue::new(state);
         let mut solution: Option<Solution> = None;
 
         let mut popped = 0;

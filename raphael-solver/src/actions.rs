@@ -131,35 +131,6 @@ pub const PROGRESS_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
     ActionCombo::Single(Action::TrainedPerfection),
 ];
 
-pub const QUALITY_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
-    ActionCombo::TricksOfTheTrade,
-    ActionCombo::PreciseTouch,
-    ActionCombo::StandardTouch,
-    ActionCombo::AdvancedTouch,
-    ActionCombo::FocusedTouch,
-    ActionCombo::RefinedTouch,
-    // quality
-    ActionCombo::Single(Action::BasicTouch),
-    ActionCombo::Single(Action::StandardTouch),
-    ActionCombo::Single(Action::GreatStrides),
-    ActionCombo::Single(Action::Innovation),
-    ActionCombo::Single(Action::ByregotsBlessing),
-    ActionCombo::Single(Action::PrudentTouch),
-    ActionCombo::Single(Action::Reflect),
-    ActionCombo::Single(Action::PreparatoryTouch),
-    ActionCombo::Single(Action::AdvancedTouch),
-    ActionCombo::Single(Action::TrainedFinesse),
-    ActionCombo::Single(Action::TrainedEye),
-    ActionCombo::Single(Action::QuickInnovation),
-    // durability
-    ActionCombo::Single(Action::MasterMend),
-    ActionCombo::Single(Action::WasteNot),
-    ActionCombo::Single(Action::WasteNot2),
-    ActionCombo::Single(Action::Manipulation),
-    ActionCombo::Single(Action::ImmaculateMend),
-    ActionCombo::Single(Action::TrainedPerfection),
-];
-
 pub fn use_action_combo(
     settings: &SolverSettings,
     mut state: SimulationState,
