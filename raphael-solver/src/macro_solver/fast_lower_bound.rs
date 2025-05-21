@@ -27,13 +27,18 @@ impl Ord for Node {
     }
 }
 
+pub struct FastLbResult {
+    pub quality_lower_bound: u32,
+    pub num_states: usize,
+}
+
 pub fn fast_lower_bound(
     initial_state: SimulationState,
     settings: SolverSettings,
     interrupt_signal: AtomicFlag,
     finish_solver: &mut FinishSolver,
     quality_ub_solver: &mut QualityUbSolver,
-) -> Result<u32, SolverException> {
+) -> Result<FastLbResult, SolverException> {
     let _timer = ScopedTimer::new("Fast lower bound");
 
     let mut search_queue = std::collections::BinaryHeap::default();
@@ -44,8 +49,10 @@ pub fn fast_lower_bound(
     search_queue.push(initial_node);
 
     let mut best_achieved_quality = 0;
+    let mut num_states = 0;
 
     while let Some(node) = search_queue.pop() {
+        num_states += 1;
         if interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
@@ -82,7 +89,10 @@ pub fn fast_lower_bound(
         }
     }
 
-    Ok(std::cmp::min(settings.max_quality(), best_achieved_quality))
+    Ok(FastLbResult {
+        quality_lower_bound: std::cmp::min(settings.max_quality(), best_achieved_quality),
+        num_states,
+    })
 }
 
 fn should_use_action(

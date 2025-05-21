@@ -97,6 +97,7 @@ fn stuffed_peppers() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
+            fast_lb_states: 15,
             finish_states: 886551,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 79736,
@@ -150,6 +151,7 @@ fn test_rare_tacos_2() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
+            fast_lb_states: 334053,
             finish_states: 1425739,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 2766403,
@@ -204,6 +206,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
+            fast_lb_states: 18,
             finish_states: 75906,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 26316,
@@ -255,6 +258,7 @@ fn test_indagator_3858_4057() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
+            fast_lb_states: 8675,
             finish_states: 501457,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 16559,
@@ -307,6 +311,7 @@ fn test_rare_tacos_4628_4410() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
+            fast_lb_states: 117327,
             finish_states: 534863,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 743165,
@@ -361,6 +366,7 @@ fn issue_113() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
+            fast_lb_states: 675667,
             finish_states: 1911106,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 1025251,
@@ -413,6 +419,7 @@ fn issue_118() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
+            fast_lb_states: 868,
             finish_states: 561636,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 1148749,

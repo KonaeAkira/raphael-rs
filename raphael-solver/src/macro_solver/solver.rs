@@ -35,6 +35,7 @@ type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MacroSolverStats {
+    pub fast_lb_states: usize,
     pub finish_states: usize,
     pub search_queue_stats: SearchQueueStats,
     pub quality_ub_stats: QualityUbSolverStats,
@@ -49,6 +50,7 @@ pub struct MacroSolver<'a> {
     quality_ub_solver: QualityUbSolver,
     step_lb_solver: StepLbSolver,
     search_queue_stats: SearchQueueStats, // stats of last solve
+    fast_lb_num_states: usize,            // stats of last solve
     interrupt_signal: AtomicFlag,
 }
 
@@ -67,6 +69,7 @@ impl<'a> MacroSolver<'a> {
             quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
             step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
             search_queue_stats: SearchQueueStats::default(),
+            fast_lb_num_states: 0,
             interrupt_signal,
         }
     }
@@ -94,26 +97,27 @@ impl<'a> MacroSolver<'a> {
         self.quality_ub_solver.precompute();
         drop(timer);
 
-        let _timer = ScopedTimer::new("Search");
         Ok(self.do_solve(initial_state)?.actions())
     }
 
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
         let mut search_queue = {
-            let quality_lower_bound = fast_lower_bound(
+            let result = fast_lower_bound(
                 state,
                 self.settings,
                 self.interrupt_signal.clone(),
                 &mut self.finish_solver,
                 &mut self.quality_ub_solver,
             )?;
+            self.fast_lb_num_states = result.num_states;
             let minimum_score = SearchScore {
-                quality_upper_bound: quality_lower_bound,
+                quality_upper_bound: result.quality_lower_bound,
                 ..SearchScore::MIN
             };
             SearchQueue::new(state, minimum_score)
         };
 
+        let _timer = ScopedTimer::new("Search");
         let mut solution: Option<Solution> = None;
 
         let mut popped = 0;
@@ -218,6 +222,7 @@ impl<'a> MacroSolver<'a> {
 
     pub fn runtime_stats(&self) -> MacroSolverStats {
         MacroSolverStats {
+            fast_lb_states: self.fast_lb_num_states,
             finish_states: self.finish_solver.num_states(),
             search_queue_stats: self.search_queue_stats,
             quality_ub_stats: self.quality_ub_solver.runtime_stats(),
