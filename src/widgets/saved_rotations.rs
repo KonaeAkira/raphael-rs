@@ -23,12 +23,12 @@ fn generate_unique_rotation_id() -> u64 {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum RecipeInputConfiguration {
+pub enum RecipeInfo {
     NormalRecipe(u32),
     CustomRecipe(Recipe, CustomRecipeOverridesConfiguration),
 }
 
-impl RecipeInputConfiguration {
+impl RecipeInfo {
     pub fn create_from(
         recipe: &Recipe,
         custom_recipe_overrides_configuration: &CustomRecipeOverridesConfiguration,
@@ -53,13 +53,13 @@ impl RecipeInputConfiguration {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SolverInputConfiguration {
+pub struct SolveInfo {
     pub game_settings: Settings,
     pub initial_quality: u16,
     pub solver_config: SolverConfig,
 }
 
-impl SolverInputConfiguration {
+impl SolveInfo {
     pub fn new(
         game_settings: &Settings,
         initial_quality: u16,
@@ -80,9 +80,9 @@ pub struct Rotation {
     pub solver: String,
     pub actions: Vec<Action>,
     #[serde(default)]
-    pub recipe_configuration: Option<RecipeInputConfiguration>,
+    pub recipe_info: Option<RecipeInfo>,
     #[serde(default)]
-    pub solver_configuration: Option<SolverInputConfiguration>,
+    pub solve_info: Option<SolveInfo>,
     pub food: Option<(u32, bool)>,
     pub potion: Option<(u32, bool)>,
     pub crafter_stats: CrafterStats,
@@ -118,11 +118,11 @@ impl Rotation {
             name: name.into(),
             solver: solver_params,
             actions,
-            recipe_configuration: Some(RecipeInputConfiguration::create_from(
+            recipe_info: Some(RecipeInfo::create_from(
                 &recipe_config.recipe,
                 &custom_recipe_overrides_configuration,
             )),
-            solver_configuration: Some(SolverInputConfiguration::new(
+            solve_info: Some(SolveInfo::new(
                 &game_settings,
                 initial_quality,
                 &solver_config,
@@ -141,8 +141,8 @@ impl Clone for Rotation {
             name: self.name.clone(),
             solver: self.solver.clone(),
             actions: self.actions.clone(),
-            recipe_configuration: self.recipe_configuration.clone(),
-            solver_configuration: self.solver_configuration.clone(),
+            recipe_info: self.recipe_info.clone(),
+            solve_info: self.solve_info.clone(),
             food: self.food,
             potion: self.potion,
             crafter_stats: self.crafter_stats,
@@ -155,8 +155,8 @@ impl PartialEq for Rotation {
         // unique_id & name are skipped
         self.solver == other.solver
             && self.actions == other.actions
-            && self.recipe_configuration == other.recipe_configuration
-            && self.solver_configuration == other.solver_configuration
+            && self.recipe_info == other.recipe_info
+            && self.solve_info == other.solve_info
             && self.food == other.food
             && self.potion == other.potion
             && self.crafter_stats == other.crafter_stats
@@ -164,26 +164,24 @@ impl PartialEq for Rotation {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum SavedRotationLoadOperation {
+pub enum LoadOperation {
     LoadRotation,
     LoadRotationRecipe,
     LoadRotationRecipeConsumables,
 }
 
-impl std::fmt::Display for SavedRotationLoadOperation {
+impl std::fmt::Display for LoadOperation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output_str = match self {
-            SavedRotationLoadOperation::LoadRotation => "Load rotation",
-            SavedRotationLoadOperation::LoadRotationRecipe => "Load rotation & recipe",
-            SavedRotationLoadOperation::LoadRotationRecipeConsumables => {
-                "Load rotation, recipe & consumables"
-            }
+            LoadOperation::LoadRotation => "Load rotation",
+            LoadOperation::LoadRotationRecipe => "Load rotation & recipe",
+            LoadOperation::LoadRotationRecipeConsumables => "Load rotation, recipe & consumables",
         };
         write!(f, "{}", output_str)
     }
 }
 
-impl Default for SavedRotationLoadOperation {
+impl Default for LoadOperation {
     fn default() -> Self {
         Self::LoadRotation
     }
@@ -192,7 +190,7 @@ impl Default for SavedRotationLoadOperation {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SavedRotationsConfig {
     pub load_from_saved_rotations: bool,
-    pub default_saved_rotation_load_operation: SavedRotationLoadOperation,
+    pub default_load_operation: LoadOperation,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -230,15 +228,13 @@ impl SavedRotationsData {
         initial_quality: u16,
         solver_config: &SolverConfig,
     ) -> Option<Vec<Action>> {
+        let solve_info = SolveInfo::new(&game_settings, initial_quality, &solver_config);
         let find_and_map_rotation = |rotation: &Rotation| {
-            if let (Some(saved_solver_version), Some(saved_solver_configuration)) = (
-                rotation.solver.split(' ').nth(1),
-                rotation.solver_configuration.clone(),
-            ) {
-                let solver_configuration =
-                    SolverInputConfiguration::new(&game_settings, initial_quality, &solver_config);
+            if let (Some(saved_solver_version), Some(saved_solve_info)) =
+                (rotation.solver.split(' ').nth(1), &rotation.solve_info)
+            {
                 if saved_solver_version == format!("v{}", env!("CARGO_PKG_VERSION"))
-                    && saved_solver_configuration == solver_configuration
+                    && *saved_solve_info == solve_info
                 {
                     return Some(rotation.actions.clone());
                 }
@@ -324,16 +320,16 @@ impl<'a> RotationWidget<'a> {
                         ui.close();
                     }
                     for saved_rotation_load_operation in [
-                        SavedRotationLoadOperation::LoadRotation,
-                        SavedRotationLoadOperation::LoadRotationRecipe,
-                        SavedRotationLoadOperation::LoadRotationRecipeConsumables,
+                        LoadOperation::LoadRotation,
+                        LoadOperation::LoadRotationRecipe,
+                        LoadOperation::LoadRotationRecipeConsumables,
                     ] {
                         let text = format!("{}", saved_rotation_load_operation);
                         if ui.button(text).clicked() {
                             selected_load_operation = Some(saved_rotation_load_operation);
                         }
                     }
-                    if self.rotation.recipe_configuration.is_none() {
+                    if self.rotation.recipe_info.is_none() {
                         ui.add(
                             egui::Label::new(
                                 egui::RichText::new("⚠ pre-v0.20.3 rotation. No recipe data.")
@@ -345,20 +341,18 @@ impl<'a> RotationWidget<'a> {
                     }
                 });
                 if load_button_response.clicked() {
-                    selected_load_operation =
-                        Some(self.config.default_saved_rotation_load_operation.clone());
-                    self.actions.clone_from(&self.rotation.actions);
+                    selected_load_operation = Some(self.config.default_load_operation);
                 }
                 if let Some(load_operation) = selected_load_operation {
                     match load_operation {
-                        SavedRotationLoadOperation::LoadRotation => {
+                        LoadOperation::LoadRotation => {
                             self.actions.clone_from(&self.rotation.actions);
                         }
-                        SavedRotationLoadOperation::LoadRotationRecipe => {
+                        LoadOperation::LoadRotationRecipe => {
                             self.actions.clone_from(&self.rotation.actions);
                             self.load_saved_recipe();
                         }
-                        SavedRotationLoadOperation::LoadRotationRecipeConsumables => {
+                        LoadOperation::LoadRotationRecipeConsumables => {
                             self.actions.clone_from(&self.rotation.actions);
                             self.load_saved_recipe();
                             self.load_saved_consumables();
@@ -381,9 +375,9 @@ impl<'a> RotationWidget<'a> {
     }
 
     fn load_saved_recipe(&mut self) {
-        if let Some(recipe_configuration) = &self.rotation.recipe_configuration {
+        if let Some(recipe_configuration) = &self.rotation.recipe_info {
             match recipe_configuration {
-                RecipeInputConfiguration::NormalRecipe(recipe_id) => {
+                RecipeInfo::NormalRecipe(recipe_id) => {
                     if let Some(recipe) = raphael_data::RECIPES.get(recipe_id) {
                         *self.recipe_config = RecipeConfiguration {
                             recipe: *recipe,
@@ -395,7 +389,7 @@ impl<'a> RotationWidget<'a> {
                         log::debug!("Unable to find recipe with recipe_id={:?}", recipe_id);
                     }
                 }
-                RecipeInputConfiguration::CustomRecipe(recipe, custom_recipe_overrides_config) => {
+                RecipeInfo::CustomRecipe(recipe, custom_recipe_overrides_config) => {
                     *self.recipe_config = RecipeConfiguration {
                         recipe: *recipe,
                         quality_source: QualitySource::Value(0),
@@ -494,12 +488,10 @@ impl<'a> RotationWidget<'a> {
     }
 
     fn get_recipe(&self) -> Option<&Recipe> {
-        if let Some(recipe_config) = &self.rotation.recipe_configuration {
+        if let Some(recipe_config) = &self.rotation.recipe_info {
             match recipe_config {
-                RecipeInputConfiguration::NormalRecipe(recipe_id) => {
-                    raphael_data::RECIPES.get(&recipe_id)
-                }
-                RecipeInputConfiguration::CustomRecipe(recipe, _) => Some(recipe),
+                RecipeInfo::NormalRecipe(recipe_id) => raphael_data::RECIPES.get(&recipe_id),
+                RecipeInfo::CustomRecipe(recipe, _) => Some(recipe),
             }
         } else {
             None
@@ -578,13 +570,13 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     ui.separator();
                     ui.label("Default operation on clicking Load button:");
                     for saved_rotation_load_operation in [
-                        SavedRotationLoadOperation::LoadRotation,
-                        SavedRotationLoadOperation::LoadRotationRecipe,
-                        SavedRotationLoadOperation::LoadRotationRecipeConsumables,
+                        LoadOperation::LoadRotation,
+                        LoadOperation::LoadRotationRecipe,
+                        LoadOperation::LoadRotationRecipeConsumables,
                     ] {
                         let text = format!("{}", saved_rotation_load_operation);
                         ui.selectable_value(
-                            &mut self.config.default_saved_rotation_load_operation,
+                            &mut self.config.default_load_operation,
                             saved_rotation_load_operation,
                             text,
                         );
