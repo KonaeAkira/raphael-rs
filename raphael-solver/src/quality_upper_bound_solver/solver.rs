@@ -337,10 +337,7 @@ struct Template {
 
 impl Template {
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
-        if cp > self.max_cp {
-            return None;
-        }
-        if cp > 255 && cp % 2 == 1 {
+        if cp > self.max_cp || !cp.is_multiple_of(2) {
             return None;
         }
         Some(ReducedState {
