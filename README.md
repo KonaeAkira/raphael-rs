@@ -5,8 +5,7 @@
 :link: [www.raphael-xiv.com](https://www.raphael-xiv.com/)
 
 Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
-* Produces the most optimal macro according to these [criteria](#optimal-macro-selection).
-* Short solve time (20-60 seconds) and reasonable memory usage (300-1000 MB) for most configurations.
+It produces crafting macros that are tailored to your stats.
 
 ## Contents <!-- omit in toc -->
 
@@ -19,16 +18,16 @@ Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 
 ## Optimal macro selection
 
-The following is the specification of how the most "optimal" macro is selected:
+The following is the specification of how the optimal macro is selected:
 
 * The generated macro must be able to finish the synthesis, i.e. reach 100% progress.
 * Valid macros are then ranked based on these criteria, in order:
   * Quality reached, capped at the target quality defined in the solver configuration. (Higher is better)
   * Number of macro steps. (Lower is better)
   * Total macro duration, in seconds. (Lower is better)
-  * Excess quality above the target quality. (Higher is better)
 
-Anything not mentioned in the above specification is not taken into account. If you would like to change/amend the specification, please submit a feature request.
+Anything not mentioned in the above specification is not guaranteed to be taken into account.
+If you would like to change/amend the specification, please submit a feature request.
 
 If you find a macro that beats the generated macro according to the specification above, please submit a bug report.
 
@@ -40,6 +39,17 @@ If you find a macro that beats the generated macro according to the specificatio
 ## Building from source
 
 The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
+The minimal supported Rust version (MSRV) is 1.88.0.
+
+> [!NOTE]  
+> At the moment of writing, Rust version 1.88.0 is in beta and hasn't been released as stable yet.
+> To use the Rust's beta version:
+>
+> ```
+> rustup update beta && rustup default beta
+> ```
+>
+> Rust 1.88.0 is expected to release on 26.06.2025, after which you don't need the above command anymore.
 
 ### Native GUI
 
@@ -90,4 +100,5 @@ Before submitting a pull request, make sure all tests are ok by running:
 cargo test --workspace
 ```
 
-**Important:** Pull requests should be opened against the `preview` branch. The `main` branch is for releasing.
+> [!IMPORTANT]  
+> Pull requests should be opened against the `preview` branch. The `main` branch is for releasing.
