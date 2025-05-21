@@ -60,7 +60,11 @@ pub struct SolverInputConfiguration {
 }
 
 impl SolverInputConfiguration {
-    pub fn new(game_settings: &Settings, initial_quality: u16, solver_config: &SolverConfig) -> Self {
+    pub fn new(
+        game_settings: &Settings,
+        initial_quality: u16,
+        solver_config: &SolverConfig,
+    ) -> Self {
         Self {
             game_settings: *game_settings,
             initial_quality,
@@ -108,16 +112,7 @@ impl Rotation {
                 false => "",
             },
         );
-        let initial_quality = match recipe_config.quality_source {
-            QualitySource::HqMaterialList(hq_materials) => {
-                raphael_data::get_initial_quality(
-                    *crafter_config.active_stats(),
-                    recipe_config.recipe,
-                    hq_materials,
-                )
-            }
-            QualitySource::Value(quality) => quality,
-        };
+        let initial_quality = crate::util::get_initial_quality(&recipe_config, &crafter_config);
         Self {
             unique_id: generate_unique_rotation_id(),
             name: name.into(),

@@ -6,7 +6,7 @@ use raphael_solver::SolverException;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use egui::{Align, CursorIcon, Id, Layout, TextStyle};
-use raphael_data::{Consumable, Locale, action_name, get_initial_quality, get_job_name};
+use raphael_data::{Consumable, Locale, action_name, get_job_name};
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
@@ -14,7 +14,7 @@ use crate::config::{
     AppConfig, CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
     RecipeConfiguration,
 };
-use crate::{thread_pool, widgets::*};
+use crate::{thread_pool, util, widgets::*};
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
     match cc.storage {
@@ -637,26 +637,15 @@ impl MacroSolverApp {
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        let mut game_settings = raphael_data::get_game_settings(
-            self.recipe_config.recipe,
-            match self.custom_recipe_overrides_config.use_custom_recipe {
-                true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
-                false => None,
-            },
-            *self.crafter_config.active_stats(),
+        let game_settings = util::get_game_settings(
+            &self.recipe_config,
+            &self.custom_recipe_overrides_config,
+            &self.solver_config,
+            &self.crafter_config,
             self.selected_food,
             self.selected_potion,
         );
-        game_settings.adversarial = self.solver_config.adversarial;
-        game_settings.backload_progress = self.solver_config.backload_progress;
-        let initial_quality = match self.recipe_config.quality_source {
-            QualitySource::HqMaterialList(hq_materials) => raphael_data::get_initial_quality(
-                *self.crafter_config.active_stats(),
-                self.recipe_config.recipe,
-                hq_materials,
-            ),
-            QualitySource::Value(quality) => quality,
-        };
+        let initial_quality = util::get_initial_quality(&self.recipe_config, &self.crafter_config);
         let item = raphael_data::ITEMS
             .get(&self.recipe_config.recipe.item_id)
             .copied()
@@ -1054,31 +1043,15 @@ impl MacroSolverApp {
         self.solver_pending = true;
         self.solver_interrupt.clear();
 
-        let mut game_settings = raphael_data::get_game_settings(
-            self.recipe_config.recipe,
-            match self.custom_recipe_overrides_config.use_custom_recipe {
-                true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
-                false => None,
-            },
-            *self.crafter_config.active_stats(),
+        let mut game_settings = util::get_game_settings(
+            &self.recipe_config,
+            &self.custom_recipe_overrides_config,
+            &self.solver_config,
+            &self.crafter_config,
             self.selected_food,
             self.selected_potion,
         );
-        let target_quality = self
-            .solver_config
-            .quality_target
-            .get_target(game_settings.max_quality);
-        let initial_quality = match self.recipe_config.quality_source {
-            QualitySource::HqMaterialList(hq_materials) => get_initial_quality(
-                *self.crafter_config.active_stats(),
-                self.recipe_config.recipe,
-                hq_materials,
-            ),
-            QualitySource::Value(quality) => quality,
-        };
-        game_settings.adversarial = self.solver_config.adversarial;
-        game_settings.backload_progress = self.solver_config.backload_progress;
-
+        let initial_quality = util::get_initial_quality(&self.recipe_config, &self.crafter_config);
         ctx.data_mut(|data| {
             data.insert_temp(
                 Id::new("LAST_SOLVE_PARAMS"),
@@ -1098,6 +1071,10 @@ impl MacroSolverApp {
             solver_events.push_back(SolverEvent::LoadedFromHistory());
             solver_events.push_back(SolverEvent::Finished(None));
         } else {
+            let target_quality = self
+                .solver_config
+                .quality_target
+                .get_target(game_settings.max_quality);
             game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
             self.actions = Vec::new();
             self.solver_progress = 0;
