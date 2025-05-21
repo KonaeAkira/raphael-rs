@@ -14,7 +14,7 @@ const EFFECTS_MASK: u32 = Effects::new()
     .with_quick_innovation_available(true)
     .into_bits();
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct Key {
     progress: u32,
     quality_div: u16,
@@ -122,11 +122,17 @@ impl ParetoFront {
 
 impl Drop for ParetoFront {
     fn drop(&mut self) {
+        let largest_bucket = self.buckets.iter().max_by_key(|(_key, elems)| elems.len());
         let pareto_entries: usize = self.buckets.values().map(Vec::len).sum();
         log::debug!(
-            "ParetoFront - buckets: {}, entries: {}",
+            "ParetoFront - buckets: {}, entries: {}, largest_bucket_len: {}",
             self.buckets.len(),
-            pareto_entries
+            pareto_entries,
+            largest_bucket.map_or(0, |(_key, elems)| elems.len())
+        );
+        log::trace!(
+            "ParetoFront - largest_bucket_key: {:?}",
+            largest_bucket.map_or(Key::default(), |(key, _elems)| *key)
         );
     }
 }
