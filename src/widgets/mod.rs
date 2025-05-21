@@ -23,6 +23,8 @@ mod item_name_label;
 pub use item_name_label::ItemNameLabel;
 
 mod saved_rotations;
-pub use saved_rotations::{Rotation, SavedRotationsData, SavedRotationsWidget};
+pub use saved_rotations::{
+    Rotation, SavedRotationsConfig, SavedRotationsData, SavedRotationsWidget,
+};
 
 mod util;

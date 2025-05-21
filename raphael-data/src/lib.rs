@@ -41,7 +41,7 @@ pub struct RecipeLevel {
     pub quality_mod: u32,
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CustomRecipeOverrides {
     pub max_progress_override: u16,
