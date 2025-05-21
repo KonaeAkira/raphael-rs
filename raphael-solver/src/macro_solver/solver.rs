@@ -98,7 +98,7 @@ impl<'a> MacroSolver<'a> {
 
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
         let _timer = ScopedTimer::new("Search");
-        let mut search_queue = SearchQueue::new(state, SearchScore::MIN);
+        let mut search_queue = SearchQueue::new(state);
         let mut solution: Option<Solution> = None;
 
         let mut popped = 0;
