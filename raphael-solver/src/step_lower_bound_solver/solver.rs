@@ -2,10 +2,7 @@ use std::num::NonZeroU8;
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{
-        ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS,
-        QUALITY_ONLY_SEARCH_ACTIONS, use_action_combo,
-    },
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
     utils,
 };
 use raphael_sim::*;
@@ -380,7 +377,7 @@ fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
                 .with_adversarial_guard(true)
                 .with_inner_quiet(iq),
         };
-        for &action in QUALITY_ONLY_SEARCH_ACTIONS {
+        for &action in FULL_SEARCH_ACTIONS {
             if let Ok(new_state) = use_action_combo(settings, state, action) {
                 let new_iq = new_state.effects.inner_quiet();
                 if new_iq > iq {

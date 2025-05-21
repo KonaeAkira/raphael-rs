@@ -78,7 +78,6 @@ fn unsolvable() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            fast_lb_states: 0,
             finish_states: 2864,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
@@ -130,7 +129,6 @@ fn zero_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            fast_lb_states: 1,
             finish_states: 1660,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 43,
@@ -182,17 +180,16 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            fast_lb_states: 4,
-            finish_states: 229983,
+            finish_states: 229977,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 4472,
-                dropped_nodes: 51468,
+                dropped_nodes: 51531,
                 pareto_buckets_squared_size_sum: 32640,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 749334,
-                sequential_states: 29018,
-                pareto_values: 5547439,
+                sequential_states: 26053,
+                pareto_values: 5543390,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 244815,
@@ -231,7 +228,6 @@ fn large_progress_quality_increase() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            fast_lb_states: 1,
             finish_states: 21,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
@@ -240,8 +236,8 @@ fn large_progress_quality_increase() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 456294,
-                sequential_states: 35,
-                pareto_values: 456329,
+                sequential_states: 0,
+                pareto_values: 456294,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 120,
@@ -283,7 +279,6 @@ fn backload_progress_single_delicate_synthesis() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            fast_lb_states: 1,
             finish_states: 15,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
