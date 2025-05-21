@@ -8,6 +8,7 @@ pub enum Locale {
     DE,
     FR,
     JP,
+    KR,
 }
 
 impl std::fmt::Display for Locale {
@@ -17,6 +18,7 @@ impl std::fmt::Display for Locale {
             Self::DE => write!(f, "DE"),
             Self::FR => write!(f, "FR"),
             Self::JP => write!(f, "JP"),
+            Self::KR => write!(f, "KR"),
         }
     }
 }
@@ -24,6 +26,7 @@ impl std::fmt::Display for Locale {
 const JOB_NAMES_EN: [&str; 8] = ["CRP", "BSM", "ARM", "GSM", "LTW", "WVR", "ALC", "CUL"];
 const JOB_NAMES_DE: [&str; 8] = ["ZMR", "GRS", "PLA", "GLD", "GER", "WEB", "ALC", "GRM"];
 const JOB_NAMES_FR: [&str; 8] = ["MEN", "FRG", "ARM", "ORF", "TAN", "COU", "ALC", "CUI"];
+const JOB_NAMES_KR: [&str; 8] = ["목수", "대장", "갑주", "보석", "가죽", "재봉", "연금", "요리"];
 
 pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     match locale {
@@ -31,6 +34,7 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
         Locale::DE => JOB_NAMES_DE[job_id as usize],
         Locale::FR => JOB_NAMES_FR[job_id as usize],
         Locale::JP => JOB_NAMES_EN[job_id as usize], // JP job abbreviations are the same as EN
+        Locale::KR => JOB_NAMES_KR[job_id as usize],
     }
 }
 
@@ -38,6 +42,7 @@ pub static ITEM_NAMES_EN: phf::Map<u32, &str> = include!("../data/item_names_en.
 pub static ITEM_NAMES_DE: phf::Map<u32, &str> = include!("../data/item_names_de.rs");
 pub static ITEM_NAMES_FR: phf::Map<u32, &str> = include!("../data/item_names_fr.rs");
 pub static ITEM_NAMES_JP: phf::Map<u32, &str> = include!("../data/item_names_jp.rs");
+pub static ITEM_NAMES_KR: phf::Map<u32, &str> = include!("../data/item_names_kr.rs");
 
 pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     let item_name = match locale {
@@ -45,6 +50,7 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
         Locale::DE => ITEM_NAMES_DE.get(&item_id)?.to_owned(),
         Locale::FR => ITEM_NAMES_FR.get(&item_id)?.to_owned(),
         Locale::JP => ITEM_NAMES_JP.get(&item_id)?.to_owned(),
+        Locale::KR => ITEM_NAMES_KR.get(&item_id)?.to_owned(),
     };
     let item_entry = ITEMS.get(&item_id);
     let always_collectable = item_entry.is_some_and(|item| item.always_collectable);
@@ -64,6 +70,7 @@ pub const fn action_name(action: Action, locale: Locale) -> &'static str {
         Locale::DE => action_name_de(action),
         Locale::FR => action_name_fr(action),
         Locale::JP => action_name_jp(action),
+        Locale::KR => action_name_kr(action),
     }
 }
 
@@ -208,5 +215,41 @@ const fn action_name_jp(action: Action) -> &'static str {
         Action::TrainedPerfection => "匠の絶技",
         Action::TrainedEye => "匠の早業",
         Action::QuickInnovation => "クイックイノベーション",
+    }
+}
+
+const fn action_name_kr(action: Action) -> &'static str {
+    match action {
+        Action::BasicSynthesis => "작업",
+        Action::BasicTouch => "가공",
+        Action::MasterMend => "능숙한 땜질",
+        Action::Observe => "경과 관찰",
+        Action::TricksOfTheTrade => "비결",
+        Action::WasteNot => "근검절약",
+        Action::Veneration => "공경",
+        Action::StandardTouch => "중급 가공",
+        Action::GreatStrides => "장족의 발전",
+        Action::Innovation => "혁신",
+        Action::WasteNot2 => "장기 절약",
+        Action::ByregotsBlessing => "비레고의 축복",
+        Action::PreciseTouch => "집중 가공",
+        Action::MuscleMemory => "확신",
+        Action::CarefulSynthesis => "모범 작업",
+        Action::Manipulation => "교묘한 손놀림",
+        Action::PrudentTouch => "절약 가공",
+        Action::AdvancedTouch => "상급 가공",
+        Action::Reflect => "진가",
+        Action::PreparatoryTouch => "밑가공",
+        Action::Groundwork => "밑작업",
+        Action::DelicateSynthesis => "정밀 작업",
+        Action::IntensiveSynthesis => "집중 작업",
+        Action::HeartAndSoul => "일심불란",
+        Action::PrudentSynthesis => "절약 작업",
+        Action::TrainedFinesse => "장인의 황금손",
+        Action::RefinedTouch => "세련 가공",
+        Action::ImmaculateMend => "완벽한 땜질",
+        Action::TrainedPerfection => "장인의 초절 기술",
+        Action::TrainedEye => "장인의 날랜손",
+        Action::QuickInnovation => "신속한 혁신",
     }
 }

@@ -310,6 +310,11 @@ impl eframe::App for MacroSolverApp {
                                     Locale::JP,
                                     format!("{}", Locale::JP),
                                 );
+                                ui.selectable_value(
+                                    &mut self.locale,
+                                    Locale::KR,
+                                    format!("{}", Locale::KR),
+                                );
                             });
 
                         ui.add(
@@ -1079,6 +1084,12 @@ impl MacroSolverApp {
                 "/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
             );
             load_font_dyn(ctx, "MPLUS1Code-Regular", uri);
+        } else if self.locale == Locale::KR {
+            let uri = concat!(
+                env!("BASE_URL"),
+                "/fonts/Noto_Sans_KR/static/NotoSansKR-Regular.ttf"
+            );
+            load_font_dyn(ctx, "NotoSansKR-Regular", uri);
         }
     }
 }
@@ -1133,6 +1144,23 @@ fn load_fonts(ctx: &egui::Context) {
         "MPLUS1Code-Regular",
         egui::FontData::from_static(include_bytes!(
             "../assets/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
+        )),
+        vec![
+            InsertFontFamily {
+                family: egui::FontFamily::Proportional,
+                priority: FontPriority::Lowest,
+            },
+            InsertFontFamily {
+                family: egui::FontFamily::Monospace,
+                priority: FontPriority::Lowest,
+            },
+        ],
+    ));
+    #[cfg(not(target_arch = "wasm32"))]
+    ctx.add_font(FontInsert::new(
+        "NotoSansKR-Regular",
+        egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/Noto_Sans_KR/static/NotoSansKR-Regular.ttf"
         )),
         vec![
             InsertFontFamily {
