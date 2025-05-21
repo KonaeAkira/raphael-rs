@@ -112,7 +112,7 @@ impl Rotation {
                 false => "",
             },
         );
-        let initial_quality = crate::util::get_initial_quality(&recipe_config, &crafter_config);
+        let initial_quality = crate::util::get_initial_quality(recipe_config, crafter_config);
         Self {
             unique_id: generate_unique_rotation_id(),
             name: name.into(),
@@ -120,12 +120,12 @@ impl Rotation {
             actions,
             recipe_info: Some(RecipeInfo::create_from(
                 &recipe_config.recipe,
-                &custom_recipe_overrides_configuration,
+                custom_recipe_overrides_configuration,
             )),
             solve_info: Some(SolveInfo::new(
-                &game_settings,
+                game_settings,
                 initial_quality,
-                &solver_config,
+                solver_config,
             )),
             food: food.map(|consumable| (consumable.item_id, consumable.hq)),
             potion: potion.map(|consumable| (consumable.item_id, consumable.hq)),
@@ -173,9 +173,9 @@ pub enum LoadOperation {
 impl std::fmt::Display for LoadOperation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let output_str = match self {
-            LoadOperation::LoadRotation => "Load rotation",
-            LoadOperation::LoadRotationRecipe => "Load rotation & recipe",
-            LoadOperation::LoadRotationRecipeConsumables => "Load rotation, recipe & consumables",
+            Self::LoadRotation => "Load rotation",
+            Self::LoadRotationRecipe => "Load rotation & recipe",
+            Self::LoadRotationRecipeConsumables => "Load rotation, recipe & consumables",
         };
         write!(f, "{}", output_str)
     }
@@ -228,18 +228,17 @@ impl SavedRotationsData {
         initial_quality: u16,
         solver_config: &SolverConfig,
     ) -> Option<Vec<Action>> {
-        let solve_info = SolveInfo::new(&game_settings, initial_quality, &solver_config);
+        let solve_info = SolveInfo::new(game_settings, initial_quality, solver_config);
         let find_and_map_rotation = |rotation: &Rotation| {
             if let (Some(saved_solver_version), Some(saved_solve_info)) =
                 (rotation.solver.split(' ').nth(1), &rotation.solve_info)
+                && saved_solver_version == format!("v{}", env!("CARGO_PKG_VERSION"))
+                && *saved_solve_info == solve_info
             {
-                if saved_solver_version == format!("v{}", env!("CARGO_PKG_VERSION"))
-                    && *saved_solve_info == solve_info
-                {
-                    return Some(rotation.actions.clone());
-                }
+                Some(rotation.actions.clone())
+            } else {
+                None
             }
-            None
         };
         let history_search_result = self.solve_history.iter().find_map(find_and_map_rotation);
         if history_search_result.is_some() {
@@ -402,22 +401,18 @@ impl<'a> RotationWidget<'a> {
     }
 
     fn load_saved_consumables(&mut self) {
-        *self.selected_food = if let Some(saved_food) = self.rotation.food {
+        *self.selected_food = self.rotation.food.and_then(|(item_id, hq)| {
             raphael_data::MEALS
                 .iter()
-                .find(|food| food.item_id == saved_food.0 && food.hq == saved_food.1)
+                .find(|food| food.item_id == item_id && food.hq == hq)
                 .copied()
-        } else {
-            None
-        };
-        *self.selected_potion = if let Some(saved_potion) = self.rotation.potion {
-            raphael_data::POTIONS
+        });
+        *self.selected_potion = self.rotation.potion.and_then(|(item_id, hq)| {
+            raphael_data::MEALS
                 .iter()
-                .find(|potion| potion.item_id == saved_potion.0 && potion.hq == saved_potion.1)
+                .find(|potion| potion.item_id == item_id && potion.hq == hq)
                 .copied()
-        } else {
-            None
-        };
+        });
     }
 
     fn show_info_row(
@@ -488,14 +483,13 @@ impl<'a> RotationWidget<'a> {
     }
 
     fn get_recipe(&self) -> Option<&Recipe> {
-        if let Some(recipe_config) = &self.rotation.recipe_info {
-            match recipe_config {
-                RecipeInfo::NormalRecipe(recipe_id) => raphael_data::RECIPES.get(&recipe_id),
+        self.rotation
+            .recipe_info
+            .as_ref()
+            .and_then(|recipe_config| match recipe_config {
+                RecipeInfo::NormalRecipe(recipe_id) => raphael_data::RECIPES.get(recipe_id),
                 RecipeInfo::CustomRecipe(recipe, _) => Some(recipe),
-            }
-        } else {
-            None
-        }
+            })
     }
 }
 
