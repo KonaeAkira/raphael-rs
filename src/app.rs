@@ -511,16 +511,6 @@ impl MacroSolverApp {
                         );
                         game_settings.adversarial = self.solver_config.adversarial;
                         game_settings.backload_progress = self.solver_config.backload_progress;
-                        let initial_quality = match self.recipe_config.quality_source {
-                            QualitySource::HqMaterialList(hq_materials) => {
-                                raphael_data::get_initial_quality(
-                                    *self.crafter_config.active_stats(),
-                                    self.recipe_config.recipe,
-                                    hq_materials,
-                                )
-                            }
-                            QualitySource::Value(quality) => quality,
-                        };
                         self.saved_rotations_data.add_solved_rotation(Rotation::new(
                             raphael_data::get_item_name(
                                 self.recipe_config.recipe.item_id,
@@ -529,17 +519,13 @@ impl MacroSolverApp {
                             )
                             .unwrap_or("Unknown item".to_owned()),
                             self.actions.clone(),
-                            &self.recipe_config.recipe,
+                            &self.recipe_config,
                             &self.custom_recipe_overrides_config,
-                            game_settings,
-                            initial_quality,
-                            self.solver_config
-                                .quality_target
-                                .get_target(game_settings.max_quality),
+                            &game_settings,
+                            &self.solver_config,
                             self.selected_food,
                             self.selected_potion,
                             &self.crafter_config,
-                            &self.solver_config,
                         ));
                     } else {
                         self.solver_error = exception;
@@ -1104,7 +1090,7 @@ impl MacroSolverApp {
             && let Some(actions) = self.saved_rotations_data.find_solved_rotation(
                 &game_settings,
                 initial_quality,
-                target_quality,
+                &self.solver_config,
             )
         {
             let mut solver_events = self.solver_events.lock().unwrap();

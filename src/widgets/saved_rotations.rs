@@ -56,15 +56,15 @@ impl RecipeInputConfiguration {
 pub struct SolverInputConfiguration {
     pub game_settings: Settings,
     pub initial_quality: u16,
-    pub target_quality: u16,
+    pub solver_config: SolverConfig,
 }
 
 impl SolverInputConfiguration {
-    pub fn new(game_settings: &Settings, initial_quality: u16, target_quality: u16) -> Self {
+    pub fn new(game_settings: &Settings, initial_quality: u16, solver_config: &SolverConfig) -> Self {
         Self {
             game_settings: *game_settings,
             initial_quality,
-            target_quality,
+            solver_config: *solver_config,
         }
     }
 }
@@ -88,15 +88,13 @@ impl Rotation {
     pub fn new(
         name: impl Into<String>,
         actions: Vec<Action>,
-        recipe: &Recipe,
+        recipe_config: &RecipeConfiguration,
         custom_recipe_overrides_configuration: &CustomRecipeOverridesConfiguration,
-        game_settings: Settings,
-        initial_quality: u16,
-        target_quality: u16,
+        game_settings: &Settings,
+        solver_config: &SolverConfig,
         food: Option<Consumable>,
         potion: Option<Consumable>,
         crafter_config: &CrafterConfig,
-        solver_config: &SolverConfig,
     ) -> Self {
         let solver_params = format!(
             "Raphael v{}{}{}",
@@ -110,19 +108,29 @@ impl Rotation {
                 false => "",
             },
         );
+        let initial_quality = match recipe_config.quality_source {
+            QualitySource::HqMaterialList(hq_materials) => {
+                raphael_data::get_initial_quality(
+                    *crafter_config.active_stats(),
+                    recipe_config.recipe,
+                    hq_materials,
+                )
+            }
+            QualitySource::Value(quality) => quality,
+        };
         Self {
             unique_id: generate_unique_rotation_id(),
             name: name.into(),
             solver: solver_params,
             actions,
             recipe_configuration: Some(RecipeInputConfiguration::create_from(
-                recipe,
-                custom_recipe_overrides_configuration,
+                &recipe_config.recipe,
+                &custom_recipe_overrides_configuration,
             )),
             solver_configuration: Some(SolverInputConfiguration::new(
                 &game_settings,
                 initial_quality,
-                target_quality,
+                &solver_config,
             )),
             food: food.map(|consumable| (consumable.item_id, consumable.hq)),
             potion: potion.map(|consumable| (consumable.item_id, consumable.hq)),
@@ -225,7 +233,7 @@ impl SavedRotationsData {
         &self,
         game_settings: &Settings,
         initial_quality: u16,
-        target_quality: u16,
+        solver_config: &SolverConfig,
     ) -> Option<Vec<Action>> {
         let find_and_map_rotation = |rotation: &Rotation| {
             if let (Some(saved_solver_version), Some(saved_solver_configuration)) = (
@@ -233,7 +241,7 @@ impl SavedRotationsData {
                 rotation.solver_configuration.clone(),
             ) {
                 let solver_configuration =
-                    SolverInputConfiguration::new(game_settings, initial_quality, target_quality);
+                    SolverInputConfiguration::new(&game_settings, initial_quality, &solver_config);
                 if saved_solver_version == format!("v{}", env!("CARGO_PKG_VERSION"))
                     && saved_solver_configuration == solver_configuration
                 {
