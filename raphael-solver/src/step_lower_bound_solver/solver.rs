@@ -142,7 +142,7 @@ impl StepLbSolver {
 
         self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
 
-        log::debug!(
+        log::trace!(
             "StepLbSolver - templates: {}, solved_states: {}",
             self.precompute_templates.len(),
             self.solved_states.len()
