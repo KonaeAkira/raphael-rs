@@ -17,20 +17,18 @@ const EFFECTS_MASK: u32 = Effects::new()
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct Key {
     progress: u32,
-    quality_div: u16,
-    cp_div: u8,
-    durability_div: u8,
-    effects_mask: u32,
+    cp: u16,
+    durability: u16,
+    effects: u32,
 }
 
 impl From<&SimulationState> for Key {
     fn from(state: &SimulationState) -> Self {
         Self {
             progress: state.progress,
-            quality_div: (state.quality / 4096) as u16,
-            cp_div: (state.cp / 64) as u8,
-            durability_div: (state.durability / 15) as u8,
-            effects_mask: state.effects.into_bits() & EFFECTS_MASK,
+            cp: state.cp.next_multiple_of(64),
+            durability: state.durability.next_multiple_of(15),
+            effects: state.effects.into_bits() & EFFECTS_MASK,
         }
     }
 }
