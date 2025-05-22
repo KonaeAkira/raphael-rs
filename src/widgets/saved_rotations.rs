@@ -408,7 +408,7 @@ impl<'a> RotationWidget<'a> {
                 .copied()
         });
         *self.selected_potion = self.rotation.potion.and_then(|(item_id, hq)| {
-            raphael_data::MEALS
+            raphael_data::POTIONS
                 .iter()
                 .find(|potion| potion.item_id == item_id && potion.hq == hq)
                 .copied()
