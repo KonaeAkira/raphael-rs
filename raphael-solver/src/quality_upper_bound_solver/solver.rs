@@ -5,12 +5,12 @@ use crate::{
 };
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rustc_hash::FxHashMap;
 
 use super::state::ReducedState;
 
 type ParetoValue = utils::ParetoValue<u32, u32>;
 type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
-type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct QualityUbSolverStats {
@@ -22,7 +22,8 @@ pub struct QualityUbSolverStats {
 pub struct QualityUbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
-    solved_states: SolvedStates,
+    solved_states: FxHashMap<ReducedState, Box<[ParetoValue]>>,
+    maximal_templates: FxHashMap<TemplateData, u16>,
     pareto_front_builder: ParetoFrontBuilder,
     durability_cost: u16,
     precomputed_states: usize,
@@ -38,7 +39,8 @@ impl QualityUbSolver {
         Self {
             settings,
             interrupt_signal,
-            solved_states: SolvedStates::default(),
+            solved_states: FxHashMap::default(),
+            maximal_templates: FxHashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress(),
                 settings.max_quality(),
@@ -106,7 +108,7 @@ impl QualityUbSolver {
         for (heart_and_soul, quick_innovation) in
             [(false, false), (false, true), (true, false), (true, true)]
         {
-            let filtered_templates: Vec<_> = templates
+            let mut filtered_templates: Vec<_> = templates
                 .iter()
                 .filter(|template| {
                     template.data.effects.heart_and_soul_available() == heart_and_soul
@@ -115,7 +117,7 @@ impl QualityUbSolver {
                 .collect();
             // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
             // See `ReducedState::is_final` for details.
-            for cp in 2 * self.durability_cost..=self.settings.max_cp() {
+            for cp in (2 * self.durability_cost..=self.settings.max_cp()).step_by(2) {
                 if self.interrupt_signal.is_set() {
                     return;
                 }
@@ -134,6 +136,20 @@ impl QualityUbSolver {
                     .collect_vec_list();
                 self.solved_states
                     .extend(solved_states.into_iter().flatten());
+                filtered_templates.retain(|template| {
+                    template.instantiate(cp).is_some_and(|state| {
+                        let pareto_front = self.solved_states.get(&state).unwrap();
+                        let value = pareto_front.first().unwrap();
+                        let is_maximal = value.first >= self.settings.max_progress()
+                            && value.second >= self.settings.max_quality();
+                        if is_maximal {
+                            self.maximal_templates.insert(template.data, cp);
+                            false
+                        } else {
+                            true
+                        }
+                    })
+                });
             }
         }
         self.precomputed_states = self.solved_states.len();
@@ -192,6 +208,19 @@ impl QualityUbSolver {
         }
 
         let reduced_state = ReducedState::from_state(state, &self.settings, self.durability_cost);
+
+        let template_data = TemplateData::new(
+            reduced_state.effects,
+            reduced_state.compressed_unreliable_quality,
+        );
+        if self
+            .maximal_templates
+            .get(&template_data)
+            .is_some_and(|required_cp| reduced_state.cp >= *required_cp)
+        {
+            return Ok(self.settings.max_quality());
+        }
+
         let required_progress = self.settings.max_progress() - state.progress;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
@@ -339,7 +368,7 @@ impl Template {
     }
 
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
-        if cp > self.max_cp || !cp.is_multiple_of(2) {
+        if cp > self.max_cp {
             return None;
         }
         Some(ReducedState {

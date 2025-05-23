@@ -104,9 +104,9 @@ fn stuffed_peppers() {
                 pareto_buckets_squared_size_sum: 1190791,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 2490788,
-                sequential_states: 9439,
-                pareto_values: 39433453,
+                parallel_states: 2271577,
+                sequential_states: 6898,
+                pareto_values: 39211692,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1414006,
@@ -157,9 +157,9 @@ fn test_rare_tacos_2() {
                 pareto_buckets_squared_size_sum: 298697843,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 2490788,
+                parallel_states: 2490785,
                 sequential_states: 90229,
-                pareto_values: 70483459,
+                pareto_values: 70483456,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2227573,
@@ -211,9 +211,9 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_buckets_squared_size_sum: 456620,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1839894,
-                sequential_states: 50645,
-                pareto_values: 16816502,
+                parallel_states: 1800446,
+                sequential_states: 43703,
+                pareto_values: 16748522,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 52408,
@@ -420,9 +420,9 @@ fn issue_118() {
                 pareto_buckets_squared_size_sum: 216063563,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1931356,
-                sequential_states: 70702,
-                pareto_values: 25707810,
+                parallel_states: 1931154,
+                sequential_states: 70683,
+                pareto_values: 25707447,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 258314,
