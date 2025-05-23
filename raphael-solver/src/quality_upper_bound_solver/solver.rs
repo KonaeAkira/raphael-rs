@@ -23,6 +23,7 @@ pub struct QualityUbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: FxHashMap<ReducedState, Box<[ParetoValue]>>,
+    iq_quality_lut: [u32; 11],
     maximal_templates: FxHashMap<TemplateData, u16>,
     pareto_front_builder: ParetoFrontBuilder,
     durability_cost: u16,
@@ -40,6 +41,7 @@ impl QualityUbSolver {
             settings,
             interrupt_signal,
             solved_states: FxHashMap::default(),
+            iq_quality_lut: utils::compute_iq_quality_lut(&settings),
             maximal_templates: FxHashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress(),
@@ -138,13 +140,19 @@ impl QualityUbSolver {
                     .extend(solved_states.into_iter().flatten());
                 filtered_templates.retain(|template| {
                     template.instantiate(cp).is_some_and(|state| {
-                        let pareto_front = self.solved_states.get(&state).unwrap();
-                        let value = pareto_front.first().unwrap();
-                        let is_maximal = value.first >= self.settings.max_progress()
-                            && value.second >= self.settings.max_quality();
-                        if is_maximal {
+                        let required_progress = self.settings.max_progress();
+                        let required_quality = self.settings.max_quality().saturating_sub(
+                            self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
+                        );
+                        #[cfg(test)]
+                        assert!(self.solved_states.contains_key(&state));
+                        if let Some(pareto_front) = self.solved_states.get(&state)
+                            && let Some(value) = pareto_front.last()
+                            && value.first >= required_progress
+                            && value.second >= required_quality
+                        {
                             self.maximal_templates.insert(template.data, cp);
-                            false
+                            false // remove this template as computing it with a higher CP is unnecessary
                         } else {
                             true
                         }
@@ -208,20 +216,29 @@ impl QualityUbSolver {
         }
 
         let reduced_state = ReducedState::from_state(state, &self.settings, self.durability_cost);
+        let required_progress = self.settings.max_progress() - state.progress;
 
         let template_data = TemplateData::new(
             reduced_state.effects,
             reduced_state.compressed_unreliable_quality,
         );
-        if self
-            .maximal_templates
-            .get(&template_data)
-            .is_some_and(|required_cp| reduced_state.cp >= *required_cp)
+        if let Some(&required_cp) = self.maximal_templates.get(&template_data)
+            && reduced_state.cp >= required_cp
         {
-            return Ok(self.settings.max_quality());
+            let reduced_state = ReducedState {
+                cp: required_cp,
+                ..reduced_state
+            };
+            #[cfg(test)]
+            assert!(self.solved_states.contains_key(&reduced_state));
+            if let Some(pareto_front) = self.solved_states.get(&reduced_state)
+                && let Some(value) = pareto_front.last()
+                && value.first >= required_progress
+                && value.second + state.quality >= self.settings.max_quality()
+            {
+                return Ok(self.settings.max_quality());
+            }
         }
-
-        let required_progress = self.settings.max_progress() - state.progress;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);

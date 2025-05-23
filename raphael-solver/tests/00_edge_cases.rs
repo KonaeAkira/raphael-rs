@@ -187,9 +187,9 @@ fn max_quality() {
                 pareto_buckets_squared_size_sum: 31041,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 410619,
-                sequential_states: 18234,
-                pareto_values: 3147357,
+                parallel_states: 392060,
+                sequential_states: 7255,
+                pareto_values: 3020564,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 244815,
@@ -286,9 +286,9 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 9307,
+                parallel_states: 7773,
                 sequential_states: 0,
-                pareto_values: 9307,
+                pareto_values: 7773,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 116,

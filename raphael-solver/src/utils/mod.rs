@@ -91,6 +91,13 @@ pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
         // TODO: implement this for adversarial mode
         return [0; 11];
     }
+    if settings
+        .simulator_settings
+        .is_action_allowed::<HeartAndSoul>()
+    {
+        // TODO: implement this for heart and soul
+        return [0; 11];
+    }
     let mut result = [u32::MAX; 11];
     result[0] = 0;
     for iq in 0..10 {
