@@ -49,12 +49,6 @@ impl QualityUbSolver {
     }
 
     fn generate_precompute_templates(&self) -> Box<[Template]> {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-        struct TemplateData {
-            effects: Effects,
-            compressed_unreliable_quality: u8,
-        }
-
         let mut templates = rustc_hash::FxHashMap::<TemplateData, u16>::default();
         let mut heap = std::collections::BinaryHeap::<Template>::default();
 
@@ -62,20 +56,12 @@ impl QualityUbSolver {
             let seed_effects = Effects::initial(&self.settings.simulator_settings)
                 .with_trained_perfection_available(false)
                 .with_combo(Combo::None);
-            Template {
-                max_cp: self.settings.max_cp(),
-                effects: seed_effects,
-                compressed_unreliable_quality: 0,
-            }
+            Template::new(self.settings.max_cp(), TemplateData::new(seed_effects, 0))
         };
         heap.push(seed_template);
 
         while let Some(template) = heap.pop() {
-            let template_data = TemplateData {
-                effects: template.effects,
-                compressed_unreliable_quality: template.compressed_unreliable_quality,
-            };
-            let entry = templates.entry(template_data).or_default();
+            let entry = templates.entry(template.data).or_default();
             if template.max_cp > *entry {
                 *entry = template.max_cp;
                 let state = template.instantiate(template.max_cp).unwrap();
@@ -87,11 +73,13 @@ impl QualityUbSolver {
                             effects: new_state.effects,
                             compressed_unreliable_quality: new_state.compressed_unreliable_quality,
                         };
-                        let new_template = Template {
-                            max_cp: new_state.cp,
-                            effects: new_state.effects,
-                            compressed_unreliable_quality: new_state.compressed_unreliable_quality,
-                        };
+                        let new_template = Template::new(
+                            new_state.cp,
+                            TemplateData::new(
+                                new_state.effects,
+                                new_state.compressed_unreliable_quality,
+                            ),
+                        );
                         let new_entry = templates.entry(new_template_data).or_default();
                         if new_template.max_cp > *new_entry {
                             heap.push(new_template);
@@ -103,11 +91,7 @@ impl QualityUbSolver {
 
         templates
             .into_iter()
-            .map(|(template_data, max_cp)| Template {
-                max_cp,
-                effects: template_data.effects,
-                compressed_unreliable_quality: template_data.compressed_unreliable_quality,
-            })
+            .map(|(template_data, max_cp)| Template::new(max_cp, template_data))
             .collect()
     }
 
@@ -125,8 +109,8 @@ impl QualityUbSolver {
             let filtered_templates: Vec<_> = templates
                 .iter()
                 .filter(|template| {
-                    template.effects.heart_and_soul_available() == heart_and_soul
-                        && template.effects.quick_innovation_available() == quick_innovation
+                    template.data.effects.heart_and_soul_available() == heart_and_soul
+                        && template.data.effects.quick_innovation_available() == quick_innovation
                 })
                 .collect();
             // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
@@ -328,22 +312,40 @@ fn durability_cost(settings: &Settings) -> u16 {
     cost
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct Template {
-    max_cp: u16, // The template cannot be instantiated with CP above this value
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
+struct TemplateData {
     effects: Effects,
     compressed_unreliable_quality: u8,
 }
 
+impl TemplateData {
+    pub fn new(effects: Effects, compressed_unreliable_quality: u8) -> Self {
+        Self {
+            effects,
+            compressed_unreliable_quality,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Template {
+    max_cp: u16, // The template cannot be instantiated with CP above this value
+    data: TemplateData,
+}
+
 impl Template {
+    pub fn new(max_cp: u16, data: TemplateData) -> Self {
+        Self { max_cp, data }
+    }
+
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
         if cp > self.max_cp || !cp.is_multiple_of(2) {
             return None;
         }
         Some(ReducedState {
             cp,
-            compressed_unreliable_quality: self.compressed_unreliable_quality,
-            effects: self.effects,
+            compressed_unreliable_quality: self.data.compressed_unreliable_quality,
+            effects: self.data.effects,
         })
     }
 }
