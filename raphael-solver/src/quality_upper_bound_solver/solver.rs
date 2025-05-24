@@ -1,6 +1,6 @@
 use crate::{
     SolverException, SolverSettings,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
     utils,
 };
 use raphael_sim::*;
@@ -27,6 +27,7 @@ pub struct QualityUbSolver {
     maximal_templates: FxHashMap<TemplateData, u16>,
     pareto_front_builder: ParetoFrontBuilder,
     durability_cost: u16,
+    largest_progress_increase: u32,
     precomputed_states: usize,
 }
 
@@ -48,6 +49,7 @@ impl QualityUbSolver {
                 settings.max_quality(),
             ),
             durability_cost,
+            largest_progress_increase: find_largest_single_action_progress_increase(&settings),
             precomputed_states: 0,
         }
     }
@@ -215,7 +217,10 @@ impl QualityUbSolver {
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u32, SolverException> {
+    pub fn quality_upper_bound(
+        &mut self,
+        mut state: SimulationState,
+    ) -> Result<u32, SolverException> {
         if state.effects.combo() != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in quality upper bound solver",
@@ -223,8 +228,14 @@ impl QualityUbSolver {
             )));
         }
 
+        let mut required_progress = self.settings.max_progress() - state.progress;
+        if state.effects.muscle_memory() != 0 {
+            // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
+            required_progress = required_progress.saturating_sub(self.largest_progress_increase);
+            state.effects.set_muscle_memory(0);
+        }
+
         let reduced_state = ReducedState::from_state(state, &self.settings, self.durability_cost);
-        let required_progress = self.settings.max_progress() - state.progress;
 
         let template_data = TemplateData::new(
             reduced_state.effects,
@@ -364,6 +375,20 @@ fn durability_cost(settings: &Settings) -> u16 {
         cost = std::cmp::min(cost, cost_per_five);
     }
     cost
+}
+
+fn find_largest_single_action_progress_increase(settings: &SolverSettings) -> u32 {
+    let state = SimulationState::new(&settings.simulator_settings);
+    assert_eq!(state.progress, 0);
+    PROGRESS_ONLY_SEARCH_ACTIONS
+        .iter()
+        .filter_map(|&action| {
+            use_action_combo(settings, state, action)
+                .ok()
+                .map(|state| state.progress)
+        })
+        .max()
+        .unwrap()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]

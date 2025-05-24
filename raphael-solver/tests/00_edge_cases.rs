@@ -137,8 +137,8 @@ fn zero_quality() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 31147,
-                sequential_states: 3000,
-                pareto_values: 117954,
+                sequential_states: 0,
+                pareto_values: 109398,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -183,18 +183,18 @@ fn max_quality() {
             finish_states: 228053,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 4411,
-                dropped_nodes: 51315,
+                dropped_nodes: 51368,
                 pareto_buckets_squared_size_sum: 31041,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 392060,
-                sequential_states: 7105,
-                pareto_values: 3019766,
+                sequential_states: 2551,
+                pareto_values: 2990347,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 244815,
-                sequential_states: 11953,
-                pareto_values: 1767265,
+                sequential_states: 11956,
+                pareto_values: 1767278,
             },
         }
     "#]];
