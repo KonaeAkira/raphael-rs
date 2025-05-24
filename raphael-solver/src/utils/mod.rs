@@ -127,3 +127,17 @@ pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
     }
     result
 }
+
+pub fn largest_single_action_progress_increase(settings: &SolverSettings) -> u32 {
+    let state = SimulationState::new(&settings.simulator_settings);
+    assert_eq!(state.progress, 0);
+    FULL_SEARCH_ACTIONS
+        .iter()
+        .filter_map(|&action| {
+            use_action_combo(settings, state, action)
+                .ok()
+                .map(|state| state.progress)
+        })
+        .max()
+        .unwrap()
+}

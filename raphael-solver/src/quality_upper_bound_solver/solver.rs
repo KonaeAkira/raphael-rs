@@ -1,6 +1,6 @@
 use crate::{
     SolverException, SolverSettings,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
     utils,
 };
 use raphael_sim::*;
@@ -49,7 +49,7 @@ impl QualityUbSolver {
                 settings.max_quality(),
             ),
             durability_cost,
-            largest_progress_increase: find_largest_single_action_progress_increase(&settings),
+            largest_progress_increase: utils::largest_single_action_progress_increase(&settings),
             precomputed_states: 0,
         }
     }
@@ -375,20 +375,6 @@ fn durability_cost(settings: &Settings) -> u16 {
         cost = std::cmp::min(cost, cost_per_five);
     }
     cost
-}
-
-fn find_largest_single_action_progress_increase(settings: &SolverSettings) -> u32 {
-    let state = SimulationState::new(&settings.simulator_settings);
-    assert_eq!(state.progress, 0);
-    PROGRESS_ONLY_SEARCH_ACTIONS
-        .iter()
-        .filter_map(|&action| {
-            use_action_combo(settings, state, action)
-                .ok()
-                .map(|state| state.progress)
-        })
-        .max()
-        .unwrap()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]

@@ -3,7 +3,7 @@ use std::num::NonZeroU8;
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
-    utils,
+    utils::{self, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
 use rayon::iter::{
@@ -32,9 +32,8 @@ pub struct StepLbSolver {
     precompute_templates: Vec<Template>,
     next_precompute_step_budget: NonZeroU8,
     precomputed_states: usize,
-    /// Maps InnerQuiet to the minimum amount of Quality that
-    /// a state with the corresponding InnerQuiet can have.
     iq_quality_lut: [u32; 11],
+    largest_progress_increase: u32,
 }
 
 impl StepLbSolver {
@@ -53,6 +52,7 @@ impl StepLbSolver {
             next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             precomputed_states: 0,
             iq_quality_lut: utils::compute_iq_quality_lut(&settings),
+            largest_progress_increase: largest_single_action_progress_increase(&settings),
         }
     }
 
@@ -213,7 +213,7 @@ impl StepLbSolver {
 
     fn quality_upper_bound(
         &mut self,
-        state: SimulationState,
+        mut state: SimulationState,
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
         if state.effects.combo() != Combo::None {
@@ -227,8 +227,14 @@ impl StepLbSolver {
             self.precompute_next_step_budget();
         }
 
+        let mut required_progress = self.settings.max_progress() - state.progress;
+        if state.effects.muscle_memory() != 0 {
+            // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
+            required_progress = required_progress.saturating_sub(self.largest_progress_increase);
+            state.effects.set_muscle_memory(0);
+        }
+
         let reduced_state = ReducedState::from_state(state, step_budget);
-        let required_progress = self.settings.max_progress() - state.progress;
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
