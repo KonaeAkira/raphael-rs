@@ -13,6 +13,7 @@ pub const WITH_SPECIALIST_ACTIONS: ActionMask = REGULAR_ACTIONS
 
 fn random_effects(settings: &Settings, rng: &mut impl rand::Rng) -> Effects {
     let mut effects = Effects::new()
+        .with_muscle_memory(rng.random_range(0..=5))
         .with_inner_quiet(rng.random_range(0..=10))
         .with_great_strides(rng.random_range(0..=3))
         .with_innovation(rng.random_range(0..=4))
