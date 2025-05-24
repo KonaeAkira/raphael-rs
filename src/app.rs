@@ -37,6 +37,13 @@ pub struct SolverConfig {
     pub adversarial: bool,
 }
 
+#[cfg(debug_assertions)]
+#[derive(Debug, Default)]
+struct DevInfoState {
+    show_dev_info_panel: bool,
+    render_info_state: RenderInfoState,
+}
+
 pub struct MacroSolverApp {
     locale: Locale,
     app_config: AppConfig,
@@ -49,6 +56,9 @@ pub struct MacroSolverApp {
     macro_view_config: MacroViewConfig,
     saved_rotations_config: SavedRotationsConfig,
     saved_rotations_data: SavedRotationsData,
+
+    #[cfg(debug_assertions)]
+    dev_info_state: DevInfoState,
 
     latest_version: Arc<Mutex<semver::Version>>,
     current_version: semver::Version,
@@ -108,6 +118,9 @@ impl MacroSolverApp {
                 SavedRotationsConfig::default(),
             ),
             saved_rotations_data: load(cc, "SAVED_ROTATIONS", SavedRotationsData::default()),
+
+            #[cfg(debug_assertions)]
+            dev_info_state: DevInfoState::default(),
 
             latest_version: latest_version.clone(),
             current_version: semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap(),
@@ -348,11 +361,33 @@ impl eframe::App for MacroSolverApp {
                             .open_in_new_tab(true),
                         );
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            #[cfg(debug_assertions)]
+                            if ui
+                                .selectable_label(
+                                    self.dev_info_state.show_dev_info_panel,
+                                    "Dev Info",
+                                )
+                                .clicked()
+                            {
+                                self.dev_info_state.show_dev_info_panel =
+                                    !self.dev_info_state.show_dev_info_panel;
+                            };
                             egui::warn_if_debug_build(ui);
                         });
                     });
                 });
         });
+
+        #[cfg(debug_assertions)]
+        if self.dev_info_state.show_dev_info_panel {
+            egui::SidePanel::right("right_panel")
+                .resizable(true)
+                .show(ctx, |ui| {
+                    ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+                    ui.heading("Rendering");
+                    RenderInfo::new(&mut self.dev_info_state.render_info_state).ui(ui, _frame);
+                });
+        }
 
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
