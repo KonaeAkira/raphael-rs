@@ -347,8 +347,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 945752,
-                sequential_states: 14887,
-                pareto_values: 18146338,
+                sequential_states: 10797,
+                pareto_values: 18106424,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2318275,
@@ -555,8 +555,8 @@ fn rakaznar_lapidary_hammer_4462_4391() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 750109,
-                sequential_states: 96,
-                pareto_values: 11255594,
+                sequential_states: 95,
+                pareto_values: 11255593,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1579065,
@@ -861,8 +861,8 @@ fn hardened_survey_plank_5558_5216() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 994029,
-                sequential_states: 12310,
-                pareto_values: 12491162,
+                sequential_states: 5188,
+                pareto_values: 12428283,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 361555,

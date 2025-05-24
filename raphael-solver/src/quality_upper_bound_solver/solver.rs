@@ -4,7 +4,7 @@ use crate::{
     utils,
 };
 use raphael_sim::*;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use rustc_hash::FxHashMap;
 
 use super::state::ReducedState;
@@ -101,7 +101,7 @@ impl QualityUbSolver {
 
     pub fn precompute(&mut self) {
         assert!(self.solved_states.is_empty());
-        let templates = self.generate_precompute_templates();
+        let all_templates = self.generate_precompute_templates();
         // States are computed in order of less CP to more CP.
         // States currently being computed assume that child states have already been computed.
         // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
@@ -110,12 +110,13 @@ impl QualityUbSolver {
         for (heart_and_soul, quick_innovation) in
             [(false, false), (false, true), (true, false), (true, true)]
         {
-            let mut filtered_templates: Vec<_> = templates
+            let mut templates: Vec<_> = all_templates
                 .iter()
                 .filter(|template| {
                     template.data.effects.heart_and_soul_available() == heart_and_soul
                         && template.data.effects.quick_innovation_available() == quick_innovation
                 })
+                .copied()
                 .collect();
             // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
             // See `ReducedState::is_final` for details.
@@ -123,9 +124,12 @@ impl QualityUbSolver {
                 if self.interrupt_signal.is_set() {
                     return;
                 }
-                let solved_states = filtered_templates
-                    .par_iter()
-                    .filter_map(|template| template.instantiate(cp))
+                let solved_states = templates
+                    .par_iter_mut()
+                    .filter_map(|template| match template.instantiate(cp) {
+                        Some(state) => Some((template, state)),
+                        None => None,
+                    })
                     .map_init(
                         || {
                             ParetoFrontBuilder::new(
@@ -133,37 +137,41 @@ impl QualityUbSolver {
                                 self.settings.max_quality(),
                             )
                         },
-                        |pf_builder, state| (state, self.solve_precompute_state(pf_builder, state)),
+                        |pf_builder, (template, state)| {
+                            let pareto_front = self.solve_precompute_state(pf_builder, state);
+                            let template_is_maximal = {
+                                // A template is "maximal" if there is no benefit of solving it with higher CP
+                                let required_progress = self.settings.max_progress();
+                                let required_quality = self.settings.max_quality().saturating_sub(
+                                    self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
+                                );
+                                #[cfg(test)]
+                                assert!(!pareto_front.is_empty());
+                                pareto_front.last().is_some_and(|value| {
+                                    value.first >= required_progress
+                                        && value.second >= required_quality
+                                })
+                            };
+                            if template_is_maximal {
+                                template.max_cp = cp;
+                            }
+                            (state, pareto_front)
+                        },
                     )
                     .collect_vec_list();
                 self.solved_states
                     .extend(solved_states.into_iter().flatten());
-                filtered_templates.retain(|template| {
-                    template.instantiate(cp).is_some_and(|state| {
-                        let required_progress = self.settings.max_progress();
-                        let required_quality = self.settings.max_quality().saturating_sub(
-                            self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
-                        );
-                        #[cfg(test)]
-                        assert!(self.solved_states.contains_key(&state));
-                        if let Some(pareto_front) = self.solved_states.get(&state)
-                            && let Some(value) = pareto_front.last()
-                            && value.first >= required_progress
-                            && value.second >= required_quality
-                        {
-                            self.maximal_templates.insert(template.data, cp);
-                            false // remove this template as computing it with a higher CP is unnecessary
-                        } else {
-                            true
-                        }
-                    })
-                });
             }
+            self.maximal_templates.extend(
+                templates
+                    .into_iter()
+                    .map(|template| (template.data, template.max_cp)),
+            );
         }
         self.precomputed_states = self.solved_states.len();
         log::debug!(
             "QualityUbSolver - templates: {}, precomputed_states: {}",
-            templates.len(),
+            all_templates.len(),
             self.solved_states.len()
         );
     }

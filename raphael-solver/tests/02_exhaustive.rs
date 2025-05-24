@@ -347,8 +347,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 932788,
-                sequential_states: 20831,
-                pareto_values: 24626265,
+                sequential_states: 14501,
+                pareto_values: 24536298,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2227573,
@@ -861,8 +861,8 @@ fn hardened_survey_plank_5558_5216() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 969126,
-                sequential_states: 11927,
-                pareto_values: 17567623,
+                sequential_states: 8518,
+                pareto_values: 17519683,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 386882,
