@@ -4,13 +4,13 @@ use crate::{
     utils,
 };
 use raphael_sim::*;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+use rustc_hash::FxHashMap;
 
 use super::state::ReducedState;
 
 type ParetoValue = utils::ParetoValue<u32, u32>;
 type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
-type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct QualityUbSolverStats {
@@ -22,9 +22,12 @@ pub struct QualityUbSolverStats {
 pub struct QualityUbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
-    solved_states: SolvedStates,
+    solved_states: FxHashMap<ReducedState, Box<[ParetoValue]>>,
+    iq_quality_lut: [u32; 11],
+    maximal_templates: FxHashMap<TemplateData, u16>,
     pareto_front_builder: ParetoFrontBuilder,
     durability_cost: u16,
+    largest_progress_increase: u32,
     precomputed_states: usize,
 }
 
@@ -38,23 +41,20 @@ impl QualityUbSolver {
         Self {
             settings,
             interrupt_signal,
-            solved_states: SolvedStates::default(),
+            solved_states: FxHashMap::default(),
+            iq_quality_lut: utils::compute_iq_quality_lut(&settings),
+            maximal_templates: FxHashMap::default(),
             pareto_front_builder: ParetoFrontBuilder::new(
                 settings.max_progress(),
                 settings.max_quality(),
             ),
             durability_cost,
+            largest_progress_increase: utils::largest_single_action_progress_increase(&settings),
             precomputed_states: 0,
         }
     }
 
     fn generate_precompute_templates(&self) -> Box<[Template]> {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-        struct TemplateData {
-            effects: Effects,
-            compressed_unreliable_quality: u8,
-        }
-
         let mut templates = rustc_hash::FxHashMap::<TemplateData, u16>::default();
         let mut heap = std::collections::BinaryHeap::<Template>::default();
 
@@ -62,20 +62,12 @@ impl QualityUbSolver {
             let seed_effects = Effects::initial(&self.settings.simulator_settings)
                 .with_trained_perfection_available(false)
                 .with_combo(Combo::None);
-            Template {
-                max_cp: self.settings.max_cp(),
-                effects: seed_effects,
-                compressed_unreliable_quality: 0,
-            }
+            Template::new(self.settings.max_cp(), TemplateData::new(seed_effects, 0))
         };
         heap.push(seed_template);
 
         while let Some(template) = heap.pop() {
-            let template_data = TemplateData {
-                effects: template.effects,
-                compressed_unreliable_quality: template.compressed_unreliable_quality,
-            };
-            let entry = templates.entry(template_data).or_default();
+            let entry = templates.entry(template.data).or_default();
             if template.max_cp > *entry {
                 *entry = template.max_cp;
                 let state = template.instantiate(template.max_cp).unwrap();
@@ -87,11 +79,13 @@ impl QualityUbSolver {
                             effects: new_state.effects,
                             compressed_unreliable_quality: new_state.compressed_unreliable_quality,
                         };
-                        let new_template = Template {
-                            max_cp: new_state.cp,
-                            effects: new_state.effects,
-                            compressed_unreliable_quality: new_state.compressed_unreliable_quality,
-                        };
+                        let new_template = Template::new(
+                            new_state.cp,
+                            TemplateData::new(
+                                new_state.effects,
+                                new_state.compressed_unreliable_quality,
+                            ),
+                        );
                         let new_entry = templates.entry(new_template_data).or_default();
                         if new_template.max_cp > *new_entry {
                             heap.push(new_template);
@@ -103,17 +97,13 @@ impl QualityUbSolver {
 
         templates
             .into_iter()
-            .map(|(template_data, max_cp)| Template {
-                max_cp,
-                effects: template_data.effects,
-                compressed_unreliable_quality: template_data.compressed_unreliable_quality,
-            })
+            .map(|(template_data, max_cp)| Template::new(max_cp, template_data))
             .collect()
     }
 
     pub fn precompute(&mut self) {
         assert!(self.solved_states.is_empty());
-        let templates = self.generate_precompute_templates();
+        let all_templates = self.generate_precompute_templates();
         // States are computed in order of less CP to more CP.
         // States currently being computed assume that child states have already been computed.
         // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
@@ -122,22 +112,26 @@ impl QualityUbSolver {
         for (heart_and_soul, quick_innovation) in
             [(false, false), (false, true), (true, false), (true, true)]
         {
-            let filtered_templates: Vec<_> = templates
+            let mut templates: Vec<_> = all_templates
                 .iter()
                 .filter(|template| {
-                    template.effects.heart_and_soul_available() == heart_and_soul
-                        && template.effects.quick_innovation_available() == quick_innovation
+                    template.data.effects.heart_and_soul_available() == heart_and_soul
+                        && template.data.effects.quick_innovation_available() == quick_innovation
                 })
+                .copied()
                 .collect();
             // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
             // See `ReducedState::is_final` for details.
-            for cp in 2 * self.durability_cost..=self.settings.max_cp() {
+            for cp in (2 * self.durability_cost..=self.settings.max_cp()).step_by(2) {
                 if self.interrupt_signal.is_set() {
                     return;
                 }
-                let solved_states = filtered_templates
-                    .par_iter()
-                    .filter_map(|template| template.instantiate(cp))
+                let solved_states = templates
+                    .par_iter_mut()
+                    .filter_map(|template| match template.instantiate(cp) {
+                        Some(state) => Some((template, state)),
+                        None => None,
+                    })
                     .map_init(
                         || {
                             ParetoFrontBuilder::new(
@@ -145,17 +139,41 @@ impl QualityUbSolver {
                                 self.settings.max_quality(),
                             )
                         },
-                        |pf_builder, state| (state, self.solve_precompute_state(pf_builder, state)),
+                        |pf_builder, (template, state)| {
+                            let pareto_front = self.solve_precompute_state(pf_builder, state);
+                            let template_is_maximal = {
+                                // A template is "maximal" if there is no benefit of solving it with higher CP
+                                let required_progress = self.settings.max_progress();
+                                let required_quality = self.settings.max_quality().saturating_sub(
+                                    self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
+                                );
+                                #[cfg(test)]
+                                assert!(!pareto_front.is_empty());
+                                pareto_front.last().is_some_and(|value| {
+                                    value.first >= required_progress
+                                        && value.second >= required_quality
+                                })
+                            };
+                            if template_is_maximal {
+                                template.max_cp = cp;
+                            }
+                            (state, pareto_front)
+                        },
                     )
                     .collect_vec_list();
                 self.solved_states
                     .extend(solved_states.into_iter().flatten());
             }
+            self.maximal_templates.extend(
+                templates
+                    .into_iter()
+                    .map(|template| (template.data, template.max_cp)),
+            );
         }
         self.precomputed_states = self.solved_states.len();
         log::debug!(
             "QualityUbSolver - templates: {}, precomputed_states: {}",
-            templates.len(),
+            all_templates.len(),
             self.solved_states.len()
         );
     }
@@ -199,7 +217,10 @@ impl QualityUbSolver {
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
-    pub fn quality_upper_bound(&mut self, state: SimulationState) -> Result<u32, SolverException> {
+    pub fn quality_upper_bound(
+        &mut self,
+        mut state: SimulationState,
+    ) -> Result<u32, SolverException> {
         if state.effects.combo() != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in quality upper bound solver",
@@ -207,8 +228,36 @@ impl QualityUbSolver {
             )));
         }
 
+        let mut required_progress = self.settings.max_progress() - state.progress;
+        if state.effects.muscle_memory() != 0 {
+            // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
+            required_progress = required_progress.saturating_sub(self.largest_progress_increase);
+            state.effects.set_muscle_memory(0);
+        }
+
         let reduced_state = ReducedState::from_state(state, &self.settings, self.durability_cost);
-        let required_progress = self.settings.max_progress() - state.progress;
+
+        let template_data = TemplateData::new(
+            reduced_state.effects,
+            reduced_state.compressed_unreliable_quality,
+        );
+        if let Some(&required_cp) = self.maximal_templates.get(&template_data)
+            && reduced_state.cp >= required_cp
+        {
+            let reduced_state = ReducedState {
+                cp: required_cp,
+                ..reduced_state
+            };
+            #[cfg(test)]
+            assert!(self.solved_states.contains_key(&reduced_state));
+            if let Some(pareto_front) = self.solved_states.get(&reduced_state)
+                && let Some(value) = pareto_front.last()
+                && value.first >= required_progress
+                && value.second + state.quality >= self.settings.max_quality()
+            {
+                return Ok(self.settings.max_quality());
+            }
+        }
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
@@ -328,22 +377,40 @@ fn durability_cost(settings: &Settings) -> u16 {
     cost
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct Template {
-    max_cp: u16, // The template cannot be instantiated with CP above this value
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
+struct TemplateData {
     effects: Effects,
     compressed_unreliable_quality: u8,
 }
 
+impl TemplateData {
+    pub fn new(effects: Effects, compressed_unreliable_quality: u8) -> Self {
+        Self {
+            effects,
+            compressed_unreliable_quality,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Template {
+    max_cp: u16, // The template cannot be instantiated with CP above this value
+    data: TemplateData,
+}
+
 impl Template {
+    pub fn new(max_cp: u16, data: TemplateData) -> Self {
+        Self { max_cp, data }
+    }
+
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
-        if cp > self.max_cp || !cp.is_multiple_of(2) {
+        if cp > self.max_cp {
             return None;
         }
         Some(ReducedState {
             cp,
-            compressed_unreliable_quality: self.compressed_unreliable_quality,
-            effects: self.effects,
+            compressed_unreliable_quality: self.data.compressed_unreliable_quality,
+            effects: self.data.effects,
         })
     }
 }

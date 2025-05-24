@@ -137,8 +137,8 @@ fn zero_quality() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 31147,
-                sequential_states: 3000,
-                pareto_values: 117954,
+                sequential_states: 0,
+                pareto_values: 109398,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
@@ -180,21 +180,21 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 228053,
+            finish_states: 233841,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 4411,
-                dropped_nodes: 51315,
-                pareto_buckets_squared_size_sum: 31041,
+                processed_nodes: 4917,
+                dropped_nodes: 59115,
+                pareto_buckets_squared_size_sum: 39418,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 423600,
-                sequential_states: 21629,
-                pareto_values: 3172560,
+                parallel_states: 392060,
+                sequential_states: 2551,
+                pareto_values: 2990347,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 244815,
-                sequential_states: 11953,
-                pareto_values: 1767265,
+                sequential_states: 0,
+                pareto_values: 1641682,
             },
         }
     "#]];
@@ -235,9 +235,9 @@ fn large_progress_quality_increase() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 259207,
+                parallel_states: 33095,
                 sequential_states: 0,
-                pareto_values: 259207,
+                pareto_values: 33095,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 120,
@@ -286,9 +286,9 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 13083,
+                parallel_states: 7773,
                 sequential_states: 0,
-                pareto_values: 13083,
+                pareto_values: 7773,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 116,
