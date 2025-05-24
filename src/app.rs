@@ -360,6 +360,8 @@ impl eframe::App for MacroSolverApp {
                             )
                             .open_in_new_tab(true),
                         );
+                        #[cfg(debug_assertions)]
+                        ui.allocate_space(egui::vec2(125.0, 0.0));
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             #[cfg(debug_assertions)]
                             if ui
