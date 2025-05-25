@@ -84,11 +84,9 @@ impl RenderInfoState {
     }
 
     pub fn theoretical_fps(&self) -> f32 {
-        if let Some(average_frame_time) = self.cpu_usage_history.average() {
-            1.0 / average_frame_time
-        } else {
-            0.0
-        }
+        self.cpu_usage_history
+            .average()
+            .map_or(0.0, |average_frame_time| 1.0 / average_frame_time)
     }
 
     pub fn mean_frame_time(&self) -> f32 {
@@ -98,11 +96,9 @@ impl RenderInfoState {
     }
 
     pub fn average_fps(&self) -> f32 {
-        if let Some(mean_time_interval) = self.cpu_usage_history.mean_time_interval() {
-            1.0 / mean_time_interval
-        } else {
-            0.0
-        }
+        self.cpu_usage_history
+            .mean_time_interval()
+            .map_or(0.0, |mean_time_interval| 1.0 / mean_time_interval)
     }
 }
 
@@ -138,7 +134,6 @@ impl<'a> RenderInfo<'a> {
         ui.vertical_centered(|ui| {
             ui.heading("Rendering / UI");
         });
-
         ui.separator();
 
         ui.horizontal(|ui| {
@@ -203,7 +198,6 @@ impl<'a> RenderInfo<'a> {
 
             self.graph(ui);
         });
-
         ui.separator();
 
         #[cfg(not(target_arch = "wasm32"))]

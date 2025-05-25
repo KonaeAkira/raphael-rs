@@ -362,15 +362,15 @@ impl eframe::App for MacroSolverApp {
                         );
                         #[cfg(debug_assertions)]
                         ui.allocate_space(egui::vec2(145.0, 0.0));
+                        #[cfg(debug_assertions)]
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            #[cfg(debug_assertions)]
                             if ui
                                 .selectable_label(self.dev_panel_state.show_dev_panel, "Dev Panel")
                                 .clicked()
                             {
                                 self.dev_panel_state.show_dev_panel =
                                     !self.dev_panel_state.show_dev_panel;
-                            };
+                            }
                             egui::warn_if_debug_build(ui);
                             ui.separator();
                         });
