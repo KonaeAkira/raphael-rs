@@ -50,14 +50,44 @@ fn init_logging() {
 fn main() -> eframe::Result<()> {
     init_logging();
 
+    let present_mode =
+        if let Some(present_mode_env_var) = std::env::var("RAPHAEL_PRESENT_MODE").ok() {
+            match present_mode_env_var.as_str() {
+                "AutoVsync" => eframe::wgpu::PresentMode::AutoVsync,
+                "AutoNoVsync" => eframe::wgpu::PresentMode::AutoNoVsync,
+                "Fifo" => eframe::wgpu::PresentMode::Fifo,
+                "FifoRelaxed" => eframe::wgpu::PresentMode::FifoRelaxed,
+                "Immediate" => eframe::wgpu::PresentMode::Immediate,
+                "Mailbox" => eframe::wgpu::PresentMode::Mailbox,
+                _ => panic!("Unknown present mode: {}", present_mode_env_var),
+            }
+        } else {
+            eframe::wgpu::PresentMode::default()
+        };
+    let desired_maximum_frame_latency = if let Some(desired_maximum_frame_latency_env_var) =
+        std::env::var("RAPHAEL_DESIRED_MAXIMUM_FRAME_LATENCY").ok()
+    {
+        match desired_maximum_frame_latency_env_var.parse() {
+            Ok(value) => Some(value),
+            Err(e) => panic!(
+                "Failed to parse desired maximum frame latency with error: {}",
+                e
+            ),
+        }
+    } else {
+        None
+    };
+    let wgpu_options = eframe::egui_wgpu::WgpuConfiguration {
+        present_mode,
+        desired_maximum_frame_latency,
+        ..Default::default()
+    };
+
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([400.0, 300.0])
             .with_min_inner_size([300.0, 220.0]),
-        wgpu_options: eframe::egui_wgpu::WgpuConfiguration {
-            present_mode: eframe::wgpu::PresentMode::AutoNoVsync,
-            ..Default::default()
-        },
+        wgpu_options,
         ..Default::default()
     };
     eframe::run_native(
