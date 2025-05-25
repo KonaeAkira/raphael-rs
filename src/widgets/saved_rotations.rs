@@ -187,27 +187,31 @@ impl Default for LoadOperation {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SavedRotationsConfig {
     pub load_from_saved_rotations: bool,
     pub default_load_operation: LoadOperation,
+    pub max_history_size: usize,
+}
+
+impl Default for SavedRotationsConfig {
+    fn default() -> Self {
+        Self {
+            load_from_saved_rotations: false,
+            default_load_operation: LoadOperation::LoadRotation,
+            max_history_size: 50,
+        }
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SavedRotationsData {
     pinned: Vec<Rotation>,
     solve_history: VecDeque<Rotation>,
-    #[serde(default = "default_max_history_size")]
-    max_history_size: usize,
-}
-
-const DEFAULT_MAX_HISTORY_SIZE: usize = 50;
-fn default_max_history_size() -> usize {
-    DEFAULT_MAX_HISTORY_SIZE
 }
 
 impl SavedRotationsData {
-    pub fn add_solved_rotation(&mut self, rotation: Rotation) {
+    pub fn add_solved_rotation(&mut self, rotation: Rotation, config: &SavedRotationsConfig) {
         if let Some(index) = self
             .solve_history
             .iter()
@@ -216,10 +220,10 @@ impl SavedRotationsData {
             self.solve_history.remove(index);
         }
 
-        while self.solve_history.len() >= self.max_history_size {
+        self.solve_history.push_front(rotation);
+        while self.solve_history.len() > config.max_history_size {
             self.solve_history.pop_back();
         }
-        self.solve_history.push_front(rotation);
     }
 
     pub fn find_solved_rotation(
@@ -626,12 +630,12 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                             ui.add_enabled(false, egui::DragValue::new(&mut self.rotations.solve_history.len()));
                             ui.label("/");
                             ui.add(
-                                egui::DragValue::new(&mut self.rotations.max_history_size)
-                                    .range(DEFAULT_MAX_HISTORY_SIZE..=200),
+                                egui::DragValue::new(&mut self.config.max_history_size)
+                                    .range(20..=200),
                             );
                             ui.label(")");
                         });
-                        if self.rotations.solve_history.len() > self.rotations.max_history_size {
+                        if self.rotations.solve_history.len() > self.config.max_history_size {
                             ui.add(
                                 egui::Label::new(
                                     egui::RichText::new(

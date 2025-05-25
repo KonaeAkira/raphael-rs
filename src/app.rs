@@ -516,7 +516,7 @@ impl MacroSolverApp {
                         );
                         game_settings.adversarial = self.solver_config.adversarial;
                         game_settings.backload_progress = self.solver_config.backload_progress;
-                        self.saved_rotations_data.add_solved_rotation(Rotation::new(
+                        let new_rotation = Rotation::new(
                             raphael_data::get_item_name(
                                 self.recipe_config.recipe.item_id,
                                 false,
@@ -531,7 +531,9 @@ impl MacroSolverApp {
                             self.selected_food,
                             self.selected_potion,
                             &self.crafter_config,
-                        ));
+                        );
+                        self.saved_rotations_data
+                            .add_solved_rotation(new_rotation, &self.saved_rotations_config);
                     } else {
                         self.solver_error = exception;
                     }
