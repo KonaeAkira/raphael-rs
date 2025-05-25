@@ -39,8 +39,8 @@ pub struct SolverConfig {
 
 #[cfg(debug_assertions)]
 #[derive(Debug, Default)]
-struct DevInfoState {
-    show_dev_info_panel: bool,
+struct DevPanelState {
+    show_dev_panel: bool,
     render_info_state: RenderInfoState,
 }
 
@@ -58,7 +58,7 @@ pub struct MacroSolverApp {
     saved_rotations_data: SavedRotationsData,
 
     #[cfg(debug_assertions)]
-    dev_info_state: DevInfoState,
+    dev_panel_state: DevPanelState,
 
     latest_version: Arc<Mutex<semver::Version>>,
     current_version: semver::Version,
@@ -120,7 +120,7 @@ impl MacroSolverApp {
             saved_rotations_data: load(cc, "SAVED_ROTATIONS", SavedRotationsData::default()),
 
             #[cfg(debug_assertions)]
-            dev_info_state: DevInfoState::default(),
+            dev_panel_state: DevPanelState::default(),
 
             latest_version: latest_version.clone(),
             current_version: semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap(),
@@ -361,33 +361,30 @@ impl eframe::App for MacroSolverApp {
                             .open_in_new_tab(true),
                         );
                         #[cfg(debug_assertions)]
-                        ui.allocate_space(egui::vec2(125.0, 0.0));
+                        ui.allocate_space(egui::vec2(145.0, 0.0));
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             #[cfg(debug_assertions)]
                             if ui
-                                .selectable_label(
-                                    self.dev_info_state.show_dev_info_panel,
-                                    "Dev Info",
-                                )
+                                .selectable_label(self.dev_panel_state.show_dev_panel, "Dev Panel")
                                 .clicked()
                             {
-                                self.dev_info_state.show_dev_info_panel =
-                                    !self.dev_info_state.show_dev_info_panel;
+                                self.dev_panel_state.show_dev_panel =
+                                    !self.dev_panel_state.show_dev_panel;
                             };
                             egui::warn_if_debug_build(ui);
+                            ui.separator();
                         });
                     });
                 });
         });
 
         #[cfg(debug_assertions)]
-        if self.dev_info_state.show_dev_info_panel {
-            egui::SidePanel::right("right_panel")
+        if self.dev_panel_state.show_dev_panel {
+            egui::SidePanel::right("dev_panel")
                 .resizable(true)
                 .show(ctx, |ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-                    ui.heading("Rendering");
-                    RenderInfo::new(&mut self.dev_info_state.render_info_state).ui(ui, _frame);
+                    RenderInfo::new(&mut self.dev_panel_state.render_info_state).ui(ui, _frame);
                 });
         }
 

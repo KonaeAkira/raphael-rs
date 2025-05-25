@@ -8,6 +8,44 @@ enum RunMode {
     Continuous,
 }
 
+#[derive(Debug, Clone, Default)]
+struct EguiWindows {
+    settings: bool,
+    inspection: bool,
+    memory: bool,
+    // `output_events` is skipped
+}
+
+impl EguiWindows {
+    fn ui(&mut self, ui: &mut egui::Ui) {
+        ui.checkbox(&mut self.settings, "🔧 Settings");
+        ui.checkbox(&mut self.inspection, "🔍 Inspection");
+        ui.checkbox(&mut self.memory, "📝 Memory");
+
+        let ctx = ui.ctx();
+        egui::Window::new("🔧 Settings")
+            .open(&mut self.settings)
+            .vscroll(true)
+            .show(ctx, |ui| {
+                ctx.settings_ui(ui);
+            });
+
+        egui::Window::new("🔍 Inspection")
+            .open(&mut self.inspection)
+            .vscroll(true)
+            .show(ctx, |ui| {
+                ctx.inspection_ui(ui);
+            });
+
+        egui::Window::new("📝 Memory")
+            .open(&mut self.memory)
+            .resizable(false)
+            .show(ctx, |ui| {
+                ctx.memory_ui(ui);
+            });
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RenderInfoState {
     run_mode: RunMode,
@@ -18,6 +56,8 @@ pub struct RenderInfoState {
     y_lim: f32,
     plot_cpu_usage: bool,
     plot_frame_time: bool,
+
+    egui_windows: EguiWindows,
 }
 
 impl RenderInfoState {
@@ -77,6 +117,8 @@ impl Default for RenderInfoState {
             y_lim: 0.010,
             plot_cpu_usage: true,
             plot_frame_time: false,
+
+            egui_windows: EguiWindows::default(),
         }
     }
 }
@@ -92,6 +134,12 @@ impl<'a> RenderInfo<'a> {
 
     pub fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         self.state.update(ui.ctx(), frame);
+
+        ui.vertical_centered(|ui| {
+            ui.heading("Rendering / UI");
+        });
+
+        ui.separator();
 
         ui.horizontal(|ui| {
             ui.label("Mode:");
@@ -208,6 +256,11 @@ impl<'a> RenderInfo<'a> {
                 });
             });
         }
+        ui.separator();
+
+        ui.label("egui windows:");
+        ui.add(egui::Label::new(egui::RichText::new("⚠ Changing settings in these windows may not allow for them to be reset unless the entire stored state is deleted").color(ui.visuals().warn_fg_color).small()).wrap());
+        self.state.egui_windows.ui(ui);
     }
 
     fn graph(&self, ui: &mut egui::Ui) -> egui::Response {
