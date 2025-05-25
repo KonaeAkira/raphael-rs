@@ -84,6 +84,7 @@ impl<'a> MacroSolver<'a> {
         }
 
         let timer = ScopedTimer::new("Finish Solver");
+        self.finish_solver.precompute();
         if !self.finish_solver.can_finish(&initial_state) {
             return Err(SolverException::NoSolution);
         }
