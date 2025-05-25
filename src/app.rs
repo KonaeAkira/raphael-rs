@@ -37,7 +37,7 @@ pub struct SolverConfig {
     pub adversarial: bool,
 }
 
-#[cfg(debug_assertions)]
+#[cfg(any(debug_assertions, feature = "dev-panel"))]
 #[derive(Debug, Default)]
 struct DevPanelState {
     show_dev_panel: bool,
@@ -57,7 +57,7 @@ pub struct MacroSolverApp {
     saved_rotations_config: SavedRotationsConfig,
     saved_rotations_data: SavedRotationsData,
 
-    #[cfg(debug_assertions)]
+    #[cfg(any(debug_assertions, feature = "dev-panel"))]
     dev_panel_state: DevPanelState,
 
     latest_version: Arc<Mutex<semver::Version>>,
@@ -119,7 +119,7 @@ impl MacroSolverApp {
             ),
             saved_rotations_data: load(cc, "SAVED_ROTATIONS", SavedRotationsData::default()),
 
-            #[cfg(debug_assertions)]
+            #[cfg(any(debug_assertions, feature = "dev-panel"))]
             dev_panel_state: DevPanelState::default(),
 
             latest_version: latest_version.clone(),
@@ -362,7 +362,9 @@ impl eframe::App for MacroSolverApp {
                         );
                         #[cfg(debug_assertions)]
                         ui.allocate_space(egui::vec2(145.0, 0.0));
-                        #[cfg(debug_assertions)]
+                        #[cfg(all(not(debug_assertions), feature = "dev-panel"))]
+                        ui.allocate_space(egui::vec2(68.0, 0.0));
+                        #[cfg(any(debug_assertions, feature = "dev-panel"))]
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             if ui
                                 .selectable_label(self.dev_panel_state.show_dev_panel, "Dev Panel")
@@ -378,7 +380,7 @@ impl eframe::App for MacroSolverApp {
                 });
         });
 
-        #[cfg(debug_assertions)]
+        #[cfg(any(debug_assertions, feature = "dev-panel"))]
         if self.dev_panel_state.show_dev_panel {
             egui::SidePanel::right("dev_panel")
                 .resizable(true)
