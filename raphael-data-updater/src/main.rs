@@ -112,7 +112,8 @@ async fn main() {
     env_logger::builder().format_timestamp(None).init();
 
     let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>("en").await });
-    let level_adjust_table_entries = tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>("en").await });
+    let level_adjust_table_entries =
+        tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>("en").await });
     let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>("en").await });
     let items = tokio::spawn(async { fetch_and_parse::<Item>("en").await });
     let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>("en").await });
