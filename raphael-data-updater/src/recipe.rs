@@ -30,7 +30,7 @@ impl SheetData for Recipe {
     const REQUIRED_FIELDS: &[&str] = &[
         "CraftType",
         "ItemResult",
-        "Unknown0",
+        "MaxAdjustableJobLevel",
         "RecipeLevelTable",
         "DifficultyFactor",
         "QualityFactor",
@@ -63,7 +63,7 @@ impl SheetData for Recipe {
             id: value["row_id"].as_u32().unwrap(),
             job_id: fields["CraftType"]["value"].as_u32().unwrap(),
             item_id: fields["ItemResult"]["value"].as_u32().unwrap(),
-            max_level_scaling: fields["Unknown0"].as_u32().unwrap(),
+            max_level_scaling: fields["MaxAdjustableJobLevel"]["value"].as_u32().unwrap(),
             recipe_level: fields["RecipeLevelTable"]["value"].as_u32().unwrap(),
             progress_factor: fields["DifficultyFactor"].as_u32().unwrap(),
             quality_factor: fields["QualityFactor"].as_u32().unwrap(),

@@ -8934,7 +8934,7 @@
         (10959, "Dhalmelskin Crakows of Casting"),
         (44433, "Everseeker's Top of Crafting"),
         (31948, "Grade 4 Skybuilders' Brazier"),
-        (48240, "Lunar Alloy Ingots"),
+        (48240, "Lunar Alloy Ingot"),
         (8666, "Mythril Knives"),
         (8563, "Oval Spectacles"),
         (21057, "Wind-up Ravana"),

@@ -334,7 +334,7 @@ fn test_standard_indurate_rings_lv93() {
 #[test]
 fn test_lunar_alloy_ingots_lv90() {
     // https://github.com/KonaeAkira/raphael-rs/issues/117#issuecomment-2825562688
-    let recipe = find_recipe("Lunar Alloy Ingots").unwrap();
+    let recipe = find_recipe("Lunar Alloy Ingot").unwrap();
     let crafter_stats = CrafterStats {
         craftsmanship: 3796,
         control: 3447,
@@ -401,7 +401,7 @@ fn test_standard_high_density_fiberboard_lv91() {
 
 #[test]
 fn test_lunar_alloy_ingots_lv10() {
-    let recipe = find_recipe("Lunar Alloy Ingots").unwrap();
+    let recipe = find_recipe("Lunar Alloy Ingot").unwrap();
     let crafter_stats = CrafterStats {
         craftsmanship: 3796,
         control: 3447,

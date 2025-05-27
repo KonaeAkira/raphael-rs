@@ -335,7 +335,7 @@ impl<'a> RotationWidget<'a> {
                     if self.rotation.recipe_info.is_none() {
                         ui.add(
                             egui::Label::new(
-                                egui::RichText::new("⚠ pre-v0.20.3 rotation. No recipe data.")
+                                egui::RichText::new("⚠ pre-v0.21.0 rotation. No recipe data.")
                                     .small()
                                     .color(ui.visuals().warn_fg_color),
                             )
@@ -583,7 +583,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     ui.add(
                         egui::Label::new(
                             egui::RichText::new(
-                                "⚠ Rotations saved before v0.20.3 do not contain the necessary information to load recipe data.",
+                                "⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.",
                             )
                             .small()
                             .color(ui.visuals().warn_fg_color),

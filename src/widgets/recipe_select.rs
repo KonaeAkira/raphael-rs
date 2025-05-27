@@ -136,7 +136,7 @@ impl<'a> RecipeSelect<'a> {
         let use_base_increase_overrides = self
             .custom_recipe_overrides_config
             .use_base_increase_overrides;
-        ui.label(egui::RichText::new("⚠ Only use custom recipes if you are an advanced user or if new recipes haven't been added yet. Patch 7.21 recipes are now fully supported.").small().color(ui.visuals().warn_fg_color));
+        ui.label(egui::RichText::new("⚠ Only use custom recipes if you are an advanced user or if new recipes haven't been added yet. Patch 7.25 recipes are now fully supported.").small().color(ui.visuals().warn_fg_color));
         ui.separator();
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
