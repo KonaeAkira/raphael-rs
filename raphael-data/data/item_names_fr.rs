@@ -6383,7 +6383,7 @@
         (6371, "Toit de villa en bois thanalanaise"),
         (43320, "Gilet des ressources en soie des Prés fulgurants"),
         (2552, "Hachette en acier"),
-        (48239, "Pièces pour vaisseau spatial"),
+        (48239, "Pièce pour vaisseau spatial"),
         (31875, "Boucles d'oreilles de pisteur de l'exarchat"),
         (14735, "Culotte d'éclaireur en étoffe primordiale"),
         (18560, "Boucles d'oreilles d'attaquant en azurite"),

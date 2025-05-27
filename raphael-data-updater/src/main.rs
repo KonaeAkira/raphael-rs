@@ -123,7 +123,7 @@ async fn main() {
     let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>("de").await });
     let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>("fr").await });
     let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja").await });
-    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("kr").await });
+    // let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("kr").await });
 
     let rlvls = rlvls.await.unwrap();
     let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
@@ -138,7 +138,7 @@ async fn main() {
     let mut item_names_de = item_names_de.await.unwrap();
     let mut item_names_fr = item_names_fr.await.unwrap();
     let mut item_names_jp = item_names_jp.await.unwrap();
-    let mut item_names_kr = item_names_kr.await.unwrap();
+    // let mut item_names_kr = item_names_kr.await.unwrap();
 
     // For some reason some recipes have items with ID 0 as their result
     recipes.retain(|recipe| recipe.item_id != 0);
@@ -177,7 +177,7 @@ async fn main() {
     item_names_de.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_fr.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_jp.retain(|item_name| necessary_items.contains(&item_name.id));
-    item_names_kr.retain(|item_name| necessary_items.contains(&item_name.id));
+    // item_names_kr.retain(|item_name| necessary_items.contains(&item_name.id));
 
     export_rlvls(&rlvls);
     export_level_adjust_table(&level_adjust_table_entries);
@@ -190,5 +190,5 @@ async fn main() {
     export_item_names(&item_names_de, "de");
     export_item_names(&item_names_fr, "fr");
     export_item_names(&item_names_jp, "jp");
-    export_item_names(&item_names_kr, "kr");
+    // export_item_names(&item_names_kr, "kr");
 }
