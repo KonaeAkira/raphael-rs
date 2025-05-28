@@ -9,7 +9,7 @@ use crate::quality_upper_bound_solver::QualityUbSolverStats;
 use crate::step_lower_bound_solver::StepLbSolverStats;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
-use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
+use crate::{QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
 use std::vec::Vec;
 
@@ -34,7 +34,6 @@ type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MacroSolverStats {
-    pub finish_states: usize,
     pub search_queue_stats: SearchQueueStats,
     pub quality_ub_stats: QualityUbSolverStats,
     pub step_lb_stats: StepLbSolverStats,
@@ -44,7 +43,6 @@ pub struct MacroSolver<'a> {
     settings: SolverSettings,
     solution_callback: Box<SolutionCallback<'a>>,
     progress_callback: Box<ProgressCallback<'a>>,
-    finish_solver: FinishSolver,
     quality_ub_solver: QualityUbSolver,
     step_lb_solver: StepLbSolver,
     search_queue_stats: SearchQueueStats, // stats of last solve
@@ -62,7 +60,6 @@ impl<'a> MacroSolver<'a> {
             settings,
             solution_callback,
             progress_callback,
-            finish_solver: FinishSolver::new(settings),
             quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
             step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
             search_queue_stats: SearchQueueStats::default(),
@@ -82,12 +79,6 @@ impl<'a> MacroSolver<'a> {
         if initial_state.quality >= self.settings.max_quality() {
             initial_state.effects = initial_state.effects.strip_quality_effects();
         }
-
-        let timer = ScopedTimer::new("Finish Solver");
-        if !self.finish_solver.can_finish(&initial_state) {
-            return Err(SolverException::NoSolution);
-        }
-        drop(timer);
 
         let timer = ScopedTimer::new("Quality UB Solver");
         self.quality_ub_solver.precompute();
@@ -120,19 +111,6 @@ impl<'a> MacroSolver<'a> {
             for action in search_actions {
                 if let Ok(state) = use_action_combo(&self.settings, state, *action) {
                     if !state.is_final(&self.settings.simulator_settings) {
-                        if !self.finish_solver.can_finish(&state) {
-                            // skip this state if it is impossible to max out Progress
-                            continue;
-                        }
-
-                        search_queue.update_min_score(SearchScore {
-                            quality_upper_bound: std::cmp::min(
-                                state.quality,
-                                self.settings.max_quality(),
-                            ),
-                            ..SearchScore::MIN
-                        });
-
                         let quality_upper_bound = if state.quality >= self.settings.max_quality() {
                             self.settings.max_quality()
                         } else {
@@ -203,7 +181,6 @@ impl<'a> MacroSolver<'a> {
 
     pub fn runtime_stats(&self) -> MacroSolverStats {
         MacroSolverStats {
-            finish_states: self.finish_solver.num_states(),
             search_queue_stats: self.search_queue_stats,
             quality_ub_stats: self.quality_ub_solver.runtime_stats(),
             step_lb_stats: self.step_lb_solver.runtime_stats(),

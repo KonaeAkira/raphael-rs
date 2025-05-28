@@ -1,8 +1,5 @@
 mod actions;
 
-mod finish_solver;
-use finish_solver::FinishSolver;
-
 mod quality_upper_bound_solver;
 use quality_upper_bound_solver::QualityUbSolver;
 
