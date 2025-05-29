@@ -1,12 +1,13 @@
-use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 use raphael_sim::{Action, SimulationState};
+use rustc_hash::FxHashMap;
 
 use crate::{actions::ActionCombo, utils::Backtracking};
 
 use super::pareto_front::ParetoFront;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SearchScore {
     pub quality_upper_bound: u32,
     pub steps_lower_bound: u8,
@@ -66,7 +67,8 @@ pub struct SearchQueueStats {
 
 pub struct SearchQueue {
     pareto_front: ParetoFront,
-    buckets: BTreeMap<SearchScore, Vec<SearchNode>>,
+    scores: BTreeSet<SearchScore>,
+    nodes: FxHashMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<ActionCombo>,
     current_score: SearchScore,
     current_nodes: Vec<(SimulationState, usize)>,
@@ -80,7 +82,8 @@ impl SearchQueue {
         Self {
             pareto_front: ParetoFront::default(),
             backtracking: Backtracking::new(),
-            buckets: BTreeMap::default(),
+            scores: BTreeSet::new(),
+            nodes: FxHashMap::default(),
             current_score: SearchScore::MAX,
             current_nodes: vec![(initial_state, Backtracking::<Action>::SENTINEL)],
             minimum_score: SearchScore::MIN,
@@ -95,11 +98,12 @@ impl SearchQueue {
         }
         self.minimum_score = score;
         let mut dropped = 0;
-        while let Some((bucket_score, _)) = self.buckets.first_key_value() {
-            if *bucket_score >= self.minimum_score {
+        while let Some(&score) = self.scores.first() {
+            if score >= self.minimum_score {
                 break;
             }
-            dropped += self.buckets.pop_first().unwrap().1.len();
+            self.scores.pop_first();
+            dropped += self.nodes.remove(&score).map_or(0, |nodes| nodes.len());
         }
         self.dropped_nodes += dropped;
         log::trace!(
@@ -121,17 +125,27 @@ impl SearchQueue {
         #[cfg(test)]
         assert!(self.current_score > score);
         if score > self.minimum_score {
-            self.buckets.entry(score).or_default().push(SearchNode {
+            let new_node = SearchNode {
                 state,
                 action,
                 parent_id,
-            });
+            };
+            match self.nodes.entry(score) {
+                std::collections::hash_map::Entry::Occupied(mut occupied) => {
+                    occupied.get_mut().push(new_node);
+                }
+                std::collections::hash_map::Entry::Vacant(vacant) => {
+                    self.scores.insert(score);
+                    vacant.insert(vec![new_node]);
+                }
+            }
         }
     }
 
     pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {
         while self.current_nodes.is_empty() {
-            if let Some((score, mut bucket)) = self.buckets.pop_last() {
+            if let Some(score) = self.scores.pop_last() {
+                let mut bucket = self.nodes.remove(&score).unwrap();
                 // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
                 bucket.sort_unstable_by(|lhs, rhs| {
                     pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
