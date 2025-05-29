@@ -456,9 +456,9 @@ fn stuffed_peppers_2_heart_and_soul() {
                 pareto_values: 20676360,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 1687882,
-                sequential_states: 864563,
-                pareto_values: 22444542,
+                parallel_states: 3361396,
+                sequential_states: 0,
+                pareto_values: 26035232,
             },
         }
     "#]];
@@ -508,9 +508,9 @@ fn stuffed_peppers_2_quick_innovation() {
                 pareto_values: 20284215,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 1493595,
-                sequential_states: 898225,
-                pareto_values: 22126035,
+                parallel_states: 3071733,
+                sequential_states: 0,
+                pareto_values: 25567704,
             },
         }
     "#]];

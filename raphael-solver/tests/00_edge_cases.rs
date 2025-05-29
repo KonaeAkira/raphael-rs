@@ -240,9 +240,9 @@ fn large_progress_quality_increase() {
                 pareto_values: 33095,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 120,
-                sequential_states: 9,
-                pareto_values: 129,
+                parallel_states: 456,
+                sequential_states: 1,
+                pareto_values: 457,
             },
         }
     "#]];
