@@ -8,7 +8,7 @@ use crate::{
 
 use super::QualityUbSolver;
 
-fn solve(simulator_settings: Settings, actions: &[Action]) -> u32 {
+fn solve(simulator_settings: Settings, actions: &[Action]) -> Option<u32> {
     let mut state = SimulationState::from_macro(&simulator_settings, actions).unwrap();
     state.effects.set_combo(Combo::None);
     let solver_settings = SolverSettings { simulator_settings };
@@ -35,7 +35,7 @@ fn test_manipulation_refund() {
         backload_progress: false,
     };
     let result = solve(settings, &[Action::Manipulation]);
-    assert_eq!(result, 4975);
+    assert_eq!(result, Some(4975));
 }
 
 /// Test that the QualityUbSolver is consistent and admissible.
@@ -52,12 +52,12 @@ fn check_consistency(solver_settings: SolverSettings) {
             let child_upper_bound = match use_action_combo(&solver_settings, state, *action) {
                 Ok(child) => match child.is_final(&solver_settings.simulator_settings) {
                     false => solver.quality_upper_bound(child).unwrap(),
-                    true if child.progress >= u32::from(solver_settings.max_progress()) => {
-                        std::cmp::min(u32::from(solver_settings.max_quality()), child.quality)
+                    true if child.progress >= solver_settings.max_progress() => {
+                        Some(solver_settings.max_quality().min(child.quality))
                     }
-                    true => 0,
+                    true => None,
                 },
-                Err(_) => 0,
+                Err(_) => None,
             };
             if state_upper_bound < child_upper_bound {
                 dbg!(state, action, state_upper_bound, child_upper_bound);

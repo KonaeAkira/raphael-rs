@@ -111,15 +111,11 @@ impl<'a> MacroSolver<'a> {
             for action in search_actions {
                 if let Ok(state) = use_action_combo(&self.settings, state, *action) {
                     if !state.is_final(&self.settings.simulator_settings) {
-                        let quality_upper_bound = if state.quality >= self.settings.max_quality() {
-                            self.settings.max_quality()
-                        } else {
-                            std::cmp::min(
-                                score.quality_upper_bound,
-                                self.quality_ub_solver.quality_upper_bound(state)?,
-                            )
-                        };
-
+                        let quality_upper_bound =
+                            match self.quality_ub_solver.quality_upper_bound(state)? {
+                                Some(quality) => quality.min(score.quality_upper_bound),
+                                None => continue, // QualityUbSolver can't finish Progress
+                            };
                         let step_lb_hint = score
                             .steps_lower_bound
                             .saturating_sub(score.current_steps + action.steps());
@@ -131,7 +127,6 @@ impl<'a> MacroSolver<'a> {
                                     .saturating_add(score.current_steps + action.steps()),
                                 false => score.current_steps + action.steps(),
                             };
-
                         search_queue.push(
                             state,
                             SearchScore {

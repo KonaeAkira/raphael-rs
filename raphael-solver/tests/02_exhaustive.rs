@@ -137,7 +137,7 @@ fn pactmaker_3240_3130() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 5662,
-                dropped_nodes: 85279,
+                dropped_nodes: 84897,
                 pareto_buckets_squared_size_sum: 84770,
             },
             quality_ub_stats: QualityUbSolverStats {
@@ -236,7 +236,7 @@ fn diadochos_4021_3660() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 6413,
-                dropped_nodes: 98264,
+                dropped_nodes: 97633,
                 pareto_buckets_squared_size_sum: 61739,
             },
             quality_ub_stats: QualityUbSolverStats {
@@ -335,19 +335,19 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1530910,
-                dropped_nodes: 28043662,
-                pareto_buckets_squared_size_sum: 95970491,
+                processed_nodes: 1527871,
+                dropped_nodes: 28016975,
+                pareto_buckets_squared_size_sum: 95939696,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 932788,
-                sequential_states: 3374,
-                pareto_values: 24352482,
+                sequential_states: 7329,
+                pareto_values: 24356437,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2227573,
-                sequential_states: 3194,
-                pareto_values: 42544931,
+                sequential_states: 2730,
+                pareto_values: 42544467,
             },
         }
     "#]];
@@ -539,19 +539,19 @@ fn rakaznar_lapidary_hammer_4462_4391() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 22023,
-                dropped_nodes: 427991,
-                pareto_buckets_squared_size_sum: 254926,
+                processed_nodes: 22022,
+                dropped_nodes: 426855,
+                pareto_buckets_squared_size_sum: 254893,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 709548,
-                sequential_states: 0,
-                pareto_values: 13383321,
+                sequential_states: 5057,
+                pareto_values: 13388378,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1514037,
-                sequential_states: 3934,
-                pareto_values: 21952037,
+                sequential_states: 3460,
+                pareto_values: 21951563,
             },
         }
     "#]];
@@ -595,8 +595,8 @@ fn black_star_4048_3997() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 414395,
-                sequential_states: 0,
-                pareto_values: 3311964,
+                sequential_states: 4453,
+                pareto_values: 3316417,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 161900,
@@ -645,8 +645,8 @@ fn claro_walnut_lumber_4900_4800() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 588992,
-                sequential_states: 0,
-                pareto_values: 5653305,
+                sequential_states: 3943,
+                pareto_values: 5657248,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 456982,
@@ -695,8 +695,8 @@ fn rakaznar_lapidary_hammer_4900_4800() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 615546,
-                sequential_states: 0,
-                pareto_values: 9634708,
+                sequential_states: 2670,
+                pareto_values: 9637378,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1229899,
@@ -745,8 +745,8 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 579131,
-                sequential_states: 0,
-                pareto_values: 8283565,
+                sequential_states: 8113,
+                pareto_values: 8291678,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1108877,
@@ -795,8 +795,8 @@ fn archeo_kingdom_broadsword_4966_4914() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 812878,
-                sequential_states: 0,
-                pareto_values: 18128867,
+                sequential_states: 7422,
+                pareto_values: 18136289,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1517488,
@@ -839,19 +839,19 @@ fn hardened_survey_plank_5558_5216() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1816569,
-                dropped_nodes: 31331702,
-                pareto_buckets_squared_size_sum: 184080529,
+                processed_nodes: 1816501,
+                dropped_nodes: 31329811,
+                pareto_buckets_squared_size_sum: 184079775,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 969126,
-                sequential_states: 1226,
-                pareto_values: 17428578,
+                sequential_states: 3956,
+                pareto_values: 17431308,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 386882,
-                sequential_states: 634,
-                pareto_values: 5750727,
+                sequential_states: 573,
+                pareto_values: 5750666,
             },
         }
     "#]];

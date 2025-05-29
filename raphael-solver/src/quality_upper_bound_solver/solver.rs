@@ -220,7 +220,7 @@ impl QualityUbSolver {
     pub fn quality_upper_bound(
         &mut self,
         mut state: SimulationState,
-    ) -> Result<u32, SolverException> {
+    ) -> Result<Option<u32>, SolverException> {
         if state.effects.combo() != Combo::None {
             return Err(SolverException::InternalError(format!(
                 "\"{:?}\" combo in quality upper bound solver",
@@ -255,16 +255,16 @@ impl QualityUbSolver {
                 && value.first >= required_progress
                 && value.second + state.quality >= self.settings.max_quality()
             {
-                return Ok(self.settings.max_quality());
+                return Ok(Some(self.settings.max_quality()));
             }
         }
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
-            let quality = pareto_front
+            let quality_ub = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality + value.second);
-            return Ok(std::cmp::min(self.settings.max_quality(), quality));
+                .map(|value| (state.quality + value.second).min(self.settings.max_quality()));
+            return Ok(quality_ub);
         }
 
         self.pareto_front_builder.clear();
@@ -272,10 +272,10 @@ impl QualityUbSolver {
 
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
-            let quality = pareto_front
+            let quality_ub = pareto_front
                 .get(index)
-                .map_or(0, |value| state.quality + value.second);
-            Ok(std::cmp::min(self.settings.max_quality(), quality))
+                .map(|value| (state.quality + value.second).min(self.settings.max_quality()));
+            return Ok(quality_ub);
         } else {
             unreachable!("State must be in memoization table after solver")
         }
