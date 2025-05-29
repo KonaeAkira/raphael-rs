@@ -65,10 +65,7 @@ fn rinascita_3700_3280() {
         base_progress: 229,
         base_quality: 224,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -116,10 +113,7 @@ fn pactmaker_3240_3130() {
         base_progress: 200,
         base_quality: 215,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -217,10 +211,7 @@ fn diadochos_4021_3660() {
         base_progress: 249,
         base_quality: 247,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -268,10 +259,7 @@ fn indagator_3858_4057() {
         base_progress: 239,
         base_quality: 271,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -319,10 +307,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
         base_progress: 256,
         base_quality: 265,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -372,10 +357,7 @@ fn stuffed_peppers_2() {
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -527,10 +509,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
         base_progress: 237,
         base_quality: 245,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -578,10 +557,7 @@ fn black_star_4048_3997() {
         base_progress: 250,
         base_quality: 312,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -629,10 +605,7 @@ fn claro_walnut_lumber_4900_4800() {
         base_progress: 300,
         base_quality: 368,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -680,10 +653,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
         base_progress: 261,
         base_quality: 266,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -731,10 +701,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
         base_progress: 264,
         base_quality: 267,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -782,10 +749,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
         base_progress: 264,
         base_quality: 271,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };
@@ -833,10 +797,7 @@ fn hardened_survey_plank_5558_5216() {
         base_progress: 310,
         base_quality: 324,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };

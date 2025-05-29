@@ -65,10 +65,7 @@ fn unsolvable() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
     };
@@ -109,10 +106,7 @@ fn zero_quality() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
     };
@@ -160,10 +154,7 @@ fn max_quality() {
         base_progress: 100,
         base_quality: 100,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
     };
@@ -259,10 +250,7 @@ fn backload_progress_single_delicate_synthesis() {
         base_progress: 100,
         base_quality: 100,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
     };

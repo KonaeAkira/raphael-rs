@@ -130,10 +130,7 @@ fn test_rare_tacos_2() {
         base_progress: 256,
         base_quality: 265,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
     };
@@ -235,10 +232,7 @@ fn test_indagator_3858_4057() {
         base_progress: 239,
         base_quality: 271,
         job_level: 90,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
     };
@@ -341,10 +335,7 @@ fn issue_113() {
         base_progress: 297,
         base_quality: 288,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
     };
@@ -393,10 +384,7 @@ fn issue_118() {
         base_progress: 205,
         base_quality: 240,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
     };
