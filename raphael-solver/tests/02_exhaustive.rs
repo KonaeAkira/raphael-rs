@@ -368,7 +368,7 @@ fn stuffed_peppers_2() {
         max_cp: 646,
         max_durability: 80,
         max_progress: 6300,
-        max_quality: 40000,
+        max_quality: 11400,
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
@@ -383,30 +383,30 @@ fn stuffed_peppers_2() {
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
-                capped_quality: 20177,
-                steps: 31,
-                duration: 85,
-                overflow_quality: 0,
+                capped_quality: 11400,
+                steps: 15,
+                duration: 42,
+                overflow_quality: 336,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 905935,
+            finish_states: 113230,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 624421,
-                dropped_nodes: 5460978,
-                pareto_buckets_squared_size_sum: 33727927,
+                processed_nodes: 160,
+                dropped_nodes: 3297,
+                pareto_buckets_squared_size_sum: 296,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 943006,
-                sequential_states: 25383,
-                pareto_values: 25572638,
+                parallel_states: 685374,
+                sequential_states: 0,
+                pareto_values: 12109118,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                sequential_states: 0,
-                pareto_values: 0,
+                parallel_states: 1414006,
+                sequential_states: 5,
+                pareto_values: 20622461,
             },
         }
     "#]];
@@ -421,7 +421,7 @@ fn stuffed_peppers_2_heart_and_soul() {
         max_cp: 646,
         max_durability: 80,
         max_progress: 6300,
-        max_quality: 40000,
+        max_quality: 11400,
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
@@ -435,30 +435,30 @@ fn stuffed_peppers_2_heart_and_soul() {
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
-                capped_quality: 21536,
-                steps: 30,
-                duration: 83,
-                overflow_quality: 0,
+                capped_quality: 11400,
+                steps: 15,
+                duration: 42,
+                overflow_quality: 336,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 880717,
+            finish_states: 135300,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 136776,
-                dropped_nodes: 2265702,
-                pareto_buckets_squared_size_sum: 3372283,
+                processed_nodes: 165,
+                dropped_nodes: 3871,
+                pareto_buckets_squared_size_sum: 305,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1927690,
-                sequential_states: 47209,
-                pareto_values: 53396652,
+                parallel_states: 1464188,
+                sequential_states: 0,
+                pareto_values: 24789603,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                sequential_states: 0,
-                pareto_values: 0,
+                parallel_states: 1624750,
+                sequential_states: 700057,
+                pareto_values: 34533488,
             },
         }
     "#]];
@@ -473,7 +473,7 @@ fn stuffed_peppers_2_quick_innovation() {
         max_cp: 646,
         max_durability: 80,
         max_progress: 6300,
-        max_quality: 40000,
+        max_quality: 11400,
         base_progress: 289,
         base_quality: 360,
         job_level: 100,
@@ -487,30 +487,30 @@ fn stuffed_peppers_2_quick_innovation() {
     let expected_score = expect![[r#"
         Some(
             SolutionScore {
-                capped_quality: 20502,
-                steps: 28,
-                duration: 77,
-                overflow_quality: 0,
+                capped_quality: 11400,
+                steps: 15,
+                duration: 42,
+                overflow_quality: 336,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 918966,
+            finish_states: 113231,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1064957,
-                dropped_nodes: 11405000,
-                pareto_buckets_squared_size_sum: 56970375,
+                processed_nodes: 160,
+                dropped_nodes: 3422,
+                pareto_buckets_squared_size_sum: 296,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 1966489,
-                sequential_states: 50389,
-                pareto_values: 53389943,
+                parallel_states: 1405659,
+                sequential_states: 0,
+                pareto_values: 25010269,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                sequential_states: 0,
-                pareto_values: 0,
+                parallel_states: 1414006,
+                sequential_states: 728935,
+                pareto_values: 34615063,
             },
         }
     "#]];
@@ -967,6 +967,59 @@ fn ceviche_4900_4800_no_quality() {
                 parallel_states: 7478,
                 sequential_states: 0,
                 pareto_values: 7478,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+fn ce_high_progress_zero_achieved_quality() {
+    // Researcher's Water-resistant Leather
+    // 5386/5425/628/100 + HQ Rroneek Steak
+    let simulator_settings = Settings {
+        max_cp: 720,
+        max_durability: 25,
+        max_progress: 19800,
+        max_quality: 1100,
+        base_progress: 286,
+        base_quality: 293,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: false,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Some(
+            SolutionScore {
+                capped_quality: 0,
+                steps: 30,
+                duration: 80,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 1751541,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 390,
+                dropped_nodes: 0,
+                pareto_buckets_squared_size_sum: 692,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                parallel_states: 963431,
+                sequential_states: 0,
+                pareto_values: 3934034,
+            },
+            step_lb_stats: StepLbSolverStats {
+                parallel_states: 0,
+                sequential_states: 0,
+                pareto_values: 0,
             },
         }
     "#]];
