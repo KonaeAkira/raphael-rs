@@ -127,7 +127,7 @@ impl SimulationState {
                 .set_inner_quiet(std::cmp::min(10, state.effects.inner_quiet() + 1));
         }
 
-        let progress_increase = A::progress_increase(self, settings, condition);
+        let progress_increase = A::progress_increase(self, settings);
         state.progress += progress_increase;
         if progress_increase != 0 && state.effects.muscle_memory() != 0 {
             state.effects.set_muscle_memory(0);

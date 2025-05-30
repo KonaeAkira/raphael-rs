@@ -15,44 +15,24 @@ pub trait ActionImpl {
         Ok(())
     }
 
-    fn progress_increase(
-        state: &SimulationState,
-        settings: &Settings,
-        _condition: Condition,
-    ) -> u32 {
-        let efficiency_mod = Self::base_progress_increase(state, settings) as u64;
-        let mut effect_mod = 100;
-        if state.effects.muscle_memory() != 0 {
-            effect_mod += 100;
-        }
-        if state.effects.veneration() != 0 {
-            effect_mod += 50;
-        }
-        (settings.base_progress as u64 * efficiency_mod * effect_mod / 10000) as u32
+    #[inline]
+    fn progress_increase(state: &SimulationState, settings: &Settings) -> u32 {
+        let action_mod = u32::from(Self::progress_modifier(state, settings));
+        let effect_mod = u32::from(state.effects.progress_modifier());
+        u32::from(settings.base_progress) * action_mod * effect_mod / 10000
     }
 
+    #[inline]
     fn quality_increase(state: &SimulationState, settings: &Settings, condition: Condition) -> u32 {
-        let efficieny_mod = Self::base_quality_increase(state, settings) as u64;
+        let action_mod = u32::from(Self::quality_modifier(state, settings));
+        let effect_mod = u32::from(state.effects.quality_modifier());
         let condition_mod = match condition {
-            Condition::Good => 150,
-            Condition::Excellent => 400,
-            Condition::Poor => 50,
-            _ => 100,
+            Condition::Normal => 2,
+            Condition::Good => 3,
+            Condition::Excellent => 8,
+            Condition::Poor => 1,
         };
-        let mut effect_mod = 100;
-        if state.effects.innovation() != 0 {
-            effect_mod += 50;
-        }
-        if state.effects.great_strides() != 0 {
-            effect_mod += 100;
-        }
-        let inner_quiet_mod = 100 + 10 * state.effects.inner_quiet() as u64;
-        (settings.base_quality as u64
-            * efficieny_mod
-            * condition_mod
-            * effect_mod
-            * inner_quiet_mod
-            / 100_000_000) as u32
+        u32::from(settings.base_quality) * action_mod * effect_mod * condition_mod / 20000
     }
 
     fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> u16 {
@@ -69,10 +49,10 @@ pub trait ActionImpl {
         Self::base_cp_cost(state, settings)
     }
 
-    fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn progress_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         0
     }
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         0
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -94,7 +74,7 @@ pub struct BasicSynthesis {}
 impl ActionImpl for BasicSynthesis {
     const LEVEL_REQUIREMENT: u8 = 1;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicSynthesis);
-    fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u32 {
+    fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         if settings.job_level < 31 { 100 } else { 120 }
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -109,7 +89,7 @@ impl BasicTouch {
 impl ActionImpl for BasicTouch {
     const LEVEL_REQUIREMENT: u8 = 5;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicTouch);
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -214,7 +194,7 @@ pub struct StandardTouch {}
 impl ActionImpl for StandardTouch {
     const LEVEL_REQUIREMENT: u8 = 18;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StandardTouch);
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         125
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -293,7 +273,7 @@ impl ActionImpl for ByregotsBlessing {
             _ => Ok(()),
         }
     }
-    fn base_quality_increase(state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(state: &SimulationState, _settings: &Settings) -> u32 {
         100 + 20 * state.effects.inner_quiet() as u32
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -324,7 +304,7 @@ impl ActionImpl for PreciseTouch {
         }
         Ok(())
     }
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         150
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -356,7 +336,7 @@ impl ActionImpl for MuscleMemory {
         }
         Ok(())
     }
-    fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn progress_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         300
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -374,7 +354,7 @@ pub struct CarefulSynthesis {}
 impl ActionImpl for CarefulSynthesis {
     const LEVEL_REQUIREMENT: u8 = 62;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::CarefulSynthesis);
-    fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u32 {
+    fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         match settings.job_level {
             0..82 => 150,
             82.. => 180,
@@ -420,7 +400,7 @@ impl ActionImpl for PrudentTouch {
         }
         Ok(())
     }
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -435,7 +415,7 @@ pub struct AdvancedTouch {}
 impl ActionImpl for AdvancedTouch {
     const LEVEL_REQUIREMENT: u8 = 68;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::AdvancedTouch);
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         150
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -463,7 +443,7 @@ impl ActionImpl for Reflect {
         }
         Ok(())
     }
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         300
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -485,7 +465,7 @@ impl PreparatoryTouch {
 impl ActionImpl for PreparatoryTouch {
     const LEVEL_REQUIREMENT: u8 = 71;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PreparatoryTouch);
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         200
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -504,7 +484,7 @@ pub struct Groundwork {}
 impl ActionImpl for Groundwork {
     const LEVEL_REQUIREMENT: u8 = 72;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Groundwork);
-    fn base_progress_increase(state: &SimulationState, settings: &Settings) -> u32 {
+    fn progress_modifier(state: &SimulationState, settings: &Settings) -> u32 {
         let base = match settings.job_level {
             0..86 => 300,
             86.. => 360,
@@ -526,13 +506,13 @@ pub struct DelicateSynthesis {}
 impl ActionImpl for DelicateSynthesis {
     const LEVEL_REQUIREMENT: u8 = 76;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::DelicateSynthesis);
-    fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u32 {
+    fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         match settings.job_level {
             0..94 => 100,
             94.. => 150,
         }
     }
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -562,7 +542,7 @@ impl ActionImpl for IntensiveSynthesis {
         }
         Ok(())
     }
-    fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn progress_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         400
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -599,7 +579,7 @@ impl ActionImpl for TrainedEye {
     ) -> u32 {
         u32::from(settings.max_quality)
     }
-    fn base_quality_increase(_state: &SimulationState, settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         u32::from(settings.max_quality)
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -645,7 +625,7 @@ impl ActionImpl for PrudentSynthesis {
         }
         Ok(())
     }
-    fn base_progress_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn progress_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         180
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -670,7 +650,7 @@ impl ActionImpl for TrainedFinesse {
         }
         Ok(())
     }
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -695,7 +675,7 @@ impl ActionImpl for RefinedTouch {
         }
         Ok(())
     }
-    fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
