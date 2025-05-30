@@ -1,6 +1,8 @@
 use raphael_sim::{Effects, SimulationState};
 use rustc_hash::FxHashMap;
 
+// It is important that this mask doesn't use any effect to its full bit range.
+// Otherwise, `Value::effect_dominates` will break.
 const EFFECTS_VALUE_MASK: u32 = Effects::new()
     .with_inner_quiet(1)
     .with_manipulation(3)
@@ -53,28 +55,28 @@ impl From<&SimulationState> for Value {
 }
 
 impl Value {
-    fn dominates(&self, other: &Self) -> bool {
-        self.cp >= other.cp
+    #[inline]
+    const fn dominates(&self, other: &Self) -> bool {
+        self.effect_dominates(other)
+            && self.cp >= other.cp
             && self.durability >= other.durability
             && self.quality_dominates(other)
-            && self.effect_dominates(other)
     }
 
     #[inline]
-    fn quality_dominates(&self, other: &Self) -> bool {
+    const fn quality_dominates(&self, other: &Self) -> bool {
         let adversarial_dominates = self.unreliable_quality >= other.unreliable_quality
             || self.quality >= other.quality + other.unreliable_quality;
         self.quality >= other.quality && adversarial_dominates
     }
 
     #[inline]
-    fn effect_dominates(&self, other: &Self) -> bool {
-        self.effects.inner_quiet() >= other.effects.inner_quiet()
-            && self.effects.innovation() >= other.effects.innovation()
-            && self.effects.veneration() >= other.effects.veneration()
-            && self.effects.great_strides() >= other.effects.great_strides()
-            && self.effects.manipulation() >= other.effects.manipulation()
-            && self.effects.waste_not() >= other.effects.waste_not()
+    const fn effect_dominates(&self, other: &Self) -> bool {
+        let padded_mask = EFFECTS_KEY_MASK | self.effects.into_bits();
+        // If any effect in `other.effects` is larger than in `self.effects`, the subtraction will eat into the `EFFECTS_KEY_MASK` padding.
+        let diff = padded_mask - other.effects.into_bits();
+        // Therefore if the padding is untouched, then `self.effects` dominates `other.effects`.
+        diff & EFFECTS_KEY_MASK == EFFECTS_KEY_MASK
     }
 }
 
@@ -88,13 +90,11 @@ impl ParetoFront {
         let bucket = self.buckets.entry(Key::from(&state)).or_default();
         let new_value = Value::from(&state);
         let is_dominated = bucket.iter().any(|value| value.dominates(&new_value));
-        if is_dominated {
-            false
-        } else {
+        if !is_dominated {
             bucket.retain(|value| !new_value.dominates(value));
             bucket.push(new_value);
-            true
         }
+        !is_dominated
     }
 
     /// Returns the sum of the squared size of all Pareto buckets.
