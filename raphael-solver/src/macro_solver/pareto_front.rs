@@ -1,18 +1,16 @@
 use raphael_sim::{Effects, SimulationState};
 use rustc_hash::FxHashMap;
 
-const EFFECTS_MASK: u32 = Effects::new()
-    .with_inner_quiet(0b1110)
-    .with_muscle_memory(0b111)
-    .with_manipulation(0b1100)
-    .with_waste_not(0b1100)
-    .with_great_strides(0b10)
-    .with_heart_and_soul_active(true)
-    .with_heart_and_soul_available(true)
-    .with_trained_perfection_active(true)
-    .with_trained_perfection_available(true)
-    .with_quick_innovation_available(true)
+const EFFECTS_VALUE_MASK: u32 = Effects::new()
+    .with_inner_quiet(1)
+    .with_manipulation(3)
+    .with_waste_not(3)
+    .with_great_strides(1)
+    .with_veneration(3)
+    .with_innovation(3)
     .into_bits();
+
+const EFFECTS_KEY_MASK: u32 = !EFFECTS_VALUE_MASK;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct Key {
@@ -28,7 +26,7 @@ impl From<&SimulationState> for Key {
             progress: state.progress,
             cp: state.cp.next_multiple_of(64),
             durability: state.durability.next_multiple_of(15),
-            effects: state.effects.into_bits() & EFFECTS_MASK,
+            effects: state.effects.into_bits() & EFFECTS_KEY_MASK,
         }
     }
 }
@@ -49,7 +47,7 @@ impl From<&SimulationState> for Value {
             durability: state.durability,
             quality: state.quality,
             unreliable_quality: state.unreliable_quality,
-            effects: state.effects,
+            effects: Effects::from_bits(state.effects.into_bits() & EFFECTS_VALUE_MASK),
         }
     }
 }
@@ -71,19 +69,12 @@ impl Value {
 
     #[inline]
     fn effect_dominates(&self, other: &Self) -> bool {
-        let allow_quality_actions_dominates =
-            self.effects.allow_quality_actions() || !other.effects.allow_quality_actions();
-        let adversarial_guard_dominates =
-            self.effects.adversarial_guard() || !other.effects.adversarial_guard();
         self.effects.inner_quiet() >= other.effects.inner_quiet()
-            && self.effects.muscle_memory() >= other.effects.muscle_memory()
             && self.effects.innovation() >= other.effects.innovation()
             && self.effects.veneration() >= other.effects.veneration()
             && self.effects.great_strides() >= other.effects.great_strides()
             && self.effects.manipulation() >= other.effects.manipulation()
             && self.effects.waste_not() >= other.effects.waste_not()
-            && allow_quality_actions_dominates
-            && adversarial_guard_dominates
     }
 }
 
@@ -94,8 +85,6 @@ pub struct ParetoFront {
 
 impl ParetoFront {
     pub fn insert(&mut self, state: SimulationState) -> bool {
-        #[cfg(test)]
-        assert_eq!(state.effects.combo(), raphael_sim::Combo::None);
         let bucket = self.buckets.entry(Key::from(&state)).or_default();
         let new_value = Value::from(&state);
         let is_dominated = bucket.iter().any(|value| value.dominates(&new_value));
