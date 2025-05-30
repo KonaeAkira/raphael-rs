@@ -429,7 +429,7 @@ fn stuffed_peppers_2_heart_and_soul() {
             finish_states: 479880,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 3679,
-                dropped_nodes: 63488,
+                dropped_nodes: 63489,
                 pareto_buckets_squared_size_sum: 36165,
             },
             quality_ub_stats: QualityUbSolverStats {

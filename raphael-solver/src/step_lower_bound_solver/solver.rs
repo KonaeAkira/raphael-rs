@@ -2,7 +2,7 @@ use std::num::NonZeroU8;
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo},
     utils::{self, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
@@ -71,11 +71,7 @@ impl StepLbSolver {
 
         while let Some(template) = queue.pop_front() {
             let state = template.instantiate(NonZeroU8::MAX);
-            let search_actions = match state.effects.allow_quality_actions() {
-                false => PROGRESS_ONLY_SEARCH_ACTIONS,
-                true => FULL_SEARCH_ACTIONS,
-            };
-            for &action in search_actions {
+            for action in FULL_SEARCH_ACTIONS {
                 if let Ok(new_state) = use_action_combo(settings, state.to_state(), action) {
                     let new_state = ReducedState::from_state(new_state, NonZeroU8::MAX);
                     if new_state.durability > 0 {
@@ -152,11 +148,7 @@ impl StepLbSolver {
     ) -> Box<[ParetoValue]> {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
-        let search_actions = match state.effects.allow_quality_actions() {
-            false => PROGRESS_ONLY_SEARCH_ACTIONS,
-            true => FULL_SEARCH_ACTIONS,
-        };
-        for &action in search_actions {
+        for action in FULL_SEARCH_ACTIONS {
             if state.steps_budget.get() < action.steps() {
                 continue;
             }
@@ -260,11 +252,7 @@ impl StepLbSolver {
             return Err(SolverException::Interrupted);
         }
         self.pareto_front_builder.push_empty();
-        let search_actions = match reduced_state.effects.allow_quality_actions() {
-            false => PROGRESS_ONLY_SEARCH_ACTIONS,
-            true => FULL_SEARCH_ACTIONS,
-        };
-        for &action in search_actions {
+        for action in FULL_SEARCH_ACTIONS {
             if action.steps() <= reduced_state.steps_budget.get() {
                 self.build_child_front(reduced_state, action)?;
                 if self.pareto_front_builder.is_max() {

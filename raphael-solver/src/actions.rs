@@ -73,7 +73,7 @@ impl ActionCombo {
     }
 }
 
-pub const FULL_SEARCH_ACTIONS: &[ActionCombo] = &[
+pub const FULL_SEARCH_ACTIONS: [ActionCombo; 32] = [
     ActionCombo::AdvancedTouch,
     ActionCombo::TricksOfTheTrade,
     ActionCombo::IntensiveSynthesis,
@@ -112,7 +112,7 @@ pub const FULL_SEARCH_ACTIONS: &[ActionCombo] = &[
     ActionCombo::Single(Action::DelicateSynthesis),
 ];
 
-pub const PROGRESS_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
+pub const PROGRESS_ONLY_SEARCH_ACTIONS: [ActionCombo; 14] = [
     ActionCombo::IntensiveSynthesis,
     ActionCombo::TricksOfTheTrade,
     // progress

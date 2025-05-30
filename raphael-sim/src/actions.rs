@@ -221,6 +221,16 @@ impl GreatStrides {
 impl ActionImpl for GreatStrides {
     const LEVEL_REQUIREMENT: u8 = 21;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::GreatStrides);
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        match state.effects.allow_quality_actions() {
+            false => Err("Forbidden by backload_progress setting"),
+            true => Ok(()),
+        }
+    }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
@@ -236,6 +246,16 @@ impl Innovation {
 impl ActionImpl for Innovation {
     const LEVEL_REQUIREMENT: u8 = 26;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Innovation);
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        match state.effects.allow_quality_actions() {
+            false => Err("Forbidden by backload_progress setting"),
+            true => Ok(()),
+        }
+    }
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }

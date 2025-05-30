@@ -274,9 +274,9 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 9346,
+                parallel_states: 8965,
                 sequential_states: 0,
-                pareto_values: 9346,
+                pareto_values: 8965,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1596,

@@ -61,7 +61,7 @@ impl FinishSolver {
                 let mut max_progress = 0;
                 for action in PROGRESS_ONLY_SEARCH_ACTIONS {
                     if let Ok(new_state) =
-                        use_action_combo(&self.settings, state.to_state(), *action)
+                        use_action_combo(&self.settings, state.to_state(), action)
                     {
                         if new_state.is_final(&self.settings.simulator_settings) {
                             max_progress = std::cmp::max(max_progress, new_state.progress);
