@@ -33,24 +33,24 @@ impl From<&SimulationState> for Key {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[bitfield_struct::bitfield(u128, default = false)]
+#[derive(PartialEq, Eq)]
 struct Value {
     cp: u16,
     durability: u16,
     quality: u32,
     unreliable_quality: u32,
-    effects: Effects,
+    effects: u32,
 }
 
 impl From<&SimulationState> for Value {
     fn from(state: &SimulationState) -> Self {
-        Self {
-            cp: state.cp,
-            durability: state.durability,
-            quality: state.quality,
-            unreliable_quality: state.unreliable_quality,
-            effects: Effects::from_bits(state.effects.into_bits() & EFFECTS_VALUE_MASK),
-        }
+        Self::new()
+            .with_cp(state.cp)
+            .with_durability(state.durability)
+            .with_quality(state.quality)
+            .with_unreliable_quality(state.quality + state.unreliable_quality)
+            .with_effects(state.effects.into_bits() & EFFECTS_VALUE_MASK)
     }
 }
 
@@ -58,23 +58,17 @@ impl Value {
     #[inline]
     const fn dominates(&self, other: &Self) -> bool {
         self.effect_dominates(other)
-            && self.cp >= other.cp
-            && self.durability >= other.durability
-            && self.quality_dominates(other)
-    }
-
-    #[inline]
-    const fn quality_dominates(&self, other: &Self) -> bool {
-        let adversarial_dominates = self.unreliable_quality >= other.unreliable_quality
-            || self.quality >= other.quality + other.unreliable_quality;
-        self.quality >= other.quality && adversarial_dominates
+            && self.cp() >= other.cp()
+            && self.durability() >= other.durability()
+            && self.quality() >= other.quality()
+            && self.unreliable_quality() >= other.unreliable_quality()
     }
 
     #[inline]
     const fn effect_dominates(&self, other: &Self) -> bool {
-        let padded_mask = EFFECTS_KEY_MASK | self.effects.into_bits();
+        let padded_mask = EFFECTS_KEY_MASK | self.effects();
         // If any effect in `other.effects` is larger than in `self.effects`, the subtraction will eat into the `EFFECTS_KEY_MASK` padding.
-        let diff = padded_mask - other.effects.into_bits();
+        let diff = padded_mask - other.effects();
         // Therefore if the padding is untouched, then `self.effects` dominates `other.effects`.
         diff & EFFECTS_KEY_MASK == EFFECTS_KEY_MASK
     }
