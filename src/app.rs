@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::ops::{Deref, DerefMut};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 use raphael_solver::SolverException;
@@ -24,7 +25,6 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
 }
 
 enum SolverEvent {
-    NodesVisited(usize),
     Actions(Vec<Action>),
     LoadedFromHistory(),
     Finished(Option<SolverException>),
@@ -69,7 +69,8 @@ pub struct MacroSolverApp {
 
     actions: Vec<Action>,
     solver_pending: bool,
-    solver_progress: usize,
+    solution_loaded_from_history: bool,
+    solver_progress: Arc<AtomicUsize>,
     start_time: web_time::Instant,
     duration: web_time::Duration,
     solver_error: Option<SolverException>,
@@ -131,7 +132,8 @@ impl MacroSolverApp {
 
             actions: Vec::new(),
             solver_pending: false,
-            solver_progress: 0,
+            solution_loaded_from_history: false,
+            solver_progress: Arc::new(AtomicUsize::new(0)),
             start_time: web_time::Instant::now(),
             duration: web_time::Duration::ZERO,
             solver_error: None,
@@ -268,12 +270,12 @@ impl eframe::App for MacroSolverApp {
                             );
                             ui.label(format!("({:.2}s)", self.start_time.elapsed().as_secs_f32()));
                         });
-                        if self.solver_progress == 0 {
+                        let solver_progress = self.solver_progress.load(Ordering::Relaxed);
+                        if solver_progress == 0 {
                             ui.label("Computing ...");
                         } else {
                             // format with thousands separator
-                            let num = self
-                                .solver_progress
+                            let num = solver_progress
                                 .to_string()
                                 .as_bytes()
                                 .rchunks(3)
@@ -529,9 +531,8 @@ impl MacroSolverApp {
         let mut solver_events = self.solver_events.lock().unwrap();
         while let Some(event) = solver_events.pop_front() {
             match event {
-                SolverEvent::NodesVisited(count) => self.solver_progress = count,
                 SolverEvent::Actions(actions) => self.actions = actions,
-                SolverEvent::LoadedFromHistory() => self.solver_progress = usize::MAX,
+                SolverEvent::LoadedFromHistory() => self.solution_loaded_from_history = true,
                 SolverEvent::Finished(exception) => {
                     self.duration = self.start_time.elapsed();
                     self.solver_pending = false;
@@ -762,9 +763,9 @@ impl MacroSolverApp {
                     });
                 });
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-                    if self.solver_progress == usize::MAX {
+                    if self.solution_loaded_from_history {
                         ui.label("Loaded from saved rotations");
-                    } else if self.solver_progress > 0 {
+                    } else {
                         ui.label(format!("Elapsed time: {:.2}s", self.duration.as_secs_f32()));
                     }
                 });
@@ -1084,6 +1085,7 @@ impl MacroSolverApp {
 
     fn solve(&mut self, ctx: &egui::Context) {
         self.solver_pending = true;
+        self.solution_loaded_from_history = false;
         self.solver_interrupt.clear();
 
         let mut game_settings = util::get_game_settings(
@@ -1120,11 +1122,12 @@ impl MacroSolverApp {
                 .get_target(game_settings.max_quality);
             game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
             self.actions = Vec::new();
-            self.solver_progress = 0;
+            self.solver_progress.store(0, Ordering::SeqCst);
             self.start_time = web_time::Instant::now();
             spawn_solver(
                 game_settings,
                 self.solver_events.clone(),
+                self.solver_progress.clone(),
                 self.solver_interrupt.clone(),
             );
         }
@@ -1247,16 +1250,12 @@ fn load_fonts(ctx: &egui::Context) {
 fn spawn_solver(
     simulator_settings: raphael_sim::Settings,
     solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
+    solver_progress: Arc<AtomicUsize>,
     solver_interrupt: raphael_solver::AtomicFlag,
 ) {
     let events = solver_events.clone();
     let solution_callback = move |actions: &[raphael_sim::Action]| {
         let event = SolverEvent::Actions(actions.to_vec());
-        events.lock().unwrap().push_back(event);
-    };
-    let events = solver_events.clone();
-    let progress_callback = move |progress: usize| {
-        let event = SolverEvent::NodesVisited(progress);
         events.lock().unwrap().push_back(event);
     };
     rayon::spawn(move || {
@@ -1265,7 +1264,7 @@ fn spawn_solver(
         let mut macro_solver = raphael_solver::MacroSolver::new(
             solver_settings,
             Box::new(solution_callback),
-            Box::new(progress_callback),
+            solver_progress,
             solver_interrupt,
         );
         match macro_solver.solve() {

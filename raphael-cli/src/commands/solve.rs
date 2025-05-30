@@ -1,3 +1,5 @@
+use std::sync::{Arc, atomic::AtomicUsize};
+
 use clap::Args;
 use log::error;
 use raphael_data::{
@@ -344,7 +346,7 @@ pub fn execute(args: &SolveArgs) {
     let mut solver = MacroSolver::new(
         solver_settings,
         Box::new(|_| {}),
-        Box::new(|_| {}),
+        Arc::new(AtomicUsize::new(0)),
         AtomicFlag::new(),
     );
     let actions = solver.solve().expect("Failed to solve");

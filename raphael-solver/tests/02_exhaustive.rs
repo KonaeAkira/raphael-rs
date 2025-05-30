@@ -1,3 +1,5 @@
+use std::sync::{Arc, atomic::AtomicUsize};
+
 use expect_test::expect;
 use raphael_sim::*;
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
@@ -33,7 +35,7 @@ fn test_with_settings(
     let mut solver = MacroSolver::new(
         settings,
         Box::new(|_| {}),
-        Box::new(|_| {}),
+        Arc::new(AtomicUsize::new(0)),
         AtomicFlag::new(),
     );
     let result = solver.solve();

@@ -11,6 +11,8 @@ use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
 use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::vec::Vec;
 
 #[derive(Clone)]
@@ -30,7 +32,6 @@ impl Solution {
 }
 
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
-type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MacroSolverStats {
@@ -43,7 +44,7 @@ pub struct MacroSolverStats {
 pub struct MacroSolver<'a> {
     settings: SolverSettings,
     solution_callback: Box<SolutionCallback<'a>>,
-    progress_callback: Box<ProgressCallback<'a>>,
+    visited_nodes_counter: Arc<AtomicUsize>,
     finish_solver: FinishSolver,
     quality_ub_solver: QualityUbSolver,
     step_lb_solver: StepLbSolver,
@@ -55,13 +56,13 @@ impl<'a> MacroSolver<'a> {
     pub fn new(
         settings: SolverSettings,
         solution_callback: Box<SolutionCallback<'a>>,
-        progress_callback: Box<ProgressCallback<'a>>,
+        visited_nodes_counter: Arc<AtomicUsize>,
         interrupt_signal: AtomicFlag,
     ) -> Self {
         Self {
             settings,
             solution_callback,
-            progress_callback,
+            visited_nodes_counter,
             finish_solver: FinishSolver::new(settings),
             quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
             step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
@@ -98,15 +99,9 @@ impl<'a> MacroSolver<'a> {
         let mut search_queue = SearchQueue::new(state);
         let mut solution: Option<Solution> = None;
 
-        let mut popped = 0;
         while let Some((state, score, backtrack_id)) = search_queue.pop() {
             if self.interrupt_signal.is_set() {
                 return Err(SolverException::Interrupted);
-            }
-
-            popped += 1;
-            if popped % (1 << 12) == 0 {
-                (self.progress_callback)(popped);
             }
 
             let search_actions = match state.effects.allow_quality_actions() {
@@ -192,6 +187,8 @@ impl<'a> MacroSolver<'a> {
                     }
                 }
             }
+
+            self.visited_nodes_counter.fetch_add(1, Ordering::Relaxed);
         }
 
         self.search_queue_stats = search_queue.runtime_stats();
