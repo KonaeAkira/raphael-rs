@@ -45,10 +45,19 @@ fn test_quality_actions_forbidden() {
         &[Action::Reflect, Action::BasicSynthesis, Action::Observe],
     )
     .unwrap();
+
     let result = state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS);
     assert_eq!(result, Err("Forbidden by backload_progress setting"));
+
     let result = state.use_action(Action::PreciseTouch, Condition::Good, &SETTINGS);
     assert_eq!(result, Err("Forbidden by backload_progress setting"));
+
+    let result = state.use_action(Action::Innovation, Condition::Normal, &SETTINGS);
+    assert_eq!(result, Err("Forbidden by backload_progress setting"));
+
+    let result = state.use_action(Action::GreatStrides, Condition::Normal, &SETTINGS);
+    assert_eq!(result, Err("Forbidden by backload_progress setting"));
+
     // Using a Progress-action resets Inner Quiet.
     let result = state.use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS);
     assert_eq!(

@@ -1,6 +1,6 @@
 use crate::{
     SolverException, SolverSettings,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS},
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS},
     utils,
 };
 use raphael_sim::*;
@@ -71,7 +71,7 @@ impl QualityUbSolver {
             if template.max_cp > *entry {
                 *entry = template.max_cp;
                 let state = template.instantiate(template.max_cp).unwrap();
-                for &action in FULL_SEARCH_ACTIONS {
+                for action in FULL_SEARCH_ACTIONS {
                     if let Some((new_state, _, _)) =
                         state.use_action(action, &self.settings, self.durability_cost)
                     {
@@ -185,7 +185,7 @@ impl QualityUbSolver {
     ) -> Box<[ParetoValue]> {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
-        for &action in FULL_SEARCH_ACTIONS {
+        for action in FULL_SEARCH_ACTIONS {
             if let Some((new_state, progress, quality)) =
                 state.use_action(action, &self.settings, self.durability_cost)
             {
@@ -286,11 +286,7 @@ impl QualityUbSolver {
             return Err(SolverException::Interrupted);
         }
         self.pareto_front_builder.push_empty();
-        let search_actions = match state.effects.allow_quality_actions() {
-            false => PROGRESS_ONLY_SEARCH_ACTIONS,
-            true => FULL_SEARCH_ACTIONS,
-        };
-        for &action in search_actions {
+        for action in FULL_SEARCH_ACTIONS {
             self.build_child_front(state, action)?;
             if self.pareto_front_builder.is_max() {
                 // stop early if both Progress and Quality are maxed out

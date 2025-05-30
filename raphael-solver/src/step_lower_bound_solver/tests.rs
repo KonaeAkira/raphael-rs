@@ -18,7 +18,7 @@ fn check_consistency(solver_settings: SolverSettings) {
         let state = random_state(&solver_settings, &mut rng);
         let state_step_lb = solver.step_lower_bound(state, 0).unwrap();
         for action in FULL_SEARCH_ACTIONS {
-            if let Ok(child_state) = use_action_combo(&solver_settings, state, *action) {
+            if let Ok(child_state) = use_action_combo(&solver_settings, state, action) {
                 let child_step_lb = if child_state.is_final(&solver_settings.simulator_settings) {
                     let progress_maxed = child_state.progress >= solver_settings.max_progress();
                     let quality_maxed = child_state.quality >= solver_settings.max_quality();
