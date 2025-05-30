@@ -43,6 +43,14 @@ struct Value {
     effects: u32,
 }
 
+const VALUE_DIFF_GUARD: u128 = Value::new()
+    .with_cp(1 << 15)
+    .with_durability(1 << 15)
+    .with_quality(1 << 31)
+    .with_unreliable_quality(1 << 31)
+    .with_effects(EFFECTS_KEY_MASK)
+    .into_bits();
+
 impl From<&SimulationState> for Value {
     fn from(state: &SimulationState) -> Self {
         Self::new()
@@ -56,21 +64,10 @@ impl From<&SimulationState> for Value {
 
 impl Value {
     #[inline]
+    /// `A` dominates `B` if every member of `A` is geq the corresponding member in `B`.
     const fn dominates(&self, other: &Self) -> bool {
-        self.effect_dominates(other)
-            && self.cp() >= other.cp()
-            && self.durability() >= other.durability()
-            && self.quality() >= other.quality()
-            && self.unreliable_quality() >= other.unreliable_quality()
-    }
-
-    #[inline]
-    const fn effect_dominates(&self, other: &Self) -> bool {
-        let padded_mask = EFFECTS_KEY_MASK | self.effects();
-        // If any effect in `other.effects` is larger than in `self.effects`, the subtraction will eat into the `EFFECTS_KEY_MASK` padding.
-        let diff = padded_mask - other.effects();
-        // Therefore if the padding is untouched, then `self.effects` dominates `other.effects`.
-        diff & EFFECTS_KEY_MASK == EFFECTS_KEY_MASK
+        let guarded_value = VALUE_DIFF_GUARD | self.into_bits();
+        (guarded_value - other.into_bits()) & VALUE_DIFF_GUARD == VALUE_DIFF_GUARD
     }
 }
 
