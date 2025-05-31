@@ -2,7 +2,7 @@ use std::num::NonZeroU8;
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo},
+    actions::{FULL_SEARCH_ACTIONS, use_action_combo},
     utils::{self, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
@@ -20,7 +20,6 @@ type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
     pub parallel_states: usize,
-    pub sequential_states: usize,
     pub pareto_values: usize,
 }
 
@@ -28,10 +27,8 @@ pub struct StepLbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
-    pareto_front_builder: ParetoFrontBuilder,
     precompute_templates: Vec<Template>,
     next_precompute_step_budget: NonZeroU8,
-    precomputed_states: usize,
     iq_quality_lut: [u32; 11],
     largest_progress_increase: u32,
 }
@@ -45,13 +42,8 @@ impl StepLbSolver {
             settings,
             interrupt_signal,
             solved_states: SolvedStates::default(),
-            pareto_front_builder: ParetoFrontBuilder::new(
-                settings.max_progress(),
-                settings.max_quality(),
-            ),
             precompute_templates: Self::generate_precompute_templates(&settings),
             next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
-            precomputed_states: 0,
             iq_quality_lut,
             largest_progress_increase: largest_single_action_progress_increase(&settings),
         }
@@ -111,10 +103,8 @@ impl StepLbSolver {
             })
             .collect_vec_list();
 
-        let num_solved_states_before = self.solved_states.len();
         self.solved_states
             .extend(solved_templates.into_iter().flatten());
-        self.precomputed_states += self.solved_states.len() - num_solved_states_before;
 
         let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
             let state = template.instantiate(self.next_precompute_step_budget);
@@ -229,92 +219,14 @@ impl StepLbSolver {
                 .get(index)
                 .map(|value| state.quality + value.second);
             return Ok(quality_ub);
-        }
-
-        self.solve_state(reduced_state)?;
-
-        if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
-            let index = pareto_front.partition_point(|value| value.first < required_progress);
-            let quality_ub = pareto_front
-                .get(index)
-                .map(|value| state.quality + value.second);
-            return Ok(quality_ub);
         } else {
-            unreachable!("State must be in memoization table after solver")
+            unreachable!("State must already solved after precompute");
         }
-    }
-
-    fn solve_state(&mut self, reduced_state: ReducedState) -> Result<(), SolverException> {
-        if self.interrupt_signal.is_set() {
-            return Err(SolverException::Interrupted);
-        }
-        self.pareto_front_builder.push_empty();
-        for action in FULL_SEARCH_ACTIONS {
-            if action.steps() <= reduced_state.steps_budget.get() {
-                self.build_child_front(reduced_state, action)?;
-                if self.pareto_front_builder.is_max() {
-                    // stop early if both Progress and Quality are maxed out
-                    // this optimization would work even better with better action ordering
-                    // (i.e. if better actions are visited first)
-                    break;
-                }
-            }
-        }
-        let pareto_front = Box::from(self.pareto_front_builder.peek().unwrap());
-        self.solved_states.insert(reduced_state, pareto_front);
-        Ok(())
-    }
-
-    fn build_child_front(
-        &mut self,
-        reduced_state: ReducedState,
-        action: ActionCombo,
-    ) -> Result<(), SolverException> {
-        if let Ok(new_full_state) =
-            use_action_combo(&self.settings, reduced_state.to_state(), action)
-        {
-            let action_progress = new_full_state.progress;
-            let action_quality = new_full_state.quality;
-            let new_step_budget = reduced_state.steps_budget.get() - action.steps();
-            match NonZeroU8::try_from(new_step_budget) {
-                Ok(new_step_budget) if new_full_state.durability > 0 => {
-                    // New state is not final
-                    let new_reduced_state =
-                        ReducedState::from_state(new_full_state, new_step_budget);
-                    if let Some(pareto_front) = self.solved_states.get(&new_reduced_state) {
-                        self.pareto_front_builder.push_slice(pareto_front);
-                    } else {
-                        self.solve_state(new_reduced_state)?;
-                    }
-                    self.pareto_front_builder
-                        .peek_mut()
-                        .unwrap()
-                        .iter_mut()
-                        .for_each(|value| {
-                            value.first += action_progress;
-                            value.second += action_quality;
-                        });
-                    self.pareto_front_builder.merge();
-                }
-                _ if action_progress != 0 => {
-                    // New state is final and last action increased Progress
-                    self.pareto_front_builder
-                        .push_slice(&[ParetoValue::new(action_progress, action_quality)]);
-                    self.pareto_front_builder.merge();
-                }
-                _ => {
-                    // New state is final but last action did not increase Progress
-                    // Skip this state
-                }
-            }
-        }
-        Ok(())
     }
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
         StepLbSolverStats {
-            parallel_states: self.precomputed_states,
-            sequential_states: self.solved_states.len() - self.precomputed_states,
+            parallel_states: self.solved_states.len(),
             pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
         }
     }
@@ -324,9 +236,8 @@ impl Drop for StepLbSolver {
     fn drop(&mut self) {
         let runtime_stats = self.runtime_stats();
         log::debug!(
-            "StepLbSolver - par_states: {}, seq_states: {}, values: {}",
+            "StepLbSolver - par_states: {}, values: {}",
             runtime_stats.parallel_states,
-            runtime_stats.sequential_states,
             runtime_stats.pareto_values
         );
     }

@@ -95,7 +95,6 @@ fn rinascita_3700_3280() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
-                sequential_states: 0,
                 pareto_values: 0,
             },
         }
@@ -143,7 +142,6 @@ fn pactmaker_3240_3130() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
-                sequential_states: 0,
                 pareto_values: 0,
             },
         }
@@ -193,7 +191,6 @@ fn pactmaker_3240_3130_heart_and_soul() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
-                sequential_states: 0,
                 pareto_values: 0,
             },
         }
@@ -241,7 +238,6 @@ fn diadochos_4021_3660() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
-                sequential_states: 0,
                 pareto_values: 0,
             },
         }
@@ -289,7 +285,6 @@ fn indagator_3858_4057() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 0,
-                sequential_states: 0,
                 pareto_values: 0,
             },
         }
@@ -337,7 +332,6 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2318275,
-                sequential_states: 0,
                 pareto_values: 24996627,
             },
         }
@@ -387,7 +381,6 @@ fn stuffed_peppers_2() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1493595,
-                sequential_states: 0,
                 pareto_values: 12299858,
             },
         }
@@ -439,7 +432,6 @@ fn stuffed_peppers_2_heart_and_soul() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 3361396,
-                sequential_states: 0,
                 pareto_values: 26035232,
             },
         }
@@ -491,7 +483,6 @@ fn stuffed_peppers_2_quick_innovation() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 3071733,
-                sequential_states: 0,
                 pareto_values: 25567704,
             },
         }
@@ -539,7 +530,6 @@ fn rakaznar_lapidary_hammer_4462_4391() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1579065,
-                sequential_states: 0,
                 pareto_values: 13935076,
             },
         }
@@ -587,7 +577,6 @@ fn black_star_4048_3997() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 168003,
-                sequential_states: 0,
                 pareto_values: 928501,
             },
         }
@@ -635,7 +624,6 @@ fn claro_walnut_lumber_4900_4800() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 461630,
-                sequential_states: 0,
                 pareto_values: 2798356,
             },
         }
@@ -683,7 +671,6 @@ fn rakaznar_lapidary_hammer_4900_4800() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1336246,
-                sequential_states: 0,
                 pareto_values: 10026036,
             },
         }
@@ -731,7 +718,6 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1118641,
-                sequential_states: 0,
                 pareto_values: 8025952,
             },
         }
@@ -779,7 +765,6 @@ fn archeo_kingdom_broadsword_4966_4914() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1556489,
-                sequential_states: 0,
                 pareto_values: 14722811,
             },
         }
@@ -827,7 +812,6 @@ fn hardened_survey_plank_5558_5216() {
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 361555,
-                sequential_states: 0,
                 pareto_values: 3147923,
             },
         }
