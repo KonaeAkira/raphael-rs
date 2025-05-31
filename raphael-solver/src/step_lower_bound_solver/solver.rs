@@ -208,26 +208,23 @@ impl StepLbSolver {
         mut state: SimulationState,
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
-        #[cfg(test)]
-        assert!(state.effects.combo() == Combo::None);
-
         let mut required_progress = self.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
             // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
             required_progress = required_progress.saturating_sub(self.largest_progress_increase);
             state.effects.set_muscle_memory(0);
         }
-
         let reduced_state = ReducedState::from_state(state, step_budget);
-
         if let Some(pareto_front) = self.solved_states.get(&reduced_state) {
             let index = pareto_front.partition_point(|value| value.first < required_progress);
             let quality_ub = pareto_front
                 .get(index)
                 .map(|value| state.quality + value.second);
-            return Ok(quality_ub);
+            Ok(quality_ub)
         } else {
-            unreachable!("State must already solved after precompute");
+            Err(SolverException::InternalError(
+                "StepLbSolver: Unknown state queried.".to_string(),
+            ))
         }
     }
 
