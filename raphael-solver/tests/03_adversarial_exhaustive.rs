@@ -109,8 +109,8 @@ fn stuffed_peppers() {
                 pareto_values: 39199991,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 1624750,
-                pareto_values: 20977625,
+                parallel_states: 1624760,
+                pareto_values: 20977635,
             },
         }
     "#]];
@@ -158,8 +158,8 @@ fn test_rare_tacos_2() {
                 pareto_values: 70121907,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 2437044,
-                pareto_values: 42904319,
+                parallel_states: 2437107,
+                pareto_values: 42904382,
             },
         }
     "#]];
@@ -211,8 +211,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_values: 16364005,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 63194,
-                pareto_values: 479061,
+                parallel_states: 63199,
+                pareto_values: 479066,
             },
         }
     "#]];
@@ -258,8 +258,8 @@ fn test_indagator_3858_4057() {
                 pareto_values: 64650515,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                pareto_values: 0,
+                parallel_states: 1198681,
+                pareto_values: 18122679,
             },
         }
     "#]];
@@ -309,8 +309,8 @@ fn test_rare_tacos_4628_4410() {
                 pareto_values: 78047587,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 450741,
-                pareto_values: 8257333,
+                parallel_states: 451769,
+                pareto_values: 8258428,
             },
         }
     "#]];
@@ -359,8 +359,8 @@ fn issue_113() {
                 pareto_values: 120616917,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                pareto_values: 0,
+                parallel_states: 3164458,
+                pareto_values: 75245690,
             },
         }
     "#]];

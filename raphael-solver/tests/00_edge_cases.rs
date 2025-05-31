@@ -134,8 +134,8 @@ fn zero_quality() {
                 pareto_values: 109398,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                pareto_values: 0,
+                parallel_states: 228416,
+                pareto_values: 1548874,
             },
         }
     "#]];
@@ -181,8 +181,8 @@ fn max_quality() {
                 pareto_values: 2988048,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 238904,
-                pareto_values: 1635771,
+                parallel_states: 239199,
+                pareto_values: 1636066,
             },
         }
     "#]];

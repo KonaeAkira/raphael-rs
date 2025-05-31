@@ -28,7 +28,6 @@ pub struct StepLbSolver {
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
     precompute_templates: Vec<Template>,
-    next_precompute_step_budget: NonZeroU8,
     iq_quality_lut: [u32; 11],
     largest_progress_increase: u32,
 }
@@ -43,7 +42,6 @@ impl StepLbSolver {
             interrupt_signal,
             solved_states: SolvedStates::default(),
             precompute_templates: Self::generate_precompute_templates(&settings),
-            next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             iq_quality_lut,
             largest_progress_increase: largest_single_action_progress_increase(&settings),
         }
@@ -84,52 +82,59 @@ impl StepLbSolver {
         templates.into_iter().collect()
     }
 
-    fn precompute_next_step_budget(&mut self) {
-        // A lot of templates map to the same state at lower step budgets due to effect and durability optimizations.
-        // Here we deduplicate the instantiated templates to avoid solving duplicate states.
-        let instantiated_templates: FxHashSet<ReducedState> = self
-            .precompute_templates
-            .iter()
-            .map(|template| template.instantiate(self.next_precompute_step_budget))
-            .collect();
+    pub fn precompute(&mut self) {
+        let mut next_precompute_step_budget = NonZeroU8::new(1).unwrap();
+        while !self.precompute_templates.is_empty() && !self.interrupt_signal.is_set() {
+            // A lot of templates map to the same state at lower step budgets due to effect and durability optimizations.
+            // Here we deduplicate the instantiated templates to avoid solving duplicate states.
+            let instantiated_templates: FxHashSet<ReducedState> = self
+                .precompute_templates
+                .iter()
+                .map(|template| template.instantiate(next_precompute_step_budget))
+                .collect();
 
-        let init =
-            || ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality());
-        let solved_templates = instantiated_templates
-            .into_par_iter()
-            .map_init(init, |pareto_front_builder, state| {
-                let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                (state, pareto_front)
-            })
-            .collect_vec_list();
-
-        self.solved_states
-            .extend(solved_templates.into_iter().flatten());
-
-        let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
-            let state = template.instantiate(self.next_precompute_step_budget);
-            let pareto_front = self.solved_states.get(&state).unwrap();
-            // Values are sorted Progress-increaasing and Quality-decreasing.
-            // The last value is the value with the most Progress.
-            let value = pareto_front.last().unwrap();
-            // Estimate the max quality that this state ever needs to achieve.
-            // Over-estimating the max needed quality leads to redundant states being precomputed.
-            // Under-estimating the max needed quality could lead to solver crash during precompute from templates being removed too early.
-            let max_needed_quality = {
-                let min_cur_quality = self.iq_quality_lut[usize::from(state.effects.inner_quiet())];
-                self.settings.max_quality().saturating_sub(min_cur_quality)
+            let init = || {
+                ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality())
             };
-            value.first < self.settings.max_progress() || value.second < max_needed_quality
-        });
-        self.precompute_templates = Vec::from_par_iter(filtered_templates.copied());
+            let solved_templates = instantiated_templates
+                .into_par_iter()
+                .map_init(init, |pareto_front_builder, state| {
+                    let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
+                    (state, pareto_front)
+                })
+                .collect_vec_list();
 
-        self.next_precompute_step_budget = self.next_precompute_step_budget.saturating_add(1);
+            self.solved_states
+                .extend(solved_templates.into_iter().flatten());
 
-        log::trace!(
-            "StepLbSolver - templates: {}, solved_states: {}",
-            self.precompute_templates.len(),
-            self.solved_states.len()
-        );
+            let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
+                let state = template.instantiate(next_precompute_step_budget);
+                let pareto_front = self.solved_states.get(&state).unwrap();
+                // Values are sorted Progress-increaasing and Quality-decreasing.
+                // The last value is the value with the most Progress.
+                let value = pareto_front.last().unwrap();
+                // Estimate the max quality that this state ever needs to achieve.
+                // Over-estimating the max needed quality leads to redundant states being precomputed.
+                // Under-estimating the max needed quality could lead to solver crash during precompute from templates being removed too early.
+                let max_needed_quality = if state.effects.allow_quality_actions() {
+                    let min_cur_quality =
+                        self.iq_quality_lut[usize::from(state.effects.inner_quiet())];
+                    self.settings.max_quality().saturating_sub(min_cur_quality)
+                } else {
+                    0
+                };
+                value.first < self.settings.max_progress() || value.second < max_needed_quality
+            });
+            self.precompute_templates = Vec::from_par_iter(filtered_templates.copied());
+
+            next_precompute_step_budget = next_precompute_step_budget.saturating_add(1);
+
+            log::trace!(
+                "StepLbSolver - templates: {}, solved_states: {}",
+                self.precompute_templates.len(),
+                self.solved_states.len()
+            );
+        }
     }
 
     fn solve_precompute_state(
@@ -153,6 +158,12 @@ impl StepLbSolver {
                     let new_state = ReducedState::from_state(new_state, new_step_budget);
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
+                    } else if !new_state.effects.allow_quality_actions() {
+                        // States that disallow quality actions get filtered out early because they only need to reach max_progress, whereas normal states need to reach both max_progress and max_quality to be fitered out.
+                        // So if the new state does not allow quality actions and cannot be found in the already solved state, we assume that it has reached max_progress using a lower step budget.
+                        // IMPORTANT: A missing child state could also mean that there is something wrong with the precompute template generation, but the consistency fuzz check should hopefully catch this case.
+                        pareto_front_builder
+                            .push_slice(&[ParetoValue::new(self.settings.max_progress(), 0)]);
                     } else {
                         unreachable!("Parent: {state:?}\nChild: {new_state:?}\nAction: {action:?}");
                     }
@@ -199,10 +210,6 @@ impl StepLbSolver {
     ) -> Result<Option<u32>, SolverException> {
         #[cfg(test)]
         assert!(state.effects.combo() == Combo::None);
-
-        while self.next_precompute_step_budget <= step_budget {
-            self.precompute_next_step_budget();
-        }
 
         let mut required_progress = self.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
