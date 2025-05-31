@@ -207,12 +207,8 @@ impl StepLbSolver {
         mut state: SimulationState,
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
-        if state.effects.combo() != Combo::None {
-            return Err(SolverException::InternalError(format!(
-                "\"{:?}\" combo in step lower bound solver",
-                state.effects.combo()
-            )));
-        }
+        #[cfg(test)]
+        assert!(state.effects.combo() == Combo::None);
 
         while self.next_precompute_step_budget <= step_budget {
             self.precompute_next_step_budget();
