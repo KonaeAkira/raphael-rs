@@ -38,6 +38,7 @@ pub struct StepLbSolver {
 
 impl StepLbSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
+        let iq_quality_lut = utils::compute_iq_quality_lut(&settings);
         settings.simulator_settings.adversarial = false;
         ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
@@ -51,7 +52,7 @@ impl StepLbSolver {
             precompute_templates: Self::generate_precompute_templates(&settings),
             next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             precomputed_states: 0,
-            iq_quality_lut: utils::compute_iq_quality_lut(&settings),
+            iq_quality_lut,
             largest_progress_increase: largest_single_action_progress_increase(&settings),
         }
     }

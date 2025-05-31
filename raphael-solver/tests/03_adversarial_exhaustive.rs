@@ -109,9 +109,9 @@ fn stuffed_peppers() {
                 pareto_values: 39199991,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 1414006,
-                sequential_states: 41,
-                pareto_values: 20622499,
+                parallel_states: 1624750,
+                sequential_states: 0,
+                pareto_values: 20977625,
             },
         }
     "#]];
@@ -159,9 +159,9 @@ fn test_rare_tacos_2() {
                 pareto_values: 70121907,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 2227573,
+                parallel_states: 2437044,
                 sequential_states: 0,
-                pareto_values: 42541737,
+                pareto_values: 42904319,
             },
         }
     "#]];
@@ -213,9 +213,9 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_values: 16364005,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 52408,
-                sequential_states: 241,
-                pareto_values: 449860,
+                parallel_states: 63194,
+                sequential_states: 0,
+                pareto_values: 479061,
             },
         }
     "#]];
@@ -313,9 +313,9 @@ fn test_rare_tacos_4628_4410() {
                 pareto_values: 78047587,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 420784,
+                parallel_states: 450741,
                 sequential_states: 0,
-                pareto_values: 8205611,
+                pareto_values: 8257333,
             },
         }
     "#]];
@@ -413,9 +413,9 @@ fn issue_118() {
                 pareto_values: 25432562,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 258314,
-                sequential_states: 12,
-                pareto_values: 2699537,
+                parallel_states: 295097,
+                sequential_states: 0,
+                pareto_values: 2766395,
             },
         }
     "#]];
