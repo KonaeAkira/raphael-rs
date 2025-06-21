@@ -78,7 +78,7 @@ jobs:
           asset_name: raphael_x86_64_windows.exe
           asset_content_type: application/octet-stream
   windows-cli:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - name: Use nightly toolchain
