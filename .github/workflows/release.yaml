@@ -38,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Use nightly toolchain
+        run: rustup update nightly && rustup default nightly
       - name: Build
         run: cargo build --release --package raphael-cli
       - name: Generate artifact attestation
@@ -79,6 +81,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Use nightly toolchain
+        run: rustup update nightly && rustup default nightly
       - name: Build
         run: cargo build --release --package raphael-cli
       - name: Generate artifact attestation
