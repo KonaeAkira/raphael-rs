@@ -1,4 +1,6 @@
 &[
+Consumable { item_id: 46253, item_level: 750, hq: true, craft_rel: 0, craft_max: 0, control_rel: 5, control_max: 115, cp_rel: 26, cp_max: 100, },
+Consumable { item_id: 46253, item_level: 750, hq: false, craft_rel: 0, craft_max: 0, control_rel: 4, control_max: 92, cp_rel: 21, cp_max: 80, },
 Consumable { item_id: 44842, item_level: 720, hq: true, craft_rel: 5, craft_max: 150, control_rel: 0, control_max: 0, cp_rel: 26, cp_max: 96, },
 Consumable { item_id: 44842, item_level: 720, hq: false, craft_rel: 4, craft_max: 120, control_rel: 0, control_max: 0, cp_rel: 21, cp_max: 76, },
 Consumable { item_id: 44091, item_level: 684, hq: true, craft_rel: 0, craft_max: 0, control_rel: 5, control_max: 97, cp_rel: 26, cp_max: 92, },
