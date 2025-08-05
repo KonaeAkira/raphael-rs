@@ -221,8 +221,12 @@ impl QualityUbSolver {
         &mut self,
         mut state: SimulationState,
     ) -> Result<u32, SolverException> {
-        #[cfg(test)]
-        assert!(state.effects.combo() == Combo::None);
+        if state.effects.combo() != Combo::None {
+            return Err(SolverException::InternalError(format!(
+                "\"{:?}\" combo in quality upper bound solver",
+                state.effects.combo()
+            )));
+        }
 
         let mut required_progress = self.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {

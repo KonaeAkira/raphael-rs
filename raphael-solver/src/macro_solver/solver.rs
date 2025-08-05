@@ -88,10 +88,6 @@ impl<'a> MacroSolver<'a> {
         self.quality_ub_solver.precompute();
         drop(timer);
 
-        let timer = ScopedTimer::new("Step Lb Solver");
-        self.step_lb_solver.precompute();
-        drop(timer);
-
         Ok(self.do_solve(initial_state)?.actions())
     }
 
