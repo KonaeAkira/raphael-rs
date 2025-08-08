@@ -1,4 +1,4 @@
-use raphael_sim::{Action, ActionMask, Settings, SimulationState};
+use raphael_sim::{ActionMask, Settings, SimulationState};
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 fn main() {
@@ -15,10 +15,7 @@ fn main() {
         base_progress: 310,
         base_quality: 324,
         job_level: 100,
-        allowed_actions: ActionMask::all()
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
     };

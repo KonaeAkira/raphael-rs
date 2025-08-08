@@ -41,16 +41,6 @@ If you find a macro that beats the generated macro according to the specificatio
 The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
 The minimal supported Rust version (MSRV) is 1.88.0.
 
-> [!NOTE]  
-> At the moment of writing, Rust version 1.88.0 is in beta and hasn't been released as stable yet.
-> To use the Rust's beta version:
->
-> ```
-> rustup update beta && rustup default beta
-> ```
->
-> Rust 1.88.0 is expected to release on 26.06.2025, after which you don't need the above command anymore.
-
 ### Native GUI
 
 To build and run the application:

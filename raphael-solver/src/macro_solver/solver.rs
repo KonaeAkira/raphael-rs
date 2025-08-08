@@ -1,9 +1,7 @@
 use raphael_sim::*;
 
 use super::search_queue::{SearchQueueStats, SearchScore};
-use crate::actions::{
-    ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo,
-};
+use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::quality_upper_bound_solver::QualityUbSolverStats;
 use crate::step_lower_bound_solver::StepLbSolverStats;
@@ -78,10 +76,7 @@ impl<'a> MacroSolver<'a> {
 
         let _total_time = ScopedTimer::new("Total Time");
 
-        let mut initial_state = SimulationState::new(&self.settings.simulator_settings);
-        if initial_state.quality >= self.settings.max_quality() {
-            initial_state.effects = initial_state.effects.strip_quality_effects();
-        }
+        let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
         let timer = ScopedTimer::new("Finish Solver");
         if !self.finish_solver.can_finish(&initial_state) {
@@ -112,13 +107,8 @@ impl<'a> MacroSolver<'a> {
                 (self.progress_callback)(popped);
             }
 
-            let search_actions = match state.effects.allow_quality_actions() {
-                false => PROGRESS_ONLY_SEARCH_ACTIONS,
-                true => FULL_SEARCH_ACTIONS,
-            };
-
-            for action in search_actions {
-                if let Ok(state) = use_action_combo(&self.settings, state, *action) {
+            for action in FULL_SEARCH_ACTIONS {
+                if let Ok(state) = use_action_combo(&self.settings, state, action) {
                     if !state.is_final(&self.settings.simulator_settings) {
                         if !self.finish_solver.can_finish(&state) {
                             // skip this state if it is impossible to max out Progress
@@ -165,7 +155,7 @@ impl<'a> MacroSolver<'a> {
                                 current_steps: score.current_steps + action.steps(),
                                 current_duration: score.current_duration + action.duration(),
                             },
-                            *action,
+                            action,
                             backtrack_id,
                         );
                     } else if state.progress >= self.settings.max_progress() {
@@ -187,7 +177,7 @@ impl<'a> MacroSolver<'a> {
                                 score: (solution_score, state.quality),
                                 solver_actions: search_queue
                                     .backtrack(backtrack_id)
-                                    .chain(std::iter::once(*action))
+                                    .chain(std::iter::once(action))
                                     .collect(),
                             });
                             (self.solution_callback)(&solution.as_ref().unwrap().actions());
