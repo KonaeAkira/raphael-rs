@@ -6,9 +6,7 @@ pub trait ActionImpl {
     const ACTION_MASK: ActionMask;
     /// Does this action trigger ticking effects (e.g. Manipulation)?
     const TICK_EFFECTS: bool = true;
-
-    const ACTION_ID: u32;
-
+    
     fn precondition(
         _state: &SimulationState,
         _settings: &Settings,
@@ -94,7 +92,6 @@ pub trait ActionImpl {
 
 pub struct BasicSynthesis {}
 impl ActionImpl for BasicSynthesis {
-    const ACTION_ID: u32 = 100001;
     const LEVEL_REQUIREMENT: u8 = 1;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicSynthesis);
     fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u32 {
@@ -110,7 +107,6 @@ impl BasicTouch {
     pub const CP_COST: u16 = 18;
 }
 impl ActionImpl for BasicTouch {
-    const ACTION_ID: u32 = 100002;
     const LEVEL_REQUIREMENT: u8 = 5;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicTouch);
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -132,7 +128,6 @@ impl MasterMend {
     pub const CP_COST: u16 = 88;
 }
 impl ActionImpl for MasterMend {
-    const ACTION_ID: u32 = 100003;
     const LEVEL_REQUIREMENT: u8 = 7;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::MasterMend);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -148,7 +143,6 @@ impl Observe {
     pub const CP_COST: u16 = 7;
 }
 impl ActionImpl for Observe {
-    const ACTION_ID: u32 = 100010;
     const LEVEL_REQUIREMENT: u8 = 13;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Observe);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -161,7 +155,6 @@ impl ActionImpl for Observe {
 
 pub struct TricksOfTheTrade {}
 impl ActionImpl for TricksOfTheTrade {
-    const ACTION_ID: u32 = 100371;
     const LEVEL_REQUIREMENT: u8 = 13;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TricksOfTheTrade);
     fn precondition(
@@ -192,7 +185,6 @@ impl WasteNot {
     pub const CP_COST: u16 = 56;
 }
 impl ActionImpl for WasteNot {
-    const ACTION_ID: u32 = 4631;
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -208,7 +200,6 @@ impl Veneration {
     pub const CP_COST: u16 = 18;
 }
 impl ActionImpl for Veneration {
-    const ACTION_ID: u32 = 19297;
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Veneration);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -221,7 +212,6 @@ impl ActionImpl for Veneration {
 
 pub struct StandardTouch {}
 impl ActionImpl for StandardTouch {
-    const ACTION_ID: u32 = 100004;
     const LEVEL_REQUIREMENT: u8 = 18;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StandardTouch);
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -249,7 +239,6 @@ impl GreatStrides {
     pub const CP_COST: u16 = 32;
 }
 impl ActionImpl for GreatStrides {
-    const ACTION_ID: u32 = 260;
     const LEVEL_REQUIREMENT: u8 = 21;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::GreatStrides);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -265,7 +254,6 @@ impl Innovation {
     pub const CP_COST: u16 = 18;
 }
 impl ActionImpl for Innovation {
-    const ACTION_ID: u32 = 19004;
     const LEVEL_REQUIREMENT: u8 = 26;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Innovation);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -281,7 +269,6 @@ impl WasteNot2 {
     pub const CP_COST: u16 = 98;
 }
 impl ActionImpl for WasteNot2 {
-    const ACTION_ID: u32 = 4639;
     const LEVEL_REQUIREMENT: u8 = 47;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot2);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -294,7 +281,6 @@ impl ActionImpl for WasteNot2 {
 
 pub struct ByregotsBlessing {}
 impl ActionImpl for ByregotsBlessing {
-    const ACTION_ID: u32 = 100339;
     const LEVEL_REQUIREMENT: u8 = 50;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::ByregotsBlessing);
     fn precondition(
@@ -323,7 +309,6 @@ impl ActionImpl for ByregotsBlessing {
 
 pub struct PreciseTouch {}
 impl ActionImpl for PreciseTouch {
-    const ACTION_ID: u32 = 100128;
     const LEVEL_REQUIREMENT: u8 = 53;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PreciseTouch);
     fn precondition(
@@ -359,7 +344,6 @@ impl ActionImpl for PreciseTouch {
 
 pub struct MuscleMemory {}
 impl ActionImpl for MuscleMemory {
-    const ACTION_ID: u32 = 100379;
     const LEVEL_REQUIREMENT: u8 = 54;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::MuscleMemory);
     fn precondition(
@@ -388,7 +372,6 @@ impl ActionImpl for MuscleMemory {
 
 pub struct CarefulSynthesis {}
 impl ActionImpl for CarefulSynthesis {
-    const ACTION_ID: u32 = 100203;
     const LEVEL_REQUIREMENT: u8 = 62;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::CarefulSynthesis);
     fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u32 {
@@ -410,7 +393,6 @@ impl Manipulation {
     pub const CP_COST: u16 = 96;
 }
 impl ActionImpl for Manipulation {
-    const ACTION_ID: u32 = 4574;
     const LEVEL_REQUIREMENT: u8 = 65;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Manipulation);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -426,7 +408,6 @@ impl ActionImpl for Manipulation {
 
 pub struct PrudentTouch {}
 impl ActionImpl for PrudentTouch {
-    const ACTION_ID: u32 = 100227;
     const LEVEL_REQUIREMENT: u8 = 66;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PrudentTouch);
     fn precondition(
@@ -452,7 +433,6 @@ impl ActionImpl for PrudentTouch {
 
 pub struct AdvancedTouch {}
 impl ActionImpl for AdvancedTouch {
-    const ACTION_ID: u32 = 100411;
     const LEVEL_REQUIREMENT: u8 = 68;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::AdvancedTouch);
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -471,7 +451,6 @@ impl ActionImpl for AdvancedTouch {
 
 pub struct Reflect {}
 impl ActionImpl for Reflect {
-    const ACTION_ID: u32 = 100387;
     const LEVEL_REQUIREMENT: u8 = 69;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Reflect);
     fn precondition(
@@ -504,7 +483,6 @@ impl PreparatoryTouch {
     pub const CP_COST: u16 = 40;
 }
 impl ActionImpl for PreparatoryTouch {
-    const ACTION_ID: u32 = 100299;
     const LEVEL_REQUIREMENT: u8 = 71;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PreparatoryTouch);
     fn base_quality_increase(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -524,7 +502,6 @@ impl ActionImpl for PreparatoryTouch {
 
 pub struct Groundwork {}
 impl ActionImpl for Groundwork {
-    const ACTION_ID: u32 = 100403;
     const LEVEL_REQUIREMENT: u8 = 72;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Groundwork);
     fn base_progress_increase(state: &SimulationState, settings: &Settings) -> u32 {
@@ -547,7 +524,6 @@ impl ActionImpl for Groundwork {
 
 pub struct DelicateSynthesis {}
 impl ActionImpl for DelicateSynthesis {
-    const ACTION_ID: u32 = 100323;
     const LEVEL_REQUIREMENT: u8 = 76;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::DelicateSynthesis);
     fn base_progress_increase(_state: &SimulationState, settings: &Settings) -> u32 {
@@ -569,7 +545,6 @@ impl ActionImpl for DelicateSynthesis {
 
 pub struct IntensiveSynthesis {}
 impl ActionImpl for IntensiveSynthesis {
-    const ACTION_ID: u32 = 100315;
     const LEVEL_REQUIREMENT: u8 = 78;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::IntensiveSynthesis);
     fn precondition(
@@ -605,7 +580,6 @@ impl ActionImpl for IntensiveSynthesis {
 
 pub struct TrainedEye {}
 impl ActionImpl for TrainedEye {
-    const ACTION_ID: u32 = 100283;
     const LEVEL_REQUIREMENT: u8 = 80;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TrainedEye);
     fn precondition(
@@ -638,7 +612,6 @@ impl ActionImpl for TrainedEye {
 
 pub struct HeartAndSoul {}
 impl ActionImpl for HeartAndSoul {
-    const ACTION_ID: u32 = 100419;
     const LEVEL_REQUIREMENT: u8 = 86;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HeartAndSoul);
     const TICK_EFFECTS: bool = false;
@@ -660,7 +633,6 @@ impl ActionImpl for HeartAndSoul {
 
 pub struct PrudentSynthesis {}
 impl ActionImpl for PrudentSynthesis {
-    const ACTION_ID: u32 = 100427;
     const LEVEL_REQUIREMENT: u8 = 88;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PrudentSynthesis);
     fn precondition(
@@ -686,7 +658,6 @@ impl ActionImpl for PrudentSynthesis {
 
 pub struct TrainedFinesse {}
 impl ActionImpl for TrainedFinesse {
-    const ACTION_ID: u32 = 100435;
     const LEVEL_REQUIREMENT: u8 = 90;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TrainedFinesse);
     fn precondition(
@@ -712,7 +683,6 @@ impl RefinedTouch {
     pub const CP_COST: u16 = 24;
 }
 impl ActionImpl for RefinedTouch {
-    const ACTION_ID: u32 = 100443;
     const LEVEL_REQUIREMENT: u8 = 92;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::RefinedTouch);
     fn precondition(
@@ -742,7 +712,6 @@ impl ActionImpl for RefinedTouch {
 
 pub struct QuickInnovation {}
 impl ActionImpl for QuickInnovation {
-    const ACTION_ID: u32 = 100459;
     const LEVEL_REQUIREMENT: u8 = 96;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::QuickInnovation);
     const TICK_EFFECTS: bool = false;
@@ -770,7 +739,6 @@ impl ImmaculateMend {
     pub const CP_COST: u16 = 112;
 }
 impl ActionImpl for ImmaculateMend {
-    const ACTION_ID: u32 = 100467;
     const LEVEL_REQUIREMENT: u8 = 98;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::ImmaculateMend);
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -783,7 +751,6 @@ impl ActionImpl for ImmaculateMend {
 
 pub struct TrainedPerfection {}
 impl ActionImpl for TrainedPerfection {
-    const ACTION_ID: u32 = 100475;
     const LEVEL_REQUIREMENT: u8 = 100;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TrainedPerfection);
     fn precondition(
@@ -902,9 +869,7 @@ impl Action {
             Self::QuickInnovation => 3,
         }
     }
-}
 
-impl  Action {
     pub const fn action_id(self) -> u32 {
         match self {
             Action::BasicSynthesis => 100001,
