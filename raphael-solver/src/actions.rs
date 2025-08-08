@@ -73,7 +73,7 @@ impl ActionCombo {
     }
 }
 
-pub const FULL_SEARCH_ACTIONS: &[ActionCombo] = &[
+pub const FULL_SEARCH_ACTIONS: [ActionCombo; 32] = [
     ActionCombo::AdvancedTouch,
     ActionCombo::TricksOfTheTrade,
     ActionCombo::IntensiveSynthesis,
@@ -112,7 +112,7 @@ pub const FULL_SEARCH_ACTIONS: &[ActionCombo] = &[
     ActionCombo::Single(Action::DelicateSynthesis),
 ];
 
-pub const PROGRESS_ONLY_SEARCH_ACTIONS: &[ActionCombo] = &[
+pub const PROGRESS_ONLY_SEARCH_ACTIONS: [ActionCombo; 14] = [
     ActionCombo::IntensiveSynthesis,
     ActionCombo::TricksOfTheTrade,
     // progress
@@ -138,10 +138,6 @@ pub fn use_action_combo(
 ) -> Result<SimulationState, &'static str> {
     for action in action_combo.actions() {
         state = state.use_action(*action, Condition::Normal, &settings.simulator_settings)?;
-        if state.effects.allow_quality_actions() && state.quality >= settings.max_quality() {
-            state.unreliable_quality = 0;
-            state.effects = state.effects.strip_quality_effects();
-        }
     }
     state.effects.set_combo(Combo::None);
     Ok(state)

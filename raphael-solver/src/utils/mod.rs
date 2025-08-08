@@ -112,7 +112,7 @@ pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
                 .with_adversarial_guard(true)
                 .with_inner_quiet(iq),
         };
-        for &action in FULL_SEARCH_ACTIONS {
+        for action in FULL_SEARCH_ACTIONS {
             if let Ok(new_state) = use_action_combo(settings, state, action) {
                 let new_iq = new_state.effects.inner_quiet();
                 if new_iq > iq {

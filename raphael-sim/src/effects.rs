@@ -49,6 +49,21 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
+    #[inline]
+    pub const fn progress_modifier(self) -> u32 {
+        let mm_mod = 2 * (self.muscle_memory() != 0) as u32;
+        let vene_mod = (self.veneration() != 0) as u32;
+        50 * (2 + mm_mod + vene_mod)
+    }
+
+    #[inline]
+    pub const fn quality_modifier(self) -> u32 {
+        let gs_mod = 2 * (self.great_strides() != 0) as u32;
+        let inno_mod = (self.innovation() != 0) as u32;
+        5 * (self.inner_quiet() as u32 + 10) * (2 + gs_mod + inno_mod)
+    }
+
+    #[inline]
     pub const fn tick_down(self) -> Self {
         const {
             assert!(Combo::SynthesisBegin.into_bits() == 0b11);
@@ -76,6 +91,7 @@ impl Effects {
     }
 
     /// Removes all effects that are only relevant for Quality.
+    #[inline]
     pub const fn strip_quality_effects(self) -> Self {
         self.with_allow_quality_actions(false)
             .with_inner_quiet(0)
