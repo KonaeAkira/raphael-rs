@@ -6,7 +6,7 @@ pub trait ActionImpl {
     const ACTION_MASK: ActionMask;
     /// Does this action trigger ticking effects (e.g. Manipulation)?
     const TICK_EFFECTS: bool = true;
-
+    
     fn precondition(
         _state: &SimulationState,
         _settings: &Settings,
@@ -867,6 +867,42 @@ impl Action {
             Self::TrainedPerfection => 3,
             Self::TrainedEye => 3,
             Self::QuickInnovation => 3,
+        }
+    }
+
+    pub const fn action_id(self) -> u32 {
+        match self {
+            Action::BasicSynthesis => 100001,
+            Action::BasicTouch => 100002,
+            Action::MasterMend => 100003,
+            Action::Observe => 100010,
+            Action::TricksOfTheTrade => 100371,
+            Action::WasteNot => 4631,
+            Action::Veneration => 19297,
+            Action::StandardTouch => 100004,
+            Action::GreatStrides => 260,
+            Action::Innovation => 19004,
+            Action::WasteNot2 => 4639,
+            Action::ByregotsBlessing => 100339,
+            Action::PreciseTouch => 100128,
+            Action::MuscleMemory => 100379,
+            Action::CarefulSynthesis => 100203,
+            Action::Manipulation => 4574,
+            Action::PrudentTouch => 100227,
+            Action::AdvancedTouch => 100411,
+            Action::Reflect => 100387,
+            Action::PreparatoryTouch => 100299,
+            Action::Groundwork => 100403,
+            Action::DelicateSynthesis => 100323,
+            Action::IntensiveSynthesis => 100315,
+            Action::TrainedEye => 100283,
+            Action::HeartAndSoul => 100419,
+            Action::PrudentSynthesis => 100427,
+            Action::TrainedFinesse => 100435,
+            Action::RefinedTouch => 100443,
+            Action::QuickInnovation => 100459,
+            Action::ImmaculateMend => 100467,
+            Action::TrainedPerfection => 100475,
         }
     }
 }

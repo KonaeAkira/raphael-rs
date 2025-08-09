@@ -354,6 +354,7 @@ pub fn execute(args: &SolveArgs) {
     let final_quality = state_quality + u32::from(initial_quality);
     let steps = actions.len();
     let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
+    let action_ids: Vec<u32> = actions.iter().map(|f| f.action_id()).collect();
 
     if args.output_variables.is_empty() {
         println!("Recipe ID: {}", recipe_id);
@@ -391,6 +392,7 @@ pub fn execute(args: &SolveArgs) {
                 "target_quality" => format!("{:?}", target_quality),
                 "recipe_max_quality" => format!("{:?}", recipe_max_quality),
                 "actions" => format!("\"{:?}\"", actions),
+                "action_ids" => format!("\"{:?}\"", action_ids),
                 "final_state" => format!("\"{:?}\"", final_state),
                 "state_quality" => format!("{:?}", state_quality),
                 "final_quality" => format!("{:?}", final_quality),
