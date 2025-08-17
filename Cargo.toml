@@ -33,7 +33,7 @@ web-time = "1.1.0"
 
 [package]
 name = "raphael-xiv"
-version = "0.22.1"
+version = "0.22.2"
 edition = "2024"
 default-run = "raphael-xiv"
 
@@ -45,13 +45,8 @@ raphael-sim = { workspace = true, features = ["serde"] }
 raphael-solver = { workspace = true, features = ["serde"] }
 raphael-data = { workspace = true, features = ["serde"] }
 
-# This revision includes the fix for tab-navigating over disabled widgets.
-# Switch back to version number once new egui version is released. Same for `eframe` further down
-egui = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29" }
-egui_extras = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", features = [
-    "http",
-    "webp",
-] }
+egui = "0.32.1"
+egui_extras = { version = "0.32.1", features = ["http", "webp"] }
 
 rayon = { workspace = true }
 serde = { workspace = true }
@@ -65,7 +60,7 @@ env_logger = "0.11.5"
 ehttp = { version = "0.5.0", features = ["json"] }
 # Default features of `eframe` include the "glow" renderer which is not needed if "wgpu" is enabled.
 # To avoid including both in the binary, default features have to be disabled
-eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", default-features = false, features = [
+eframe = { version = "0.32.1", default-features = false, features = [
     "accesskit",         # default
     "default_fonts",     # default
     "wayland",           # default
@@ -74,15 +69,16 @@ eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", default-f
     "persistence",
     "wgpu",
 ] }
+# Need to opt-in to wgpu as of egui 0.32.0. See release notes of egui for details.
+# https://github.com/emilk/egui/releases/tag/0.32.0
+wgpu = "25"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-rayon = { version = "1.2", features = ["no-bundler"] }
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 web-sys = "0.3"
-eframe = { git = "https://github.com/emilk/egui.git", rev = "6a8ee29", features = [
-    "persistence",
-] }
+eframe = { version = "0.32.1", features = ["persistence"] }
 
 [profile.release]
 opt-level = 3
