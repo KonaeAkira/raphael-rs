@@ -301,7 +301,7 @@ impl eframe::App for MacroSolverApp {
             egui::ScrollArea::horizontal()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
-                    egui::containers::menu::Bar::new().ui(ui, |ui| {
+                    egui::containers::menu::MenuBar::new().ui(ui, |ui| {
                         ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                         ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
                         self.draw_app_config_menu_button(ui, ctx);
