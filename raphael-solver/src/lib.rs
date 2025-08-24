@@ -28,6 +28,28 @@ pub enum SolverException {
     AllocError,
 }
 
+#[macro_export]
+macro_rules! internal_error_message {
+    ( $desc:expr, $( $x:expr ),* ) => {
+        {
+            let mut message = Vec::new();
+            message.push("The solver encountered an internal error.".into());
+            message.push("Please submit a bug report.".into());
+            message.push("".into());
+            message.push("Location:".into());
+            message.push(format!("{}:{}", file!(), line!()));
+            message.push("".into());
+            message.push("Description:".into());
+            message.push(format!("{}", $desc));
+            $(
+                message.push("".into());
+                message.push(format!("{:#?}", $x));
+            )*
+            message.join("\n")
+        }
+    };
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct SolverSettings {
     pub simulator_settings: raphael_sim::Settings,

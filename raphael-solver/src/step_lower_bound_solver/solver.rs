@@ -3,6 +3,7 @@ use std::num::NonZeroU8;
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo},
+    internal_error_message,
     utils::{self, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
@@ -207,9 +208,9 @@ impl StepLbSolver {
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(SolverException::InternalError(format!(
-                "\"{:?}\" combo in step lower bound solver",
-                state.effects.combo()
+            return Err(SolverException::InternalError(internal_error_message!(
+                "Unexpected combo state.",
+                state
             )));
         }
 
@@ -243,7 +244,10 @@ impl StepLbSolver {
                 .map(|value| state.quality + value.second);
             return Ok(quality_ub);
         } else {
-            unreachable!("State must be in memoization table after solver")
+            Err(SolverException::InternalError(internal_error_message!(
+                "State not found in memoization table after solve.",
+                reduced_state
+            )))
         }
     }
 

@@ -1,7 +1,7 @@
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS},
-    utils,
+    internal_error_message, utils,
 };
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
@@ -222,9 +222,9 @@ impl QualityUbSolver {
         mut state: SimulationState,
     ) -> Result<u32, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(SolverException::InternalError(format!(
-                "\"{:?}\" combo in quality upper bound solver",
-                state.effects.combo()
+            return Err(SolverException::InternalError(internal_error_message!(
+                "Unexpected combo state.",
+                state
             )));
         }
 
@@ -277,7 +277,10 @@ impl QualityUbSolver {
                 .map_or(0, |value| state.quality + value.second);
             Ok(std::cmp::min(self.settings.max_quality(), quality))
         } else {
-            unreachable!("State must be in memoization table after solver")
+            Err(SolverException::InternalError(internal_error_message!(
+                "State not found in memoization table after solve.",
+                reduced_state
+            )))
         }
     }
 
