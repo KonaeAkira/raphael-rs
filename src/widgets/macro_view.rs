@@ -1,4 +1,4 @@
-use egui::{Align, Id, Layout, Widget};
+use egui::{Align, Layout, Widget};
 use raphael_data::{Locale, action_name};
 use raphael_sim::Action;
 use serde::{Deserialize, Serialize};
@@ -121,23 +121,7 @@ impl MacroTextBox {
 
 impl Widget for MacroTextBox {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let id = Id::new(&self.text);
-        ui.group(|ui| {
-            ui.horizontal_top(|ui| {
-                ui.monospace(&self.text);
-                ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-                    if ui.ctx().animate_bool_with_time(id, false, 2.0) == 0.0 {
-                        if ui.button("Copy").clicked() {
-                            ui.ctx().copy_text(self.text);
-                            ui.ctx().animate_bool_with_time(id, true, 0.0);
-                        }
-                    } else {
-                        ui.add_enabled(false, egui::Button::new("Copied"));
-                    }
-                });
-            });
-        })
-        .response
+        ui.add(super::MultilineMonospace::new(self.text))
     }
 }
 

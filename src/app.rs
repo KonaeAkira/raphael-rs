@@ -214,10 +214,13 @@ impl eframe::App for MacroSolverApp {
                         unrecoverable_error = false;
                     },
                     SolverException::InternalError(message) => {
-                        ui.label(egui::RichText::new("Error").strong());
+                        ui.label(egui::RichText::new("Internal Solver Error").strong());
                         ui.separator();
-                        ui.label(message);
-                        ui.label("This is an internal error. Please submit a bug report :)");
+                        ui.label("The solver encountered an error. Please submit a bug report.");
+                        ui.label("Details:");
+                        ui.add_space(3.0);
+                        ui.add(MultilineMonospace::new(message));
+                        ui.separator();
                         unrecoverable_error = false;
                     },
                     #[cfg(target_arch = "wasm32")]

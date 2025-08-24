@@ -1,3 +1,6 @@
+mod multiline_monospace;
+pub use multiline_monospace::MultilineMonospace;
+
 mod macro_view;
 pub use macro_view::{MacroView, MacroViewConfig};
 
