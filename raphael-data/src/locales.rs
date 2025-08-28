@@ -1,4 +1,4 @@
-use crate::{CL_ICON_CHAR, HQ_ICON_CHAR, ITEMS};
+use crate::{CL_ICON_CHAR, HQ_ICON_CHAR, ITEMS, NciArray};
 use raphael_sim::Action;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -40,11 +40,11 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     }
 }
 
-pub static ITEM_NAMES_EN: phf::Map<u32, &str> = include!("../data/item_names_en.rs");
-pub static ITEM_NAMES_DE: phf::Map<u32, &str> = include!("../data/item_names_de.rs");
-pub static ITEM_NAMES_FR: phf::Map<u32, &str> = include!("../data/item_names_fr.rs");
-pub static ITEM_NAMES_JP: phf::Map<u32, &str> = include!("../data/item_names_jp.rs");
-pub static ITEM_NAMES_KR: phf::Map<u32, &str> = include!("../data/item_names_kr.rs");
+pub const ITEM_NAMES_EN: NciArray<&str> = include!("../data/item_names_en.rs");
+pub const ITEM_NAMES_DE: NciArray<&str> = include!("../data/item_names_de.rs");
+pub const ITEM_NAMES_FR: NciArray<&str> = include!("../data/item_names_fr.rs");
+pub const ITEM_NAMES_JP: NciArray<&str> = include!("../data/item_names_jp.rs");
+pub const ITEM_NAMES_KR: NciArray<&str> = include!("../data/item_names_kr.rs");
 
 pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     let item_name = match locale {
@@ -63,15 +63,15 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     }
 }
 
-pub static STELLAR_MISSION_NAMES_EN: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_EN: NciArray<&str> =
     include!("../data/stellar_mission_names_en.rs");
-pub static STELLAR_MISSION_NAMES_DE: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_DE: NciArray<&str> =
     include!("../data/stellar_mission_names_de.rs");
-pub static STELLAR_MISSION_NAMES_FR: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_FR: NciArray<&str> =
     include!("../data/stellar_mission_names_fr.rs");
-pub static STELLAR_MISSION_NAMES_JP: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_JP: NciArray<&str> =
     include!("../data/stellar_mission_names_jp.rs");
-pub static STELLAR_MISSION_NAMES_KR: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_KR: NciArray<&str> =
     include!("../data/stellar_mission_names_kr.rs");
 
 pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<String> {

@@ -16,6 +16,11 @@ pub use consumable::{Consumable, ItemAction, ItemFood, instantiate_consumables};
 mod stellar_mission;
 pub use stellar_mission::{StellarMission, StellarMissionName};
 
+mod non_contiguously_indexed_array_builder;
+pub use non_contiguously_indexed_array_builder::{
+    BuildConfiguration, NciArrayBuilder, OutputFormat, ValueFormatting,
+};
+
 pub trait SheetData: Sized {
     const SHEET: &'static str;
     const REQUIRED_FIELDS: &[&str];
