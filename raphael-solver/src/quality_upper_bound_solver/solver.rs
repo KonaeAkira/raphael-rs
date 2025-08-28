@@ -1,7 +1,8 @@
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS},
-    internal_error, utils,
+    macros::internal_error,
+    utils,
 };
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};

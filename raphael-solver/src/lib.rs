@@ -28,24 +28,26 @@ pub enum SolverException {
     AllocError,
 }
 
-#[macro_export]
-macro_rules! internal_error {
-    ( $desc:expr, $( $x:expr ),* ) => {
-        {
-            let mut message = String::from(concat!(
-                "The solver encountered an internal error.\n",
-                "Please submit a bug report.\n\n",
-                "--- Description ---\n\n",
-            ));
-            message += &format!("{}\n\n", $desc);
-            message += &format!("Location: {}:{}\n\n", file!(), line!());
-            message += "--- Variables ---\n";
-            $(
-                message += &format!("\n{} = {:#?}\n", stringify!($x), $x);
-            )*
-            crate::SolverException::InternalError(message)
-        }
-    };
+mod macros {
+    macro_rules! internal_error {
+        ( $desc:expr, $( $x:expr ),* ) => {
+            {
+                let mut message = String::from(concat!(
+                    "The solver encountered an internal error.\n",
+                    "Please submit a bug report.\n\n",
+                    "--- Description ---\n\n",
+                ));
+                message += &format!("{}\n\n", $desc);
+                message += &format!("Location: {}:{}\n\n", file!(), line!());
+                message += "--- Variables ---\n";
+                $(
+                    message += &format!("\n{} = {:#?}\n", stringify!($x), $x);
+                )*
+                crate::SolverException::InternalError(message)
+            }
+        };
+    }
+    pub(crate) use internal_error;
 }
 
 #[derive(Clone, Copy, Debug)]

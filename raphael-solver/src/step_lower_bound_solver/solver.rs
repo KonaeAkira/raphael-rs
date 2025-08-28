@@ -3,7 +3,7 @@ use std::num::NonZeroU8;
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo},
-    internal_error,
+    macros::internal_error,
     utils::{self, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
