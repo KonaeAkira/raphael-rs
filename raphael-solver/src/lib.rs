@@ -18,7 +18,7 @@ pub use utils::AtomicFlag;
 #[cfg(test)]
 pub mod test_utils;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SolverException {
     NoSolution,
@@ -26,6 +26,18 @@ pub enum SolverException {
     InternalError(String),
     #[cfg(target_arch = "wasm32")]
     AllocError,
+}
+
+impl std::fmt::Debug for SolverException {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NoSolution => write!(f, "NoSolution"),
+            Self::Interrupted => write!(f, "Interrupted"),
+            Self::InternalError(message) => f.write_str(message),
+            #[cfg(target_arch = "wasm32")]
+            Self::AllocError => write!(f, "AllocError"),
+        }
+    }
 }
 
 mod macros {
@@ -38,7 +50,7 @@ mod macros {
                     "--- Description ---\n\n",
                 ));
                 message += &format!("{}\n\n", $desc);
-                message += &format!("Location: {}:{}\n\n", file!(), line!());
+                message += &format!("Location: {}:{}:{}\n\n", file!(), line!(), column!());
                 message += "--- Debug info ---\n";
                 $(
                     message += &format!("\n{} = {:#?}\n", stringify!($x), $x);
