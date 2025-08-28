@@ -40,7 +40,7 @@ fn test_manipulation_refund() {
 /// It is admissible if the quality-ub of a state is never less than the quality of a reachable final state.
 fn check_consistency(solver_settings: SolverSettings) {
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
-    solver.precompute();
+    solver.precompute().unwrap();
     let mut rng = rand::rng();
     for _ in 0..100000 {
         let state = random_state(&solver_settings, &mut rng);

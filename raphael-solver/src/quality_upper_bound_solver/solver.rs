@@ -1,7 +1,7 @@
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS},
-    internal_error_message, utils,
+    internal_error, utils,
 };
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
@@ -150,11 +150,9 @@ impl QualityUbSolver {
                                     value.first >= required_progress
                                         && value.second >= required_quality
                                 } else {
-                                    return Err(SolverException::InternalError(
-                                        internal_error_message!(
-                                            "Unexpected empty pareto front.",
-                                            state
-                                        ),
+                                    return Err(internal_error!(
+                                        "Unexpected empty pareto front.",
+                                        state
                                     ));
                                 }
                             };
@@ -198,12 +196,12 @@ impl QualityUbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        return Err(SolverException::InternalError(internal_error_message!(
+                        return Err(internal_error!(
                             "Required precompute state does not exist.",
                             action,
                             state,
                             new_state
-                        )));
+                        ));
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -230,10 +228,7 @@ impl QualityUbSolver {
         mut state: SimulationState,
     ) -> Result<u32, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(SolverException::InternalError(internal_error_message!(
-                "Unexpected combo state.",
-                state
-            )));
+            return Err(internal_error!("Unexpected combo state.", state));
         }
 
         let mut required_progress = self.settings.max_progress() - state.progress;
@@ -256,14 +251,17 @@ impl QualityUbSolver {
                 cp: required_cp,
                 ..reduced_state
             };
-            #[cfg(test)]
-            assert!(self.solved_states.contains_key(&reduced_state));
             if let Some(pareto_front) = self.solved_states.get(&reduced_state)
                 && let Some(value) = pareto_front.last()
                 && value.first >= required_progress
                 && value.second + state.quality >= self.settings.max_quality()
             {
                 return Ok(self.settings.max_quality());
+            } else {
+                return Err(internal_error!(
+                    "Maximal template list is inconsistent with actual solved states.",
+                    reduced_state
+                ));
             }
         }
 
@@ -285,10 +283,10 @@ impl QualityUbSolver {
                 .map_or(0, |value| state.quality + value.second);
             Ok(std::cmp::min(self.settings.max_quality(), quality))
         } else {
-            Err(SolverException::InternalError(internal_error_message!(
+            Err(internal_error!(
                 "State not found in memoization table after solve.",
                 reduced_state
-            )))
+            ))
         }
     }
 

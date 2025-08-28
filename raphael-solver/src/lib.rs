@@ -29,7 +29,7 @@ pub enum SolverException {
 }
 
 #[macro_export]
-macro_rules! internal_error_message {
+macro_rules! internal_error {
     ( $desc:expr, $( $x:expr ),* ) => {
         {
             let mut message = Vec::new();
@@ -45,7 +45,8 @@ macro_rules! internal_error_message {
                 message.push("".into());
                 message.push(format!("{} = {:#?}", stringify!($x), $x));
             )*
-            message.join("\n")
+
+            crate::SolverException::InternalError(message.join("\n"))
         }
     };
 }

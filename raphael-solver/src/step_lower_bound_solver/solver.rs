@@ -3,7 +3,7 @@ use std::num::NonZeroU8;
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo},
-    internal_error_message,
+    internal_error,
     utils::{self, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
@@ -168,12 +168,12 @@ impl StepLbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        return Err(SolverException::InternalError(internal_error_message!(
+                        return Err(internal_error!(
                             "Required precompute state does not exist.",
                             action,
                             state,
                             new_state
-                        )));
+                        ));
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -217,10 +217,7 @@ impl StepLbSolver {
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(SolverException::InternalError(internal_error_message!(
-                "Unexpected combo state.",
-                state
-            )));
+            return Err(internal_error!("Unexpected combo state.", state));
         }
 
         while self.next_precompute_step_budget <= step_budget {
@@ -253,10 +250,10 @@ impl StepLbSolver {
                 .map(|value| state.quality + value.second);
             return Ok(quality_ub);
         } else {
-            Err(SolverException::InternalError(internal_error_message!(
+            Err(internal_error!(
                 "State not found in memoization table after solve.",
                 reduced_state
-            )))
+            ))
         }
     }
 
