@@ -1,4 +1,5 @@
 use crate::{Action, ActionImpl};
+use strum::IntoEnumIterator;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -23,7 +24,7 @@ impl Settings {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ActionMask {
     mask: u64,
@@ -97,5 +98,19 @@ impl ActionMask {
         Self {
             mask: self.mask & (!other.mask),
         }
+    }
+}
+
+impl std::fmt::Debug for ActionMask {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut disallowed_actions = Vec::new();
+        for action in Action::iter() {
+            if !self.has(action) {
+                disallowed_actions.push(action);
+            }
+        }
+        f.debug_struct("ActionMask")
+            .field("disallowed_actions", &disallowed_actions)
+            .finish()
     }
 }

@@ -153,6 +153,7 @@ impl QualityUbSolver {
                                 } else {
                                     return Err(internal_error!(
                                         "Unexpected empty pareto front.",
+                                        self.settings,
                                         state
                                     ));
                                 }
@@ -199,6 +200,7 @@ impl QualityUbSolver {
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
+                            self.settings,
                             action,
                             state,
                             new_state
@@ -229,7 +231,11 @@ impl QualityUbSolver {
         mut state: SimulationState,
     ) -> Result<u32, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(internal_error!("Unexpected combo state.", state));
+            return Err(internal_error!(
+                "Unexpected combo state.",
+                self.settings,
+                state
+            ));
         }
 
         let mut required_progress = self.settings.max_progress() - state.progress;
@@ -261,6 +267,7 @@ impl QualityUbSolver {
             } else {
                 return Err(internal_error!(
                     "Maximal template list is inconsistent with actual solved states.",
+                    self.settings,
                     reduced_state
                 ));
             }
@@ -286,6 +293,7 @@ impl QualityUbSolver {
         } else {
             Err(internal_error!(
                 "State not found in memoization table after solve.",
+                self.settings,
                 reduced_state
             ))
         }

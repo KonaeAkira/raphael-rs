@@ -170,6 +170,7 @@ impl StepLbSolver {
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
+                            self.settings,
                             action,
                             state,
                             new_state
@@ -217,7 +218,11 @@ impl StepLbSolver {
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(internal_error!("Unexpected combo state.", state));
+            return Err(internal_error!(
+                "Unexpected combo state.",
+                self.settings,
+                state
+            ));
         }
 
         while self.next_precompute_step_budget <= step_budget {
@@ -252,6 +257,7 @@ impl StepLbSolver {
         } else {
             Err(internal_error!(
                 "State not found in memoization table after solve.",
+                self.settings,
                 reduced_state
             ))
         }
