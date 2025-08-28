@@ -6,7 +6,7 @@ pub trait ActionImpl {
     const ACTION_MASK: ActionMask;
     /// Does this action trigger ticking effects (e.g. Manipulation)?
     const TICK_EFFECTS: bool = true;
-    
+
     fn precondition(
         _state: &SimulationState,
         _settings: &Settings,

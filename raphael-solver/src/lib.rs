@@ -39,7 +39,7 @@ mod macros {
                 ));
                 message += &format!("{}\n\n", $desc);
                 message += &format!("Location: {}:{}\n\n", file!(), line!());
-                message += "--- Variables ---\n";
+                message += "--- Debug info ---\n";
                 $(
                     message += &format!("\n{} = {:#?}\n", stringify!($x), $x);
                 )*

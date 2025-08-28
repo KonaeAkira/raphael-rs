@@ -216,7 +216,7 @@ impl eframe::App for MacroSolverApp {
                     SolverException::InternalError(message) => {
                         ui.label(egui::RichText::new("Internal Solver Error").strong());
                         ui.separator();
-                        ui.add(MultilineMonospace::new(message));
+                        ui.add(MultilineMonospace::new(message).max_height(360.0));
                         unrecoverable_error = false;
                     },
                     #[cfg(target_arch = "wasm32")]
