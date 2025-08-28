@@ -13,9 +13,9 @@ use super::*;
 /// It is admissible if the step-lb of a state is never greater than the step count of a reachable final state.
 fn check_consistency(solver_settings: SolverSettings) {
     let mut solver = StepLbSolver::new(solver_settings, AtomicFlag::default());
-    let mut rng = rand::rng();
-    for _ in 0..100000 {
-        let state = random_state(&solver_settings, &mut rng);
+    for state in generate_random_states(solver_settings, 1_000_000)
+        .filter(|state| state.effects.combo() == Combo::None)
+    {
         let state_step_lb = solver.step_lower_bound(state, 0).unwrap();
         for action in FULL_SEARCH_ACTIONS {
             if let Ok(child_state) = use_action_combo(&solver_settings, state, action) {
@@ -38,15 +38,6 @@ fn check_consistency(solver_settings: SolverSettings) {
         }
     }
 }
-
-const REGULAR_ACTIONS: ActionMask = ActionMask::all()
-    .remove(Action::TrainedEye)
-    .remove(Action::HeartAndSoul)
-    .remove(Action::QuickInnovation);
-const NO_MANIPULATION: ActionMask = REGULAR_ACTIONS.remove(Action::Manipulation);
-const WITH_SPECIALIST_ACTIONS: ActionMask = REGULAR_ACTIONS
-    .add(Action::HeartAndSoul)
-    .add(Action::QuickInnovation);
 
 #[test_case::test_matrix(
     [20, 35, 60, 80],
