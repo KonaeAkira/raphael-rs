@@ -92,7 +92,7 @@ impl StepLbSolver {
         templates.into_iter().collect()
     }
 
-    fn precompute_next_step_budget(&mut self) {
+    fn precompute_next_step_budget(&mut self) -> Result<(), SolverException> {
         // A lot of templates map to the same state at lower step budgets due to effect and durability optimizations.
         // Here we deduplicate the instantiated templates to avoid solving duplicate states.
         let instantiated_templates: FxHashSet<ReducedState> = self
@@ -105,15 +105,17 @@ impl StepLbSolver {
             || ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality());
         let solved_templates = instantiated_templates
             .into_par_iter()
-            .map_init(init, |pareto_front_builder, state| {
-                let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                (state, pareto_front)
-            })
-            .collect_vec_list();
+            .map_init(
+                init,
+                |pareto_front_builder, state| -> Result<_, SolverException> {
+                    let pareto_front = self.solve_precompute_state(pareto_front_builder, state)?;
+                    Ok((state, pareto_front))
+                },
+            )
+            .collect::<Result<Vec<_>, SolverException>>()?;
 
         let num_solved_states_before = self.solved_states.len();
-        self.solved_states
-            .extend(solved_templates.into_iter().flatten());
+        self.solved_states.extend(solved_templates);
         self.precomputed_states += self.solved_states.len() - num_solved_states_before;
 
         let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
@@ -140,13 +142,15 @@ impl StepLbSolver {
             self.precompute_templates.len(),
             self.solved_states.len()
         );
+
+        Ok(())
     }
 
     fn solve_precompute_state(
         &self,
         pareto_front_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
-    ) -> Box<[ParetoValue]> {
+    ) -> Result<Box<[ParetoValue]>, SolverException> {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
         for action in FULL_SEARCH_ACTIONS {
@@ -164,7 +168,12 @@ impl StepLbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        unreachable!("Parent: {state:?}\nChild: {new_state:?}\nAction: {action:?}");
+                        return Err(SolverException::InternalError(internal_error_message!(
+                            "Required precompute state does not exist.",
+                            action,
+                            state,
+                            new_state
+                        )));
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -181,7 +190,7 @@ impl StepLbSolver {
                 }
             }
         }
-        Box::from(pareto_front_builder.peek().unwrap())
+        Ok(Box::from(pareto_front_builder.peek().unwrap()))
     }
 
     pub fn step_lower_bound(
@@ -215,7 +224,7 @@ impl StepLbSolver {
         }
 
         while self.next_precompute_step_budget <= step_budget {
-            self.precompute_next_step_budget();
+            self.precompute_next_step_budget()?;
         }
 
         let mut required_progress = self.settings.max_progress() - state.progress;

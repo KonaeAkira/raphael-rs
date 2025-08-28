@@ -85,7 +85,7 @@ impl<'a> MacroSolver<'a> {
         drop(timer);
 
         let timer = ScopedTimer::new("Quality UB Solver");
-        self.quality_ub_solver.precompute();
+        self.quality_ub_solver.precompute()?;
         drop(timer);
 
         Ok(self.do_solve(initial_state)?.actions())

@@ -101,8 +101,7 @@ impl QualityUbSolver {
             .collect()
     }
 
-    pub fn precompute(&mut self) {
-        assert!(self.solved_states.is_empty());
+    pub fn precompute(&mut self) -> Result<(), SolverException> {
         let all_templates = self.generate_precompute_templates();
         // States are computed in order of less CP to more CP.
         // States currently being computed assume that child states have already been computed.
@@ -124,7 +123,7 @@ impl QualityUbSolver {
             // See `ReducedState::is_final` for details.
             for cp in (2 * self.durability_cost..=self.settings.max_cp()).step_by(2) {
                 if self.interrupt_signal.is_set() {
-                    return;
+                    return Err(SolverException::Interrupted);
                 }
                 let solved_states = templates
                     .par_iter_mut()
@@ -139,30 +138,34 @@ impl QualityUbSolver {
                                 self.settings.max_quality(),
                             )
                         },
-                        |pf_builder, (template, state)| {
-                            let pareto_front = self.solve_precompute_state(pf_builder, state);
+                        |pf_builder, (template, state)| -> Result<_, SolverException> {
+                            let pareto_front = self.solve_precompute_state(pf_builder, state)?;
                             let template_is_maximal = {
                                 // A template is "maximal" if there is no benefit of solving it with higher CP
                                 let required_progress = self.settings.max_progress();
                                 let required_quality = self.settings.max_quality().saturating_sub(
                                     self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
                                 );
-                                #[cfg(test)]
-                                assert!(!pareto_front.is_empty());
-                                pareto_front.last().is_some_and(|value| {
+                                if let Some(value) = pareto_front.last() {
                                     value.first >= required_progress
                                         && value.second >= required_quality
-                                })
+                                } else {
+                                    return Err(SolverException::InternalError(
+                                        internal_error_message!(
+                                            "Unexpected empty pareto front.",
+                                            state
+                                        ),
+                                    ));
+                                }
                             };
                             if template_is_maximal {
                                 template.max_cp = cp;
                             }
-                            (state, pareto_front)
+                            Ok((state, pareto_front))
                         },
                     )
-                    .collect_vec_list();
-                self.solved_states
-                    .extend(solved_states.into_iter().flatten());
+                    .collect::<Result<Vec<_>, SolverException>>()?;
+                self.solved_states.extend(solved_states);
             }
             self.maximal_templates.extend(
                 templates
@@ -176,13 +179,15 @@ impl QualityUbSolver {
             all_templates.len(),
             self.solved_states.len()
         );
+
+        Ok(())
     }
 
     fn solve_precompute_state(
         &self,
         pareto_front_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
-    ) -> Box<[ParetoValue]> {
+    ) -> Result<Box<[ParetoValue]>, SolverException> {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
         for action in FULL_SEARCH_ACTIONS {
@@ -193,9 +198,12 @@ impl QualityUbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        unreachable!(
-                            "Precompute state does not exist.\nParent: {state:?}\nChild: {new_state:?}\nAction: {action:?}"
-                        );
+                        return Err(SolverException::InternalError(internal_error_message!(
+                            "Required precompute state does not exist.",
+                            action,
+                            state,
+                            new_state
+                        )));
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -212,7 +220,7 @@ impl QualityUbSolver {
                 }
             }
         }
-        Box::from(pareto_front_builder.peek().unwrap())
+        Ok(Box::from(pareto_front_builder.peek().unwrap()))
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.

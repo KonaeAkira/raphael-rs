@@ -35,15 +35,15 @@ macro_rules! internal_error_message {
             let mut message = Vec::new();
             message.push("The solver encountered an internal error.".into());
             message.push("Please submit a bug report.".into());
-            message.push("".into());
-            message.push("Location:".into());
-            message.push(format!("{}:{}", file!(), line!()));
-            message.push("".into());
-            message.push("Description:".into());
+
+            message.push("\n--- Description ---\n".into());
             message.push(format!("{}", $desc));
+            message.push(format!("\nLocation: {}:{}", file!(), line!()));
+
+            message.push("\n--- Variables ---".into());
             $(
                 message.push("".into());
-                message.push(format!("{:#?}", $x));
+                message.push(format!("{} = {:#?}", stringify!($x), $x));
             )*
             message.join("\n")
         }
