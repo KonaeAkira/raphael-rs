@@ -140,7 +140,7 @@ fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [
         .iter()
         .filter_map(|ingredient| match ingredient.item_id {
             0 => None,
-            id => Some((*raphael_data::ITEMS.get(&id).unwrap(), ingredient.amount)),
+            id => Some((*raphael_data::ITEMS.get(id).unwrap(), ingredient.amount)),
         })
         .collect();
 
@@ -190,7 +190,7 @@ pub fn execute(args: &SolveArgs) {
             req_control: 0,
         }
     } else if args.recipe_id.is_some() {
-        *RECIPES.get(&args.recipe_id.unwrap()).expect(&format!(
+        *RECIPES.get(args.recipe_id.unwrap()).expect(&format!(
             "Unable to find Recipe with ID: {}",
             args.recipe_id.unwrap()
         ))
@@ -209,7 +209,7 @@ pub fn execute(args: &SolveArgs) {
     let recipe_id = RECIPES
         .entries()
         .find(|(_, entry_recipe)| **entry_recipe == recipe)
-        .map(|(recipe_id, _)| *recipe_id)
+        .map(|(recipe_id, _)| recipe_id)
         .unwrap_or_default();
     let food = match args.food {
         Some(food_arg) => {

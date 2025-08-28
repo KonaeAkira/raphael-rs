@@ -172,7 +172,7 @@ pub fn get_initial_quality(
     let ingredients: Vec<(Item, u32)> = recipe
         .ingredients
         .iter()
-        .filter_map(|ingredient| Some((*ITEMS.get(&ingredient.item_id)?, ingredient.amount)))
+        .filter_map(|ingredient| Some((*ITEMS.get(ingredient.item_id)?, ingredient.amount)))
         .collect();
 
     let mut max_ilvl = 0;

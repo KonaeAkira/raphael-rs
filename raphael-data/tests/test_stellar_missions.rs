@@ -29,7 +29,7 @@ struct DetailedRecipeInfo {
 
 impl DetailedRecipeInfo {
     pub fn from_recipe_id(recipe_id: u32) -> Self {
-        let recipe = RECIPES.get(&recipe_id).unwrap();
+        let recipe = RECIPES.get(recipe_id).unwrap();
         let rlvl_entry = RLVLS[usize::from(recipe.recipe_level)];
         Self {
             recipe_id,
@@ -50,7 +50,7 @@ struct DetailedMissionInfo {
 
 impl DetailedMissionInfo {
     pub fn from_mission_id(mission_id: u32) -> Self {
-        let mission = STELLAR_MISSIONS.get(&mission_id).unwrap();
+        let mission = STELLAR_MISSIONS.get(mission_id).unwrap();
         Self {
             job_id: mission.job_id,
             recipes: mission

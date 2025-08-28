@@ -48,13 +48,13 @@ pub const ITEM_NAMES_KR: NciArray<&str> = include!("../data/item_names_kr.rs");
 
 pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     let item_name = match locale {
-        Locale::EN => *ITEM_NAMES_EN.get(&item_id)?,
-        Locale::DE => *ITEM_NAMES_DE.get(&item_id)?,
-        Locale::FR => *ITEM_NAMES_FR.get(&item_id)?,
-        Locale::JP => *ITEM_NAMES_JP.get(&item_id)?,
-        Locale::KR => *ITEM_NAMES_KR.get(&item_id)?,
+        Locale::EN => *ITEM_NAMES_EN.get(item_id)?,
+        Locale::DE => *ITEM_NAMES_DE.get(item_id)?,
+        Locale::FR => *ITEM_NAMES_FR.get(item_id)?,
+        Locale::JP => *ITEM_NAMES_JP.get(item_id)?,
+        Locale::KR => *ITEM_NAMES_KR.get(item_id)?,
     };
-    if ITEMS.get(&item_id)?.always_collectable {
+    if ITEMS.get(item_id)?.always_collectable {
         Some(format!("{} {}", item_name, CL_ICON_CHAR))
     } else if hq {
         Some(format!("{} {}", item_name, HQ_ICON_CHAR))
@@ -77,19 +77,19 @@ pub static STELLAR_MISSION_NAMES_KR: NciArray<&str> =
 pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<String> {
     match locale {
         Locale::EN => STELLAR_MISSION_NAMES_EN
-            .get(&mission_id)
+            .get(mission_id)
             .map(std::string::ToString::to_string),
         Locale::DE => STELLAR_MISSION_NAMES_DE
-            .get(&mission_id)
+            .get(mission_id)
             .map(std::string::ToString::to_string),
         Locale::FR => STELLAR_MISSION_NAMES_FR
-            .get(&mission_id)
+            .get(mission_id)
             .map(std::string::ToString::to_string),
         Locale::JP => STELLAR_MISSION_NAMES_JP
-            .get(&mission_id)
+            .get(mission_id)
             .map(std::string::ToString::to_string),
         Locale::KR => STELLAR_MISSION_NAMES_KR
-            .get(&mission_id)
+            .get(mission_id)
             .map(std::string::ToString::to_string),
     }
 }

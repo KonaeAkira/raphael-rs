@@ -31,7 +31,7 @@ pub fn find_recipes(search_string: &str, locale: Locale) -> Vec<u32> {
         .filter_map(|(recipe_id, recipe)| {
             let item_name = get_item_name(recipe.item_id, false, locale)?;
             match contains_noncontiguous(&item_name.to_lowercase(), &pattern) {
-                true => Some(*recipe_id),
+                true => Some(recipe_id),
                 false => None,
             }
         })
@@ -43,17 +43,17 @@ pub fn find_stellar_missions(search_string: &str, locale: Locale) -> Vec<u32> {
     STELLAR_MISSIONS
         .entries()
         .filter_map(|(mission_id, mission)| {
-            let mission_name = get_stellar_mission_name(*mission_id, locale)?;
+            let mission_name = get_stellar_mission_name(mission_id, locale)?;
             match contains_noncontiguous(&mission_name.to_lowercase(), &pattern) {
-                true => Some(*mission_id),
+                true => Some(mission_id),
                 false => mission
                     .recipe_ids
                     .iter()
                     .filter_map(|recipe_id| {
-                        let recipe = RECIPES.get(recipe_id)?;
+                        let recipe = RECIPES.get(*recipe_id)?;
                         let item_name = get_item_name(recipe.item_id, false, locale)?;
                         match contains_noncontiguous(&item_name.to_lowercase(), &pattern) {
-                            true => Some(*mission_id),
+                            true => Some(mission_id),
                             false => None,
                         }
                     })

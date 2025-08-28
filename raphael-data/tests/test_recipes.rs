@@ -28,7 +28,7 @@ fn all_recipe_items_exist() {
 fn medical_supplies() {
     let matching_recipes = find_recipes("Medical Supplies", Locale::EN)
         .iter()
-        .map(|recipe_id| RECIPES.get(recipe_id).unwrap())
+        .map(|recipe_id| RECIPES.get(*recipe_id).unwrap())
         .collect::<Vec<_>>();
     let expected = expect![[r#"
         [
@@ -353,7 +353,7 @@ fn medical_supplies() {
 fn ipe_lumber() {
     let matching_recipes = find_recipes("Ipe Lumber", Locale::EN)
         .iter()
-        .map(|recipe_id| RECIPES.get(recipe_id).unwrap())
+        .map(|recipe_id| RECIPES.get(*recipe_id).unwrap())
         .collect::<Vec<_>>();
     let expected = expect![[r#"
         [
@@ -405,7 +405,7 @@ fn ipe_lumber() {
 fn uncharted_course_resin() {
     let matching_recipes = find_recipes("Uncharted Course Resin", Locale::EN)
         .iter()
-        .map(|recipe_id| RECIPES.get(recipe_id).unwrap())
+        .map(|recipe_id| RECIPES.get(*recipe_id).unwrap())
         .collect::<Vec<_>>();
     let expected = expect![[r#"
         [
@@ -496,7 +496,7 @@ fn uncharted_course_resin() {
 fn habitat_chair() {
     let matching_recipes = find_recipes("Habitat Chair", Locale::EN)
         .iter()
-        .map(|recipe_id| RECIPES.get(recipe_id).unwrap())
+        .map(|recipe_id| RECIPES.get(*recipe_id).unwrap())
         .collect::<Vec<_>>();
     let expected = expect![[r#"
         [
