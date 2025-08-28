@@ -32,21 +32,18 @@ pub enum SolverException {
 macro_rules! internal_error {
     ( $desc:expr, $( $x:expr ),* ) => {
         {
-            let mut message = Vec::new();
-            message.push("The solver encountered an internal error.".into());
-            message.push("Please submit a bug report.".into());
-
-            message.push("\n--- Description ---\n".into());
-            message.push(format!("{}", $desc));
-            message.push(format!("\nLocation: {}:{}", file!(), line!()));
-
-            message.push("\n--- Variables ---".into());
+            let mut message = String::from(concat!(
+                "The solver encountered an internal error.\n",
+                "Please submit a bug report.\n\n",
+                "--- Description ---\n\n",
+            ));
+            message += &format!("{}\n\n", $desc);
+            message += &format!("Location: {}:{}\n\n", file!(), line!());
+            message += "--- Variables ---\n";
             $(
-                message.push("".into());
-                message.push(format!("{} = {:#?}", stringify!($x), $x));
+                message += &format!("\n{} = {:#?}\n", stringify!($x), $x);
             )*
-
-            crate::SolverException::InternalError(message.join("\n"))
+            crate::SolverException::InternalError(message)
         }
     };
 }
