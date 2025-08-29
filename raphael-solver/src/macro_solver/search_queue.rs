@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use raphael_sim::{Action, SimulationState};
 
-use crate::{actions::ActionCombo, utils::Backtracking};
+use crate::{SolverException, actions::ActionCombo, macros::internal_error, utils::Backtracking};
 
 use super::pareto_front::ParetoFront;
 
@@ -111,15 +111,22 @@ impl SearchQueue {
         );
     }
 
-    pub fn push(
+    pub fn try_push(
         &mut self,
         state: SimulationState,
         score: SearchScore,
         action: ActionCombo,
         parent_id: usize,
-    ) {
-        #[cfg(test)]
-        assert!(self.current_score > score);
+    ) -> Result<(), SolverException> {
+        if score >= self.current_score {
+            return Err(internal_error!(
+                "Search score isn't strictly monotonic.",
+                state,
+                action,
+                score,
+                self.current_score
+            ));
+        }
         if score > self.minimum_score {
             self.buckets.entry(score).or_default().push(SearchNode {
                 state,
@@ -127,6 +134,7 @@ impl SearchQueue {
                 parent_id,
             });
         }
+        Ok(())
     }
 
     pub fn pop(&mut self) -> Option<(SimulationState, SearchScore, usize)> {
