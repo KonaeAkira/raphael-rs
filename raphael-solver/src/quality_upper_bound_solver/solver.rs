@@ -69,9 +69,9 @@ impl QualityUbSolver {
 
         while let Some(template) = heap.pop() {
             let entry = templates.entry(template.data).or_default();
-            if template.max_cp > *entry {
-                *entry = template.max_cp;
-                let state = template.instantiate(template.max_cp).unwrap();
+            if template.max_instantiated_cp > *entry {
+                *entry = template.max_instantiated_cp;
+                let state = template.instantiate(template.max_instantiated_cp).unwrap();
                 for action in FULL_SEARCH_ACTIONS {
                     if let Some((new_state, _, _)) =
                         state.use_action(action, &self.settings, self.durability_cost)
@@ -88,7 +88,7 @@ impl QualityUbSolver {
                             ),
                         );
                         let new_entry = templates.entry(new_template_data).or_default();
-                        if new_template.max_cp > *new_entry {
+                        if new_template.max_instantiated_cp > *new_entry {
                             heap.push(new_template);
                         }
                     }
@@ -159,7 +159,7 @@ impl QualityUbSolver {
                                 }
                             };
                             if template_is_maximal {
-                                template.max_cp = cp;
+                                template.required_cp_for_max_progress_and_quality = Some(cp);
                             }
                             Ok((state, pareto_front))
                         },
@@ -167,11 +167,12 @@ impl QualityUbSolver {
                     .collect::<Result<Vec<_>, SolverException>>()?;
                 self.solved_states.extend(solved_states);
             }
-            self.maximal_templates.extend(
-                templates
-                    .into_iter()
-                    .map(|template| (template.data, template.max_cp)),
-            );
+            self.maximal_templates
+                .extend(templates.into_iter().filter_map(|template| {
+                    template
+                        .required_cp_for_max_progress_and_quality
+                        .map(|required_cp| (template.data, required_cp))
+                }));
         }
         self.precomputed_states = self.solved_states.len();
         log::debug!(
@@ -408,17 +409,36 @@ impl TemplateData {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Template {
-    max_cp: u16, // The template cannot be instantiated with CP above this value
+    /// The maximum amount of CP the template can be instantiated with.
+    ///
+    /// The purpose of this limit is to avoid instantiating unreachable states.
+    /// For example, if the solve configuration has a max CP of 500, then instantiating a template with Waste Not II at 450 CP is not useful as the instantiated state cannot be reached from the initial state using any action sequence.
+    max_instantiated_cp: u16,
+
+    /// Minimum amount of CP required for the instantiated state to reach max Progress and max Quality.
+    ///
+    /// This also takes into account the minimum existing Quality of the state (e.g. a template with 10 Inner Quiet must already have some Quality, so it's not necessary for the template to reach max Quality on its own).
+    required_cp_for_max_progress_and_quality: Option<u16>,
+
     data: TemplateData,
 }
 
 impl Template {
     pub fn new(max_cp: u16, data: TemplateData) -> Self {
-        Self { max_cp, data }
+        Self {
+            max_instantiated_cp: max_cp,
+            required_cp_for_max_progress_and_quality: None,
+            data,
+        }
     }
 
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
-        if cp > self.max_cp {
+        if cp > self.max_instantiated_cp {
+            return None;
+        }
+        if let Some(max_cp) = self.required_cp_for_max_progress_and_quality
+            && cp > max_cp
+        {
             return None;
         }
         Some(ReducedState {

@@ -37,19 +37,19 @@ fn test_with_settings(
         AtomicFlag::new(),
     );
     let result = solver.solve();
-    let score = result.map_or(None, |actions| {
+    let score = result.map(|actions| {
         let final_state =
             SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
         assert!(final_state.progress >= settings.max_progress());
         if settings.simulator_settings.backload_progress {
             assert!(is_progress_backloaded(&settings, &actions));
         }
-        Some(SolutionScore {
+        SolutionScore {
             capped_quality: std::cmp::min(final_state.quality, settings.max_quality()),
             steps: actions.len() as u8,
             duration: actions.iter().map(|action| action.time_cost()).sum(),
             overflow_quality: final_state.quality.saturating_sub(settings.max_quality()),
-        })
+        }
     });
     expected_score.assert_debug_eq(&score);
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -71,7 +71,9 @@ fn unsolvable() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        None
+        Err(
+            NoSolution,
+        )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
@@ -112,7 +114,7 @@ fn zero_quality() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 0,
                 steps: 5,
@@ -160,7 +162,7 @@ fn max_quality() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 1000,
                 steps: 11,
@@ -179,8 +181,8 @@ fn max_quality() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 389796,
-                sequential_states: 2516,
-                pareto_values: 2988048,
+                sequential_states: 2665,
+                pareto_values: 2988845,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 238904,
@@ -208,7 +210,7 @@ fn large_progress_quality_increase() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 100,
                 steps: 1,
@@ -256,7 +258,7 @@ fn backload_progress_single_delicate_synthesis() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 100,
                 steps: 1,

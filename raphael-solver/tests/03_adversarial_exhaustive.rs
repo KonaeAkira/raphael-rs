@@ -37,19 +37,19 @@ fn test_with_settings(
         AtomicFlag::new(),
     );
     let result = solver.solve();
-    let score = result.map_or(None, |actions| {
+    let score = result.map(|actions| {
         let final_state =
             SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
         assert!(final_state.progress >= settings.max_progress());
         if settings.simulator_settings.backload_progress {
             assert!(is_progress_backloaded(&settings, &actions));
         }
-        Some(SolutionScore {
+        SolutionScore {
             capped_quality: std::cmp::min(final_state.quality, settings.max_quality()),
             steps: actions.len() as u8,
             duration: actions.iter().map(|action| action.time_cost()).sum(),
             overflow_quality: final_state.quality.saturating_sub(settings.max_quality()),
-        })
+        }
     });
     expected_score.assert_debug_eq(&score);
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -86,7 +86,7 @@ fn stuffed_peppers() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 11400,
                 steps: 16,
@@ -105,8 +105,8 @@ fn stuffed_peppers() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 2271577,
-                sequential_states: 11,
-                pareto_values: 39199991,
+                sequential_states: 16,
+                pareto_values: 39200086,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 1414006,
@@ -136,7 +136,7 @@ fn test_rare_tacos_2() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 12000,
                 steps: 32,
@@ -155,8 +155,8 @@ fn test_rare_tacos_2() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 2490785,
-                sequential_states: 77523,
-                pareto_values: 70121907,
+                sequential_states: 77760,
+                pareto_values: 70125298,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2227573,
@@ -190,7 +190,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 8200,
                 steps: 14,
@@ -209,8 +209,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 1800446,
-                sequential_states: 603,
-                pareto_values: 16364005,
+                sequential_states: 39390,
+                pareto_values: 16731571,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 52408,
@@ -238,7 +238,7 @@ fn test_indagator_3858_4057() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 10686,
                 steps: 26,
@@ -290,7 +290,7 @@ fn test_rare_tacos_4628_4410() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 11748,
                 steps: 31,
@@ -341,7 +341,7 @@ fn issue_113() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 14070,
                 steps: 33,
@@ -390,7 +390,7 @@ fn issue_118() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 8400,
                 steps: 19,
@@ -409,8 +409,8 @@ fn issue_118() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 1931154,
-                sequential_states: 50787,
-                pareto_values: 25432562,
+                sequential_states: 61560,
+                pareto_values: 25592132,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 258314,
