@@ -66,6 +66,37 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     }
 }
 
+pub static STELLAR_MISSION_NAMES_EN: phf::Map<u32, &str> =
+    include!("../data/stellar_mission_names_en.rs");
+pub static STELLAR_MISSION_NAMES_DE: phf::Map<u32, &str> =
+    include!("../data/stellar_mission_names_de.rs");
+pub static STELLAR_MISSION_NAMES_FR: phf::Map<u32, &str> =
+    include!("../data/stellar_mission_names_fr.rs");
+pub static STELLAR_MISSION_NAMES_JP: phf::Map<u32, &str> =
+    include!("../data/stellar_mission_names_jp.rs");
+pub static STELLAR_MISSION_NAMES_KR: phf::Map<u32, &str> =
+    include!("../data/stellar_mission_names_kr.rs");
+
+pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<String> {
+    match locale {
+        Locale::EN => STELLAR_MISSION_NAMES_EN
+            .get(&mission_id)
+            .map(|name| name.to_string()),
+        Locale::DE => STELLAR_MISSION_NAMES_DE
+            .get(&mission_id)
+            .map(|name| name.to_string()),
+        Locale::FR => STELLAR_MISSION_NAMES_FR
+            .get(&mission_id)
+            .map(|name| name.to_string()),
+        Locale::JP => STELLAR_MISSION_NAMES_JP
+            .get(&mission_id)
+            .map(|name| name.to_string()),
+        Locale::KR => STELLAR_MISSION_NAMES_KR
+            .get(&mission_id)
+            .map(|name| name.to_string()),
+    }
+}
+
 pub const fn action_name(action: Action, locale: Locale) -> &'static str {
     match locale {
         Locale::EN => action_name_en(action),

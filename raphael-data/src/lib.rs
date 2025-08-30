@@ -68,10 +68,19 @@ pub struct Recipe {
     pub req_control: u16,
 }
 
+#[derive(Debug)]
+pub struct StellarMission {
+    pub job_id: u8,
+    pub recipe_ids: &'static [u32],
+}
+
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
 pub const LEVEL_ADJUST_TABLE: &[u16] = include!("../data/level_adjust_table.rs");
 pub static RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
 pub const ITEMS: phf::OrderedMap<u32, Item> = include!("../data/items.rs");
+
+pub const STELLAR_MISSIONS: phf::OrderedMap<u32, StellarMission> =
+    include!("../data/stellar_missions.rs");
 
 pub fn get_game_settings(
     recipe: Recipe,
