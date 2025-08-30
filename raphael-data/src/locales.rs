@@ -81,19 +81,19 @@ pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<Strin
     match locale {
         Locale::EN => STELLAR_MISSION_NAMES_EN
             .get(&mission_id)
-            .map(|name| name.to_string()),
+            .map(std::string::ToString::to_string),
         Locale::DE => STELLAR_MISSION_NAMES_DE
             .get(&mission_id)
-            .map(|name| name.to_string()),
+            .map(std::string::ToString::to_string),
         Locale::FR => STELLAR_MISSION_NAMES_FR
             .get(&mission_id)
-            .map(|name| name.to_string()),
+            .map(std::string::ToString::to_string),
         Locale::JP => STELLAR_MISSION_NAMES_JP
             .get(&mission_id)
-            .map(|name| name.to_string()),
+            .map(std::string::ToString::to_string),
         Locale::KR => STELLAR_MISSION_NAMES_KR
             .get(&mission_id)
-            .map(|name| name.to_string()),
+            .map(std::string::ToString::to_string),
     }
 }
 
