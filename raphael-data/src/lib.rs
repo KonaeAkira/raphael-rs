@@ -119,6 +119,7 @@ pub fn get_game_settings(
         allowed_actions = allowed_actions.remove(Action::QuickInnovation);
     }
 
+    #[allow(clippy::option_if_let_else)]
     match custom_recipe_overrides {
         Some(overrides) => Settings {
             max_cp: cp as _,

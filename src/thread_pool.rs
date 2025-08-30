@@ -18,10 +18,7 @@ pub fn initialization_attempted() -> bool {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn initialize(num_threads: Option<NonZeroUsize>) {
-    let num_threads = match num_threads {
-        Some(num_threads) => num_threads,
-        None => default_thread_count(),
-    };
+    let num_threads = num_threads.unwrap_or_else(default_thread_count);
     match rayon::ThreadPoolBuilder::new()
         .num_threads(num_threads.get())
         .build_global()

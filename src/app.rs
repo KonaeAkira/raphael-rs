@@ -859,28 +859,25 @@ impl MacroSolverApp {
             &mut self.recipe_config.quality_source
         {
             for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
-                if let Some(item) = raphael_data::ITEMS.get(&ingredient.item_id) {
-                    if item.can_be_hq {
-                        has_hq_ingredient = true;
-                        ui.horizontal(|ui| {
-                            ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
-                            ui.with_layout(
-                                Layout::right_to_left(Align::Center),
-                                |ui: &mut egui::Ui| {
-                                    let mut max_placeholder = ingredient.amount;
-                                    ui.add_enabled(
-                                        false,
-                                        egui::DragValue::new(&mut max_placeholder),
-                                    );
-                                    ui.monospace("/");
-                                    ui.add(
-                                        egui::DragValue::new(&mut provided_ingredients[index])
-                                            .range(0..=ingredient.amount),
-                                    );
-                                },
-                            );
-                        });
-                    }
+                if let Some(item) = raphael_data::ITEMS.get(&ingredient.item_id)
+                    && item.can_be_hq
+                {
+                    has_hq_ingredient = true;
+                    ui.horizontal(|ui| {
+                        ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
+                        ui.with_layout(
+                            Layout::right_to_left(Align::Center),
+                            |ui: &mut egui::Ui| {
+                                let mut max_placeholder = ingredient.amount;
+                                ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
+                                ui.monospace("/");
+                                ui.add(
+                                    egui::DragValue::new(&mut provided_ingredients[index])
+                                        .range(0..=ingredient.amount),
+                                );
+                            },
+                        );
+                    });
                 }
             }
         }

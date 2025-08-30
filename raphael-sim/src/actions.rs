@@ -17,15 +17,15 @@ pub trait ActionImpl {
 
     #[inline]
     fn progress_increase(state: &SimulationState, settings: &Settings) -> u32 {
-        let action_mod = u32::from(Self::progress_modifier(state, settings));
-        let effect_mod = u32::from(state.effects.progress_modifier());
+        let action_mod = Self::progress_modifier(state, settings);
+        let effect_mod = state.effects.progress_modifier();
         u32::from(settings.base_progress) * action_mod * effect_mod / 10000
     }
 
     #[inline]
     fn quality_increase(state: &SimulationState, settings: &Settings, condition: Condition) -> u32 {
-        let action_mod = u32::from(Self::quality_modifier(state, settings));
-        let effect_mod = u32::from(state.effects.quality_modifier());
+        let action_mod = Self::quality_modifier(state, settings);
+        let effect_mod = state.effects.quality_modifier();
         let condition_mod = match condition {
             Condition::Normal => 2,
             Condition::Good => 3,
@@ -872,37 +872,37 @@ impl Action {
 
     pub const fn action_id(self) -> u32 {
         match self {
-            Action::BasicSynthesis => 100001,
-            Action::BasicTouch => 100002,
-            Action::MasterMend => 100003,
-            Action::Observe => 100010,
-            Action::TricksOfTheTrade => 100371,
-            Action::WasteNot => 4631,
-            Action::Veneration => 19297,
-            Action::StandardTouch => 100004,
-            Action::GreatStrides => 260,
-            Action::Innovation => 19004,
-            Action::WasteNot2 => 4639,
-            Action::ByregotsBlessing => 100339,
-            Action::PreciseTouch => 100128,
-            Action::MuscleMemory => 100379,
-            Action::CarefulSynthesis => 100203,
-            Action::Manipulation => 4574,
-            Action::PrudentTouch => 100227,
-            Action::AdvancedTouch => 100411,
-            Action::Reflect => 100387,
-            Action::PreparatoryTouch => 100299,
-            Action::Groundwork => 100403,
-            Action::DelicateSynthesis => 100323,
-            Action::IntensiveSynthesis => 100315,
-            Action::TrainedEye => 100283,
-            Action::HeartAndSoul => 100419,
-            Action::PrudentSynthesis => 100427,
-            Action::TrainedFinesse => 100435,
-            Action::RefinedTouch => 100443,
-            Action::QuickInnovation => 100459,
-            Action::ImmaculateMend => 100467,
-            Action::TrainedPerfection => 100475,
+            Self::BasicSynthesis => 100001,
+            Self::BasicTouch => 100002,
+            Self::MasterMend => 100003,
+            Self::Observe => 100010,
+            Self::TricksOfTheTrade => 100371,
+            Self::WasteNot => 4631,
+            Self::Veneration => 19297,
+            Self::StandardTouch => 100004,
+            Self::GreatStrides => 260,
+            Self::Innovation => 19004,
+            Self::WasteNot2 => 4639,
+            Self::ByregotsBlessing => 100339,
+            Self::PreciseTouch => 100128,
+            Self::MuscleMemory => 100379,
+            Self::CarefulSynthesis => 100203,
+            Self::Manipulation => 4574,
+            Self::PrudentTouch => 100227,
+            Self::AdvancedTouch => 100411,
+            Self::Reflect => 100387,
+            Self::PreparatoryTouch => 100299,
+            Self::Groundwork => 100403,
+            Self::DelicateSynthesis => 100323,
+            Self::IntensiveSynthesis => 100315,
+            Self::TrainedEye => 100283,
+            Self::HeartAndSoul => 100419,
+            Self::PrudentSynthesis => 100427,
+            Self::TrainedFinesse => 100435,
+            Self::RefinedTouch => 100443,
+            Self::QuickInnovation => 100459,
+            Self::ImmaculateMend => 100467,
+            Self::TrainedPerfection => 100475,
         }
     }
 }

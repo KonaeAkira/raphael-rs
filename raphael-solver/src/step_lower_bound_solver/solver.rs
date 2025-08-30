@@ -254,7 +254,7 @@ impl StepLbSolver {
             let quality_ub = pareto_front
                 .get(index)
                 .map(|value| state.quality + value.second);
-            return Ok(quality_ub);
+            Ok(quality_ub)
         } else {
             Err(internal_error!(
                 "State not found in memoization table after solve.",

@@ -64,6 +64,7 @@ impl Effects {
     }
 
     #[inline]
+    #[must_use]
     pub const fn tick_down(self) -> Self {
         const {
             assert!(Combo::SynthesisBegin.into_bits() == 0b11);
@@ -92,6 +93,7 @@ impl Effects {
 
     /// Removes all effects that are only relevant for Quality.
     #[inline]
+    #[must_use]
     pub const fn strip_quality_effects(self) -> Self {
         self.with_allow_quality_actions(false)
             .with_inner_quiet(0)

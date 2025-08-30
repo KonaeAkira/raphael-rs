@@ -128,10 +128,7 @@ impl QualityUbSolver {
                 }
                 let solved_states = templates
                     .par_iter_mut()
-                    .filter_map(|template| match template.instantiate(cp) {
-                        Some(state) => Some((template, state)),
-                        None => None,
-                    })
+                    .filter_map(|template| template.instantiate(cp).map(|state| (template, state)))
                     .map_init(
                         || {
                             ParetoFrontBuilder::new(
