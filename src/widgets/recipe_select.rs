@@ -4,8 +4,8 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{
-    Consumable, CustomRecipeOverrides, Ingredient, Locale, RLVLS, find_recipes, get_game_settings,
-    get_job_name,
+    Consumable, CustomRecipeOverrides, Ingredient, Locale, RLVLS, find_recipes,
+    find_stellar_missions, get_game_settings, get_job_name, get_stellar_mission_name,
 };
 
 use crate::config::{
@@ -13,6 +13,22 @@ use crate::config::{
 };
 
 use super::{ItemNameLabel, util};
+
+#[derive(Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+enum RecipeSearchDomain {
+    #[default]
+    Recipes,
+    StellarMissions,
+}
+
+impl std::fmt::Display for RecipeSearchDomain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Recipes => write!(f, "Recipes"),
+            Self::StellarMissions => write!(f, "Missions"),
+        }
+    }
+}
 
 #[derive(Default)]
 struct RecipeFinder {}
@@ -23,7 +39,18 @@ impl ComputerMut<(&str, Locale), Vec<u32>> for RecipeFinder {
     }
 }
 
-type SearchCache<'a> = FrameCache<Vec<u32>, RecipeFinder>;
+type RecipeSearchCache<'a> = FrameCache<Vec<u32>, RecipeFinder>;
+
+#[derive(Default)]
+struct StellarMissionFinder {}
+
+impl ComputerMut<(&str, Locale), Vec<u32>> for StellarMissionFinder {
+    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<u32> {
+        find_stellar_missions(text, locale)
+    }
+}
+
+type StellarMissionSearchCache<'a> = FrameCache<Vec<u32>, StellarMissionFinder>;
 
 pub struct RecipeSelect<'a> {
     crafter_config: &'a mut CrafterConfig,
@@ -55,32 +82,72 @@ impl<'a> RecipeSelect<'a> {
 
     fn draw_normal_recipe_select(self, ui: &mut egui::Ui) {
         let mut search_text = String::new();
+        let mut search_domain = RecipeSearchDomain::default();
         ui.ctx().data_mut(|data| {
             if let Some(text) = data.get_persisted::<String>(Id::new("RECIPE_SEARCH_TEXT")) {
                 search_text = text;
             }
+            if let Some(domain) =
+                data.get_persisted::<RecipeSearchDomain>(Id::new("RECIPE_SEARCH_DOMAIN"))
+            {
+                search_domain = domain;
+            }
         });
 
-        if egui::TextEdit::singleline(&mut search_text)
-            .desired_width(f32::INFINITY)
-            .hint_text("🔍 Search")
-            .ui(ui)
-            .changed()
-        {
-            search_text = search_text.replace('\0', "");
-        }
+        ui.horizontal(|ui| {
+            egui::ComboBox::from_id_salt("LOCALE")
+                .selected_text(format!("{}", search_domain))
+                .width(72.0)
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut search_domain,
+                        RecipeSearchDomain::Recipes,
+                        format!("{}", RecipeSearchDomain::Recipes),
+                    );
+                    ui.selectable_value(
+                        &mut search_domain,
+                        RecipeSearchDomain::StellarMissions,
+                        format!("{}", RecipeSearchDomain::StellarMissions),
+                    );
+                });
+            if egui::TextEdit::singleline(&mut search_text)
+                .desired_width(f32::INFINITY)
+                .hint_text("🔍 Search")
+                .ui(ui)
+                .changed()
+            {
+                search_text = search_text.replace('\0', "");
+            }
+        });
+
         ui.separator();
 
         let mut search_result = Vec::new();
-        ui.ctx().memory_mut(|mem| {
-            let search_cache = mem.caches.cache::<SearchCache<'_>>();
-            search_result = search_cache.get((&search_text, self.locale));
+        ui.ctx().memory_mut(|mem| match search_domain {
+            RecipeSearchDomain::Recipes => {
+                let search_cache = mem.caches.cache::<RecipeSearchCache<'_>>();
+                search_result = search_cache.get((&search_text, self.locale));
+            }
+            RecipeSearchDomain::StellarMissions => {
+                let search_cache = mem.caches.cache::<StellarMissionSearchCache<'_>>();
+                search_result = search_cache.get((&search_text, self.locale));
+            }
         });
+
+        match search_domain {
+            RecipeSearchDomain::Recipes => self.draw_recipe_select_table(ui, search_result),
+            RecipeSearchDomain::StellarMissions => {
+                self.draw_mission_recipe_select(ui, search_result)
+            }
+        }
 
         ui.ctx().data_mut(|data| {
             data.insert_persisted(Id::new("RECIPE_SEARCH_TEXT"), search_text);
+            data.insert_persisted(Id::new("RECIPE_SEARCH_DOMAIN"), search_domain);
         });
+    }
 
+    fn draw_recipe_select_table(self, ui: &mut egui::Ui, search_result: Vec<u32>) {
         let line_height = ui.spacing().interact_size.y;
         let line_spacing = ui.spacing().item_spacing.y;
         let table_height = 6.3 * line_height + 6.0 * line_spacing;
@@ -118,6 +185,70 @@ impl<'a> RecipeSelect<'a> {
                 });
                 row.col(|ui| {
                     ui.add(ItemNameLabel::new(recipe.item_id, false, self.locale));
+                });
+            });
+        });
+    }
+
+    fn draw_mission_recipe_select(self, ui: &mut egui::Ui, search_result: Vec<u32>) {
+        let line_height = ui.spacing().interact_size.y;
+        let line_spacing = ui.spacing().item_spacing.y;
+        let table_height = 6.3 * line_height + 6.0 * line_spacing;
+
+        let line_heights = search_result.iter().map(|mission_id| {
+            let mission = &raphael_data::STELLAR_MISSIONS[&mission_id];
+            let recipe_count = mission.recipe_ids.len();
+            line_height * (1 + recipe_count) as f32 + line_spacing * recipe_count as f32
+        });
+
+        // See above note, 'Column::remainder().clip(true) is buggy [...]'
+        let spacing = ui.spacing().item_spacing.x;
+        let mission_width = (ui.available_width() - 28.0 - spacing).max(0.0);
+
+        let table = egui_extras::TableBuilder::new(ui)
+            .id_salt("MISSION_RECIPE_SELECT_TABLE")
+            .auto_shrink(false)
+            .striped(true)
+            .column(Column::exact(28.0))
+            .column(Column::exact(mission_width))
+            .min_scrolled_height(table_height)
+            .max_scroll_height(table_height);
+        table.body(|body| {
+            body.heterogeneous_rows(line_heights, |mut row| {
+                let mission_id = search_result[row.index()];
+                let mission = &raphael_data::STELLAR_MISSIONS[&mission_id];
+                row.col(|ui| {
+                    ui.label(get_job_name(mission.job_id, self.locale));
+                });
+                row.col(|ui| {
+                    let mission_name = get_stellar_mission_name(mission_id, self.locale).unwrap();
+                    ui.label(
+                        egui::RichText::new(&mission_name).color(ui.style().visuals.text_color()),
+                    );
+                    let table = egui_extras::TableBuilder::new(ui)
+                        .id_salt(mission_name)
+                        .auto_shrink(false)
+                        .striped(false)
+                        .column(Column::exact(42.0))
+                        .column(Column::exact((mission_width - 42.0 - spacing).max(0.0)));
+                    table.body(|body| {
+                        body.rows(line_height, mission.recipe_ids.len(), |mut row| {
+                            let recipe_id = mission.recipe_ids[row.index()];
+                            let recipe = &raphael_data::RECIPES[&recipe_id]; // TODO test if this improves performance; same as above
+                            row.col(|ui| {
+                                if ui.button("Select").clicked() {
+                                    self.crafter_config.selected_job = recipe.job_id;
+                                    *self.recipe_config = RecipeConfiguration {
+                                        recipe: *recipe,
+                                        quality_source: QualitySource::HqMaterialList([0; 6]),
+                                    }
+                                }
+                            });
+                            row.col(|ui| {
+                                ui.add(ItemNameLabel::new(recipe.item_id, false, self.locale));
+                            });
+                        });
+                    });
                 });
             });
         });
