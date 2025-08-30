@@ -1284,22 +1284,18 @@ fn fetch_latest_version(latest_version: Arc<Mutex<semver::Version>>) {
     struct ApiResponse {
         tag_name: String,
     }
-    let request =
-        ehttp::Request::get("https://api.github.com/repos/KonaeAkira/raphael-rs/releases/latest");
+    let uri = "https://api.github.com/repos/KonaeAkira/raphael-rs/releases/latest";
+    let process_response =
+        |response: ehttp::Result::<ehttp::Response>| -> Result<semver::Version, Box<dyn std::error::Error>> {
+            let json = response?.json::<ApiResponse>()?;
+            let version = semver::Version::parse(json.tag_name.trim_start_matches('v'))?;
+            Ok(version)
+        };
     ehttp::fetch(
-        request,
-        move |result: ehttp::Result<ehttp::Response>| match result {
-            Ok(response) => match response.json::<ApiResponse>() {
-                Ok(data) => match semver::Version::parse(data.tag_name.trim_start_matches('v')) {
-                    Ok(version) => {
-                        log::debug!("Latest version: {}", version);
-                        *latest_version.lock().unwrap() = version;
-                    }
-                    Err(err) => log::error!("{err}"),
-                },
-                Err(err) => log::error!("{err}"),
-            },
-            Err(err) => log::error!("{err}"),
+        ehttp::Request::get(uri),
+        move |result: ehttp::Result<ehttp::Response>| match process_response(result) {
+            Ok(version) => *latest_version.lock().unwrap() = version,
+            Err(error) => log::error!("{error}"),
         },
     );
 }
