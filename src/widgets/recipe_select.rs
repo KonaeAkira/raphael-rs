@@ -220,22 +220,31 @@ impl<'a> RecipeSelect<'a> {
                 row.col(|ui| {
                     ui.label(get_job_name(mission.job_id, self.locale));
                 });
+                let row_index = row.index();
                 row.col(|ui| {
                     let mission_name = get_stellar_mission_name(mission_id, self.locale).unwrap();
                     ui.label(
-                        egui::RichText::new(&mission_name).color(ui.style().visuals.text_color()),
+                        egui::RichText::new(&mission_name)
+                            .color(ui.style().visuals.widgets.inactive.fg_stroke.color),
                     );
-                    let table = egui_extras::TableBuilder::new(ui)
-                        .id_salt(mission_name)
-                        .auto_shrink(false)
-                        .striped(false)
-                        .column(Column::exact(42.0))
-                        .column(Column::exact((mission_width - 42.0 - spacing).max(0.0)));
-                    table.body(|body| {
-                        body.rows(line_height, mission.recipe_ids.len(), |mut row| {
-                            let recipe_id = mission.recipe_ids[row.index()];
-                            let recipe = &raphael_data::RECIPES[&recipe_id]; // TODO test if this improves performance; same as above
-                            row.col(|ui| {
+                    for (index, recipe_id) in mission.recipe_ids.iter().enumerate() {
+                        let recipe = &raphael_data::RECIPES[&recipe_id];
+                        const DARKENING_COLOR_DARK_MODE: egui::Color32 =
+                            egui::Color32::from_black_alpha(25);
+                        const DARKENING_COLOR_LIGHT_MODE: egui::Color32 =
+                            egui::Color32::from_black_alpha(3);
+                        let background_color = match (index % 2) == 0 {
+                            true => match (row_index % 2) == 0 {
+                                true => ui.style().visuals.faint_bg_color,
+                                false => match ui.visuals().dark_mode {
+                                    true => DARKENING_COLOR_DARK_MODE,
+                                    false => DARKENING_COLOR_LIGHT_MODE,
+                                },
+                            },
+                            false => egui::Color32::TRANSPARENT,
+                        };
+                        egui::Frame::new().fill(background_color).show(ui, |ui| {
+                            ui.horizontal(|ui| {
                                 if ui.button("Select").clicked() {
                                     self.crafter_config.selected_job = recipe.job_id;
                                     *self.recipe_config = RecipeConfiguration {
@@ -243,12 +252,11 @@ impl<'a> RecipeSelect<'a> {
                                         quality_source: QualitySource::HqMaterialList([0; 6]),
                                     }
                                 }
-                            });
-                            row.col(|ui| {
                                 ui.add(ItemNameLabel::new(recipe.item_id, false, self.locale));
+                                ui.allocate_space(ui.available_size());
                             });
                         });
-                    });
+                    }
                 });
             });
         });
