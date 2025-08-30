@@ -76,8 +76,8 @@ impl SheetData for StellarMissionName {
             name: fields["Name"]
                 .as_str()
                 .unwrap()
-                .replace([' ', '­'], "")
-                .replace('：', ": "), // TODO look into ' ' & '：', i.e. if they are easily copyable in game. It is not included in the current fonts
+                .replace('­', "") // FR
+                .replace(' ', " "), // No-break space used by FR, copied as normal space from in-game chat
         })
     }
 }
