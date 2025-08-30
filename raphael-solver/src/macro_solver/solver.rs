@@ -85,7 +85,7 @@ impl<'a> MacroSolver<'a> {
         drop(timer);
 
         let timer = ScopedTimer::new("Quality UB Solver");
-        self.quality_ub_solver.precompute();
+        self.quality_ub_solver.precompute()?;
         drop(timer);
 
         Ok(self.do_solve(initial_state)?.actions())
@@ -144,7 +144,7 @@ impl<'a> MacroSolver<'a> {
                                 false => score.current_steps + action.steps(),
                             };
 
-                        search_queue.push(
+                        search_queue.try_push(
                             state,
                             SearchScore {
                                 quality_upper_bound,
@@ -157,7 +157,7 @@ impl<'a> MacroSolver<'a> {
                             },
                             action,
                             backtrack_id,
-                        );
+                        )?;
                     } else if state.progress >= self.settings.max_progress() {
                         let solution_score = SearchScore {
                             quality_upper_bound: std::cmp::min(

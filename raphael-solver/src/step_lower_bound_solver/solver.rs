@@ -3,6 +3,7 @@ use std::num::NonZeroU8;
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo},
+    macros::internal_error,
     utils::{self, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
@@ -38,6 +39,7 @@ pub struct StepLbSolver {
 
 impl StepLbSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
+        let iq_quality_lut = utils::compute_iq_quality_lut(&settings);
         settings.simulator_settings.adversarial = false;
         ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
@@ -51,7 +53,7 @@ impl StepLbSolver {
             precompute_templates: Self::generate_precompute_templates(&settings),
             next_precompute_step_budget: NonZeroU8::new(1).unwrap(),
             precomputed_states: 0,
-            iq_quality_lut: utils::compute_iq_quality_lut(&settings),
+            iq_quality_lut,
             largest_progress_increase: largest_single_action_progress_increase(&settings),
         }
     }
@@ -91,7 +93,7 @@ impl StepLbSolver {
         templates.into_iter().collect()
     }
 
-    fn precompute_next_step_budget(&mut self) {
+    fn precompute_next_step_budget(&mut self) -> Result<(), SolverException> {
         // A lot of templates map to the same state at lower step budgets due to effect and durability optimizations.
         // Here we deduplicate the instantiated templates to avoid solving duplicate states.
         let instantiated_templates: FxHashSet<ReducedState> = self
@@ -104,15 +106,17 @@ impl StepLbSolver {
             || ParetoFrontBuilder::new(self.settings.max_progress(), self.settings.max_quality());
         let solved_templates = instantiated_templates
             .into_par_iter()
-            .map_init(init, |pareto_front_builder, state| {
-                let pareto_front = self.solve_precompute_state(pareto_front_builder, state);
-                (state, pareto_front)
-            })
-            .collect_vec_list();
+            .map_init(
+                init,
+                |pareto_front_builder, state| -> Result<_, SolverException> {
+                    let pareto_front = self.solve_precompute_state(pareto_front_builder, state)?;
+                    Ok((state, pareto_front))
+                },
+            )
+            .collect::<Result<Vec<_>, SolverException>>()?;
 
         let num_solved_states_before = self.solved_states.len();
-        self.solved_states
-            .extend(solved_templates.into_iter().flatten());
+        self.solved_states.extend(solved_templates);
         self.precomputed_states += self.solved_states.len() - num_solved_states_before;
 
         let filtered_templates = self.precompute_templates.par_iter().filter(|template| {
@@ -139,13 +143,15 @@ impl StepLbSolver {
             self.precompute_templates.len(),
             self.solved_states.len()
         );
+
+        Ok(())
     }
 
     fn solve_precompute_state(
         &self,
         pareto_front_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
-    ) -> Box<[ParetoValue]> {
+    ) -> Result<Box<[ParetoValue]>, SolverException> {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
         for action in FULL_SEARCH_ACTIONS {
@@ -163,7 +169,13 @@ impl StepLbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        unreachable!("Parent: {state:?}\nChild: {new_state:?}\nAction: {action:?}");
+                        return Err(internal_error!(
+                            "Required precompute state does not exist.",
+                            self.settings,
+                            action,
+                            state,
+                            new_state
+                        ));
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -180,7 +192,7 @@ impl StepLbSolver {
                 }
             }
         }
-        Box::from(pareto_front_builder.peek().unwrap())
+        Ok(Box::from(pareto_front_builder.peek().unwrap()))
     }
 
     pub fn step_lower_bound(
@@ -207,14 +219,15 @@ impl StepLbSolver {
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(SolverException::InternalError(format!(
-                "\"{:?}\" combo in step lower bound solver",
-                state.effects.combo()
-            )));
+            return Err(internal_error!(
+                "Unexpected combo state.",
+                self.settings,
+                state
+            ));
         }
 
         while self.next_precompute_step_budget <= step_budget {
-            self.precompute_next_step_budget();
+            self.precompute_next_step_budget()?;
         }
 
         let mut required_progress = self.settings.max_progress() - state.progress;
@@ -243,7 +256,11 @@ impl StepLbSolver {
                 .map(|value| state.quality + value.second);
             return Ok(quality_ub);
         } else {
-            unreachable!("State must be in memoization table after solver")
+            Err(internal_error!(
+                "State not found in memoization table after solve.",
+                self.settings,
+                reduced_state
+            ))
         }
     }
 

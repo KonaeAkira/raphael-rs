@@ -26,7 +26,9 @@ impl std::fmt::Display for Locale {
 const JOB_NAMES_EN: [&str; 8] = ["CRP", "BSM", "ARM", "GSM", "LTW", "WVR", "ALC", "CUL"];
 const JOB_NAMES_DE: [&str; 8] = ["ZMR", "GRS", "PLA", "GLD", "GER", "WEB", "ALC", "GRM"];
 const JOB_NAMES_FR: [&str; 8] = ["MEN", "FRG", "ARM", "ORF", "TAN", "COU", "ALC", "CUI"];
-const JOB_NAMES_KR: [&str; 8] = ["목수", "대장", "갑주", "보석", "가죽", "재봉", "연금", "요리"];
+const JOB_NAMES_KR: [&str; 8] = [
+    "목수", "대장", "갑주", "보석", "가죽", "재봉", "연금", "요리",
+];
 
 pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     match locale {

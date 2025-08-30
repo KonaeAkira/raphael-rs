@@ -1,6 +1,7 @@
 use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS},
+    macros::internal_error,
     utils,
 };
 use raphael_sim::*;
@@ -68,9 +69,9 @@ impl QualityUbSolver {
 
         while let Some(template) = heap.pop() {
             let entry = templates.entry(template.data).or_default();
-            if template.max_cp > *entry {
-                *entry = template.max_cp;
-                let state = template.instantiate(template.max_cp).unwrap();
+            if template.max_instantiated_cp > *entry {
+                *entry = template.max_instantiated_cp;
+                let state = template.instantiate(template.max_instantiated_cp).unwrap();
                 for action in FULL_SEARCH_ACTIONS {
                     if let Some((new_state, _, _)) =
                         state.use_action(action, &self.settings, self.durability_cost)
@@ -87,7 +88,7 @@ impl QualityUbSolver {
                             ),
                         );
                         let new_entry = templates.entry(new_template_data).or_default();
-                        if new_template.max_cp > *new_entry {
+                        if new_template.max_instantiated_cp > *new_entry {
                             heap.push(new_template);
                         }
                     }
@@ -101,8 +102,7 @@ impl QualityUbSolver {
             .collect()
     }
 
-    pub fn precompute(&mut self) {
-        assert!(self.solved_states.is_empty());
+    pub fn precompute(&mut self) -> Result<(), SolverException> {
         let all_templates = self.generate_precompute_templates();
         // States are computed in order of less CP to more CP.
         // States currently being computed assume that child states have already been computed.
@@ -124,7 +124,7 @@ impl QualityUbSolver {
             // See `ReducedState::is_final` for details.
             for cp in (2 * self.durability_cost..=self.settings.max_cp()).step_by(2) {
                 if self.interrupt_signal.is_set() {
-                    return;
+                    return Err(SolverException::Interrupted);
                 }
                 let solved_states = templates
                     .par_iter_mut()
@@ -139,36 +139,40 @@ impl QualityUbSolver {
                                 self.settings.max_quality(),
                             )
                         },
-                        |pf_builder, (template, state)| {
-                            let pareto_front = self.solve_precompute_state(pf_builder, state);
+                        |pf_builder, (template, state)| -> Result<_, SolverException> {
+                            let pareto_front = self.solve_precompute_state(pf_builder, state)?;
                             let template_is_maximal = {
                                 // A template is "maximal" if there is no benefit of solving it with higher CP
                                 let required_progress = self.settings.max_progress();
                                 let required_quality = self.settings.max_quality().saturating_sub(
                                     self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
                                 );
-                                #[cfg(test)]
-                                assert!(!pareto_front.is_empty());
-                                pareto_front.last().is_some_and(|value| {
+                                if let Some(value) = pareto_front.last() {
                                     value.first >= required_progress
                                         && value.second >= required_quality
-                                })
+                                } else {
+                                    return Err(internal_error!(
+                                        "Unexpected empty pareto front.",
+                                        self.settings,
+                                        state
+                                    ));
+                                }
                             };
                             if template_is_maximal {
-                                template.max_cp = cp;
+                                template.required_cp_for_max_progress_and_quality = Some(cp);
                             }
-                            (state, pareto_front)
+                            Ok((state, pareto_front))
                         },
                     )
-                    .collect_vec_list();
-                self.solved_states
-                    .extend(solved_states.into_iter().flatten());
+                    .collect::<Result<Vec<_>, SolverException>>()?;
+                self.solved_states.extend(solved_states);
             }
-            self.maximal_templates.extend(
-                templates
-                    .into_iter()
-                    .map(|template| (template.data, template.max_cp)),
-            );
+            self.maximal_templates
+                .extend(templates.into_iter().filter_map(|template| {
+                    template
+                        .required_cp_for_max_progress_and_quality
+                        .map(|required_cp| (template.data, required_cp))
+                }));
         }
         self.precomputed_states = self.solved_states.len();
         log::debug!(
@@ -176,13 +180,15 @@ impl QualityUbSolver {
             all_templates.len(),
             self.solved_states.len()
         );
+
+        Ok(())
     }
 
     fn solve_precompute_state(
         &self,
         pareto_front_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
-    ) -> Box<[ParetoValue]> {
+    ) -> Result<Box<[ParetoValue]>, SolverException> {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
         for action in FULL_SEARCH_ACTIONS {
@@ -193,9 +199,13 @@ impl QualityUbSolver {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pareto_front_builder.push_slice(pareto_front);
                     } else {
-                        unreachable!(
-                            "Precompute state does not exist.\nParent: {state:?}\nChild: {new_state:?}\nAction: {action:?}"
-                        );
+                        return Err(internal_error!(
+                            "Required precompute state does not exist.",
+                            self.settings,
+                            action,
+                            state,
+                            new_state
+                        ));
                     }
                     pareto_front_builder
                         .peek_mut()
@@ -212,7 +222,7 @@ impl QualityUbSolver {
                 }
             }
         }
-        Box::from(pareto_front_builder.peek().unwrap())
+        Ok(Box::from(pareto_front_builder.peek().unwrap()))
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
@@ -222,10 +232,11 @@ impl QualityUbSolver {
         mut state: SimulationState,
     ) -> Result<u32, SolverException> {
         if state.effects.combo() != Combo::None {
-            return Err(SolverException::InternalError(format!(
-                "\"{:?}\" combo in quality upper bound solver",
-                state.effects.combo()
-            )));
+            return Err(internal_error!(
+                "Unexpected combo state.",
+                self.settings,
+                state
+            ));
         }
 
         let mut required_progress = self.settings.max_progress() - state.progress;
@@ -248,14 +259,18 @@ impl QualityUbSolver {
                 cp: required_cp,
                 ..reduced_state
             };
-            #[cfg(test)]
-            assert!(self.solved_states.contains_key(&reduced_state));
             if let Some(pareto_front) = self.solved_states.get(&reduced_state)
                 && let Some(value) = pareto_front.last()
                 && value.first >= required_progress
                 && value.second + state.quality >= self.settings.max_quality()
             {
                 return Ok(self.settings.max_quality());
+            } else {
+                return Err(internal_error!(
+                    "Maximal template list is inconsistent with actual solved states.",
+                    self.settings,
+                    reduced_state
+                ));
             }
         }
 
@@ -277,7 +292,11 @@ impl QualityUbSolver {
                 .map_or(0, |value| state.quality + value.second);
             Ok(std::cmp::min(self.settings.max_quality(), quality))
         } else {
-            unreachable!("State must be in memoization table after solver")
+            Err(internal_error!(
+                "State not found in memoization table after solve.",
+                self.settings,
+                reduced_state
+            ))
         }
     }
 
@@ -390,17 +409,36 @@ impl TemplateData {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Template {
-    max_cp: u16, // The template cannot be instantiated with CP above this value
+    /// The maximum amount of CP the template can be instantiated with.
+    ///
+    /// The purpose of this limit is to avoid instantiating unreachable states.
+    /// For example, if the solve configuration has a max CP of 500, then instantiating a template with Waste Not II at 450 CP is not useful as the instantiated state cannot be reached from the initial state using any action sequence.
+    max_instantiated_cp: u16,
+
+    /// Minimum amount of CP required for the instantiated state to reach max Progress and max Quality.
+    ///
+    /// This also takes into account the minimum existing Quality of the state (e.g. a template with 10 Inner Quiet must already have some Quality, so it's not necessary for the template to reach max Quality on its own).
+    required_cp_for_max_progress_and_quality: Option<u16>,
+
     data: TemplateData,
 }
 
 impl Template {
     pub fn new(max_cp: u16, data: TemplateData) -> Self {
-        Self { max_cp, data }
+        Self {
+            max_instantiated_cp: max_cp,
+            required_cp_for_max_progress_and_quality: None,
+            data,
+        }
     }
 
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
-        if cp > self.max_cp {
+        if cp > self.max_instantiated_cp {
+            return None;
+        }
+        if let Some(max_cp) = self.required_cp_for_max_progress_and_quality
+            && cp > max_cp
+        {
             return None;
         }
         Some(ReducedState {

@@ -6,7 +6,7 @@ pub trait ActionImpl {
     const ACTION_MASK: ActionMask;
     /// Does this action trigger ticking effects (e.g. Manipulation)?
     const TICK_EFFECTS: bool = true;
-    
+
     fn precondition(
         _state: &SimulationState,
         _settings: &Settings,
@@ -769,7 +769,7 @@ impl ActionImpl for TrainedPerfection {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(strum_macros::EnumIter, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Action {
     BasicSynthesis,

@@ -18,7 +18,7 @@ pub use utils::AtomicFlag;
 #[cfg(test)]
 pub mod test_utils;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SolverException {
     NoSolution,
@@ -26,6 +26,40 @@ pub enum SolverException {
     InternalError(String),
     #[cfg(target_arch = "wasm32")]
     AllocError,
+}
+
+impl std::fmt::Debug for SolverException {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NoSolution => write!(f, "NoSolution"),
+            Self::Interrupted => write!(f, "Interrupted"),
+            Self::InternalError(message) => f.write_str(message),
+            #[cfg(target_arch = "wasm32")]
+            Self::AllocError => write!(f, "AllocError"),
+        }
+    }
+}
+
+mod macros {
+    macro_rules! internal_error {
+        ( $desc:expr, $( $x:expr ),* ) => {
+            {
+                let mut message = String::from(concat!(
+                    "The solver encountered an internal error.\n",
+                    "Please submit a bug report.\n\n",
+                    "--- Description ---\n\n",
+                ));
+                message += &format!("{}\n\n", $desc);
+                message += &format!("Location: {}:{}:{}\n\n", file!(), line!(), column!());
+                message += "--- Debug info ---\n";
+                $(
+                    message += &format!("\n{} = {:#?}\n", stringify!($x), $x);
+                )*
+                crate::SolverException::InternalError(message)
+            }
+        };
+    }
+    pub(crate) use internal_error;
 }
 
 #[derive(Clone, Copy, Debug)]

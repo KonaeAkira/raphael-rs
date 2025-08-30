@@ -37,19 +37,19 @@ fn test_with_settings(
         AtomicFlag::new(),
     );
     let result = solver.solve();
-    let score = result.map_or(None, |actions| {
+    let score = result.map(|actions| {
         let final_state =
             SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
         assert!(final_state.progress >= settings.max_progress());
         if settings.simulator_settings.backload_progress {
             assert!(is_progress_backloaded(&settings, &actions));
         }
-        Some(SolutionScore {
+        SolutionScore {
             capped_quality: std::cmp::min(final_state.quality, settings.max_quality()),
             steps: actions.len() as u8,
             duration: actions.iter().map(|action| action.time_cost()).sum(),
             overflow_quality: final_state.quality.saturating_sub(settings.max_quality()),
-        })
+        }
     });
     expected_score.assert_debug_eq(&score);
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
@@ -71,7 +71,7 @@ fn rinascita_3700_3280() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 10623,
                 steps: 26,
@@ -119,7 +119,7 @@ fn pactmaker_3240_3130() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 8912,
                 steps: 21,
@@ -169,7 +169,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 9608,
                 steps: 24,
@@ -217,7 +217,7 @@ fn diadochos_4021_3660() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 9688,
                 steps: 25,
@@ -265,7 +265,7 @@ fn indagator_3858_4057() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 12793,
                 steps: 27,
@@ -313,7 +313,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 12000,
                 steps: 21,
@@ -332,8 +332,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 932788,
-                sequential_states: 3433,
-                pareto_values: 24353529,
+                sequential_states: 9945,
+                pareto_values: 24444837,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 2227573,
@@ -363,7 +363,7 @@ fn stuffed_peppers_2() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 11400,
                 steps: 15,
@@ -415,7 +415,7 @@ fn stuffed_peppers_2_heart_and_soul() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 11400,
                 steps: 15,
@@ -467,7 +467,7 @@ fn stuffed_peppers_2_quick_innovation() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 11400,
                 steps: 15,
@@ -515,7 +515,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 6500,
                 steps: 16,
@@ -563,7 +563,7 @@ fn black_star_4048_3997() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 5500,
                 steps: 11,
@@ -611,7 +611,7 @@ fn claro_walnut_lumber_4900_4800() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 11000,
                 steps: 13,
@@ -659,7 +659,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 6000,
                 steps: 14,
@@ -707,7 +707,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 5400,
                 steps: 14,
@@ -755,7 +755,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 8250,
                 steps: 17,
@@ -803,7 +803,7 @@ fn hardened_survey_plank_5558_5216() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 14900,
                 steps: 21,
@@ -822,8 +822,8 @@ fn hardened_survey_plank_5558_5216() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 969126,
-                sequential_states: 1305,
-                pareto_values: 17429437,
+                sequential_states: 4824,
+                pareto_values: 17478760,
             },
             step_lb_stats: StepLbSolverStats {
                 parallel_states: 386882,
@@ -851,7 +851,7 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 11378,
                 steps: 23,
@@ -900,7 +900,7 @@ fn ceviche_4900_4800_no_quality() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 0,
                 steps: 8,
@@ -950,7 +950,7 @@ fn ce_high_progress_zero_achieved_quality() {
     };
     let solver_settings = SolverSettings { simulator_settings };
     let expected_score = expect![[r#"
-        Some(
+        Ok(
             SolutionScore {
                 capped_quality: 0,
                 steps: 30,

@@ -14,6 +14,8 @@ rand = "0.9.1"
 
 [dependencies]
 bitfield-struct = "0.8.0"
+strum = "0.27"
+strum_macros = "0.27"
 serde = { workspace = true, optional = true }
 log = { workspace = true }
 
