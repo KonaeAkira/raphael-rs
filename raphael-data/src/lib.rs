@@ -18,7 +18,6 @@ pub const CL_ICON_CHAR: char = '\u{e03d}';
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Item {
     pub item_level: u16,
-    pub can_be_hq: bool,
     pub always_collectable: bool,
 }
 
