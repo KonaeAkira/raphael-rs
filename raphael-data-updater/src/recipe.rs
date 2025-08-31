@@ -88,7 +88,7 @@ impl std::fmt::Display for Recipe {
         write!(f, "quality_factor: {}, ", self.quality_factor)?;
         write!(f, "durability_factor: {}, ", self.durability_factor)?;
         write!(f, "material_factor: {}, ", self.material_factor)?;
-        write!(f, "ingredients: [")?;
+        write!(f, "hq_ingredients: [")?;
         for ingredient in self
             .ingredients
             .iter()

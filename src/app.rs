@@ -854,31 +854,27 @@ impl MacroSolverApp {
 
         ui.label(egui::RichText::new("HQ materials").strong());
         let mut has_hq_ingredient = false;
-        let recipe_ingredients = self.recipe_config.recipe.ingredients;
+        let recipe_ingredients = self.recipe_config.recipe.hq_ingredients;
         if let QualitySource::HqMaterialList(provided_ingredients) =
             &mut self.recipe_config.quality_source
         {
             for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
-                if let Some(item) = raphael_data::ITEMS.get(&ingredient.item_id)
-                    && item.can_be_hq
-                {
-                    has_hq_ingredient = true;
-                    ui.horizontal(|ui| {
-                        ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
-                        ui.with_layout(
-                            Layout::right_to_left(Align::Center),
-                            |ui: &mut egui::Ui| {
-                                let mut max_placeholder = ingredient.amount;
-                                ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
-                                ui.monospace("/");
-                                ui.add(
-                                    egui::DragValue::new(&mut provided_ingredients[index])
-                                        .range(0..=ingredient.amount),
-                                );
-                            },
+                if ingredient.item_id == 0 {
+                    continue;
+                }
+                has_hq_ingredient = true;
+                ui.horizontal(|ui| {
+                    ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
+                        let mut max_placeholder = ingredient.amount;
+                        ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
+                        ui.monospace("/");
+                        ui.add(
+                            egui::DragValue::new(&mut provided_ingredients[index])
+                                .range(0..=ingredient.amount),
                         );
                     });
-                }
+                });
             }
         }
         if !has_hq_ingredient {

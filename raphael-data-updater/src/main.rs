@@ -189,8 +189,7 @@ async fn main() {
     // For some reason some recipes have items with ID 0 as their result
     recipes.retain(|recipe| recipe.item_id != 0);
 
-    // Remove recipe ingredients that don't have a HQ variant
-    // as those are not used when calculating initial Quality.
+    // Remove recipe ingredients that cannot be HQ as those aren't used when calculating initial Quality
     let hq_items: HashSet<_> = items
         .iter()
         .filter_map(|item| if item.can_be_hq { Some(item.id) } else { None })

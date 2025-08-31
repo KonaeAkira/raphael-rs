@@ -136,7 +136,7 @@ pub enum ConsumableArg {
 
 fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [u8; 6]) -> [u8; 6] {
     let ingredients: Vec<(raphael_data::Item, u32)> = recipe
-        .ingredients
+        .hq_ingredients
         .iter()
         .filter_map(|ingredient| match ingredient.item_id {
             0 => None,
@@ -146,12 +146,10 @@ fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [
 
     let mut modified_hq_ingredients: [u8; 6] = [0; 6];
     let mut hq_ingredient_index: usize = 0;
-    for (index, (item, max_amount)) in ingredients.into_iter().enumerate() {
-        if item.can_be_hq {
-            modified_hq_ingredients[index] =
-                hq_ingredients[hq_ingredient_index].clamp(0, max_amount as u8);
-            hq_ingredient_index = hq_ingredient_index.saturating_add(1);
-        }
+    for (index, (_item_id, max_amount)) in ingredients.into_iter().enumerate() {
+        modified_hq_ingredients[index] =
+            hq_ingredients[hq_ingredient_index].clamp(0, max_amount as u8);
+        hq_ingredient_index = hq_ingredient_index.saturating_add(1);
     }
 
     modified_hq_ingredients
@@ -183,7 +181,7 @@ pub fn execute(args: &SolveArgs) {
             quality_factor: 0,
             durability_factor: 0,
             material_factor: 0,
-            ingredients: Default::default(),
+            hq_ingredients: Default::default(),
             is_expert: match args.custom_recipe.get(4) {
                 Some(value) => *value != 0,
                 None => false,
