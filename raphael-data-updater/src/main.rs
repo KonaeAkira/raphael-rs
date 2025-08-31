@@ -96,6 +96,17 @@ fn export_potions(consumables: &[Consumable]) {
     log::info!("potions exported to \"{}\"", path.display());
 }
 
+fn export_stellar_missions(stellar_missions: &[StellarMission]) {
+    let mut phf_map = phf_codegen::OrderedMap::new();
+    for stellar_mission in stellar_missions {
+        phf_map.entry(stellar_mission.id, &format!("{stellar_mission}"));
+    }
+    let path = std::path::absolute("./raphael-data/data/stellar_missions.rs").unwrap();
+    let mut writer = BufWriter::new(File::create(&path).unwrap());
+    writeln!(writer, "{}", phf_map.build()).unwrap();
+    log::info!("stellar missions exported to \"{}\"", path.display());
+}
+
 fn export_item_names(item_names: &[ItemName], lang: &str) {
     let mut phf_map = phf_codegen::Map::new();
     for item_name in item_names {
@@ -105,6 +116,23 @@ fn export_item_names(item_names: &[ItemName], lang: &str) {
     let mut writer = BufWriter::new(File::create(&path).unwrap());
     writeln!(writer, "{}", phf_map.build()).unwrap();
     log::info!("item names exported to \"{}\"", path.display());
+}
+
+fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], lang: &str) {
+    let mut phf_map = phf_codegen::Map::new();
+    for stellar_mission_name in stellar_mission_names {
+        phf_map.entry(
+            stellar_mission_name.id,
+            &format!("\"{}\"", stellar_mission_name.name),
+        );
+    }
+    let path = std::path::absolute(format!(
+        "./raphael-data/data/stellar_mission_names_{lang}.rs"
+    ))
+    .unwrap();
+    let mut writer = BufWriter::new(File::create(&path).unwrap());
+    writeln!(writer, "{}", phf_map.build()).unwrap();
+    log::info!("stellar mission names exported to \"{}\"", path.display());
 }
 
 #[tokio::main]
@@ -118,12 +146,23 @@ async fn main() {
     let items = tokio::spawn(async { fetch_and_parse::<Item>("en").await });
     let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>("en").await });
     let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>("en").await });
+    let stellar_missions = tokio::spawn(async { fetch_and_parse::<StellarMission>("en").await });
 
     let item_names_en = tokio::spawn(async { fetch_and_parse::<ItemName>("en").await });
     let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>("de").await });
     let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>("fr").await });
     let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja").await });
-    // let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("kr").await });
+    // let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("ko").await });
+    let stellar_mission_names_en =
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("en").await });
+    let stellar_mission_names_de =
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("de").await });
+    let stellar_mission_names_fr =
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("fr").await });
+    let stellar_mission_names_jp =
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ja").await });
+    // let stellar_mission_names_kr =
+    //     tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ko").await });
 
     let rlvls = rlvls.await.unwrap();
     let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
@@ -134,11 +173,18 @@ async fn main() {
     let item_foods = item_foods.await.unwrap();
     let (meals, potions) = instantiate_consumables(&items, item_actions, item_foods);
 
+    let stellar_missions = stellar_missions.await.unwrap();
+
     let mut item_names_en = item_names_en.await.unwrap();
     let mut item_names_de = item_names_de.await.unwrap();
     let mut item_names_fr = item_names_fr.await.unwrap();
     let mut item_names_jp = item_names_jp.await.unwrap();
     // let mut item_names_kr = item_names_kr.await.unwrap();
+    let mut stellar_mission_names_en = stellar_mission_names_en.await.unwrap();
+    let mut stellar_mission_names_de = stellar_mission_names_de.await.unwrap();
+    let mut stellar_mission_names_fr = stellar_mission_names_fr.await.unwrap();
+    let mut stellar_mission_names_jp = stellar_mission_names_jp.await.unwrap();
+    // let mut stellar_mission_names_kr = stellar_mission_names_kr.await.unwrap();
 
     // For some reason some recipes have items with ID 0 as their result
     recipes.retain(|recipe| recipe.item_id != 0);
@@ -177,7 +223,26 @@ async fn main() {
     item_names_de.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_fr.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_jp.retain(|item_name| necessary_items.contains(&item_name.id));
-    // item_names_kr.retain(|item_name| necessary_items.contains(&item_name.id));
+    // item_names_kr
+    //     .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
+
+    // Parsing of stellar mission json already filters out gatherer only missions
+    let crafter_stellar_missions: HashSet<u32> = stellar_missions
+        .iter()
+        .map(|stellar_mission| stellar_mission.id)
+        .collect();
+    stellar_mission_names_en
+        .retain(|stellar_mission_name| crafter_stellar_missions.contains(&stellar_mission_name.id));
+    stellar_mission_names_de
+        .retain(|stellar_mission_name| crafter_stellar_missions.contains(&stellar_mission_name.id));
+    stellar_mission_names_fr
+        .retain(|stellar_mission_name| crafter_stellar_missions.contains(&stellar_mission_name.id));
+    stellar_mission_names_jp
+        .retain(|stellar_mission_name| crafter_stellar_missions.contains(&stellar_mission_name.id));
+    // stellar_mission_names_kr.retain(|stellar_mission_name| {
+    //     crafter_stellar_missions.contains(&stellar_mission_name.id)
+    //         && !stellar_mission_name.name.is_empty()
+    // });
 
     export_rlvls(&rlvls);
     export_level_adjust_table(&level_adjust_table_entries);
@@ -185,10 +250,16 @@ async fn main() {
     export_meals(&meals);
     export_potions(&potions);
     export_items(&items);
+    export_stellar_missions(&stellar_missions);
 
     export_item_names(&item_names_en, "en");
     export_item_names(&item_names_de, "de");
     export_item_names(&item_names_fr, "fr");
     export_item_names(&item_names_jp, "jp");
     // export_item_names(&item_names_kr, "kr");
+    export_stellar_mission_names(&stellar_mission_names_en, "en");
+    export_stellar_mission_names(&stellar_mission_names_de, "de");
+    export_stellar_mission_names(&stellar_mission_names_fr, "fr");
+    export_stellar_mission_names(&stellar_mission_names_jp, "jp");
+    // export_stellar_mission_names(&stellar_mission_names_kr, "kr");
 }
