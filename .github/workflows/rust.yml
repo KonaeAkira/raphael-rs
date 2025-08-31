@@ -15,7 +15,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Use nightly toolchain
-        run: rustup update nightly && rustup default nightly
+      - name: Use current MSRV (Rust 1.88.0)
+        run: rustup default 1.88.0
+      - name: Check that everything compiles
+        run: cargo check --workspace
       - name: Build & run tests
         run: cargo test --verbose --workspace
