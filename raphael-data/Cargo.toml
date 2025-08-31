@@ -13,5 +13,8 @@ raphael-sim = { workspace = true }
 phf = "0.11.2"
 serde = { version = "1.0.215", features = ["derive"], optional = true }
 
+[dev-dependencies]
+expect-test = "1.5.1"
+
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]
