@@ -859,26 +859,22 @@ impl MacroSolverApp {
             &mut self.recipe_config.quality_source
         {
             for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
-                if let Some(item) = raphael_data::ITEMS.get(&ingredient.item_id)
-                    && item.can_be_hq
-                {
-                    has_hq_ingredient = true;
-                    ui.horizontal(|ui| {
-                        ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
-                        ui.with_layout(
-                            Layout::right_to_left(Align::Center),
-                            |ui: &mut egui::Ui| {
-                                let mut max_placeholder = ingredient.amount;
-                                ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
-                                ui.monospace("/");
-                                ui.add(
-                                    egui::DragValue::new(&mut provided_ingredients[index])
-                                        .range(0..=ingredient.amount),
-                                );
-                            },
+                if ingredient.item_id == 0 {
+                    continue;
+                }
+                has_hq_ingredient = true;
+                ui.horizontal(|ui| {
+                    ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
+                        let mut max_placeholder = ingredient.amount;
+                        ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
+                        ui.monospace("/");
+                        ui.add(
+                            egui::DragValue::new(&mut provided_ingredients[index])
+                                .range(0..=ingredient.amount),
                         );
                     });
-                }
+                });
             }
         }
         if !has_hq_ingredient {
@@ -1284,22 +1280,18 @@ fn fetch_latest_version(latest_version: Arc<Mutex<semver::Version>>) {
     struct ApiResponse {
         tag_name: String,
     }
-    let request =
-        ehttp::Request::get("https://api.github.com/repos/KonaeAkira/raphael-rs/releases/latest");
+    let uri = "https://api.github.com/repos/KonaeAkira/raphael-rs/releases/latest";
+    let process_response =
+        |response: ehttp::Result::<ehttp::Response>| -> Result<semver::Version, Box<dyn std::error::Error>> {
+            let json = response?.json::<ApiResponse>()?;
+            let version = semver::Version::parse(json.tag_name.trim_start_matches('v'))?;
+            Ok(version)
+        };
     ehttp::fetch(
-        request,
-        move |result: ehttp::Result<ehttp::Response>| match result {
-            Ok(response) => match response.json::<ApiResponse>() {
-                Ok(data) => match semver::Version::parse(data.tag_name.trim_start_matches('v')) {
-                    Ok(version) => {
-                        log::debug!("Latest version: {}", version);
-                        *latest_version.lock().unwrap() = version;
-                    }
-                    Err(err) => log::error!("{err}"),
-                },
-                Err(err) => log::error!("{err}"),
-            },
-            Err(err) => log::error!("{err}"),
+        ehttp::Request::get(uri),
+        move |result: ehttp::Result<ehttp::Response>| match process_response(result) {
+            Ok(version) => *latest_version.lock().unwrap() = version,
+            Err(error) => log::error!("{error}"),
         },
     );
 }

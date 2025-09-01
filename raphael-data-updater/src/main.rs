@@ -33,7 +33,7 @@ fn export_rlvls(rlvls: &[RecipeLevel]) {
     let mut writer = BufWriter::new(File::create(&path).unwrap());
     writeln!(&mut writer, "&[").unwrap();
     writeln!(&mut writer, "{},", RecipeLevel::default()).unwrap(); // index 0
-    for rlvl in rlvls.iter() {
+    for rlvl in rlvls {
         writeln!(&mut writer, "{rlvl},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
@@ -45,7 +45,7 @@ fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry
     let mut writer = BufWriter::new(File::create(&path).unwrap());
     writeln!(&mut writer, "&[").unwrap();
     writeln!(&mut writer, "{},", u16::default()).unwrap(); // index 0
-    for entry in level_adjust_table_entries.iter() {
+    for entry in level_adjust_table_entries {
         writeln!(&mut writer, "{entry},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
@@ -78,7 +78,7 @@ fn export_meals(consumables: &[Consumable]) {
     let path = std::path::absolute("./raphael-data/data/meals.rs").unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
     writeln!(&mut writer, "&[").unwrap();
-    for consumable in consumables.iter() {
+    for consumable in consumables {
         writeln!(&mut writer, "{consumable},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
@@ -89,7 +89,7 @@ fn export_potions(consumables: &[Consumable]) {
     let path = std::path::absolute("./raphael-data/data/potions.rs").unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
     writeln!(&mut writer, "&[").unwrap();
-    for consumable in consumables.iter() {
+    for consumable in consumables {
         writeln!(&mut writer, "{consumable},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
@@ -189,13 +189,12 @@ async fn main() {
     // For some reason some recipes have items with ID 0 as their result
     recipes.retain(|recipe| recipe.item_id != 0);
 
-    // Remove recipe ingredients that don't have a HQ variant
-    // as those are not used when calculating initial Quality.
+    // Remove recipe ingredients that cannot be HQ as those aren't used when calculating initial Quality
     let hq_items: HashSet<_> = items
         .iter()
         .filter_map(|item| if item.can_be_hq { Some(item.id) } else { None })
         .collect();
-    for recipe in recipes.iter_mut() {
+    for recipe in &mut recipes {
         recipe
             .ingredients
             .retain(|ingredient| hq_items.contains(&ingredient.item_id));
@@ -203,7 +202,7 @@ async fn main() {
 
     // Only retain necessary items to reduce binary size
     let mut necessary_items: HashSet<u32> = HashSet::new();
-    for recipe in recipes.iter() {
+    for recipe in &recipes {
         necessary_items.insert(recipe.item_id);
         necessary_items.extend(
             recipe

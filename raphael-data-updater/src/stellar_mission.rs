@@ -21,7 +21,7 @@ impl SheetData for StellarMission {
             .members()
             .filter_map(|class_job_category| {
                 let id = class_job_category["value"].as_u32()?;
-                if id >= 9 && id < 17 {
+                if (9..17).contains(&id) {
                     Some(id - 9)
                 } else {
                     None
@@ -46,7 +46,7 @@ impl std::fmt::Display for StellarMission {
         write!(f, "StellarMission {{ ")?;
         write!(f, "job_id: {}, ", self.job_id)?;
         write!(f, "recipe_ids: &[")?;
-        for recipe_id in self.recipe_ids.iter() {
+        for recipe_id in &self.recipe_ids {
             write!(f, "{}, ", recipe_id)?;
         }
         write!(f, "], ")?;
@@ -76,8 +76,8 @@ impl SheetData for StellarMissionName {
             name: fields["Name"]
                 .as_str()
                 .unwrap()
-                .replace('­', "") // FR
-                .replace(' ', " "), // No-break space used by FR, copied as normal space from in-game chat
+                .replace('\u{AD}', "") // FR
+                .replace('\u{A0}', " "), // No-break space used by FR, copied as normal space from in-game chat
         })
     }
 }

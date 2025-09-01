@@ -156,13 +156,12 @@ impl Log for CallbackLogger {
     }
 
     fn log(&self, record: &log::Record) {
-        if self.enabled(record.metadata()) {
-            if let Some(logger) = self.0.lock().unwrap().as_ref() {
+        if self.enabled(record.metadata())
+            && let Some(logger) = self.0.lock().unwrap().as_ref() {
                 let message = format!("{} - {}", record.level(), record.args());
                 let message = message.as_bytes();
                 (logger.on_log)(message.as_ptr(), message.len());
             }
-        }
     }
 
     fn flush(&self) {}
@@ -189,7 +188,7 @@ impl CallbackLogger {
     }
 }
 
-static LOG: LazyLock<CallbackLogger> = LazyLock::new(|| CallbackLogger::new());
+static LOG: LazyLock<CallbackLogger> = LazyLock::new(CallbackLogger::new);
 
 #[unsafe(no_mangle)]
 pub extern "C" fn solve(args: &SolveArgs) {
