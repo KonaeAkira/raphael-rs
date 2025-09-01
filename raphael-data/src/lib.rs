@@ -61,7 +61,7 @@ pub struct Recipe {
     pub quality_factor: u32,
     pub durability_factor: u16,
     pub material_factor: u16,
-    pub hq_ingredients: [Ingredient; 6],
+    pub ingredients: [Ingredient; 6],
     pub is_expert: bool,
     pub req_craftsmanship: u16,
     pub req_control: u16,
@@ -168,7 +168,7 @@ pub fn get_initial_quality(
     hq_ingredients: [u8; 6],
 ) -> u16 {
     let ingredients: Vec<(Item, u32)> = recipe
-        .hq_ingredients
+        .ingredients
         .iter()
         .filter_map(|ingredient| Some((*ITEMS.get(&ingredient.item_id)?, ingredient.amount)))
         .collect();

@@ -453,7 +453,7 @@ impl Widget for RecipeSelect<'_> {
                                 self.recipe_config.recipe.req_control = 0;
                                 self.recipe_config.recipe.max_level_scaling = 0;
                                 self.recipe_config.recipe.material_factor = 0;
-                                self.recipe_config.recipe.hq_ingredients = [Ingredient::default(); 6];
+                                self.recipe_config.recipe.ingredients = [Ingredient::default(); 6];
 
                                 // Only set appropriate overrides when switching from normal to custom recipe
                                 // Switching back does not currently restore the other parameters, e.g. rlvl back to default

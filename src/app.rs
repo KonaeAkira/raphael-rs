@@ -854,7 +854,7 @@ impl MacroSolverApp {
 
         ui.label(egui::RichText::new("HQ materials").strong());
         let mut has_hq_ingredient = false;
-        let recipe_ingredients = self.recipe_config.recipe.hq_ingredients;
+        let recipe_ingredients = self.recipe_config.recipe.ingredients;
         if let QualitySource::HqMaterialList(provided_ingredients) =
             &mut self.recipe_config.quality_source
         {

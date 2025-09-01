@@ -14,7 +14,7 @@ fn find_recipe(item_name: &'static str) -> Option<Recipe> {
 
 fn ingredient_names(recipe: Recipe) -> Vec<String> {
     recipe
-        .hq_ingredients
+        .ingredients
         .into_iter()
         .filter_map(|ingr| get_item_name(ingr.item_id, false, Locale::EN))
         .collect()
