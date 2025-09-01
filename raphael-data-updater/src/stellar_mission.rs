@@ -76,8 +76,8 @@ impl SheetData for StellarMissionName {
             name: fields["Name"]
                 .as_str()
                 .unwrap()
-                .replace('­', "") // FR
-                .replace(' ', " "), // No-break space used by FR, copied as normal space from in-game chat
+                .replace('\u{AD}', "") // FR
+                .replace('\u{A0}', " "), // No-break space used by FR, copied as normal space from in-game chat
         })
     }
 }

@@ -57,7 +57,7 @@ impl SheetData for ItemName {
         let fields = &value["fields"];
         Some(Self {
             id: value["row_id"].as_u32().unwrap(),
-            name: fields["Name"].as_str().unwrap().replace('­', ""),
+            name: fields["Name"].as_str().unwrap().replace('\u{AD}', ""),
         })
     }
 }
