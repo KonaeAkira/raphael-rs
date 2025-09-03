@@ -9,7 +9,7 @@ impl MultilineMonospace {
     pub fn new(text: String) -> Self {
         Self {
             text,
-            max_height: f32::MAX,
+            max_height: f32::INFINITY,
             scrollable: false,
         }
     }
