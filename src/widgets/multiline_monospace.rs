@@ -1,21 +1,26 @@
-use std::f32;
-
 /// Copyable multiline monospace text box
 pub struct MultilineMonospace {
     text: String,
     max_height: f32,
+    scrollable: bool,
 }
 
 impl MultilineMonospace {
     pub fn new(text: String) -> Self {
         Self {
             text,
-            max_height: f32::INFINITY,
+            max_height: f32::MAX,
+            scrollable: false,
         }
     }
 
     pub fn max_height(mut self, max_height: f32) -> Self {
         self.max_height = max_height;
+        self
+    }
+
+    pub fn scrollable(mut self, scrollable: bool) -> Self {
+        self.scrollable = scrollable;
         self
     }
 }
@@ -26,7 +31,7 @@ impl egui::Widget for MultilineMonospace {
         ui.push_id(id, |ui| {
             ui.group(|ui| {
                 ui.horizontal_top(|ui| {
-                    egui::ScrollArea::vertical()
+                    egui::ScrollArea::new([self.scrollable, self.scrollable])
                         .max_height(self.max_height)
                         .show(ui, |ui| {
                             ui.monospace(&self.text);

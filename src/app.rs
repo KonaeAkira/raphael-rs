@@ -201,6 +201,7 @@ impl eframe::App for MacroSolverApp {
         if let Some(error) = self.solver_error.clone() {
             egui::Modal::new(egui::Id::new("solver_error")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+                ui.set_width(480.0f32.min(ctx.screen_rect().width() - 32.0));
                 let unrecoverable_error;
                 match error {
                     SolverException::NoSolution => {
@@ -216,7 +217,7 @@ impl eframe::App for MacroSolverApp {
                     SolverException::InternalError(message) => {
                         ui.label(egui::RichText::new("Internal Solver Error").strong());
                         ui.separator();
-                        ui.add(MultilineMonospace::new(message).max_height(360.0));
+                        ui.add(MultilineMonospace::new(message).max_height(320.0).scrollable(true));
                         unrecoverable_error = false;
                     },
                     #[cfg(target_arch = "wasm32")]
