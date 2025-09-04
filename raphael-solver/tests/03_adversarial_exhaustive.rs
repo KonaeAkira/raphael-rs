@@ -109,9 +109,8 @@ fn stuffed_peppers() {
                 pareto_values: 39200086,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 1624750,
-                sequential_states: 0,
-                pareto_values: 20977625,
+                states: 944544,
+                pareto_values: 16991075,
             },
         }
     "#]];
@@ -159,9 +158,8 @@ fn test_rare_tacos_2() {
                 pareto_values: 70125298,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 2437044,
-                sequential_states: 0,
-                pareto_values: 42904319,
+                states: 1635706,
+                pareto_values: 37206732,
             },
         }
     "#]];
@@ -213,9 +211,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_values: 16731571,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 63194,
-                sequential_states: 0,
-                pareto_values: 479061,
+                states: 47761,
+                pareto_values: 428964,
             },
         }
     "#]];
@@ -261,8 +258,7 @@ fn test_indagator_3858_4057() {
                 pareto_values: 64650515,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                sequential_states: 0,
+                states: 0,
                 pareto_values: 0,
             },
         }
@@ -313,9 +309,8 @@ fn test_rare_tacos_4628_4410() {
                 pareto_values: 78047587,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 450741,
-                sequential_states: 0,
-                pareto_values: 8257333,
+                states: 352035,
+                pareto_values: 7690209,
             },
         }
     "#]];
@@ -364,8 +359,7 @@ fn issue_113() {
                 pareto_values: 120616917,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                sequential_states: 0,
+                states: 0,
                 pareto_values: 0,
             },
         }
@@ -413,9 +407,8 @@ fn issue_118() {
                 pareto_values: 25592132,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 295097,
-                sequential_states: 0,
-                pareto_values: 2766395,
+                states: 208553,
+                pareto_values: 2353263,
             },
         }
     "#]];
