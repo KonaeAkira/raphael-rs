@@ -94,18 +94,14 @@ impl StepLbSolver {
         Ok(quality_ub)
     }
 
-    fn solve_state(
-        &mut self,
-        seed_state: ReducedState,
-    ) -> Result<&Box<[ParetoValue]>, SolverException> {
+    fn solve_state(&mut self, seed_state: ReducedState) -> Result<&[ParetoValue], SolverException> {
+        // Find all transitive children that still need solving and group them by step budget.
+        // This is done with a simple BFS, skipping all states that have already been solved.
         let mut unvisited_states_by_steps: VecDeque<FxHashSet<ReducedState>> = VecDeque::new();
         for _ in 0..seed_state.steps_budget.get() {
             unvisited_states_by_steps.push_back(FxHashSet::default());
         }
         unvisited_states_by_steps[0].insert(seed_state);
-
-        // Find all transitive children that still need solving and group them by step budget.
-        // This is done with a simple BFS, skipping all states that have already been solved.
         let mut unsolved_state_by_steps: Vec<Vec<ReducedState>> = Vec::new();
         while let Some(unvisited_states) = unvisited_states_by_steps.pop_front() {
             if unvisited_states.is_empty() {
@@ -115,24 +111,24 @@ impl StepLbSolver {
             for parent_state in &currently_visited_states {
                 let full_parent_state = parent_state.to_state();
                 let parent_steps_budget = parent_state.steps_budget.get();
-                FULL_SEARCH_ACTIONS
+                for action in FULL_SEARCH_ACTIONS
                     .into_iter()
                     .filter(|action| action.steps() < parent_steps_budget)
-                    .for_each(|action| {
-                        let child_steps_budget =
-                            NonZeroU8::try_from(parent_steps_budget - action.steps()).unwrap();
-                        if let Ok(full_child_state) =
-                            use_action_combo(&self.settings, full_parent_state, action)
-                            && !full_child_state.is_final(&self.settings.simulator_settings)
-                        {
-                            let child_state =
-                                ReducedState::from_state(full_child_state, child_steps_budget);
-                            if !self.solved_states.contains_key(&child_state) {
-                                unvisited_states_by_steps[usize::from(action.steps() - 1)]
-                                    .insert(child_state);
-                            }
+                {
+                    let child_steps_budget =
+                        NonZeroU8::try_from(parent_steps_budget - action.steps()).unwrap();
+                    if let Ok(full_child_state) =
+                        use_action_combo(&self.settings, full_parent_state, action)
+                        && !full_child_state.is_final(&self.settings.simulator_settings)
+                    {
+                        let child_state =
+                            ReducedState::from_state(full_child_state, child_steps_budget);
+                        if !self.solved_states.contains_key(&child_state) {
+                            unvisited_states_by_steps[usize::from(action.steps() - 1)]
+                                .insert(child_state);
                         }
-                    });
+                    }
+                }
             }
             unsolved_state_by_steps.push(currently_visited_states);
         }
@@ -159,11 +155,14 @@ impl StepLbSolver {
             self.solved_states.extend(solved_states);
         }
 
-        self.solved_states.get(&seed_state).ok_or(internal_error!(
-            "State not found in memoization after solving",
-            self.settings,
-            seed_state
-        ))
+        match self.solved_states.get(&seed_state) {
+            Some(pareto_front) => Ok(pareto_front),
+            None => Err(internal_error!(
+                "State not found in memoization after solving",
+                self.settings,
+                seed_state
+            )),
+        }
     }
 
     fn do_solve_state(
