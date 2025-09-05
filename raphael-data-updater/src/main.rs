@@ -71,7 +71,7 @@ fn export_recipes(recipes: &[Recipe]) {
     writeln!(
         writer,
         "NciArray {}",
-        builder.build(DEFAULT_BUILD_CONFIGUATION)
+        builder.build(&DEFAULT_BUILD_CONFIGUATION)
     )
     .unwrap();
     log::info!("recipes exported to \"{}\"", path.display());
@@ -87,7 +87,7 @@ fn export_items(items: &[Item]) {
     writeln!(
         writer,
         "NciArray {}",
-        builder.build(DEFAULT_BUILD_CONFIGUATION)
+        builder.build(&DEFAULT_BUILD_CONFIGUATION)
     )
     .unwrap();
     log::info!("items exported to \"{}\"", path.display());
@@ -125,7 +125,7 @@ fn export_stellar_missions(stellar_missions: &[StellarMission]) {
     writeln!(
         writer,
         "NciArray {}",
-        builder.build(DEFAULT_BUILD_CONFIGUATION)
+        builder.build(&DEFAULT_BUILD_CONFIGUATION)
     )
     .unwrap();
     log::info!("stellar missions exported to \"{}\"", path.display());
@@ -141,7 +141,7 @@ fn export_item_names(item_names: &[ItemName], lang: &str) {
     writeln!(
         writer,
         "NciArray {}",
-        builder.build(NAME_BUILD_CONFIGURATION)
+        builder.build(&NAME_BUILD_CONFIGURATION)
     )
     .unwrap();
     log::info!("item names exported to \"{}\"", path.display());
@@ -160,7 +160,7 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
     writeln!(
         writer,
         "NciArray {}",
-        builder.build(NAME_BUILD_CONFIGURATION)
+        builder.build(&NAME_BUILD_CONFIGURATION)
     )
     .unwrap();
     log::info!("stellar mission names exported to \"{}\"", path.display());

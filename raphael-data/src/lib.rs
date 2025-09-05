@@ -7,8 +7,7 @@ pub use config::*;
 mod locales;
 pub use locales::*;
 
-mod non_contiguously_indexed_array;
-pub use non_contiguously_indexed_array::*;
+use non_contiguously_indexed_array::NciArray;
 
 mod search;
 pub use search::*;
@@ -78,10 +77,10 @@ pub struct StellarMission {
 
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
 pub const LEVEL_ADJUST_TABLE: &[u16] = include!("../data/level_adjust_table.rs");
-pub const RECIPES: NciArray<Recipe> = include!("../data/recipes.rs");
-pub const ITEMS: NciArray<Item> = include!("../data/items.rs");
+pub const RECIPES: NciArray<u32, Recipe> = include!("../data/recipes.rs");
+pub const ITEMS: NciArray<u32, Item> = include!("../data/items.rs");
 
-pub const STELLAR_MISSIONS: NciArray<StellarMission> = include!("../data/stellar_missions.rs");
+pub const STELLAR_MISSIONS: NciArray<u32, StellarMission> = include!("../data/stellar_missions.rs");
 
 pub fn get_game_settings(
     recipe: Recipe,

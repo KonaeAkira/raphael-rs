@@ -40,11 +40,11 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     }
 }
 
-pub const ITEM_NAMES_EN: NciArray<&str> = include!("../data/item_names_en.rs");
-pub const ITEM_NAMES_DE: NciArray<&str> = include!("../data/item_names_de.rs");
-pub const ITEM_NAMES_FR: NciArray<&str> = include!("../data/item_names_fr.rs");
-pub const ITEM_NAMES_JP: NciArray<&str> = include!("../data/item_names_jp.rs");
-pub const ITEM_NAMES_KR: NciArray<&str> = include!("../data/item_names_kr.rs");
+pub const ITEM_NAMES_EN: NciArray<u32, &str> = include!("../data/item_names_en.rs");
+pub const ITEM_NAMES_DE: NciArray<u32, &str> = include!("../data/item_names_de.rs");
+pub const ITEM_NAMES_FR: NciArray<u32, &str> = include!("../data/item_names_fr.rs");
+pub const ITEM_NAMES_JP: NciArray<u32, &str> = include!("../data/item_names_jp.rs");
+pub const ITEM_NAMES_KR: NciArray<u32, &str> = include!("../data/item_names_kr.rs");
 
 pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     let item_name = match locale {
@@ -63,15 +63,15 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     }
 }
 
-pub static STELLAR_MISSION_NAMES_EN: NciArray<&str> =
+pub static STELLAR_MISSION_NAMES_EN: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_en.rs");
-pub static STELLAR_MISSION_NAMES_DE: NciArray<&str> =
+pub static STELLAR_MISSION_NAMES_DE: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_de.rs");
-pub static STELLAR_MISSION_NAMES_FR: NciArray<&str> =
+pub static STELLAR_MISSION_NAMES_FR: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_fr.rs");
-pub static STELLAR_MISSION_NAMES_JP: NciArray<&str> =
+pub static STELLAR_MISSION_NAMES_JP: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_jp.rs");
-pub static STELLAR_MISSION_NAMES_KR: NciArray<&str> =
+pub static STELLAR_MISSION_NAMES_KR: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_kr.rs");
 
 pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<String> {
