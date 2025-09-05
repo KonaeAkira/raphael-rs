@@ -8,7 +8,7 @@ pub struct LevelAdjustTableEntry {
 
 impl SheetData for LevelAdjustTableEntry {
     const SHEET: &'static str = "GathererCrafterLvAdjustTable";
-    const REQUIRED_FIELDS: &[&str] = &["RecipeLevel"];
+    const REQUIRED_FIELDS: &[&str] = &["RecipeLevel@as(raw)"];
 
     fn row_id(&self) -> u32 {
         self.level
@@ -18,7 +18,7 @@ impl SheetData for LevelAdjustTableEntry {
         let fields = &value["fields"];
         Some(Self {
             level: value["row_id"].as_u32().unwrap(),
-            rlvl: fields["RecipeLevel"]["value"].as_u32().unwrap(),
+            rlvl: fields["RecipeLevel@as(raw)"].as_u32().unwrap(),
         })
     }
 }

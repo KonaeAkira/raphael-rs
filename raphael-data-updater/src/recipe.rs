@@ -28,16 +28,16 @@ pub struct Recipe {
 impl SheetData for Recipe {
     const SHEET: &'static str = "Recipe";
     const REQUIRED_FIELDS: &[&str] = &[
-        "CraftType",
-        "ItemResult",
-        "MaxAdjustableJobLevel",
-        "RecipeLevelTable",
+        "CraftType@as(raw)",
+        "ItemResult@as(raw)",
+        "MaxAdjustableJobLevel@as(raw)",
+        "RecipeLevelTable@as(raw)",
         "DifficultyFactor",
         "QualityFactor",
         "DurabilityFactor",
         "MaterialQualityFactor",
         "IsExpert",
-        "Ingredient",
+        "Ingredient@as(raw)",
         "AmountIngredient",
         "RequiredCraftsmanship",
         "RequiredControl",
@@ -49,22 +49,22 @@ impl SheetData for Recipe {
 
     fn from_json(value: &json::JsonValue) -> Option<Self> {
         let fields = &value["fields"];
-        let ingredients = fields["Ingredient"]
+        let ingredients = fields["Ingredient@as(raw)"]
             .members()
             .zip(fields["AmountIngredient"].members())
             .filter_map(|(item, amount)| {
                 Some(Ingredient {
-                    item_id: item["value"].as_u32()?,
+                    item_id: item.as_u32()?,
                     amount: amount.as_u32()?,
                 })
             })
             .collect();
         Some(Self {
             id: value["row_id"].as_u32().unwrap(),
-            job_id: fields["CraftType"]["value"].as_u32().unwrap(),
-            item_id: fields["ItemResult"]["value"].as_u32().unwrap(),
-            max_level_scaling: fields["MaxAdjustableJobLevel"]["value"].as_u32().unwrap(),
-            recipe_level: fields["RecipeLevelTable"]["value"].as_u32().unwrap(),
+            job_id: fields["CraftType@as(raw)"].as_u32().unwrap(),
+            item_id: fields["ItemResult@as(raw)"].as_u32().unwrap(),
+            max_level_scaling: fields["MaxAdjustableJobLevel@as(raw)"].as_u32().unwrap(),
+            recipe_level: fields["RecipeLevelTable@as(raw)"].as_u32().unwrap(),
             progress_factor: fields["DifficultyFactor"].as_u32().unwrap(),
             quality_factor: fields["QualityFactor"].as_u32().unwrap(),
             durability_factor: fields["DurabilityFactor"].as_u32().unwrap(),

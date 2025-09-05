@@ -42,7 +42,7 @@ impl SheetData for ItemFood {
     const SHEET: &'static str = "ItemFood";
     const REQUIRED_FIELDS: &[&str] = &[
         "IsRelative",
-        "BaseParam",
+        "BaseParam@as(raw)",
         "Max",
         "MaxHQ",
         "Value",
@@ -61,9 +61,9 @@ impl SheetData for ItemFood {
                 .members()
                 .map(|value| value.as_bool().unwrap())
                 .collect(),
-            param: fields["BaseParam"]
+            param: fields["BaseParam@as(raw)"]
                 .members()
-                .map(|value| value["value"].as_u32().unwrap())
+                .map(|value| value.as_u32().unwrap())
                 .collect(),
             max: fields["Max"]
                 .members()
