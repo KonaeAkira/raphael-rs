@@ -31,8 +31,8 @@ impl NciArrayIndexIter {
         value_count: usize,
     ) -> Self {
         if let (Some(initial_index), Some(initial_skip_amount)) = (
-            index_range_starting_indices.get(0),
-            index_range_skip_amounts.get(0),
+            index_range_starting_indices.first(),
+            index_range_skip_amounts.first(),
         ) {
             let next_index_range_starting_index = index_range_starting_indices.get(1);
             let next_index_range_skip_amount = index_range_skip_amounts.get(1);
@@ -75,19 +75,17 @@ impl Iterator for NciArrayIndexIter {
             if let (Some(next_index_range_starting_index), Some(next_index_range_skip_amount)) = (
                 self.next_index_range_starting_index,
                 self.next_index_range_skip_amount,
-            ) {
-                if next_index_range_starting_index - self.index
-                    <= next_index_range_skip_amount - self.skipped
-                {
-                    self.index = *next_index_range_starting_index;
-                    self.skipped = *next_index_range_skip_amount;
+            ) && next_index_range_starting_index - self.index
+                <= next_index_range_skip_amount - self.skipped
+            {
+                self.index = *next_index_range_starting_index;
+                self.skipped = *next_index_range_skip_amount;
 
-                    self.next_range_index += 1;
-                    self.next_index_range_starting_index =
-                        self.index_range_starting_indices.get(self.next_range_index);
-                    self.next_index_range_skip_amount =
-                        self.index_range_skip_amounts.get(self.next_range_index);
-                }
+                self.next_range_index += 1;
+                self.next_index_range_starting_index =
+                    self.index_range_starting_indices.get(self.next_range_index);
+                self.next_index_range_skip_amount =
+                    self.index_range_skip_amounts.get(self.next_range_index);
             }
 
             self.true_index += 1;

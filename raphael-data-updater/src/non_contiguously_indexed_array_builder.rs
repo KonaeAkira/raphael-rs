@@ -25,6 +25,12 @@ pub struct BuildConfiguration {
     pub value_formatting: ValueFormatting,
 }
 
+impl<V: std::fmt::Display + std::fmt::Debug> Default for NciArrayBuilder<V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<V: std::fmt::Display + std::fmt::Debug> NciArrayBuilder<V> {
     pub fn new() -> Self {
         Self {
@@ -73,7 +79,7 @@ impl<V: std::fmt::Display + std::fmt::Debug> NciArrayBuilder<V> {
                 self.entries.retain(|(entry_index, _)| {
                     let index_as_expected = *entry_index == expected_index;
                     if index_as_expected {
-                        expected_index = expected_index + 1;
+                        expected_index += 1;
                     }
                     index_as_expected
                 });
@@ -100,16 +106,9 @@ impl<V: std::fmt::Display + std::fmt::Debug> NciArrayBuilder<V> {
         }
     }
 
-    // pub fn build_type(&mut self, value_type_str: &str) -> String {
-    //     self.ensure_output_preconditions();
-
-    //     let index_range_count = self.index_ranges.len();
-    //     let value_count = self.entries.len();
-
-    //     format!("NciArray<{value_type_str}, {index_range_count}, {value_count}>")
-    // }
-
     pub fn build(&mut self, build_config: BuildConfiguration) -> String {
+        use std::fmt::Write as _;
+
         self.ensure_output_preconditions();
 
         let (struct_opening_str, struct_closing_str, array_opening_str, array_closing_str) =
@@ -124,10 +123,12 @@ impl<V: std::fmt::Display + std::fmt::Debug> NciArrayBuilder<V> {
 
         let mut output_string = format!("{}{new_line_str}", struct_opening_str);
 
-        output_string.push_str(&format!(
+        write!(
+            output_string,
             "{indentation_str}index_range_starting_indices:{space_str}{}{new_line_str}",
             array_opening_str
-        ));
+        )
+        .unwrap();
         for (i, (starting_index, _)) in self.index_ranges.iter().enumerate() {
             let comma_str = match build_config.output_format {
                 OutputFormat::RON => {
@@ -139,20 +140,26 @@ impl<V: std::fmt::Display + std::fmt::Debug> NciArrayBuilder<V> {
                 }
                 _ => ",",
             };
-            output_string.push_str(&format!(
+            write!(
+                output_string,
                 "{indentation_str}{indentation_str}{:?}{comma_str}{new_line_str}",
                 *starting_index
-            ));
+            )
+            .unwrap();
         }
-        output_string.push_str(&format!(
+        write!(
+            output_string,
             "{indentation_str}{},{new_line_str}",
             array_closing_str
-        ));
+        )
+        .unwrap();
 
-        output_string.push_str(&format!(
+        write!(
+            output_string,
             "{indentation_str}index_range_skip_amounts:{space_str}{}{new_line_str}",
             array_opening_str
-        ));
+        )
+        .unwrap();
         let mut total_skip_amount = 0;
         for (i, (_, skip_amount)) in self.index_ranges.iter().enumerate() {
             let comma_str = match build_config.output_format {
@@ -166,20 +173,26 @@ impl<V: std::fmt::Display + std::fmt::Debug> NciArrayBuilder<V> {
                 _ => ",",
             };
             total_skip_amount += skip_amount;
-            output_string.push_str(&format!(
+            write!(
+                output_string,
                 "{indentation_str}{indentation_str}{:?}{comma_str}{new_line_str}",
                 total_skip_amount
-            ));
+            )
+            .unwrap();
         }
-        output_string.push_str(&format!(
+        write!(
+            output_string,
             "{indentation_str}{},{new_line_str}",
-            array_closing_str
-        ));
+            array_closing_str,
+        )
+        .unwrap();
 
-        output_string.push_str(&format!(
+        write!(
+            output_string,
             "{indentation_str}values:{space_str}{}{new_line_str}",
-            array_opening_str
-        ));
+            array_opening_str,
+        )
+        .unwrap();
         for (i, (_, value)) in self.entries.iter().enumerate() {
             let comma_str = match build_config.output_format {
                 OutputFormat::RON => {
@@ -209,17 +222,19 @@ impl<V: std::fmt::Display + std::fmt::Debug> NciArrayBuilder<V> {
                     *value
                 ),
             };
-            output_string.push_str(entry_str);
+            write!(output_string, "{}", entry_str).unwrap();
         }
         let comma_str = match build_config.output_format {
             OutputFormat::RON => "",
             _ => ",",
         };
-        output_string.push_str(&format!(
+        write!(
+            output_string,
             "{indentation_str}{}{comma_str}{new_line_str}",
             array_closing_str
-        ));
-        output_string.push_str(&format!("{}", struct_closing_str));
+        )
+        .unwrap();
+        write!(output_string, "{}", struct_closing_str).unwrap();
         output_string
     }
 }
