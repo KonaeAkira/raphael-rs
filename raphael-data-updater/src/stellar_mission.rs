@@ -9,7 +9,10 @@ pub struct StellarMission {
 
 impl SheetData for StellarMission {
     const SHEET: &'static str = "WKSMissionUnit";
-    const REQUIRED_FIELDS: &[&str] = &["ClassJobCategory", "WKSMissionRecipe"];
+    const REQUIRED_FIELDS: &[&str] = &[
+        "ClassJobCategory@as(raw)",
+        "WKSMissionRecipe.Recipe@as(raw)",
+    ];
 
     fn row_id(&self) -> u32 {
         self.id
@@ -17,10 +20,10 @@ impl SheetData for StellarMission {
 
     fn from_json(value: &json::JsonValue) -> Option<Self> {
         let fields = &value["fields"];
-        let job_ids: Vec<u32> = fields["ClassJobCategory"]
+        let job_ids: Vec<u32> = fields["ClassJobCategory@as(raw)"]
             .members()
             .filter_map(|class_job_category| {
-                let id = class_job_category["value"].as_u32()?;
+                let id = class_job_category.as_u32()?;
                 if (9..17).contains(&id) {
                     Some(id - 9)
                 } else {
@@ -29,9 +32,9 @@ impl SheetData for StellarMission {
             })
             .collect();
         assert!(job_ids.len() <= 1);
-        let recipe_ids = fields["WKSMissionRecipe"]["fields"]["Recipe"]
+        let recipe_ids = fields["WKSMissionRecipe"]["fields"]["Recipe@as(raw)"]
             .members()
-            .filter_map(|recipe| recipe["value"].as_u32().filter(|recipe_id| *recipe_id > 0))
+            .filter_map(|recipe| recipe.as_u32().filter(|recipe_id| *recipe_id > 0))
             .collect();
         Some(Self {
             id: value["row_id"].as_u32().unwrap(),

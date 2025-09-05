@@ -11,7 +11,12 @@ pub struct Item {
 
 impl SheetData for Item {
     const SHEET: &'static str = "Item";
-    const REQUIRED_FIELDS: &[&str] = &["LevelItem", "ItemAction", "CanBeHq", "AlwaysCollectable"];
+    const REQUIRED_FIELDS: &[&str] = &[
+        "LevelItem@as(raw)",
+        "ItemAction@as(raw)",
+        "CanBeHq",
+        "AlwaysCollectable",
+    ];
 
     fn row_id(&self) -> u32 {
         self.id
@@ -21,8 +26,8 @@ impl SheetData for Item {
         let fields = &value["fields"];
         Some(Self {
             id: value["row_id"].as_u32().unwrap(),
-            item_level: fields["LevelItem"]["value"].as_u32().unwrap(),
-            item_action: fields["ItemAction"]["value"].as_u32().unwrap(),
+            item_level: fields["LevelItem@as(raw)"].as_u32().unwrap(),
+            item_action: fields["ItemAction@as(raw)"].as_u32().unwrap(),
             can_be_hq: fields["CanBeHq"].as_bool().unwrap(),
             always_collectable: fields["AlwaysCollectable"].as_bool().unwrap(),
         })
