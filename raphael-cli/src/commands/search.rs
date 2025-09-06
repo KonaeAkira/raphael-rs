@@ -48,12 +48,12 @@ pub fn execute(args: &SearchArgs) {
     let matches = if args.pattern.is_some() {
         raphael_data::find_recipes(&args.pattern.clone().unwrap(), locale)
             .iter()
-            .map(|recipe_id| RECIPES.get_entry(recipe_id).unwrap())
+            .map(|recipe_id| (*recipe_id, RECIPES.get(*recipe_id).unwrap()))
             .collect()
     } else if args.recipe_id.is_some() {
         if let Some(entry) = RECIPES
             .entries()
-            .find(|(id, _)| **id == args.recipe_id.unwrap())
+            .find(|(id, _)| *id == args.recipe_id.unwrap())
         {
             vec![entry]
         } else {
