@@ -18,9 +18,6 @@ where
     segments: Vec<usize>, // indices to the beginning of each segment
     buffer: Vec<ParetoValue<T, U>>,
     merge_buffer: [ParetoValue<T, U>; 512],
-    // cut-off values
-    max_first: T,
-    max_second: U,
 }
 
 impl<T, U> ParetoFrontBuilder<T, U>
@@ -28,13 +25,11 @@ where
     T: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
     U: Copy + std::cmp::Ord + std::default::Default + std::fmt::Debug,
 {
-    pub fn new(max_first: T, max_second: U) -> Self {
+    pub fn new() -> Self {
         Self {
             segments: Vec::new(),
             buffer: Vec::new(),
             merge_buffer: [ParetoValue::default(); 512],
-            max_first,
-            max_second,
         }
     }
 
@@ -54,7 +49,7 @@ where
 
     /// Merges the last two segments into one.
     /// Panics in case there are fewer than two segments.
-    pub fn merge(&mut self) {
+    pub fn merge(&mut self, max_first: T, max_second: U) {
         assert!(self.segments.len() >= 2);
         let begin_b = self.segments.pop().unwrap();
         let begin_a = self.segments.last().copied().unwrap();
@@ -101,10 +96,10 @@ where
         };
 
         assert!(end_c <= self.merge_buffer.len());
-        while begin_c + 1 < end_c && self.merge_buffer[begin_c + 1].second >= self.max_second {
+        while begin_c + 1 < end_c && self.merge_buffer[begin_c + 1].second >= max_second {
             begin_c += 1;
         }
-        while begin_c + 1 < end_c && self.merge_buffer[end_c - 2].first >= self.max_first {
+        while begin_c + 1 < end_c && self.merge_buffer[end_c - 2].first >= max_first {
             end_c -= 1;
         }
 
@@ -222,11 +217,11 @@ where
             .map(|&segment_begin| &mut self.buffer[segment_begin..])
     }
 
-    pub fn is_max(&self) -> bool {
+    pub fn is_max(&self, max_first: T, max_second: U) -> bool {
         match self.segments.last().copied() {
             Some(segment_begin) if segment_begin + 1 == self.buffer.len() => {
                 let element = self.buffer.last().unwrap();
-                element.first >= self.max_first && element.second >= self.max_second
+                element.first >= max_first && element.second >= max_second
             }
             _ => false,
         }
@@ -274,10 +269,10 @@ mod tests {
 
     #[test]
     fn test_merge_empty() {
-        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new();
         builder.push_empty();
         builder.push_empty();
-        builder.merge();
+        builder.merge(1000, 2000);
         let front = builder.peek().unwrap();
         assert!(front.as_ref().is_empty());
         builder.check_invariants();
@@ -285,10 +280,10 @@ mod tests {
 
     #[test]
     fn test_merge() {
-        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new();
         builder.push_slice(SAMPLE_FRONT_1);
         builder.push_slice(SAMPLE_FRONT_2);
-        builder.merge();
+        builder.merge(1000, 2000);
         let front = builder.peek().unwrap();
         assert_eq!(
             *front,
@@ -305,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_merge_truncate() {
-        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new(1000, 2000);
+        let mut builder: ParetoFrontBuilder<u16, u16> = ParetoFrontBuilder::new();
         builder.push_slice(&[
             ParetoValue::new(1100, 2300),
             ParetoValue::new(1200, 2200),
@@ -317,7 +312,7 @@ mod tests {
             ParetoValue::new(1250, 2150),
             ParetoValue::new(1300, 2050),
         ]);
-        builder.merge();
+        builder.merge(1000, 2000);
         let front = builder.peek().unwrap();
         assert_eq!(*front, [ParetoValue::new(1300, 2100)]);
         builder.check_invariants();
@@ -363,12 +358,12 @@ mod tests {
                 }
             }
 
-            let mut builder = ParetoFrontBuilder::new(usize::MAX, usize::MAX);
+            let mut builder = ParetoFrontBuilder::new();
             builder.push_slice(&values_a);
             builder.check_invariants();
             builder.push_slice(&values_b);
             builder.check_invariants();
-            builder.merge();
+            builder.merge(usize::MAX, usize::MAX);
             builder.check_invariants();
 
             let result = builder.peek().unwrap();
