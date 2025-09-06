@@ -45,10 +45,7 @@ impl QualityUbSolver {
             solved_states: FxHashMap::default(),
             iq_quality_lut: utils::compute_iq_quality_lut(&settings),
             maximal_templates: FxHashMap::default(),
-            pareto_front_builder: ParetoFrontBuilder::new(
-                settings.max_progress(),
-                settings.max_quality(),
-            ),
+            pareto_front_builder: ParetoFrontBuilder::new(),
             durability_cost,
             largest_progress_increase: utils::largest_single_action_progress_increase(&settings),
             precomputed_states: 0,
@@ -130,12 +127,7 @@ impl QualityUbSolver {
                     .par_iter_mut()
                     .filter_map(|template| template.instantiate(cp).map(|state| (template, state)))
                     .map_init(
-                        || {
-                            ParetoFrontBuilder::new(
-                                self.settings.max_progress(),
-                                self.settings.max_quality(),
-                            )
-                        },
+                        ParetoFrontBuilder::new,
                         |pf_builder, (template, state)| -> Result<_, SolverException> {
                             let pareto_front = self.solve_precompute_state(pf_builder, state)?;
                             let template_is_maximal = {
@@ -212,10 +204,12 @@ impl QualityUbSolver {
                             value.first += progress;
                             value.second += quality;
                         });
-                    pareto_front_builder.merge();
+                    pareto_front_builder
+                        .merge(self.settings.max_progress(), self.settings.max_quality());
                 } else if progress != 0 {
                     pareto_front_builder.push_slice(&[ParetoValue::new(progress, quality)]);
-                    pareto_front_builder.merge();
+                    pareto_front_builder
+                        .merge(self.settings.max_progress(), self.settings.max_quality());
                 }
             }
         }
@@ -304,7 +298,10 @@ impl QualityUbSolver {
         self.pareto_front_builder.push_empty();
         for action in FULL_SEARCH_ACTIONS {
             self.build_child_front(state, action)?;
-            if self.pareto_front_builder.is_max() {
+            if self
+                .pareto_front_builder
+                .is_max(self.settings.max_progress(), self.settings.max_quality())
+            {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
                 // (i.e. if better actions are visited first)
@@ -339,12 +336,14 @@ impl QualityUbSolver {
                         value.first += progress;
                         value.second += quality;
                     });
-                self.pareto_front_builder.merge();
+                self.pareto_front_builder
+                    .merge(self.settings.max_progress(), self.settings.max_quality());
             } else if progress != 0 {
                 // last action must be a progress increase
                 self.pareto_front_builder
                     .push_slice(&[ParetoValue::new(progress, quality)]);
-                self.pareto_front_builder.merge();
+                self.pareto_front_builder
+                    .merge(self.settings.max_progress(), self.settings.max_quality());
             }
         }
         Ok(())

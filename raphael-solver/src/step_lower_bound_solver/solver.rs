@@ -4,7 +4,7 @@ use crate::{
     SolverException, SolverSettings,
     actions::{FULL_SEARCH_ACTIONS, use_action_combo},
     macros::internal_error,
-    utils::{self, largest_single_action_progress_increase},
+    utils::{self, compute_iq_quality_lut, largest_single_action_progress_increase},
 };
 use raphael_sim::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -26,17 +26,20 @@ pub struct StepLbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     solved_states: SolvedStates,
+    iq_quality_lut: [u32; 11],
     largest_progress_increase: u32,
 }
 
 impl StepLbSolver {
     pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
+        let iq_quality_lut = compute_iq_quality_lut(&settings);
         settings.simulator_settings.adversarial = false;
         ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
             settings,
             interrupt_signal,
             solved_states: SolvedStates::default(),
+            iq_quality_lut,
             largest_progress_increase: largest_single_action_progress_increase(&settings),
         }
     }
@@ -140,12 +143,7 @@ impl StepLbSolver {
             let solved_states = unsolved_states
                 .into_par_iter()
                 .map_init(
-                    || {
-                        ParetoFrontBuilder::new(
-                            self.settings.max_progress(),
-                            self.settings.max_quality(),
-                        )
-                    },
+                    ParetoFrontBuilder::new,
                     |pf_builder, reduced_state| -> Result<_, SolverException> {
                         let pareto_front = self.do_solve_state(pf_builder, reduced_state)?;
                         Ok((reduced_state, pareto_front))
@@ -170,6 +168,11 @@ impl StepLbSolver {
         pareto_front_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
     ) -> Result<Box<[ParetoValue]>, SolverException> {
+        let progress_cutoff = self.settings.max_progress();
+        let quality_cutoff = self
+            .settings
+            .max_quality()
+            .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]);
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
         for action in FULL_SEARCH_ACTIONS {
@@ -203,10 +206,10 @@ impl StepLbSolver {
                             value.first += progress;
                             value.second += quality;
                         });
-                    pareto_front_builder.merge();
+                    pareto_front_builder.merge(progress_cutoff, quality_cutoff);
                 } else if progress != 0 {
                     pareto_front_builder.push_slice(&[ParetoValue::new(progress, quality)]);
-                    pareto_front_builder.merge();
+                    pareto_front_builder.merge(progress_cutoff, quality_cutoff);
                 }
             }
         }
