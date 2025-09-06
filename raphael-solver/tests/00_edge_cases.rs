@@ -179,8 +179,8 @@ fn max_quality() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 389796,
-                sequential_states: 2665,
-                pareto_values: 2988845,
+                sequential_states: 514,
+                pareto_values: 2236380,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 96805,

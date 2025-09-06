@@ -1,8 +1,5 @@
 use crate::{
-    SolverException, SolverSettings,
-    actions::{ActionCombo, FULL_SEARCH_ACTIONS},
-    macros::internal_error,
-    utils,
+    SolverException, SolverSettings, actions::FULL_SEARCH_ACTIONS, macros::internal_error, utils,
 };
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
@@ -180,6 +177,11 @@ impl QualityUbSolver {
     ) -> Result<Box<[ParetoValue]>, SolverException> {
         pareto_front_builder.clear();
         pareto_front_builder.push_empty();
+        let progress_cutoff = self.settings.max_progress();
+        let quality_cutoff = self
+            .settings
+            .max_quality()
+            .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]);
         for action in FULL_SEARCH_ACTIONS {
             if let Some((new_state, progress, quality)) =
                 state.use_action(action, &self.settings, self.durability_cost)
@@ -204,12 +206,10 @@ impl QualityUbSolver {
                             value.first += progress;
                             value.second += quality;
                         });
-                    pareto_front_builder
-                        .merge(self.settings.max_progress(), self.settings.max_quality());
+                    pareto_front_builder.merge(progress_cutoff, quality_cutoff);
                 } else if progress != 0 {
                     pareto_front_builder.push_slice(&[ParetoValue::new(progress, quality)]);
-                    pareto_front_builder
-                        .merge(self.settings.max_progress(), self.settings.max_quality());
+                    pareto_front_builder.merge(progress_cutoff, quality_cutoff);
                 }
             }
         }
@@ -296,11 +296,42 @@ impl QualityUbSolver {
             return Err(SolverException::Interrupted);
         }
         self.pareto_front_builder.push_empty();
+        let progress_cutoff = self.settings.max_progress();
+        let quality_cutoff = self
+            .settings
+            .max_quality()
+            .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]);
         for action in FULL_SEARCH_ACTIONS {
-            self.build_child_front(state, action)?;
+            if let Some((new_state, progress, quality)) =
+                state.use_action(action, &self.settings, self.durability_cost)
+            {
+                if !new_state.is_final(self.durability_cost) {
+                    if let Some(pareto_front) = self.solved_states.get(&new_state) {
+                        self.pareto_front_builder.push_slice(pareto_front);
+                    } else {
+                        self.solve_state(new_state)?;
+                    }
+                    self.pareto_front_builder
+                        .peek_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .for_each(|value| {
+                            value.first += progress;
+                            value.second += quality;
+                        });
+                    self.pareto_front_builder
+                        .merge(progress_cutoff, quality_cutoff);
+                } else if progress != 0 {
+                    // last action must be a progress increase
+                    self.pareto_front_builder
+                        .push_slice(&[ParetoValue::new(progress, quality)]);
+                    self.pareto_front_builder
+                        .merge(progress_cutoff, quality_cutoff);
+                }
+            }
             if self
                 .pareto_front_builder
-                .is_max(self.settings.max_progress(), self.settings.max_quality())
+                .is_max(progress_cutoff, quality_cutoff)
             {
                 // stop early if both Progress and Quality are maxed out
                 // this optimization would work even better with better action ordering
@@ -310,42 +341,6 @@ impl QualityUbSolver {
         }
         let pareto_front = Box::from(self.pareto_front_builder.peek().unwrap());
         self.solved_states.insert(state, pareto_front);
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn build_child_front(
-        &mut self,
-        state: ReducedState,
-        action: ActionCombo,
-    ) -> Result<(), SolverException> {
-        if let Some((new_state, progress, quality)) =
-            state.use_action(action, &self.settings, self.durability_cost)
-        {
-            if !new_state.is_final(self.durability_cost) {
-                if let Some(pareto_front) = self.solved_states.get(&new_state) {
-                    self.pareto_front_builder.push_slice(pareto_front);
-                } else {
-                    self.solve_state(new_state)?;
-                }
-                self.pareto_front_builder
-                    .peek_mut()
-                    .unwrap()
-                    .iter_mut()
-                    .for_each(|value| {
-                        value.first += progress;
-                        value.second += quality;
-                    });
-                self.pareto_front_builder
-                    .merge(self.settings.max_progress(), self.settings.max_quality());
-            } else if progress != 0 {
-                // last action must be a progress increase
-                self.pareto_front_builder
-                    .push_slice(&[ParetoValue::new(progress, quality)]);
-                self.pareto_front_builder
-                    .merge(self.settings.max_progress(), self.settings.max_quality());
-            }
-        }
         Ok(())
     }
 
