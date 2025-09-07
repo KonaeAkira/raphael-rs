@@ -56,3 +56,25 @@ jobs:
           asset_path: ./target/release/raphael-xiv.exe
           asset_name: raphael_x86_64_windows.exe
           asset_content_type: application/octet-stream
+
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use nightly toolchain
+        run: rustup update nightly && rustup default nightly
+      - name: Build
+        run: cargo build --release
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "target/release/raphael-xiv"
+      - name: Upload Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./target/release/raphael-xiv
+          asset_name: raphael_aarch64_macos
+          asset_content_type: application/octet-stream
