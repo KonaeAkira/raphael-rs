@@ -8,10 +8,10 @@ use raphael_sim::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    app::SolverConfig,
     config::{
         CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
     },
+    context::{AppContext, SolverConfig},
 };
 
 use super::util;
@@ -89,17 +89,21 @@ pub struct Rotation {
 }
 
 impl Rotation {
-    pub fn new(
-        name: impl Into<String>,
-        actions: Vec<Action>,
-        recipe_config: &RecipeConfiguration,
-        custom_recipe_overrides_configuration: &CustomRecipeOverridesConfiguration,
-        game_settings: &Settings,
-        solver_config: &SolverConfig,
-        food: Option<Consumable>,
-        potion: Option<Consumable>,
-        crafter_config: &CrafterConfig,
-    ) -> Self {
+    pub fn new(app_context: &AppContext, actions: Vec<Action>) -> Self {
+        let AppContext {
+            locale,
+            recipe_config,
+            custom_recipe_overrides_config,
+            selected_food: food,
+            selected_potion: potion,
+            crafter_config,
+            solver_config,
+            ..
+        } = app_context;
+        let game_settings = app_context.game_settings();
+        let initial_quality = app_context.initial_quality();
+        let name = raphael_data::get_item_name(recipe_config.recipe.item_id, false, *locale)
+            .unwrap_or("Unknown item".to_owned());
         let solver_params = format!(
             "Raphael v{}{}{}",
             env!("CARGO_PKG_VERSION"),
@@ -112,18 +116,17 @@ impl Rotation {
                 false => "",
             },
         );
-        let initial_quality = crate::util::get_initial_quality(recipe_config, crafter_config);
         Self {
             unique_id: generate_unique_rotation_id(),
-            name: name.into(),
+            name,
             solver: solver_params,
             actions,
             recipe_info: Some(RecipeInfo::create_from(
                 &recipe_config.recipe,
-                custom_recipe_overrides_configuration,
+                custom_recipe_overrides_config,
             )),
             solve_info: Some(SolveInfo::new(
-                game_settings,
+                &game_settings,
                 initial_quality,
                 solver_config,
             )),
@@ -255,7 +258,7 @@ impl SavedRotationsData {
 
 struct RotationWidget<'a> {
     locale: Locale,
-    config: &'a mut SavedRotationsConfig,
+    default_load_operation: LoadOperation,
     pinned: &'a mut bool,
     deleted: &'a mut bool,
     rotation: &'a Rotation,
@@ -267,32 +270,36 @@ struct RotationWidget<'a> {
     selected_potion: &'a mut Option<Consumable>,
 }
 
+struct LimitedAppContext<'a> {
+    pub locale: Locale,
+    pub default_load_operation: LoadOperation,
+    pub recipe_config: &'a mut RecipeConfiguration,
+    pub custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
+    pub selected_food: &'a mut Option<Consumable>,
+    pub selected_potion: &'a mut Option<Consumable>,
+    pub crafter_config: &'a mut CrafterConfig,
+}
+
 impl<'a> RotationWidget<'a> {
     pub fn new(
-        locale: Locale,
-        config: &'a mut SavedRotationsConfig,
+        limited_app_context: &'a mut LimitedAppContext,
         pinned: &'a mut bool,
         deleted: &'a mut bool,
         rotation: &'a Rotation,
         actions: &'a mut Vec<Action>,
-        crafter_config: &'a mut CrafterConfig,
-        recipe_config: &'a mut RecipeConfiguration,
-        custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
-        selected_food: &'a mut Option<Consumable>,
-        selected_potion: &'a mut Option<Consumable>,
     ) -> Self {
         Self {
-            locale,
-            config,
+            locale: limited_app_context.locale,
+            default_load_operation: limited_app_context.default_load_operation,
             pinned,
             deleted,
             rotation,
             actions,
-            crafter_config,
-            recipe_config,
-            custom_recipe_overrides_config,
-            selected_food,
-            selected_potion,
+            crafter_config: limited_app_context.crafter_config,
+            recipe_config: limited_app_context.recipe_config,
+            custom_recipe_overrides_config: limited_app_context.custom_recipe_overrides_config,
+            selected_food: limited_app_context.selected_food,
+            selected_potion: limited_app_context.selected_potion,
         }
     }
 
@@ -344,7 +351,7 @@ impl<'a> RotationWidget<'a> {
                     }
                 });
                 if load_button_response.clicked() {
-                    selected_load_operation = Some(self.config.default_load_operation);
+                    selected_load_operation = Some(self.default_load_operation);
                 }
                 if let Some(load_operation) = selected_load_operation {
                     match load_operation {
@@ -517,52 +524,52 @@ impl egui::Widget for RotationWidget<'_> {
 }
 
 pub struct SavedRotationsWidget<'a> {
-    locale: Locale,
-    config: &'a mut SavedRotationsConfig,
-    rotations: &'a mut SavedRotationsData,
+    app_context: &'a mut AppContext,
     actions: &'a mut Vec<Action>,
-    crafter_config: &'a mut CrafterConfig,
-    recipe_config: &'a mut RecipeConfiguration,
-    custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
-    selected_food: &'a mut Option<Consumable>,
-    selected_potion: &'a mut Option<Consumable>,
 }
 
 impl<'a> SavedRotationsWidget<'a> {
-    pub fn new(
-        locale: Locale,
-        config: &'a mut SavedRotationsConfig,
-        rotations: &'a mut SavedRotationsData,
-        actions: &'a mut Vec<Action>,
-        crafter_config: &'a mut CrafterConfig,
-        recipe_config: &'a mut RecipeConfiguration,
-        custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
-        selected_food: &'a mut Option<Consumable>,
-        selected_potion: &'a mut Option<Consumable>,
-    ) -> Self {
+    pub fn new(app_context: &'a mut AppContext, actions: &'a mut Vec<Action>) -> Self {
         Self {
-            locale,
-            config,
-            rotations,
+            app_context,
             actions,
-            crafter_config,
-            recipe_config,
-            custom_recipe_overrides_config,
-            selected_food,
-            selected_potion,
         }
     }
 }
 
 impl egui::Widget for SavedRotationsWidget<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let AppContext {
+            locale,
+            // app_config,
+            recipe_config,
+            custom_recipe_overrides_config,
+            selected_food,
+            selected_potion,
+            crafter_config,
+            // solver_config,
+            // macro_view_config,
+            saved_rotations_config: config,
+            saved_rotations_data: rotations,
+            ..
+        } = self.app_context;
+        let mut limited_app_context = LimitedAppContext {
+            locale: *locale,
+            default_load_operation: config.default_load_operation,
+            recipe_config,
+            custom_recipe_overrides_config,
+            selected_food,
+            selected_potion,
+            crafter_config,
+        };
+
         ui.vertical(|ui| {
             ui.style_mut().visuals.collapsing_header_frame = true;
             ui.collapsing("Settings", |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.vertical(|ui| {
                     ui.checkbox(
-                        &mut self.config.load_from_saved_rotations,
+                        &mut config.load_from_saved_rotations,
                         "Load saved rotations when initiating solve",
                     );
                     ui.separator();
@@ -574,7 +581,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     ] {
                         let text = format!("{}", saved_rotation_load_operation);
                         ui.selectable_value(
-                            &mut self.config.default_load_operation,
+                            &mut config.default_load_operation,
                             saved_rotation_load_operation,
                             text,
                         );
@@ -597,23 +604,17 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                 ui.group(|ui| {
                     ui.label(egui::RichText::new("Saved macros").strong());
                     ui.separator();
-                    if self.rotations.pinned.is_empty() {
+                    if rotations.pinned.is_empty() {
                         ui.label("No saved macros");
                     }
-                    self.rotations.pinned.retain(|rotation| {
+                    rotations.pinned.retain(|rotation| {
                         let mut deleted = false;
                         ui.add(RotationWidget::new(
-                            self.locale,
-                            self.config,
+                            &mut limited_app_context,
                             &mut true,
                             &mut deleted,
                             rotation,
                             self.actions,
-                            self.crafter_config,
-                            self.recipe_config,
-                            self.custom_recipe_overrides_config,
-                            self.selected_food,
-                            self.selected_potion,
                         ));
                         !deleted
                     });
@@ -627,15 +628,15 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                         ui.horizontal(|ui| {
                             ui.style_mut().spacing.item_spacing.x = 3.0;
                             ui.label("(");
-                            ui.add_enabled(false, egui::DragValue::new(&mut self.rotations.solve_history.len()));
+                            ui.add_enabled(false, egui::DragValue::new(&mut rotations.solve_history.len()));
                             ui.label("/");
                             ui.add(
-                                egui::DragValue::new(&mut self.config.max_history_size)
+                                egui::DragValue::new(&mut config.max_history_size)
                                     .range(20..=200),
                             );
                             ui.label(")");
                         });
-                        if self.rotations.solve_history.len() > self.config.max_history_size {
+                        if rotations.solve_history.len() > config.max_history_size {
                             ui.add(
                                 egui::Label::new(
                                     egui::RichText::new(
@@ -649,27 +650,21 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                         }
                     });
                     ui.separator();
-                    if self.rotations.solve_history.is_empty() {
+                    if rotations.solve_history.is_empty() {
                         ui.label("No solve history");
                     }
-                    self.rotations.solve_history.retain(|rotation| {
+                    rotations.solve_history.retain(|rotation| {
                         let mut pinned = false;
                         let mut deleted = false;
                         ui.add(RotationWidget::new(
-                            self.locale,
-                            self.config,
+                            &mut limited_app_context,
                             &mut pinned,
                             &mut deleted,
                             rotation,
                             self.actions,
-                            self.crafter_config,
-                            self.recipe_config,
-                            self.custom_recipe_overrides_config,
-                            self.selected_food,
-                            self.selected_potion,
                         ));
                         if pinned {
-                            self.rotations.pinned.push(rotation.clone());
+                            rotations.pinned.push(rotation.clone());
                         }
                         !pinned && !deleted
                     });

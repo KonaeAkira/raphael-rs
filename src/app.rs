@@ -3,38 +3,22 @@ use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex};
 
 use raphael_solver::SolverException;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::Deserialize;
 
 use egui::{Align, CursorIcon, Id, Layout, TextStyle};
-use raphael_data::{Consumable, Locale, action_name, get_job_name};
+use raphael_data::{Locale, action_name, get_job_name};
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
-use crate::config::{
-    AppConfig, CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, QualityTarget,
-    RecipeConfiguration,
-};
-use crate::{thread_pool, util, widgets::*};
-
-fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
-    match cc.storage {
-        Some(storage) => eframe::get_value(storage, key).unwrap_or(default),
-        None => default,
-    }
-}
+use crate::config::{QualitySource, QualityTarget};
+use crate::context::AppContext;
+use crate::{thread_pool, widgets::*};
 
 enum SolverEvent {
     NodesVisited(usize),
     Actions(Vec<Action>),
     LoadedFromHistory(),
     Finished(Option<SolverException>),
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SolverConfig {
-    pub quality_target: QualityTarget,
-    pub backload_progress: bool,
-    pub adversarial: bool,
 }
 
 #[cfg(any(debug_assertions, feature = "dev-panel"))]
@@ -45,17 +29,7 @@ struct DevPanelState {
 }
 
 pub struct MacroSolverApp {
-    locale: Locale,
-    app_config: AppConfig,
-    recipe_config: RecipeConfiguration,
-    custom_recipe_overrides_config: CustomRecipeOverridesConfiguration,
-    selected_food: Option<Consumable>,
-    selected_potion: Option<Consumable>,
-    crafter_config: CrafterConfig,
-    solver_config: SolverConfig,
-    macro_view_config: MacroViewConfig,
-    saved_rotations_config: SavedRotationsConfig,
-    saved_rotations_data: SavedRotationsData,
+    app_context: AppContext,
 
     #[cfg(any(debug_assertions, feature = "dev-panel"))]
     dev_panel_state: DevPanelState,
@@ -81,9 +55,9 @@ pub struct MacroSolverApp {
 impl MacroSolverApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let app_config = load(cc, "APP_CONFIG", AppConfig::default());
+        let app_context = AppContext::new(cc);
         cc.egui_ctx
-            .set_zoom_factor(f32::from(app_config.zoom_percentage) * 0.01);
+            .set_zoom_factor(f32::from(app_context.app_config.zoom_percentage) * 0.01);
 
         cc.egui_ctx.all_styles_mut(|style| {
             style.visuals.interact_cursor = Some(CursorIcon::PointingHand);
@@ -99,25 +73,7 @@ impl MacroSolverApp {
         fetch_latest_version(latest_version.clone());
 
         Self {
-            locale: load(cc, "LOCALE", Locale::EN),
-            app_config,
-            recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
-            custom_recipe_overrides_config: load(
-                cc,
-                "CUSTOM_RECIPE_OVERRIDES_CONFIG",
-                CustomRecipeOverridesConfiguration::default(),
-            ),
-            selected_food: load(cc, "SELECTED_FOOD", None),
-            selected_potion: load(cc, "SELECTED_POTION", None),
-            crafter_config: load(cc, "CRAFTER_CONFIG", CrafterConfig::default()),
-            solver_config: load(cc, "SOLVER_CONFIG", SolverConfig::default()),
-            macro_view_config: load(cc, "MACRO_VIEW_CONFIG", MacroViewConfig::default()),
-            saved_rotations_config: load(
-                cc,
-                "SAVED_ROTATIONS_CONFIG",
-                SavedRotationsConfig::default(),
-            ),
-            saved_rotations_data: load(cc, "SAVED_ROTATIONS", SavedRotationsData::default()),
+            app_context,
 
             #[cfg(any(debug_assertions, feature = "dev-panel"))]
             dev_panel_state: DevPanelState::default(),
@@ -176,8 +132,8 @@ impl eframe::App for MacroSolverApp {
 
         if self.missing_stats_error_window_open {
             egui::Modal::new(egui::Id::new("min_stats_warning")).show(ctx, |ui| {
-                let req_cms = self.recipe_config.recipe.req_craftsmanship;
-                let req_ctrl = self.recipe_config.recipe.req_control;
+                let req_cms = self.app_context.recipe_config.recipe.req_craftsmanship;
+                let req_ctrl = self.app_context.recipe_config.recipe.req_control;
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new("Error").strong());
                 ui.separator();
@@ -307,31 +263,31 @@ impl eframe::App for MacroSolverApp {
                         self.draw_app_config_menu_button(ui, ctx);
 
                         egui::ComboBox::from_id_salt("LOCALE")
-                            .selected_text(format!("{}", self.locale))
+                            .selected_text(format!("{}", self.app_context.locale))
                             .width(0.0)
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(
-                                    &mut self.locale,
+                                    &mut self.app_context.locale,
                                     Locale::EN,
                                     format!("{}", Locale::EN),
                                 );
                                 ui.selectable_value(
-                                    &mut self.locale,
+                                    &mut self.app_context.locale,
                                     Locale::DE,
                                     format!("{}", Locale::DE),
                                 );
                                 ui.selectable_value(
-                                    &mut self.locale,
+                                    &mut self.app_context.locale,
                                     Locale::FR,
                                     format!("{}", Locale::FR),
                                 );
                                 ui.selectable_value(
-                                    &mut self.locale,
+                                    &mut self.app_context.locale,
                                     Locale::JP,
                                     format!("{}", Locale::JP),
                                 );
                                 ui.selectable_value(
-                                    &mut self.locale,
+                                    &mut self.app_context.locale,
                                     Locale::KR,
                                     format!("{}", Locale::KR),
                                 );
@@ -470,7 +426,7 @@ impl eframe::App for MacroSolverApp {
         .max_width(400.0)
         .show(ctx, |ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-            ui.add(StatsEdit::new(self.locale, &mut self.crafter_config));
+            ui.add(StatsEdit::new(&mut self.app_context));
         });
 
         egui::Window::new(
@@ -484,39 +440,14 @@ impl eframe::App for MacroSolverApp {
         .show(ctx, |ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(SavedRotationsWidget::new(
-                self.locale,
-                &mut self.saved_rotations_config,
-                &mut self.saved_rotations_data,
+                &mut self.app_context,
                 &mut self.actions,
-                &mut self.crafter_config,
-                &mut self.recipe_config,
-                &mut self.custom_recipe_overrides_config,
-                &mut self.selected_food,
-                &mut self.selected_potion,
             ));
         });
     }
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, "LOCALE", &self.locale);
-        eframe::set_value(storage, "APP_CONFIG", &self.app_config);
-        eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
-        eframe::set_value(
-            storage,
-            "CUSTOM_RECIPE_OVERRIDES_CONFIG",
-            &self.custom_recipe_overrides_config,
-        );
-        eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
-        eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
-        eframe::set_value(storage, "CRAFTER_CONFIG", &self.crafter_config);
-        eframe::set_value(storage, "SOLVER_CONFIG", &self.solver_config);
-        eframe::set_value(storage, "MACRO_VIEW_CONFIG", &self.macro_view_config);
-        eframe::set_value(
-            storage,
-            "SAVED_ROTATIONS_CONFIG",
-            &self.saved_rotations_config,
-        );
-        eframe::set_value(storage, "SAVED_ROTATIONS", &self.saved_rotations_data);
+        self.app_context.save(storage);
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
@@ -537,39 +468,11 @@ impl MacroSolverApp {
                     self.solver_pending = false;
                     self.solver_interrupt.clear();
                     if exception.is_none() {
-                        let mut game_settings = raphael_data::get_game_settings(
-                            self.recipe_config.recipe,
-                            match self.custom_recipe_overrides_config.use_custom_recipe {
-                                true => Some(
-                                    self.custom_recipe_overrides_config.custom_recipe_overrides,
-                                ),
-                                false => None,
-                            },
-                            self.crafter_config.crafter_stats
-                                [self.crafter_config.selected_job as usize],
-                            self.selected_food,
-                            self.selected_potion,
+                        let new_rotation = Rotation::new(&self.app_context, self.actions.clone());
+                        self.app_context.saved_rotations_data.add_solved_rotation(
+                            new_rotation,
+                            &self.app_context.saved_rotations_config,
                         );
-                        game_settings.adversarial = self.solver_config.adversarial;
-                        game_settings.backload_progress = self.solver_config.backload_progress;
-                        let new_rotation = Rotation::new(
-                            raphael_data::get_item_name(
-                                self.recipe_config.recipe.item_id,
-                                false,
-                                self.locale,
-                            )
-                            .unwrap_or("Unknown item".to_owned()),
-                            self.actions.clone(),
-                            &self.recipe_config,
-                            &self.custom_recipe_overrides_config,
-                            &game_settings,
-                            &self.solver_config,
-                            self.selected_food,
-                            self.selected_potion,
-                            &self.crafter_config,
-                        );
-                        self.saved_rotations_data
-                            .add_solved_rotation(new_rotation, &self.saved_rotations_config);
                     } else {
                         self.solver_error = exception;
                     }
@@ -621,7 +524,7 @@ impl MacroSolverApp {
                                 .update_while_editing(false),
                         );
 
-                        self.app_config.zoom_percentage = zoom_percentage;
+                        self.app_context.app_config.zoom_percentage = zoom_percentage;
                         ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
                     });
 
@@ -635,12 +538,13 @@ impl MacroSolverApp {
                     ui.horizontal(|ui| {
                         ui.label("Max solver threads");
                         ui.add_enabled_ui(!thread_pool::initialization_attempted(), |ui| {
-                            let mut auto_thread_count = self.app_config.num_threads.is_none();
+                            let mut auto_thread_count =
+                                self.app_context.app_config.num_threads.is_none();
                             if ui.checkbox(&mut auto_thread_count, "Auto").changed() {
                                 if auto_thread_count {
-                                    self.app_config.num_threads = None;
+                                    self.app_context.app_config.num_threads = None;
                                 } else {
-                                    self.app_config.num_threads =
+                                    self.app_context.app_config.num_threads =
                                         Some(thread_pool::default_thread_count());
                                 }
                             }
@@ -649,7 +553,9 @@ impl MacroSolverApp {
                                     false,
                                     egui::DragValue::new(&mut rayon::current_num_threads()),
                                 );
-                            } else if let Some(num_threads) = self.app_config.num_threads.as_mut() {
+                            } else if let Some(num_threads) =
+                                self.app_context.app_config.num_threads.as_mut()
+                            {
                                 ui.add(egui::DragValue::new(num_threads));
                             } else {
                                 ui.add_enabled(
@@ -680,50 +586,14 @@ impl MacroSolverApp {
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        let game_settings = util::get_game_settings(
-            &self.recipe_config,
-            &self.custom_recipe_overrides_config,
-            &self.solver_config,
-            &self.crafter_config,
-            self.selected_food,
-            self.selected_potion,
-        );
-        let initial_quality = util::get_initial_quality(&self.recipe_config, &self.crafter_config);
-        let item = raphael_data::ITEMS
-            .get(self.recipe_config.recipe.item_id)
-            .copied()
-            .unwrap_or_default();
-        ui.add(Simulator::new(
-            &game_settings,
-            initial_quality,
-            self.solver_config,
-            &self.crafter_config,
-            &self.actions,
-            &item,
-            self.locale,
-        ));
+        ui.add(Simulator::new(&self.app_context, ui.ctx(), &self.actions));
     }
 
     fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.add(RecipeSelect::new(
-                &mut self.crafter_config,
-                &mut self.recipe_config,
-                &mut self.custom_recipe_overrides_config,
-                self.selected_food,
-                self.selected_potion,
-                self.locale,
-            ));
-            ui.add(FoodSelect::new(
-                self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
-                &mut self.selected_food,
-                self.locale,
-            ));
-            ui.add(PotionSelect::new(
-                self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
-                &mut self.selected_potion,
-                self.locale,
-            ));
+            ui.add(RecipeSelect::new(&mut self.app_context));
+            ui.add(FoodSelect::new(&mut self.app_context));
+            ui.add(PotionSelect::new(&mut self.app_context));
         });
     }
 
@@ -775,6 +645,12 @@ impl MacroSolverApp {
     }
 
     fn draw_configuration_widget(&mut self, ui: &mut egui::Ui) {
+        let AppContext {
+            locale,
+            selected_food,
+            selected_potion,
+            ..
+        } = self.app_context;
         ui.horizontal(|ui| {
             ui.label(egui::RichText::new("Configuration").strong());
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -784,13 +660,13 @@ impl MacroSolverApp {
                 }
                 egui::ComboBox::from_id_salt("SELECTED_JOB")
                     .width(20.0)
-                    .selected_text(get_job_name(self.crafter_config.selected_job, self.locale))
+                    .selected_text(get_job_name(self.app_context.selected_job(), locale))
                     .show_ui(ui, |ui| {
                         for i in 0..8 {
                             ui.selectable_value(
-                                &mut self.crafter_config.selected_job,
+                                &mut self.app_context.selected_job(),
                                 i,
-                                get_job_name(i, self.locale),
+                                get_job_name(i, locale),
                             );
                         }
                     });
@@ -802,11 +678,9 @@ impl MacroSolverApp {
         ui.horizontal(|ui| {
             ui.label("Craftsmanship");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let cms_base = &mut self.crafter_config.active_stats_mut().craftsmanship;
-                let cms_bonus = raphael_data::craftsmanship_bonus(
-                    *cms_base,
-                    &[self.selected_food, self.selected_potion],
-                );
+                let cms_base = &mut self.app_context.active_stats_mut().craftsmanship;
+                let cms_bonus =
+                    raphael_data::craftsmanship_bonus(*cms_base, &[selected_food, selected_potion]);
                 let mut cms_total = *cms_base + cms_bonus;
                 ui.style_mut().spacing.item_spacing.x = 5.0;
                 ui.add_enabled(false, egui::DragValue::new(&mut cms_total));
@@ -817,11 +691,9 @@ impl MacroSolverApp {
         ui.horizontal(|ui| {
             ui.label("Control");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let control_base = &mut self.crafter_config.active_stats_mut().control;
-                let control_bonus = raphael_data::control_bonus(
-                    *control_base,
-                    &[self.selected_food, self.selected_potion],
-                );
+                let control_base = &mut self.app_context.active_stats_mut().control;
+                let control_bonus =
+                    raphael_data::control_bonus(*control_base, &[selected_food, selected_potion]);
                 let mut control_total = *control_base + control_bonus;
                 ui.style_mut().spacing.item_spacing.x = 5.0;
                 ui.add_enabled(false, egui::DragValue::new(&mut control_total));
@@ -832,9 +704,8 @@ impl MacroSolverApp {
         ui.horizontal(|ui| {
             ui.label("CP");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let cp_base = &mut self.crafter_config.active_stats_mut().cp;
-                let cp_bonus =
-                    raphael_data::cp_bonus(*cp_base, &[self.selected_food, self.selected_potion]);
+                let cp_base = &mut self.app_context.active_stats_mut().cp;
+                let cp_bonus = raphael_data::cp_bonus(*cp_base, &[selected_food, selected_potion]);
                 let mut cp_total = *cp_base + cp_bonus;
                 ui.style_mut().spacing.item_spacing.x = 5.0;
                 ui.add_enabled(false, egui::DragValue::new(&mut cp_total));
@@ -846,7 +717,7 @@ impl MacroSolverApp {
             ui.label("Job level");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.add(
-                    egui::DragValue::new(&mut self.crafter_config.active_stats_mut().level)
+                    egui::DragValue::new(&mut self.app_context.active_stats_mut().level)
                         .range(1..=100),
                 );
             });
@@ -855,9 +726,9 @@ impl MacroSolverApp {
 
         ui.label(egui::RichText::new("HQ materials").strong());
         let mut has_hq_ingredient = false;
-        let recipe_ingredients = self.recipe_config.recipe.ingredients;
+        let recipe_ingredients = self.app_context.recipe_config.recipe.ingredients;
         if let QualitySource::HqMaterialList(provided_ingredients) =
-            &mut self.recipe_config.quality_source
+            &mut self.app_context.recipe_config.quality_source
         {
             for (index, ingredient) in recipe_ingredients.into_iter().enumerate() {
                 if ingredient.item_id == 0 {
@@ -865,7 +736,7 @@ impl MacroSolverApp {
                 }
                 has_hq_ingredient = true;
                 ui.horizontal(|ui| {
-                    ui.add(ItemNameLabel::new(ingredient.item_id, false, self.locale));
+                    ui.add(ItemNameLabel::new(ingredient.item_id, false, locale));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
                         let mut max_placeholder = ingredient.amount;
                         ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
@@ -884,48 +755,45 @@ impl MacroSolverApp {
         ui.separator();
 
         ui.label(egui::RichText::new("Actions").strong());
-        if self.crafter_config.active_stats().level >= Manipulation::LEVEL_REQUIREMENT {
+        if self.app_context.active_stats().level >= Manipulation::LEVEL_REQUIREMENT {
             ui.add(egui::Checkbox::new(
-                &mut self.crafter_config.active_stats_mut().manipulation,
-                action_name(Action::Manipulation, self.locale),
+                &mut self.app_context.active_stats_mut().manipulation,
+                action_name(Action::Manipulation, locale),
             ));
         } else {
             ui.add_enabled(
                 false,
-                egui::Checkbox::new(&mut false, action_name(Action::Manipulation, self.locale)),
+                egui::Checkbox::new(&mut false, action_name(Action::Manipulation, locale)),
             );
         }
-        if self.crafter_config.active_stats().level >= HeartAndSoul::LEVEL_REQUIREMENT {
+        if self.app_context.active_stats().level >= HeartAndSoul::LEVEL_REQUIREMENT {
             ui.add(egui::Checkbox::new(
-                &mut self.crafter_config.active_stats_mut().heart_and_soul,
-                action_name(Action::HeartAndSoul, self.locale),
+                &mut self.app_context.active_stats_mut().heart_and_soul,
+                action_name(Action::HeartAndSoul, locale),
             ));
         } else {
             ui.add_enabled(
                 false,
-                egui::Checkbox::new(&mut false, action_name(Action::HeartAndSoul, self.locale)),
+                egui::Checkbox::new(&mut false, action_name(Action::HeartAndSoul, locale)),
             );
         }
-        if self.crafter_config.active_stats().level >= QuickInnovation::LEVEL_REQUIREMENT {
+        if self.app_context.active_stats().level >= QuickInnovation::LEVEL_REQUIREMENT {
             ui.add(egui::Checkbox::new(
-                &mut self.crafter_config.active_stats_mut().quick_innovation,
-                action_name(Action::QuickInnovation, self.locale),
+                &mut self.app_context.active_stats_mut().quick_innovation,
+                action_name(Action::QuickInnovation, locale),
             ));
         } else {
             ui.add_enabled(
                 false,
-                egui::Checkbox::new(
-                    &mut false,
-                    action_name(Action::QuickInnovation, self.locale),
-                ),
+                egui::Checkbox::new(&mut false, action_name(Action::QuickInnovation, locale)),
             );
         }
-        let heart_and_soul_enabled = self.crafter_config.active_stats().level
+        let heart_and_soul_enabled = self.app_context.active_stats().level
             >= HeartAndSoul::LEVEL_REQUIREMENT
-            && self.crafter_config.active_stats_mut().heart_and_soul;
-        let quick_innovation_enabled = self.crafter_config.active_stats().level
+            && self.app_context.active_stats().heart_and_soul;
+        let quick_innovation_enabled = self.app_context.active_stats().level
             >= QuickInnovation::LEVEL_REQUIREMENT
-            && self.crafter_config.active_stats_mut().quick_innovation;
+            && self.app_context.active_stats().quick_innovation;
         if heart_and_soul_enabled || quick_innovation_enabled {
             #[cfg(not(target_arch = "wasm32"))]
             ui.label(
@@ -957,21 +825,13 @@ impl MacroSolverApp {
             ui.label("Target quality");
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
-                let game_settings = raphael_data::get_game_settings(
-                    self.recipe_config.recipe,
-                    match self.custom_recipe_overrides_config.use_custom_recipe {
-                        true => Some(self.custom_recipe_overrides_config.custom_recipe_overrides),
-                        false => None,
-                    },
-                    self.crafter_config.crafter_stats[self.crafter_config.selected_job as usize],
-                    self.selected_food,
-                    self.selected_potion,
-                );
+                let game_settings = self.app_context.game_settings();
                 let mut current_value = self
+                    .app_context
                     .solver_config
                     .quality_target
                     .get_target(game_settings.max_quality);
-                match &mut self.solver_config.quality_target {
+                match &mut self.app_context.solver_config.quality_target {
                     QualityTarget::Custom(value) => {
                         ui.add(egui::DragValue::new(value));
                     }
@@ -980,35 +840,35 @@ impl MacroSolverApp {
                     }
                 }
                 egui::ComboBox::from_id_salt("TARGET_QUALITY")
-                    .selected_text(format!("{}", self.solver_config.quality_target))
+                    .selected_text(format!("{}", self.app_context.solver_config.quality_target))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
-                            &mut self.solver_config.quality_target,
+                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Zero,
                             format!("{}", QualityTarget::Zero),
                         );
                         ui.selectable_value(
-                            &mut self.solver_config.quality_target,
+                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT1,
                             format!("{}", QualityTarget::CollectableT1),
                         );
                         ui.selectable_value(
-                            &mut self.solver_config.quality_target,
+                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT2,
                             format!("{}", QualityTarget::CollectableT2),
                         );
                         ui.selectable_value(
-                            &mut self.solver_config.quality_target,
+                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT3,
                             format!("{}", QualityTarget::CollectableT3),
                         );
                         ui.selectable_value(
-                            &mut self.solver_config.quality_target,
+                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Full,
                             format!("{}", QualityTarget::Full),
                         );
                         ui.selectable_value(
-                            &mut self.solver_config.quality_target,
+                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Custom(current_value),
                             format!("{}", QualityTarget::Custom(0)),
                         )
@@ -1018,26 +878,26 @@ impl MacroSolverApp {
 
         ui.horizontal(|ui| {
             ui.checkbox(
-                &mut self.solver_config.backload_progress,
+                &mut self.app_context.solver_config.backload_progress,
                 "Backload progress",
             );
             ui.add(HelpText::new("Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration."));
         });
 
-        if self.recipe_config.recipe.is_expert {
-            self.solver_config.adversarial = false;
+        if self.app_context.recipe_config.recipe.is_expert {
+            self.app_context.solver_config.adversarial = false;
         }
         ui.horizontal(|ui| {
             ui.add_enabled(
-                !self.recipe_config.recipe.is_expert,
+                !self.app_context.recipe_config.recipe.is_expert,
                 egui::Checkbox::new(
-                    &mut self.solver_config.adversarial,
+                    &mut self.app_context.solver_config.adversarial,
                     "Ensure 100% reliability",
                 ),
             );
             ui.add(HelpText::new("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro."));
         });
-        if self.solver_config.adversarial {
+        if self.app_context.solver_config.adversarial {
             ui.label(
                 egui::RichText::new(Self::experimental_warning_text())
                     .small()
@@ -1052,25 +912,32 @@ impl MacroSolverApp {
                 data.insert_temp(Id::new("SOLVE_INITIATED"), false);
             });
 
-            let craftsmanship_req = self.recipe_config.recipe.req_craftsmanship;
-            let control_req = self.recipe_config.recipe.req_control;
-            let craftsmanship = self.crafter_config.active_stats().craftsmanship;
-            let control = self.crafter_config.active_stats().control;
+            let craftsmanship_req = self.app_context.recipe_config.recipe.req_craftsmanship;
+            let control_req = self.app_context.recipe_config.recipe.req_control;
+            let active_stats = self.app_context.active_stats();
             let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
-                craftsmanship,
-                &[self.selected_food, self.selected_potion],
+                active_stats.craftsmanship,
+                &[
+                    self.app_context.selected_food,
+                    self.app_context.selected_potion,
+                ],
             );
-            let control_bonus =
-                raphael_data::control_bonus(control, &[self.selected_food, self.selected_potion]);
-            if craftsmanship + craftsmanship_bonus >= craftsmanship_req
-                && control + control_bonus >= control_req
+            let control_bonus = raphael_data::control_bonus(
+                active_stats.control,
+                &[
+                    self.app_context.selected_food,
+                    self.app_context.selected_potion,
+                ],
+            );
+            if active_stats.craftsmanship + craftsmanship_bonus >= craftsmanship_req
+                && active_stats.control + control_bonus >= control_req
             {
                 self.solve(ctx);
             } else {
                 self.missing_stats_error_window_open = true;
             }
         } else {
-            thread_pool::attempt_initialization(self.app_config.num_threads);
+            thread_pool::attempt_initialization(self.app_context.app_config.num_threads);
             ctx.request_repaint();
         }
     }
@@ -1079,27 +946,27 @@ impl MacroSolverApp {
         self.solver_pending = true;
         self.solver_interrupt.clear();
 
-        let mut game_settings = util::get_game_settings(
-            &self.recipe_config,
-            &self.custom_recipe_overrides_config,
-            &self.solver_config,
-            &self.crafter_config,
-            self.selected_food,
-            self.selected_potion,
-        );
-        let initial_quality = util::get_initial_quality(&self.recipe_config, &self.crafter_config);
+        let mut game_settings = self.app_context.game_settings();
+        let initial_quality = self.app_context.initial_quality();
         ctx.data_mut(|data| {
             data.insert_temp(
                 Id::new("LAST_SOLVE_PARAMS"),
-                (game_settings, initial_quality, self.solver_config),
+                (
+                    game_settings,
+                    initial_quality,
+                    self.app_context.solver_config,
+                ),
             );
         });
 
-        if self.saved_rotations_config.load_from_saved_rotations
-            && let Some(actions) = self.saved_rotations_data.find_solved_rotation(
+        if self
+            .app_context
+            .saved_rotations_config
+            .load_from_saved_rotations
+            && let Some(actions) = self.app_context.saved_rotations_data.find_solved_rotation(
                 &game_settings,
                 initial_quality,
-                &self.solver_config,
+                &self.app_context.solver_config,
             )
         {
             let mut solver_events = self.solver_events.lock().unwrap();
@@ -1108,10 +975,11 @@ impl MacroSolverApp {
             solver_events.push_back(SolverEvent::Finished(None));
         } else {
             let target_quality = self
+                .app_context
                 .solver_config
                 .quality_target
                 .get_target(game_settings.max_quality);
-            game_settings.max_quality = target_quality.saturating_sub(initial_quality) as u16;
+            game_settings.max_quality = target_quality.saturating_sub(initial_quality);
             self.actions = Vec::new();
             self.solver_progress = 0;
             self.start_time = web_time::Instant::now();
@@ -1124,11 +992,7 @@ impl MacroSolverApp {
     }
 
     fn draw_macro_output_widget(&mut self, ui: &mut egui::Ui) {
-        ui.add(MacroView::new(
-            &mut self.actions,
-            &mut self.macro_view_config,
-            self.locale,
-        ));
+        ui.add(MacroView::new(&mut self.app_context, &mut self.actions));
     }
 
     fn experimental_warning_text() -> &'static str {
@@ -1140,13 +1004,13 @@ impl MacroSolverApp {
 
     #[cfg(target_arch = "wasm32")]
     fn load_fonts_dyn(&self, ctx: &egui::Context) {
-        if self.locale == Locale::JP {
+        if self.app_context.locale == Locale::JP {
             let uri = concat!(
                 env!("BASE_URL"),
                 "/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
             );
             load_font_dyn(ctx, "MPLUS1Code-Regular", uri);
-        } else if self.locale == Locale::KR {
+        } else if self.app_context.locale == Locale::KR {
             let uri = concat!(
                 env!("BASE_URL"),
                 "/fonts/Noto_Sans_KR/static/NotoSansKR-Regular.ttf"

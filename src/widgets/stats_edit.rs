@@ -2,7 +2,7 @@ use egui::Widget;
 use raphael_data::{Locale, action_name, get_job_name};
 use raphael_sim::Action;
 
-use crate::config::CrafterConfig;
+use crate::{config::CrafterConfig, context::AppContext};
 
 pub struct StatsEdit<'a> {
     locale: Locale,
@@ -10,10 +10,10 @@ pub struct StatsEdit<'a> {
 }
 
 impl<'a> StatsEdit<'a> {
-    pub fn new(locale: Locale, crafter_config: &'a mut CrafterConfig) -> Self {
+    pub fn new(app_context: &'a mut AppContext) -> Self {
         Self {
-            locale,
-            crafter_config,
+            locale: app_context.locale,
+            crafter_config: &mut app_context.crafter_config,
         }
     }
 }

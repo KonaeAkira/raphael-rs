@@ -8,8 +8,11 @@ use raphael_data::{
     find_stellar_missions, get_game_settings, get_job_name, get_stellar_mission_name,
 };
 
-use crate::config::{
-    CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
+use crate::{
+    config::{
+        CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
+    },
+    context::AppContext,
 };
 
 use super::{ItemNameLabel, util};
@@ -68,21 +71,24 @@ pub struct RecipeSelect<'a> {
 }
 
 impl<'a> RecipeSelect<'a> {
-    pub fn new(
-        crafter_config: &'a mut CrafterConfig,
-        recipe_config: &'a mut RecipeConfiguration,
-        custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
-        selected_food: Option<Consumable>,
-        selected_potion: Option<Consumable>,
-        locale: Locale,
-    ) -> Self {
-        Self {
-            crafter_config,
+    pub fn new(app_context: &'a mut AppContext) -> Self {
+        let AppContext {
+            locale,
             recipe_config,
             custom_recipe_overrides_config,
             selected_food,
             selected_potion,
-            locale,
+            crafter_config,
+            ..
+        } = app_context;
+
+        Self {
+            crafter_config,
+            recipe_config,
+            custom_recipe_overrides_config,
+            selected_food: *selected_food,
+            selected_potion: *selected_potion,
+            locale: *locale,
         }
     }
 
