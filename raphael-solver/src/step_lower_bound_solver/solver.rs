@@ -184,7 +184,7 @@ impl StepLbSolver {
                 let progress = new_state.progress;
                 let quality = new_state.quality;
                 if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget)
-                    && new_state.durability > 0
+                    && !new_state.is_final(&self.settings.simulator_settings)
                 {
                     let new_state = ReducedState::from_state(new_state, new_step_budget);
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {

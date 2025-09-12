@@ -284,3 +284,51 @@ fn backload_progress_single_delicate_synthesis() {
     "#]];
     test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
+
+#[test]
+/// https://github.com/KonaeAkira/raphael-rs/issues/216
+fn issue_216_steplbsolver_crash() {
+    let simulator_settings = Settings {
+        max_cp: 649,
+        max_durability: 40,
+        max_progress: 2125,
+        max_quality: 8600,
+        base_progress: 400,
+        base_quality: 468,
+        job_level: 100,
+        allowed_actions: ActionMask::regular(),
+        adversarial: false,
+        backload_progress: false,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 8600,
+                steps: 10,
+                duration: 25,
+                overflow_quality: 596,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 212737,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 21441,
+                dropped_nodes: 393413,
+                pareto_buckets_squared_size_sum: 384142,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                parallel_states: 318520,
+                sequential_states: 0,
+                pareto_values: 1267763,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 77688,
+                pareto_values: 341355,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
