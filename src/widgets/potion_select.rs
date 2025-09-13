@@ -10,13 +10,13 @@ use super::{ItemNameLabel, util};
 #[derive(Default)]
 struct PotionFinder {}
 
-impl ComputerMut<(&str, Locale), Vec<usize>> for PotionFinder {
-    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<usize> {
-        find_potions(text, locale)
+impl ComputerMut<(&str, Locale), Vec<&'static Consumable>> for PotionFinder {
+    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<&'static Consumable> {
+        find_potions(text, locale).collect::<Vec<_>>()
     }
 }
 
-type PotionSearchCache<'a> = FrameCache<Vec<usize>, PotionFinder>;
+type PotionSearchCache<'a> = FrameCache<Vec<&'static Consumable>, PotionFinder>;
 
 pub struct PotionSelect<'a> {
     crafter_stats: CrafterStats,
@@ -126,10 +126,10 @@ impl Widget for PotionSelect<'_> {
 
                 table.body(|body| {
                     body.rows(line_height, search_result.len(), |mut row| {
-                        let item = raphael_data::POTIONS[search_result[row.index()]];
+                        let item = search_result[row.index()];
                         row.col(|ui| {
                             if ui.button("Select").clicked() {
-                                *self.selected_consumable = Some(item);
+                                *self.selected_consumable = Some(*item);
                             }
                         });
                         row.col(|ui| {
