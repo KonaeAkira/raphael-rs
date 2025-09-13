@@ -4,7 +4,6 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{Consumable, CrafterStats, Locale, find_potions};
-use unicode_normalization::UnicodeNormalization;
 
 use super::{ItemNameLabel, util};
 
@@ -92,7 +91,7 @@ impl Widget for PotionSelect<'_> {
                     .ui(ui)
                     .changed()
                 {
-                    search_text = search_text.replace('\0', "").nfc().collect();
+                    search_text = search_text.replace('\0', "");
                 }
                 ui.separator();
 
