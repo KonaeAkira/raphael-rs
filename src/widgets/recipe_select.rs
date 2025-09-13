@@ -170,7 +170,7 @@ impl<'a> RecipeSelect<'a> {
         table.body(|body| {
             body.rows(line_height, search_result.len(), |mut row| {
                 let recipe_id = search_result[row.index()];
-                let recipe = raphael_data::RECIPES[&recipe_id];
+                let recipe = raphael_data::RECIPES[recipe_id];
                 row.col(|ui| {
                     if ui.button("Select").clicked() {
                         self.crafter_config.selected_job = recipe.job_id;
@@ -196,7 +196,7 @@ impl<'a> RecipeSelect<'a> {
         let table_height = 6.3 * line_height + 6.0 * line_spacing;
 
         let line_heights = search_result.iter().map(|mission_id| {
-            let mission = &raphael_data::STELLAR_MISSIONS[mission_id];
+            let mission = &raphael_data::STELLAR_MISSIONS[*mission_id];
             let recipe_count = mission.recipe_ids.len();
             line_height * (1 + recipe_count) as f32 + line_spacing * recipe_count as f32
         });
@@ -216,7 +216,7 @@ impl<'a> RecipeSelect<'a> {
         table.body(|body| {
             body.heterogeneous_rows(line_heights, |mut row| {
                 let mission_id = search_result[row.index()];
-                let mission = &raphael_data::STELLAR_MISSIONS[&mission_id];
+                let mission = &raphael_data::STELLAR_MISSIONS[mission_id];
                 row.col(|ui| {
                     ui.label(get_job_name(mission.job_id, self.locale));
                 });
@@ -228,7 +228,7 @@ impl<'a> RecipeSelect<'a> {
                             .color(ui.style().visuals.widgets.inactive.fg_stroke.color),
                     );
                     for (index, recipe_id) in mission.recipe_ids.iter().enumerate() {
-                        let recipe = &raphael_data::RECIPES[recipe_id];
+                        let recipe = &raphael_data::RECIPES[*recipe_id];
                         const DARKENING_COLOR_DARK_MODE: egui::Color32 =
                             egui::Color32::from_black_alpha(25);
                         const DARKENING_COLOR_LIGHT_MODE: egui::Color32 =
