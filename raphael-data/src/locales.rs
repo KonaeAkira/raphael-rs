@@ -46,20 +46,24 @@ pub static ITEM_NAMES_FR: phf::Map<u32, &str> = include!("../data/item_names_fr.
 pub static ITEM_NAMES_JP: phf::Map<u32, &str> = include!("../data/item_names_jp.rs");
 pub static ITEM_NAMES_KR: phf::Map<u32, &str> = include!("../data/item_names_kr.rs");
 
+pub fn get_raw_item_name(item_id: u32, locale: Locale) -> Option<&'static str> {
+    match locale {
+        Locale::EN => ITEM_NAMES_EN.get(&item_id).map(|s| *s),
+        Locale::DE => ITEM_NAMES_DE.get(&item_id).map(|s| *s),
+        Locale::FR => ITEM_NAMES_FR.get(&item_id).map(|s| *s),
+        Locale::JP => ITEM_NAMES_JP.get(&item_id).map(|s| *s),
+        Locale::KR => ITEM_NAMES_KR.get(&item_id).map(|s| *s),
+    }
+}
+
 pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
-    let item_name = match locale {
-        Locale::EN => *ITEM_NAMES_EN.get(&item_id)?,
-        Locale::DE => *ITEM_NAMES_DE.get(&item_id)?,
-        Locale::FR => *ITEM_NAMES_FR.get(&item_id)?,
-        Locale::JP => *ITEM_NAMES_JP.get(&item_id)?,
-        Locale::KR => *ITEM_NAMES_KR.get(&item_id)?,
-    };
+    let raw_item_name = get_raw_item_name(item_id, locale)?;
     if ITEMS.get(&item_id)?.always_collectable {
-        Some(format!("{} {}", item_name, CL_ICON_CHAR))
+        Some(format!("{} {}", raw_item_name, CL_ICON_CHAR))
     } else if hq {
-        Some(format!("{} {}", item_name, HQ_ICON_CHAR))
+        Some(format!("{} {}", raw_item_name, HQ_ICON_CHAR))
     } else {
-        Some(item_name.into())
+        Some(raw_item_name.into())
     }
 }
 
@@ -74,23 +78,13 @@ pub static STELLAR_MISSION_NAMES_JP: phf::Map<u32, &str> =
 pub static STELLAR_MISSION_NAMES_KR: phf::Map<u32, &str> =
     include!("../data/stellar_mission_names_kr.rs");
 
-pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<String> {
+pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<&'static str> {
     match locale {
-        Locale::EN => STELLAR_MISSION_NAMES_EN
-            .get(&mission_id)
-            .map(std::string::ToString::to_string),
-        Locale::DE => STELLAR_MISSION_NAMES_DE
-            .get(&mission_id)
-            .map(std::string::ToString::to_string),
-        Locale::FR => STELLAR_MISSION_NAMES_FR
-            .get(&mission_id)
-            .map(std::string::ToString::to_string),
-        Locale::JP => STELLAR_MISSION_NAMES_JP
-            .get(&mission_id)
-            .map(std::string::ToString::to_string),
-        Locale::KR => STELLAR_MISSION_NAMES_KR
-            .get(&mission_id)
-            .map(std::string::ToString::to_string),
+        Locale::EN => STELLAR_MISSION_NAMES_EN.get(&mission_id).map(|s| *s),
+        Locale::DE => STELLAR_MISSION_NAMES_DE.get(&mission_id).map(|s| *s),
+        Locale::FR => STELLAR_MISSION_NAMES_FR.get(&mission_id).map(|s| *s),
+        Locale::JP => STELLAR_MISSION_NAMES_JP.get(&mission_id).map(|s| *s),
+        Locale::KR => STELLAR_MISSION_NAMES_KR.get(&mission_id).map(|s| *s),
     }
 }
 

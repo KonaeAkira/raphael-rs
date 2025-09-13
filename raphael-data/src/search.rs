@@ -2,7 +2,7 @@ use unicode_normalization::UnicodeNormalization;
 
 use crate::{
     CL_ICON_CHAR, Consumable, HQ_ICON_CHAR, Locale, MEALS, POTIONS, RECIPES, STELLAR_MISSIONS,
-    get_item_name, get_stellar_mission_name,
+    get_raw_item_name, get_stellar_mission_name,
 };
 
 fn is_subsequence(text: impl Iterator<Item = char>, pattern: impl Iterator<Item = char>) -> bool {
@@ -13,21 +13,21 @@ fn is_subsequence(text: impl Iterator<Item = char>, pattern: impl Iterator<Item 
     pattern.peek().is_none()
 }
 
-fn preprocess_text(pattern: &str) -> String {
+fn preprocess_text(pattern: &str) -> impl Iterator<Item = char> {
     pattern
-        .to_lowercase()
-        .replace([HQ_ICON_CHAR, CL_ICON_CHAR], "")
+        .chars()
+        .filter(|&c| !c.is_whitespace() && c != HQ_ICON_CHAR && c != CL_ICON_CHAR)
+        .flat_map(|c| c.to_lowercase())
         .nfd() // Unicode Normalization Form D (canonical decomposition)
-        .collect()
 }
 
 pub fn find_recipes(search_string: &str, locale: Locale) -> Vec<u32> {
-    let pattern = preprocess_text(search_string);
+    let pattern = preprocess_text(search_string).collect::<String>();
     RECIPES
         .entries()
         .filter_map(|(recipe_id, recipe)| {
-            let item_name = preprocess_text(&get_item_name(recipe.item_id, false, locale)?);
-            match is_subsequence(item_name.chars(), pattern.chars()) {
+            let item_name = get_raw_item_name(recipe.item_id, locale)?;
+            match is_subsequence(preprocess_text(item_name), pattern.chars()) {
                 true => Some(*recipe_id),
                 false => None,
             }
@@ -36,21 +36,20 @@ pub fn find_recipes(search_string: &str, locale: Locale) -> Vec<u32> {
 }
 
 pub fn find_stellar_missions(search_string: &str, locale: Locale) -> Vec<u32> {
-    let pattern = preprocess_text(search_string);
+    let pattern = preprocess_text(search_string).collect::<String>();
     STELLAR_MISSIONS
         .entries()
         .filter_map(|(mission_id, mission)| {
-            let mission_name = preprocess_text(&get_stellar_mission_name(*mission_id, locale)?);
-            match is_subsequence(mission_name.chars(), pattern.chars()) {
+            let mission_name = get_stellar_mission_name(*mission_id, locale)?;
+            match is_subsequence(preprocess_text(mission_name), pattern.chars()) {
                 true => Some(*mission_id),
                 false => mission
                     .recipe_ids
                     .iter()
                     .filter_map(|recipe_id| {
                         let recipe = RECIPES.get(recipe_id)?;
-                        let item_name =
-                            preprocess_text(&get_item_name(recipe.item_id, false, locale)?);
-                        match is_subsequence(item_name.chars(), pattern.chars()) {
+                        let item_name = get_raw_item_name(recipe.item_id, locale)?;
+                        match is_subsequence(preprocess_text(item_name), pattern.chars()) {
                             true => Some(*mission_id),
                             false => None,
                         }
@@ -62,13 +61,13 @@ pub fn find_stellar_missions(search_string: &str, locale: Locale) -> Vec<u32> {
 }
 
 fn find_consumables(search_string: &str, locale: Locale, consumables: &[Consumable]) -> Vec<usize> {
-    let pattern = preprocess_text(search_string);
+    let pattern = preprocess_text(search_string).collect::<String>();
     consumables
         .iter()
         .enumerate()
         .filter_map(|(index, consumable)| {
-            let item_name = preprocess_text(&get_item_name(consumable.item_id, false, locale)?);
-            match is_subsequence(item_name.chars(), pattern.chars()) {
+            let item_name = get_raw_item_name(consumable.item_id, locale)?;
+            match is_subsequence(preprocess_text(item_name), pattern.chars()) {
                 true => Some(index),
                 false => None,
             }

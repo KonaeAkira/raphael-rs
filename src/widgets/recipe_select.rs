@@ -224,7 +224,7 @@ impl<'a> RecipeSelect<'a> {
                 row.col(|ui| {
                     let mission_name = get_stellar_mission_name(mission_id, self.locale).unwrap();
                     ui.label(
-                        egui::RichText::new(&mission_name)
+                        egui::RichText::new(mission_name)
                             .color(ui.style().visuals.widgets.inactive.fg_stroke.color),
                     );
                     for (index, recipe_id) in mission.recipe_ids.iter().enumerate() {
