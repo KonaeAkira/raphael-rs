@@ -7,6 +7,7 @@ use raphael_data::{
     Consumable, CustomRecipeOverrides, Ingredient, Locale, RLVLS, find_recipes,
     find_stellar_missions, get_game_settings, get_job_name, get_stellar_mission_name,
 };
+use unicode_normalization::UnicodeNormalization;
 
 use crate::config::{
     CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
@@ -116,7 +117,7 @@ impl<'a> RecipeSelect<'a> {
                 .ui(ui)
                 .changed()
             {
-                search_text = search_text.replace('\0', "");
+                search_text = search_text.replace('\0', "").nfc().collect();
             }
         });
 
