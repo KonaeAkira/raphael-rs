@@ -48,11 +48,11 @@ pub static ITEM_NAMES_KR: phf::Map<u32, &str> = include!("../data/item_names_kr.
 
 pub fn get_raw_item_name(item_id: u32, locale: Locale) -> Option<&'static str> {
     match locale {
-        Locale::EN => ITEM_NAMES_EN.get(&item_id).map(|s| *s),
-        Locale::DE => ITEM_NAMES_DE.get(&item_id).map(|s| *s),
-        Locale::FR => ITEM_NAMES_FR.get(&item_id).map(|s| *s),
-        Locale::JP => ITEM_NAMES_JP.get(&item_id).map(|s| *s),
-        Locale::KR => ITEM_NAMES_KR.get(&item_id).map(|s| *s),
+        Locale::EN => ITEM_NAMES_EN.get(&item_id).copied(),
+        Locale::DE => ITEM_NAMES_DE.get(&item_id).copied(),
+        Locale::FR => ITEM_NAMES_FR.get(&item_id).copied(),
+        Locale::JP => ITEM_NAMES_JP.get(&item_id).copied(),
+        Locale::KR => ITEM_NAMES_KR.get(&item_id).copied(),
     }
 }
 
@@ -80,11 +80,11 @@ pub static STELLAR_MISSION_NAMES_KR: phf::Map<u32, &str> =
 
 pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<&'static str> {
     match locale {
-        Locale::EN => STELLAR_MISSION_NAMES_EN.get(&mission_id).map(|s| *s),
-        Locale::DE => STELLAR_MISSION_NAMES_DE.get(&mission_id).map(|s| *s),
-        Locale::FR => STELLAR_MISSION_NAMES_FR.get(&mission_id).map(|s| *s),
-        Locale::JP => STELLAR_MISSION_NAMES_JP.get(&mission_id).map(|s| *s),
-        Locale::KR => STELLAR_MISSION_NAMES_KR.get(&mission_id).map(|s| *s),
+        Locale::EN => STELLAR_MISSION_NAMES_EN.get(&mission_id).copied(),
+        Locale::DE => STELLAR_MISSION_NAMES_DE.get(&mission_id).copied(),
+        Locale::FR => STELLAR_MISSION_NAMES_FR.get(&mission_id).copied(),
+        Locale::JP => STELLAR_MISSION_NAMES_JP.get(&mission_id).copied(),
+        Locale::KR => STELLAR_MISSION_NAMES_KR.get(&mission_id).copied(),
     }
 }
 
