@@ -5,7 +5,6 @@ members = [
     "raphael-data",
     "raphael-data-updater",
     "raphael-cli",
-    "raphael-bindings",
 ]
 resolver = "2"
 
@@ -33,7 +32,7 @@ web-time = "1.1.0"
 
 [package]
 name = "raphael-xiv"
-version = "0.22.3"
+version = "0.23.0"
 edition = "2024"
 default-run = "raphael-xiv"
 
@@ -85,6 +84,12 @@ opt-level = 3
 lto = "fat"
 overflow-checks = false
 
+[profile.release.package.egui]
+opt-level = "s"
+
+[profile.release.package.eframe]
+opt-level = "s"
+
 [profile.release-with-debug]
 inherits = "release"
 debug = true
@@ -94,10 +99,6 @@ debug-assertions = true
 opt-level = 3
 lto = "thin"
 overflow-checks = true
-
-[patch.crates-io]
-# unsafe(no_mangle) fix for csbindgen in raphael-bindings
-csbindgen = { git = "https://github.com/Cysharp/csbindgen.git", rev = "refs/pull/103/head" }
 
 [features]
 dev-panel = []

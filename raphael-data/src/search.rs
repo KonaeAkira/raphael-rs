@@ -1,87 +1,94 @@
+use unicode_normalization::UnicodeNormalization;
+
 use crate::{
-    CL_ICON_CHAR, Consumable, HQ_ICON_CHAR, Locale, MEALS, POTIONS, RECIPES, STELLAR_MISSIONS,
-    get_item_name, get_stellar_mission_name,
+    CL_ICON_CHAR, HQ_ICON_CHAR, MEALS, POTIONS, RECIPES, STELLAR_MISSIONS, get_raw_item_name,
+    get_stellar_mission_name,
 };
 
-fn contains_noncontiguous(string: &str, pattern: &str) -> bool {
-    let mut it = string.split_whitespace();
-    for c in pattern.split_whitespace() {
-        loop {
-            let Some(c2) = it.next() else {
-                return false;
-            };
-            if c2.contains(c) {
-                break;
-            }
-        }
+fn is_subsequence(text: impl Iterator<Item = char>, pattern: impl Iterator<Item = char>) -> bool {
+    let mut pattern = pattern.peekable();
+    for text_char in text {
+        pattern.next_if_eq(&text_char);
     }
-    true
+    pattern.peek().is_none()
 }
 
-fn preprocess_pattern(pattern: &str) -> String {
+fn preprocess_text(pattern: &str) -> impl Iterator<Item = char> {
     pattern
-        .to_lowercase()
-        .replace([HQ_ICON_CHAR, CL_ICON_CHAR], "")
+        .chars()
+        .filter(|&c| !c.is_whitespace() && c != HQ_ICON_CHAR && c != CL_ICON_CHAR)
+        .flat_map(char::to_lowercase)
+        .nfd() // Unicode Normalization Form D (canonical decomposition)
 }
 
-pub fn find_recipes(search_string: &str, locale: Locale) -> Vec<u32> {
-    let pattern = preprocess_pattern(search_string);
-    RECIPES
-        .entries()
-        .filter_map(|(recipe_id, recipe)| {
-            let item_name = get_item_name(recipe.item_id, false, locale)?;
-            match contains_noncontiguous(&item_name.to_lowercase(), &pattern) {
-                true => Some(recipe_id),
-                false => None,
-            }
-        })
-        .collect()
+pub type RecipeSearchEntry = (u32, &'static crate::Recipe);
+pub fn find_recipes(
+    search_string: &str,
+    locale: crate::Locale,
+) -> impl Iterator<Item = RecipeSearchEntry> {
+    let pattern = preprocess_text(search_string).collect::<String>();
+    RECIPES.entries().filter_map(move |(recipe_id, recipe)| {
+        let item_name = get_raw_item_name(recipe.item_id, locale)?;
+        match is_subsequence(preprocess_text(item_name), pattern.chars()) {
+            true => Some((recipe_id, recipe)),
+            false => None,
+        }
+    })
 }
 
-pub fn find_stellar_missions(search_string: &str, locale: Locale) -> Vec<u32> {
-    let pattern = preprocess_pattern(search_string);
+pub type StellarMissionSearchEntry = (u32, &'static crate::StellarMission);
+pub fn find_stellar_missions(
+    search_string: &str,
+    locale: crate::Locale,
+) -> impl Iterator<Item = StellarMissionSearchEntry> {
+    let pattern = preprocess_text(search_string).collect::<String>();
     STELLAR_MISSIONS
         .entries()
-        .filter_map(|(mission_id, mission)| {
+        .filter_map(move |(mission_id, mission)| {
             let mission_name = get_stellar_mission_name(mission_id, locale)?;
-            match contains_noncontiguous(&mission_name.to_lowercase(), &pattern) {
-                true => Some(mission_id),
+            match is_subsequence(preprocess_text(mission_name), pattern.chars()) {
+                true => Some((mission_id, mission)),
                 false => mission
                     .recipe_ids
                     .iter()
                     .filter_map(|recipe_id| {
                         let recipe = RECIPES.get(*recipe_id)?;
-                        let item_name = get_item_name(recipe.item_id, false, locale)?;
-                        match contains_noncontiguous(&item_name.to_lowercase(), &pattern) {
-                            true => Some(mission_id),
+                        let item_name = get_raw_item_name(recipe.item_id, locale)?;
+                        match is_subsequence(preprocess_text(item_name), pattern.chars()) {
+                            true => Some((mission_id, mission)),
                             false => None,
                         }
                     })
                     .next(),
             }
         })
-        .collect()
 }
 
-fn find_consumables(search_string: &str, locale: Locale, consumables: &[Consumable]) -> Vec<usize> {
-    let pattern = preprocess_pattern(search_string);
-    consumables
-        .iter()
-        .enumerate()
-        .filter_map(|(index, consumable)| {
-            let item_name = get_item_name(consumable.item_id, false, locale)?;
-            match contains_noncontiguous(&item_name.to_lowercase(), &pattern) {
-                true => Some(index),
-                false => None,
-            }
-        })
-        .collect()
+fn find_consumables(
+    search_string: &str,
+    locale: crate::Locale,
+    consumables: &'static [crate::Consumable],
+) -> impl Iterator<Item = &'static crate::Consumable> {
+    let pattern = preprocess_text(search_string).collect::<String>();
+    consumables.iter().filter_map(move |consumable| {
+        let item_name = get_raw_item_name(consumable.item_id, locale)?;
+        match is_subsequence(preprocess_text(item_name), pattern.chars()) {
+            true => Some(consumable),
+            false => None,
+        }
+    })
 }
 
-pub fn find_meals(search_string: &str, locale: Locale) -> Vec<usize> {
+pub fn find_meals(
+    search_string: &str,
+    locale: crate::Locale,
+) -> impl Iterator<Item = &'static crate::Consumable> {
     find_consumables(search_string, locale, MEALS)
 }
 
-pub fn find_potions(search_string: &str, locale: Locale) -> Vec<usize> {
+pub fn find_potions(
+    search_string: &str,
+    locale: crate::Locale,
+) -> impl Iterator<Item = &'static crate::Consumable> {
     find_consumables(search_string, locale, POTIONS)
 }

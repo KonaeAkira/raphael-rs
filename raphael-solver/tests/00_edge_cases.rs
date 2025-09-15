@@ -89,8 +89,7 @@ fn unsolvable() {
                 pareto_values: 0,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                sequential_states: 0,
+                states: 0,
                 pareto_values: 0,
             },
         }
@@ -137,8 +136,7 @@ fn zero_quality() {
                 pareto_values: 109398,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 0,
-                sequential_states: 0,
+                states: 0,
                 pareto_values: 0,
             },
         }
@@ -181,13 +179,12 @@ fn max_quality() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 389796,
-                sequential_states: 2665,
-                pareto_values: 2988845,
+                sequential_states: 514,
+                pareto_values: 2236380,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 238904,
-                sequential_states: 0,
-                pareto_values: 1635771,
+                states: 96805,
+                pareto_values: 589715,
             },
         }
     "#]];
@@ -233,9 +230,8 @@ fn large_progress_quality_increase() {
                 pareto_values: 178982,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 6336,
-                sequential_states: 0,
-                pareto_values: 6336,
+                states: 13,
+                pareto_values: 13,
             },
         }
     "#]];
@@ -281,9 +277,56 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_values: 8965,
             },
             step_lb_stats: StepLbSolverStats {
-                parallel_states: 1596,
+                states: 9,
+                pareto_values: 9,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+/// https://github.com/KonaeAkira/raphael-rs/issues/216
+fn issue_216_steplbsolver_crash() {
+    let simulator_settings = Settings {
+        max_cp: 649,
+        max_durability: 40,
+        max_progress: 2125,
+        max_quality: 8600,
+        base_progress: 400,
+        base_quality: 468,
+        job_level: 100,
+        allowed_actions: ActionMask::regular(),
+        adversarial: false,
+        backload_progress: false,
+    };
+    let solver_settings = SolverSettings { simulator_settings };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 8600,
+                steps: 10,
+                duration: 25,
+                overflow_quality: 596,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            finish_states: 212737,
+            search_queue_stats: SearchQueueStats {
+                processed_nodes: 21441,
+                dropped_nodes: 393413,
+                pareto_buckets_squared_size_sum: 384142,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                parallel_states: 318520,
                 sequential_states: 0,
-                pareto_values: 1596,
+                pareto_values: 1267763,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states: 77688,
+                pareto_values: 341355,
             },
         }
     "#]];

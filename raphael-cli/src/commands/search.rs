@@ -1,5 +1,5 @@
 use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, get_item_name, get_job_name};
+use raphael_data::{Locale, RECIPES, Recipe, get_item_name, get_job_name};
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
@@ -45,28 +45,32 @@ impl From<SearchLanguage> for Locale {
 
 pub fn execute(args: &SearchArgs) {
     let locale = args.language.into();
-    let matches = if args.pattern.is_some() {
-        raphael_data::find_recipes(&args.pattern.clone().unwrap(), locale)
-            .iter()
-            .map(|recipe_id| (*recipe_id, RECIPES.get(*recipe_id).unwrap()))
-            .collect()
-    } else if args.recipe_id.is_some() {
-        if let Some(entry) = RECIPES
-            .entries()
-            .find(|(id, _)| *id == args.recipe_id.unwrap())
-        {
-            vec![entry]
-        } else {
-            Vec::new()
-        }
-    } else {
+    let mut matches: Vec<(u32, &Recipe)> = Vec::new();
+    if let Some(pattern_arg) = &args.pattern {
+        matches.extend(raphael_data::find_recipes(pattern_arg, locale));
+    }
+    if let Some(recipe_id_arg) = args.recipe_id {
+        matches.extend(
+            RECIPES
+                .get(recipe_id_arg)
+                .map(|recipe| (recipe_id_arg, recipe)),
+        );
+    }
+    if let Some(item_id_arg) = args.item_id {
         log::warn!(
             "Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead."
         );
-        raphael_data::RECIPES
-            .entries()
-            .filter(|(_, recipe)| recipe.item_id == args.item_id.unwrap())
-            .collect()
+        matches.extend(
+            raphael_data::RECIPES
+                .entries()
+                .filter_map(|(recipe_id, recipe)| {
+                    if recipe.item_id == item_id_arg {
+                        Some((recipe_id, recipe))
+                    } else {
+                        None
+                    }
+                }),
+        );
     };
     if matches.is_empty() {
         println!("No matches found");
