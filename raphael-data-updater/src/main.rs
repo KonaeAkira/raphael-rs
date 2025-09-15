@@ -15,11 +15,16 @@ const NAME_BUILD_CONFIGURATION: BuildConfiguration = BuildConfiguration {
 
 async fn fetch_and_parse<T: SheetData>(lang: &str) -> Vec<T> {
     const XIV_API: &str = "https://v2.xivapi.com/api";
+    const BOILMASTER_KO: &str = "https://boilmaster_ko.augenfrosch.dev/api";
+    let domain = match lang {
+        "ko" => BOILMASTER_KO,
+        _ => XIV_API,
+    };
     let mut rows = Vec::new();
     loop {
         let last_row_id = rows.last().map_or(0, |row: &T| row.row_id());
         let query = format!(
-            "{XIV_API}/sheet/{}?limit=1000&fields={}&after={}&language={}",
+            "{domain}/sheet/{}?limit=1000&fields={}&after={}&language={}",
             T::SHEET,
             T::REQUIRED_FIELDS.join(","),
             last_row_id,
@@ -183,7 +188,7 @@ async fn main() {
     let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>("de").await });
     let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>("fr").await });
     let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja").await });
-    // let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("ko").await });
+    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("ko").await });
     let stellar_mission_names_en =
         tokio::spawn(async { fetch_and_parse::<StellarMissionName>("en").await });
     let stellar_mission_names_de =
@@ -192,8 +197,8 @@ async fn main() {
         tokio::spawn(async { fetch_and_parse::<StellarMissionName>("fr").await });
     let stellar_mission_names_jp =
         tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ja").await });
-    // let stellar_mission_names_kr =
-    //     tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ko").await });
+    let stellar_mission_names_kr =
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ko").await });
 
     let rlvls = rlvls.await.unwrap();
     let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
@@ -210,12 +215,12 @@ async fn main() {
     let mut item_names_de = item_names_de.await.unwrap();
     let mut item_names_fr = item_names_fr.await.unwrap();
     let mut item_names_jp = item_names_jp.await.unwrap();
-    // let mut item_names_kr = item_names_kr.await.unwrap();
+    let mut item_names_kr = item_names_kr.await.unwrap();
     let mut stellar_mission_names_en = stellar_mission_names_en.await.unwrap();
     let mut stellar_mission_names_de = stellar_mission_names_de.await.unwrap();
     let mut stellar_mission_names_fr = stellar_mission_names_fr.await.unwrap();
     let mut stellar_mission_names_jp = stellar_mission_names_jp.await.unwrap();
-    // let mut stellar_mission_names_kr = stellar_mission_names_kr.await.unwrap();
+    let mut stellar_mission_names_kr = stellar_mission_names_kr.await.unwrap();
 
     // For some reason some recipes have items with ID 0 as their result
     recipes.retain(|recipe| recipe.item_id != 0);
@@ -253,8 +258,8 @@ async fn main() {
     item_names_de.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_fr.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_jp.retain(|item_name| necessary_items.contains(&item_name.id));
-    // item_names_kr
-    //     .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
+    item_names_kr
+        .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
 
     // Parsing of stellar mission json already filters out gatherer only missions
     let crafter_stellar_missions: HashSet<u32> = stellar_missions
@@ -269,10 +274,10 @@ async fn main() {
         .retain(|stellar_mission_name| crafter_stellar_missions.contains(&stellar_mission_name.id));
     stellar_mission_names_jp
         .retain(|stellar_mission_name| crafter_stellar_missions.contains(&stellar_mission_name.id));
-    // stellar_mission_names_kr.retain(|stellar_mission_name| {
-    //     crafter_stellar_missions.contains(&stellar_mission_name.id)
-    //         && !stellar_mission_name.name.is_empty()
-    // });
+    stellar_mission_names_kr.retain(|stellar_mission_name| {
+        crafter_stellar_missions.contains(&stellar_mission_name.id)
+            && !stellar_mission_name.name.is_empty()
+    });
 
     export_rlvls(&rlvls);
     export_level_adjust_table(&level_adjust_table_entries);
@@ -286,10 +291,10 @@ async fn main() {
     export_item_names(&item_names_de, "de");
     export_item_names(&item_names_fr, "fr");
     export_item_names(&item_names_jp, "jp");
-    // export_item_names(&item_names_kr, "kr");
+    export_item_names(&item_names_kr, "kr");
     export_stellar_mission_names(&stellar_mission_names_en, "en");
     export_stellar_mission_names(&stellar_mission_names_de, "de");
     export_stellar_mission_names(&stellar_mission_names_fr, "fr");
     export_stellar_mission_names(&stellar_mission_names_jp, "jp");
-    // export_stellar_mission_names(&stellar_mission_names_kr, "kr");
+    export_stellar_mission_names(&stellar_mission_names_kr, "kr");
 }

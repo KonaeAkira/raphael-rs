@@ -1,15 +1,15 @@
 NciArray {
-	index_range_starting_indices: &[
+	segments_idx_begin: &[
 		1,
 		496,
 		545,
 		1007,
 	],
-	index_range_skip_amounts: &[
-		1,
-		136,
-		145,
-		271,
+	segments_mem_idx_begin: &[
+		0,
+		360,
+		400,
+		736,
 	],
 	values: &[
 		StellarMission { job_id: 0, recipe_ids: &[36165, ], },

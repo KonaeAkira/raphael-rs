@@ -1,11 +1,11 @@
 NciArray {
-	index_range_starting_indices: &[
+	segments_idx_begin: &[
 		1,
 		496,
 	],
-	index_range_skip_amounts: &[
-		1,
-		136,
+	segments_mem_idx_begin: &[
+		0,
+		360,
 	],
 	values: &[
 		"\u{e0be} 범용 섬유판 제작",
