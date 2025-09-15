@@ -41,7 +41,7 @@ impl RecipeInfo {
                     .entries()
                     .find_map(|(recipe_id, recipe_entry)| {
                         if recipe_entry == recipe {
-                            Some(*recipe_id)
+                            Some(recipe_id)
                         } else {
                             None
                         }
@@ -381,7 +381,7 @@ impl<'a> RotationWidget<'a> {
         if let Some(recipe_configuration) = &self.rotation.recipe_info {
             match recipe_configuration {
                 RecipeInfo::NormalRecipe(recipe_id) => {
-                    if let Some(recipe) = raphael_data::RECIPES.get(recipe_id) {
+                    if let Some(recipe) = raphael_data::RECIPES.get(*recipe_id) {
                         *self.recipe_config = RecipeConfiguration {
                             recipe: *recipe,
                             quality_source: QualitySource::HqMaterialList([0; 6]),
@@ -491,7 +491,7 @@ impl<'a> RotationWidget<'a> {
             .recipe_info
             .as_ref()
             .and_then(|recipe_config| match recipe_config {
-                RecipeInfo::NormalRecipe(recipe_id) => raphael_data::RECIPES.get(recipe_id),
+                RecipeInfo::NormalRecipe(recipe_id) => raphael_data::RECIPES.get(*recipe_id),
                 RecipeInfo::CustomRecipe(recipe, _) => Some(recipe),
             })
     }

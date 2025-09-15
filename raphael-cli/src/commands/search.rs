@@ -52,8 +52,8 @@ pub fn execute(args: &SearchArgs) {
     if let Some(recipe_id_arg) = args.recipe_id {
         matches.extend(
             RECIPES
-                .get_entry(&recipe_id_arg)
-                .map(|(recipe_id, recipe)| (*recipe_id, recipe)),
+                .get(recipe_id_arg)
+                .map(|recipe| (recipe_id_arg, recipe)),
         );
     }
     if let Some(item_id_arg) = args.item_id {
@@ -65,7 +65,7 @@ pub fn execute(args: &SearchArgs) {
                 .entries()
                 .filter_map(|(recipe_id, recipe)| {
                     if recipe.item_id == item_id_arg {
-                        Some((*recipe_id, recipe))
+                        Some((recipe_id, recipe))
                     } else {
                         None
                     }

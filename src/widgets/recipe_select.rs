@@ -239,7 +239,7 @@ impl<'a> RecipeSelect<'a> {
                             .color(ui.style().visuals.widgets.inactive.fg_stroke.color),
                     );
                     for (index, recipe_id) in mission.recipe_ids.iter().enumerate() {
-                        let recipe = &raphael_data::RECIPES[recipe_id];
+                        let recipe = &raphael_data::RECIPES[*recipe_id];
                         const DARKENING_COLOR_DARK_MODE: egui::Color32 =
                             egui::Color32::from_black_alpha(25);
                         const DARKENING_COLOR_LIGHT_MODE: egui::Color32 =

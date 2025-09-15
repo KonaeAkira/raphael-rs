@@ -7,6 +7,8 @@ pub use config::*;
 mod locales;
 pub use locales::*;
 
+use non_contiguously_indexed_array::NciArray;
+
 mod search;
 pub use search::*;
 
@@ -75,11 +77,10 @@ pub struct StellarMission {
 
 pub const RLVLS: &[RecipeLevel] = include!("../data/rlvls.rs");
 pub const LEVEL_ADJUST_TABLE: &[u16] = include!("../data/level_adjust_table.rs");
-pub static RECIPES: phf::OrderedMap<u32, Recipe> = include!("../data/recipes.rs");
-pub const ITEMS: phf::OrderedMap<u32, Item> = include!("../data/items.rs");
+pub const RECIPES: NciArray<u32, Recipe> = include!("../data/recipes.rs");
+pub const ITEMS: NciArray<u32, Item> = include!("../data/items.rs");
 
-pub const STELLAR_MISSIONS: phf::OrderedMap<u32, StellarMission> =
-    include!("../data/stellar_missions.rs");
+pub const STELLAR_MISSIONS: NciArray<u32, StellarMission> = include!("../data/stellar_missions.rs");
 
 pub fn get_game_settings(
     recipe: Recipe,
@@ -170,7 +171,7 @@ pub fn get_initial_quality(
     let ingredients: Vec<(Item, u32)> = recipe
         .ingredients
         .iter()
-        .filter_map(|ingredient| Some((*ITEMS.get(&ingredient.item_id)?, ingredient.amount)))
+        .filter_map(|ingredient| Some((*ITEMS.get(ingredient.item_id)?, ingredient.amount)))
         .collect();
 
     let mut max_ilvl = 0;

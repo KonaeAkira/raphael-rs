@@ -30,7 +30,7 @@ pub fn find_recipes(
     RECIPES.entries().filter_map(move |(recipe_id, recipe)| {
         let item_name = get_raw_item_name(recipe.item_id, locale)?;
         match is_subsequence(preprocess_text(item_name), pattern.chars()) {
-            true => Some((*recipe_id, recipe)),
+            true => Some((recipe_id, recipe)),
             false => None,
         }
     })
@@ -45,17 +45,17 @@ pub fn find_stellar_missions(
     STELLAR_MISSIONS
         .entries()
         .filter_map(move |(mission_id, mission)| {
-            let mission_name = get_stellar_mission_name(*mission_id, locale)?;
+            let mission_name = get_stellar_mission_name(mission_id, locale)?;
             match is_subsequence(preprocess_text(mission_name), pattern.chars()) {
-                true => Some((*mission_id, mission)),
+                true => Some((mission_id, mission)),
                 false => mission
                     .recipe_ids
                     .iter()
                     .filter_map(|recipe_id| {
-                        let recipe = RECIPES.get(recipe_id)?;
+                        let recipe = RECIPES.get(*recipe_id)?;
                         let item_name = get_raw_item_name(recipe.item_id, locale)?;
                         match is_subsequence(preprocess_text(item_name), pattern.chars()) {
-                            true => Some((*mission_id, mission)),
+                            true => Some((mission_id, mission)),
                             false => None,
                         }
                     })

@@ -1,4 +1,4 @@
-use crate::{CL_ICON_CHAR, HQ_ICON_CHAR, ITEMS};
+use crate::{CL_ICON_CHAR, HQ_ICON_CHAR, ITEMS, NciArray};
 use raphael_sim::Action;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -40,25 +40,25 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     }
 }
 
-pub static ITEM_NAMES_EN: phf::Map<u32, &str> = include!("../data/item_names_en.rs");
-pub static ITEM_NAMES_DE: phf::Map<u32, &str> = include!("../data/item_names_de.rs");
-pub static ITEM_NAMES_FR: phf::Map<u32, &str> = include!("../data/item_names_fr.rs");
-pub static ITEM_NAMES_JP: phf::Map<u32, &str> = include!("../data/item_names_jp.rs");
-pub static ITEM_NAMES_KR: phf::Map<u32, &str> = include!("../data/item_names_kr.rs");
+pub const ITEM_NAMES_EN: NciArray<u32, &str> = include!("../data/item_names_en.rs");
+pub const ITEM_NAMES_DE: NciArray<u32, &str> = include!("../data/item_names_de.rs");
+pub const ITEM_NAMES_FR: NciArray<u32, &str> = include!("../data/item_names_fr.rs");
+pub const ITEM_NAMES_JP: NciArray<u32, &str> = include!("../data/item_names_jp.rs");
+pub const ITEM_NAMES_KR: NciArray<u32, &str> = include!("../data/item_names_kr.rs");
 
 pub fn get_raw_item_name(item_id: u32, locale: Locale) -> Option<&'static str> {
     match locale {
-        Locale::EN => ITEM_NAMES_EN.get(&item_id).copied(),
-        Locale::DE => ITEM_NAMES_DE.get(&item_id).copied(),
-        Locale::FR => ITEM_NAMES_FR.get(&item_id).copied(),
-        Locale::JP => ITEM_NAMES_JP.get(&item_id).copied(),
-        Locale::KR => ITEM_NAMES_KR.get(&item_id).copied(),
+        Locale::EN => ITEM_NAMES_EN.get(item_id).copied(),
+        Locale::DE => ITEM_NAMES_DE.get(item_id).copied(),
+        Locale::FR => ITEM_NAMES_FR.get(item_id).copied(),
+        Locale::JP => ITEM_NAMES_JP.get(item_id).copied(),
+        Locale::KR => ITEM_NAMES_KR.get(item_id).copied(),
     }
 }
 
 pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     let raw_item_name = get_raw_item_name(item_id, locale)?;
-    if ITEMS.get(&item_id)?.always_collectable {
+    if ITEMS.get(item_id)?.always_collectable {
         Some(format!("{} {}", raw_item_name, CL_ICON_CHAR))
     } else if hq {
         Some(format!("{} {}", raw_item_name, HQ_ICON_CHAR))
@@ -67,24 +67,24 @@ pub fn get_item_name(item_id: u32, hq: bool, locale: Locale) -> Option<String> {
     }
 }
 
-pub static STELLAR_MISSION_NAMES_EN: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_EN: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_en.rs");
-pub static STELLAR_MISSION_NAMES_DE: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_DE: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_de.rs");
-pub static STELLAR_MISSION_NAMES_FR: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_FR: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_fr.rs");
-pub static STELLAR_MISSION_NAMES_JP: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_JP: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_jp.rs");
-pub static STELLAR_MISSION_NAMES_KR: phf::Map<u32, &str> =
+pub static STELLAR_MISSION_NAMES_KR: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_kr.rs");
 
 pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<&'static str> {
     match locale {
-        Locale::EN => STELLAR_MISSION_NAMES_EN.get(&mission_id).copied(),
-        Locale::DE => STELLAR_MISSION_NAMES_DE.get(&mission_id).copied(),
-        Locale::FR => STELLAR_MISSION_NAMES_FR.get(&mission_id).copied(),
-        Locale::JP => STELLAR_MISSION_NAMES_JP.get(&mission_id).copied(),
-        Locale::KR => STELLAR_MISSION_NAMES_KR.get(&mission_id).copied(),
+        Locale::EN => STELLAR_MISSION_NAMES_EN.get(mission_id).copied(),
+        Locale::DE => STELLAR_MISSION_NAMES_DE.get(mission_id).copied(),
+        Locale::FR => STELLAR_MISSION_NAMES_FR.get(mission_id).copied(),
+        Locale::JP => STELLAR_MISSION_NAMES_JP.get(mission_id).copied(),
+        Locale::KR => STELLAR_MISSION_NAMES_KR.get(mission_id).copied(),
     }
 }
 

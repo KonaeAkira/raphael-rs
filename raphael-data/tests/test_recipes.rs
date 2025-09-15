@@ -3,12 +3,12 @@ use raphael_data::*;
 
 #[track_caller]
 fn assert_item_exists(item_id: u32) {
-    assert!(ITEMS.contains_key(&item_id));
-    assert!(ITEM_NAMES_EN.contains_key(&item_id));
-    assert!(ITEM_NAMES_DE.contains_key(&item_id));
-    assert!(ITEM_NAMES_FR.contains_key(&item_id));
-    assert!(ITEM_NAMES_JP.contains_key(&item_id));
-    // KR version is not up-to-date with global version, so some item names are missing.
+    assert!(ITEMS.has_entry(item_id));
+    assert!(ITEM_NAMES_EN.has_entry(item_id));
+    assert!(ITEM_NAMES_DE.has_entry(item_id));
+    assert!(ITEM_NAMES_FR.has_entry(item_id));
+    assert!(ITEM_NAMES_JP.has_entry(item_id));
+    // KR version is not up-to-date with global version, so some item names can be missing.
     // assert!(ITEM_NAMES_KR.contains_key(&item_id));
 }
 

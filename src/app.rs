@@ -690,7 +690,7 @@ impl MacroSolverApp {
         );
         let initial_quality = util::get_initial_quality(&self.recipe_config, &self.crafter_config);
         let item = raphael_data::ITEMS
-            .get(&self.recipe_config.recipe.item_id)
+            .get(self.recipe_config.recipe.item_id)
             .copied()
             .unwrap_or_default();
         ui.add(Simulator::new(
