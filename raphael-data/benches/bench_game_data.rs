@@ -35,18 +35,20 @@ fn bench_random_access(c: &mut Criterion) {
 }
 
 fn bench_find_recipes(c: &mut Criterion) {
-    let mut group = c.benchmark_group("long-running");
-    group.sampling_mode(criterion::SamplingMode::Flat);
-    group.noise_threshold(0.03);
-    group.bench_function("find_recipes", |b| {
+    c.bench_function("find_recipes", |b| {
         b.iter(|| find_recipes("", Locale::EN));
     });
 }
 
-// criterion_group!(bench_game_data, bench_random_access, bench_find_recipes);
+fn bench_find_stellar_missions(c: &mut Criterion) {
+    c.bench_function("find_stellar_missions", |b| {
+        b.iter(|| find_stellar_missions("", Locale::EN));
+    });
+}
+
 criterion_group! {
     name = bench_game_data;
     config = Criterion::default().warm_up_time(std::time::Duration::new(6, 0)).measurement_time(std::time::Duration::new(10, 0));
-    targets = bench_random_access, bench_find_recipes
+    targets = bench_random_access, bench_find_recipes, bench_find_stellar_missions
 }
 criterion_main!(bench_game_data);
