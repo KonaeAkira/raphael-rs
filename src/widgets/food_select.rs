@@ -5,6 +5,8 @@ use egui::{
 use egui_extras::Column;
 use raphael_data::{Consumable, CrafterStats, Locale, find_meals};
 
+use crate::context::AppContext;
+
 use super::{ItemNameLabel, util};
 
 #[derive(Default)]
@@ -19,21 +21,23 @@ impl ComputerMut<(&str, Locale), Vec<&'static Consumable>> for FoodFinder {
 type FoodSearchCache<'a> = FrameCache<Vec<&'static Consumable>, FoodFinder>;
 
 pub struct FoodSelect<'a> {
-    crafter_stats: CrafterStats,
+    crafter_stats: &'a CrafterStats,
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
 }
 
 impl<'a> FoodSelect<'a> {
-    pub fn new(
-        crafter_stats: CrafterStats,
-        selected_consumable: &'a mut Option<Consumable>,
-        locale: Locale,
-    ) -> Self {
-        Self {
-            crafter_stats,
-            selected_consumable,
+    pub fn new(app_context: &'a mut AppContext) -> Self {
+        let AppContext {
             locale,
+            selected_food: selected_consumable,
+            crafter_config,
+            ..
+        } = app_context;
+        Self {
+            crafter_stats: crafter_config.active_stats(),
+            selected_consumable,
+            locale: *locale,
         }
     }
 }

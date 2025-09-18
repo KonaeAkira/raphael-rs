@@ -1,60 +1,70 @@
-use raphael_data::{Item, Locale};
+use raphael_data::Locale;
 use raphael_sim::{Action, Settings, SimulationState};
 
 use crate::{
-    app::SolverConfig,
-    config::{CrafterConfig, QualityTarget},
+    config::QualityTarget,
+    context::{AppContext, SolverConfig},
 };
 
 use super::{HelpText, util};
 
 pub struct Simulator<'a> {
-    settings: &'a Settings,
+    settings: Settings,
     initial_quality: u16,
-    solver_config: SolverConfig,
-    crafter_config: &'a CrafterConfig,
+    job_id: u8,
     actions: &'a [Action],
-    item: &'a Item,
+    item_always_collectable: bool,
+    config_changed: bool,
     locale: Locale,
 }
 
+fn config_changed(
+    settings: &raphael_sim::Settings,
+    initial_quality: u16,
+    solver_config: &SolverConfig,
+    ctx: &egui::Context,
+) -> bool {
+    ctx.data(|data| {
+        match data.get_temp::<(Settings, u16, SolverConfig)>(egui::Id::new("LAST_SOLVE_PARAMS")) {
+            Some((saved_settings, saved_initial_quality, saved_solver_config)) => {
+                *settings != saved_settings
+                    || initial_quality != saved_initial_quality
+                    || *solver_config != saved_solver_config
+            }
+            None => false,
+        }
+    })
+}
+
 impl<'a> Simulator<'a> {
-    pub fn new(
-        settings: &'a Settings,
-        initial_quality: u16,
-        solver_config: SolverConfig,
-        crafter_config: &'a CrafterConfig,
-        actions: &'a [Action],
-        item: &'a Item,
-        locale: Locale,
-    ) -> Self {
+    pub fn new(app_context: &'a AppContext, ctx: &egui::Context, actions: &'a [Action]) -> Self {
+        let AppContext {
+            locale,
+            recipe_config,
+            solver_config,
+            crafter_config,
+            ..
+        } = app_context;
+        let settings = app_context.game_settings();
+        let initial_quality = app_context.initial_quality();
+        let item_always_collectable = raphael_data::ITEMS
+            .get(recipe_config.recipe.item_id)
+            .map(|item| item.always_collectable)
+            .unwrap_or_default();
+        let config_changed = config_changed(&settings, initial_quality, solver_config, ctx);
         Self {
             settings,
             initial_quality,
-            solver_config,
-            crafter_config,
+            job_id: crafter_config.selected_job,
             actions,
-            item,
-            locale,
+            item_always_collectable,
+            config_changed,
+            locale: *locale,
         }
     }
 }
 
 impl Simulator<'_> {
-    fn config_changed(&self, ctx: &egui::Context) -> bool {
-        ctx.data(|data| {
-            match data.get_temp::<(Settings, u16, SolverConfig)>(egui::Id::new("LAST_SOLVE_PARAMS"))
-            {
-                Some((settings, initial_quality, solver_config)) => {
-                    settings != *self.settings
-                        || initial_quality != self.initial_quality
-                        || solver_config != self.solver_config
-                }
-                None => false,
-            }
-        })
-    }
-
     fn draw_simulation(&self, ui: &mut egui::Ui, state: &SimulationState) {
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
@@ -63,7 +73,7 @@ impl Simulator<'_> {
                     ui.label(egui::RichText::new("Simulation").strong());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_visible(
-                            !self.actions.is_empty() && self.config_changed(ui.ctx()),
+                            !self.actions.is_empty() && self.config_changed,
                             egui::Label::new(
                                 egui::RichText::new(
                                     "⚠ Some parameters have changed since last solve.",
@@ -155,11 +165,11 @@ impl Simulator<'_> {
                             true => "Calculated assuming worst possible sequence of conditions",
                             false => "Calculated assuming Normal conditon on every step",
                         }));
-                        if !state.is_final(self.settings) {
+                        if !state.is_final(&self.settings) {
                             // do nothing
                         } else if state.progress < u32::from(self.settings.max_progress) {
                             ui.label("Synthesis failed");
-                        } else if self.item.always_collectable {
+                        } else if self.item_always_collectable {
                             let (t1, t2, t3) = (
                                 QualityTarget::CollectableT1.get_target(self.settings.max_quality),
                                 QualityTarget::CollectableT2.get_target(self.settings.max_quality),
@@ -197,14 +207,13 @@ impl Simulator<'_> {
                     for (step_index, (action, error)) in
                         self.actions.iter().zip(errors.iter()).enumerate()
                     {
-                        let image =
-                            util::get_action_icon(*action, self.crafter_config.selected_job)
-                                .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
-                                .corner_radius(4.0)
-                                .tint(match error {
-                                    Ok(_) => egui::Color32::WHITE,
-                                    Err(_) => egui::Color32::DARK_GRAY,
-                                });
+                        let image = util::get_action_icon(*action, self.job_id)
+                            .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
+                            .corner_radius(4.0)
+                            .tint(match error {
+                                Ok(_) => egui::Color32::WHITE,
+                                Err(_) => egui::Color32::DARK_GRAY,
+                            });
                         let response = ui
                             .add(image)
                             .on_hover_text(raphael_data::action_name(*action, self.locale));
@@ -251,7 +260,7 @@ impl Simulator<'_> {
 impl egui::Widget for Simulator<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let (state, errors) =
-            SimulationState::from_macro_continue_on_error(self.settings, self.actions);
+            SimulationState::from_macro_continue_on_error(&self.settings, self.actions);
         ui.vertical(|ui| {
             self.draw_simulation(ui, &state);
             self.draw_actions(ui, &errors);

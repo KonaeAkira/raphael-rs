@@ -5,6 +5,8 @@ use egui::{
 use egui_extras::Column;
 use raphael_data::{Consumable, CrafterStats, Locale, find_potions};
 
+use crate::context::AppContext;
+
 use super::{ItemNameLabel, util};
 
 #[derive(Default)]
@@ -19,21 +21,23 @@ impl ComputerMut<(&str, Locale), Vec<&'static Consumable>> for PotionFinder {
 type PotionSearchCache<'a> = FrameCache<Vec<&'static Consumable>, PotionFinder>;
 
 pub struct PotionSelect<'a> {
-    crafter_stats: CrafterStats,
+    crafter_stats: &'a CrafterStats,
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
 }
 
 impl<'a> PotionSelect<'a> {
-    pub fn new(
-        crafter_stats: CrafterStats,
-        selected_consumable: &'a mut Option<Consumable>,
-        locale: Locale,
-    ) -> Self {
-        Self {
-            crafter_stats,
-            selected_consumable,
+    pub fn new(app_context: &'a mut AppContext) -> Self {
+        let AppContext {
             locale,
+            selected_potion: selected_consumable,
+            crafter_config,
+            ..
+        } = app_context;
+        Self {
+            crafter_stats: crafter_config.active_stats(),
+            selected_consumable,
+            locale: *locale,
         }
     }
 }

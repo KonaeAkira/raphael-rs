@@ -3,6 +3,8 @@ use raphael_data::{Locale, action_name};
 use raphael_sim::Action;
 use serde::{Deserialize, Serialize};
 
+use crate::context::AppContext;
+
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MacroViewConfig {
     #[serde(default)]
@@ -132,15 +134,17 @@ pub struct MacroView<'a> {
 }
 
 impl<'a> MacroView<'a> {
-    pub fn new(
-        actions: &'a mut Vec<Action>,
-        config: &'a mut MacroViewConfig,
-        locale: Locale,
-    ) -> Self {
+    pub fn new(app_context: &'a mut AppContext, actions: &'a mut Vec<Action>) -> Self {
+        let AppContext {
+            locale,
+            macro_view_config: config,
+            ..
+        } = app_context;
+
         Self {
             actions,
             config,
-            locale,
+            locale: *locale,
         }
     }
 }
