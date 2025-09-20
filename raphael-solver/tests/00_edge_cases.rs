@@ -81,7 +81,6 @@ fn unsolvable() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 0,
-                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 0,
@@ -128,7 +127,6 @@ fn zero_quality() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 41,
                 dropped_nodes: 12,
-                pareto_buckets_squared_size_sum: 97,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 31147,
@@ -175,7 +173,6 @@ fn max_quality() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 5567,
                 dropped_nodes: 66122,
-                pareto_buckets_squared_size_sum: 116580,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 389796,
@@ -222,7 +219,6 @@ fn large_progress_quality_increase() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 23,
-                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 178982,
@@ -269,7 +265,6 @@ fn backload_progress_single_delicate_synthesis() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 0,
                 dropped_nodes: 14,
-                pareto_buckets_squared_size_sum: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 8965,
@@ -317,7 +312,6 @@ fn issue_216_steplbsolver_crash() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 19113,
                 dropped_nodes: 350079,
-                pareto_buckets_squared_size_sum: 1312972,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 318520,

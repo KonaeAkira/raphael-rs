@@ -1,3 +1,5 @@
+use std::u32;
+
 use raphael_sim::{Effects, SimulationState};
 use rustc_hash::FxHashMap;
 
@@ -67,46 +69,77 @@ impl Value {
     }
 }
 
+struct IntermediateNode {
+    partition_point: u16,
+    lhs: Box<TreeNode>,
+    rhs: Box<TreeNode>,
+}
+
+struct LeafNode {
+    range_min: u16,
+    range_max: u16,
+    values: Vec<Value>,
+}
+
+enum TreeNode {
+    Intermediate(IntermediateNode),
+    Leaf(LeafNode),
+}
+
+impl Default for TreeNode {
+    fn default() -> Self {
+        Self::Leaf(LeafNode {
+            range_min: u16::MIN,
+            range_max: u16::MAX,
+            values: Vec::new(),
+        })
+    }
+}
+
 #[derive(Default)]
 pub struct ParetoFront {
-    buckets: FxHashMap<Key, Vec<Value>>,
+    buckets: FxHashMap<Key, TreeNode>,
 }
 
 impl ParetoFront {
     pub fn insert(&mut self, state: SimulationState) -> bool {
-        let bucket = self.buckets.entry(Key::from(&state)).or_default();
+        const MAX_LEAF_SIZE: usize = 500;
         let new_value = Value::from(&state);
-        let is_dominated = bucket.iter().any(|value| value.dominates(&new_value));
-        if !is_dominated {
-            bucket.retain(|value| !new_value.dominates(value));
-            bucket.push(new_value);
+        let mut node = self.buckets.entry(Key::from(&state)).or_default();
+        while let TreeNode::Intermediate(intermediate) = node {
+            if new_value.cp() < intermediate.partition_point {
+                node = intermediate.lhs.as_mut();
+            } else {
+                node = intermediate.rhs.as_mut();
+            }
         }
-        !is_dominated
-    }
-
-    /// Returns the sum of the squared size of all Pareto buckets.
-    /// This is a useful performance metric because the total insertion cost of each Pareto bucket scales with the square of its size.
-    pub fn buckets_squared_size_sum(&self) -> usize {
-        self.buckets
-            .values()
-            .map(|bucket| bucket.len() * bucket.len())
-            .sum()
-    }
-}
-
-impl Drop for ParetoFront {
-    fn drop(&mut self) {
-        let largest_bucket = self.buckets.iter().max_by_key(|(_key, elems)| elems.len());
-        let pareto_entries: usize = self.buckets.values().map(Vec::len).sum();
-        log::debug!(
-            "ParetoFront - buckets: {}, entries: {}, largest_bucket_len: {}",
-            self.buckets.len(),
-            pareto_entries,
-            largest_bucket.map_or(0, |(_key, elems)| elems.len())
-        );
-        log::trace!(
-            "ParetoFront - largest_bucket_key: {:?}",
-            largest_bucket.map_or(Key::default(), |(key, _elems)| *key)
-        );
+        if let TreeNode::Leaf(leaf) = node {
+            let is_dominated = leaf.values.iter().any(|value| value.dominates(&new_value));
+            if !is_dominated {
+                leaf.values.retain(|value| !new_value.dominates(value));
+                leaf.values.push(new_value);
+            }
+            if leaf.values.len() > MAX_LEAF_SIZE && leaf.range_min + 1 != leaf.range_max {
+                leaf.values.sort_unstable_by_key(|value| value.cp());
+                let (lhs_values, rhs_values) = leaf.values.split_at(MAX_LEAF_SIZE / 2);
+                let partition_point = rhs_values[0].cp();
+                *node = TreeNode::Intermediate(IntermediateNode {
+                    partition_point,
+                    lhs: Box::new(TreeNode::Leaf(LeafNode {
+                        range_min: leaf.range_min,
+                        range_max: partition_point,
+                        values: lhs_values.into(),
+                    })),
+                    rhs: Box::new(TreeNode::Leaf(LeafNode {
+                        range_min: partition_point,
+                        range_max: leaf.range_max,
+                        values: rhs_values.into(),
+                    })),
+                });
+            }
+            !is_dominated
+        } else {
+            unreachable!()
+        }
     }
 }
