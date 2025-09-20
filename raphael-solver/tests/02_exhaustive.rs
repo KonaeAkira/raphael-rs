@@ -314,10 +314,10 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 2386848,
+            finish_states: 2387186,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1466804,
-                dropped_nodes: 9994206,
+                processed_nodes: 1483443,
+                dropped_nodes: 10107736,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 932788,
@@ -325,8 +325,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
                 pareto_values: 22061401,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1750683,
-                pareto_values: 35133297,
+                states: 1750689,
+                pareto_values: 35133315,
             },
         }
     "#]];
@@ -510,8 +510,8 @@ fn rakaznar_lapidary_hammer_4462_4391() {
         MacroSolverStats {
             finish_states: 1209636,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 20524,
-                dropped_nodes: 330165,
+                processed_nodes: 20525,
+                dropped_nodes: 330172,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 709548,
@@ -784,10 +784,10 @@ fn hardened_survey_plank_5558_5216() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 859369,
+            finish_states: 859926,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1785217,
-                dropped_nodes: 13044055,
+                processed_nodes: 1820997,
+                dropped_nodes: 13336465,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 969126,
@@ -795,8 +795,8 @@ fn hardened_survey_plank_5558_5216() {
                 pareto_values: 16038900,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 341307,
-                pareto_values: 4977992,
+                states: 341313,
+                pareto_values: 4978005,
             },
         }
     "#]];

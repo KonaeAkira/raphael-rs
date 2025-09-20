@@ -310,8 +310,8 @@ fn issue_216_steplbsolver_crash() {
         MacroSolverStats {
             finish_states: 199538,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 19113,
-                dropped_nodes: 350079,
+                processed_nodes: 19119,
+                dropped_nodes: 350178,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 318520,

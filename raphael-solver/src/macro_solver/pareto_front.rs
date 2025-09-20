@@ -96,7 +96,7 @@ pub struct ParetoFront {
 
 impl ParetoFront {
     pub fn insert(&mut self, state: SimulationState) -> bool {
-        const MAX_LEAF_SIZE: usize = 500;
+        const MAX_LEAF_SIZE: usize = 200;
         let new_value = Value::from(&state);
         let mut node = self.buckets.entry(Key::from(&state)).or_default();
         while let TreeNode::Intermediate(intermediate) = node {
