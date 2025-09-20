@@ -61,7 +61,6 @@ struct SearchNode {
 pub struct SearchQueueStats {
     pub processed_nodes: usize,
     pub dropped_nodes: usize,
-    pub pareto_buckets_squared_size_sum: usize,
 }
 
 pub struct SearchQueue {
@@ -170,7 +169,6 @@ impl SearchQueue {
         SearchQueueStats {
             processed_nodes: self.processed_nodes,
             dropped_nodes: self.dropped_nodes,
-            pareto_buckets_squared_size_sum: self.pareto_front.buckets_squared_size_sum(),
         }
     }
 }
