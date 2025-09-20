@@ -82,11 +82,11 @@ fn rinascita_3700_3280() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 212417,
+            finish_states: 212167,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 459,
-                dropped_nodes: 4545,
-                pareto_buckets_squared_size_sum: 1781,
+                processed_nodes: 456,
+                dropped_nodes: 4523,
+                pareto_buckets_squared_size_sum: 8004,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 957930,
@@ -129,11 +129,11 @@ fn pactmaker_3240_3130() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 267636,
+            finish_states: 267472,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 4623,
-                dropped_nodes: 34199,
-                pareto_buckets_squared_size_sum: 171614,
+                processed_nodes: 4600,
+                dropped_nodes: 34040,
+                pareto_buckets_squared_size_sum: 839521,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 818130,
@@ -182,7 +182,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 577,
                 dropped_nodes: 6649,
-                pareto_buckets_squared_size_sum: 3863,
+                pareto_buckets_squared_size_sum: 17601,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 1690660,
@@ -225,11 +225,11 @@ fn diadochos_4021_3660() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 426813,
+            finish_states: 426778,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1630,
-                dropped_nodes: 5157,
-                pareto_buckets_squared_size_sum: 24480,
+                processed_nodes: 1626,
+                dropped_nodes: 5140,
+                pareto_buckets_squared_size_sum: 126370,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 888030,
@@ -272,11 +272,11 @@ fn indagator_3858_4057() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 346009,
+            finish_states: 346005,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 3359,
-                dropped_nodes: 19188,
-                pareto_buckets_squared_size_sum: 65123,
+                processed_nodes: 3357,
+                dropped_nodes: 19183,
+                pareto_buckets_squared_size_sum: 408097,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 971910,
@@ -319,20 +319,20 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1197808,
+            finish_states: 1177480,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 65094,
-                dropped_nodes: 265540,
-                pareto_buckets_squared_size_sum: 4726300,
+                processed_nodes: 60066,
+                dropped_nodes: 247368,
+                pareto_buckets_squared_size_sum: 33375101,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 945752,
-                sequential_states: 12506,
-                pareto_values: 16494261,
+                sequential_states: 12496,
+                pareto_values: 16494230,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1760061,
-                pareto_values: 20065497,
+                states: 1753849,
+                pareto_values: 20037701,
             },
         }
     "#]];
@@ -368,11 +368,11 @@ fn stuffed_peppers_2() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 354023,
+            finish_states: 331770,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 3145,
-                dropped_nodes: 47888,
-                pareto_buckets_squared_size_sum: 31195,
+                processed_nodes: 2787,
+                dropped_nodes: 42357,
+                pareto_buckets_squared_size_sum: 138311,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 727703,
@@ -380,8 +380,8 @@ fn stuffed_peppers_2() {
                 pareto_values: 8685113,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 867752,
-                pareto_values: 8186694,
+                states: 843369,
+                pareto_values: 7997948,
             },
         }
     "#]];
@@ -419,11 +419,11 @@ fn stuffed_peppers_2_heart_and_soul() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 479880,
+            finish_states: 445947,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 3679,
-                dropped_nodes: 63489,
-                pareto_buckets_squared_size_sum: 36165,
+                processed_nodes: 3178,
+                dropped_nodes: 54624,
+                pareto_buckets_squared_size_sum: 167681,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 1547790,
@@ -431,8 +431,8 @@ fn stuffed_peppers_2_heart_and_soul() {
                 pareto_values: 20676360,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1588279,
-                pareto_values: 17702595,
+                states: 1532904,
+                pareto_values: 17146214,
             },
         }
     "#]];
@@ -470,11 +470,11 @@ fn stuffed_peppers_2_quick_innovation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 354024,
+            finish_states: 331771,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 3145,
-                dropped_nodes: 49074,
-                pareto_buckets_squared_size_sum: 31195,
+                processed_nodes: 2787,
+                dropped_nodes: 43336,
+                pareto_buckets_squared_size_sum: 138311,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 1477069,
@@ -482,8 +482,8 @@ fn stuffed_peppers_2_quick_innovation() {
                 pareto_values: 17827198,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1619083,
-                pareto_values: 15965490,
+                states: 1572551,
+                pareto_values: 15555612,
             },
         }
     "#]];
@@ -517,11 +517,11 @@ fn rakaznar_lapidary_hammer_4462_4391() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 605814,
+            finish_states: 592766,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 292,
-                dropped_nodes: 3564,
-                pareto_buckets_squared_size_sum: 644,
+                processed_nodes: 260,
+                dropped_nodes: 3188,
+                pareto_buckets_squared_size_sum: 2000,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 750109,
@@ -529,8 +529,8 @@ fn rakaznar_lapidary_hammer_4462_4391() {
                 pareto_values: 9640072,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 879299,
-                pareto_values: 8796813,
+                states: 833285,
+                pareto_values: 8330947,
             },
         }
     "#]];
@@ -564,11 +564,11 @@ fn black_star_4048_3997() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 136859,
+            finish_states: 127123,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 9079,
-                dropped_nodes: 111869,
-                pareto_buckets_squared_size_sum: 356414,
+                processed_nodes: 8156,
+                dropped_nodes: 100402,
+                pareto_buckets_squared_size_sum: 1076395,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 448545,
@@ -576,8 +576,8 @@ fn black_star_4048_3997() {
                 pareto_values: 2531249,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 102945,
-                pareto_values: 559179,
+                states: 99751,
+                pareto_values: 543891,
             },
         }
     "#]];
@@ -611,11 +611,11 @@ fn claro_walnut_lumber_4900_4800() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 315154,
+            finish_states: 293888,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 27817,
-                dropped_nodes: 430405,
-                pareto_buckets_squared_size_sum: 1595686,
+                processed_nodes: 24660,
+                dropped_nodes: 384352,
+                pareto_buckets_squared_size_sum: 6630183,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 632525,
@@ -623,8 +623,8 @@ fn claro_walnut_lumber_4900_4800() {
                 pareto_values: 4421953,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 311790,
-                pareto_values: 1982673,
+                states: 308090,
+                pareto_values: 1967852,
             },
         }
     "#]];
@@ -658,11 +658,11 @@ fn rakaznar_lapidary_hammer_4900_4800() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 395204,
+            finish_states: 371099,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 357,
-                dropped_nodes: 4875,
-                pareto_buckets_squared_size_sum: 679,
+                processed_nodes: 295,
+                dropped_nodes: 4037,
+                pareto_buckets_squared_size_sum: 1477,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 654113,
@@ -670,8 +670,8 @@ fn rakaznar_lapidary_hammer_4900_4800() {
                 pareto_values: 7088630,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 683238,
-                pareto_values: 5815405,
+                states: 655500,
+                pareto_values: 5579324,
             },
         }
     "#]];
@@ -705,11 +705,11 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 457491,
+            finish_states: 420652,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1202,
-                dropped_nodes: 18056,
-                pareto_buckets_squared_size_sum: 4650,
+                processed_nodes: 929,
+                dropped_nodes: 13806,
+                pareto_buckets_squared_size_sum: 15087,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 620174,
@@ -717,8 +717,8 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
                 pareto_values: 6152904,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 530777,
-                pareto_values: 4366569,
+                states: 484722,
+                pareto_values: 3995240,
             },
         }
     "#]];
@@ -752,11 +752,11 @@ fn archeo_kingdom_broadsword_4966_4914() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1171247,
+            finish_states: 1129890,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 16606,
-                dropped_nodes: 251621,
-                pareto_buckets_squared_size_sum: 433633,
+                processed_nodes: 14680,
+                dropped_nodes: 223882,
+                pareto_buckets_squared_size_sum: 2761690,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 871349,
@@ -764,8 +764,8 @@ fn archeo_kingdom_broadsword_4966_4914() {
                 pareto_values: 12661815,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1113317,
-                pareto_values: 11054392,
+                states: 1097602,
+                pareto_values: 10951795,
             },
         }
     "#]];
@@ -799,20 +799,20 @@ fn hardened_survey_plank_5558_5216() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 584023,
+            finish_states: 577933,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 161594,
-                dropped_nodes: 720978,
-                pareto_buckets_squared_size_sum: 27623705,
+                processed_nodes: 153823,
+                dropped_nodes: 685761,
+                pareto_buckets_squared_size_sum: 107697428,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 994029,
-                sequential_states: 9822,
-                pareto_values: 11580676,
+                sequential_states: 9767,
+                pareto_values: 11580525,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 319981,
-                pareto_values: 2763164,
+                states: 319663,
+                pareto_values: 2762456,
             },
         }
     "#]];
