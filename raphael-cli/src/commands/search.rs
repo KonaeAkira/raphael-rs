@@ -30,6 +30,7 @@ pub enum SearchLanguage {
     DE,
     FR,
     JP,
+	KR
 }
 
 impl From<SearchLanguage> for Locale {
@@ -39,6 +40,7 @@ impl From<SearchLanguage> for Locale {
             SearchLanguage::DE => Locale::DE,
             SearchLanguage::FR => Locale::FR,
             SearchLanguage::JP => Locale::JP,
+			SearchLanguage::KR => Locale::KR,
         }
     }
 }
