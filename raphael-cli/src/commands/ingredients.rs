@@ -1,5 +1,5 @@
 use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, get_item_name, get_job_name};
+use raphael_data::{Locale, RECIPES, get_raw_item_name, get_job_name};
 
 #[derive(Args, Debug)]
 pub struct IngredientsArgs {
@@ -50,13 +50,13 @@ pub fn execute(args: &IngredientsArgs) {
     };
 
     // Get the recipe item name
-    let recipe_name = get_item_name(recipe.item_id, false, locale)
-        .unwrap_or("Unknown item".to_owned());
+    let recipe_name = get_raw_item_name(recipe.item_id, locale)
+        .unwrap_or("Unknown item");
     let job_name = get_job_name(recipe.job_id, locale);
 
     // Print recipe header
     println!("Recipe ID: {}", args.recipe_id);
-    println!("Recipe: {} ({})", recipe_name.trim_end_matches([' ', raphael_data::CL_ICON_CHAR]), job_name);
+    println!("Recipe: {} ({})", recipe_name, job_name);
     println!("Item ID: {}", recipe.item_id);
     println!();
 
@@ -64,17 +64,17 @@ pub fn execute(args: &IngredientsArgs) {
     println!("Ingredients:");
     let mut has_ingredients = false;
     
-    for (_index, ingredient) in recipe.ingredients.iter().enumerate() {
+    for ingredient in recipe.ingredients {
         if ingredient.item_id != 0 {
             has_ingredients = true;
-            let ingredient_name = get_item_name(ingredient.item_id, false, locale)
-                .unwrap_or("Unknown item".to_owned());
+            let ingredient_name = get_raw_item_name(ingredient.item_id, locale)
+                .unwrap_or("Unknown item");
             
             println!(
                 "{amount}{separator}{item_id}{separator}{name}",
                 amount = ingredient.amount,
                 item_id = ingredient.item_id,
-                name = ingredient_name.trim_end_matches([' ', raphael_data::CL_ICON_CHAR]),
+                name = ingredient_name,
                 separator = args.output_field_separator
             );
         }
