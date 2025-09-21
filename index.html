@@ -180,26 +180,20 @@
                 }
             }
         </style>
-        <meta name="theme-color" />
+        <meta name="theme-color" content="var(--window-panel-fill-color)" />
         <script>
             const theme_color_meta_element = document.querySelector('meta[name="theme-color"]');
             const theme_preference = /theme_preference:(System|Dark|Light),/.exec(localStorage.egui_memory_ron);
             if (theme_preference) {
                 switch (theme_preference[1]) {
                     case "Dark":
-                        theme_color_meta_element.setAttribute("content", "var(--window-panel-fill-dark)");
                         document.documentElement.classList = ["dark"];
                         break;
                     case "Light":
-                        theme_color_meta_element.setAttribute("content", "var(--window-panel-fill-light)");
                         document.documentElement.classList = ["light"];
                         break;
                     default:
-                        theme_color_meta_element.setAttribute("content", "light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark))");
-                        document.documentElement.classList = [];
                 }
-            } else {
-                theme_color_meta_element.setAttribute("content", "light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark))");
             }
         </script>
     </head>
