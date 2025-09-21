@@ -18,6 +18,8 @@ enum Commands {
     Search(commands::search::SearchArgs),
     /// Solve a crafting rotation
     Solve(commands::solve::SolveArgs),
+    /// Show ingredients for a recipe
+    Ingredients(commands::ingredients::IngredientsArgs),
 }
 
 fn main() {
@@ -31,5 +33,6 @@ fn main() {
     match &cli.command {
         Commands::Search(args) => commands::search::execute(args),
         Commands::Solve(args) => commands::solve::execute(args),
+        Commands::Ingredients(args) => commands::ingredients::execute(args),
     }
 }
