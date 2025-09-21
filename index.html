@@ -28,6 +28,7 @@
         <link data-trunk rel="copy-dir" href="assets/action-icons/" />
         <link data-trunk rel="copy-dir" href="assets/fonts/" />
 
+        <meta name="color-scheme" content="dark light" />
         <meta
             name="theme-color"
             media="(prefers-color-scheme: light)"
@@ -40,6 +41,30 @@
         />
 
         <style>
+            :root {
+                color-scheme: light dark;
+
+                /* Colors and style roughly matching egui's default themes */
+                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1387 */
+                --hyperlink-dark: rgb(90, 170, 255);
+                --window-panel-fill-dark: rgb(27, 27, 27);
+                --window-separator-stroke-dark: rgb(60, 60, 60);
+                --shadow-dark: rgb(0, 0, 0, 0.3765); /* a=96 */
+                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1499 */
+                --selection-bg-fill-dark: rgb(0, 92, 128);
+                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1521 */
+                --noninteractive-fg-stroke-dark: rgb(140, 140, 140);
+                --active-fg-stroke-dark: white;
+
+                --hyperlink-light: rgb(0, 155, 255);
+                --window-panel-fill-light: rgb(248, 248, 248);
+                --window-separator-stroke-light: rgb(190, 190, 190);
+                --shadow-light: rgb(0, 0, 0, 0.0980); /* a=25 */
+                --selection-bg-fill-light: rgb(144, 209, 255);
+                --noninteractive-fg-stroke-light: rgb(80, 80, 80);
+                --active-fg-stroke-light: black;
+            }
+
             html {
                 /* Remove touch delay: */
                 touch-action: manipulation;
@@ -57,20 +82,6 @@
                         or where the egui canvas is translucent. */
                     background: #404040;
                 }
-            }
-
-            .centered {
-                margin-right: auto;
-                margin-left: auto;
-                display: block;
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #f0f0f0;
-                font-size: 24px;
-                font-family: Ubuntu-Light, Helvetica, sans-serif;
-                text-align: center;
             }
 
             /* Allow canvas to fill entire web page: */
@@ -92,16 +103,74 @@
                 height: 100%;
             }
 
+            .centering {
+                position: absolute;
+                display: grid;
+                inset: 0;
+                place-items: center;
+
+                pointer-events: none;
+            }
+
             /* Loading animation from https://cssloaders.github.io/ */
-            .loader {
+            #loader {
                 width: 32px;
                 height: 32px;
                 border: 5px solid #fff;
                 border-bottom-color: transparent;
                 border-radius: 50%;
-                display: inline-block;
                 box-sizing: border-box;
                 animation: rotation 1s linear infinite;
+            }
+
+
+            .modal {
+                background-color: light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark));
+                padding-block: 0.2em;
+                padding-inline: 0.4em;
+
+                border: 0.1em solid light-dark(var(--window-separator-stroke-light), var(--window-separator-stroke-dark));
+                border-radius: 0.5em;
+
+                box-shadow: 0.3em 0.5em 0.4em light-dark(var(--shadow-light), var(--shadow-dark));
+
+                font: lighter 0.8em sans-serif;
+
+                pointer-events: all;
+            }
+
+            .modal ::selection {
+                background-color: light-dark(var(--selection-bg-fill-light), var(--selection-bg-fill-dark));
+            }
+
+            .modal > hr {
+                border-color: light-dark(var(--window-separator-stroke-light), var(--window-separator-stroke-dark));
+            }
+
+            .modal > p {
+                width: fit-content;
+                margin-block: 0.4em;
+            }
+
+            .modal > p:hover {
+                cursor: text;
+            }
+
+            .modal > a, a:visited {
+                color: light-dark(var(--hyperlink-light), var(--hyperlink-dark));
+                text-decoration: none;
+            }
+
+            .modal > a:hover {
+                text-decoration: underline;
+            }
+
+            .strong-text {
+                color: light-dark(var(--active-fg-stroke-light), var(--active-fg-stroke-dark));
+            }
+
+            .weak-text {
+                color: light-dark(var(--noninteractive-fg-stroke-light), var(--noninteractive-fg-stroke-dark));
             }
 
             @keyframes rotation {
@@ -116,12 +185,47 @@
     </head>
 
     <body>
-        <div id="spinner" class="centered">
-            <span class="loader"></span>
+        <div id="spinner" class="centering">
+            <span id="loader"></span>
+        </div>
+        <div class="centering">
+            <div id="memory_error_modal" class="modal weak-text" style="display: none;">
+                <p class="strong-text">Error: <span>Solver ran out of memory!</span></p>
+                <hr />
+                <p>The solver reached the 4GB memory limit of 32-bit web assembly and crashed.</p>
+                <p>Consider enabling fewer memory intensive options.</p>
+                <br />
+                <p>Alternatively, a native version is available from the release page on GitHub.</p>
+                <p>The native version doesn't have the 4GB limit, in addition to better performance.</p>
+                <a href="https://github.com/KonaeAkira/raphael-rs/releases/latest">View latest release on GitHub</a>
+                <hr />
+                <p style="margin-inline: auto;">Reload the page to reset the app</p>
+            </div>
+             <div id="webgl_error_modal" class="modal weak-text" style="display: none;">
+                <p class="strong-text">Error: <span id="start-failure-message">WebGL is not available!</span></p>
+                <hr />
+                <p>Please enable WebGL support in your browser.</p>
+                <hr />
+                <p style="margin-inline: auto;">Reload the page after to try again</p>
+            </div>
         </div>
         <!-- The WASM code will resize the canvas dynamically -->
         <!-- the id is hardcoded in main.rs . so, make sure both match. -->
         <canvas id="the_canvas_id"></canvas>
+
+        <script>
+            const main_wasm_regex = /raphael-xiv.*.wasm/;
+            const main_js_regex = /raphael-xiv.*.js/;
+            window.addEventListener("error", (event) => {
+                console.error(event);
+
+                if (main_wasm_regex.test(event.filename) && event.message === "RuntimeError: unreachable executed") {
+                    memory_error_modal.removeAttribute("style");
+                } else if (main_js_regex.test(event.filename) && event.message === "uncaught exception: WebGL isn't supported") {
+                    webgl_error_modal.removeAttribute("style");
+                }
+            });
+        </script>
     </body>
 </html>
 

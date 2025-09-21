@@ -150,55 +150,28 @@ impl eframe::App for MacroSolverApp {
             });
         }
 
-        #[cfg(target_arch = "wasm32")]
-        if crate::OOM_PANIC_OCCURED.load(std::sync::atomic::Ordering::Relaxed) {
-            self.solver_error = Some(SolverException::AllocError);
-        }
         if let Some(error) = self.solver_error.clone() {
             egui::Modal::new(egui::Id::new("solver_error")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.set_width(480.0f32.min(ctx.screen_rect().width() - 32.0));
-                let unrecoverable_error;
                 match error {
                     SolverException::NoSolution => {
                         ui.label(egui::RichText::new("No solution").strong());
                         ui.separator();
                         ui.label("Make sure that the recipe is set correctly and that your stats are enough to craft this item.");
-                        unrecoverable_error = false;
                     }
                     SolverException::Interrupted => {
                         self.solver_error = None;
-                        unrecoverable_error = false;
                     },
                     SolverException::InternalError(message) => {
                         ui.label(egui::RichText::new("Internal Solver Error").strong());
                         ui.separator();
                         ui.add(MultilineMonospace::new(message).max_height(320.0).scrollable(true));
-                        unrecoverable_error = false;
                     },
-                    #[cfg(target_arch = "wasm32")]
-                    SolverException::AllocError => {
-                        ui.label(egui::RichText::new("Error: Solver ran out of memory!").strong());
-                        ui.separator();
-                        ui.label("The solver reached the 4GB memory limit of 32-bit web assembly and crashed.");
-                        ui.label("Consider enabling fewer memory intensive options.\n");
-                        ui.label("Alternatively, a native version is available from the release page on GitHub.");
-                        ui.label("The native version doesn't have the 4GB limit, in addition to better performance.");
-                        ui.add(
-                            egui::Hyperlink::from_label_and_url(
-                                "View latest release on GitHub",
-                                "https://github.com/KonaeAkira/raphael-rs/releases/latest",
-                            )
-                            .open_in_new_tab(true),
-                        );
-                        unrecoverable_error = true;
-                    }
                 }
                 ui.separator();
                 ui.vertical_centered_justified(|ui| {
-                    if unrecoverable_error {
-                        ui.label("Reload the page to reset the app");
-                    } else if ui.button("Close").clicked() {
+                    if ui.button("Close").clicked() {
                         self.solver_error = None;
                     }
                 });

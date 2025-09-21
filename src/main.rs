@@ -1,7 +1,6 @@
 // Prevents a console from being opened on Windows
 // This attribute is ignored for all other platforms
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![cfg_attr(target_arch = "wasm32", feature(alloc_error_hook))]
 
 #[cfg(all(target_os = "windows", not(debug_assertions)))]
 fn init_logging() {
@@ -97,11 +96,6 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    fn custom_alloc_error_hook(_layout: std::alloc::Layout) {
-        raphael_xiv::OOM_PANIC_OCCURED.store(true, std::sync::atomic::Ordering::Relaxed);
-    }
-    std::alloc::set_alloc_error_hook(custom_alloc_error_hook);
-
     init_logging();
 
     fn get_canvas() -> Option<web_sys::HtmlCanvasElement> {
@@ -131,14 +125,7 @@ fn main() {
             .await;
         remove_loading_spinner();
         if let Err(error) = start_result {
-            let mut message = format!("Failed to start app: {error:?}");
-            log::error!("{message}");
-            message.push_str("\n\nIn case the error is \"WebGL not supported\":");
-            message.push_str("\nPlease enable WebGL support in your browser.");
-            web_sys::window()
-                .unwrap()
-                .alert_with_message(&message)
-                .unwrap();
+            eframe::wasm_bindgen::throw_val(error);
         }
     });
 }
