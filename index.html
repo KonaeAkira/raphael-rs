@@ -35,23 +35,17 @@
 
                 /* Colors and style roughly matching egui's default themes */
                 /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1387 */
-                --hyperlink-dark: rgb(90, 170, 255);
+                --hyperlink-color: light-dark(rgb(0, 155, 255), rgb(90, 170, 255));
                 --window-panel-fill-dark: rgb(27, 27, 27);
-                --window-separator-stroke-dark: rgb(60, 60, 60);
-                --shadow-dark: rgb(0, 0, 0, 0.3765); /* a=96 */
-                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1499 */
-                --selection-bg-fill-dark: rgb(0, 92, 128);
-                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1521 */
-                --noninteractive-fg-stroke-dark: rgb(140, 140, 140);
-                --active-fg-stroke-dark: white;
-
-                --hyperlink-light: rgb(0, 155, 255);
                 --window-panel-fill-light: rgb(248, 248, 248);
-                --window-separator-stroke-light: rgb(190, 190, 190);
-                --shadow-light: rgb(0, 0, 0, 0.0980); /* a=25 */
-                --selection-bg-fill-light: rgb(144, 209, 255);
-                --noninteractive-fg-stroke-light: rgb(80, 80, 80);
-                --active-fg-stroke-light: black;
+                --window-panel-fill-color: light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark));
+                --window-separator-stroke-color: light-dark(rgb(190, 190, 190), rgb(60, 60, 60));
+                --shadow-color: light-dark(rgb(0, 0, 0, 0.0980), rgb(0, 0, 0, 0.3765)); /*  a=25, a=96 */
+                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1499 */
+                --selection-bg-fill-color: light-dark(rgb(144, 209, 255), rgb(0, 92, 128));
+                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1521 */
+                --noninteractive-fg-stroke-color: light-dark(rgb(80, 80, 80), rgb(140, 140, 140));
+                --active-fg-stroke-color: light-dark(black, white);
             }
 
             .light {
@@ -71,7 +65,7 @@
             body {
                 /* Background color for what is not covered by the egui canvas,
                     or where the egui canvas is translucent. */
-                background: light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark));
+                background: var(--window-panel-fill-color);
             }
 
             /* Allow canvas to fill entire web page: */
@@ -106,22 +100,26 @@
             #loader {
                 width: 32px;
                 height: 32px;
-                border: 5px solid light-dark(var(--active-fg-stroke-light), var(--active-fg-stroke-dark));
+                border: 5px solid var(--active-fg-stroke-color);
                 border-bottom-color: transparent;
                 border-radius: 50%;
                 box-sizing: border-box;
                 animation: rotation 1s linear infinite, fade-in 3s ease-in forwards;
             }
 
+            #modal_container {
+                backdrop-filter: brightness(60%);
+            }
+
             .modal {
-                background-color: light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark));
+                background-color: var(--window-panel-fill-color);
                 padding-block: 0.2em;
                 padding-inline: 0.4em;
 
-                border: 0.1em solid light-dark(var(--window-separator-stroke-light), var(--window-separator-stroke-dark));
+                border: 0.1em solid var(--window-separator-stroke-color);
                 border-radius: 0.5em;
 
-                box-shadow: 0.3em 0.5em 0.4em light-dark(var(--shadow-light), var(--shadow-dark));
+                box-shadow: 0.3em 0.5em 0.4em var(--shadow-color);
 
                 font: lighter 0.8em sans-serif;
 
@@ -129,11 +127,13 @@
             }
 
             .modal ::selection {
-                background-color: light-dark(var(--selection-bg-fill-light), var(--selection-bg-fill-dark));
+                background-color: var(--selection-bg-fill-color);
             }
 
             .modal > hr {
-                border-color: light-dark(var(--window-separator-stroke-light), var(--window-separator-stroke-dark));
+                border-top-width: 0;
+                border-style: solid;
+                border-color: var(--window-separator-stroke-color);
             }
 
             .modal > p {
@@ -146,7 +146,7 @@
             }
 
             .modal > a, a:visited {
-                color: light-dark(var(--hyperlink-light), var(--hyperlink-dark));
+                color: var(--hyperlink-color);
                 text-decoration: none;
             }
 
@@ -155,11 +155,11 @@
             }
 
             .strong-text {
-                color: light-dark(var(--active-fg-stroke-light), var(--active-fg-stroke-dark));
+                color: var(--active-fg-stroke-color);
             }
 
             .weak-text {
-                color: light-dark(var(--noninteractive-fg-stroke-light), var(--noninteractive-fg-stroke-dark));
+                color: var(--noninteractive-fg-stroke-color);
             }
 
             @keyframes rotation {
@@ -210,7 +210,7 @@
         </div>
         <div id="modal_container" class="centering" style="display: none;">
             <div id="memory_error_modal" class="modal weak-text" style="display: none;">
-                <p class="strong-text">Error: <span>Solver ran out of memory!</span></p>
+                <p class="strong-text">Error: Solver ran out of memory!</p>
                 <hr />
                 <p>The solver reached the 4GB memory limit of 32-bit web assembly and crashed.</p>
                 <p>Consider enabling fewer memory intensive options.</p>
@@ -222,7 +222,7 @@
                 <p style="margin-inline: auto;">Reload the page to reset the app</p>
             </div>
              <div id="webgl_error_modal" class="modal weak-text" style="display: none;">
-                <p class="strong-text">Error: <span id="start-failure-message">WebGL is not available!</span></p>
+                <p class="strong-text">Error: WebGL is not available!</p>
                 <hr />
                 <p>Please enable WebGL support in your browser.</p>
                 <hr />
