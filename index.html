@@ -29,17 +29,6 @@
         <link data-trunk rel="copy-dir" href="assets/fonts/" />
 
         <meta name="color-scheme" content="dark light" />
-        <meta
-            name="theme-color"
-            media="(prefers-color-scheme: light)"
-            content="white"
-        />
-        <meta
-            name="theme-color"
-            media="(prefers-color-scheme: dark)"
-            content="#404040"
-        />
-
         <style>
             :root {
                 color-scheme: light dark;
@@ -65,23 +54,24 @@
                 --active-fg-stroke-light: black;
             }
 
+            .light {
+                color-scheme: light;
+            }
+
+            .dark {
+                color-scheme: dark;
+            }
+
+
             html {
                 /* Remove touch delay: */
                 touch-action: manipulation;
             }
 
             body {
-                /* Light mode background color for what is not covered by the egui canvas,
+                /* Background color for what is not covered by the egui canvas,
                     or where the egui canvas is translucent. */
-                background: #909090;
-            }
-
-            @media (prefers-color-scheme: dark) {
-                body {
-                    /* Dark mode background color for what is not covered by the egui canvas,
-                        or where the egui canvas is translucent. */
-                    background: #404040;
-                }
+                background: light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark));
             }
 
             /* Allow canvas to fill entire web page: */
@@ -116,13 +106,12 @@
             #loader {
                 width: 32px;
                 height: 32px;
-                border: 5px solid #fff;
+                border: 5px solid light-dark(var(--active-fg-stroke-light), var(--active-fg-stroke-dark));
                 border-bottom-color: transparent;
                 border-radius: 50%;
                 box-sizing: border-box;
-                animation: rotation 1s linear infinite;
+                animation: rotation 1s linear infinite, fade-in 3s ease-in forwards;
             }
-
 
             .modal {
                 background-color: light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark));
@@ -181,14 +170,45 @@
                     transform: rotate(360deg);
                 }
             }
+
+            @keyframes fade-in {
+                0% {
+                    opacity: 0;
+                }
+                100% {
+                    transform: 1;
+                }
+            }
         </style>
+        <meta name="theme-color" />
+        <script>
+            const theme_color_meta_element = document.querySelector('meta[name="theme-color"]');
+            const theme_preference = /theme_preference:(System|Dark|Light),/.exec(localStorage.egui_memory_ron);
+            if (theme_preference) {
+                switch (theme_preference[1]) {
+                    case "Dark":
+                        theme_color_meta_element.setAttribute("content", "var(--window-panel-fill-dark)");
+                        document.documentElement.classList = ["dark"];
+                        break;
+                    case "Light":
+                        theme_color_meta_element.setAttribute("content", "var(--window-panel-fill-light)");
+                        document.documentElement.classList = ["light"];
+                        break;
+                    default:
+                        theme_color_meta_element.setAttribute("content", "light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark))");
+                        document.documentElement.classList = [];
+                }
+            } else {
+                theme_color_meta_element.setAttribute("content", "light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark))");
+            }
+        </script>
     </head>
 
     <body>
         <div id="spinner" class="centering">
             <span id="loader"></span>
         </div>
-        <div class="centering">
+        <div id="modal_container" class="centering" style="display: none;">
             <div id="memory_error_modal" class="modal weak-text" style="display: none;">
                 <p class="strong-text">Error: <span>Solver ran out of memory!</span></p>
                 <hr />
@@ -218,7 +238,7 @@
             const main_js_regex = /raphael-xiv.*.js/;
             window.addEventListener("error", (event) => {
                 console.error(event);
-
+                modal_container.removeAttribute("style");
                 if (main_wasm_regex.test(event.filename) && event.message === "RuntimeError: unreachable executed") {
                     memory_error_modal.removeAttribute("style");
                 } else if (main_js_regex.test(event.filename) && event.message === "uncaught exception: WebGL isn't supported") {
