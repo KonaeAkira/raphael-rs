@@ -1,0 +1,87 @@
+use clap::{Args, ValueEnum};
+use raphael_data::{Locale, RECIPES, get_item_name, get_job_name};
+
+#[derive(Args, Debug)]
+pub struct IngredientsArgs {
+    /// Recipe ID to get ingredients for
+    #[arg(short, long)]
+    pub recipe_id: u32,
+
+    /// The language the output uses
+    #[arg(short, long, alias = "locale", value_enum, ignore_case = true, default_value_t = IngredientsLanguage::EN)]
+    language: IngredientsLanguage,
+
+    /// The delimiter the output uses between fields
+    #[arg(long, alias = "OFS", default_value = " ", env = "OFS")]
+    output_field_separator: String,
+}
+
+#[derive(Copy, Clone, ValueEnum, Debug)]
+pub enum IngredientsLanguage {
+    EN,
+    DE,
+    FR,
+    JP,
+    KR,
+}
+
+impl From<IngredientsLanguage> for Locale {
+    fn from(val: IngredientsLanguage) -> Self {
+        match val {
+            IngredientsLanguage::EN => Locale::EN,
+            IngredientsLanguage::DE => Locale::DE,
+            IngredientsLanguage::FR => Locale::FR,
+            IngredientsLanguage::JP => Locale::JP,
+            IngredientsLanguage::KR => Locale::KR,
+        }
+    }
+}
+
+pub fn execute(args: &IngredientsArgs) {
+    let locale = args.language.into();
+    
+    // Get the recipe by ID
+    let recipe = match RECIPES.get(args.recipe_id) {
+        Some(recipe) => recipe,
+        None => {
+            println!("Recipe with ID {} not found", args.recipe_id);
+            return;
+        }
+    };
+
+    // Get the recipe item name
+    let recipe_name = get_item_name(recipe.item_id, false, locale)
+        .unwrap_or("Unknown item".to_owned());
+    let job_name = get_job_name(recipe.job_id, locale);
+
+    // Print recipe header
+    println!("Recipe ID: {}", args.recipe_id);
+    println!("Recipe: {} ({})", recipe_name.trim_end_matches([' ', raphael_data::CL_ICON_CHAR]), job_name);
+    println!("Item ID: {}", recipe.item_id);
+    println!();
+
+    // Print ingredients
+    println!("Ingredients:");
+    let mut has_ingredients = false;
+    
+    for (_index, ingredient) in recipe.ingredients.iter().enumerate() {
+        if ingredient.item_id != 0 {
+            has_ingredients = true;
+            let ingredient_name = get_item_name(ingredient.item_id, false, locale)
+                .unwrap_or("Unknown item".to_owned());
+            
+            println!(
+                "{amount}{separator}{item_id}{separator}{name}",
+                amount = ingredient.amount,
+                item_id = ingredient.item_id,
+                name = ingredient_name.trim_end_matches([' ', raphael_data::CL_ICON_CHAR]),
+                separator = args.output_field_separator
+            );
+        }
+    }
+
+    if !has_ingredients {
+        println!("No ingredients found for this recipe.");
+    }
+}
+
