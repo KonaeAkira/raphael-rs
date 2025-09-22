@@ -1,6 +1,6 @@
 use crate::{ActionMask, Condition, Effects, Settings, SimulationState};
 
-const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX);
+const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX).with_combo(Combo::None);
 
 pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
@@ -67,11 +67,7 @@ pub trait ActionImpl {
         0
     }
 
-    fn transform_post(_state: &mut SimulationState, _settings: &Settings, _condition: Condition) {}
-
-    fn combo(_state: &SimulationState) -> Combo {
-        Combo::None
-    }
+    fn transform(_state: &mut SimulationState, _settings: &Settings, _condition: Condition) {}
 }
 
 pub struct BasicSynthesis {}
@@ -104,7 +100,7 @@ impl ActionImpl for BasicTouch {
     const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
         .with_great_strides(0)
         .with_trained_perfection_active(false);
-    const EFFECT_SET_MASK: Effects = Effects::new();
+    const EFFECT_SET_MASK: Effects = Effects::new().with_combo(Combo::BasicTouch);
 
     fn precondition(
         state: &SimulationState,
@@ -129,10 +125,6 @@ impl ActionImpl for BasicTouch {
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
-
-    fn combo(_state: &SimulationState) -> Combo {
-        Combo::BasicTouch
-    }
 }
 
 pub struct MasterMend {}
@@ -150,7 +142,7 @@ impl ActionImpl for MasterMend {
         Self::CP_COST
     }
 
-    fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
+    fn transform(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability = std::cmp::min(settings.max_durability, state.durability + 30);
     }
 }
@@ -164,14 +156,10 @@ impl ActionImpl for Observe {
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Observe);
 
     const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK;
-    const EFFECT_SET_MASK: Effects = Effects::new();
+    const EFFECT_SET_MASK: Effects = Effects::new().with_combo(Combo::StandardTouch);
 
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
-    }
-
-    fn combo(_state: &SimulationState) -> Combo {
-        Combo::StandardTouch
     }
 }
 
@@ -199,7 +187,7 @@ impl ActionImpl for TricksOfTheTrade {
         Ok(())
     }
 
-    fn transform_post(state: &mut SimulationState, settings: &Settings, condition: Condition) {
+    fn transform(state: &mut SimulationState, settings: &Settings, condition: Condition) {
         state.cp = std::cmp::min(settings.max_cp, state.cp + 20);
         if condition != Condition::Good && condition != Condition::Excellent {
             state.effects.set_heart_and_soul_active(false);
@@ -276,10 +264,11 @@ impl ActionImpl for StandardTouch {
         }
     }
 
-    fn combo(state: &SimulationState) -> Combo {
-        match state.effects.combo() {
-            Combo::BasicTouch => Combo::StandardTouch,
-            _ => Combo::None,
+    fn transform(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
+        if state.effects.combo() == Combo::BasicTouch {
+            state.effects.set_combo(Combo::StandardTouch);
+        } else {
+            state.effects.set_combo(Combo::None);
         }
     }
 }
@@ -433,7 +422,7 @@ impl ActionImpl for PreciseTouch {
         18
     }
 
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
+    fn transform(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
         if condition != Condition::Good && condition != Condition::Excellent {
@@ -628,7 +617,7 @@ impl ActionImpl for Reflect {
         6
     }
 
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
+    fn transform(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
     }
@@ -671,7 +660,7 @@ impl ActionImpl for PreparatoryTouch {
         Self::CP_COST
     }
 
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
+    fn transform(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
     }
@@ -788,7 +777,7 @@ impl ActionImpl for IntensiveSynthesis {
         6
     }
 
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
+    fn transform(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
         if condition != Condition::Good && condition != Condition::Excellent {
             state.effects.set_heart_and_soul_active(false);
         }
@@ -966,7 +955,7 @@ impl ActionImpl for RefinedTouch {
         Self::CP_COST
     }
 
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
+    fn transform(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
     }
@@ -1015,7 +1004,7 @@ impl ActionImpl for ImmaculateMend {
         Self::CP_COST
     }
 
-    fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
+    fn transform(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability = settings.max_durability;
     }
 }

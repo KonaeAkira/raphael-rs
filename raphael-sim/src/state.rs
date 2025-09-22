@@ -130,6 +130,7 @@ impl SimulationState {
 
         state.effects =
             Effects::from_bits(state.effects.into_bits() & A::EFFECT_RESET_MASK.into_bits());
+        A::transform(&mut state, settings, condition);
         if A::TICK_EFFECTS {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
@@ -147,9 +148,6 @@ impl SimulationState {
                 .effects
                 .set_special_quality_state(SpecialQualityState::AdversarialGuard);
         }
-
-        A::transform_post(&mut state, settings, condition);
-        state.effects.set_combo(A::combo(&state));
 
         Ok(state)
     }
