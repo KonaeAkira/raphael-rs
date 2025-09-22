@@ -24,8 +24,9 @@ pub struct Effects {
     pub trained_perfection_active: bool,
     pub heart_and_soul_active: bool,
 
-    pub adversarial_guard: bool,
-    pub allow_quality_actions: bool,
+    #[bits(2)]
+    /// This effect does not exist in-game and is only used by the solver.
+    pub special_quality_state: SpecialQualityState,
 
     #[bits(2)]
     pub combo: Combo,
@@ -34,9 +35,12 @@ pub struct Effects {
 impl Effects {
     /// Effects at synthesis begin
     pub fn initial(settings: &Settings) -> Self {
+        let special_quality_state = match settings.adversarial {
+            true => SpecialQualityState::AdversarialGuard2,
+            false => SpecialQualityState::Normal,
+        };
         Self::new()
-            .with_adversarial_guard(settings.adversarial)
-            .with_allow_quality_actions(true)
+            .with_special_quality_state(special_quality_state)
             .with_trained_perfection_available(
                 settings.is_action_allowed::<crate::actions::TrainedPerfection>(),
             )
@@ -49,36 +53,36 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
-    #[inline]
     pub const fn progress_modifier(self) -> u32 {
         let mm_mod = 2 * (self.muscle_memory() != 0) as u32;
         let vene_mod = (self.veneration() != 0) as u32;
         50 * (2 + mm_mod + vene_mod)
     }
 
-    #[inline]
     pub const fn quality_modifier(self) -> u32 {
         let gs_mod = 2 * (self.great_strides() != 0) as u32;
         let inno_mod = (self.innovation() != 0) as u32;
         5 * (self.inner_quiet() as u32 + 10) * (2 + gs_mod + inno_mod)
     }
 
-    #[inline]
+    pub const fn adversarial_guard_active(self) -> bool {
+        matches!(
+            self.special_quality_state(),
+            SpecialQualityState::AdversarialGuard | SpecialQualityState::AdversarialGuard2
+        )
+    }
+
+    pub const fn quality_actions_allowed(self) -> bool {
+        !matches!(self.special_quality_state(), SpecialQualityState::Forbidden)
+    }
+
     #[must_use]
     pub const fn tick_down(self) -> Self {
-        const {
-            assert!(Combo::SynthesisBegin.into_bits() == 0b11);
-            assert!(Self::COMBO_BITS == 2);
-            assert!(Self::ADVERSARIAL_GUARD_BITS == 1);
-            assert!(Self::COMBO_OFFSET == Self::ADVERSARIAL_GUARD_OFFSET + 2);
-        }
         // Calculate the decrement bit for the adversarial guard
-        // The bit corresponding to the adversarial guard effect is set if the guard should fall off.
-        // The guard should fall off if it is currently active and the combo is not `SynthesisBegin`.
-        let adversarial_guard_tick = {
-            let is_synth_begin = (self.into_bits() >> 2) & (self.into_bits() >> 3);
-            self.into_bits() & !is_synth_begin & (1 << Self::ADVERSARIAL_GUARD_OFFSET)
-        };
+        // The adversarial guard is encoded by the `special_quality_state` field.
+        // Decrement if the state is either `AdversarialGuard (0b10)` or `AdversarialGuard2 (0b11)`.
+        let adversarial_guard_tick =
+            (self.into_bits() >> 1) & (1 << Self::SPECIAL_QUALITY_STATE_OFFSET);
         // Calculate the decrement bits for all ticking effects.
         // The decrement contains the least-significant bit of all active ticking effects.
         let normal_effects_tick = {
@@ -92,14 +96,12 @@ impl Effects {
     }
 
     /// Removes all effects that are only relevant for Quality.
-    #[inline]
     #[must_use]
     pub const fn strip_quality_effects(self) -> Self {
-        self.with_allow_quality_actions(false)
+        self.with_special_quality_state(SpecialQualityState::Forbidden)
             .with_inner_quiet(0)
             .with_innovation(0)
             .with_great_strides(0)
-            .with_adversarial_guard(false)
             .with_quick_innovation_available(false)
     }
 }
@@ -134,3 +136,31 @@ const EFFECTS_BIT_3: u32 = Effects::new()
     .with_waste_not(8)
     .with_manipulation(8)
     .into_bits();
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum SpecialQualityState {
+    Forbidden,         // Quality-increasing actions are forbidden
+    Normal,            // Default mode of operation
+    AdversarialGuard,  // Guarded from adversarial mode (expires in 1 turn)
+    AdversarialGuard2, // Guard from adversarial mode (expires in 2 turns)
+}
+
+impl SpecialQualityState {
+    pub const fn into_bits(self) -> u8 {
+        match self {
+            Self::Forbidden => 0,
+            Self::Normal => 1,
+            Self::AdversarialGuard => 2,
+            Self::AdversarialGuard2 => 3,
+        }
+    }
+
+    pub const fn from_bits(bits: u8) -> Self {
+        match bits {
+            0 => Self::Forbidden,
+            1 => Self::Normal,
+            2 => Self::AdversarialGuard,
+            _ => Self::AdversarialGuard2,
+        }
+    }
+}

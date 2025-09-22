@@ -106,6 +106,18 @@ impl ActionImpl for BasicTouch {
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();
 
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
+        }
+    }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
@@ -237,6 +249,18 @@ impl ActionImpl for StandardTouch {
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();
 
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
+        }
+    }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         125
     }
@@ -276,9 +300,10 @@ impl ActionImpl for GreatStrides {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        match state.effects.allow_quality_actions() {
-            false => Err("Forbidden by backload_progress setting"),
-            true => Ok(()),
+        if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
     }
 
@@ -303,9 +328,10 @@ impl ActionImpl for Innovation {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        match state.effects.allow_quality_actions() {
-            false => Err("Forbidden by backload_progress setting"),
-            true => Ok(()),
+        if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
     }
 
@@ -346,9 +372,12 @@ impl ActionImpl for ByregotsBlessing {
         _settings: &Settings,
         _condition: Condition,
     ) -> Result<(), &'static str> {
-        match state.effects.inner_quiet() {
-            0 => Err("Cannot use Byregot's Blessing when Inner Quiet is 0."),
-            _ => Ok(()),
+        if state.effects.inner_quiet() == 0 {
+            Err("Cannot use Byregot's Blessing when Inner Quiet is 0.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
     }
 
@@ -384,9 +413,12 @@ impl ActionImpl for PreciseTouch {
             && condition != Condition::Good
             && condition != Condition::Excellent
         {
-            return Err("Precise Touch can only be used when the condition is Good or Excellent.");
+            Err("Precise Touch can only be used when the condition is Good or Excellent.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -502,9 +534,12 @@ impl ActionImpl for PrudentTouch {
         _condition: Condition,
     ) -> Result<(), &'static str> {
         if state.effects.waste_not() != 0 {
-            return Err("Prudent Touch cannot be used while Waste Not is active.");
+            Err("Prudent Touch cannot be used while Waste Not is active.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -529,6 +564,18 @@ impl ActionImpl for AdvancedTouch {
         .with_great_strides(0)
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
+        }
+    }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         150
@@ -561,9 +608,12 @@ impl ActionImpl for Reflect {
         _condition: Condition,
     ) -> Result<(), &'static str> {
         if state.effects.combo() != Combo::SynthesisBegin {
-            return Err("Reflect can only be used at synthesis begin.");
+            Err("Reflect can only be used at synthesis begin.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -596,6 +646,18 @@ impl ActionImpl for PreparatoryTouch {
         .with_great_strides(0)
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
+        }
+    }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         200
@@ -655,6 +717,18 @@ impl ActionImpl for DelicateSynthesis {
         .with_great_strides(0)
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
+        }
+    }
 
     fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         match settings.job_level {
@@ -737,9 +811,12 @@ impl ActionImpl for TrainedEye {
         _condition: Condition,
     ) -> Result<(), &'static str> {
         if state.effects.combo() != Combo::SynthesisBegin {
-            return Err("Trained Eye can only be used at synthesis begin.");
+            Err("Trained Eye can only be used at synthesis begin.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     fn quality_increase(
@@ -833,9 +910,12 @@ impl ActionImpl for TrainedFinesse {
         _condition: Condition,
     ) -> Result<(), &'static str> {
         if state.effects.inner_quiet() < 10 {
-            return Err("Trained Finesse can only be used when Inner Quiet is 10.");
+            Err("Trained Finesse can only be used when Inner Quiet is 10.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -866,9 +946,12 @@ impl ActionImpl for RefinedTouch {
         _condition: Condition,
     ) -> Result<(), &'static str> {
         if state.effects.combo() != Combo::BasicTouch {
-            return Err("Refined Touch can only be used after Observe or Basic Touch.");
+            Err("Refined Touch can only be used after Observe or Basic Touch.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
@@ -906,12 +989,14 @@ impl ActionImpl for QuickInnovation {
         _condition: Condition,
     ) -> Result<(), &'static str> {
         if state.effects.innovation() != 0 {
-            return Err("Quick Innovation cannot be used while Innovation is active.");
+            Err("Quick Innovation cannot be used while Innovation is active.")
+        } else if !state.effects.quick_innovation_available() {
+            Err("Quick Innovation can only be used once per synthesis.")
+        } else if !state.effects.quality_actions_allowed() {
+            Err("Forbidden by backload_progress setting")
+        } else {
+            Ok(())
         }
-        if !state.effects.quick_innovation_available() {
-            return Err("Quick Innovation can only be used once per synthesis.");
-        }
-        Ok(())
     }
 }
 

@@ -94,18 +94,16 @@ impl SimulationState {
         state.cp -= A::cp_cost(self, settings, condition);
 
         let quality_increase = A::quality_increase(self, settings, condition);
-        if !state.effects.allow_quality_actions() && quality_increase != 0 {
-            return Err("Forbidden by backload_progress setting");
-        }
         if settings.adversarial {
-            let adversarial_quality_increase = if state.effects.adversarial_guard() {
+            let adversarial_guard_active = state.effects.adversarial_guard_active();
+            let adversarial_quality_increase = if adversarial_guard_active {
                 quality_increase
             } else {
                 A::quality_increase(self, settings, Condition::Poor)
             };
-            if !state.effects.adversarial_guard() && adversarial_quality_increase == 0 {
+            if !adversarial_guard_active && adversarial_quality_increase == 0 {
                 state.unreliable_quality = 0;
-            } else if state.effects.adversarial_guard() && adversarial_quality_increase != 0 {
+            } else if adversarial_guard_active && adversarial_quality_increase != 0 {
                 state.quality += adversarial_quality_increase;
                 state.unreliable_quality = 0;
             } else if adversarial_quality_increase != 0 {
@@ -126,10 +124,6 @@ impl SimulationState {
         let progress_increase = A::progress_increase(self, settings);
         state.progress += progress_increase;
 
-        if progress_increase != 0 && settings.backload_progress {
-            state.effects.set_allow_quality_actions(false);
-        }
-
         if state.is_final(settings) {
             return Ok(state);
         }
@@ -145,17 +139,17 @@ impl SimulationState {
         state.effects =
             Effects::from_bits(state.effects.into_bits() | A::EFFECT_SET_MASK.into_bits());
 
-        if settings.adversarial && quality_increase != 0 {
-            state.effects.set_adversarial_guard(true);
+        if progress_increase != 0 && settings.backload_progress {
+            state.effects = state.effects.strip_quality_effects();
+            state.unreliable_quality = 0;
+        } else if settings.adversarial && quality_increase != 0 {
+            state
+                .effects
+                .set_special_quality_state(SpecialQualityState::AdversarialGuard);
         }
 
         A::transform_post(&mut state, settings, condition);
         state.effects.set_combo(A::combo(&state));
-
-        if !state.effects.allow_quality_actions() {
-            state.unreliable_quality = 0;
-            state.effects = state.effects.strip_quality_effects();
-        }
 
         Ok(state)
     }
