@@ -59,7 +59,9 @@ impl ReducedState {
             // this gives a looser bound but decreases the number of states
             effects.set_great_strides(3);
         }
-        effects.set_adversarial_guard(false);
+        if effects.adversarial_guard_active() {
+            effects.set_special_quality_state(SpecialQualityState::Normal);
+        }
         // Optimize durability
         let durability = {
             let mut usable_durability = u16::from(step_budget.get()) * 20;

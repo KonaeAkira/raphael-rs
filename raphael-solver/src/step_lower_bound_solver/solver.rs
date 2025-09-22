@@ -52,7 +52,7 @@ impl StepLbSolver {
         if self.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
-        if !state.effects.allow_quality_actions() && state.quality < self.settings.max_quality() {
+        if !state.effects.quality_actions_allowed() && state.quality < self.settings.max_quality() {
             return Ok(u8::MAX);
         }
         let mut hint = NonZeroU8::try_from(std::cmp::max(hint, 1)).unwrap();

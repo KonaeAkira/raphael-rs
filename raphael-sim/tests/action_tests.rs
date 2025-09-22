@@ -624,7 +624,10 @@ fn test_heart_and_soul() {
     match state {
         Ok(state) => {
             assert_eq!(state.effects.combo(), Combo::None); // combo is removed
-            assert!(state.effects.adversarial_guard()); // condition is not re-rolled
+            assert_eq!(
+                state.effects.special_quality_state(),
+                SpecialQualityState::AdversarialGuard
+            ); // condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.heart_and_soul_available(), false);
             assert_eq!(state.effects.heart_and_soul_active(), true);
@@ -694,7 +697,10 @@ fn test_quick_innovation() {
     match state {
         Ok(state) => {
             assert_eq!(state.effects.combo(), Combo::None); // combo is removed
-            assert!(state.effects.adversarial_guard()); // condition is not re-rolled
+            assert_eq!(
+                state.effects.special_quality_state(),
+                SpecialQualityState::AdversarialGuard
+            ); // condition is not re-rolled
             assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
             assert_eq!(state.effects.innovation(), 1);
         }

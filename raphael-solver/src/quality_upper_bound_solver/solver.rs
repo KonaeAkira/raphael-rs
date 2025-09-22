@@ -55,6 +55,7 @@ impl QualityUbSolver {
 
         let seed_template = {
             let seed_effects = Effects::initial(&self.settings.simulator_settings)
+                .with_special_quality_state(SpecialQualityState::Normal)
                 .with_trained_perfection_available(false)
                 .with_combo(Combo::None);
             Template::new(self.settings.max_cp(), TemplateData::new(seed_effects, 0))

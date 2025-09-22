@@ -1,4 +1,4 @@
-use raphael_sim::{Action, ActionMask, Condition, Settings, SimulationState};
+use raphael_sim::{Action, ActionMask, Condition, Settings, SimulationState, SpecialQualityState};
 
 const SETTINGS: Settings = Settings {
     max_cp: 500,
@@ -23,7 +23,9 @@ fn test_effects() {
     state.effects.set_inner_quiet(2);
     state.effects.set_innovation(2);
     state.effects.set_great_strides(2);
-    state.effects.set_adversarial_guard(true);
+    state
+        .effects
+        .set_special_quality_state(SpecialQualityState::AdversarialGuard);
     state.effects.set_quick_innovation_available(true);
     let state = state
         .use_action(Action::MuscleMemory, Condition::Normal, &SETTINGS)
@@ -32,9 +34,11 @@ fn test_effects() {
     assert_eq!(state.effects.inner_quiet(), 0);
     assert_eq!(state.effects.innovation(), 0);
     assert_eq!(state.effects.great_strides(), 0);
-    assert_eq!(state.effects.adversarial_guard(), false);
     assert_eq!(state.effects.quick_innovation_available(), false);
-    assert_eq!(state.effects.allow_quality_actions(), false);
+    assert_eq!(
+        state.effects.special_quality_state(),
+        SpecialQualityState::Forbidden
+    );
 }
 
 #[test]
@@ -71,5 +75,8 @@ fn test_quality_actions_forbidden() {
 /// It is the only action that increases Progress and Quality at the same time.
 fn test_delicate_synthesis() {
     let state = SimulationState::from_macro(&SETTINGS, &[Action::DelicateSynthesis]).unwrap();
-    assert_eq!(state.effects.allow_quality_actions(), false);
+    assert_eq!(
+        state.effects.special_quality_state(),
+        SpecialQualityState::Forbidden
+    );
 }

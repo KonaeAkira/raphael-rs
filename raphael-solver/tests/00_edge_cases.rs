@@ -267,9 +267,9 @@ fn backload_progress_single_delicate_synthesis() {
                 dropped_nodes: 14,
             },
             quality_ub_stats: QualityUbSolverStats {
-                parallel_states: 8965,
+                parallel_states: 3243,
                 sequential_states: 0,
-                pareto_values: 8965,
+                pareto_values: 3243,
             },
             step_lb_stats: StepLbSolverStats {
                 states: 9,

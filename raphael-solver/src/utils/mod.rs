@@ -108,8 +108,7 @@ pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
             quality: 0,
             unreliable_quality: 0,
             effects: Effects::new()
-                .with_allow_quality_actions(true)
-                .with_adversarial_guard(true)
+                .with_special_quality_state(SpecialQualityState::AdversarialGuard)
                 .with_inner_quiet(iq),
         };
         for action in FULL_SEARCH_ACTIONS {
