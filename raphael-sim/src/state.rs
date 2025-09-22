@@ -85,13 +85,10 @@ impl SimulationState {
 
         let mut state = *self;
 
-        A::transform_pre(&mut state, settings, condition);
-
         if A::base_durability_cost(&state, settings) != 0 {
             state.durability = state
                 .durability
                 .saturating_sub(A::durability_cost(self, settings, condition));
-            state.effects.set_trained_perfection_active(false);
         }
 
         state.cp -= A::cp_cost(self, settings, condition);
@@ -121,7 +118,6 @@ impl SimulationState {
             state.quality += quality_increase;
         }
         if quality_increase != 0 && settings.job_level >= 11 {
-            state.effects.set_great_strides(0);
             state
                 .effects
                 .set_inner_quiet(std::cmp::min(10, state.effects.inner_quiet() + 1));
@@ -129,9 +125,6 @@ impl SimulationState {
 
         let progress_increase = A::progress_increase(self, settings);
         state.progress += progress_increase;
-        if progress_increase != 0 && state.effects.muscle_memory() != 0 {
-            state.effects.set_muscle_memory(0);
-        }
 
         if progress_increase != 0 && settings.backload_progress {
             state.effects.set_allow_quality_actions(false);
@@ -141,22 +134,23 @@ impl SimulationState {
             return Ok(state);
         }
 
+        state.effects =
+            Effects::from_bits(state.effects.into_bits() & A::EFFECT_RESET_MASK.into_bits());
         if A::TICK_EFFECTS {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
             state.effects = state.effects.tick_down();
         }
+        state.effects =
+            Effects::from_bits(state.effects.into_bits() | A::EFFECT_SET_MASK.into_bits());
 
         if settings.adversarial && quality_increase != 0 {
             state.effects.set_adversarial_guard(true);
         }
 
         A::transform_post(&mut state, settings, condition);
-
-        state
-            .effects
-            .set_combo(A::combo(&state, settings, condition));
+        state.effects.set_combo(A::combo(&state));
 
         if !state.effects.allow_quality_actions() {
             state.unreliable_quality = 0;

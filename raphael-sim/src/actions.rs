@@ -1,4 +1,6 @@
-use crate::{ActionMask, Condition, Settings, SimulationState};
+use crate::{ActionMask, Condition, Effects, Settings, SimulationState};
+
+const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX);
 
 pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
@@ -6,6 +8,9 @@ pub trait ActionImpl {
     const ACTION_MASK: ActionMask;
     /// Does this action trigger ticking effects (e.g. Manipulation)?
     const TICK_EFFECTS: bool = true;
+
+    const EFFECT_RESET_MASK: Effects;
+    const EFFECT_SET_MASK: Effects;
 
     fn precondition(
         _state: &SimulationState,
@@ -62,10 +67,9 @@ pub trait ActionImpl {
         0
     }
 
-    fn transform_pre(_state: &mut SimulationState, _settings: &Settings, _condition: Condition) {}
     fn transform_post(_state: &mut SimulationState, _settings: &Settings, _condition: Condition) {}
 
-    fn combo(_state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
+    fn combo(_state: &SimulationState) -> Combo {
         Combo::None
     }
 }
@@ -74,9 +78,16 @@ pub struct BasicSynthesis {}
 impl ActionImpl for BasicSynthesis {
     const LEVEL_REQUIREMENT: u8 = 1;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         if settings.job_level < 31 { 100 } else { 120 }
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
@@ -89,16 +100,25 @@ impl BasicTouch {
 impl ActionImpl for BasicTouch {
     const LEVEL_REQUIREMENT: u8 = 5;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::BasicTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
-    fn combo(_state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
+
+    fn combo(_state: &SimulationState) -> Combo {
         Combo::BasicTouch
     }
 }
@@ -110,9 +130,14 @@ impl MasterMend {
 impl ActionImpl for MasterMend {
     const LEVEL_REQUIREMENT: u8 = 7;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::MasterMend);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK;
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
+
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability = std::cmp::min(settings.max_durability, state.durability + 30);
     }
@@ -125,10 +150,15 @@ impl Observe {
 impl ActionImpl for Observe {
     const LEVEL_REQUIREMENT: u8 = 13;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Observe);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK;
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
-    fn combo(_state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
+
+    fn combo(_state: &SimulationState) -> Combo {
         Combo::StandardTouch
     }
 }
@@ -137,6 +167,10 @@ pub struct TricksOfTheTrade {}
 impl ActionImpl for TricksOfTheTrade {
     const LEVEL_REQUIREMENT: u8 = 13;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TricksOfTheTrade);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK;
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -152,6 +186,7 @@ impl ActionImpl for TricksOfTheTrade {
         }
         Ok(())
     }
+
     fn transform_post(state: &mut SimulationState, settings: &Settings, condition: Condition) {
         state.cp = std::cmp::min(settings.max_cp, state.cp + 20);
         if condition != Condition::Good && condition != Condition::Excellent {
@@ -167,11 +202,12 @@ impl WasteNot {
 impl ActionImpl for WasteNot {
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_waste_not(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_waste_not(4);
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_waste_not(4);
     }
 }
 
@@ -182,11 +218,12 @@ impl Veneration {
 impl ActionImpl for Veneration {
     const LEVEL_REQUIREMENT: u8 = 15;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Veneration);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_veneration(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_veneration(4);
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_veneration(4);
     }
 }
 
@@ -194,19 +231,28 @@ pub struct StandardTouch {}
 impl ActionImpl for StandardTouch {
     const LEVEL_REQUIREMENT: u8 = 18;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StandardTouch);
+
+    const EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX)
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         125
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> u16 {
         match state.effects.combo() {
             Combo::BasicTouch => 18,
             _ => 32,
         }
     }
-    fn combo(state: &SimulationState, _settings: &Settings, _condition: Condition) -> Combo {
+
+    fn combo(state: &SimulationState) -> Combo {
         match state.effects.combo() {
             Combo::BasicTouch => Combo::StandardTouch,
             _ => Combo::None,
@@ -221,6 +267,10 @@ impl GreatStrides {
 impl ActionImpl for GreatStrides {
     const LEVEL_REQUIREMENT: u8 = 21;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::GreatStrides);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_great_strides(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_great_strides(3);
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -231,11 +281,9 @@ impl ActionImpl for GreatStrides {
             true => Ok(()),
         }
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_great_strides(3);
     }
 }
 
@@ -246,6 +294,10 @@ impl Innovation {
 impl ActionImpl for Innovation {
     const LEVEL_REQUIREMENT: u8 = 26;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Innovation);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_innovation(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_innovation(4);
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -256,11 +308,9 @@ impl ActionImpl for Innovation {
             true => Ok(()),
         }
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_innovation(4);
     }
 }
 
@@ -271,11 +321,12 @@ impl WasteNot2 {
 impl ActionImpl for WasteNot2 {
     const LEVEL_REQUIREMENT: u8 = 47;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::WasteNot2);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_waste_not(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_waste_not(8);
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_waste_not(8);
     }
 }
 
@@ -283,6 +334,13 @@ pub struct ByregotsBlessing {}
 impl ActionImpl for ByregotsBlessing {
     const LEVEL_REQUIREMENT: u8 = 50;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::ByregotsBlessing);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_inner_quiet(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -293,17 +351,17 @@ impl ActionImpl for ByregotsBlessing {
             _ => Ok(()),
         }
     }
+
     fn quality_modifier(state: &SimulationState, _settings: &Settings) -> u32 {
         100 + 20 * state.effects.inner_quiet() as u32
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         24
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_inner_quiet(0);
     }
 }
 
@@ -311,6 +369,12 @@ pub struct PreciseTouch {}
 impl ActionImpl for PreciseTouch {
     const LEVEL_REQUIREMENT: u8 = 53;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PreciseTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -324,15 +388,19 @@ impl ActionImpl for PreciseTouch {
         }
         Ok(())
     }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         150
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         18
     }
+
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
@@ -346,6 +414,12 @@ pub struct MuscleMemory {}
 impl ActionImpl for MuscleMemory {
     const LEVEL_REQUIREMENT: u8 = 54;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::MuscleMemory);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_muscle_memory(5);
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -356,17 +430,17 @@ impl ActionImpl for MuscleMemory {
         }
         Ok(())
     }
+
     fn progress_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         300
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         6
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_muscle_memory(5);
     }
 }
 
@@ -374,15 +448,23 @@ pub struct CarefulSynthesis {}
 impl ActionImpl for CarefulSynthesis {
     const LEVEL_REQUIREMENT: u8 = 62;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::CarefulSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         match settings.job_level {
             0..82 => 150,
             82.. => 180,
         }
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         7
     }
@@ -395,14 +477,12 @@ impl Manipulation {
 impl ActionImpl for Manipulation {
     const LEVEL_REQUIREMENT: u8 = 65;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Manipulation);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_manipulation(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_manipulation(8);
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
-    }
-    fn transform_pre(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_manipulation(0);
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_manipulation(8);
     }
 }
 
@@ -410,6 +490,12 @@ pub struct PrudentTouch {}
 impl ActionImpl for PrudentTouch {
     const LEVEL_REQUIREMENT: u8 = 66;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PrudentTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -420,12 +506,15 @@ impl ActionImpl for PrudentTouch {
         }
         Ok(())
     }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         5
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         25
     }
@@ -435,12 +524,20 @@ pub struct AdvancedTouch {}
 impl ActionImpl for AdvancedTouch {
     const LEVEL_REQUIREMENT: u8 = 68;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::AdvancedTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         150
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(state: &SimulationState, _settings: &Settings) -> u16 {
         match state.effects.combo() {
             Combo::StandardTouch => 18,
@@ -453,6 +550,11 @@ pub struct Reflect {}
 impl ActionImpl for Reflect {
     const LEVEL_REQUIREMENT: u8 = 69;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Reflect);
+
+    const EFFECT_RESET_MASK: Effects =
+        DEFAULT_EFFECT_RESET_MASK.with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -463,15 +565,19 @@ impl ActionImpl for Reflect {
         }
         Ok(())
     }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         300
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         6
     }
+
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
@@ -485,15 +591,24 @@ impl PreparatoryTouch {
 impl ActionImpl for PreparatoryTouch {
     const LEVEL_REQUIREMENT: u8 = 71;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PreparatoryTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         200
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         20
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
+
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
@@ -504,6 +619,12 @@ pub struct Groundwork {}
 impl ActionImpl for Groundwork {
     const LEVEL_REQUIREMENT: u8 = 72;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::Groundwork);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn progress_modifier(state: &SimulationState, settings: &Settings) -> u32 {
         let base = match settings.job_level {
             0..86 => 300,
@@ -514,9 +635,11 @@ impl ActionImpl for Groundwork {
         }
         base
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         20
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         18
     }
@@ -526,18 +649,28 @@ pub struct DelicateSynthesis {}
 impl ActionImpl for DelicateSynthesis {
     const LEVEL_REQUIREMENT: u8 = 76;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::DelicateSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         match settings.job_level {
             0..94 => 100,
             94.. => 150,
         }
     }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         32
     }
@@ -547,6 +680,12 @@ pub struct IntensiveSynthesis {}
 impl ActionImpl for IntensiveSynthesis {
     const LEVEL_REQUIREMENT: u8 = 78;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::IntensiveSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -562,15 +701,19 @@ impl ActionImpl for IntensiveSynthesis {
         }
         Ok(())
     }
+
     fn progress_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         400
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         6
     }
+
     fn transform_post(state: &mut SimulationState, _settings: &Settings, condition: Condition) {
         if condition != Condition::Good && condition != Condition::Excellent {
             state.effects.set_heart_and_soul_active(false);
@@ -582,6 +725,12 @@ pub struct TrainedEye {}
 impl ActionImpl for TrainedEye {
     const LEVEL_REQUIREMENT: u8 = 80;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TrainedEye);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -592,6 +741,7 @@ impl ActionImpl for TrainedEye {
         }
         Ok(())
     }
+
     fn quality_increase(
         _state: &SimulationState,
         settings: &Settings,
@@ -599,12 +749,15 @@ impl ActionImpl for TrainedEye {
     ) -> u32 {
         u32::from(settings.max_quality)
     }
+
     fn quality_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
         u32::from(settings.max_quality)
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         250
     }
@@ -615,6 +768,11 @@ impl ActionImpl for HeartAndSoul {
     const LEVEL_REQUIREMENT: u8 = 86;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HeartAndSoul);
     const TICK_EFFECTS: bool = false;
+
+    const EFFECT_RESET_MASK: Effects =
+        DEFAULT_EFFECT_RESET_MASK.with_heart_and_soul_available(false);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_heart_and_soul_active(true);
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -625,16 +783,18 @@ impl ActionImpl for HeartAndSoul {
         }
         Ok(())
     }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_heart_and_soul_available(false);
-        state.effects.set_heart_and_soul_active(true);
-    }
 }
 
 pub struct PrudentSynthesis {}
 impl ActionImpl for PrudentSynthesis {
     const LEVEL_REQUIREMENT: u8 = 88;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::PrudentSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -645,12 +805,15 @@ impl ActionImpl for PrudentSynthesis {
         }
         Ok(())
     }
+
     fn progress_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         180
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         5
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         18
     }
@@ -660,6 +823,10 @@ pub struct TrainedFinesse {}
 impl ActionImpl for TrainedFinesse {
     const LEVEL_REQUIREMENT: u8 = 90;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TrainedFinesse);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_great_strides(0);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -670,9 +837,11 @@ impl ActionImpl for TrainedFinesse {
         }
         Ok(())
     }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         32
     }
@@ -685,6 +854,12 @@ impl RefinedTouch {
 impl ActionImpl for RefinedTouch {
     const LEVEL_REQUIREMENT: u8 = 92;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::RefinedTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -695,15 +870,19 @@ impl ActionImpl for RefinedTouch {
         }
         Ok(())
     }
+
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
         100
     }
+
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         10
     }
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
+
     fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
         let iq = state.effects.inner_quiet();
         state.effects.set_inner_quiet(std::cmp::min(10, iq + 1));
@@ -715,6 +894,12 @@ impl ActionImpl for QuickInnovation {
     const LEVEL_REQUIREMENT: u8 = 96;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::QuickInnovation);
     const TICK_EFFECTS: bool = false;
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_quick_innovation_available(false)
+        .with_innovation(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_innovation(1);
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -728,10 +913,6 @@ impl ActionImpl for QuickInnovation {
         }
         Ok(())
     }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_innovation(1);
-        state.effects.set_quick_innovation_available(false);
-    }
 }
 
 pub struct ImmaculateMend {}
@@ -741,9 +922,14 @@ impl ImmaculateMend {
 impl ActionImpl for ImmaculateMend {
     const LEVEL_REQUIREMENT: u8 = 98;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::ImmaculateMend);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK;
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
     fn base_cp_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
         Self::CP_COST
     }
+
     fn transform_post(state: &mut SimulationState, settings: &Settings, _condition: Condition) {
         state.durability = settings.max_durability;
     }
@@ -753,6 +939,11 @@ pub struct TrainedPerfection {}
 impl ActionImpl for TrainedPerfection {
     const LEVEL_REQUIREMENT: u8 = 100;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::TrainedPerfection);
+
+    const EFFECT_RESET_MASK: Effects =
+        DEFAULT_EFFECT_RESET_MASK.with_trained_perfection_available(false);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_trained_perfection_active(true);
+
     fn precondition(
         state: &SimulationState,
         _settings: &Settings,
@@ -762,10 +953,6 @@ impl ActionImpl for TrainedPerfection {
             return Err("Trained Perfection can only be used once per synthesis.");
         }
         Ok(())
-    }
-    fn transform_post(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
-        state.effects.set_trained_perfection_available(false);
-        state.effects.set_trained_perfection_active(true);
     }
 }
 
