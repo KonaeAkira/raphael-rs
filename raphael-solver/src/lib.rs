@@ -24,8 +24,6 @@ pub enum SolverException {
     NoSolution,
     Interrupted,
     InternalError(String),
-    #[cfg(target_arch = "wasm32")]
-    AllocError,
 }
 
 impl std::fmt::Debug for SolverException {
@@ -34,8 +32,6 @@ impl std::fmt::Debug for SolverException {
             Self::NoSolution => write!(f, "NoSolution"),
             Self::Interrupted => write!(f, "Interrupted"),
             Self::InternalError(message) => f.write_str(message),
-            #[cfg(target_arch = "wasm32")]
-            Self::AllocError => write!(f, "AllocError"),
         }
     }
 }

@@ -99,6 +99,7 @@ fn main() -> eframe::Result<()> {
 fn main() {
     fn custom_alloc_error_hook(_layout: std::alloc::Layout) {
         raphael_xiv::OOM_PANIC_OCCURED.store(true, std::sync::atomic::Ordering::Relaxed);
+        eframe::wasm_bindgen::throw_val("OOM panic".into());
     }
     std::alloc::set_alloc_error_hook(custom_alloc_error_hook);
 
@@ -131,14 +132,7 @@ fn main() {
             .await;
         remove_loading_spinner();
         if let Err(error) = start_result {
-            let mut message = format!("Failed to start app: {error:?}");
-            log::error!("{message}");
-            message.push_str("\n\nIn case the error is \"WebGL not supported\":");
-            message.push_str("\nPlease enable WebGL support in your browser.");
-            web_sys::window()
-                .unwrap()
-                .alert_with_message(&message)
-                .unwrap();
+            eframe::wasm_bindgen::throw_val(error);
         }
     });
 }
