@@ -78,21 +78,16 @@ impl Effects {
 
     #[must_use]
     pub const fn tick_down(self) -> Self {
-        // Calculate the decrement bit for the adversarial guard
-        // The adversarial guard is encoded by the `special_quality_state` field.
-        // Decrement if the state is either `AdversarialGuard (0b10)` or `AdversarialGuard2 (0b11)`.
-        let adversarial_guard_tick =
-            (self.into_bits() >> 1) & (1 << Self::SPECIAL_QUALITY_STATE_OFFSET);
         // Calculate the decrement bits for all ticking effects.
         // The decrement contains the least-significant bit of all active ticking effects.
-        let normal_effects_tick = {
+        let effects_tick = {
             let mask_0 = self.into_bits() & EFFECTS_BIT_0;
             let mask_1 = (self.into_bits() & EFFECTS_BIT_1) >> 1;
             let mask_2 = (self.into_bits() & EFFECTS_BIT_2) >> 2;
             let mask_3 = (self.into_bits() & EFFECTS_BIT_3) >> 3;
             mask_0 | mask_1 | mask_2 | mask_3
         };
-        Self::from_bits(self.into_bits() - (normal_effects_tick | adversarial_guard_tick))
+        Self::from_bits(self.into_bits() - effects_tick)
     }
 
     /// Removes all effects that are only relevant for Quality.
@@ -116,6 +111,7 @@ const EFFECTS_BIT_0: u32 = Effects::new()
     .into_bits();
 
 const EFFECTS_BIT_1: u32 = Effects::new()
+    .with_special_quality_state(SpecialQualityState::AdversarialGuard)
     .with_waste_not(2)
     .with_innovation(2)
     .with_veneration(2)
