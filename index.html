@@ -232,7 +232,7 @@
                 console.error(event);
                 modal_container.removeAttribute("style");
                 const raphael_related = /raphael-xiv.*.wasm/.test(event.filename) || /raphael-xiv.*.js/.test(event.filename);
-                if (raphael_related && event.error.name === "RuntimeError") {
+                if (raphael_related && event.error === "OOM panic") {
                     memory_error_modal.removeAttribute("style");
                 } else if (raphael_related && event.error === "WebGL isn't supported") {
                     webgl_error_modal.removeAttribute("style");

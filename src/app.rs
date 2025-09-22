@@ -179,6 +179,10 @@ impl eframe::App for MacroSolverApp {
         }
 
         if self.solver_pending {
+            #[cfg(target_arch = "wasm32")]
+            if crate::OOM_PANIC_OCCURED.load(std::sync::atomic::Ordering::Relaxed) {
+                eframe::wasm_bindgen::throw_val("OOM panic".into());
+            }
             let interrupt_pending = self.solver_interrupt.is_set();
             egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);

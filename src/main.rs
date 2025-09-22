@@ -1,6 +1,7 @@
 // Prevents a console from being opened on Windows
 // This attribute is ignored for all other platforms
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![cfg_attr(target_arch = "wasm32", feature(alloc_error_hook))]
 
 #[cfg(all(target_os = "windows", not(debug_assertions)))]
 fn init_logging() {
@@ -96,6 +97,12 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
+    fn custom_alloc_error_hook(_layout: std::alloc::Layout) {
+        raphael_xiv::OOM_PANIC_OCCURED.store(true, std::sync::atomic::Ordering::Relaxed);
+        eframe::wasm_bindgen::throw_val("OOM panic".into());
+    }
+    std::alloc::set_alloc_error_hook(custom_alloc_error_hook);
+
     init_logging();
 
     fn get_canvas() -> Option<web_sys::HtmlCanvasElement> {
