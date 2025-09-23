@@ -4,7 +4,7 @@ use raphael_data::{Locale, RECIPES, Recipe, STELLAR_MISSIONS, get_item_name, get
 #[derive(Args, Debug)]
 pub struct SearchArgs {
     /// Search string to use, can be partial name
-    #[arg(short, long, required_unless_present_any(["recipe_id", "item_id", "mission_id"]), conflicts_with_all(["recipe_id", "item_id", "mission_id"]))]
+    #[arg(short, long, required_unless_present_any(["recipe_id", "item_id", "mission_id"]), conflicts_with_all(["recipe_id", "item_id"]))]
     pub pattern: Option<String>,
 
     /// Recipe ID to search for
