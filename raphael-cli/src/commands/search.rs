@@ -56,10 +56,6 @@ pub fn execute(args: &SearchArgs) {
     if let Some(mission_id_arg) = args.mission_id {
         match STELLAR_MISSIONS.get(mission_id_arg) {
             Some(mission) => {
-                if mission.recipe_ids.is_empty() {
-                    println!("No recipes associated with mission {}", mission_id_arg);
-                    return;
-                }
                 for recipe_id in mission.recipe_ids {
                     match RECIPES.get(*recipe_id) {
                         Some(recipe) => matches.push((*recipe_id, recipe)),
