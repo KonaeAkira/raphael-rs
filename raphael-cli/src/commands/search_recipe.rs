@@ -34,7 +34,7 @@ pub enum SearchLanguage {
     DE,
     FR,
     JP,
-	KR
+    KR,
 }
 
 impl From<SearchLanguage> for Locale {
@@ -44,7 +44,7 @@ impl From<SearchLanguage> for Locale {
             SearchLanguage::DE => Locale::DE,
             SearchLanguage::FR => Locale::FR,
             SearchLanguage::JP => Locale::JP,
-			SearchLanguage::KR => Locale::KR,
+            SearchLanguage::KR => Locale::KR,
         }
     }
 }
@@ -59,7 +59,11 @@ pub fn execute(args: &SearchArgs) {
                 for recipe_id in mission.recipe_ids {
                     match RECIPES.get(*recipe_id) {
                         Some(recipe) => matches.push((*recipe_id, recipe)),
-                        None => log::warn!("Mission {} references missing recipe id {}", mission_id_arg, recipe_id),
+                        None => log::warn!(
+                            "Mission {} references missing recipe id {}",
+                            mission_id_arg,
+                            recipe_id
+                        ),
                     }
                 }
             }

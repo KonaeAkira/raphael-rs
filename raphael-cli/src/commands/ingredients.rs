@@ -1,5 +1,5 @@
 use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, get_raw_item_name, get_job_name};
+use raphael_data::{Locale, RECIPES, get_job_name, get_raw_item_name};
 
 #[derive(Args, Debug)]
 pub struct IngredientsArgs {
@@ -39,7 +39,7 @@ impl From<IngredientsLanguage> for Locale {
 
 pub fn execute(args: &IngredientsArgs) {
     let locale = args.language.into();
-    
+
     // Get the recipe by ID
     let recipe = match RECIPES.get(args.recipe_id) {
         Some(recipe) => recipe,
@@ -50,8 +50,7 @@ pub fn execute(args: &IngredientsArgs) {
     };
 
     // Get the recipe item name
-    let recipe_name = get_raw_item_name(recipe.item_id, locale)
-        .unwrap_or("Unknown item");
+    let recipe_name = get_raw_item_name(recipe.item_id, locale).unwrap_or("Unknown item");
     let job_name = get_job_name(recipe.job_id, locale);
 
     // Print recipe header
@@ -63,13 +62,13 @@ pub fn execute(args: &IngredientsArgs) {
     // Print ingredients
     println!("Ingredients:");
     let mut has_ingredients = false;
-    
+
     for ingredient in recipe.ingredients {
         if ingredient.item_id != 0 {
             has_ingredients = true;
-            let ingredient_name = get_raw_item_name(ingredient.item_id, locale)
-                .unwrap_or("Unknown item");
-            
+            let ingredient_name =
+                get_raw_item_name(ingredient.item_id, locale).unwrap_or("Unknown item");
+
             println!(
                 "{amount}{separator}{item_id}{separator}{name}",
                 amount = ingredient.amount,
@@ -84,4 +83,3 @@ pub fn execute(args: &IngredientsArgs) {
         println!("No ingredients found for this recipe.");
     }
 }
-
