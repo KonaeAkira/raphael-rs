@@ -190,10 +190,9 @@ pub fn execute(args: &SolveArgs) {
             req_control: 0,
         }
     } else if args.recipe_id.is_some() {
-        *RECIPES.get(args.recipe_id.unwrap()).expect(&format!(
-            "Unable to find Recipe with ID: {}",
-            args.recipe_id.unwrap()
-        ))
+        *RECIPES
+            .get(args.recipe_id.unwrap())
+            .unwrap_or_else(|| panic!("Unable to find Recipe with ID: {}", args.recipe_id.unwrap()))
     } else {
         log::warn!(
             "Item IDs do not uniquely corresponds to a specific recipe config. Consider using the recipe ID instead.\nThe first match, i.e. the recipe with the lowest ID, will be selected."
@@ -201,10 +200,12 @@ pub fn execute(args: &SolveArgs) {
         *RECIPES
             .values()
             .find(|recipe| recipe.item_id == args.item_id.unwrap())
-            .expect(&format!(
-                "Unable to find Recipe for an item with item ID: {}",
-                args.item_id.unwrap()
-            ))
+            .unwrap_or_else(|| {
+                panic!(
+                    "Unable to find Recipe for an item with item ID: {}",
+                    args.item_id.unwrap()
+                )
+            })
     };
     let recipe_id = RECIPES
         .entries()
@@ -230,7 +231,7 @@ pub fn execute(args: &SolveArgs) {
                 MEALS
                     .iter()
                     .find(|m| (m.item_id == item_id) && (m.hq == is_hq))
-                    .expect(&format!("Unable to find Food with item ID: {item_id}"))
+                    .unwrap_or_else(|| panic!("Unable to find Food with item ID: {item_id}"))
                     .to_owned(),
             )
         }
@@ -255,7 +256,7 @@ pub fn execute(args: &SolveArgs) {
                 POTIONS
                     .iter()
                     .find(|m| (m.item_id == item_id) && (m.hq == is_hq))
-                    .expect(&format!("Unable to find Potion with item ID: {item_id}"))
+                    .unwrap_or_else(|| panic!("Unable to find Potion with item ID: {item_id}"))
                     .to_owned(),
             )
         }

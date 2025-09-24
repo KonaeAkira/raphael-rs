@@ -74,22 +74,18 @@ pub fn execute(args: &SearchArgs) {
     }
     if let Some(item_id_arg) = args.item_id {
         matches.extend(STELLAR_MISSIONS.entries().filter(|(mission_id, mission)| {
-            mission
-                .recipe_ids
-                .iter()
-                .find(|recipe_id| {
-                    if let Some(recipe) = RECIPES.get(**recipe_id) {
-                        recipe.item_id == item_id_arg
-                    } else {
-                        log::warn!(
-                            "Mission {} references missing recipe id {}",
-                            mission_id,
-                            recipe_id
-                        );
-                        false
-                    }
-                })
-                .is_some()
+            mission.recipe_ids.iter().any(|recipe_id| {
+                if let Some(recipe) = RECIPES.get(*recipe_id) {
+                    recipe.item_id == item_id_arg
+                } else {
+                    log::warn!(
+                        "Mission {} references missing recipe id {}",
+                        mission_id,
+                        recipe_id
+                    );
+                    false
+                }
+            })
         }));
     };
     if matches.is_empty() {
@@ -106,7 +102,7 @@ pub fn execute(args: &SearchArgs) {
             separator = args.output_field_separator,
             recipe_id_0 = mission
                 .recipe_ids
-                .get(0)
+                .first()
                 .map(ToString::to_string)
                 .unwrap_or_default(),
             recipe_id_1 = mission
