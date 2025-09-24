@@ -15,11 +15,29 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Search for recipes by name
-    Search(commands::search::SearchArgs),
+    Search(SearchCli),
     /// Solve a crafting rotation
     Solve(commands::solve::SolveArgs),
     /// Show ingredients for a recipe
     Ingredients(commands::ingredients::IngredientsArgs),
+}
+
+#[derive(Parser, Debug)]
+#[command(args_conflicts_with_subcommands = true)]
+struct SearchCli {
+    #[command(subcommand)]
+    command: Option<SearchCommands>,
+
+    #[command(flatten)]
+    recipe_search_args: commands::search::SearchArgs,
+}
+
+#[derive(Subcommand, Debug)]
+enum SearchCommands {
+    /// Search recipes. Default if no command is specified
+    Recipe(commands::search::SearchArgs),
+    /// Search stellar missions
+    Mission(commands::search_mission::SearchArgs),
 }
 
 fn main() {
@@ -31,7 +49,13 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Search(args) => commands::search::execute(args),
+        Commands::Search(search_cli) => match &search_cli.command {
+            Some(command) => match command {
+                SearchCommands::Recipe(args) => commands::search::execute(args),
+                SearchCommands::Mission(args) => commands::search_mission::execute(args),
+            },
+            None => commands::search::execute(&search_cli.recipe_search_args),
+        },
         Commands::Solve(args) => commands::solve::execute(args),
         Commands::Ingredients(args) => commands::ingredients::execute(args),
     }
