@@ -1,24 +1,39 @@
-use unicode_normalization::UnicodeNormalization;
+use std::{
+    collections::HashSet,
+    sync::{LazyLock, Mutex},
+};
+
+use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 
 use crate::{
     CL_ICON_CHAR, HQ_ICON_CHAR, MEALS, POTIONS, RECIPES, STELLAR_MISSIONS, get_raw_item_name,
     get_stellar_mission_name,
 };
 
-fn is_subsequence(text: impl Iterator<Item = char>, pattern: impl Iterator<Item = char>) -> bool {
-    let mut pattern = pattern.peekable();
-    for text_char in text {
-        pattern.next_if_eq(&text_char);
-    }
-    pattern.peek().is_none()
+// The matcher allocates a huge chunk of heap memory on creation, so it's best
+// to only create and re-use a single instance throughout the lifetime of the program.
+static MATCHER: LazyLock<Mutex<nucleo_matcher::Matcher>> = LazyLock::new(|| {
+    let config = nucleo_matcher::Config::DEFAULT;
+    Mutex::new(nucleo_matcher::Matcher::new(config))
+});
+
+#[derive(Debug, Clone, Copy)]
+struct MatcherCandidate<T> {
+    haystack: &'static str,
+    associated_data: T,
 }
 
-fn preprocess_text(pattern: &str) -> impl Iterator<Item = char> {
+impl<T> AsRef<str> for MatcherCandidate<T> {
+    fn as_ref(&self) -> &str {
+        self.haystack
+    }
+}
+
+fn preprocess_pattern(pattern: &str) -> String {
     pattern
         .chars()
         .filter(|&c| !c.is_whitespace() && c != HQ_ICON_CHAR && c != CL_ICON_CHAR)
-        .flat_map(char::to_lowercase)
-        .nfd() // Unicode Normalization Form D (canonical decomposition)
+        .collect()
 }
 
 pub type RecipeSearchEntry = (u32, &'static crate::Recipe);
@@ -26,14 +41,22 @@ pub fn find_recipes(
     search_string: &str,
     locale: crate::Locale,
 ) -> impl Iterator<Item = RecipeSearchEntry> {
-    let pattern = preprocess_text(search_string).collect::<String>();
-    RECIPES.entries().filter_map(move |(recipe_id, recipe)| {
+    let pattern = Pattern::parse(
+        &preprocess_pattern(search_string),
+        CaseMatching::Ignore,
+        Normalization::Smart,
+    );
+    let entries = RECIPES.entries().filter_map(|(recipe_id, recipe)| {
         let item_name = get_raw_item_name(recipe.item_id, locale)?;
-        match is_subsequence(preprocess_text(item_name), pattern.chars()) {
-            true => Some((recipe_id, recipe)),
-            false => None,
-        }
-    })
+        Some(MatcherCandidate {
+            haystack: item_name,
+            associated_data: (recipe_id, recipe),
+        })
+    });
+    let matches = pattern.match_list(entries, MATCHER.lock().as_mut().unwrap());
+    matches
+        .into_iter()
+        .map(|(entry, _score)| entry.associated_data)
 }
 
 pub type StellarMissionSearchEntry = (u32, &'static crate::StellarMission);
@@ -41,27 +64,43 @@ pub fn find_stellar_missions(
     search_string: &str,
     locale: crate::Locale,
 ) -> impl Iterator<Item = StellarMissionSearchEntry> {
-    let pattern = preprocess_text(search_string).collect::<String>();
-    STELLAR_MISSIONS
+    let pattern = Pattern::parse(
+        &preprocess_pattern(search_string),
+        CaseMatching::Ignore,
+        Normalization::Smart,
+    );
+    let mission_entries = STELLAR_MISSIONS
         .entries()
-        .filter_map(move |(mission_id, mission)| {
+        .filter_map(|(mission_id, mission)| {
             let mission_name = get_stellar_mission_name(mission_id, locale)?;
-            match is_subsequence(preprocess_text(mission_name), pattern.chars()) {
-                true => Some((mission_id, mission)),
-                false => mission
-                    .recipe_ids
-                    .iter()
-                    .filter_map(|recipe_id| {
-                        let recipe = RECIPES.get(*recipe_id)?;
-                        let item_name = get_raw_item_name(recipe.item_id, locale)?;
-                        match is_subsequence(preprocess_text(item_name), pattern.chars()) {
-                            true => Some((mission_id, mission)),
-                            false => None,
-                        }
-                    })
-                    .next(),
-            }
-        })
+            Some(MatcherCandidate {
+                haystack: mission_name,
+                associated_data: (mission_id, mission),
+            })
+        });
+    let recipe_entries = STELLAR_MISSIONS
+        .entries()
+        .flat_map(|(mission_id, mission)| {
+            mission.recipe_ids.iter().filter_map(move |&recipe_id| {
+                let recipe = RECIPES.get(recipe_id)?;
+                let item_name = get_raw_item_name(recipe.item_id, locale)?;
+                Some(MatcherCandidate {
+                    haystack: item_name,
+                    associated_data: (mission_id, mission),
+                })
+            })
+        });
+    let matches = pattern.match_list(
+        mission_entries.chain(recipe_entries),
+        MATCHER.lock().as_mut().unwrap(),
+    );
+    let mut unique_matches: HashSet<u32> = HashSet::default();
+    matches.into_iter().filter_map(move |(entry, _score)| {
+        match unique_matches.insert(entry.associated_data.0) {
+            true => Some(entry.associated_data),
+            false => None,
+        }
+    })
 }
 
 fn find_consumables(
@@ -69,14 +108,22 @@ fn find_consumables(
     locale: crate::Locale,
     consumables: &'static [crate::Consumable],
 ) -> impl Iterator<Item = &'static crate::Consumable> {
-    let pattern = preprocess_text(search_string).collect::<String>();
-    consumables.iter().filter_map(move |consumable| {
+    let pattern = Pattern::parse(
+        &preprocess_pattern(search_string),
+        CaseMatching::Ignore,
+        Normalization::Smart,
+    );
+    let entries = consumables.iter().filter_map(|consumable| {
         let item_name = get_raw_item_name(consumable.item_id, locale)?;
-        match is_subsequence(preprocess_text(item_name), pattern.chars()) {
-            true => Some(consumable),
-            false => None,
-        }
-    })
+        Some(MatcherCandidate {
+            haystack: item_name,
+            associated_data: consumable,
+        })
+    });
+    let matches = pattern.match_list(entries, MATCHER.lock().as_mut().unwrap());
+    matches
+        .into_iter()
+        .map(|(entry, _score)| entry.associated_data)
 }
 
 pub fn find_meals(
