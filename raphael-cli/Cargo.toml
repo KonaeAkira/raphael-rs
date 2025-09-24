@@ -1,6 +1,6 @@
 [package]
 name = "raphael-cli"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 
 [dependencies]
@@ -10,6 +10,6 @@ raphael-data = { workspace = true }
 rayon = { workspace = true }
 log = { workspace = true }
 
-clap = { version = "4.4.11", features = ["derive", "wrap_help", "env"] }
+clap = { version = "4.5.48", features = ["derive", "wrap_help", "env"] }
 
 env_logger = "0.11.5"
