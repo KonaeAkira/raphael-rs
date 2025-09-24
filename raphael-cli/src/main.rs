@@ -29,13 +29,13 @@ struct SearchCli {
     command: Option<SearchCommands>,
 
     #[command(flatten)]
-    recipe_search_args: commands::search::SearchArgs,
+    recipe_search_args: commands::search_recipe::SearchArgs,
 }
 
 #[derive(Subcommand, Debug)]
 enum SearchCommands {
     /// Search recipes. Default if no command is specified
-    Recipe(commands::search::SearchArgs),
+    Recipe(commands::search_recipe::SearchArgs),
     /// Search stellar missions
     Mission(commands::search_mission::SearchArgs),
 }
@@ -51,10 +51,10 @@ fn main() {
     match &cli.command {
         Commands::Search(search_cli) => match &search_cli.command {
             Some(command) => match command {
-                SearchCommands::Recipe(args) => commands::search::execute(args),
+                SearchCommands::Recipe(args) => commands::search_recipe::execute(args),
                 SearchCommands::Mission(args) => commands::search_mission::execute(args),
             },
-            None => commands::search::execute(&search_cli.recipe_search_args),
+            None => commands::search_recipe::execute(&search_cli.recipe_search_args),
         },
         Commands::Solve(args) => commands::solve::execute(args),
         Commands::Ingredients(args) => commands::ingredients::execute(args),
