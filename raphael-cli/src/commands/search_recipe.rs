@@ -1,5 +1,5 @@
 use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, Recipe, STELLAR_MISSIONS, get_item_name, get_job_name};
+use raphael_data::{Locale, RECIPES, Recipe, STELLAR_MISSIONS, get_job_name, get_raw_item_name};
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
@@ -34,7 +34,7 @@ pub enum SearchLanguage {
     DE,
     FR,
     JP,
-	KR
+    KR,
 }
 
 impl From<SearchLanguage> for Locale {
@@ -44,7 +44,7 @@ impl From<SearchLanguage> for Locale {
             SearchLanguage::DE => Locale::DE,
             SearchLanguage::FR => Locale::FR,
             SearchLanguage::JP => Locale::JP,
-			SearchLanguage::KR => Locale::KR,
+            SearchLanguage::KR => Locale::KR,
         }
     }
 }
@@ -59,7 +59,11 @@ pub fn execute(args: &SearchArgs) {
                 for recipe_id in mission.recipe_ids {
                     match RECIPES.get(*recipe_id) {
                         Some(recipe) => matches.push((*recipe_id, recipe)),
-                        None => log::warn!("Mission {} references missing recipe id {}", mission_id_arg, recipe_id),
+                        None => log::warn!(
+                            "Mission {} references missing recipe id {}",
+                            mission_id_arg,
+                            recipe_id
+                        ),
                     }
                 }
             }
@@ -101,15 +105,12 @@ pub fn execute(args: &SearchArgs) {
     }
 
     for (recipe_id, recipe) in matches {
-        let name =
-            get_item_name(recipe.item_id, false, locale).unwrap_or("Unknown item".to_owned());
+        let name = get_raw_item_name(recipe.item_id, locale).unwrap_or("Unknown item");
         println!(
             "{recipe_id}{separator}{job_name}{separator}{item_id}{separator}{name}",
-            recipe_id = recipe_id,
             job_name = get_job_name(recipe.job_id, locale),
             item_id = recipe.item_id,
             separator = args.output_field_separator,
-            name = name.trim_end_matches([' ', raphael_data::CL_ICON_CHAR])
         );
     }
 }
