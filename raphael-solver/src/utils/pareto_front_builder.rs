@@ -94,31 +94,52 @@ impl<'a> ParetoFrontBuilder<'a> {
     }
 
     pub fn build(self) -> Box<[ParetoValue]> {
-        let mut result = Vec::<ParetoValue>::new();
-        let mut segments = BinaryHeap::from(self.segments);
-        while let Some(mut segment) = segments.pop() {
-            if result
-                .last()
-                .is_none_or(|last_value| last_value.progress < segment.head.progress)
-            {
-                result.push(segment.head);
-            }
-            if segment.head.progress < self.cutoff.progress
-                && let Some(new_head) = segment.values.split_off_first()
-            {
-                segment.head = ParetoValue::new(
+        let advance_head = |segment: Segment<'a>, min_progress: u32| -> Option<Segment<'a>> {
+            if let Some((mut head, mut values)) = segment.values.split_first() {
+                while head.progress + segment.offset.progress <= min_progress {
+                    if let Some(new_head) = values.split_off_first() {
+                        head = new_head;
+                    } else {
+                        return None;
+                    }
+                }
+                let head = ParetoValue::new(
                     std::cmp::min(
                         self.cutoff.progress,
-                        new_head.progress + segment.offset.progress,
+                        head.progress + segment.offset.progress,
                     ),
-                    std::cmp::min(
-                        self.cutoff.quality,
-                        new_head.quality + segment.offset.quality,
-                    ),
+                    std::cmp::min(self.cutoff.quality, head.quality + segment.offset.quality),
                 );
-                segments.push(segment);
+                Some(Segment {
+                    head,
+                    values,
+                    offset: segment.offset,
+                })
+            } else {
+                None
             }
+        };
+
+        let mut segments = BinaryHeap::from(self.segments);
+        if let Some(first_segment) = segments.pop() {
+            let mut result = nunny::vec![first_segment.head];
+            if let Some(new_segment) = advance_head(first_segment, 0) {
+                segments.push(new_segment);
+            }
+            while let Some(segment) = segments.pop() {
+                if result.last().progress < segment.head.progress {
+                    result.push(segment.head);
+                    if segment.head.progress == self.cutoff.progress {
+                        break;
+                    }
+                }
+                if let Some(new_segment) = advance_head(segment, result.last().progress) {
+                    segments.push(new_segment);
+                }
+            }
+            result.into_boxed_slice().into()
+        } else {
+            Box::new([])
         }
-        result.into_boxed_slice()
     }
 }
