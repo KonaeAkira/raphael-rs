@@ -59,10 +59,7 @@ impl<'a> ParetoFrontBuilder<'a> {
 
     pub fn push(&mut self, progress: u32, quality: u32) {
         let segment = Segment {
-            head: ParetoValue::new(
-                std::cmp::min(self.cutoff.progress, progress),
-                std::cmp::min(self.cutoff.quality, quality),
-            ),
+            head: ParetoValue::new(progress, std::cmp::min(self.cutoff.quality, quality)),
             values: &[],
             offset: ParetoValue::new(0, 0),
         };
@@ -83,7 +80,7 @@ impl<'a> ParetoFrontBuilder<'a> {
             values = next_values;
         }
         let head = ParetoValue::new(
-            std::cmp::min(self.cutoff.progress, head.progress + progress_offset),
+            head.progress + progress_offset,
             std::cmp::min(self.cutoff.quality, head.quality + quality_offset),
         );
         self.segments.push(Segment {
@@ -103,15 +100,8 @@ impl<'a> ParetoFrontBuilder<'a> {
                         return None;
                     }
                 }
-                let head = ParetoValue::new(
-                    std::cmp::min(
-                        self.cutoff.progress,
-                        head.progress + segment.offset.progress,
-                    ),
-                    std::cmp::min(self.cutoff.quality, head.quality + segment.offset.quality),
-                );
                 Some(Segment {
-                    head,
+                    head: *head + segment.offset,
                     values,
                     offset: segment.offset,
                 })
@@ -122,6 +112,9 @@ impl<'a> ParetoFrontBuilder<'a> {
 
         let mut segments = BinaryHeap::from(self.segments);
         if let Some(first_segment) = segments.pop() {
+            if first_segment.head.progress >= self.cutoff.progress {
+                return Box::new([first_segment.head]);
+            }
             let mut result = nunny::vec![first_segment.head];
             if let Some(new_segment) = advance_head(first_segment, 0) {
                 segments.push(new_segment);
@@ -129,7 +122,7 @@ impl<'a> ParetoFrontBuilder<'a> {
             while let Some(segment) = segments.pop() {
                 if result.last().progress < segment.head.progress {
                     result.push(segment.head);
-                    if segment.head.progress == self.cutoff.progress {
+                    if segment.head.progress >= self.cutoff.progress {
                         break;
                     }
                 }
