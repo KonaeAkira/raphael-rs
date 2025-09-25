@@ -163,12 +163,12 @@ impl QualityUbSolver {
         &self,
         state: ReducedState,
     ) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
-        let mut pareto_front_builder = ParetoFrontBuilder::new();
         let progress_cutoff = self.settings.max_progress();
         let quality_cutoff = self
             .settings
             .max_quality()
             .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]);
+        let mut pareto_front_builder = ParetoFrontBuilder::new(progress_cutoff, quality_cutoff);
         for action in FULL_SEARCH_ACTIONS {
             if let Some((new_state, progress, quality)) =
                 state.use_action(action, &self.settings, self.durability_cost)
@@ -191,7 +191,7 @@ impl QualityUbSolver {
             }
         }
         pareto_front_builder
-            .build(progress_cutoff, quality_cutoff)
+            .build()
             .try_into()
             .map_err(|_| internal_error!("Empty precompute Pareto front.", self.settings, state))
     }
@@ -307,7 +307,7 @@ impl QualityUbSolver {
             }
         }
 
-        let mut pareto_front_builder = ParetoFrontBuilder::new();
+        let mut pareto_front_builder = ParetoFrontBuilder::new(progress_cutoff, quality_cutoff);
         for (child_state, action_progress, action_quality) in child_states {
             if !child_state.is_final(self.durability_cost) {
                 let child_pareto_front = self.solved_states.get(&child_state).ok_or(
@@ -323,12 +323,9 @@ impl QualityUbSolver {
             }
         }
 
-        let pareto_front = pareto_front_builder
-            .build(progress_cutoff, quality_cutoff)
-            .try_into()
-            .map_err(|_| {
-                internal_error!("Solver produced empty Pareto front.", self.settings, state)
-            });
+        let pareto_front = pareto_front_builder.build().try_into().map_err(|_| {
+            internal_error!("Solver produced empty Pareto front.", self.settings, state)
+        });
         self.solved_states.insert(state, pareto_front?);
         Ok(())
     }

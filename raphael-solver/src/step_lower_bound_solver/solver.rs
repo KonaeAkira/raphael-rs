@@ -169,12 +169,12 @@ impl StepLbSolver {
         &self,
         state: ReducedState,
     ) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
-        let mut pareto_front_builder = ParetoFrontBuilder::new();
         let progress_cutoff = self.settings.max_progress();
         let quality_cutoff = self
             .settings
             .max_quality()
             .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]);
+        let mut pareto_front_builder = ParetoFrontBuilder::new(progress_cutoff, quality_cutoff);
         for action in FULL_SEARCH_ACTIONS {
             if state.steps_budget.get() < action.steps() {
                 continue;
@@ -203,12 +203,9 @@ impl StepLbSolver {
                 }
             }
         }
-        pareto_front_builder
-            .build(progress_cutoff, quality_cutoff)
-            .try_into()
-            .map_err(|_| {
-                internal_error!("Solver produced empty Pareto front.", self.settings, state)
-            })
+        pareto_front_builder.build().try_into().map_err(|_| {
+            internal_error!("Solver produced empty Pareto front.", self.settings, state)
+        })
     }
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
