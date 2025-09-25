@@ -18,7 +18,9 @@ pub struct MacroViewConfig {
     #[serde(default)]
     notification_config: MacroNotificationConfig,
     #[serde(default)]
-    macro_lock: bool,
+    intro_enabled: bool,
+    #[serde(default)]
+    intro_config: MacroIntroConfig,
 }
 
 impl Default for MacroViewConfig {
@@ -29,7 +31,8 @@ impl Default for MacroViewConfig {
             extra_delay: 0,
             notification_enabled: false,
             notification_config: MacroNotificationConfig::default(),
-            macro_lock: false,
+            intro_enabled: false,
+            intro_config: MacroIntroConfig::default(),
         }
     }
 }
@@ -63,11 +66,32 @@ impl Default for MacroNotificationConfig {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct MacroIntroConfig {
+    #[serde(default)]
+    default_intro: bool,
+    #[serde(default)]
+    custom_intro_format: String,
+}
+
+impl Default for MacroIntroConfig {
+    fn default() -> Self {
+        Self {
+            default_intro: true,
+            custom_intro_format: String::new(),
+        }
+    }
+}
+
 struct MacroTextBox {
     text: String,
 }
 
-fn format_custom_notification(notification_format: &str, index: usize, max_index: usize) -> String {
+fn format_custom_macro_command(
+    notification_format: &str,
+    index: usize,
+    max_index: usize,
+) -> String {
     notification_format
         .replace("{index}", &index.to_string())
         .replace("{max_index}", &max_index.to_string())
@@ -83,8 +107,16 @@ impl MacroTextBox {
         locale: Locale,
     ) -> Self {
         let mut lines: Vec<String> = Vec::new();
-        if config.macro_lock {
-            lines.push("/macrolock ".to_string());
+        if config.intro_enabled {
+            if config.intro_config.default_intro {
+                lines.push("/macrolock".to_string());
+            } else {
+                lines.push(format_custom_macro_command(
+                    &config.intro_config.custom_intro_format,
+                    index,
+                    max_index,
+                ))
+            }
         }
         lines.extend(actions.iter().map(|action| {
             if config.include_delay {
@@ -112,7 +144,7 @@ impl MacroTextBox {
                     &config.notification_config.custom_notification_format
                 };
 
-                lines.push(format_custom_notification(notification, index, max_index))
+                lines.push(format_custom_macro_command(notification, index, max_index))
             }
         }
         Self {
@@ -212,6 +244,32 @@ impl MacroView<'_> {
             });
         });
     }
+
+    fn macro_intro_menu(ui: &mut egui::Ui, intro_cfg: &mut MacroIntroConfig) {
+        ui.style_mut().spacing.item_spacing.y = 3.0;
+        ui.radio_value(
+            &mut intro_cfg.default_intro,
+            true,
+            "Use \"/macrolock\" as macro intro",
+        );
+        ui.radio_value(
+            &mut intro_cfg.default_intro,
+            false,
+            "Use custom intro format",
+        );
+        ui.horizontal(|ui| {
+            ui.add_space(18.0);
+            ui.vertical(|ui| {
+                ui.add_enabled_ui(!intro_cfg.default_intro, |ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut intro_cfg.custom_intro_format)
+                            .font(egui::TextStyle::Monospace)
+                            .hint_text("/macrolock <wait.5>"),
+                    );
+                });
+            });
+        });
+    }
 }
 
 impl Widget for MacroView<'_> {
@@ -250,7 +308,19 @@ impl Widget for MacroView<'_> {
                 });
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.config.split_macro, "Split macro");
-                    ui.checkbox(&mut self.config.macro_lock, "Macro lock");
+                    ui.checkbox(&mut self.config.intro_enabled, "Macro lock / intro");
+                    ui.add_enabled_ui(self.config.intro_enabled, |ui| {
+                        egui::containers::menu::MenuButton::new("✏ Edit")
+                            .config(
+                                egui::containers::menu::MenuConfig::default()
+                                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
+                            )
+                            .ui(ui, |ui| {
+                                ui.reset_style(); // prevent egui::DragValue from looking weird
+                                ui.set_max_width(305.0);
+                                Self::macro_intro_menu(ui, &mut self.config.intro_config)
+                            });
+                    });
                 });
                 ui.horizontal(|ui| {
                     ui.add(egui::Checkbox::new(
@@ -279,7 +349,7 @@ impl Widget for MacroView<'_> {
                 let mut remaining_actions = self.actions.as_slice();
                 while !remaining_actions.is_empty() {
                     let max_chunk_size = if self.config.split_macro {
-                        let chunk_size = 15 - usize::from(self.config.macro_lock);
+                        let chunk_size = 15 - usize::from(self.config.intro_enabled);
                         let avoid_notif = self.config.notification_config.avoid_single_action_macro
                             && remaining_actions.len() == chunk_size;
                         let has_notif = self.config.notification_enabled && !avoid_notif;
