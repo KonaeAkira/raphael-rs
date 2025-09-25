@@ -1,7 +1,5 @@
 use std::collections::BinaryHeap;
 
-use nunny::NonEmpty;
-
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ParetoValue {
     pub progress: u32,
@@ -68,7 +66,7 @@ impl<'a> ParetoFrontBuilder<'a> {
 
     pub fn push_slice(
         &mut self,
-        values: &'a NonEmpty<[ParetoValue]>,
+        values: &'a nunny::Slice<ParetoValue>,
         progress_offset: u32,
         quality_offset: u32,
     ) {
@@ -91,43 +89,34 @@ impl<'a> ParetoFrontBuilder<'a> {
     }
 
     pub fn build(self) -> Box<[ParetoValue]> {
-        let advance_head = |segment: Segment<'a>, min_progress: u32| -> Option<Segment<'a>> {
-            if let Some((mut head, mut values)) = segment.values.split_first() {
-                while head.progress + segment.offset.progress <= min_progress {
-                    if let Some(new_head) = values.split_off_first() {
-                        head = new_head;
-                    } else {
-                        return None;
-                    }
-                }
-                Some(Segment {
-                    head: *head + segment.offset,
-                    values,
-                    offset: segment.offset,
-                })
-            } else {
-                None
-            }
-        };
-
         let mut segments = BinaryHeap::from(self.segments);
-        if let Some(first_segment) = segments.pop() {
+        if let Some(mut first_segment) = segments.pop() {
             if first_segment.head.progress >= self.cutoff.progress {
                 return Box::new([first_segment.head]);
             }
             let mut result = nunny::vec![first_segment.head];
-            if let Some(new_segment) = advance_head(first_segment, 0) {
-                segments.push(new_segment);
+            if let Some(head) = first_segment.values.split_off_first() {
+                first_segment.head = *head + first_segment.offset;
+                segments.push(first_segment);
             }
-            while let Some(segment) = segments.pop() {
-                if result.last().progress < segment.head.progress {
+            while let Some(mut segment) = segments.pop() {
+                if segment.head.progress > result.last().progress {
                     result.push(segment.head);
                     if segment.head.progress >= self.cutoff.progress {
                         break;
                     }
-                }
-                if let Some(new_segment) = advance_head(segment, result.last().progress) {
-                    segments.push(new_segment);
+                    if let Some(head) = segment.values.split_off_first() {
+                        segment.head = *head + segment.offset;
+                        segments.push(segment);
+                    }
+                } else {
+                    while let Some(head) = segment.values.split_off_first() {
+                        if head.progress + segment.offset.progress > result.last().progress {
+                            segment.head = *head + segment.offset;
+                            segments.push(segment);
+                            break;
+                        }
+                    }
                 }
             }
             result.into_boxed_slice().into()
