@@ -4,7 +4,10 @@ use crate::{
     SolverException, SolverSettings,
     actions::{FULL_SEARCH_ACTIONS, use_action_combo},
     macros::internal_error,
-    utils::{self, compute_iq_quality_lut, largest_single_action_progress_increase},
+    utils::{
+        self, ParetoFrontBuilder, ParetoValue, compute_iq_quality_lut,
+        largest_single_action_progress_increase,
+    },
 };
 use raphael_sim::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -12,8 +15,6 @@ use rustc_hash::FxHashSet;
 
 use super::state::ReducedState;
 
-type ParetoValue = utils::ParetoValue<u32, u32>;
-type ParetoFrontBuilder = utils::ParetoFrontBuilder<u32, u32>;
 type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
 
 #[derive(Debug, Clone, Copy)]
@@ -90,10 +91,10 @@ impl StepLbSolver {
             Some(pareto_front) => pareto_front,
             None => self.solve_state(reduced_state)?,
         };
-        let index = pareto_front.partition_point(|value| value.first < required_progress);
+        let index = pareto_front.partition_point(|value| value.progress < required_progress);
         let quality_ub = pareto_front
             .get(index)
-            .map(|value| state.quality + value.second);
+            .map(|value| state.quality + value.quality);
         Ok(quality_ub)
     }
 
@@ -142,13 +143,10 @@ impl StepLbSolver {
         for unsolved_states in unsolved_state_by_steps.into_iter().rev() {
             let solved_states = unsolved_states
                 .into_par_iter()
-                .map_init(
-                    ParetoFrontBuilder::new,
-                    |pf_builder, reduced_state| -> Result<_, SolverException> {
-                        let pareto_front = self.do_solve_state(pf_builder, reduced_state)?;
-                        Ok((reduced_state, pareto_front))
-                    },
-                )
+                .map(|reduced_state| -> Result<_, SolverException> {
+                    let pareto_front = self.do_solve_state(reduced_state)?;
+                    Ok((reduced_state, pareto_front))
+                })
                 .collect::<Result<Vec<_>, SolverException>>()?;
             self.solved_states.extend(solved_states);
         }
@@ -163,18 +161,13 @@ impl StepLbSolver {
         }
     }
 
-    fn do_solve_state(
-        &self,
-        pareto_front_builder: &mut ParetoFrontBuilder,
-        state: ReducedState,
-    ) -> Result<Box<[ParetoValue]>, SolverException> {
+    fn do_solve_state(&self, state: ReducedState) -> Result<Box<[ParetoValue]>, SolverException> {
+        let mut pareto_front_builder = ParetoFrontBuilder::new();
         let progress_cutoff = self.settings.max_progress();
         let quality_cutoff = self
             .settings
             .max_quality()
             .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]);
-        pareto_front_builder.clear();
-        pareto_front_builder.push_empty();
         for action in FULL_SEARCH_ACTIONS {
             if state.steps_budget.get() < action.steps() {
                 continue;
@@ -188,7 +181,7 @@ impl StepLbSolver {
                 {
                     let new_state = ReducedState::from_state(new_state, new_step_budget);
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
-                        pareto_front_builder.push_slice(pareto_front);
+                        pareto_front_builder.push_slice(pareto_front, progress, quality)?;
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
@@ -198,22 +191,12 @@ impl StepLbSolver {
                             new_state
                         ));
                     }
-                    pareto_front_builder
-                        .peek_mut()
-                        .unwrap()
-                        .iter_mut()
-                        .for_each(|value| {
-                            value.first += progress;
-                            value.second += quality;
-                        });
-                    pareto_front_builder.merge(progress_cutoff, quality_cutoff);
                 } else if progress != 0 {
-                    pareto_front_builder.push_slice(&[ParetoValue::new(progress, quality)]);
-                    pareto_front_builder.merge(progress_cutoff, quality_cutoff);
+                    pareto_front_builder.push(progress, quality);
                 }
             }
         }
-        Ok(Box::from(pareto_front_builder.peek().unwrap()))
+        Ok(pareto_front_builder.build(progress_cutoff, quality_cutoff))
     }
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
