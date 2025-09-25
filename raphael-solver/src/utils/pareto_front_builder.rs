@@ -1,6 +1,6 @@
 use std::collections::BinaryHeap;
 
-use crate::{SolverException, macros::internal_error};
+use nunny::NonEmpty;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ParetoValue {
@@ -27,21 +27,6 @@ struct Segment<'a> {
     head: ParetoValue,
     values: &'a [ParetoValue],
     offset: ParetoValue,
-}
-
-impl<'a> Segment<'a> {
-    fn new(values: &'a [ParetoValue], offset: ParetoValue) -> Result<Self, SolverException> {
-        match values.split_first() {
-            Some((head, values)) => Ok(Self {
-                head: *head + offset,
-                values,
-                offset,
-            }),
-            None => Err(internal_error!(
-                "Cannot create ParetoFrontBuilder segment from empty Pareto front.",
-            )),
-        }
-    }
 }
 
 impl<'a> std::cmp::PartialOrd for Segment<'a> {
@@ -78,13 +63,17 @@ impl<'a> ParetoFrontBuilder<'a> {
 
     pub fn push_slice(
         &mut self,
-        values: &'a [ParetoValue],
+        values: &'a NonEmpty<[ParetoValue]>,
         progress_offset: u32,
         quality_offset: u32,
-    ) -> Result<(), SolverException> {
-        let segment = Segment::new(values, ParetoValue::new(progress_offset, quality_offset))?;
-        self.segments.push(segment);
-        Ok(())
+    ) {
+        let (&head, values) = values.split_first();
+        let offset = ParetoValue::new(progress_offset, quality_offset);
+        self.segments.push(Segment {
+            head: head + offset,
+            values,
+            offset,
+        });
     }
 
     pub fn build(self, max_progress: u32, max_quality: u32) -> Box<[ParetoValue]> {

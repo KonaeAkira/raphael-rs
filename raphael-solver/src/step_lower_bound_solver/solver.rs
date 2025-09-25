@@ -9,13 +9,14 @@ use crate::{
         largest_single_action_progress_increase,
     },
 };
+
 use raphael_sim::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rustc_hash::FxHashSet;
 
 use super::state::ReducedState;
 
-type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<[ParetoValue]>>;
+type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
@@ -98,7 +99,10 @@ impl StepLbSolver {
         Ok(quality_ub)
     }
 
-    fn solve_state(&mut self, seed_state: ReducedState) -> Result<&[ParetoValue], SolverException> {
+    fn solve_state(
+        &mut self,
+        seed_state: ReducedState,
+    ) -> Result<&nunny::Slice<ParetoValue>, SolverException> {
         // Find all transitive children that still need solving and group them by step budget.
         // This is done with a simple BFS, skipping all states that have already been solved.
         let mut unvisited_states_by_steps: VecDeque<FxHashSet<ReducedState>> = VecDeque::new();
@@ -161,7 +165,10 @@ impl StepLbSolver {
         }
     }
 
-    fn do_solve_state(&self, state: ReducedState) -> Result<Box<[ParetoValue]>, SolverException> {
+    fn do_solve_state(
+        &self,
+        state: ReducedState,
+    ) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
         let mut pareto_front_builder = ParetoFrontBuilder::new();
         let progress_cutoff = self.settings.max_progress();
         let quality_cutoff = self
@@ -181,7 +188,7 @@ impl StepLbSolver {
                 {
                     let new_state = ReducedState::from_state(new_state, new_step_budget);
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
-                        pareto_front_builder.push_slice(pareto_front, progress, quality)?;
+                        pareto_front_builder.push_slice(pareto_front, progress, quality);
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
@@ -196,7 +203,12 @@ impl StepLbSolver {
                 }
             }
         }
-        Ok(pareto_front_builder.build(progress_cutoff, quality_cutoff))
+        pareto_front_builder
+            .build(progress_cutoff, quality_cutoff)
+            .try_into()
+            .map_err(|_| {
+                internal_error!("Solver produced empty Pareto front.", self.settings, state)
+            })
     }
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {

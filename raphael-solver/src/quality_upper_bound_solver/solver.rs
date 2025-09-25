@@ -4,6 +4,7 @@ use crate::{
     macros::internal_error,
     utils::{self, ParetoFrontBuilder, ParetoValue},
 };
+
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use rustc_hash::FxHashMap;
@@ -20,7 +21,7 @@ pub struct QualityUbSolverStats {
 pub struct QualityUbSolver {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
-    solved_states: FxHashMap<ReducedState, Box<[ParetoValue]>>,
+    solved_states: FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
     iq_quality_lut: [u32; 11],
     maximal_templates: FxHashMap<TemplateData, u16>,
     durability_cost: u16,
@@ -130,16 +131,8 @@ impl QualityUbSolver {
                             let required_quality = self.settings.max_quality().saturating_sub(
                                 self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
                             );
-                            if let Some(value) = pareto_front.last() {
-                                value.progress >= required_progress
-                                    && value.quality >= required_quality
-                            } else {
-                                return Err(internal_error!(
-                                    "Unexpected empty pareto front.",
-                                    self.settings,
-                                    state
-                                ));
-                            }
+                            pareto_front.first().progress >= required_progress
+                                && pareto_front.first().quality >= required_quality
                         };
                         if template_is_maximal {
                             template.required_cp_for_max_progress_and_quality = Some(cp);
@@ -169,7 +162,7 @@ impl QualityUbSolver {
     fn solve_precompute_state(
         &self,
         state: ReducedState,
-    ) -> Result<Box<[ParetoValue]>, SolverException> {
+    ) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
         let mut pareto_front_builder = ParetoFrontBuilder::new();
         let progress_cutoff = self.settings.max_progress();
         let quality_cutoff = self
@@ -182,7 +175,7 @@ impl QualityUbSolver {
             {
                 if !new_state.is_final(self.durability_cost) {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
-                        pareto_front_builder.push_slice(pareto_front, progress, quality)?;
+                        pareto_front_builder.push_slice(pareto_front, progress, quality);
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
@@ -197,7 +190,10 @@ impl QualityUbSolver {
                 }
             }
         }
-        Ok(pareto_front_builder.build(progress_cutoff, quality_cutoff))
+        pareto_front_builder
+            .build(progress_cutoff, quality_cutoff)
+            .try_into()
+            .map_err(|_| internal_error!("Empty precompute Pareto front.", self.settings, state))
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
@@ -235,9 +231,8 @@ impl QualityUbSolver {
                 ..reduced_state
             };
             if let Some(pareto_front) = self.solved_states.get(&reduced_state)
-                && let Some(value) = pareto_front.last()
-                && value.progress >= required_progress
-                && value.quality + state.quality >= self.settings.max_quality()
+                && pareto_front.first().progress >= required_progress
+                && pareto_front.first().quality + state.quality >= self.settings.max_quality()
             {
                 return Ok(self.settings.max_quality());
             } else {
@@ -305,7 +300,7 @@ impl QualityUbSolver {
                 if child_pareto_front.iter().any(is_maximal) {
                     self.solved_states.insert(
                         state,
-                        [ParetoValue::new(progress_cutoff, quality_cutoff)].into(),
+                        nunny::slice![ParetoValue::new(progress_cutoff, quality_cutoff)].into(),
                     );
                     return Ok(());
                 }
@@ -322,14 +317,19 @@ impl QualityUbSolver {
                     child_pareto_front,
                     action_progress,
                     action_quality,
-                )?;
+                );
             } else if action_progress != 0 {
                 pareto_front_builder.push(action_progress, action_quality);
             }
         }
 
-        let pareto_front = pareto_front_builder.build(progress_cutoff, quality_cutoff);
-        self.solved_states.insert(state, pareto_front);
+        let pareto_front = pareto_front_builder
+            .build(progress_cutoff, quality_cutoff)
+            .try_into()
+            .map_err(|_| {
+                internal_error!("Solver produced empty Pareto front.", self.settings, state)
+            });
+        self.solved_states.insert(state, pareto_front?);
         Ok(())
     }
 
