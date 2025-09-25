@@ -32,7 +32,7 @@ impl<T> AsRef<str> for MatcherCandidate<T> {
 fn preprocess_pattern(pattern: &str) -> String {
     pattern
         .chars()
-        .filter(|&c| !c.is_whitespace() && c != HQ_ICON_CHAR && c != CL_ICON_CHAR)
+        .filter(|&c| c != HQ_ICON_CHAR && c != CL_ICON_CHAR)
         .collect()
 }
 
