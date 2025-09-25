@@ -155,7 +155,7 @@ impl MacroTextBox {
 
 impl Widget for MacroTextBox {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        ui.add(super::MultilineMonospace::new(self.text))
+        ui.add(super::MultilineMonospace::new(self.text).scrollable([true, false]))
     }
 }
 

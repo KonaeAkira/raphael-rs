@@ -2,7 +2,33 @@
 pub struct MultilineMonospace {
     text: String,
     max_height: f32,
-    scrollable: bool,
+    scroll_direction_enabled: egui::Vec2b,
+}
+
+struct CopyTextButton<'a> {
+    text: &'a str,
+}
+
+impl<'a> CopyTextButton<'a> {
+    pub fn new(text: &'a str) -> Self {
+        Self { text }
+    }
+}
+
+impl egui::Widget for CopyTextButton<'_> {
+    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+            if ui.ctx().animate_bool_with_time(ui.id(), false, 1.5) == 0.0 {
+                if ui.button("🗐").clicked() {
+                    ui.ctx().copy_text(self.text.to_owned());
+                    ui.ctx().animate_bool_with_time(ui.id(), true, 0.0);
+                }
+            } else {
+                ui.add_enabled(false, egui::Button::new("🗐"));
+            }
+        })
+        .response
+    }
 }
 
 impl MultilineMonospace {
@@ -10,7 +36,7 @@ impl MultilineMonospace {
         Self {
             text,
             max_height: f32::INFINITY,
-            scrollable: false,
+            scroll_direction_enabled: egui::Vec2b::default(),
         }
     }
 
@@ -19,8 +45,8 @@ impl MultilineMonospace {
         self
     }
 
-    pub fn scrollable(mut self, scrollable: bool) -> Self {
-        self.scrollable = scrollable;
+    pub fn scrollable(mut self, direction_enabled: impl Into<egui::Vec2b>) -> Self {
+        self.scroll_direction_enabled = direction_enabled.into();
         self
     }
 }
@@ -30,22 +56,20 @@ impl egui::Widget for MultilineMonospace {
         let id = egui::Id::new(&self.text);
         ui.push_id(id, |ui| {
             ui.group(|ui| {
+                ui.set_max_size(ui.available_size());
                 ui.horizontal_top(|ui| {
-                    egui::ScrollArea::new([self.scrollable, self.scrollable])
+                    egui::ScrollArea::new(self.scroll_direction_enabled)
                         .max_height(self.max_height)
                         .show(ui, |ui| {
                             ui.monospace(&self.text);
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                                if ui.ctx().animate_bool_with_time(id, false, 1.5) == 0.0 {
-                                    if ui.button("🗐").clicked() {
-                                        ui.ctx().copy_text(self.text);
-                                        ui.ctx().animate_bool_with_time(id, true, 0.0);
-                                    }
-                                } else {
-                                    ui.add_enabled(false, egui::Button::new("🗐"));
-                                }
-                            });
                         });
+                    ui.put(
+                        egui::Rect::from_min_max(
+                            ui.max_rect().left_top(),
+                            ui.max_rect().right_top(),
+                        ),
+                        CopyTextButton::new(&self.text),
+                    );
                 });
             });
         })
