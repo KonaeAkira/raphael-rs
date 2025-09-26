@@ -195,6 +195,9 @@ impl QualityUbSolver {
                 } else if progress != 0 {
                     pf_builder.push(action_offset);
                 }
+                if pf_builder.is_maximal(cutoff) {
+                    break;
+                }
             }
         }
         pf_builder
