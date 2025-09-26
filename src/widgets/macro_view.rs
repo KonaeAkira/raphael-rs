@@ -3,7 +3,20 @@ use raphael_data::{Locale, action_name, get_item_name};
 use raphael_sim::Action;
 use serde::{Deserialize, Serialize};
 
-use crate::context::AppContext;
+use crate::{context::AppContext, widgets::HelpText};
+
+const CUSTOM_FORMAT_PLACEHOLDER_HELP_TEXT: &str =
+    "The format can be any arbitrary text or FFXIV command.
+
+The following placeholders can be used to output their respective value:
+  - {index} : the index or number of the macro block
+  - {max_index} : the maximum index or number of macro blocks
+  - {item_name} : the name of the selected recipe's item result
+  - {food} : the name of the selected food
+  - {potion} : the name of the selected potion
+  - {craftsmanship} : the base craftsmanship stat
+  - {control} : the base control stat
+  - {cp} : the base CP stat";
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MacroViewConfig {
@@ -260,11 +273,15 @@ impl MacroView<'_> {
                     .suffix(">"),
             );
         });
-        ui.radio_value(
-            &mut notification_cfg.default_notification,
-            false,
-            "Use custom notification format",
-        );
+        ui.horizontal(|ui| {
+            ui.radio_value(
+                &mut notification_cfg.default_notification,
+                false,
+                "Use custom notification format",
+            );
+            ui.add(HelpText::new(CUSTOM_FORMAT_PLACEHOLDER_HELP_TEXT));
+        });
+
         ui.horizontal(|ui| {
             ui.add_space(18.0);
             ui.vertical(|ui| {
@@ -314,11 +331,14 @@ impl MacroView<'_> {
             true,
             "Use \"/macrolock\" as macro intro",
         );
-        ui.radio_value(
-            &mut intro_cfg.default_intro,
-            false,
-            "Use custom intro format",
-        );
+        ui.horizontal(|ui| {
+            ui.radio_value(
+                &mut intro_cfg.default_intro,
+                false,
+                "Use custom intro format",
+            );
+            ui.add(HelpText::new(CUSTOM_FORMAT_PLACEHOLDER_HELP_TEXT));
+        });
         ui.horizontal(|ui| {
             ui.add_space(18.0);
             ui.vertical(|ui| {
