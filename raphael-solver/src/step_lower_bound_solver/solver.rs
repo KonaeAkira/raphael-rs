@@ -169,12 +169,14 @@ impl StepLbSolver {
         &self,
         state: ReducedState,
     ) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
-        let progress_cutoff = self.settings.max_progress();
-        let quality_cutoff = self
-            .settings
-            .max_quality()
-            .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]);
-        let mut pareto_front_builder = ParetoFrontBuilder::new(progress_cutoff, quality_cutoff);
+        let cutoff = ParetoValue::new(
+            self.settings.max_progress(),
+            self.settings
+                .max_quality()
+                .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]),
+        );
+        let mut pareto_front_builder = ParetoFrontBuilder::new();
+        pareto_front_builder.initialize_with_cutoff(cutoff);
         for action in FULL_SEARCH_ACTIONS {
             if state.steps_budget.get() < action.steps() {
                 continue;
@@ -188,7 +190,9 @@ impl StepLbSolver {
                 {
                     let new_state = ReducedState::from_state(new_state, new_step_budget);
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
-                        pareto_front_builder.push_slice(pareto_front, progress, quality);
+                        pareto_front_builder.push_slice(pareto_front.iter().map(|value| {
+                            ParetoValue::new(value.progress + progress, value.quality + quality)
+                        }));
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
@@ -199,11 +203,11 @@ impl StepLbSolver {
                         ));
                     }
                 } else if progress != 0 {
-                    pareto_front_builder.push(progress, quality);
+                    pareto_front_builder.push(ParetoValue::new(progress, quality));
                 }
             }
         }
-        pareto_front_builder.build().try_into().map_err(|_| {
+        pareto_front_builder.result().try_into().map_err(|_| {
             internal_error!("Solver produced empty Pareto front.", self.settings, state)
         })
     }
