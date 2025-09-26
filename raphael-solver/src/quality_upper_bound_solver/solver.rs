@@ -290,7 +290,7 @@ impl QualityUbSolver {
                 && !self.solved_states.contains_key(child_state)
             {
                 self.solve_state(*child_state)?;
-                let child_pareto_front = self.solved_states.get(&child_state).ok_or(
+                let child_pareto_front = self.solved_states.get(child_state).ok_or(
                     internal_error!("State not found in memoization table after solving.",),
                 )?;
                 let is_maximal = |value: &ParetoValue| {
