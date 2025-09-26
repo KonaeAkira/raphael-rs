@@ -1,5 +1,5 @@
 use egui::{Align, Layout, Widget};
-use raphael_data::{Locale, action_name};
+use raphael_data::{Locale, action_name, get_item_name};
 use raphael_sim::Action;
 use serde::{Deserialize, Serialize};
 
@@ -87,12 +87,79 @@ struct MacroTextBox {
     text: String,
 }
 
-fn format_custom_macro_command(
-    notification_format: &str,
-    index: usize,
-    max_index: usize,
-) -> String {
-    notification_format
+#[derive(Debug)]
+struct FixedFormattingData {
+    pub locale: Locale,
+    pub notification_format: String,
+    pub last_notification_format: String,
+    pub intro_format: String,
+}
+
+fn preformat_fixed_data(format: &str, app_context: &AppContext) -> String {
+    let item_name = get_item_name(
+        app_context.recipe_config.recipe.item_id,
+        false,
+        app_context.locale,
+    )
+    .unwrap_or("Unknown item".to_owned());
+    let food_string = app_context
+        .selected_food
+        .map(|food| {
+            get_item_name(food.item_id, food.hq, app_context.locale)
+                .unwrap_or("Unknown item".to_owned())
+        })
+        .unwrap_or("None".to_owned());
+    let potion_string = app_context
+        .selected_potion
+        .map(|potion| {
+            get_item_name(potion.item_id, potion.hq, app_context.locale)
+                .unwrap_or("Unknown item".to_owned())
+        })
+        .unwrap_or("None".to_owned());
+    format
+        .replace("{item_name}", &item_name)
+        .replace("{food}", &food_string)
+        .replace("{potion}", &potion_string)
+        .replace(
+            "{craftsmanship}",
+            &app_context.active_stats().craftsmanship.to_string(),
+        )
+        .replace("{control}", &app_context.active_stats().control.to_string())
+        .replace("{cp}", &app_context.active_stats().cp.to_string())
+        .replace("{level}", &app_context.active_stats().level.to_string())
+}
+
+impl FixedFormattingData {
+    pub fn new(app_context: &AppContext) -> Self {
+        Self {
+            locale: app_context.locale,
+            notification_format: preformat_fixed_data(
+                &app_context
+                    .macro_view_config
+                    .notification_config
+                    .custom_notification_format,
+                app_context,
+            ),
+            last_notification_format: preformat_fixed_data(
+                &app_context
+                    .macro_view_config
+                    .notification_config
+                    .custom_last_notification_format,
+                app_context,
+            ),
+            intro_format: preformat_fixed_data(
+                &app_context
+                    .macro_view_config
+                    .intro_config
+                    .custom_intro_format,
+                app_context,
+            ),
+        }
+    }
+}
+
+fn format_custom_macro_command(command_format: &str, index: usize, max_index: usize) -> String {
+    command_format
         .replace("{index}", &index.to_string())
         .replace("{max_index}", &max_index.to_string())
 }
@@ -102,9 +169,9 @@ impl MacroTextBox {
         index: usize,
         max_index: usize,
         actions: &[Action],
+        fixed_formatting_data: &FixedFormattingData,
         config: &MacroViewConfig,
         newline: &'static str,
-        locale: Locale,
     ) -> Self {
         let mut lines: Vec<String> = Vec::new();
         if config.intro_enabled {
@@ -112,7 +179,7 @@ impl MacroTextBox {
                 lines.push("/macrolock".to_string());
             } else {
                 lines.push(format_custom_macro_command(
-                    &config.intro_config.custom_intro_format,
+                    &fixed_formatting_data.intro_format,
                     index,
                     max_index,
                 ))
@@ -122,11 +189,14 @@ impl MacroTextBox {
             if config.include_delay {
                 format!(
                     "/ac \"{}\" <wait.{}>",
-                    action_name(*action, locale),
+                    action_name(*action, fixed_formatting_data.locale),
                     action.time_cost() + config.extra_delay
                 )
             } else {
-                format!("/ac \"{}\"", action_name(*action, locale))
+                format!(
+                    "/ac \"{}\"",
+                    action_name(*action, fixed_formatting_data.locale)
+                )
             }
         }));
         if config.notification_enabled && lines.len() < 15 {
@@ -139,9 +209,9 @@ impl MacroTextBox {
                 let notification = if config.notification_config.different_last_notification
                     && index == max_index
                 {
-                    &config.notification_config.custom_last_notification_format
+                    &fixed_formatting_data.last_notification_format
                 } else {
-                    &config.notification_config.custom_notification_format
+                    &fixed_formatting_data.notification_format
                 };
 
                 lines.push(format_custom_macro_command(notification, index, max_index))
@@ -160,23 +230,15 @@ impl Widget for MacroTextBox {
 }
 
 pub struct MacroView<'a> {
+    app_context: &'a mut AppContext,
     actions: &'a mut Vec<Action>,
-    config: &'a mut MacroViewConfig,
-    locale: Locale,
 }
 
 impl<'a> MacroView<'a> {
     pub fn new(app_context: &'a mut AppContext, actions: &'a mut Vec<Action>) -> Self {
-        let AppContext {
-            locale,
-            macro_view_config: config,
-            ..
-        } = app_context;
-
         Self {
+            app_context,
             actions,
-            config,
-            locale: *locale,
         }
     }
 }
@@ -274,6 +336,12 @@ impl MacroView<'_> {
 
 impl Widget for MacroView<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let fixed_fromatting_data = FixedFormattingData::new(self.app_context);
+        let AppContext {
+            macro_view_config: config,
+            ..
+        } = self.app_context;
+
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
@@ -300,16 +368,16 @@ impl Widget for MacroView<'_> {
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.config.include_delay, "Include delay");
-                    ui.add_enabled_ui(self.config.include_delay, |ui| {
+                    ui.checkbox(&mut config.include_delay, "Include delay");
+                    ui.add_enabled_ui(config.include_delay, |ui| {
                         ui.label("Extra delay");
-                        ui.add(egui::DragValue::new(&mut self.config.extra_delay).range(0..=9));
+                        ui.add(egui::DragValue::new(&mut config.extra_delay).range(0..=9));
                     });
                 });
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.config.split_macro, "Split macro");
-                    ui.checkbox(&mut self.config.intro_enabled, "Macro lock / intro");
-                    ui.add_enabled_ui(self.config.intro_enabled, |ui| {
+                    ui.checkbox(&mut config.split_macro, "Split macro");
+                    ui.checkbox(&mut config.intro_enabled, "Macro lock / intro");
+                    ui.add_enabled_ui(config.intro_enabled, |ui| {
                         egui::containers::menu::MenuButton::new("✏ Edit")
                             .config(
                                 egui::containers::menu::MenuConfig::default()
@@ -318,16 +386,16 @@ impl Widget for MacroView<'_> {
                             .ui(ui, |ui| {
                                 ui.reset_style(); // prevent egui::DragValue from looking weird
                                 ui.set_max_width(305.0);
-                                Self::macro_intro_menu(ui, &mut self.config.intro_config)
+                                Self::macro_intro_menu(ui, &mut config.intro_config)
                             });
                     });
                 });
                 ui.horizontal(|ui| {
                     ui.add(egui::Checkbox::new(
-                        &mut self.config.notification_enabled,
+                        &mut config.notification_enabled,
                         "End-of-macro notification",
                     ));
-                    ui.add_enabled_ui(self.config.notification_enabled, |ui| {
+                    ui.add_enabled_ui(config.notification_enabled, |ui| {
                         egui::containers::menu::MenuButton::new("✏ Edit")
                             .config(
                                 egui::containers::menu::MenuConfig::default()
@@ -336,10 +404,7 @@ impl Widget for MacroView<'_> {
                             .ui(ui, |ui| {
                                 ui.reset_style(); // prevent egui::DragValue from looking weird
                                 ui.set_max_width(305.0);
-                                Self::macro_notification_menu(
-                                    ui,
-                                    &mut self.config.notification_config,
-                                )
+                                Self::macro_notification_menu(ui, &mut config.notification_config)
                             });
                     });
                 });
@@ -348,11 +413,11 @@ impl Widget for MacroView<'_> {
                 let mut chunks = Vec::new();
                 let mut remaining_actions = self.actions.as_slice();
                 while !remaining_actions.is_empty() {
-                    let max_chunk_size = if self.config.split_macro {
-                        let chunk_size = 15 - usize::from(self.config.intro_enabled);
-                        let avoid_notif = self.config.notification_config.avoid_single_action_macro
+                    let max_chunk_size = if config.split_macro {
+                        let chunk_size = 15 - usize::from(config.intro_enabled);
+                        let avoid_notif = config.notification_config.avoid_single_action_macro
                             && remaining_actions.len() == chunk_size;
-                        let has_notif = self.config.notification_enabled && !avoid_notif;
+                        let has_notif = config.notification_enabled && !avoid_notif;
                         chunk_size - usize::from(has_notif)
                     } else {
                         usize::MAX
@@ -373,9 +438,9 @@ impl Widget for MacroView<'_> {
                         index + 1,
                         num_chunks,
                         actions,
-                        self.config,
+                        &fixed_fromatting_data,
+                        config,
                         newline,
-                        self.locale,
                     ));
                 }
 
