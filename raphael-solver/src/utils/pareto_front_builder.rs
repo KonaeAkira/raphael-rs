@@ -64,7 +64,7 @@ impl ParetoFrontBuilder {
 }
 
 fn trim(mut slice: &mut [ParetoValue], cutoff: ParetoValue) -> &mut [ParetoValue] {
-    if slice.len() >= 1 {
+    if !slice.is_empty() {
         if slice[0].quality > cutoff.quality {
             while slice.len() >= 2 && slice[1].quality >= cutoff.quality {
                 slice.split_off_first_mut();
