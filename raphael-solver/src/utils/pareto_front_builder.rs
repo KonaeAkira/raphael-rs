@@ -1,5 +1,3 @@
-use std::collections::BinaryHeap;
-
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ParetoValue {
     pub progress: u32,
@@ -20,108 +18,99 @@ impl std::ops::Add for ParetoValue {
     }
 }
 
-#[derive(PartialEq, Eq)]
-struct Segment<'a> {
-    head: ParetoValue,
-    values: &'a [ParetoValue],
-    offset: ParetoValue,
-}
-
-impl<'a> std::cmp::PartialOrd for Segment<'a> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<'a> std::cmp::Ord for Segment<'a> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.head
-            .quality
-            .cmp(&other.head.quality)
-            .then(self.head.progress.cmp(&other.head.progress))
-    }
-}
-
-pub struct ParetoFrontBuilder<'a> {
-    segments: Vec<Segment<'a>>,
+pub struct ParetoFrontBuilder {
     cutoff: ParetoValue,
+    result: Vec<ParetoValue>,
+    merge_buffer: Vec<ParetoValue>,
 }
 
-impl<'a> ParetoFrontBuilder<'a> {
-    pub fn new(progress_cutoff: u32, quality_cutoff: u32) -> Self {
+impl ParetoFrontBuilder {
+    pub fn new() -> Self {
         Self {
-            segments: Vec::new(),
-            cutoff: ParetoValue::new(progress_cutoff, quality_cutoff),
+            cutoff: ParetoValue::new(u32::MAX, u32::MAX),
+            result: Vec::new(),
+            merge_buffer: Vec::new(),
         }
     }
 
-    pub fn push(&mut self, progress: u32, quality: u32) {
-        let segment = Segment {
-            head: ParetoValue::new(progress, std::cmp::min(self.cutoff.quality, quality)),
-            values: &[],
-            offset: ParetoValue::new(0, 0),
-        };
-        self.segments.push(segment);
+    pub fn initialize_with_cutoff(&mut self, cutoff: ParetoValue) {
+        self.cutoff = cutoff;
+        self.result.clear();
     }
 
-    pub fn push_slice(
-        &mut self,
-        values: &'a nunny::Slice<ParetoValue>,
-        progress_offset: u32,
-        quality_offset: u32,
-    ) {
-        let (mut head, mut values) = values.split_first();
-        while let Some((next_head, next_values)) = values.split_first()
-            && next_head.quality + quality_offset >= self.cutoff.quality
-        {
-            head = next_head;
-            values = next_values;
+    pub fn push(&mut self, value: ParetoValue) {
+        self.push_slice(std::iter::once(value));
+    }
+
+    pub fn push_slice(&mut self, values: impl Iterator<Item = ParetoValue>) {
+        std::mem::swap(&mut self.result, &mut self.merge_buffer);
+        let slice_b_begin = self.merge_buffer.len();
+        self.merge_buffer.extend(values);
+        let (slice_a, mut slice_b) = self.merge_buffer.split_at_mut(slice_b_begin);
+        slice_b = trim(slice_b, self.cutoff);
+        merge(slice_a, slice_b, &mut self.result);
+        self.merge_buffer.clear();
+    }
+
+    pub fn is_maximal(&self, cutoff: ParetoValue) -> bool {
+        self.result.first().is_some_and(|value| {
+            value.progress >= cutoff.progress && value.quality >= cutoff.quality
+        })
+    }
+
+    pub fn result(&mut self) -> Box<[ParetoValue]> {
+        self.result.as_slice().into()
+    }
+}
+
+fn trim(mut slice: &mut [ParetoValue], cutoff: ParetoValue) -> &mut [ParetoValue] {
+    if !slice.is_empty() {
+        if slice[0].quality > cutoff.quality {
+            while slice.len() >= 2 && slice[1].quality >= cutoff.quality {
+                slice.split_off_first_mut();
+            }
+            slice[0].quality = cutoff.quality;
         }
-        let head = ParetoValue::new(
-            head.progress + progress_offset,
-            std::cmp::min(self.cutoff.quality, head.quality + quality_offset),
-        );
-        self.segments.push(Segment {
-            head,
-            values,
-            offset: ParetoValue::new(progress_offset, quality_offset),
-        });
+        if slice[slice.len() - 1].progress > cutoff.progress {
+            while slice.len() >= 2 && slice[slice.len() - 2].progress >= cutoff.progress {
+                slice.split_off_last_mut();
+            }
+            slice[slice.len() - 1].progress = cutoff.progress;
+        }
     }
+    slice
+}
 
-    pub fn build(self) -> Box<[ParetoValue]> {
-        let mut segments = BinaryHeap::from(self.segments);
-        if let Some(mut first_segment) = segments.pop() {
-            if first_segment.head.progress >= self.cutoff.progress {
-                return Box::new([first_segment.head]);
+fn merge(
+    mut slice_a: &mut [ParetoValue],
+    mut slice_b: &mut [ParetoValue],
+    result: &mut Vec<ParetoValue>,
+) {
+    let mut try_push = |v: &ParetoValue| {
+        if result.last().is_none_or(|t| t.progress < v.progress) {
+            result.push(*v);
+        }
+    };
+    loop {
+        match (slice_a.first(), slice_b.first()) {
+            (None, None) => return,
+            (None, Some(_)) => {
+                slice_b.iter().for_each(try_push);
+                return;
             }
-            let mut result = nunny::vec![first_segment.head];
-            if let Some(head) = first_segment.values.split_off_first() {
-                first_segment.head = *head + first_segment.offset;
-                segments.push(first_segment);
+            (Some(_), None) => {
+                slice_a.iter().for_each(try_push);
+                return;
             }
-            while let Some(mut segment) = segments.pop() {
-                if segment.head.progress > result.last().progress {
-                    result.push(segment.head);
-                    if segment.head.progress >= self.cutoff.progress {
-                        break;
-                    }
-                    if let Some(head) = segment.values.split_off_first() {
-                        segment.head = *head + segment.offset;
-                        segments.push(segment);
-                    }
+            (Some(a), Some(b)) => {
+                if a.quality > b.quality || (a.quality == b.quality && a.progress >= b.progress) {
+                    try_push(a);
+                    slice_a.split_off_first_mut();
                 } else {
-                    while let Some(head) = segment.values.split_off_first() {
-                        if head.progress + segment.offset.progress > result.last().progress {
-                            segment.head = *head + segment.offset;
-                            segments.push(segment);
-                            break;
-                        }
-                    }
+                    try_push(b);
+                    slice_b.split_off_first_mut();
                 }
             }
-            result.into_boxed_slice().into()
-        } else {
-            Box::new([])
         }
     }
 }
