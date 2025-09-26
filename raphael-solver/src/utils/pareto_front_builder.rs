@@ -86,39 +86,28 @@ fn merge(
     mut slice_b: &mut [ParetoValue],
     result: &mut Vec<ParetoValue>,
 ) {
+    let mut try_push = |v: &ParetoValue| {
+        if result.last().is_none_or(|t| t.progress < v.progress) {
+            result.push(*v);
+        }
+    };
     loop {
         match (slice_a.first(), slice_b.first()) {
-            (None, None) => break,
+            (None, None) => return,
             (None, Some(_)) => {
-                let idx = result.last().map_or(0, |merge_tail| {
-                    slice_b.partition_point(|v| v.progress <= merge_tail.progress)
-                });
-                result.extend_from_slice(&slice_b[idx..]);
-                break;
+                slice_b.iter().for_each(try_push);
+                return;
             }
             (Some(_), None) => {
-                let idx = result.last().map_or(0, |merge_tail| {
-                    slice_a.partition_point(|v| v.progress <= merge_tail.progress)
-                });
-                result.extend_from_slice(&slice_a[idx..]);
-                break;
+                slice_a.iter().for_each(try_push);
+                return;
             }
             (Some(a), Some(b)) => {
                 if a.quality > b.quality || (a.quality == b.quality && a.progress >= b.progress) {
-                    if result
-                        .last()
-                        .is_none_or(|merge_tail| a.progress > merge_tail.progress)
-                    {
-                        result.push(*a);
-                    }
+                    try_push(a);
                     slice_a.split_off_first_mut();
                 } else {
-                    if result
-                        .last()
-                        .is_none_or(|merge_tail| b.progress > merge_tail.progress)
-                    {
-                        result.push(*b);
-                    }
+                    try_push(b);
                     slice_b.split_off_first_mut();
                 }
             }
