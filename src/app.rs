@@ -612,7 +612,7 @@ impl MacroSolverApp {
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     if self.solver_progress == usize::MAX {
                         ui.label("Loaded from saved rotations");
-                    } else if self.solver_progress > 0 {
+                    } else if !self.duration.is_zero() {
                         ui.label(format!("Elapsed time: {:.2}s", self.duration.as_secs_f32()));
                     }
                 });
