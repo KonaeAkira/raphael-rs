@@ -65,6 +65,9 @@ impl MacroSolverApp {
             style.always_scroll_the_only_direction = false;
             style.spacing.item_spacing = egui::vec2(8.0, 8.0);
         });
+        // Force scroll area state to be effectively temporary
+        cc.egui_ctx
+            .data_mut(egui::util::IdTypeMap::remove_by_type::<egui::scroll_area::State>);
 
         load_fonts(&cc.egui_ctx);
 
