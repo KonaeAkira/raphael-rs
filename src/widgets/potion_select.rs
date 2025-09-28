@@ -8,10 +8,11 @@ use raphael_translations::t;
 
 use crate::{
     context::AppContext,
+    widgets::GameDataNameLabel,
     widgets::util::{TableColumnWidth, calculate_column_widths},
 };
 
-use super::{ItemNameLabel, util};
+use super::util;
 
 #[derive(Default)]
 struct PotionFinder {}
@@ -62,9 +63,7 @@ impl Widget for PotionSelect<'_> {
                     ui.label(egui::RichText::new(t!(locale, "Potion")).strong());
                     match self.selected_consumable {
                         None => ui.label(t!(locale, "None")),
-                        Some(item) => {
-                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale))
-                        }
+                        Some(item) => ui.add(GameDataNameLabel::new(&*item, locale)),
                     };
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
@@ -149,7 +148,7 @@ impl Widget for PotionSelect<'_> {
                             }
                         });
                         row.col(|ui| {
-                            ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
+                            ui.add(GameDataNameLabel::new(item, locale));
                         });
                         row.col(|ui| {
                             ui.label(util::effect_string(*item, self.crafter_stats, locale));

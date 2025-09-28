@@ -747,7 +747,7 @@ impl MacroSolverApp {
                 }
                 has_hq_ingredient = true;
                 ui.horizontal(|ui| {
-                    ui.add(ItemNameLabel::new(ingredient.item_id, false, locale));
+                    ui.add(GameDataNameLabel::new(&ingredient, locale));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
                         let mut max_placeholder = ingredient.amount;
                         ui.add_enabled(false, egui::DragValue::new(&mut max_placeholder));
