@@ -1,4 +1,4 @@
-use crate::{CL_ICON_CHAR, HQ_ICON_CHAR, ITEMS, NciArray};
+use crate::{CL_ICON_CHAR, HQ_ICON_CHAR, ITEMS, NciArray, nci_array};
 use raphael_sim::Action;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

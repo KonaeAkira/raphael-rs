@@ -7,7 +7,7 @@ pub use config::*;
 mod locales;
 pub use locales::*;
 
-use non_contiguously_indexed_array::NciArray;
+use non_contiguously_indexed_array::{NciArray, nci_array};
 
 mod search;
 pub use search::*;
