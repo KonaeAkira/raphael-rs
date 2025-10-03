@@ -4,15 +4,6 @@ use std::{fs::File, io::BufWriter};
 
 use raphael_data_updater::*;
 
-const DEFAULT_BUILD_CONFIGUATION: BuildConfiguration = BuildConfiguration {
-    output_format: OutputFormat::RustCodegen,
-    value_formatting: ValueFormatting::Display,
-};
-const NAME_BUILD_CONFIGURATION: BuildConfiguration = BuildConfiguration {
-    output_format: OutputFormat::RustCodegen,
-    value_formatting: ValueFormatting::Debug,
-};
-
 async fn fetch_and_parse<T: SheetData>(lang: &str) -> Vec<T> {
     const XIV_API: &str = "https://v2.xivapi.com/api";
     const BOILMASTER_KO: &str = "https://boilmaster_ko.augenfrosch.dev/api";
@@ -67,34 +58,24 @@ fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry
 }
 
 fn export_recipes(recipes: &[Recipe]) {
-    let mut builder = NciArrayBuilder::new();
-    for recipe in recipes {
-        builder.entry(recipe.id, recipe);
-    }
     let path = std::path::absolute("./raphael-data/data/recipes.rs").unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
-    writeln!(
-        writer,
-        "NciArray {}",
-        builder.build(&DEFAULT_BUILD_CONFIGUATION)
-    )
-    .unwrap();
+    writeln!(writer, "nci_array! {{").unwrap();
+    for recipe in recipes {
+        writeln!(writer, "{} => {},", recipe.id, recipe,).unwrap();
+    }
+    writeln!(writer, "}}").unwrap();
     log::info!("recipes exported to \"{}\"", path.display());
 }
 
 fn export_items(items: &[Item]) {
-    let mut builder = NciArrayBuilder::new();
-    for item in items {
-        builder.entry(item.id, item);
-    }
     let path = std::path::absolute("./raphael-data/data/items.rs").unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
-    writeln!(
-        writer,
-        "NciArray {}",
-        builder.build(&DEFAULT_BUILD_CONFIGUATION)
-    )
-    .unwrap();
+    writeln!(writer, "nci_array! {{").unwrap();
+    for item in items {
+        writeln!(writer, "{} => {},", item.id, item,).unwrap();
+    }
+    writeln!(writer, "}}").unwrap();
     log::info!("items exported to \"{}\"", path.display());
 }
 
@@ -121,53 +102,43 @@ fn export_potions(consumables: &[Consumable]) {
 }
 
 fn export_stellar_missions(stellar_missions: &[StellarMission]) {
-    let mut builder = NciArrayBuilder::new();
-    for stellar_mission in stellar_missions {
-        builder.entry(stellar_mission.id, stellar_mission);
-    }
     let path = std::path::absolute("./raphael-data/data/stellar_missions.rs").unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
-    writeln!(
-        writer,
-        "NciArray {}",
-        builder.build(&DEFAULT_BUILD_CONFIGUATION)
-    )
-    .unwrap();
+    writeln!(writer, "nci_array! {{").unwrap();
+    for stellar_mission in stellar_missions {
+        writeln!(writer, "{} => {},", stellar_mission.id, stellar_mission,).unwrap();
+    }
+    writeln!(writer, "}}").unwrap();
     log::info!("stellar missions exported to \"{}\"", path.display());
 }
 
 fn export_item_names(item_names: &[ItemName], lang: &str) {
-    let mut builder = NciArrayBuilder::new();
-    for item_name in item_names {
-        builder.entry(item_name.id, item_name.name.clone());
-    }
     let path = std::path::absolute(format!("./raphael-data/data/item_names_{lang}.rs")).unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
-    writeln!(
-        writer,
-        "NciArray {}",
-        builder.build(&NAME_BUILD_CONFIGURATION)
-    )
-    .unwrap();
+    writeln!(writer, "nci_array! {{").unwrap();
+    for item_name in item_names {
+        writeln!(writer, "{} => {:?},", item_name.id, item_name.name,).unwrap();
+    }
+    writeln!(writer, "}}").unwrap();
     log::info!("item names exported to \"{}\"", path.display());
 }
 
 fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], lang: &str) {
-    let mut builder = NciArrayBuilder::new();
-    for stellar_mission_name in stellar_mission_names {
-        builder.entry(stellar_mission_name.id, stellar_mission_name.name.clone());
-    }
     let path = std::path::absolute(format!(
         "./raphael-data/data/stellar_mission_names_{lang}.rs"
     ))
     .unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
-    writeln!(
-        writer,
-        "NciArray {}",
-        builder.build(&NAME_BUILD_CONFIGURATION)
-    )
-    .unwrap();
+    writeln!(writer, "nci_array! {{").unwrap();
+    for stellar_mission_name in stellar_mission_names {
+        writeln!(
+            writer,
+            "{} => {:?},",
+            stellar_mission_name.id, stellar_mission_name.name,
+        )
+        .unwrap();
+    }
+    writeln!(writer, "}}").unwrap();
     log::info!("stellar mission names exported to \"{}\"", path.display());
 }
 

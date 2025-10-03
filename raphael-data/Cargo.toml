@@ -10,7 +10,7 @@ crate-type = ["rlib"]
 
 [dependencies]
 raphael-sim = { workspace = true }
-non_contiguously_indexed_array = { git = "https://github.com/augenfrosch/non_contiguously_indexed_array", rev = "59bc352188361ba47bcca66c5a140a2b7580bb47", version = "0.4.1" }
+non_contiguously_indexed_array = { git = "https://github.com/augenfrosch/non_contiguously_indexed_array", rev = "4e9697707947c6b8273d3c655cb6fcfd6d822de8", version = "0.4.2", features = ["macros"] }
 serde = { version = "1.0.215", features = ["derive"], optional = true }
 nucleo-matcher = "0.3.1"
 

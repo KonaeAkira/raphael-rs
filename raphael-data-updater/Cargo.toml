@@ -8,7 +8,6 @@ workspace = true
 [dependencies]
 tokio = { version = "1.44.2", features = ["full"] }
 reqwest = "0.12.15"
-non_contiguously_indexed_array_builder = { git = "https://github.com/augenfrosch/non_contiguously_indexed_array", rev = "59bc352188361ba47bcca66c5a140a2b7580bb47", version = "0.2.0"}
 json = "0.12.4"
 log = { workspace = true }
 env_logger = "0.11.5"
