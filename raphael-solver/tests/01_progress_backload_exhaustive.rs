@@ -318,7 +318,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     };
     let solver_settings = SolverSettings {
         simulator_settings,
-        allow_non_max_quality_solutions: true,
+        allow_non_max_quality_solutions: false,
     };
     let expected_score = expect![[r#"
         Ok(
@@ -335,7 +335,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             finish_states: 1183317,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 63042,
-                dropped_nodes: 262543,
+                dropped_nodes: 256167,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 945752,

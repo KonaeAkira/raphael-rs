@@ -137,7 +137,7 @@ fn test_rare_tacos_2() {
     };
     let solver_settings = SolverSettings {
         simulator_settings,
-        allow_non_max_quality_solutions: true,
+        allow_non_max_quality_solutions: false,
     };
     let expected_score = expect![[r#"
         Ok(
@@ -154,7 +154,7 @@ fn test_rare_tacos_2() {
             finish_states: 1472394,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 3802112,
-                dropped_nodes: 31992658,
+                dropped_nodes: 1381,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 2490500,

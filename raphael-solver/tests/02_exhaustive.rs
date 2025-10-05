@@ -318,7 +318,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     };
     let solver_settings = SolverSettings {
         simulator_settings,
-        allow_non_max_quality_solutions: true,
+        allow_non_max_quality_solutions: false,
     };
     let expected_score = expect![[r#"
         Ok(
@@ -335,7 +335,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             finish_states: 2387186,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 1483443,
-                dropped_nodes: 10107736,
+                dropped_nodes: 9532747,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 932788,
@@ -818,7 +818,7 @@ fn hardened_survey_plank_5558_5216() {
     };
     let solver_settings = SolverSettings {
         simulator_settings,
-        allow_non_max_quality_solutions: true,
+        allow_non_max_quality_solutions: false,
     };
     let expected_score = expect![[r#"
         Ok(
@@ -835,7 +835,7 @@ fn hardened_survey_plank_5558_5216() {
             finish_states: 859926,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 1820997,
-                dropped_nodes: 13336465,
+                dropped_nodes: 12419415,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 969126,
