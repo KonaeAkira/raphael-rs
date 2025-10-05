@@ -338,6 +338,7 @@ pub fn execute(args: &SolveArgs) {
 
     let solver_settings = SolverSettings {
         simulator_settings: settings,
+        allow_non_max_quality_solutions: true,
     };
 
     let mut solver = MacroSolver::new(

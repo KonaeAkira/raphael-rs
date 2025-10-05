@@ -21,6 +21,8 @@ pub struct SolverConfig {
     pub quality_target: QualityTarget,
     pub backload_progress: bool,
     pub adversarial: bool,
+    #[serde(default)]
+    pub must_reach_target_quality: bool,
 }
 
 pub struct AppContext {

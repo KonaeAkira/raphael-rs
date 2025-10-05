@@ -11,7 +11,10 @@ use super::QualityUbSolver;
 fn solve(simulator_settings: Settings, actions: &[Action]) -> u32 {
     let mut state = SimulationState::from_macro(&simulator_settings, actions).unwrap();
     state.effects.set_combo(Combo::None);
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let mut solver = QualityUbSolver::new(solver_settings, Default::default());
     solver.quality_upper_bound(state).unwrap()
 }
@@ -81,6 +84,9 @@ fn consistency(max_durability: u16, allowed_actions: ActionMask) {
         adversarial: false,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     check_consistency(solver_settings);
 }
