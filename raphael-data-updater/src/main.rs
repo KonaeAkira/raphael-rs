@@ -6,7 +6,7 @@ use raphael_data_updater::*;
 
 async fn fetch_and_parse<T: SheetData>(lang: &str) -> Vec<T> {
     const XIV_API: &str = "https://v2.xivapi.com/api";
-    const BOILMASTER_KO: &str = "https://boilmaster_ko.augenfrosch.dev/api";
+    const BOILMASTER_KO: &str = "http://boilmaster_ko.augenfrosch.dev/api";
     let domain = match lang {
         "ko" => BOILMASTER_KO,
         _ => XIV_API,

@@ -292,7 +292,7 @@ nci_array! {
 291 => "\u{e0be} Decorative Lunar Plants",
 292 => "Water-resistant Bricks",
 293 => "Stellar Adhesive",
-294 => "Nutrient Supplements",
+294 => "Nutrient Stabilizer",
 295 => "Cafeteria Goods",
 296 => "Lunar Seafood Processing",
 297 => "EX: Emergency Potables",
