@@ -20,7 +20,10 @@ fn main() {
         backload_progress: false,
     };
 
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: false,
+    };
 
     let mut solver = MacroSolver::new(
         solver_settings,

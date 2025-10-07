@@ -84,7 +84,10 @@ fn stuffed_peppers() {
         base_quality: 360,
         ..SETTINGS
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -132,7 +135,10 @@ fn test_rare_tacos_2() {
         adversarial: true,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: false,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -148,7 +154,7 @@ fn test_rare_tacos_2() {
             finish_states: 1472394,
             search_queue_stats: SearchQueueStats {
                 processed_nodes: 3802112,
-                dropped_nodes: 31992658,
+                dropped_nodes: 1381,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 2490500,
@@ -184,7 +190,10 @@ fn test_mountain_chromite_ingot_no_manipulation() {
         adversarial: true,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -230,7 +239,10 @@ fn test_indagator_3858_4057() {
         adversarial: true,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -280,7 +292,10 @@ fn test_rare_tacos_4628_4410() {
         adversarial: true,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -329,7 +344,10 @@ fn issue_113() {
         adversarial: true,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -376,7 +394,10 @@ fn issue_118() {
         adversarial: true,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {

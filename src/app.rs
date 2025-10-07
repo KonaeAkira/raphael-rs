@@ -856,6 +856,17 @@ impl MacroSolverApp {
 
         ui.horizontal(|ui| {
             ui.checkbox(
+                &mut self
+                    .app_context
+                    .solver_config
+                    .must_reach_target_quality,
+                "Solution must reach target quality",
+            );
+            ui.add(HelpText::new("Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off."));
+        });
+
+        ui.horizontal(|ui| {
+            ui.checkbox(
                 &mut self.app_context.solver_config.backload_progress,
                 "Backload progress",
             );
@@ -961,8 +972,15 @@ impl MacroSolverApp {
             self.actions = Vec::new();
             self.solver_progress = 0;
             self.start_time = web_time::Instant::now();
+            let solver_settings = raphael_solver::SolverSettings {
+                simulator_settings: game_settings,
+                allow_non_max_quality_solutions: !self
+                    .app_context
+                    .solver_config
+                    .must_reach_target_quality,
+            };
             spawn_solver(
-                game_settings,
+                solver_settings,
                 self.solver_events.clone(),
                 self.solver_interrupt.clone(),
             );
@@ -1080,7 +1098,7 @@ fn load_fonts(ctx: &egui::Context) {
 }
 
 fn spawn_solver(
-    simulator_settings: raphael_sim::Settings,
+    solver_settings: raphael_solver::SolverSettings,
     solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
     solver_interrupt: raphael_solver::AtomicFlag,
 ) {
@@ -1095,7 +1113,6 @@ fn spawn_solver(
         events.lock().unwrap().push_back(event);
     };
     rayon::spawn(move || {
-        let solver_settings = raphael_solver::SolverSettings { simulator_settings };
         log::debug!("Spawning solver: {solver_settings:?}");
         let mut macro_solver = raphael_solver::MacroSolver::new(
             solver_settings,

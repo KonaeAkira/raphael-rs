@@ -132,6 +132,12 @@ impl<'a> MacroSolver<'a> {
                             )
                         };
 
+                        if !self.settings.allow_non_max_quality_solutions
+                            && quality_upper_bound < self.settings.max_quality()
+                        {
+                            continue;
+                        }
+
                         let step_lb_hint = score
                             .steps_lower_bound
                             .saturating_sub(score.current_steps + action.steps());

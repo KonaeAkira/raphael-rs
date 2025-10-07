@@ -69,7 +69,10 @@ fn unsolvable() {
         adversarial: false,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Err(
             NoSolution,
@@ -110,7 +113,10 @@ fn zero_quality() {
         adversarial: false,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -156,7 +162,10 @@ fn max_quality() {
         adversarial: false,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -202,7 +211,10 @@ fn large_progress_quality_increase() {
         adversarial: false,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -248,7 +260,10 @@ fn backload_progress_single_delicate_synthesis() {
         adversarial: false,
         backload_progress: true,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
@@ -295,7 +310,10 @@ fn issue_216_steplbsolver_crash() {
         adversarial: false,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {

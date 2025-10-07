@@ -56,6 +56,9 @@ fn consistency(max_durability: u16, allowed_actions: ActionMask) {
         adversarial: false,
         backload_progress: false,
     };
-    let solver_settings = SolverSettings { simulator_settings };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
     check_consistency(solver_settings);
 }
