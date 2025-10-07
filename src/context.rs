@@ -132,6 +132,10 @@ impl AppContext {
         self.crafter_config.selected_job
     }
 
+    pub fn selected_job_mut(&mut self) -> &mut u8 {
+        &mut self.crafter_config.selected_job
+    }
+
     pub fn active_stats(&self) -> &CrafterStats {
         self.crafter_config.active_stats()
     }

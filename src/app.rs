@@ -642,7 +642,7 @@ impl MacroSolverApp {
                     .show_ui(ui, |ui| {
                         for i in 0..8 {
                             ui.selectable_value(
-                                &mut self.app_context.selected_job(),
+                                self.app_context.selected_job_mut(),
                                 i,
                                 get_job_name(i, locale),
                             );
