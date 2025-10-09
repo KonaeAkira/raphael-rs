@@ -174,12 +174,27 @@ pub enum LoadOperation {
     RotationRecipeConsumables,
 }
 
-impl std::fmt::Display for LoadOperation {
+struct LoadOperationDisplay {
+    load_operation: LoadOperation,
+    locale: Locale,
+}
+
+impl LoadOperation {
+    pub fn display(self, locale: Locale) -> impl std::fmt::Display {
+        LoadOperationDisplay {
+            load_operation: self,
+            locale,
+        }
+    }
+}
+
+impl std::fmt::Display for LoadOperationDisplay {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let output_str = match self {
-            Self::Rotation => "Load rotation", // TODO(display-impl-translations)
-            Self::RotationRecipe => "Load rotation & recipe",
-            Self::RotationRecipeConsumables => "Load rotation, recipe & consumables",
+        let locale = self.locale;
+        let output_str = match self.load_operation {
+            LoadOperation::Rotation => t!("Load rotation"),
+            LoadOperation::RotationRecipe => t!("Load rotation & recipe"),
+            LoadOperation::RotationRecipeConsumables => t!("Load rotation, recipe & consumables"),
         };
         write!(f, "{}", output_str)
     }
@@ -336,7 +351,7 @@ impl<'a> RotationWidget<'a> {
                         LoadOperation::RotationRecipe,
                         LoadOperation::RotationRecipeConsumables,
                     ] {
-                        let text = format!("{}", saved_rotation_load_operation);
+                        let text = format!("{}", saved_rotation_load_operation.display(locale));
                         if ui.button(text).clicked() {
                             selected_load_operation = Some(saved_rotation_load_operation);
                         }
@@ -586,7 +601,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                         LoadOperation::RotationRecipe,
                         LoadOperation::RotationRecipeConsumables,
                     ] {
-                        let text = format!("{}", saved_rotation_load_operation); // TODO(display-impl-translations)
+                        let text = format!("{}", saved_rotation_load_operation.display(*locale));
                         ui.selectable_value(
                             &mut config.default_load_operation,
                             saved_rotation_load_operation,

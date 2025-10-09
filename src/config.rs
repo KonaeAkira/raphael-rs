@@ -1,6 +1,7 @@
 use std::num::NonZeroUsize;
 
-use raphael_data::{CrafterStats, CustomRecipeOverrides, Recipe};
+use raphael_data::{CrafterStats, CustomRecipeOverrides, Locale, Recipe};
+use raphael_translations::t;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -100,19 +101,33 @@ impl Default for QualityTarget {
     }
 }
 
-impl std::fmt::Display for QualityTarget {
+struct QualityTargetDisplay {
+    quality_target: QualityTarget,
+    locale: Locale,
+}
+
+impl QualityTarget {
+    pub fn display(self, locale: Locale) -> impl std::fmt::Display {
+        QualityTargetDisplay {
+            quality_target: self,
+            locale,
+        }
+    }
+}
+
+impl std::fmt::Display for QualityTargetDisplay {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // TODO(display-impl-translations)
+        let locale = self.locale;
         write!(
             f,
             "{}",
-            match self {
-                Self::Zero => "0% quality",
-                Self::CollectableT1 => "55% quality",
-                Self::CollectableT2 => "75% quality",
-                Self::CollectableT3 => "95% quality",
-                Self::Full => "100% quality",
-                Self::Custom(_) => "Custom",
+            match self.quality_target {
+                QualityTarget::Zero => t!("0% quality"),
+                QualityTarget::CollectableT1 => t!("55% quality"),
+                QualityTarget::CollectableT2 => t!("75% quality"),
+                QualityTarget::CollectableT3 => t!("95% quality"),
+                QualityTarget::Full => t!("100% quality"),
+                QualityTarget::Custom(_) => t!("Custom"),
             }
         )
     }

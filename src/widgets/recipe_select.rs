@@ -25,11 +25,26 @@ enum RecipeSearchDomain {
     StellarMissions,
 }
 
-impl std::fmt::Display for RecipeSearchDomain {
+struct RecipeSearchDomainDisplay {
+    recipe_search_domain: RecipeSearchDomain,
+    locale: Locale,
+}
+
+impl RecipeSearchDomain {
+    fn display(self, locale: Locale) -> impl std::fmt::Display {
+        RecipeSearchDomainDisplay {
+            recipe_search_domain: self,
+            locale,
+        }
+    }
+}
+
+impl std::fmt::Display for RecipeSearchDomainDisplay {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Recipes => write!(f, "Recipes"), // TODO(display-impl-translations)
-            Self::StellarMissions => write!(f, "Missions"),
+        let locale = self.locale;
+        match self.recipe_search_domain {
+            RecipeSearchDomain::Recipes => write!(f, "{}", t!("Recipes")),
+            RecipeSearchDomain::StellarMissions => write!(f, "{}", t!("Missions")),
         }
     }
 }
@@ -110,18 +125,18 @@ impl<'a> RecipeSelect<'a> {
 
         ui.horizontal(|ui| {
             egui::ComboBox::from_id_salt("LOCALE")
-                .selected_text(format!("{}", search_domain))
+                .selected_text(format!("{}", search_domain.clone().display(locale)))
                 .width(72.0)
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut search_domain,
                         RecipeSearchDomain::Recipes,
-                        format!("{}", RecipeSearchDomain::Recipes),
+                        format!("{}", RecipeSearchDomain::Recipes.display(locale)),
                     );
                     ui.selectable_value(
                         &mut search_domain,
                         RecipeSearchDomain::StellarMissions,
-                        format!("{}", RecipeSearchDomain::StellarMissions),
+                        format!("{}", RecipeSearchDomain::StellarMissions.display(locale)),
                     );
                 });
             if egui::TextEdit::singleline(&mut search_text)

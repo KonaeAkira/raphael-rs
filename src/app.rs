@@ -248,7 +248,7 @@ impl eframe::App for MacroSolverApp {
                         self.draw_app_config_menu_button(ui, ctx);
 
                         egui::ComboBox::from_id_salt("LOCALE")
-                            .selected_text(format!("{}", self.app_context.locale)) // TODO(display-impl-translations)
+                            .selected_text(format!("{}", self.app_context.locale))
                             .width(0.0)
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(
@@ -828,37 +828,43 @@ impl MacroSolverApp {
                     }
                 }
                 egui::ComboBox::from_id_salt("TARGET_QUALITY")
-                    .selected_text(format!("{}", self.app_context.solver_config.quality_target))
+                    .selected_text(format!(
+                        "{}",
+                        self.app_context
+                            .solver_config
+                            .quality_target
+                            .display(locale)
+                    ))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Zero,
-                            format!("{}", QualityTarget::Zero), // TODO(display-impl-translations)
+                            format!("{}", QualityTarget::Zero.display(locale)),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT1,
-                            format!("{}", QualityTarget::CollectableT1),
+                            format!("{}", QualityTarget::CollectableT1.display(locale)),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT2,
-                            format!("{}", QualityTarget::CollectableT2),
+                            format!("{}", QualityTarget::CollectableT2.display(locale)),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT3,
-                            format!("{}", QualityTarget::CollectableT3),
+                            format!("{}", QualityTarget::CollectableT3.display(locale)),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Full,
-                            format!("{}", QualityTarget::Full),
+                            format!("{}", QualityTarget::Full.display(locale)),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Custom(current_value),
-                            format!("{}", QualityTarget::Custom(0)),
+                            format!("{}", QualityTarget::Custom(0).display(locale)),
                         )
                     });
             });
