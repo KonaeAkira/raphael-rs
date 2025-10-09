@@ -62,7 +62,7 @@ pub fn get_translations(ctx: &Context) -> Vec<Translation> {
             let source_location = source_location_string(main_arg_token_tree);
             if !appearances
                 .iter()
-                .any(|value| value.as_str().map_or(false, |str| str == source_location))
+                .any(|value| value.as_str().is_some_and(|str| str == source_location))
             {
                 appearances.push(source_location);
             }
@@ -95,7 +95,7 @@ pub fn get_translations(ctx: &Context) -> Vec<Translation> {
         toml_file.set_len(0).unwrap();
         toml_file.rewind().unwrap();
         toml_file
-            .write(doc.to_string().as_bytes())
+            .write_all(doc.to_string().as_bytes())
             .expect("Failed to write to translation TOML file!");
     }
 
