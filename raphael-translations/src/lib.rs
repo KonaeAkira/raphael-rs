@@ -79,3 +79,21 @@ pub fn t(input: TokenStream) -> TokenStream {
 
     generate_output_token_stream(translations, ctx)
 }
+
+#[proc_macro]
+pub fn t_format(input: TokenStream) -> TokenStream {
+    let mut input_iter = input.into_iter();
+    assert_ne!(
+        // This assumes the size hint is correct
+        input_iter.size_hint().0,
+        0,
+        "At least a format argument is required!"
+    );
+
+    let (format_token_tree, format_arguments) = (input_iter.next().unwrap(), input_iter);
+    let ctx = Context::new(format_token_tree);
+
+    let translations = get_translations(&ctx);
+
+    generate_format_macro_output_token_stream(translations, format_arguments, ctx)
+}
