@@ -2,21 +2,29 @@
 use std::io::{Seek, Write};
 use std::{fs::OpenOptions, io::Read};
 
+#[cfg(feature = "update-toml")]
+use proc_macro::TokenTree;
 use toml_edit::DocumentMut;
 
-#[cfg(feature = "update-toml")]
-use crate::Occurance;
 use crate::{Context, util::translation_toml_path};
 
+#[cfg(feature = "update-toml")]
+fn source_location_string(token_tree: &proc_macro::TokenTree) -> String {
+    let span = token_tree.span();
+
+    format!("{}:{}:{}", span.file(), span.line(), span.column())
+}
+
+#[derive(Debug)]
 pub struct Translation(pub &'static str, pub String);
 
 pub fn get_translations(ctx: &Context) -> Vec<Translation> {
     #[allow(unused_variables)]
-    // `text` & `occurance` are used when `update-toml` feature is enabled
+    // `main_arg_token_tree` & `text` are used when `update-toml` feature is enabled
     let Context {
         hash_base64,
+        main_arg_token_tree,
         text,
-        occurance,
     } = ctx;
 
     let toml_path = translation_toml_path();
@@ -47,11 +55,11 @@ pub fn get_translations(ctx: &Context) -> Vec<Translation> {
         if item["version"].as_str().unwrap() != env!("CARGO_PKG_VERSION") {
             item["version"] = toml_edit::value(env!("CARGO_PKG_VERSION"));
             let mut arr = toml_edit::Array::new();
-            arr.push(occurance.source_location());
+            arr.push(source_location_string(main_arg_token_tree));
             item["appearances"] = toml_edit::value(arr);
         } else {
             let appearances = item["appearances"].as_array_mut().unwrap();
-            let source_location = occurance.source_location();
+            let source_location = source_location_string(main_arg_token_tree);
             if !appearances
                 .iter()
                 .any(|value| value.as_str().map_or(false, |str| str == source_location))
@@ -63,20 +71,21 @@ pub fn get_translations(ctx: &Context) -> Vec<Translation> {
         #[cfg(feature = "update-toml")]
         {
             doc[hash_base64] = toml_edit::table();
-            match occurance {
-                Occurance::Identifier(span) => {
-                    doc[hash_base64]["identifier"] = toml_edit::value(text.trim_matches('\"'));
-                    doc[hash_base64]["file"] = toml_edit::value(span.file());
+            match main_arg_token_tree {
+                TokenTree::Ident(_) => {
+                    doc[hash_base64]["identifier"] = toml_edit::value(text);
+                    doc[hash_base64]["file"] = toml_edit::value(main_arg_token_tree.span().file());
                 }
-                Occurance::Literal(_) => {
+                TokenTree::Literal(_) => {
                     doc[hash_base64]["en"] = format!("'''{}'''", text.trim_matches('\"'))
                         .parse::<toml_edit::Item>()
                         .unwrap();
                 }
+                _ => unreachable!(),
             }
             doc[hash_base64]["version"] = toml_edit::value(env!("CARGO_PKG_VERSION"));
             let mut arr = toml_edit::Array::new();
-            arr.push(occurance.source_location());
+            arr.push(source_location_string(main_arg_token_tree));
             doc[hash_base64]["appearances"] = toml_edit::value(arr);
         }
     }
