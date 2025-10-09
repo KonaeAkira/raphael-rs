@@ -1,0 +1,19 @@
+[package]
+name = "raphael-translations"
+version = "0.0.0"
+edition = "2024"
+
+[lints]
+workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+toml_edit = "0.23.6"
+rustc-stable-hash = "0.1.2"
+base64 = "0.22"
+
+[features]
+default = []
+update-toml = []

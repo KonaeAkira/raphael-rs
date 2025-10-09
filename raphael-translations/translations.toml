@@ -1,0 +1,9 @@
+
+["MNv+UPkp3UQQhGdnsf10Ng=="] # Hash encoded as basce64; only auto-created when `update-toml` is used
+en = '''EXAMPLE \u{e100}''' # filled from Rust source when `update-toml` feature is used
+de = '''EXAMPLE_DE \u{e100}''' # contents must be a valid rust string literal
+fr = '''EXAMPLE_FR \u{e100}'''
+ja = '''EXAMPLE_JA \u{e100}'''
+ko = '''EXAMPLE_KO \u{e100}'''
+version = "0.0.0" # only written when `update-toml` feature is used
+appearances = ["src/main.rs:121:3"] # only written when `update-toml` feature is used
