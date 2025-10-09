@@ -7,7 +7,7 @@ use raphael_data::{
     Consumable, CustomRecipeOverrides, Ingredient, Locale, RLVLS, find_recipes,
     find_stellar_missions, get_game_settings, get_job_name, get_stellar_mission_name,
 };
-use raphael_translations::t;
+use raphael_translations::{t, t_format};
 
 use crate::{
     config::{
@@ -312,7 +312,10 @@ impl<'a> RecipeSelect<'a> {
         let use_base_increase_overrides = self
             .custom_recipe_overrides_config
             .use_base_increase_overrides;
-        ui.label(egui::RichText::new(t!("⚠ Patch 7.35 recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.")).small().color(ui.visuals().warn_fg_color)); // TODO Look into this; This should probably be a format string to not cause the hash to change when updated
+        ui.label(egui::RichText::new(t_format!(
+            "⚠ Patch {ffxiv_patch} recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.",
+            ffxiv_patch = "7.35"
+        )).small().color(ui.visuals().warn_fg_color));
         ui.separator();
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
