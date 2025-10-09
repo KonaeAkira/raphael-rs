@@ -27,14 +27,11 @@ fn generate_toml_entry_hash(text: &str, main_arg_token_tree: &TokenTree) -> u128
         hasher.write_u8(*byte);
     }
 
-    match main_arg_token_tree {
-        TokenTree::Ident(_) => {
-            // This assumes that the identifier is only used once / stable, i.e., the same accross the file
-            for byte in main_arg_token_tree.span().file().as_bytes() {
-                hasher.write_u8(*byte);
-            }
+    if let TokenTree::Ident(_) = main_arg_token_tree {
+        // This assumes that the identifier is only used once / stable, i.e., the same accross the file
+        for byte in main_arg_token_tree.span().file().as_bytes() {
+            hasher.write_u8(*byte);
         }
-        _ => {}
     }
 
     hasher.finish::<HashU128>().0
@@ -75,7 +72,7 @@ pub fn t(input: TokenStream) -> TokenStream {
         "Only a single argument to the macro is supported!"
     );
 
-    let token_tree = input_iter.nth(0).unwrap();
+    let token_tree = input_iter.next().unwrap();
     let ctx = Context::new(token_tree);
 
     let translations = get_translations(&ctx);
