@@ -1,7 +1,7 @@
 use egui::{Align, Layout, Widget};
 use raphael_data::{Locale, action_name, get_item_name};
 use raphael_sim::Action;
-use raphael_translations::t;
+use raphael_translations::{t, t_format};
 use serde::{Deserialize, Serialize};
 
 use crate::{context::AppContext, widgets::HelpText};
@@ -407,13 +407,9 @@ impl Widget for MacroView<'_> {
                             .iter()
                             .map(|action| action.time_cost())
                             .sum::<u8>();
-                        ui.label(format!(
-                            // TODO(format-translations)
-                            "{} {}, {} {}",
-                            t!("steps"),
-                            self.actions.len(),
-                            t!("seconds"),
-                            duration
+                        ui.label(t_format!(
+                            "{steps} steps, {duration} seconds",
+                            steps = self.actions.len(),
                         ));
                     });
                 });

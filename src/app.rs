@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex};
 
 use raphael_solver::SolverException;
-use raphael_translations::t;
+use raphael_translations::{t, t_format};
 use serde::Deserialize;
 
 use egui::{Align, CursorIcon, Id, Layout, TextStyle};
@@ -145,11 +145,8 @@ impl eframe::App for MacroSolverApp {
                 ui.label(t!(
                     "Your stats are below the minimum requirement for this recipe."
                 ));
-                ui.label(format!(
-                    "{}: {req_cms} {}, {req_ctrl} {}.",
-                    t!("Requirement"),
-                    t!("Craftsmanship"),
-                    t!("Control"), // TODO(format-translations): Look into simplifiying format strings; Other examples might also require reordering inputs for grammatical correctness
+                ui.label(t_format!(
+                    "Requirement: {req_cms} Craftsmanship, {req_ctrl} Control."
                 ));
                 ui.separator();
                 ui.vertical_centered_justified(|ui| {
@@ -225,7 +222,7 @@ impl eframe::App for MacroSolverApp {
                                 .collect::<Result<Vec<&str>, _>>()
                                 .unwrap()
                                 .join(",");
-                            ui.label(format!("{} {}", num, t!("nodes visited"))); // TODO(format-translations)
+                            ui.label(t_format!("{num} nodes visited"));
                         }
                     });
                 });
@@ -623,11 +620,10 @@ impl MacroSolverApp {
                     if self.solver_progress == usize::MAX {
                         ui.label(t!("Loaded from saved rotations"));
                     } else if !self.duration.is_zero() {
-                        ui.label(format!(
-                            "{}: {:.2}s",
-                            t!("Elapsed time"),
-                            self.duration.as_secs_f32()
-                        )); // TODO(format-translations)
+                        ui.label(t_format!(
+                            "Elapsed time: {dur:.2}s",
+                            dur = self.duration.as_secs_f32()
+                        ));
                     }
                 });
                 // fill the remaining space

@@ -5,7 +5,7 @@ use std::{
 
 use raphael_data::{Consumable, CrafterStats, Locale, Recipe};
 use raphael_sim::*;
-use raphael_translations::t;
+use raphael_translations::{t, t_format};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -377,12 +377,9 @@ impl<'a> RotationWidget<'a> {
                     .iter()
                     .map(|action| action.time_cost())
                     .sum::<u8>();
-                ui.label(format!(
-                    "{} {}, {} {}", // TODO(format-translations)
-                    self.rotation.actions.len(),
-                    t!("steps"),
-                    duration,
-                    t!("seconds"),
+                ui.label(t_format!(
+                    "{steps} steps, {duration} seconds",
+                    steps = self.rotation.actions.len(),
                 ));
             });
         });
@@ -454,22 +451,18 @@ impl<'a> RotationWidget<'a> {
 
     fn show_rotation_info(&self, ui: &mut egui::Ui) {
         let locale = self.locale;
-        let stats_string = format!(
-            "{} {}, {} {}, {} {}", // TODO(format-translations)
-            self.rotation.crafter_stats.craftsmanship,
-            t!("CMS"),
-            self.rotation.crafter_stats.control,
-            t!("Control"),
-            self.rotation.crafter_stats.cp,
-            t!("CP"),
+        let stats_string = t_format!(
+            "{craftsmanship} CMS, {control} Control, {cp} CP",
+            craftsmanship = self.rotation.crafter_stats.craftsmanship,
+            control = self.rotation.crafter_stats.control,
+            cp = self.rotation.crafter_stats.cp,
         );
         let recipe = self.get_recipe();
         let job_id = recipe.map(|recipe| recipe.job_id);
-        let job_string = format!(
-            "{} {} {}", // TODO(format-translations)
-            t!("Level"),
-            self.rotation.crafter_stats.level,
-            job_id.map_or("", |job_id| raphael_data::get_job_name(job_id, locale))
+        let job_string = t_format!(
+            "Level {level} {job}",
+            level = self.rotation.crafter_stats.level,
+            job = job_id.map_or("", |job_id| raphael_data::get_job_name(job_id, locale))
         );
         if let Some(recipe) = recipe {
             self.show_info_row(

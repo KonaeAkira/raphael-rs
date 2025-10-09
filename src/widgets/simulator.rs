@@ -1,6 +1,6 @@
 use raphael_data::Locale;
 use raphael_sim::{Action, Settings, SimulationState};
-use raphael_translations::t;
+use raphael_translations::{t, t_format};
 
 use crate::{
     config::QualityTarget,
@@ -186,14 +186,14 @@ impl Simulator<'_> {
                                 quality if quality >= u32::from(t1) => 1,
                                 _ => 0,
                             };
-                            ui.label(format!("{} {} {}", t!("Tier"), tier, t!("collectable"))); // TODO(format-translations)
+                            ui.label(t_format!("Tier {tier} collectable"));
                         } else {
                             let hq = raphael_data::hq_percentage(
                                 u32::from(self.initial_quality) + state.quality,
                                 self.settings.max_quality,
                             )
                             .unwrap_or(0);
-                            ui.label(format!("{}% {}", hq, t!("HQ"))); // TODO(format-translations)
+                            ui.label(t_format!("{hq}% HQ"));
                         }
                     });
                 });
@@ -292,13 +292,7 @@ fn progress_bar_text<T: Copy + std::cmp::Ord + std::ops::Sub<Output = T> + std::
 ) -> String {
     if value > maximum {
         let overflow = value - maximum;
-        format!(
-            "{: >5} / {}  (+{} {})",
-            value,
-            maximum,
-            overflow,
-            t!("overflow")
-        ) // TODO(format-translations)
+        t_format!("{value: >5} / {maximum}  (+{overflow} overflow)")
     } else {
         format!("{: >5} / {}", value, maximum)
     }
