@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{Context, data::Translation};
+use crate::{Context, MainArgument, data::Translation};
 
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 
@@ -62,15 +62,41 @@ macro_rules! source_match_rule {
     };
 }
 
+struct TranslationFormat {
+    intro: String,
+    outro: String,
+}
+
+impl From<&MainArgument> for TranslationFormat {
+    fn from(main_arg: &MainArgument) -> Self {
+        match &main_arg.contents {
+            crate::ParsedMainArgumentContents::Identifier { .. } => Self {
+                intro: "\"".to_string(),
+                outro: "\"".to_string(),
+            },
+            crate::ParsedMainArgumentContents::StringLiteral { intro, outro, .. } => Self {
+                intro: intro.to_string(),
+                outro: outro.to_string(),
+            },
+        }
+    }
+}
+
+impl TranslationFormat {
+    pub fn format(&self, translation_string: &String) -> String {
+        let Self { intro, outro } = self;
+        format!("{intro}{translation_string}{outro}")
+    }
+}
+
 pub fn generate_output_token_stream(translations: Vec<Translation>, ctx: Context) -> TokenStream {
-    let Context {
-        main_arg_token_tree,
-        ..
-    } = ctx;
+    let Context { main_arg, .. } = ctx;
+    let translation_format = TranslationFormat::from(&main_arg);
+
     let translation_token_streams = translations
         .iter()
         .map(|Translation(language_key, string)| {
-            let string_literal = &format!("\"{}\"", string);
+            let string_literal = &translation_format.format(string);
             TokenStream::from_iter(match *language_key {
                 "de" => {
                     translation_match_rule!(::raphael_data::Locale::DE => str_lit!(string_literal))
@@ -88,7 +114,7 @@ pub fn generate_output_token_stream(translations: Vec<Translation>, ctx: Context
             })
         })
         .chain([TokenStream::from_iter(source_match_rule!(
-            main_arg_token_tree
+            main_arg.token_tree
         ))]);
     let match_body = TokenStream::from_iter(translation_token_streams);
     TokenStream::from_iter([ident!(match), ident!(locale), braces!(match_body)])
@@ -99,15 +125,13 @@ pub fn generate_format_macro_output_token_stream(
     format_arguments: proc_macro::token_stream::IntoIter,
     ctx: Context,
 ) -> TokenStream {
-    let Context {
-        main_arg_token_tree,
-        ..
-    } = ctx;
+    let Context { main_arg, .. } = ctx;
+    let translation_format = TranslationFormat::from(&main_arg);
 
     let match_arms_token_streams = translations
         .iter()
         .map(|Translation(language_key, string)| {
-            let format_string = &format!("\"{}\"", string);
+            let format_string = &translation_format.format(string);
             let format_body = TokenStream::from_iter(
                 TokenStream::from(str_lit!(format_string))
                     .into_iter()
@@ -123,7 +147,7 @@ pub fn generate_format_macro_output_token_stream(
         })
         .chain([TokenStream::from_iter({
             let format_body = TokenStream::from_iter(
-                TokenStream::from(main_arg_token_tree)
+                TokenStream::from(main_arg.token_tree)
                     .into_iter()
                     .chain(format_arguments.clone()),
             );

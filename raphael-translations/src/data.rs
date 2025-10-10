@@ -5,18 +5,11 @@ use std::{
     io::{Seek, Write},
 };
 
-#[cfg(feature = "update-toml")]
-use proc_macro::TokenTree;
 use toml_edit::DocumentMut;
 
-use crate::{Context, util::translation_toml_path};
-
 #[cfg(feature = "update-toml")]
-fn source_location_string(token_tree: &proc_macro::TokenTree) -> String {
-    let span = token_tree.span();
-
-    format!("{}:{}:{}", span.file(), span.line(), span.column())
-}
+use crate::ParsedMainArgumentContents;
+use crate::{Context, util::translation_toml_path};
 
 #[cfg(feature = "update-toml")]
 fn open_translation_toml_file() -> File {
@@ -39,11 +32,10 @@ pub struct Translation(pub &'static str, pub String);
 
 pub fn get_translations(ctx: &Context) -> Vec<Translation> {
     #[allow(unused_variables)]
-    // `main_arg_token_tree` & `text` are used when `update-toml` feature is enabled
+    // `main_arg` is used when `update-toml` feature is enabled
     let Context {
         hash_base64,
-        main_arg_token_tree,
-        text,
+        main_arg,
     } = ctx;
 
     let mut toml_file = open_translation_toml_file();
@@ -68,11 +60,11 @@ pub fn get_translations(ctx: &Context) -> Vec<Translation> {
         if item["version"].as_str().unwrap() != env!("CARGO_PKG_VERSION") {
             item["version"] = toml_edit::value(env!("CARGO_PKG_VERSION"));
             let mut arr = toml_edit::Array::new();
-            arr.push(source_location_string(main_arg_token_tree));
+            arr.push(main_arg.source_location_string());
             item["appearances"] = toml_edit::value(arr);
         } else {
             let appearances = item["appearances"].as_array_mut().unwrap();
-            let source_location = source_location_string(main_arg_token_tree);
+            let source_location = main_arg.source_location_string();
             if !appearances
                 .iter()
                 .any(|value| value.as_str().is_some_and(|str| str == source_location))
@@ -84,21 +76,20 @@ pub fn get_translations(ctx: &Context) -> Vec<Translation> {
         #[cfg(feature = "update-toml")]
         {
             doc[hash_base64] = toml_edit::table();
-            match main_arg_token_tree {
-                TokenTree::Ident(_) => {
-                    doc[hash_base64]["identifier"] = toml_edit::value(text);
-                    doc[hash_base64]["file"] = toml_edit::value(main_arg_token_tree.span().file());
+            match &main_arg.contents {
+                ParsedMainArgumentContents::Identifier { name } => {
+                    doc[hash_base64]["identifier"] = toml_edit::value(name);
+                    doc[hash_base64]["file"] = toml_edit::value(main_arg.token_tree.span().file());
                 }
-                TokenTree::Literal(_) => {
-                    doc[hash_base64]["en"] = format!("'''{}'''", text.trim_matches('\"'))
+                ParsedMainArgumentContents::StringLiteral { body, .. } => {
+                    doc[hash_base64]["en"] = format!("'''{}'''", body)
                         .parse::<toml_edit::Item>()
                         .unwrap();
                 }
-                _ => unreachable!(),
             }
             doc[hash_base64]["version"] = toml_edit::value(env!("CARGO_PKG_VERSION"));
             let mut arr = toml_edit::Array::new();
-            arr.push(source_location_string(main_arg_token_tree));
+            arr.push(main_arg.source_location_string());
             doc[hash_base64]["appearances"] = toml_edit::value(arr);
         }
     }
