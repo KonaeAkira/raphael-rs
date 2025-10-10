@@ -1,6 +1,9 @@
+use std::{fs::File, io::Read};
 #[cfg(feature = "update-toml")]
-use std::io::{Seek, Write};
-use std::{fs::OpenOptions, io::Read};
+use std::{
+    fs::OpenOptions,
+    io::{Seek, Write},
+};
 
 #[cfg(feature = "update-toml")]
 use proc_macro::TokenTree;
@@ -15,6 +18,22 @@ fn source_location_string(token_tree: &proc_macro::TokenTree) -> String {
     format!("{}:{}:{}", span.file(), span.line(), span.column())
 }
 
+#[cfg(feature = "update-toml")]
+fn open_translation_toml_file() -> File {
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(translation_toml_path())
+        .expect("Failed to open tranlstation TOML file!");
+    file.lock().unwrap();
+    file
+}
+
+#[cfg(not(feature = "update-toml"))]
+fn open_translation_toml_file() -> File {
+    File::open(translation_toml_path()).expect("Failed to open tranlstation TOML file!")
+}
+
 #[derive(Debug)]
 pub struct Translation(pub &'static str, pub String);
 
@@ -27,13 +46,7 @@ pub fn get_translations(ctx: &Context) -> Vec<Translation> {
         text,
     } = ctx;
 
-    let toml_path = translation_toml_path();
-    let mut toml_file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(toml_path)
-        .unwrap();
-    toml_file.lock().unwrap();
+    let mut toml_file = open_translation_toml_file();
     let mut doc = String::new();
     toml_file.read_to_string(&mut doc).unwrap();
     let mut doc = doc
