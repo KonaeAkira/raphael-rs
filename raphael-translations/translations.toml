@@ -1,5 +1,5 @@
 
-["MNv+UPkp3UQQhGdnsf10Ng=="] # Hash encoded as base64; only auto-created when `update-toml` is used
+["YTtTX+JOAbNYUk2bHNQSHQ=="] # Hash encoded as base64; only auto-created when `update-toml` feature is used
 en = '''EXAMPLE \u{e100}''' # filled from Rust source when `update-toml` feature is used
 de = '''EXAMPLE_DE \u{e100}''' # contents must be a valid Rust string literal
 fr = '''EXAMPLE_FR \u{e100}'''
@@ -11,660 +11,669 @@ appearances = [] # only written when `update-toml` feature is used, additionally
 ["E+W/aPQk8Tj1fBl96IuobQ=="]
 en = '''New version available!'''
 version = "0.0.0"
-appearances = ["src/app.rs:122:53"]
+appearances = ["src/app.rs:122:60"]
 
 ["mmItiM569HXD61xmESBQbQ=="]
 en = '''Download from GitHub'''
 version = "0.0.0"
-appearances = ["src/app.rs:126:24"]
+appearances = ["src/app.rs:126:31"]
 
 ["WEDujLYYyOU8tQIkwVosEA=="]
 en = '''Your stats are below the minimum requirement for this recipe.'''
 version = "0.0.0"
-appearances = ["src/app.rs:146:21"]
+appearances = ["src/app.rs:147:20"]
 
 ["Y80Ti6XzzJh0HsgP3We95Q=="]
 en = '''Requirement: {req_cms} Craftsmanship, {req_ctrl} Control.'''
 version = "0.0.0"
-appearances = ["src/app.rs:149:21"]
+appearances = ["src/app.rs:151:20"]
 
 ["Y5J9bsBCle+CMto6M6JHxw=="]
 en = '''Close'''
 version = "0.0.0"
-appearances = ["src/app.rs:153:37", "src/app.rs:181:37"]
+appearances = ["src/app.rs:155:44", "src/app.rs:183:44"]
 
 ["pgzB+gD4MKo66zNoY8FNpQ=="]
 en = '''No solution'''
 version = "0.0.0"
-appearances = ["src/app.rs:166:57"]
+appearances = ["src/app.rs:168:64"]
 
 ["kv7jCjVAfknUZcCoo2idbQ=="]
 en = '''Make sure that the recipe is set correctly and that your stats are enough to craft this item.'''
 version = "0.0.0"
-appearances = ["src/app.rs:168:37"]
+appearances = ["src/app.rs:170:44"]
 
 ["M7yKz7+xN0NbELcsdUS9mQ=="]
 en = '''Internal Solver Error'''
 version = "0.0.0"
-appearances = ["src/app.rs:174:57"]
+appearances = ["src/app.rs:176:64"]
 
 ["RGfRJgcMUrxdE5tDqHmKmw=="]
 en = '''Cancelling ...'''
 version = "0.0.0"
-appearances = ["src/app.rs:203:40"]
+appearances = ["src/app.rs:205:47"]
 
 ["jjl4qe3qMoWXStCHXMxtQw=="]
 en = '''Solving ...'''
 version = "0.0.0"
-appearances = ["src/app.rs:205:40"]
+appearances = ["src/app.rs:207:47"]
 
 ["CzGfkdakyiaZV+pcVtpfIA=="]
 en = '''Computing ...'''
 version = "0.0.0"
-appearances = ["src/app.rs:212:41"]
+appearances = ["src/app.rs:214:48"]
 
 ["BARUl+J0medS35cQtNh2aQ=="]
 en = '''{num} nodes visited'''
 version = "0.0.0"
-appearances = ["src/app.rs:225:48"]
+appearances = ["src/app.rs:227:55"]
 
 ["OoX2q/JxMzmzTwg2Ed6zIA=="]
 en = '''Cancel'''
 version = "0.0.0"
-appearances = ["src/app.rs:233:81"]
+appearances = ["src/app.rs:235:88"]
 
 ["cg3EbR6nwnyIL1Q//glDgQ=="]
 en = '''View source on GitHub'''
 version = "0.0.0"
-appearances = ["src/app.rs:283:36"]
+appearances = ["src/app.rs:285:43"]
 
 ["lWmzPzSl47iiMaVVE3XEhg=="]
 en = '''Join Discord'''
 version = "0.0.0"
-appearances = ["src/app.rs:291:36"]
+appearances = ["src/app.rs:293:43"]
 
 ["R8QWfFt31+imn5zc8sqPpQ=="]
 en = '''Support me on Ko-fi'''
 version = "0.0.0"
-appearances = ["src/app.rs:299:36"]
+appearances = ["src/app.rs:301:43"]
 
 ["korDyKclck7un9L9GomIqw=="]
 en = '''Edit crafter stats'''
 version = "0.0.0"
-appearances = ["src/app.rs:401:36"]
+appearances = ["src/app.rs:403:43"]
 
 ["j6ZOcmHFeUUvSQL3tC6w8Q=="]
 en = '''Saved macros & solve history'''
 version = "0.0.0"
-appearances = ["src/app.rs:416:36"]
+appearances = ["src/app.rs:418:43"]
 
 ["1hnF2qPsDblAcEC031aNiQ=="]
 en = '''⚙ Settings'''
 version = "0.0.0"
-appearances = ["src/app.rs:471:56"]
+appearances = ["src/app.rs:473:63"]
 
 ["io7ohp3lMzZa3WQzo2EXwA=="]
 en = '''Zoom'''
 version = "0.0.0"
-appearances = ["src/app.rs:480:37"]
+appearances = ["src/app.rs:482:44"]
 
 ["M8PiJj/aRi0rpRN+ej1g9A=="]
 en = '''Reset'''
 version = "0.0.0"
-appearances = ["src/app.rs:491:49"]
+appearances = ["src/app.rs:493:56"]
 
 ["pONACX6lY+V99UWTe/kqrg=="]
 en = '''Theme'''
 version = "0.0.0"
-appearances = ["src/app.rs:517:37"]
+appearances = ["src/app.rs:519:44"]
 
 ["Dzp4BVgWJRKCJfNNkYIVlg=="]
 en = '''Max solver threads'''
 version = "0.0.0"
-appearances = ["src/app.rs:523:37"]
+appearances = ["src/app.rs:525:44"]
 
 ["jShO4IYyVbGBOM8dCrtLKg=="]
 en = '''Auto'''
 version = "0.0.0"
-appearances = ["src/app.rs:527:71"]
+appearances = ["src/app.rs:530:77"]
 
 ["BLHRlxc+VXt0l9NBBt9tfw=="]
 en = '''Reload the page to change max solver threads.'''
 version = "0.0.0"
-appearances = ["src/app.rs:554:51"]
+appearances = ["src/app.rs:560:39"]
 
 ["vjDFd4nGKfXhhYyK/tHwPA=="]
 en = '''Restart the app to change max solver threads.'''
 version = "0.0.0"
-appearances = ["src/app.rs:556:51"]
+appearances = ["src/app.rs:563:39"]
 
 ["nn9ZpD3bAAqndQIWAbRgFw=="]
 en = '''⚠ Unavailable after the solver was started.'''
 version = "0.0.0"
-appearances = ["src/app.rs:558:52"]
+appearances = ["src/app.rs:567:32"]
 
 ["zmui7MOfCBvDo46GmrsyHQ=="]
 en = '''Solve'''
 version = "0.0.0"
-appearances = ["src/app.rs:598:59"]
+appearances = ["src/app.rs:608:66"]
 
 ["1U/QcBQBwNxZFTVzOiPbZQ=="]
 en = '''Loaded from saved rotations'''
 version = "0.0.0"
-appearances = ["src/app.rs:621:37"]
+appearances = ["src/app.rs:631:44"]
 
 ["GHsBdCyhgje4wH1aGIXomA=="]
 en = '''Elapsed time: {dur:.2}s'''
 version = "0.0.0"
-appearances = ["src/app.rs:624:29"]
+appearances = ["src/app.rs:635:28"]
 
 ["86xP6SinOkg3PnEMcQj2jQ=="]
 en = '''Configuration'''
 version = "0.0.0"
-appearances = ["src/app.rs:643:45"]
+appearances = ["src/app.rs:654:52"]
 
 ["L2JTnghPt1d+Oa4OEEF1JA=="]
 en = '''Crafter stats'''
 version = "0.0.0"
-appearances = ["src/app.rs:665:41", "src/widgets/saved_rotations.rs:490:35"]
+appearances = ["src/app.rs:676:48", "src/widgets/saved_rotations.rs:498:42"]
 
 ["djUZraHVrnziMltlgh1vrw=="]
 en = '''Craftsmanship'''
 version = "0.0.0"
-appearances = ["src/app.rs:667:25", "src/widgets/stats_edit.rs:39:33"]
+appearances = ["src/app.rs:678:32", "src/widgets/stats_edit.rs:39:40"]
 
 ["KJUTCL5V/kZ2/dZUokILbw=="]
 en = '''Control'''
 version = "0.0.0"
-appearances = ["src/app.rs:680:25", "src/widgets/stats_edit.rs:41:33"]
+appearances = ["src/app.rs:691:32", "src/widgets/stats_edit.rs:41:40"]
 
 ["xiuBlBU0Sotio+aM9OVj/g=="]
 en = '''CP'''
 version = "0.0.0"
-appearances = ["src/app.rs:693:25", "src/widgets/simulator.rs:95:55", "src/widgets/simulator.rs:157:37", "src/widgets/stats_edit.rs:43:33"]
+appearances = ["src/app.rs:704:32", "src/widgets/simulator.rs:96:62", "src/widgets/simulator.rs:158:44", "src/widgets/stats_edit.rs:43:40"]
 
 ["gvQDIapOj6o9a+eE3FQ/4w=="]
 en = '''Job level'''
 version = "0.0.0"
-appearances = ["src/app.rs:705:25", "src/widgets/stats_edit.rs:45:33"]
+appearances = ["src/app.rs:716:32", "src/widgets/stats_edit.rs:45:40"]
 
 ["cC4Pa/1y2f2sfxzRiK/t7w=="]
 en = '''HQ materials'''
 version = "0.0.0"
-appearances = ["src/app.rs:715:41"]
+appearances = ["src/app.rs:726:48"]
 
 ["kUunSSnuVLUo8LUXOeOV3g=="]
 en = '''None'''
 version = "0.0.0"
-appearances = ["src/app.rs:741:25", "src/widgets/macro_view.rs:122:23", "src/widgets/macro_view.rs:129:23", "src/widgets/macro_view.rs:499:33", "src/widgets/food_select.rs:58:45", "src/widgets/potion_select.rs:61:45", "src/widgets/saved_rotations.rs:463:24"]
+appearances = ["src/app.rs:752:32", "src/widgets/macro_view.rs:127:30", "src/widgets/macro_view.rs:134:30", "src/widgets/macro_view.rs:508:40", "src/widgets/food_select.rs:58:52", "src/widgets/potion_select.rs:61:52", "src/widgets/saved_rotations.rs:469:31"]
 
 ["zx/fjNOuB8BwC8A4Cf9wEQ=="]
 en = '''Actions'''
 version = "0.0.0"
-appearances = ["src/app.rs:745:41"]
+appearances = ["src/app.rs:756:48"]
 
 ["Nqynjr3uw4cXS6wQ7r6QMQ=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage.'''
 version = "0.0.0"
-appearances = ["src/app.rs:789:21"]
+appearances = ["src/app.rs:801:20"]
 
 ["78TQLq2ZFZ/qmx/LqLc/Xg=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions.'''
 version = "0.0.0"
-appearances = ["src/app.rs:798:28"]
+appearances = ["src/app.rs:810:35"]
 
 ["dN6QqcmCiKeFu4Xi+6XZsA=="]
 en = '''Download latest release from GitHub'''
 version = "0.0.0"
-appearances = ["src/app.rs:804:44"]
+appearances = ["src/app.rs:816:51"]
 
 ["yngZyyailHQ73P49MTwWog=="]
 en = '''Solver settings'''
 version = "0.0.0"
-appearances = ["src/app.rs:811:41"]
+appearances = ["src/app.rs:823:48"]
 
 ["F6hizp5LhBRSpJLhSSSKSw=="]
 en = '''Target quality'''
 version = "0.0.0"
-appearances = ["src/app.rs:813:25"]
+appearances = ["src/app.rs:825:32"]
 
 ["2AVyYXMX37CrN/9Gvhfyuw=="]
 en = '''Solution must reach target quality'''
 version = "0.0.0"
-appearances = ["src/app.rs:879:20"]
+appearances = ["src/app.rs:891:27"]
 
 ["p7HyJWFYYWHKe39OAg2LrQ=="]
 en = '''Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off.'''
 version = "0.0.0"
-appearances = ["src/app.rs:881:37"]
+appearances = ["src/app.rs:893:44"]
 
 ["ao5RTXAU8JPfZa/+YXPWLQ=="]
 en = '''Backload progress'''
 version = "0.0.0"
-appearances = ["src/app.rs:887:20"]
+appearances = ["src/app.rs:899:27"]
 
 ["wFvVGJ0ERIy0TrxLLi5LAw=="]
 en = '''Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.'''
 version = "0.0.0"
-appearances = ["src/app.rs:889:37"]
+appearances = ["src/app.rs:901:44"]
 
 ["4TrzziJN2b/3+NIwV86LoQ=="]
 en = '''Ensure 100% reliability'''
 version = "0.0.0"
-appearances = ["src/app.rs:900:24"]
+appearances = ["src/app.rs:912:31"]
 
 ["seCI2n41FD+21Bg6X3etyQ=="]
 en = '''Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro.'''
 version = "0.0.0"
-appearances = ["src/app.rs:903:37"]
+appearances = ["src/app.rs:915:44"]
 
 ["+DwRW5ozbiRozBNupYmv0A=="]
 en = '''⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.'''
 version = "0.0.0"
-appearances = ["src/app.rs:1013:13"]
+appearances = ["src/app.rs:1026:12"]
 
 ["l/rSN+oK2pKV8ohfHf/Ovg=="]
 en = '''⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.'''
 version = "0.0.0"
-appearances = ["src/app.rs:1017:13"]
+appearances = ["src/app.rs:1031:12"]
 
 ["sVLTzHCZb8cp/NrYNctl5Q=="]
 en = '''0% quality'''
 version = "0.0.0"
-appearances = ["src/config.rs:125:43"]
+appearances = ["src/config.rs:125:50"]
 
 ["7LMvbyCAJCGtVTLCvbNaaQ=="]
 en = '''55% quality'''
 version = "0.0.0"
-appearances = ["src/config.rs:126:52"]
+appearances = ["src/config.rs:126:59"]
 
 ["BSMfvg4Sw2tq11bcAydqFw=="]
 en = '''75% quality'''
 version = "0.0.0"
-appearances = ["src/config.rs:127:52"]
+appearances = ["src/config.rs:127:59"]
 
 ["UJHSBbmagIHL0VdGkb/BIg=="]
 en = '''95% quality'''
 version = "0.0.0"
-appearances = ["src/config.rs:128:52"]
+appearances = ["src/config.rs:128:59"]
 
 ["przcbn6z8pNaEr1YCEAcaA=="]
 en = '''100% quality'''
 version = "0.0.0"
-appearances = ["src/config.rs:129:43"]
+appearances = ["src/config.rs:129:50"]
 
 ["HNz1pOvAceAt8ecM09QFpA=="]
 en = '''Custom'''
 version = "0.0.0"
-appearances = ["src/config.rs:130:48", "src/widgets/recipe_select.rs:486:62"]
+appearances = ["src/config.rs:130:55", "src/widgets/recipe_select.rs:488:68"]
+
+["u8MNP8lLoB18+dt06cfdzQ=="]
+en = '''The format can be any arbitrary text or FFXIV command.
+
+The following placeholders can be used to output their respective value:
+  - {index} : the index or number of the macro block
+  - {max_index} : the maximum index or number of macro blocks
+  - {item_name} : the name of the selected recipe's item result
+  - {food} : the name of the selected food
+  - {potion} : the name of the selected potion
+  - {craftsmanship} : the base craftsmanship stat
+  - {control} : the base control stat
+  - {cp} : the base CP stat'''
+version = "0.0.0"
+appearances = ["src/widgets/macro_view.rs:13:8"]
 
 ["DBcrvd0yDrwJrrCOkNjGBw=="]
 en = '''Unknown item'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:116:23", "src/widgets/macro_view.rs:127:31", "src/widgets/item_name_label.rs:14:67", "src/widgets/saved_rotations.rs:107:27", "src/widgets/saved_rotations.rs:462:31", "src/widgets/saved_rotations.rs:487:35"]
+appearances = ["src/widgets/macro_view.rs:121:30", "src/widgets/macro_view.rs:132:38", "src/widgets/item_name_label.rs:15:38", "src/widgets/saved_rotations.rs:107:34", "src/widgets/saved_rotations.rs:468:38", "src/widgets/saved_rotations.rs:495:42"]
 
 ["vXv1yeY8kh1x9KtxDRdJ8w=="]
 en = '''Use default notification'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:273:20"]
+appearances = ["src/widgets/macro_view.rs:278:27"]
 
 ["RD5bQ2/SwHLXRbJ41nWayg=="]
 en = '''Use custom notification format'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:287:20"]
-
-["q9Tsns9++CyZG9JRuAQuNQ=="]
-identifier = "CUSTOM_FORMAT_PLACEHOLDER_HELP_TEXT"
-file = "src/widgets/macro_view.rs"
-version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:289:37", "src/widgets/macro_view.rs:347:37"]
+appearances = ["src/widgets/macro_view.rs:292:27"]
 
 ["ZJJiE3i2OtYlS4C4WFwMCQ=="]
 en = '''Use different format for last notification'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:306:28"]
+appearances = ["src/widgets/macro_view.rs:311:35"]
 
 ["zJY/uvQE4a+/EQbayvw3WA=="]
 en = '''Avoid single-action macros'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:322:16"]
+appearances = ["src/widgets/macro_view.rs:327:23"]
 
 ["oEJQBMU5ApSo7b6TUvt/3w=="]
 en = '''Skip last notification if doing so avoids creating a macro with a single action.'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:328:24"]
+appearances = ["src/widgets/macro_view.rs:333:31"]
 
 ["VCj4aAUHiSC0XQqJrc5hhQ=="]
 en = '''Use \"/macrolock\" as macro intro'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:339:16"]
+appearances = ["src/widgets/macro_view.rs:344:23"]
 
 ["L4G4+YiOQsz+P64Jg5FL/g=="]
 en = '''Use custom intro format'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:345:20"]
+appearances = ["src/widgets/macro_view.rs:350:27"]
 
 ["0ToYrBaZr+vb9VtFwGCoeg=="]
 en = '''Macro'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:397:53"]
+appearances = ["src/widgets/macro_view.rs:402:60"]
 
 ["pIURcS2307txIsA2caZblQ=="]
 en = '''Clear'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:400:89", "src/widgets/food_select.rs:67:54", "src/widgets/potion_select.rs:70:54"]
+appearances = ["src/widgets/macro_view.rs:407:61", "src/widgets/food_select.rs:67:61", "src/widgets/potion_select.rs:70:61"]
 
 ["iPpRNkQuRTRXmI+7BDyPng=="]
 en = '''{steps} steps, {duration} seconds'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:411:29", "src/widgets/saved_rotations.rs:396:21"]
+appearances = ["src/widgets/macro_view.rs:420:28", "src/widgets/saved_rotations.rs:402:20"]
 
 ["rT/TIfZ9jXZZJOR6xcY3sA=="]
 en = '''Include delay'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:418:63"]
+appearances = ["src/widgets/macro_view.rs:427:70"]
 
 ["3woNnNLtWMVl9o5wyolFyQ=="]
 en = '''Extra delay'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:420:37"]
+appearances = ["src/widgets/macro_view.rs:429:44"]
 
 ["A1SjGQYF1xfTO+6FPtH+nQ=="]
 en = '''Split macro'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:425:61"]
+appearances = ["src/widgets/macro_view.rs:434:68"]
 
 ["8uKOWUHS0zeATFGNHzbhCg=="]
 en = '''Macro lock / intro'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:426:63"]
+appearances = ["src/widgets/macro_view.rs:435:70"]
 
 ["jw1f6CYtILs3dZRSiPnhTw=="]
 en = '''✏ Edit'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:428:68", "src/widgets/macro_view.rs:446:68"]
+appearances = ["src/widgets/macro_view.rs:437:75", "src/widgets/macro_view.rs:455:75"]
 
 ["gS/C6YWCL3vcOBWhu6li6g=="]
 en = '''End-of-macro notification'''
 version = "0.0.0"
-appearances = ["src/widgets/macro_view.rs:443:28"]
+appearances = ["src/widgets/macro_view.rs:452:35"]
 
 ["MxqSQgJTyaqY9VdQSKH/eA=="]
 en = '''Simulation'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:75:53"]
+appearances = ["src/widgets/simulator.rs:75:60"]
 
 ["U0RYlKii9iy0kiehaDyH4g=="]
 en = '''⚠ Some parameters have changed since last solve.'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:81:37"]
+appearances = ["src/widgets/simulator.rs:82:36"]
 
 ["IP5j7MLGk64pTel97zh0cQ=="]
 en = '''Progress'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:92:61", "src/widgets/simulator.rs:107:37"]
+appearances = ["src/widgets/simulator.rs:93:68", "src/widgets/simulator.rs:108:44"]
 
 ["lhVjk5W8FC4vdxhfoqIf4g=="]
 en = '''Quality'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:93:60", "src/widgets/simulator.rs:124:37"]
+appearances = ["src/widgets/simulator.rs:94:67", "src/widgets/simulator.rs:125:44"]
 
 ["L10Gv1OAX2Uqzxno/cscwA=="]
 en = '''Durability'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:94:63", "src/widgets/simulator.rs:140:37"]
+appearances = ["src/widgets/simulator.rs:95:70", "src/widgets/simulator.rs:141:44"]
 
 ["7LpZW5ceb1VJE7v/npMZQw=="]
 en = '''Calculated assuming worst possible sequence of conditions'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:170:40"]
+appearances = ["src/widgets/simulator.rs:173:32"]
 
 ["V05L1/PMXNT9BsDP2LOuPQ=="]
 en = '''Calculated assuming Normal conditon on every step'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:171:41"]
+appearances = ["src/widgets/simulator.rs:176:43"]
 
 ["D/ceSymzCAp4349vFS0FrQ=="]
 en = '''Synthesis failed'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:176:41"]
+appearances = ["src/widgets/simulator.rs:182:48"]
 
 ["lr+XyMNzKfepBT38ED0Rvg=="]
 en = '''Tier {tier} collectable'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:189:48"]
+appearances = ["src/widgets/simulator.rs:195:55"]
 
 ["TK7YG1a/2LZTIvKOHtZrhw=="]
 en = '''{hq}% HQ'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:196:48"]
+appearances = ["src/widgets/simulator.rs:202:55"]
 
 ["dYoXGUL8QouDDMZBCoKV8Q=="]
 en = '''{value: >5} / {maximum}  (+{overflow} overflow)'''
 version = "0.0.0"
-appearances = ["src/widgets/simulator.rs:295:19"]
+appearances = ["src/widgets/simulator.rs:301:26"]
 
 ["3jz+nIL+YTpTiCUfv8ZV9g=="]
 en = '''Recipes'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:46:63"]
+appearances = ["src/widgets/recipe_select.rs:46:70"]
 
 ["s/ovMAAC5l5RoZQTq5NHTg=="]
 en = '''Missions'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:47:71"]
+appearances = ["src/widgets/recipe_select.rs:47:78"]
 
 ["3ninXzetsJO21k7Af0PZuA=="]
 en = '''🔍 Search'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:144:31", "src/widgets/food_select.rs:93:35", "src/widgets/potion_select.rs:96:35"]
+appearances = ["src/widgets/recipe_select.rs:144:38", "src/widgets/food_select.rs:93:42", "src/widgets/potion_select.rs:96:42"]
 
 ["UfUIG2T4uxtuhNjcxVbhIw=="]
 en = '''Select'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:208:37", "src/widgets/recipe_select.rs:284:49", "src/widgets/food_select.rs:133:45", "src/widgets/potion_select.rs:137:45"]
+appearances = ["src/widgets/recipe_select.rs:208:44", "src/widgets/recipe_select.rs:284:56", "src/widgets/food_select.rs:133:52", "src/widgets/potion_select.rs:137:52"]
 
 ["U71vRCskzp/0ZNKDCqyXYw=="]
 en = '''⚠ Patch {ffxiv_patch} recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:316:13"]
+appearances = ["src/widgets/recipe_select.rs:317:12"]
 
 ["d7HtKDFSNezpnAEROlmBfA=="]
 en = '''Level:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:327:33"]
+appearances = ["src/widgets/recipe_select.rs:328:40"]
 
 ["X9WQkgT1iJzBPCuNN/JvnA=="]
 en = '''Recipe Level:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:338:37"]
+appearances = ["src/widgets/recipe_select.rs:339:44"]
 
 ["YFBU1I3swO+hctnHg9pD9g=="]
 en = '''Progress:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:349:33"]
+appearances = ["src/widgets/recipe_select.rs:350:40"]
 
 ["1SwYHyOKKUpeJrqxy6qw3g=="]
 en = '''Quality:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:355:33"]
+appearances = ["src/widgets/recipe_select.rs:356:40"]
 
 ["jZQbTryjaUmYZZvlsHUtAQ=="]
 en = '''Initial Quality:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:364:37"]
+appearances = ["src/widgets/recipe_select.rs:365:44"]
 
 ["W60Qz/MbXdea5Fbt8w36dQ=="]
 en = '''Durability:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:369:33"]
+appearances = ["src/widgets/recipe_select.rs:370:40"]
 
 ["JWHlmVKKcwQdoBto+WywoQ=="]
 en = '''Expert recipe'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:377:24"]
+appearances = ["src/widgets/recipe_select.rs:378:31"]
 
 ["NnIkZMZ1I6bzAw6z+/Mkrw=="]
 en = '''Progress divider'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:385:37"]
+appearances = ["src/widgets/recipe_select.rs:386:44"]
 
 ["utcfvalMOEH1HXXDxo0QiQ=="]
 en = '''Quality divider'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:389:37"]
+appearances = ["src/widgets/recipe_select.rs:390:44"]
 
 ["xG5frC1m0GiyFaKYj6hUbw=="]
 en = '''Progress modifier'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:393:37"]
+appearances = ["src/widgets/recipe_select.rs:394:44"]
 
 ["IUbEtNqmPZ2zGIfJxqZ8ew=="]
 en = '''Quality modifier'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:397:37"]
+appearances = ["src/widgets/recipe_select.rs:398:44"]
 
 ["Ku75COVkZS7vs5feP8xfIg=="]
 en = '''Progress per 100% efficiency:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:403:33"]
+appearances = ["src/widgets/recipe_select.rs:404:40"]
 
 ["1lyQv8FR7jN32SKj8OGAEQ=="]
 en = '''Quality per 100% efficiency:'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:420:33"]
+appearances = ["src/widgets/recipe_select.rs:421:40"]
 
 ["+HWqDKvIsGRlyEP1fjeelQ=="]
 en = '''Override per 100% efficiency values'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:441:28"]
+appearances = ["src/widgets/recipe_select.rs:442:35"]
 
 ["xg14pFym75QkPxg+VMf70w=="]
 en = '''Recipe'''
 version = "0.0.0"
-appearances = ["src/widgets/recipe_select.rs:477:53", "src/widgets/saved_rotations.rs:485:20"]
+appearances = ["src/widgets/recipe_select.rs:478:60", "src/widgets/saved_rotations.rs:493:27"]
 
 ["pwNUD9CFWaFvbreERTHQww=="]
 en = '''Food'''
 version = "0.0.0"
-appearances = ["src/widgets/food_select.rs:56:53", "src/widgets/saved_rotations.rs:492:35"]
+appearances = ["src/widgets/food_select.rs:56:60", "src/widgets/saved_rotations.rs:502:23"]
 
 ["ue2ePHEFngovxxMqHDLNjQ=="]
 en = '''Potion'''
 version = "0.0.0"
-appearances = ["src/widgets/potion_select.rs:59:53", "src/widgets/saved_rotations.rs:495:16"]
+appearances = ["src/widgets/potion_select.rs:59:60", "src/widgets/saved_rotations.rs:507:23"]
 
 ["8m8Cw5TfKnNQZXbgXvFzZg=="]
 en = '''Copy to all jobs'''
 version = "0.0.0"
-appearances = ["src/widgets/stats_edit.rs:32:37"]
+appearances = ["src/widgets/stats_edit.rs:32:44"]
 
 ["aMW+XLiXOhzKGx/Pt5IDGQ=="]
 en = '''🗐 Copy crafter config'''
 version = "0.0.0"
-appearances = ["src/widgets/stats_edit.rs:70:42"]
+appearances = ["src/widgets/stats_edit.rs:70:49"]
 
 ["tS7JmmvGVAF2Bz/tl0mTTg=="]
 en = '''📋 Paste config here to load'''
 version = "0.0.0"
-appearances = ["src/widgets/stats_edit.rs:85:39"]
+appearances = ["src/widgets/stats_edit.rs:85:46"]
 
 ["B7aDbFVnrJ640ZuDhMNUaQ=="]
 en = '''Copy item name'''
 version = "0.0.0"
-appearances = ["src/widgets/item_name_label.rs:41:29"]
+appearances = ["src/widgets/item_name_label.rs:42:36"]
 
 ["jPqS6hOpY1D5ul3Z6feibg=="]
 en = '''Copy item ID'''
 version = "0.0.0"
-appearances = ["src/widgets/item_name_label.rs:51:29"]
+appearances = ["src/widgets/item_name_label.rs:52:36"]
 
 ["IOs59+lNVa5aqq42jPjgmA=="]
 en = '''Load rotation'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:195:43"]
+appearances = ["src/widgets/saved_rotations.rs:195:50"]
 
 ["FqXoTdiBoc2v0uFVD5lofg=="]
 en = '''Load rotation & recipe'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:196:49"]
+appearances = ["src/widgets/saved_rotations.rs:196:56"]
 
 ["b8CojbPI+yIlzrjesKLLJQ=="]
 en = '''Load rotation, recipe & consumables'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:197:60"]
+appearances = ["src/widgets/saved_rotations.rs:198:27"]
 
 ["42TMorbA/2WEwrSbO7/uRA=="]
 en = '''Load'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:343:57"]
+appearances = ["src/widgets/saved_rotations.rs:345:64"]
 
 ["NKEGn/3GMJBSdM36Xez7CQ=="]
 en = '''⚠ pre-v0.21.0 rotation. No recipe data.'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:362:56"]
+appearances = ["src/widgets/saved_rotations.rs:366:36"]
 
 ["8L4dKsEo8oVA7jI6qOFhvg=="]
 en = '''{craftsmanship} CMS, {control} Control, {cp} CP'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:470:13"]
+appearances = ["src/widgets/saved_rotations.rs:477:12"]
 
 ["7Xsm5zbfZlRbNkonW0Z3bQ=="]
 en = '''Level {level} {job}'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:478:13"]
+appearances = ["src/widgets/saved_rotations.rs:486:12"]
 
 ["mvUMd7JfKiB3rr2sVvJG5Q=="]
 en = '''Job'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:491:35"]
+appearances = ["src/widgets/saved_rotations.rs:499:42"]
 
 ["aUHibt51mqLDGB0pHdWF3Q=="]
 en = '''Solver'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:498:35"]
+appearances = ["src/widgets/saved_rotations.rs:510:42"]
 
 ["SmywRw+JVdoQwv6cg9pNhA=="]
 en = '''Settings'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:590:30"]
+appearances = ["src/widgets/saved_rotations.rs:602:37"]
 
 ["LQTzuXu5pMolT+3LjiKvzw=="]
 en = '''Load saved rotations when initiating solve'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:595:28"]
+appearances = ["src/widgets/saved_rotations.rs:607:35"]
 
 ["2uyiACh2ZEx6RV9q4KKrpg=="]
 en = '''Default operation on clicking Load button:'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:598:33"]
+appearances = ["src/widgets/saved_rotations.rs:610:40"]
 
 ["4IVCPgkwscSoR2m7OKjl0Q=="]
 en = '''⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:615:36"]
+appearances = ["src/widgets/saved_rotations.rs:627:43"]
 
 ["jcQRTspaQuUWgS6PSyj80A=="]
 en = '''Saved macros'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:627:53"]
+appearances = ["src/widgets/saved_rotations.rs:639:60"]
 
 ["QnMLe4Cp8KZLzp3FpPw0/g=="]
 en = '''No saved macros'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:630:37"]
+appearances = ["src/widgets/saved_rotations.rs:642:44"]
 
 ["+EtHBl/W4j8dFMG2lnzH9w=="]
 en = '''Solve history'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:649:57"]
+appearances = ["src/widgets/saved_rotations.rs:661:64"]
 
 ["AElYy3JzsSGf2JaaEhWJbg=="]
 en = '''⚠ Oldest rotations will be lost on next solve'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:665:44"]
+appearances = ["src/widgets/saved_rotations.rs:677:51"]
 
 ["xmX78PFspmhv+Qqo+N3oGg=="]
 en = '''No solve history'''
 version = "0.0.0"
-appearances = ["src/widgets/saved_rotations.rs:676:37"]
+appearances = ["src/widgets/saved_rotations.rs:688:44"]
