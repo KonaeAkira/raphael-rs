@@ -1,31 +1,12 @@
-use std::{fs::File, io::Read};
+use std::io::Read;
 #[cfg(feature = "update-toml")]
-use std::{
-    fs::OpenOptions,
-    io::{Seek, Write},
-};
+use std::io::{Seek, Write};
 
 use toml_edit::DocumentMut;
 
 #[cfg(feature = "update-toml")]
 use crate::ParsedMainArgumentContents;
-use crate::{Context, util::translation_toml_path};
-
-#[cfg(feature = "update-toml")]
-fn open_translation_toml_file() -> File {
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(translation_toml_path())
-        .expect("Failed to open tranlstation TOML file!");
-    file.lock().unwrap();
-    file
-}
-
-#[cfg(not(feature = "update-toml"))]
-fn open_translation_toml_file() -> File {
-    File::open(translation_toml_path()).expect("Failed to open tranlstation TOML file!")
-}
+use crate::{Context, util::open_translation_toml_file};
 
 #[derive(Debug)]
 pub struct Translation(pub &'static str, pub String);

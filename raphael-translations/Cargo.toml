@@ -14,6 +14,9 @@ toml_edit = "0.23.6"
 rustc-stable-hash = "0.1.2"
 base64 = "0.22"
 
+[build-dependencies]
+toml_edit = "0.23.6"
+
 [features]
 default = []
 update-toml = []
