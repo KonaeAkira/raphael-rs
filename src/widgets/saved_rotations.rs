@@ -5,6 +5,7 @@ use std::{
 
 use raphael_data::{Consumable, CrafterStats, Locale, Recipe};
 use raphael_sim::*;
+use raphael_translations::{t, t_format};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -103,7 +104,7 @@ impl Rotation {
         let game_settings = app_context.game_settings();
         let initial_quality = app_context.initial_quality();
         let name = raphael_data::get_item_name(recipe_config.recipe.item_id, false, *locale)
-            .unwrap_or("Unknown item".to_owned());
+            .unwrap_or(t!("Unknown item").to_owned());
         let solver_params = format!(
             "Raphael v{}{}{}",
             env!("CARGO_PKG_VERSION"),
@@ -173,12 +174,27 @@ pub enum LoadOperation {
     RotationRecipeConsumables,
 }
 
-impl std::fmt::Display for LoadOperation {
+struct LoadOperationDisplay {
+    load_operation: LoadOperation,
+    locale: Locale,
+}
+
+impl LoadOperation {
+    pub fn display(self, locale: Locale) -> impl std::fmt::Display {
+        LoadOperationDisplay {
+            load_operation: self,
+            locale,
+        }
+    }
+}
+
+impl std::fmt::Display for LoadOperationDisplay {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let output_str = match self {
-            Self::Rotation => "Load rotation",
-            Self::RotationRecipe => "Load rotation & recipe",
-            Self::RotationRecipeConsumables => "Load rotation, recipe & consumables",
+        let locale = self.locale;
+        let output_str = match self.load_operation {
+            LoadOperation::Rotation => t!("Load rotation"),
+            LoadOperation::RotationRecipe => t!("Load rotation & recipe"),
+            LoadOperation::RotationRecipeConsumables => t!("Load rotation, recipe & consumables"),
         };
         write!(f, "{}", output_str)
     }
@@ -308,6 +324,7 @@ impl<'a> RotationWidget<'a> {
     }
 
     fn show_rotation_title(&mut self, ui: &mut egui::Ui, collapsed: &mut bool) {
+        let locale = self.locale;
         ui.horizontal(|ui| {
             util::collapse_temporary(ui, self.id_salt("collapsed").into(), collapsed);
             ui.label(egui::RichText::new(&self.rotation.name).strong());
@@ -323,7 +340,7 @@ impl<'a> RotationWidget<'a> {
                     *self.pinned = true;
                 }
                 ui.add_space(-3.0);
-                let load_button_response = ui.button("Load");
+                let load_button_response = ui.button(t!("Load"));
                 let mut selected_load_operation = None;
                 load_button_response.context_menu(|ui| {
                     if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
@@ -334,7 +351,7 @@ impl<'a> RotationWidget<'a> {
                         LoadOperation::RotationRecipe,
                         LoadOperation::RotationRecipeConsumables,
                     ] {
-                        let text = format!("{}", saved_rotation_load_operation);
+                        let text = format!("{}", saved_rotation_load_operation.display(locale));
                         if ui.button(text).clicked() {
                             selected_load_operation = Some(saved_rotation_load_operation);
                         }
@@ -342,7 +359,7 @@ impl<'a> RotationWidget<'a> {
                     if self.rotation.recipe_info.is_none() {
                         ui.add(
                             egui::Label::new(
-                                egui::RichText::new("⚠ pre-v0.21.0 rotation. No recipe data.")
+                                egui::RichText::new(t!("⚠ pre-v0.21.0 rotation. No recipe data."))
                                     .small()
                                     .color(ui.visuals().warn_fg_color),
                             )
@@ -375,10 +392,9 @@ impl<'a> RotationWidget<'a> {
                     .iter()
                     .map(|action| action.time_cost())
                     .sum::<u8>();
-                ui.label(format!(
-                    "{} steps, {} seconds",
-                    self.rotation.actions.len(),
-                    duration
+                ui.label(t_format!(
+                    "{steps} steps, {duration} seconds",
+                    steps = self.rotation.actions.len(),
                 ));
             });
         });
@@ -440,40 +456,46 @@ impl<'a> RotationWidget<'a> {
     }
 
     fn get_consumable_name(&self, consumable: Option<(u32, bool)>) -> String {
+        let locale = self.locale;
         match consumable {
-            Some((item_id, hq)) => raphael_data::get_item_name(item_id, hq, self.locale)
-                .unwrap_or("Unknown item".to_owned()),
-            None => "None".to_string(),
+            Some((item_id, hq)) => raphael_data::get_item_name(item_id, hq, locale)
+                .unwrap_or(t!("Unknown item").to_owned()),
+            None => t!("None").to_string(),
         }
     }
 
     fn show_rotation_info(&self, ui: &mut egui::Ui) {
-        let stats_string = format!(
-            "{} CMS, {} Control, {} CP",
-            self.rotation.crafter_stats.craftsmanship,
-            self.rotation.crafter_stats.control,
-            self.rotation.crafter_stats.cp,
+        let locale = self.locale;
+        let stats_string = t_format!(
+            "{craftsmanship} CMS, {control} Control, {cp} CP",
+            craftsmanship = self.rotation.crafter_stats.craftsmanship,
+            control = self.rotation.crafter_stats.control,
+            cp = self.rotation.crafter_stats.cp,
         );
         let recipe = self.get_recipe();
         let job_id = recipe.map(|recipe| recipe.job_id);
-        let job_string = format!(
-            "Level {} {}",
-            self.rotation.crafter_stats.level,
-            job_id.map_or("", |job_id| raphael_data::get_job_name(job_id, self.locale))
+        let job_string = t_format!(
+            "Level {level} {job}",
+            level = self.rotation.crafter_stats.level,
+            job = job_id.map_or("", |job_id| raphael_data::get_job_name(job_id, locale))
         );
         if let Some(recipe) = recipe {
             self.show_info_row(
                 ui,
-                "Recipe",
-                raphael_data::get_item_name(recipe.item_id, false, self.locale)
-                    .unwrap_or("Unknown item".to_owned()),
+                t!("Recipe"),
+                raphael_data::get_item_name(recipe.item_id, false, locale)
+                    .unwrap_or(t!("Unknown item").to_owned()),
             );
         }
-        self.show_info_row(ui, "Crafter stats", stats_string);
-        self.show_info_row(ui, "Job", job_string);
-        self.show_info_row(ui, "Food", self.get_consumable_name(self.rotation.food));
-        self.show_info_row(ui, "Potion", self.get_consumable_name(self.rotation.potion));
-        self.show_info_row(ui, "Solver", &self.rotation.solver);
+        self.show_info_row(ui, t!("Crafter stats"), stats_string);
+        self.show_info_row(ui, t!("Job"), job_string);
+        self.show_info_row(ui, t!("Food"), self.get_consumable_name(self.rotation.food));
+        self.show_info_row(
+            ui,
+            t!("Potion"),
+            self.get_consumable_name(self.rotation.potion),
+        );
+        self.show_info_row(ui, t!("Solver"), &self.rotation.solver);
     }
 
     fn show_rotation_actions(&self, ui: &mut egui::Ui) {
@@ -565,21 +587,21 @@ impl egui::Widget for SavedRotationsWidget<'_> {
 
         ui.vertical(|ui| {
             ui.style_mut().visuals.collapsing_header_frame = true;
-            ui.collapsing("Settings", |ui| {
+            ui.collapsing(t!("Settings"), |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.vertical(|ui| {
                     ui.checkbox(
                         &mut config.load_from_saved_rotations,
-                        "Load saved rotations when initiating solve",
+                        t!("Load saved rotations when initiating solve"),
                     );
                     ui.separator();
-                    ui.label("Default operation on clicking Load button:");
+                    ui.label(t!("Default operation on clicking Load button:"));
                     for saved_rotation_load_operation in [
                         LoadOperation::Rotation,
                         LoadOperation::RotationRecipe,
                         LoadOperation::RotationRecipeConsumables,
                     ] {
-                        let text = format!("{}", saved_rotation_load_operation);
+                        let text = format!("{}", saved_rotation_load_operation.display(*locale));
                         ui.selectable_value(
                             &mut config.default_load_operation,
                             saved_rotation_load_operation,
@@ -590,7 +612,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     ui.add(
                         egui::Label::new(
                             egui::RichText::new(
-                                "⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.",
+                                t!("⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data."),
                             )
                             .small()
                             .color(ui.visuals().warn_fg_color),
@@ -602,10 +624,10 @@ impl egui::Widget for SavedRotationsWidget<'_> {
             ui.separator();
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.group(|ui| {
-                    ui.label(egui::RichText::new("Saved macros").strong());
+                    ui.label(egui::RichText::new(t!("Saved macros")).strong());
                     ui.separator();
                     if rotations.pinned.is_empty() {
-                        ui.label("No saved macros");
+                        ui.label(t!("No saved macros"));
                     }
                     rotations.pinned.retain(|rotation| {
                         let mut deleted = false;
@@ -624,7 +646,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
 
                 ui.group(|ui| {
                     ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("Solve history").strong());
+                        ui.label(egui::RichText::new(t!("Solve history")).strong());
                         ui.horizontal(|ui| {
                             ui.style_mut().spacing.item_spacing.x = 3.0;
                             ui.label("(");
@@ -640,7 +662,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                             ui.add(
                                 egui::Label::new(
                                     egui::RichText::new(
-                                        "⚠ Oldest rotations will be lost on next solve",
+                                        t!("⚠ Oldest rotations will be lost on next solve"),
                                     )
                                     .small()
                                     .color(ui.visuals().warn_fg_color),
@@ -651,7 +673,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
                     });
                     ui.separator();
                     if rotations.solve_history.is_empty() {
-                        ui.label("No solve history");
+                        ui.label(t!("No solve history"));
                     }
                     rotations.solve_history.retain(|rotation| {
                         let mut pinned = false;
