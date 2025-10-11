@@ -1,68 +1,126 @@
-use base64::prelude::*;
-use proc_macro::{TokenStream, TokenTree};
-
-mod input;
-use input::*;
-
 mod data;
 use data::get_translations;
 
-mod output;
-use output::*;
+use proc_macro2::Literal;
+use quote::quote;
+use syn::{Expr, LitStr, Token, parse::Parse, parse_macro_input, punctuated::Punctuated};
 
+mod translation;
 mod util;
 
-#[derive(Debug)]
-pub(crate) struct Context {
-    pub hash_base64: String,
-    pub main_arg: MainArgument,
+pub(crate) struct StringLiteralDetails {
+    #[allow(dead_code)] // TODO check this; probably used in data.rs with update-toml enabled
+    literal: Literal,
+    intro: String,
+    body: String,
+    outro: String,
 }
 
-impl Context {
-    pub fn new(main_arg_token_tree: TokenTree) -> Self {
-        let main_arg = MainArgument::from(main_arg_token_tree);
-        let hash = main_arg.generate_toml_entry_hash();
-        let hash_base64 = BASE64_STANDARD.encode(hash.to_le_bytes());
+impl StringLiteralDetails {
+    #[cfg(feature = "update-toml")]
+    pub fn source_location_string(&self) -> String {
+        let span = self.literal.span();
+        let start = span.start();
+        format!("{}:{}:{}", span.file(), start.line, start.column)
+    }
+}
+
+impl From<&LitStr> for StringLiteralDetails {
+    fn from(literal: &LitStr) -> Self {
+        let literal = literal.token();
+        let literal_text = literal.to_string();
+        let (intro, rest) = literal_text.split_once('"').unwrap();
+        let (body, outro) = rest.rsplit_once('"').unwrap();
 
         Self {
-            hash_base64,
-            main_arg,
+            literal,
+            intro: format!("{intro}\""),
+            body: body.to_string(),
+            outro: format!("\"{outro}"),
         }
     }
 }
 
-#[proc_macro]
-pub fn t(input: TokenStream) -> TokenStream {
-    let mut input_iter = input.into_iter();
-    assert_eq!(
-        // This assumes the size hint is correct
-        input_iter.size_hint(),
-        (1, Some(1)),
-        "Only a single argument to the macro is supported!"
-    );
+struct MainArguments {
+    locale: Expr,
+    string_literal: LitStr,
+}
 
-    let token_tree = input_iter.next().unwrap();
-    let ctx = Context::new(token_tree);
-
-    let translations = get_translations(&ctx);
-
-    generate_output_token_stream(translations, ctx)
+impl Parse for MainArguments {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let locale = input.parse()?;
+        input.parse::<Token![,]>()?;
+        let string_literal = input.parse()?;
+        Ok(Self {
+            locale,
+            string_literal,
+        })
+    }
 }
 
 #[proc_macro]
-pub fn t_format(input: TokenStream) -> TokenStream {
-    let mut input_iter = input.into_iter();
-    assert_ne!(
-        // This assumes the size hint is correct
-        input_iter.size_hint().0,
-        0,
-        "At least a format argument is required!"
-    );
+pub fn t(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let MainArguments {
+        locale,
+        string_literal,
+    } = parse_macro_input!(input as MainArguments);
 
-    let (format_token_tree, format_arguments) = (input_iter.next().unwrap(), input_iter);
-    let ctx = Context::new(format_token_tree);
+    let translations = get_translations(StringLiteralDetails::from(&string_literal));
 
-    let translations = get_translations(&ctx);
+    let output = quote! {
+        match #locale {
+            #(#translations,)*
+            _ => #string_literal,
+        }
+    };
 
-    generate_format_macro_output_token_stream(translations, format_arguments, ctx)
+    proc_macro::TokenStream::from(output)
+}
+
+struct FormatArguments {
+    locale: Expr,
+    string_literal: LitStr,
+    format_args: Punctuated<Expr, Token![,]>,
+}
+
+impl Parse for FormatArguments {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let locale = input.parse()?;
+        input.parse::<Token![,]>()?;
+        let string_literal = input.parse()?;
+        let lookahead = input.lookahead1();
+        if lookahead.peek(Token![,]) {
+            input.parse::<Token![,]>()?;
+        }
+        let format_args = input.parse_terminated(Expr::parse, Token![,])?;
+        Ok(Self {
+            locale,
+            string_literal,
+            format_args,
+        })
+    }
+}
+
+#[proc_macro]
+pub fn t_format(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let FormatArguments {
+        locale,
+        string_literal,
+        format_args,
+    } = parse_macro_input!(input as FormatArguments);
+
+    let (translation_locales, translation_format_strings): (Vec<_>, Vec<_>) =
+        get_translations(StringLiteralDetails::from(&string_literal))
+            .into_iter()
+            .map(translation::Translation::split)
+            .unzip();
+
+    let output = quote! {
+        match #locale {
+            #(#translation_locales => format!(#translation_format_strings, #format_args),)*
+            _ => format!(#string_literal, #format_args)
+        }
+    };
+
+    proc_macro::TokenStream::from(output)
 }

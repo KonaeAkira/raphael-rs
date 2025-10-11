@@ -10,6 +10,10 @@ workspace = true
 proc-macro = true
 
 [dependencies]
+raphael-data = { workspace = true }
+syn = "2.0"
+proc-macro2 = { version = "1.0" }
+quote = "1.0"
 toml_edit = "0.23.6"
 rustc-stable-hash = "0.1.2"
 base64 = "0.22"
@@ -19,4 +23,4 @@ toml_edit = "0.23.6"
 
 [features]
 default = []
-update-toml = []
+update-toml = ["proc-macro2/span-locations"]
