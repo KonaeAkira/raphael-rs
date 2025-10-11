@@ -43,8 +43,8 @@ impl std::fmt::Display for RecipeSearchDomainDisplay {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let locale = self.locale;
         match self.recipe_search_domain {
-            RecipeSearchDomain::Recipes => write!(f, "{}", t!("Recipes")),
-            RecipeSearchDomain::StellarMissions => write!(f, "{}", t!("Missions")),
+            RecipeSearchDomain::Recipes => write!(f, "{}", t!(locale, "Recipes")),
+            RecipeSearchDomain::StellarMissions => write!(f, "{}", t!(locale, "Missions")),
         }
     }
 }
@@ -141,7 +141,7 @@ impl<'a> RecipeSelect<'a> {
                 });
             if egui::TextEdit::singleline(&mut search_text)
                 .desired_width(f32::INFINITY)
-                .hint_text(t!("🔍 Search"))
+                .hint_text(t!(locale, "🔍 Search"))
                 .ui(ui)
                 .changed()
             {
@@ -205,7 +205,7 @@ impl<'a> RecipeSelect<'a> {
             body.rows(line_height, search_result.len(), |mut row| {
                 let (_recipe_id, recipe) = search_result[row.index()];
                 row.col(|ui| {
-                    if ui.button(t!("Select")).clicked() {
+                    if ui.button(t!(locale, "Select")).clicked() {
                         self.crafter_config.selected_job = recipe.job_id;
                         *self.recipe_config = RecipeConfiguration {
                             recipe: *recipe,
@@ -281,7 +281,7 @@ impl<'a> RecipeSelect<'a> {
                         };
                         egui::Frame::new().fill(background_color).show(ui, |ui| {
                             ui.horizontal(|ui| {
-                                if ui.button(t!("Select")).clicked() {
+                                if ui.button(t!(locale, "Select")).clicked() {
                                     self.crafter_config.selected_job = recipe.job_id;
                                     *self.recipe_config = RecipeConfiguration {
                                         recipe: *recipe,
@@ -313,6 +313,7 @@ impl<'a> RecipeSelect<'a> {
             .custom_recipe_overrides_config
             .use_base_increase_overrides;
         ui.label(egui::RichText::new(t_format!(
+            locale,
             "⚠ Patch {ffxiv_patch} recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.",
             ffxiv_patch = "7.35"
         )).small().color(ui.visuals().warn_fg_color));
@@ -324,7 +325,7 @@ impl<'a> RecipeSelect<'a> {
                     .unwrap()
                     .job_level;
                 ui.horizontal(|ui| {
-                    ui.label(t!("Level:"));
+                    ui.label(t!(locale, "Level:"));
                     ui.add_enabled_ui(use_base_increase_overrides, |ui| {
                         ui.add(egui::DragValue::new(&mut recipe_job_level).range(1..=100));
                         if use_base_increase_overrides {
@@ -335,7 +336,7 @@ impl<'a> RecipeSelect<'a> {
                 });
                 ui.horizontal(|ui| {
                     ui.add_enabled_ui(!use_base_increase_overrides, |ui| {
-                        ui.label(t!("Recipe Level:"));
+                        ui.label(t!(locale, "Recipe Level:"));
                         let mut rlvl_drag_value_widget =
                             egui::DragValue::new(&mut self.recipe_config.recipe.recipe_level)
                                 .range(1..=RLVLS.len() - 1);
@@ -346,13 +347,13 @@ impl<'a> RecipeSelect<'a> {
                     });
                 });
                 ui.horizontal(|ui| {
-                    ui.label(t!("Progress:"));
+                    ui.label(t!(locale, "Progress:"));
                     ui.add(egui::DragValue::new(
                         &mut custom_recipe_overrides.max_progress_override,
                     ));
                 });
                 ui.horizontal(|ui| {
-                    ui.label(t!("Quality:"));
+                    ui.label(t!(locale, "Quality:"));
                     ui.add(egui::DragValue::new(
                         &mut custom_recipe_overrides.max_quality_override,
                     ));
@@ -361,12 +362,12 @@ impl<'a> RecipeSelect<'a> {
                     &mut self.recipe_config.quality_source
                 {
                     ui.horizontal(|ui| {
-                        ui.label(t!("Initial Quality:"));
+                        ui.label(t!(locale, "Initial Quality:"));
                         ui.add(egui::DragValue::new(initial_quality));
                     });
                 }
                 ui.horizontal(|ui| {
-                    ui.label(t!("Durability:"));
+                    ui.label(t!(locale, "Durability:"));
                     ui.add(
                         egui::DragValue::new(&mut custom_recipe_overrides.max_durability_override)
                             .range(10..=100),
@@ -374,7 +375,7 @@ impl<'a> RecipeSelect<'a> {
                 });
                 ui.checkbox(
                     &mut self.recipe_config.recipe.is_expert,
-                    t!("Expert recipe"),
+                    t!(locale, "Expert recipe"),
                 );
             });
             ui.separator();
@@ -382,25 +383,25 @@ impl<'a> RecipeSelect<'a> {
                 let mut rlvl = RLVLS[self.recipe_config.recipe.recipe_level as usize];
                 ui.add_enabled_ui(!use_base_increase_overrides, |ui| {
                     ui.horizontal(|ui| {
-                        ui.label(t!("Progress divider"));
+                        ui.label(t!(locale, "Progress divider"));
                         ui.add_enabled(false, egui::DragValue::new(&mut rlvl.progress_div));
                     });
                     ui.horizontal(|ui| {
-                        ui.label(t!("Quality divider"));
+                        ui.label(t!(locale, "Quality divider"));
                         ui.add_enabled(false, egui::DragValue::new(&mut rlvl.quality_div));
                     });
                     ui.horizontal(|ui| {
-                        ui.label(t!("Progress modifier"));
+                        ui.label(t!(locale, "Progress modifier"));
                         ui.add_enabled(false, egui::DragValue::new(&mut rlvl.progress_mod));
                     });
                     ui.horizontal(|ui| {
-                        ui.label(t!("Quality modifier"));
+                        ui.label(t!(locale, "Quality modifier"));
                         ui.add_enabled(false, egui::DragValue::new(&mut rlvl.quality_mod));
                     });
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label(t!("Progress per 100% efficiency:"));
+                    ui.label(t!(locale, "Progress per 100% efficiency:"));
                     if !use_base_increase_overrides {
                         ui.label(
                             egui::RichText::new(default_game_settings.base_progress.to_string())
@@ -417,7 +418,7 @@ impl<'a> RecipeSelect<'a> {
                     }
                 });
                 ui.horizontal(|ui| {
-                    ui.label(t!("Quality per 100% efficiency:"));
+                    ui.label(t!(locale, "Quality per 100% efficiency:"));
                     if !use_base_increase_overrides {
                         ui.label(
                             egui::RichText::new(default_game_settings.base_quality.to_string())
@@ -438,7 +439,7 @@ impl<'a> RecipeSelect<'a> {
                         &mut self
                             .custom_recipe_overrides_config
                             .use_base_increase_overrides,
-                        t!("Override per 100% efficiency values"),
+                        t!(locale, "Override per 100% efficiency values"),
                     )
                     .changed()
                 {
@@ -474,7 +475,7 @@ impl Widget for RecipeSelect<'_> {
                         Id::new("RECIPE_SEARCH_COLLAPSED"),
                         &mut collapsed,
                     );
-                    ui.label(egui::RichText::new(t!("Recipe")).strong());
+                    ui.label(egui::RichText::new(t!(locale, "Recipe")).strong());
                     ui.add(ItemNameLabel::new(
                         self.recipe_config.recipe.item_id,
                         false,
@@ -483,7 +484,10 @@ impl Widget for RecipeSelect<'_> {
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         let use_custom_recipe =
                             &mut self.custom_recipe_overrides_config.use_custom_recipe;
-                        if ui.checkbox(use_custom_recipe, t!("Custom")).changed() {
+                        if ui
+                            .checkbox(use_custom_recipe, t!(locale, "Custom"))
+                            .changed()
+                        {
                             if *use_custom_recipe {
                                 let default_game_settings = get_game_settings(
                                     self.recipe_config.recipe,

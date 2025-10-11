@@ -11,7 +11,8 @@ impl ItemNameLabel {
     pub fn new(item_id: u32, hq: bool, locale: Locale) -> Self {
         Self {
             item_id,
-            text: get_item_name(item_id, hq, locale).unwrap_or(t!("Unknown item").to_owned()),
+            text: get_item_name(item_id, hq, locale)
+                .unwrap_or(t!(locale, "Unknown item").to_owned()),
             locale,
         }
     }
@@ -38,7 +39,7 @@ impl egui::Widget for ItemNameLabel {
                 ui.close();
             }
             let mut selection_made = false;
-            if ui.button(t!("Copy item name")).clicked() {
+            if ui.button(t!(locale, "Copy item name")).clicked() {
                 let copy_item_name = self
                     .text
                     .trim_end_matches([' ', raphael_data::HQ_ICON_CHAR, raphael_data::CL_ICON_CHAR])
@@ -48,7 +49,7 @@ impl egui::Widget for ItemNameLabel {
                 selection_made = true;
             }
             ui.separator();
-            if ui.button(t!("Copy item ID")).clicked() {
+            if ui.button(t!(locale, "Copy item ID")).clicked() {
                 ui.ctx().copy_text(self.item_id.to_string());
                 ui.close();
                 selection_made = true;

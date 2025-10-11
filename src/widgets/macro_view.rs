@@ -6,8 +6,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{context::AppContext, widgets::HelpText};
 
-const CUSTOM_FORMAT_PLACEHOLDER_HELP_TEXT: &str =
-    "The format can be any arbitrary text or FFXIV command.
+#[inline]
+fn custom_format_help_text_string(locale: Locale) -> &'static str {
+    t!(
+        locale,
+        "The format can be any arbitrary text or FFXIV command.
 
 The following placeholders can be used to output their respective value:
   - {index} : the index or number of the macro block
@@ -17,7 +20,9 @@ The following placeholders can be used to output their respective value:
   - {potion} : the name of the selected potion
   - {craftsmanship} : the base craftsmanship stat
   - {control} : the base control stat
-  - {cp} : the base CP stat";
+  - {cp} : the base CP stat"
+    )
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MacroViewConfig {
@@ -113,20 +118,20 @@ struct FixedFormattingData {
 fn preformat_fixed_data(format: &str, app_context: &AppContext) -> String {
     let locale = app_context.locale;
     let item_name = get_item_name(app_context.recipe_config.recipe.item_id, false, locale)
-        .unwrap_or(t!("Unknown item").to_owned());
+        .unwrap_or(t!(locale, "Unknown item").to_owned());
     let food_string = app_context
         .selected_food
         .map(|food| {
             get_item_name(food.item_id, food.hq, locale).unwrap_or("Unknown item".to_owned())
         })
-        .unwrap_or(t!("None").to_owned());
+        .unwrap_or(t!(locale, "None").to_owned());
     let potion_string = app_context
         .selected_potion
         .map(|potion| {
             get_item_name(potion.item_id, potion.hq, locale)
-                .unwrap_or(t!("Unknown item").to_owned())
+                .unwrap_or(t!(locale, "Unknown item").to_owned())
         })
-        .unwrap_or(t!("None").to_owned());
+        .unwrap_or(t!(locale, "None").to_owned());
     format
         .replace("{item_name}", &item_name)
         .replace("{food}", &food_string)
@@ -270,7 +275,7 @@ impl MacroView<'_> {
             ui.radio_value(
                 &mut notification_cfg.default_notification,
                 true,
-                t!("Use default notification"),
+                t!(locale, "Use default notification"),
             );
             ui.add_enabled(
                 notification_cfg.default_notification,
@@ -284,9 +289,9 @@ impl MacroView<'_> {
             ui.radio_value(
                 &mut notification_cfg.default_notification,
                 false,
-                t!("Use custom notification format"),
+                t!(locale, "Use custom notification format"),
             );
-            ui.add(HelpText::new(t!(CUSTOM_FORMAT_PLACEHOLDER_HELP_TEXT)));
+            ui.add(HelpText::new(custom_format_help_text_string(locale)));
         });
 
         ui.horizontal(|ui| {
@@ -303,7 +308,7 @@ impl MacroView<'_> {
                     ui.add_space(2.0);
                     ui.checkbox(
                         &mut notification_cfg.different_last_notification,
-                        t!("Use different format for last notification"),
+                        t!(locale, "Use different format for last notification"),
                     );
                     ui.add_enabled(
                         notification_cfg.different_last_notification,
@@ -319,13 +324,13 @@ impl MacroView<'_> {
         ui.separator();
         ui.checkbox(
             &mut notification_cfg.avoid_single_action_macro,
-            t!("Avoid single-action macros"),
+            t!(locale, "Avoid single-action macros"),
         );
         ui.horizontal(|ui| {
             ui.add_space(18.0);
             ui.vertical(|ui| {
                 ui.label(
-                    t!("Skip last notification if doing so avoids creating a macro with a single action."),
+                    t!(locale, "Skip last notification if doing so avoids creating a macro with a single action."),
                 )
             });
         });
@@ -336,15 +341,15 @@ impl MacroView<'_> {
         ui.radio_value(
             &mut intro_cfg.default_intro,
             true,
-            t!("Use \"/macrolock\" as macro intro"),
+            t!(locale, "Use \"/macrolock\" as macro intro"),
         );
         ui.horizontal(|ui| {
             ui.radio_value(
                 &mut intro_cfg.default_intro,
                 false,
-                t!("Use custom intro format"),
+                t!(locale, "Use custom intro format"),
             );
-            ui.add(HelpText::new(t!(CUSTOM_FORMAT_PLACEHOLDER_HELP_TEXT)));
+            ui.add(HelpText::new(custom_format_help_text_string(locale)));
         });
         ui.horizontal(|ui| {
             ui.add_space(18.0);
@@ -394,10 +399,13 @@ impl Widget for MacroView<'_> {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(t!("Macro")).strong());
+                    ui.label(egui::RichText::new(t!(locale, "Macro")).strong());
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
-                            .add_enabled(!self.actions.is_empty(), egui::Button::new(t!("Clear")))
+                            .add_enabled(
+                                !self.actions.is_empty(),
+                                egui::Button::new(t!(locale, "Clear")),
+                            )
                             .clicked()
                         {
                             self.actions.clear();
@@ -408,6 +416,7 @@ impl Widget for MacroView<'_> {
                             .map(|action| action.time_cost())
                             .sum::<u8>();
                         ui.label(t_format!(
+                            locale,
                             "{steps} steps, {duration} seconds",
                             steps = self.actions.len(),
                         ));
@@ -415,17 +424,17 @@ impl Widget for MacroView<'_> {
                 });
                 ui.separator();
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut config.include_delay, t!("Include delay"));
+                    ui.checkbox(&mut config.include_delay, t!(locale, "Include delay"));
                     ui.add_enabled_ui(config.include_delay, |ui| {
-                        ui.label(t!("Extra delay"));
+                        ui.label(t!(locale, "Extra delay"));
                         ui.add(egui::DragValue::new(&mut config.extra_delay).range(0..=9));
                     });
                 });
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut config.split_macro, t!("Split macro"));
-                    ui.checkbox(&mut config.intro_enabled, t!("Macro lock / intro"));
+                    ui.checkbox(&mut config.split_macro, t!(locale, "Split macro"));
+                    ui.checkbox(&mut config.intro_enabled, t!(locale, "Macro lock / intro"));
                     ui.add_enabled_ui(config.intro_enabled, |ui| {
-                        egui::containers::menu::MenuButton::new(t!("✏ Edit"))
+                        egui::containers::menu::MenuButton::new(t!(locale, "✏ Edit"))
                             .config(
                                 egui::containers::menu::MenuConfig::default()
                                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
@@ -440,10 +449,10 @@ impl Widget for MacroView<'_> {
                 ui.horizontal(|ui| {
                     ui.add(egui::Checkbox::new(
                         &mut config.notification_enabled,
-                        t!("End-of-macro notification"),
+                        t!(locale, "End-of-macro notification"),
                     ));
                     ui.add_enabled_ui(config.notification_enabled, |ui| {
-                        egui::containers::menu::MenuButton::new(t!("✏ Edit"))
+                        egui::containers::menu::MenuButton::new(t!(locale, "✏ Edit"))
                             .config(
                                 egui::containers::menu::MenuConfig::default()
                                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
@@ -496,7 +505,7 @@ impl Widget for MacroView<'_> {
                 }
 
                 if self.actions.is_empty() {
-                    ui.label(t!("None"));
+                    ui.label(t!(locale, "None"));
                 }
 
                 // fill the remaining space

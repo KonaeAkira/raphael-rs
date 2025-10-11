@@ -53,9 +53,9 @@ impl Widget for FoodSelect<'_> {
 
                 ui.horizontal(|ui| {
                     util::collapse_persisted(ui, Id::new("FOOD_SEARCH_COLLAPSED"), &mut collapsed);
-                    ui.label(egui::RichText::new(t!("Food")).strong());
+                    ui.label(egui::RichText::new(t!(locale, "Food")).strong());
                     match self.selected_consumable {
-                        None => ui.label(t!("None")),
+                        None => ui.label(t!(locale, "None")),
                         Some(item) => {
                             ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale))
                         }
@@ -64,7 +64,7 @@ impl Widget for FoodSelect<'_> {
                         if ui
                             .add_enabled(
                                 self.selected_consumable.is_some(),
-                                egui::Button::new(t!("Clear")),
+                                egui::Button::new(t!(locale, "Clear")),
                             )
                             .clicked()
                         {
@@ -90,7 +90,7 @@ impl Widget for FoodSelect<'_> {
 
                 if egui::TextEdit::singleline(&mut search_text)
                     .desired_width(f32::INFINITY)
-                    .hint_text(t!("🔍 Search"))
+                    .hint_text(t!(locale, "🔍 Search"))
                     .ui(ui)
                     .changed()
                 {
@@ -130,7 +130,7 @@ impl Widget for FoodSelect<'_> {
                     body.rows(line_height, search_result.len(), |mut row| {
                         let item = search_result[row.index()];
                         row.col(|ui| {
-                            if ui.button(t!("Select")).clicked() {
+                            if ui.button(t!(locale, "Select")).clicked() {
                                 *self.selected_consumable = Some(*item);
                             }
                         });

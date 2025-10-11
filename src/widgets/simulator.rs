@@ -72,12 +72,13 @@ impl Simulator<'_> {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(t!("Simulation")).strong());
+                    ui.label(egui::RichText::new(t!(locale, "Simulation")).strong());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_visible(
                             !self.actions.is_empty() && self.config_changed,
                             egui::Label::new(
                                 egui::RichText::new(t!(
+                                    locale,
                                     "⚠ Some parameters have changed since last solve."
                                 ))
                                 .small()
@@ -89,10 +90,10 @@ impl Simulator<'_> {
 
                 ui.separator();
 
-                let progress_text_width = text_width(ui, t!("Progress"));
-                let quality_text_width = text_width(ui, t!("Quality"));
-                let durability_text_width = text_width(ui, t!("Durability"));
-                let cp_text_width = text_width(ui, t!("CP"));
+                let progress_text_width = text_width(ui, t!(locale, "Progress"));
+                let quality_text_width = text_width(ui, t!(locale, "Quality"));
+                let durability_text_width = text_width(ui, t!(locale, "Durability"));
+                let cp_text_width = text_width(ui, t!(locale, "CP"));
 
                 let max_text_width = progress_text_width
                     .max(quality_text_width)
@@ -104,7 +105,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("Progress"));
+                        ui.label(t!(locale, "Progress"));
                     });
                     ui.add(
                         egui::ProgressBar::new(
@@ -121,7 +122,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("Quality"));
+                        ui.label(t!(locale, "Quality"));
                     });
                     let quality = u32::from(self.initial_quality) + state.quality;
                     ui.add(
@@ -137,7 +138,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("Durability"));
+                        ui.label(t!(locale, "Durability"));
                     });
                     ui.add(
                         egui::ProgressBar::new(
@@ -154,7 +155,7 @@ impl Simulator<'_> {
 
                 ui.horizontal(|ui| {
                     ui.allocate_ui_with_layout(text_size, text_layout, |ui| {
-                        ui.label(t!("CP"));
+                        ui.label(t!(locale, "CP"));
                     });
                     ui.add(
                         egui::ProgressBar::new(state.cp as f32 / self.settings.max_cp as f32)
@@ -167,13 +168,18 @@ impl Simulator<'_> {
                     ui.with_layout(text_layout, |ui| {
                         ui.set_height(ui.style().spacing.interact_size.y);
                         ui.add(HelpText::new(match self.settings.adversarial {
-                            true => t!("Calculated assuming worst possible sequence of conditions"),
-                            false => t!("Calculated assuming Normal conditon on every step"),
+                            true => t!(
+                                locale,
+                                "Calculated assuming worst possible sequence of conditions"
+                            ),
+                            false => {
+                                t!(locale, "Calculated assuming Normal conditon on every step")
+                            }
                         }));
                         if !state.is_final(&self.settings) {
                             // do nothing
                         } else if state.progress < u32::from(self.settings.max_progress) {
-                            ui.label(t!("Synthesis failed"));
+                            ui.label(t!(locale, "Synthesis failed"));
                         } else if self.item_always_collectable {
                             let (t1, t2, t3) = (
                                 QualityTarget::CollectableT1.get_target(self.settings.max_quality),
@@ -186,14 +192,14 @@ impl Simulator<'_> {
                                 quality if quality >= u32::from(t1) => 1,
                                 _ => 0,
                             };
-                            ui.label(t_format!("Tier {tier} collectable"));
+                            ui.label(t_format!(locale, "Tier {tier} collectable"));
                         } else {
                             let hq = raphael_data::hq_percentage(
                                 u32::from(self.initial_quality) + state.quality,
                                 self.settings.max_quality,
                             )
                             .unwrap_or(0);
-                            ui.label(t_format!("{hq}% HQ"));
+                            ui.label(t_format!(locale, "{hq}% HQ"));
                         }
                     });
                 });
@@ -292,7 +298,7 @@ fn progress_bar_text<T: Copy + std::cmp::Ord + std::ops::Sub<Output = T> + std::
 ) -> String {
     if value > maximum {
         let overflow = value - maximum;
-        t_format!("{value: >5} / {maximum}  (+{overflow} overflow)")
+        t_format!(locale, "{value: >5} / {maximum}  (+{overflow} overflow)")
     } else {
         format!("{: >5} / {}", value, maximum)
     }

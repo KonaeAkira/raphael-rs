@@ -122,12 +122,12 @@ impl std::fmt::Display for QualityTargetDisplay {
             f,
             "{}",
             match self.quality_target {
-                QualityTarget::Zero => t!("0% quality"),
-                QualityTarget::CollectableT1 => t!("55% quality"),
-                QualityTarget::CollectableT2 => t!("75% quality"),
-                QualityTarget::CollectableT3 => t!("95% quality"),
-                QualityTarget::Full => t!("100% quality"),
-                QualityTarget::Custom(_) => t!("Custom"),
+                QualityTarget::Zero => t!(locale, "0% quality"),
+                QualityTarget::CollectableT1 => t!(locale, "55% quality"),
+                QualityTarget::CollectableT2 => t!(locale, "75% quality"),
+                QualityTarget::CollectableT3 => t!(locale, "95% quality"),
+                QualityTarget::Full => t!(locale, "100% quality"),
+                QualityTarget::Custom(_) => t!(locale, "Custom"),
             }
         )
     }

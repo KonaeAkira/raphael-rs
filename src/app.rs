@@ -119,11 +119,11 @@ impl eframe::App for MacroSolverApp {
                 let mut latest_version = self.latest_version.lock().unwrap();
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(t!("New version available!")).strong());
+                    ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
                     ui.label(format!("(v{})", latest_version.deref()));
                 });
                 ui.add(egui::Hyperlink::from_label_and_url(
-                    t!("Download from GitHub"),
+                    t!(locale, "Download from GitHub"),
                     "https://github.com/KonaeAkira/raphael-rs/releases/latest",
                 ));
                 ui.separator();
@@ -143,14 +143,16 @@ impl eframe::App for MacroSolverApp {
                 ui.label(egui::RichText::new("Error").strong());
                 ui.separator();
                 ui.label(t!(
+                    locale,
                     "Your stats are below the minimum requirement for this recipe."
                 ));
                 ui.label(t_format!(
+                    locale,
                     "Requirement: {req_cms} Craftsmanship, {req_ctrl} Control."
                 ));
                 ui.separator();
                 ui.vertical_centered_justified(|ui| {
-                    if ui.button(t!("Close")).clicked() {
+                    if ui.button(t!(locale, "Close")).clicked() {
                         self.missing_stats_error_window_open = false;
                     }
                 });
@@ -163,22 +165,22 @@ impl eframe::App for MacroSolverApp {
                 ui.set_width(480.0f32.min(ctx.screen_rect().width() - 32.0));
                 match error {
                     SolverException::NoSolution => {
-                        ui.label(egui::RichText::new(t!("No solution")).strong());
+                        ui.label(egui::RichText::new(t!(locale, "No solution")).strong());
                         ui.separator();
-                        ui.label(t!("Make sure that the recipe is set correctly and that your stats are enough to craft this item."));
+                        ui.label(t!(locale, "Make sure that the recipe is set correctly and that your stats are enough to craft this item."));
                     }
                     SolverException::Interrupted => {
                         self.solver_error = None;
                     },
                     SolverException::InternalError(message) => {
-                        ui.label(egui::RichText::new(t!("Internal Solver Error")).strong());
+                        ui.label(egui::RichText::new(t!(locale, "Internal Solver Error")).strong());
                         ui.separator();
                         ui.add(MultilineMonospace::new(message).max_height(320.0).scrollable(true));
                     },
                 }
                 ui.separator();
                 ui.vertical_centered_justified(|ui| {
-                    if ui.button(t!("Close")).clicked() {
+                    if ui.button(t!(locale, "Close")).clicked() {
                         self.solver_error = None;
                     }
                 });
@@ -200,16 +202,16 @@ impl eframe::App for MacroSolverApp {
                         ui.horizontal(|ui| {
                             ui.label(
                                 egui::RichText::new(if interrupt_pending {
-                                    t!("Cancelling ...")
+                                    t!(locale, "Cancelling ...")
                                 } else {
-                                    t!("Solving ...")
+                                    t!(locale, "Solving ...")
                                 })
                                 .strong(),
                             );
                             ui.label(format!("({:.2}s)", self.start_time.elapsed().as_secs_f32()));
                         });
                         if self.solver_progress == 0 {
-                            ui.label(t!("Computing ..."));
+                            ui.label(t!(locale, "Computing ..."));
                         } else {
                             // format with thousands separator
                             let num = self
@@ -222,7 +224,7 @@ impl eframe::App for MacroSolverApp {
                                 .collect::<Result<Vec<&str>, _>>()
                                 .unwrap()
                                 .join(",");
-                            ui.label(t_format!("{num} nodes visited"));
+                            ui.label(t_format!(locale, "{num} nodes visited"));
                         }
                     });
                 });
@@ -230,7 +232,7 @@ impl eframe::App for MacroSolverApp {
                 ui.vertical_centered_justified(|ui| {
                     ui.separator();
                     let response =
-                        ui.add_enabled(!interrupt_pending, egui::Button::new(t!("Cancel")));
+                        ui.add_enabled(!interrupt_pending, egui::Button::new(t!(locale, "Cancel")));
                     if response.clicked() {
                         self.solver_interrupt.set();
                     }
@@ -280,7 +282,7 @@ impl eframe::App for MacroSolverApp {
 
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
-                                t!("View source on GitHub"),
+                                t!(locale, "View source on GitHub"),
                                 "https://github.com/KonaeAkira/raphael-rs",
                             )
                             .open_in_new_tab(true),
@@ -288,7 +290,7 @@ impl eframe::App for MacroSolverApp {
                         ui.label("/");
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
-                                t!("Join Discord"),
+                                t!(locale, "Join Discord"),
                                 "https://discord.com/invite/m2aCy3y8he",
                             )
                             .open_in_new_tab(true),
@@ -296,7 +298,7 @@ impl eframe::App for MacroSolverApp {
                         ui.label("/");
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
-                                t!("Support me on Ko-fi"),
+                                t!(locale, "Support me on Ko-fi"),
                                 "https://ko-fi.com/konaeakira",
                             )
                             .open_in_new_tab(true),
@@ -398,7 +400,7 @@ impl eframe::App for MacroSolverApp {
         });
 
         egui::Window::new(
-            egui::RichText::new(t!("Edit crafter stats"))
+            egui::RichText::new(t!(locale, "Edit crafter stats"))
                 .strong()
                 .text_style(TextStyle::Body),
         )
@@ -413,7 +415,7 @@ impl eframe::App for MacroSolverApp {
         });
 
         egui::Window::new(
-            egui::RichText::new(t!("Saved macros & solve history"))
+            egui::RichText::new(t!(locale, "Saved macros & solve history"))
                 .strong()
                 .text_style(TextStyle::Body),
         )
@@ -468,7 +470,7 @@ impl MacroSolverApp {
         let locale = self.app_context.locale;
         ui.add_enabled_ui(true, |ui| {
             ui.reset_style();
-            egui::containers::menu::MenuButton::new(t!("⚙ Settings"))
+            egui::containers::menu::MenuButton::new(t!(locale, "⚙ Settings"))
                 .config(
                     egui::containers::menu::MenuConfig::default()
                         .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
@@ -477,7 +479,7 @@ impl MacroSolverApp {
                     ui.reset_style();
                     ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                     ui.horizontal(|ui| {
-                        ui.label(t!("Zoom"));
+                        ui.label(t!(locale, "Zoom"));
 
                         let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
                         ui.horizontal(|ui| {
@@ -488,7 +490,7 @@ impl MacroSolverApp {
                                 }
                             });
                             ui.add_enabled_ui(zoom_percentage != 100, |ui| {
-                                if ui.button(t!("Reset")).clicked() {
+                                if ui.button(t!(locale, "Reset")).clicked() {
                                     zoom_percentage = 100;
                                 }
                             });
@@ -514,17 +516,20 @@ impl MacroSolverApp {
 
                     ui.separator();
                     ui.horizontal(|ui| {
-                        ui.label(t!("Theme"));
+                        ui.label(t!(locale, "Theme"));
                         egui::global_theme_preference_buttons(ui);
                     });
                     ui.separator();
 
                     ui.horizontal(|ui| {
-                        ui.label(t!("Max solver threads"));
+                        ui.label(t!(locale, "Max solver threads"));
                         ui.add_enabled_ui(!thread_pool::initialization_attempted(), |ui| {
                             let mut auto_thread_count =
                                 self.app_context.app_config.num_threads.is_none();
-                            if ui.checkbox(&mut auto_thread_count, t!("Auto")).changed() {
+                            if ui
+                                .checkbox(&mut auto_thread_count, t!(locale, "Auto"))
+                                .changed()
+                            {
                                 if auto_thread_count {
                                     self.app_context.app_config.num_threads = None;
                                 } else {
@@ -551,13 +556,18 @@ impl MacroSolverApp {
                     });
                     if thread_pool::initialization_attempted() {
                         #[cfg(target_arch = "wasm32")]
-                        let app_restart_text = t!("Reload the page to change max solver threads.");
+                        let app_restart_text =
+                            t!(locale, "Reload the page to change max solver threads.");
                         #[cfg(not(target_arch = "wasm32"))]
-                        let app_restart_text = t!("Restart the app to change max solver threads.");
+                        let app_restart_text =
+                            t!(locale, "Restart the app to change max solver threads.");
                         ui.label(
-                            egui::RichText::new(t!("⚠ Unavailable after the solver was started."))
-                                .small()
-                                .color(ui.visuals().warn_fg_color),
+                            egui::RichText::new(t!(
+                                locale,
+                                "⚠ Unavailable after the solver was started."
+                            ))
+                            .small()
+                            .color(ui.visuals().warn_fg_color),
                         );
                         ui.label(
                             egui::RichText::new(app_restart_text)
@@ -595,7 +605,7 @@ impl MacroSolverApp {
                     ui.add_space(-5.0);
                     ui.vertical_centered_justified(|ui| {
                         let text_color = ui.ctx().style().visuals.selection.stroke.color;
-                        let text = egui::RichText::new(t!("Solve")).color(text_color);
+                        let text = egui::RichText::new(t!(locale, "Solve")).color(text_color);
                         let fill_color = ui.ctx().style().visuals.selection.bg_fill;
                         let id = egui::Id::new("SOLVE_INITIATED");
                         let mut solve_initiated = ui
@@ -618,9 +628,10 @@ impl MacroSolverApp {
                 });
                 ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     if self.solver_progress == usize::MAX {
-                        ui.label(t!("Loaded from saved rotations"));
+                        ui.label(t!(locale, "Loaded from saved rotations"));
                     } else if !self.duration.is_zero() {
                         ui.label(t_format!(
+                            locale,
                             "Elapsed time: {dur:.2}s",
                             dur = self.duration.as_secs_f32()
                         ));
@@ -640,7 +651,7 @@ impl MacroSolverApp {
             ..
         } = self.app_context;
         ui.horizontal(|ui| {
-            ui.label(egui::RichText::new(t!("Configuration")).strong());
+            ui.label(egui::RichText::new(t!(locale, "Configuration")).strong());
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
                 if ui.button("✏").clicked() {
@@ -662,9 +673,9 @@ impl MacroSolverApp {
         });
         ui.separator();
 
-        ui.label(egui::RichText::new(t!("Crafter stats")).strong());
+        ui.label(egui::RichText::new(t!(locale, "Crafter stats")).strong());
         ui.horizontal(|ui| {
-            ui.label(t!("Craftsmanship"));
+            ui.label(t!(locale, "Craftsmanship"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 let cms_base = &mut self.app_context.active_stats_mut().craftsmanship;
                 let cms_bonus =
@@ -677,7 +688,7 @@ impl MacroSolverApp {
             });
         });
         ui.horizontal(|ui| {
-            ui.label(t!("Control"));
+            ui.label(t!(locale, "Control"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 let control_base = &mut self.app_context.active_stats_mut().control;
                 let control_bonus =
@@ -690,7 +701,7 @@ impl MacroSolverApp {
             });
         });
         ui.horizontal(|ui| {
-            ui.label(t!("CP"));
+            ui.label(t!(locale, "CP"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 let cp_base = &mut self.app_context.active_stats_mut().cp;
                 let cp_bonus = raphael_data::cp_bonus(*cp_base, &[selected_food, selected_potion]);
@@ -702,7 +713,7 @@ impl MacroSolverApp {
             });
         });
         ui.horizontal(|ui| {
-            ui.label(t!("Job level"));
+            ui.label(t!(locale, "Job level"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.add(
                     egui::DragValue::new(&mut self.app_context.active_stats_mut().level)
@@ -712,7 +723,7 @@ impl MacroSolverApp {
         });
         ui.separator();
 
-        ui.label(egui::RichText::new(t!("HQ materials")).strong());
+        ui.label(egui::RichText::new(t!(locale, "HQ materials")).strong());
         let mut has_hq_ingredient = false;
         let recipe_ingredients = self.app_context.recipe_config.recipe.ingredients;
         if let QualitySource::HqMaterialList(provided_ingredients) =
@@ -738,11 +749,11 @@ impl MacroSolverApp {
             }
         }
         if !has_hq_ingredient {
-            ui.label(t!("None"));
+            ui.label(t!(locale, "None"));
         }
         ui.separator();
 
-        ui.label(egui::RichText::new(t!("Actions")).strong());
+        ui.label(egui::RichText::new(t!(locale, "Actions")).strong());
         if self.app_context.active_stats().level >= Manipulation::LEVEL_REQUIREMENT {
             ui.add(egui::Checkbox::new(
                 &mut self.app_context.active_stats_mut().manipulation,
@@ -786,6 +797,7 @@ impl MacroSolverApp {
             #[cfg(not(target_arch = "wasm32"))]
             ui.label(
                 egui::RichText::new(t!(
+                    locale,
                     "⚠ Specialist actions substantially increase solve time and memory usage."
                 ))
                 .small()
@@ -795,22 +807,22 @@ impl MacroSolverApp {
             {
                 ui.label(
                     egui::RichText::new(
-                        t!("⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions."),
+                        t!(locale, "⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions."),
                     )
                     .small()
                     .color(ui.visuals().warn_fg_color),
                 );
                 ui.add(egui::Hyperlink::from_label_and_url(
-                    egui::RichText::new(t!("Download latest release from GitHub")).small(),
+                    egui::RichText::new(t!(locale, "Download latest release from GitHub")).small(),
                     "https://github.com/KonaeAkira/raphael-rs/releases/latest",
                 ));
             }
         }
         ui.separator();
 
-        ui.label(egui::RichText::new(t!("Solver settings")).strong());
+        ui.label(egui::RichText::new(t!(locale, "Solver settings")).strong());
         ui.horizontal(|ui| {
-            ui.label(t!("Target quality"));
+            ui.label(t!(locale, "Target quality"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.style_mut().spacing.item_spacing = [4.0, 4.0].into();
                 let game_settings = self.app_context.game_settings();
@@ -876,17 +888,17 @@ impl MacroSolverApp {
                     .app_context
                     .solver_config
                     .must_reach_target_quality,
-                t!("Solution must reach target quality"),
+                t!(locale, "Solution must reach target quality"),
             );
-            ui.add(HelpText::new(t!("Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off.")));
+            ui.add(HelpText::new(t!(locale, "Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off.")));
         });
 
         ui.horizontal(|ui| {
             ui.checkbox(
                 &mut self.app_context.solver_config.backload_progress,
-                t!("Backload progress"),
+                t!(locale, "Backload progress"),
             );
-            ui.add(HelpText::new(t!("Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.")));
+            ui.add(HelpText::new(t!(locale, "Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.")));
         });
 
         if self.app_context.recipe_config.recipe.is_expert {
@@ -897,10 +909,10 @@ impl MacroSolverApp {
                 !self.app_context.recipe_config.recipe.is_expert,
                 egui::Checkbox::new(
                     &mut self.app_context.solver_config.adversarial,
-                    t!("Ensure 100% reliability"),
+                    t!(locale, "Ensure 100% reliability"),
                 ),
             );
-            ui.add(HelpText::new(t!("Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro.")));
+            ui.add(HelpText::new(t!(locale, "Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro.")));
         });
         if self.app_context.solver_config.adversarial {
             ui.label(
@@ -1010,10 +1022,12 @@ impl MacroSolverApp {
     fn experimental_warning_text(locale: Locale) -> &'static str {
         #[cfg(not(target_arch = "wasm32"))]
         return t!(
+            locale,
             "⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory."
         );
         #[cfg(target_arch = "wasm32")]
         return t!(
+            locale,
             "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely."
         );
     }
