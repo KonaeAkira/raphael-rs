@@ -142,11 +142,7 @@ impl Widget for PotionSelect<'_> {
                             ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
                         });
                         row.col(|ui| {
-                            ui.label(item.effect_string(
-                                self.crafter_stats.craftsmanship,
-                                self.crafter_stats.control,
-                                self.crafter_stats.cp,
-                            ));
+                            ui.label(util::effect_string(*item, self.crafter_stats, locale));
                         });
                     });
                 });
