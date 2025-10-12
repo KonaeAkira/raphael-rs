@@ -677,3 +677,18 @@ appearances = ["src/widgets/saved_rotations.rs:677:51"]
 en = '''No solve history'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:688:44"]
+
+["GxiMz+bxKCA905cFlCIEOw=="]
+en = '''Crafts. +{rel}% ({val}), '''
+version = "0.0.0"
+appearances = ["src/widgets/util.rs:24:12"]
+
+["NIu40/HZc2JVk0IpGR6NIw=="]
+en = '''Control +{rel}% ({val}), '''
+version = "0.0.0"
+appearances = ["src/widgets/util.rs:32:12"]
+
+["Bgid7uajlPEK0pmvJ7KEfw=="]
+en = '''CP +{rel}% ({val}), '''
+version = "0.0.0"
+appearances = ["src/widgets/util.rs:40:12"]
