@@ -9,7 +9,7 @@ mod translation;
 mod util;
 
 pub(crate) struct StringLiteralDetails {
-    #[allow(dead_code)] // TODO check this; probably used in data.rs with update-toml enabled
+    #[allow(dead_code)] // Used in `StringLiteralDetails::source_location_string`
     literal: Literal,
     intro: String,
     body: String,

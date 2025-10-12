@@ -50,7 +50,7 @@ pub fn get_translations(literal_details: StringLiteralDetails) -> Vec<Translatio
                 translations.push(Translation::new(language_key, str, &literal_details));
             }
         }
-        #[cfg(feature = "update-toml")] // TODO fix these
+        #[cfg(feature = "update-toml")]
         if item["version"].as_str().unwrap() != env!("CARGO_PKG_VERSION") {
             item["version"] = toml_edit::value(env!("CARGO_PKG_VERSION"));
             let mut arr = toml_edit::Array::new();
