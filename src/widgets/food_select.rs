@@ -4,6 +4,7 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{Consumable, CrafterStats, Locale, find_meals};
+use raphael_translations::t;
 
 use crate::context::AppContext;
 
@@ -44,6 +45,7 @@ impl<'a> FoodSelect<'a> {
 
 impl Widget for FoodSelect<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let locale = self.locale;
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
@@ -51,9 +53,9 @@ impl Widget for FoodSelect<'_> {
 
                 ui.horizontal(|ui| {
                     util::collapse_persisted(ui, Id::new("FOOD_SEARCH_COLLAPSED"), &mut collapsed);
-                    ui.label(egui::RichText::new("Food").strong());
+                    ui.label(egui::RichText::new(t!(locale, "Food")).strong());
                     match self.selected_consumable {
-                        None => ui.label("None"),
+                        None => ui.label(t!(locale, "None")),
                         Some(item) => {
                             ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale))
                         }
@@ -62,7 +64,7 @@ impl Widget for FoodSelect<'_> {
                         if ui
                             .add_enabled(
                                 self.selected_consumable.is_some(),
-                                egui::Button::new("Clear"),
+                                egui::Button::new(t!(locale, "Clear")),
                             )
                             .clicked()
                         {
@@ -88,7 +90,7 @@ impl Widget for FoodSelect<'_> {
 
                 if egui::TextEdit::singleline(&mut search_text)
                     .desired_width(f32::INFINITY)
-                    .hint_text("🔍 Search")
+                    .hint_text(t!(locale, "🔍 Search"))
                     .ui(ui)
                     .changed()
                 {
@@ -128,7 +130,7 @@ impl Widget for FoodSelect<'_> {
                     body.rows(line_height, search_result.len(), |mut row| {
                         let item = search_result[row.index()];
                         row.col(|ui| {
-                            if ui.button("Select").clicked() {
+                            if ui.button(t!(locale, "Select")).clicked() {
                                 *self.selected_consumable = Some(*item);
                             }
                         });
@@ -136,11 +138,7 @@ impl Widget for FoodSelect<'_> {
                             ui.add(ItemNameLabel::new(item.item_id, item.hq, self.locale));
                         });
                         row.col(|ui| {
-                            ui.label(item.effect_string(
-                                self.crafter_stats.craftsmanship,
-                                self.crafter_stats.control,
-                                self.crafter_stats.cp,
-                            ));
+                            ui.label(util::effect_string(*item, self.crafter_stats, locale));
                         });
                     });
                 });

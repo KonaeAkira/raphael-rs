@@ -1,4 +1,51 @@
+use raphael_data::{
+    Consumable, CrafterStats, Locale, control_bonus, cp_bonus, craftsmanship_bonus,
+};
 use raphael_sim::*;
+use raphael_translations::t_format;
+
+pub fn effect_string(
+    consumable: Consumable,
+    crater_stats: &CrafterStats,
+    locale: Locale,
+) -> String {
+    let CrafterStats {
+        craftsmanship,
+        control,
+        cp,
+        ..
+    } = crater_stats;
+    let consumable_slice = &[Some(consumable)];
+
+    let mut effect: String = String::new();
+    if consumable.craft_rel != 0 {
+        effect.push_str(&t_format!(
+            locale,
+            "Crafts. +{rel}% ({val}), ",
+            rel = consumable.craft_rel,
+            val = craftsmanship_bonus(*craftsmanship, consumable_slice)
+        ));
+    }
+    if consumable.control_rel != 0 {
+        effect.push_str(&t_format!(
+            locale,
+            "Control +{rel}% ({val}), ",
+            rel = consumable.control_rel,
+            val = control_bonus(*control, consumable_slice)
+        ));
+    }
+    if consumable.cp_rel != 0 {
+        effect.push_str(&t_format!(
+            locale,
+            "CP +{rel}% ({val}), ",
+            rel = consumable.cp_rel,
+            val = cp_bonus(*cp, consumable_slice)
+        ));
+    }
+    effect.pop(); // This will potentially not work for JP & KR
+    effect.pop();
+    effect
+}
 
 pub fn collapse_persisted(ui: &mut egui::Ui, id: egui::Id, collapsed: &mut bool) {
     *collapsed = ui.data_mut(|data| *data.get_persisted_mut_or(id, *collapsed));

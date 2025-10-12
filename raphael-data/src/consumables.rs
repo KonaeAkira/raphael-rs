@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 pub const MEALS: &[Consumable] = include!("../data/meals.rs");
 pub const POTIONS: &[Consumable] = include!("../data/potions.rs");
 
@@ -15,39 +13,6 @@ pub struct Consumable {
     pub control_max: u16,
     pub cp_rel: u16,
     pub cp_max: u16,
-}
-
-impl Consumable {
-    pub fn effect_string(self, craftsmanship: u16, control: u16, cp: u16) -> String {
-        let mut effect: String = String::new();
-        if self.craft_rel != 0 {
-            let _write_error = write!(
-                effect,
-                "Crafts. +{}% ({}), ",
-                self.craft_rel,
-                craftsmanship_bonus(craftsmanship, &[Some(self)])
-            );
-        }
-        if self.control_rel != 0 {
-            let _write_error = write!(
-                effect,
-                "Control +{}% ({}), ",
-                self.control_rel,
-                control_bonus(control, &[Some(self)])
-            );
-        }
-        if self.cp_rel != 0 {
-            let _write_error = write!(
-                effect,
-                "CP +{}% ({}), ",
-                self.cp_rel,
-                cp_bonus(cp, &[Some(self)])
-            );
-        }
-        effect.pop();
-        effect.pop();
-        effect
-    }
 }
 
 pub fn craftsmanship_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
@@ -83,6 +48,28 @@ pub fn cp_bonus(base: u16, consumables: &[Option<Consumable>]) -> u16 {
         .sum()
 }
 
+pub fn stat_bonuses(base_stats: [u16; 3], consumables: &[Option<Consumable>]) -> [u16; 3] {
+    consumables
+        .iter()
+        .flatten()
+        .map(|item| {
+            let craft_rel_bonus = (base_stats[0] as u32 * item.craft_rel as u32 / 100) as u16;
+            let craft_bonus = std::cmp::min(item.craft_max, craft_rel_bonus);
+            let control_rel_bonus = (base_stats[1] as u32 * item.control_rel as u32 / 100) as u16;
+            let control_bonus = std::cmp::min(item.control_max, control_rel_bonus);
+            let cp_rel_bonus = (base_stats[2] as u32 * item.cp_rel as u32 / 100) as u16;
+            let cp_bonus = std::cmp::min(item.cp_max, cp_rel_bonus);
+            [craft_bonus, control_bonus, cp_bonus]
+        })
+        .fold([0, 0, 0], |acc, bonuses| {
+            [
+                acc[0] + bonuses[0],
+                acc[1] + bonuses[1],
+                acc[2] + bonuses[2],
+            ]
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Locale, get_item_name};
@@ -108,8 +95,8 @@ mod tests {
         // 13108 * 5 mod 1<<16 = 4
         // 2521 * 26 mod 1<<16 = 10
         assert_eq!(
-            consumable.effect_string(4021, 13108, 2521),
-            "Control +5% (97), CP +26% (92)"
+            stat_bonuses([4021, 13108, 2521], &[Some(consumable)]),
+            [0, 97, 92]
         );
     }
 
@@ -117,12 +104,12 @@ mod tests {
     fn test_rroneek_steak_hq() {
         let consumable = find_consumable("Rroneek Steak \u{e03c}").unwrap();
         assert_eq!(
-            consumable.effect_string(4021, 4023, 550),
-            "Control +5% (97), CP +26% (92)"
+            stat_bonuses([4021, 4032, 550], &[Some(consumable)]),
+            [0, 97, 92]
         );
         assert_eq!(
-            consumable.effect_string(1000, 1000, 100),
-            "Control +5% (50), CP +26% (26)"
+            stat_bonuses([1000, 1000, 100], &[Some(consumable)]),
+            [0, 50, 26]
         );
     }
 }
