@@ -94,14 +94,7 @@ pub fn max_job_name_text_width(ui: &egui::Ui, locale: Locale) -> f32 {
 pub enum TableColumnWidth {
     SelectButton,
     JobName,
-    #[allow(dead_code)] // currently not used, but is implemented to be readily available if needed
-    Exact(f32),
-    RelativeToRemainingClamped {
-        scale: f32,
-        min: f32,
-        max: f32,
-    },
-    // Assumes it is used at most once without other columns after it
+    RelativeToRemainingClamped { scale: f32, min: f32, max: f32 },
     Remaining,
 }
 
@@ -118,7 +111,6 @@ pub fn calculate_column_widths<const N: usize>(
                 select_text_width(ui, locale) + ui.spacing().button_padding.x
             }
             TableColumnWidth::JobName => max_job_name_text_width(ui, locale),
-            TableColumnWidth::Exact(width) => width,
             TableColumnWidth::RelativeToRemainingClamped { scale, min, max } => {
                 (remaining_width * scale).clamp(min, max)
             }
