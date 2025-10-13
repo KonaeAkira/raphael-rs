@@ -286,7 +286,7 @@ appearances = ["src/app.rs:893:44"]
 
 ["ao5RTXAU8JPfZa/+YXPWLQ=="]
 en = '''Backload progress'''
-ja = '''後半型の進捗（人間の思考特性）'''
+ja = '''後半型の進捗'''
 version = "0.0.0"
 appearances = ["src/app.rs:899:27"]
 
@@ -334,7 +334,7 @@ appearances = ["src/config.rs:126:59"]
 
 ["BSMfvg4Sw2tq11bcAydqFw=="]
 en = '''75% quality'''
-ja = '''品質 75%'''
+ja = '''品質75%'''
 version = "0.0.0"
 appearances = ["src/config.rs:127:59"]
 
