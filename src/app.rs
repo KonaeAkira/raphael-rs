@@ -1037,9 +1037,9 @@ impl MacroSolverApp {
         if self.app_context.locale == Locale::JP {
             let uri = concat!(
                 env!("BASE_URL"),
-                "/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
+                "/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
             );
-            load_font_dyn(ctx, "MPLUS1Code-Regular", uri);
+            load_font_dyn(ctx, "NotoSansJP-Regular", uri);
         } else if self.app_context.locale == Locale::KR {
             let uri = concat!(
                 env!("BASE_URL"),
@@ -1097,9 +1097,9 @@ fn load_fonts(ctx: &egui::Context) {
     ));
     #[cfg(not(target_arch = "wasm32"))]
     ctx.add_font(FontInsert::new(
-        "MPLUS1Code-Regular",
+        "NotoSansJP-Regular",
         egui::FontData::from_static(include_bytes!(
-            "../assets/fonts/M_PLUS_1_Code/static/MPLUS1Code-Regular.ttf"
+            "../assets/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
         )),
         vec![
             InsertFontFamily {
