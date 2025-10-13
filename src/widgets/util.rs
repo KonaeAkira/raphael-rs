@@ -111,41 +111,23 @@ pub fn calculate_column_widths(
     locale: Locale,
 ) -> Vec<f32> {
     let mut widths = Vec::with_capacity(column_widths.len());
-
-    let select_button_width = select_text_width(ui, locale) + ui.spacing().button_padding.x;
-    let max_job_name_width = max_job_name_text_width(ui, locale);
-    let column_spacing = ui.spacing().item_spacing.x;
-
-    let mut used_width = column_widths.len().saturating_sub(1) as f32 * column_spacing;
-    let total_available_width = ui.available_width();
-    macro_rules! available_width {
-        () => {
-            (total_available_width - used_width).max(0.0)
-        };
-    }
-
+    let width_used_for_spacing =
+        column_widths.len().saturating_sub(1) as f32 * ui.spacing().item_spacing.x;
+    let mut remaining_width = ui.available_width() - width_used_for_spacing;
     for table_column_width in column_widths {
         let exact_column_width = match table_column_width {
             TableColumnWidth::SelectButton => {
-                used_width += select_button_width;
-                select_button_width
+                select_text_width(ui, locale) + ui.spacing().button_padding.x
             }
-            TableColumnWidth::JobName => {
-                used_width += max_job_name_width;
-                max_job_name_width
-            }
-            TableColumnWidth::Exact(width) => {
-                used_width += width;
-                *width
-            }
+            TableColumnWidth::JobName => max_job_name_text_width(ui, locale),
+            TableColumnWidth::Exact(width) => *width,
             TableColumnWidth::RelativeToRemainingClamped { scale, min, max } => {
-                let width = (available_width!() * scale).clamp(*min, *max);
-                used_width += width;
-                width
+                (remaining_width * scale).clamp(*min, *max)
             }
-            TableColumnWidth::Remaining => available_width!(),
+            TableColumnWidth::Remaining => remaining_width,
         };
         widths.push(exact_column_width);
+        remaining_width -= exact_column_width;
     }
     widths
 }
