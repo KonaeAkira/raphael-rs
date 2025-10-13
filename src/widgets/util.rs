@@ -2,7 +2,7 @@ use raphael_data::{
     Consumable, CrafterStats, Locale, control_bonus, cp_bonus, craftsmanship_bonus,
 };
 use raphael_sim::*;
-use raphael_translations::t_format;
+use raphael_translations::{t, t_format};
 
 pub fn effect_string(
     consumable: Consumable,
@@ -45,6 +45,109 @@ pub fn effect_string(
     effect.pop(); // This will potentially not work for JP & KR
     effect.pop();
     effect
+}
+
+pub fn text_width(ui: &egui::Ui, text: impl Into<String>) -> f32 {
+    ui.fonts(|fonts| {
+        let galley = fonts.layout_no_wrap(
+            text.into(),
+            egui::FontId::default(),
+            egui::Color32::default(),
+        );
+        galley.rect.width()
+    })
+}
+
+pub fn max_text_width(ui: &egui::Ui, text_slice: &[impl ToString]) -> f32 {
+    ui.fonts(|fonts| {
+        text_slice
+            .iter()
+            .map(|text| {
+                let galley = fonts.layout_no_wrap(
+                    text.to_string(),
+                    egui::FontId::default(),
+                    egui::Color32::default(),
+                );
+                galley.rect.width()
+            })
+            .fold(0.0, f32::max)
+    })
+}
+
+pub fn select_text_width(ui: &egui::Ui, locale: Locale) -> f32 {
+    text_width(ui, t!(locale, "Select"))
+}
+
+pub fn max_job_name_text_width(ui: &egui::Ui, locale: Locale) -> f32 {
+    max_text_width(
+        ui,
+        match locale {
+            Locale::EN => &raphael_data::JOB_NAMES_EN,
+            Locale::DE => &raphael_data::JOB_NAMES_DE,
+            Locale::FR => &raphael_data::JOB_NAMES_FR,
+            Locale::JP => &raphael_data::JOB_NAMES_EN,
+            Locale::KR => &raphael_data::JOB_NAMES_KR,
+        },
+    )
+}
+
+pub enum TableColumnWidth {
+    SelectButton,
+    JobName,
+    #[allow(dead_code)] // currently not used, but is implemented to be readily available if needed
+    Exact(f32),
+    RelativeToRemainingClamped {
+        scale: f32,
+        min: f32,
+        max: f32,
+    },
+    // Assumes it is used at most once without other columns after it
+    Remaining,
+}
+
+pub fn calculate_column_widths(
+    ui: &mut egui::Ui,
+    column_widths: &[TableColumnWidth],
+    locale: Locale,
+) -> Vec<f32> {
+    let mut widths = Vec::with_capacity(column_widths.len());
+
+    let select_button_width = select_text_width(ui, locale) + ui.spacing().button_padding.x;
+    let max_job_name_width = max_job_name_text_width(ui, locale);
+    let column_spacing = ui.spacing().item_spacing.x;
+
+    let mut used_width = column_widths.len().saturating_sub(1) as f32 * column_spacing;
+    let total_available_width = ui.available_width();
+    macro_rules! available_width {
+        () => {
+            (total_available_width - used_width).max(0.0)
+        };
+    }
+
+    for table_column_width in column_widths {
+        let exact_column_width = match table_column_width {
+            TableColumnWidth::SelectButton => {
+                used_width += select_button_width;
+                select_button_width
+            }
+            TableColumnWidth::JobName => {
+                used_width += max_job_name_width;
+                max_job_name_width
+            }
+            TableColumnWidth::Exact(width) => {
+                used_width += width;
+                *width
+            }
+            TableColumnWidth::RelativeToRemainingClamped { scale, min, max } => {
+                let width = (available_width!() * scale).clamp(*min, *max);
+                used_width += width;
+                width
+            }
+            TableColumnWidth::Remaining => available_width!(),
+        };
+        widths.push(exact_column_width);
+    }
+    widths
 }
 
 pub fn collapse_persisted(ui: &mut egui::Ui, id: egui::Id, collapsed: &mut bool) {
