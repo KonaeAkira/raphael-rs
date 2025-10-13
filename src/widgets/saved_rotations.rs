@@ -13,6 +13,7 @@ use crate::{
         CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
     },
     context::{AppContext, SolverConfig},
+    widgets::util::max_text_width,
 };
 
 use super::util;
@@ -453,10 +454,11 @@ impl<'a> RotationWidget<'a> {
         ui: &mut egui::Ui,
         key: impl Into<egui::WidgetText>,
         value: impl Into<egui::WidgetText>,
+        max_key_width: f32,
     ) {
         ui.horizontal(|ui| {
             let used_width = ui.label(key).rect.width();
-            ui.add_space(96.0 - used_width);
+            ui.add_space(max_key_width - used_width);
             ui.label(value);
         });
     }
@@ -487,27 +489,47 @@ impl<'a> RotationWidget<'a> {
             level = self.rotation.crafter_stats.level,
             job = job_id.map_or("", |job_id| raphael_data::get_job_name(job_id, locale))
         );
+        let max_key_width = max_text_width(
+            ui,
+            &[
+                t!(locale, "Recipe"),
+                t!(locale, "Crafter stats"),
+                t!(locale, "Job"),
+                t!(locale, "Food"),
+                t!(locale, "Potion"),
+                t!(locale, "Solver"),
+            ],
+        );
+
         if let Some(recipe) = recipe {
             self.show_info_row(
                 ui,
                 t!(locale, "Recipe"),
                 raphael_data::get_item_name(recipe.item_id, false, locale)
                     .unwrap_or(t!(locale, "Unknown item").to_owned()),
+                max_key_width,
             );
         }
-        self.show_info_row(ui, t!(locale, "Crafter stats"), stats_string);
-        self.show_info_row(ui, t!(locale, "Job"), job_string);
+        self.show_info_row(ui, t!(locale, "Crafter stats"), stats_string, max_key_width);
+        self.show_info_row(ui, t!(locale, "Job"), job_string, max_key_width);
         self.show_info_row(
             ui,
             t!(locale, "Food"),
             self.get_consumable_name(self.rotation.food),
+            max_key_width,
         );
         self.show_info_row(
             ui,
             t!(locale, "Potion"),
             self.get_consumable_name(self.rotation.potion),
+            max_key_width,
         );
-        self.show_info_row(ui, t!(locale, "Solver"), &self.rotation.solver);
+        self.show_info_row(
+            ui,
+            t!(locale, "Solver"),
+            &self.rotation.solver,
+            max_key_width,
+        );
     }
 
     fn show_rotation_actions(&self, ui: &mut egui::Ui) {

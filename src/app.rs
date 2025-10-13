@@ -404,6 +404,7 @@ impl eframe::App for MacroSolverApp {
                 .strong()
                 .text_style(TextStyle::Body),
         )
+        .id(egui::Id::new("STATS_EDIT"))
         .open(&mut self.stats_edit_window_open)
         .collapsible(false)
         .resizable(false)
@@ -419,6 +420,7 @@ impl eframe::App for MacroSolverApp {
                 .strong()
                 .text_style(TextStyle::Body),
         )
+        .id(egui::Id::new("SAVED_ROTATIONS"))
         .open(&mut self.saved_rotations_window_open)
         .collapsible(false)
         .default_size((400.0, 600.0))
