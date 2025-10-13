@@ -10,291 +10,349 @@ appearances = [] # only written when `update-toml` feature is used, additionally
 
 ["E+W/aPQk8Tj1fBl96IuobQ=="]
 en = '''New version available!'''
+ja = '''利用可能なアップデートがあります！'''
 version = "0.0.0"
 appearances = ["src/app.rs:122:60"]
 
 ["mmItiM569HXD61xmESBQbQ=="]
 en = '''Download from GitHub'''
+ja = '''GitHubからダウンロード'''
 version = "0.0.0"
 appearances = ["src/app.rs:126:31"]
 
 ["WEDujLYYyOU8tQIkwVosEA=="]
 en = '''Your stats are below the minimum requirement for this recipe.'''
+ja = '''このレシピを作成するには、ステータスが不足しています。'''
 version = "0.0.0"
 appearances = ["src/app.rs:147:20"]
 
 ["Y80Ti6XzzJh0HsgP3We95Q=="]
 en = '''Requirement: {req_cms} Craftsmanship, {req_ctrl} Control.'''
+ja = '''必要ステータス: 作業精度 {req_cms}、加工精度 {req_ctrl}'''
 version = "0.0.0"
 appearances = ["src/app.rs:151:20"]
 
 ["Y5J9bsBCle+CMto6M6JHxw=="]
 en = '''Close'''
+ja = '''閉じる'''
 version = "0.0.0"
 appearances = ["src/app.rs:155:44", "src/app.rs:183:44"]
 
 ["pgzB+gD4MKo66zNoY8FNpQ=="]
 en = '''No solution'''
+ja = '''完成不可'''
 version = "0.0.0"
 appearances = ["src/app.rs:168:64"]
 
 ["kv7jCjVAfknUZcCoo2idbQ=="]
 en = '''Make sure that the recipe is set correctly and that your stats are enough to craft this item.'''
+ja = '''レシピが正しく設定されており、ステータスが十分であることを確認してください。'''
 version = "0.0.0"
 appearances = ["src/app.rs:170:44"]
 
 ["M7yKz7+xN0NbELcsdUS9mQ=="]
 en = '''Internal Solver Error'''
+ja = '''内部ソルバーエラー'''
 version = "0.0.0"
 appearances = ["src/app.rs:176:64"]
 
 ["RGfRJgcMUrxdE5tDqHmKmw=="]
 en = '''Cancelling ...'''
+ja = '''キャンセル中…'''
 version = "0.0.0"
 appearances = ["src/app.rs:205:47"]
 
 ["jjl4qe3qMoWXStCHXMxtQw=="]
 en = '''Solving ...'''
+ja = '''計算中…'''
 version = "0.0.0"
 appearances = ["src/app.rs:207:47"]
 
 ["CzGfkdakyiaZV+pcVtpfIA=="]
 en = '''Computing ...'''
+ja = '''処理中…'''
 version = "0.0.0"
 appearances = ["src/app.rs:214:48"]
 
 ["BARUl+J0medS35cQtNh2aQ=="]
 en = '''{num} nodes visited'''
+ja = '''{num} 探索済みノード'''
 version = "0.0.0"
 appearances = ["src/app.rs:227:55"]
 
 ["OoX2q/JxMzmzTwg2Ed6zIA=="]
 en = '''Cancel'''
+ja = '''キャンセル'''
 version = "0.0.0"
 appearances = ["src/app.rs:235:88"]
 
 ["cg3EbR6nwnyIL1Q//glDgQ=="]
 en = '''View source on GitHub'''
+ja = '''GitHubでソースを見る'''
 version = "0.0.0"
 appearances = ["src/app.rs:285:43"]
 
 ["lWmzPzSl47iiMaVVE3XEhg=="]
 en = '''Join Discord'''
+ja = '''Discordに参加'''
 version = "0.0.0"
 appearances = ["src/app.rs:293:43"]
 
 ["R8QWfFt31+imn5zc8sqPpQ=="]
 en = '''Support me on Ko-fi'''
+ja = '''Ko-fiでサポート'''
 version = "0.0.0"
 appearances = ["src/app.rs:301:43"]
 
 ["korDyKclck7un9L9GomIqw=="]
 en = '''Edit crafter stats'''
+ja = '''クラフターのステータスを編集'''
 version = "0.0.0"
 appearances = ["src/app.rs:403:43"]
 
 ["j6ZOcmHFeUUvSQL3tC6w8Q=="]
 en = '''Saved macros & solve history'''
+ja = '''保存済みマクロと計算履歴'''
 version = "0.0.0"
 appearances = ["src/app.rs:418:43"]
 
 ["1hnF2qPsDblAcEC031aNiQ=="]
 en = '''⚙ Settings'''
+ja = '''⚙ 設定'''
 version = "0.0.0"
 appearances = ["src/app.rs:473:63"]
 
 ["io7ohp3lMzZa3WQzo2EXwA=="]
 en = '''Zoom'''
+ja = '''ズーム'''
 version = "0.0.0"
 appearances = ["src/app.rs:482:44"]
 
 ["M8PiJj/aRi0rpRN+ej1g9A=="]
 en = '''Reset'''
+ja = '''リセット'''
 version = "0.0.0"
 appearances = ["src/app.rs:493:56"]
 
 ["pONACX6lY+V99UWTe/kqrg=="]
 en = '''Theme'''
+ja = '''テーマ'''
 version = "0.0.0"
 appearances = ["src/app.rs:519:44"]
 
 ["Dzp4BVgWJRKCJfNNkYIVlg=="]
 en = '''Max solver threads'''
+ja = '''最大ソルバースレッド数'''
 version = "0.0.0"
 appearances = ["src/app.rs:525:44"]
 
 ["jShO4IYyVbGBOM8dCrtLKg=="]
 en = '''Auto'''
+ja = '''自動'''
 version = "0.0.0"
 appearances = ["src/app.rs:530:77"]
 
 ["BLHRlxc+VXt0l9NBBt9tfw=="]
 en = '''Reload the page to change max solver threads.'''
+ja = '''最大スレッド数を変更するには、ページを再読み込みしてください。'''
 version = "0.0.0"
 appearances = ["src/app.rs:560:39"]
 
 ["vjDFd4nGKfXhhYyK/tHwPA=="]
 en = '''Restart the app to change max solver threads.'''
+ja = '''最大スレッド数を変更するには、アプリを再起動してください。'''
 version = "0.0.0"
 appearances = ["src/app.rs:563:39"]
 
 ["nn9ZpD3bAAqndQIWAbRgFw=="]
 en = '''⚠ Unavailable after the solver was started.'''
+ja = '''⚠ ソルバー開始後は使用できません'''
 version = "0.0.0"
 appearances = ["src/app.rs:567:32"]
 
 ["zmui7MOfCBvDo46GmrsyHQ=="]
 en = '''Solve'''
+ja = '''計算開始'''
 version = "0.0.0"
 appearances = ["src/app.rs:608:66"]
 
 ["1U/QcBQBwNxZFTVzOiPbZQ=="]
 en = '''Loaded from saved rotations'''
+ja = '''保存済みスキル回しから読み込み'''
 version = "0.0.0"
 appearances = ["src/app.rs:631:44"]
 
 ["GHsBdCyhgje4wH1aGIXomA=="]
 en = '''Elapsed time: {dur:.2}s'''
+ja = '''経過時間: {dur:.2}秒'''
 version = "0.0.0"
 appearances = ["src/app.rs:635:28"]
 
 ["86xP6SinOkg3PnEMcQj2jQ=="]
 en = '''Configuration'''
+ja = '''設定'''
 version = "0.0.0"
 appearances = ["src/app.rs:654:52"]
 
 ["L2JTnghPt1d+Oa4OEEF1JA=="]
 en = '''Crafter stats'''
+ja = '''クラフターステータス'''
 version = "0.0.0"
 appearances = ["src/app.rs:676:48", "src/widgets/saved_rotations.rs:498:42"]
 
 ["djUZraHVrnziMltlgh1vrw=="]
 en = '''Craftsmanship'''
+ja = '''作業精度'''
 version = "0.0.0"
 appearances = ["src/app.rs:678:32", "src/widgets/stats_edit.rs:39:40"]
 
 ["KJUTCL5V/kZ2/dZUokILbw=="]
 en = '''Control'''
+ja = '''加工精度'''
 version = "0.0.0"
 appearances = ["src/app.rs:691:32", "src/widgets/stats_edit.rs:41:40"]
 
 ["xiuBlBU0Sotio+aM9OVj/g=="]
 en = '''CP'''
+ja = '''CP'''
 version = "0.0.0"
 appearances = ["src/app.rs:704:32", "src/widgets/simulator.rs:96:62", "src/widgets/simulator.rs:158:44", "src/widgets/stats_edit.rs:43:40"]
 
 ["gvQDIapOj6o9a+eE3FQ/4w=="]
 en = '''Job level'''
+ja = '''ジョブレベル'''
 version = "0.0.0"
 appearances = ["src/app.rs:716:32", "src/widgets/stats_edit.rs:45:40"]
 
 ["cC4Pa/1y2f2sfxzRiK/t7w=="]
 en = '''HQ materials'''
+ja = '''HQ素材'''
 version = "0.0.0"
 appearances = ["src/app.rs:726:48"]
 
 ["kUunSSnuVLUo8LUXOeOV3g=="]
 en = '''None'''
+ja = '''なし'''
 version = "0.0.0"
 appearances = ["src/app.rs:752:32", "src/widgets/macro_view.rs:127:30", "src/widgets/macro_view.rs:134:30", "src/widgets/macro_view.rs:508:40", "src/widgets/food_select.rs:58:52", "src/widgets/potion_select.rs:61:52", "src/widgets/saved_rotations.rs:469:31"]
 
 ["zx/fjNOuB8BwC8A4Cf9wEQ=="]
 en = '''Actions'''
+ja = '''アクション'''
 version = "0.0.0"
 appearances = ["src/app.rs:756:48"]
 
 ["Nqynjr3uw4cXS6wQ7r6QMQ=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage.'''
+ja = '''⚠ マイスターアクションは、計算時間とメモリ使用量が大幅に増加します'''
 version = "0.0.0"
 appearances = ["src/app.rs:801:20"]
 
 ["78TQLq2ZFZ/qmx/LqLc/Xg=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions.'''
+ja = '''⚠ マイスターアクションは計算時間とメモリ使用量が大幅に増加します。有効化したい場合は、アプリ版の使用を推奨します'''
 version = "0.0.0"
 appearances = ["src/app.rs:810:35"]
 
 ["dN6QqcmCiKeFu4Xi+6XZsA=="]
 en = '''Download latest release from GitHub'''
+ja = '''GitHubから最新リリースをダウンロード'''
 version = "0.0.0"
 appearances = ["src/app.rs:816:51"]
 
 ["yngZyyailHQ73P49MTwWog=="]
 en = '''Solver settings'''
+ja = '''ソルバー設定'''
 version = "0.0.0"
 appearances = ["src/app.rs:823:48"]
 
 ["F6hizp5LhBRSpJLhSSSKSw=="]
 en = '''Target quality'''
+ja = '''目標品質'''
 version = "0.0.0"
 appearances = ["src/app.rs:825:32"]
 
 ["2AVyYXMX37CrN/9Gvhfyuw=="]
 en = '''Solution must reach target quality'''
+ja = '''目標品質を達成する必要があります'''
 version = "0.0.0"
 appearances = ["src/app.rs:891:27"]
 
 ["p7HyJWFYYWHKe39OAg2LrQ=="]
 en = '''Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off.'''
+ja = '''目標品質に到達できない候補解をスキップして、メモリ使用量を削減します。基本的には、目標品質に到達する解が得られるか、解が得られないかのどちらかです。目標品質にどれだけ近いか確認したい場合は、このオプションをオフにしてください。'''
 version = "0.0.0"
 appearances = ["src/app.rs:893:44"]
 
 ["ao5RTXAU8JPfZa/+YXPWLQ=="]
 en = '''Backload progress'''
+ja = '''後半型の進捗（人間の思考特性）'''
 version = "0.0.0"
 appearances = ["src/app.rs:899:27"]
 
 ["wFvVGJ0ERIy0TrxLLi5LAw=="]
 en = '''Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.'''
+ja = '''スキル回しの最後にのみ進行度上昇アクションを使用するスキル回しを見つけます。\n  - 達成可能な品質が下がる可能性があります\n  - マクロ時間が長くなる可能性があります'''
 version = "0.0.0"
 appearances = ["src/app.rs:901:44"]
 
 ["4TrzziJN2b/3+NIwV86LoQ=="]
 en = '''Ensure 100% reliability'''
+ja = '''品質の完成率100％保証'''
 version = "0.0.0"
 appearances = ["src/app.rs:912:31"]
 
 ["seCI2n41FD+21Bg6X3etyQ=="]
 en = '''Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro.'''
+ja = '''ランダム条件が不運でも目標品質に到達できるスキル回しを見つけます。\n  - 達成可能な品質が下がる可能性があります\n  - マクロ時間が長くなる可能性があります\n  - 計算時間が大幅に長くなる可能性があります\nソルバーは「秘訣」を使って優れた品質発生を消費することはないため、このオプションでは最適なマクロが得られない場合があります。'''
 version = "0.0.0"
 appearances = ["src/app.rs:915:44"]
 
 ["+DwRW5ozbiRozBNupYmv0A=="]
 en = '''⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.'''
+ja = '''⚠ 実験的機能\nこのオプションは大量のメモリを使用する可能性があります（場合によっては4GB以上）、システムがメモリ不足になることがあります'''
 version = "0.0.0"
 appearances = ["src/app.rs:1026:12"]
 
 ["l/rSN+oK2pKV8ohfHf/Ovg=="]
 en = '''⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.'''
+ja = '''⚠ 実験的機能\n32ビットWebAssemblyの4GBメモリ上限に達すると、ソルバーがクラッシュし、UIが「計算中」状態で無限に停止する可能性があります'''
 version = "0.0.0"
 appearances = ["src/app.rs:1031:12"]
 
 ["sVLTzHCZb8cp/NrYNctl5Q=="]
 en = '''0% quality'''
+ja = '''品質0%'''
 version = "0.0.0"
 appearances = ["src/config.rs:125:50"]
 
 ["7LMvbyCAJCGtVTLCvbNaaQ=="]
 en = '''55% quality'''
+ja = '''品質55%'''
 version = "0.0.0"
 appearances = ["src/config.rs:126:59"]
 
 ["BSMfvg4Sw2tq11bcAydqFw=="]
 en = '''75% quality'''
+ja = '''品質 75%'''
 version = "0.0.0"
 appearances = ["src/config.rs:127:59"]
 
 ["UJHSBbmagIHL0VdGkb/BIg=="]
 en = '''95% quality'''
+ja = '''品質95%'''
 version = "0.0.0"
 appearances = ["src/config.rs:128:59"]
 
 ["przcbn6z8pNaEr1YCEAcaA=="]
 en = '''100% quality'''
+ja = '''品質100%'''
 version = "0.0.0"
 appearances = ["src/config.rs:129:50"]
 
 ["HNz1pOvAceAt8ecM09QFpA=="]
 en = '''Custom'''
+ja = '''カスタム'''
 version = "0.0.0"
 appearances = ["src/config.rs:130:55", "src/widgets/recipe_select.rs:488:68"]
 
@@ -310,385 +368,472 @@ The following placeholders can be used to output their respective value:
   - {craftsmanship} : the base craftsmanship stat
   - {control} : the base control stat
   - {cp} : the base CP stat'''
+ja = '''形式は任意のテキストまたはFFXIVコマンドを使用できます。
+
+以下のプレースホルダーで各値を出力できます：
+  - {index} : マクロブロックの番号
+  - {max_index} : マクロブロックの最大番号
+  - {item_name} : 選択したレシピのアイテム名
+  - {food} : 選択した調理品の名前
+  - {potion} : 選択した薬品の名前
+  - {craftsmanship} : 基本作業精度ステータス
+  - {control} : 基本加工精度ステータス
+  - {cp} : 基本CP'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:13:8"]
 
 ["DBcrvd0yDrwJrrCOkNjGBw=="]
 en = '''Unknown item'''
+ja = '''不明なアイテム'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:121:30", "src/widgets/macro_view.rs:132:38", "src/widgets/item_name_label.rs:15:38", "src/widgets/saved_rotations.rs:107:34", "src/widgets/saved_rotations.rs:468:38", "src/widgets/saved_rotations.rs:495:42"]
 
 ["vXv1yeY8kh1x9KtxDRdJ8w=="]
 en = '''Use default notification'''
+ja = '''デフォルト通知を使用'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:278:27"]
 
 ["RD5bQ2/SwHLXRbJ41nWayg=="]
 en = '''Use custom notification format'''
+ja = '''カスタム通知形式を使用'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:292:27"]
 
 ["ZJJiE3i2OtYlS4C4WFwMCQ=="]
 en = '''Use different format for last notification'''
+ja = '''最後の通知に異なる形式を使用'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:311:35"]
 
 ["zJY/uvQE4a+/EQbayvw3WA=="]
 en = '''Avoid single-action macros'''
+ja = '''1つのみアクションマクロを避ける'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:327:23"]
 
 ["oEJQBMU5ApSo7b6TUvt/3w=="]
 en = '''Skip last notification if doing so avoids creating a macro with a single action.'''
+ja = '''1つのみアクションマクロを作成しない場合、最後の通知をスキップします。'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:333:31"]
 
 ["VCj4aAUHiSC0XQqJrc5hhQ=="]
 en = '''Use \"/macrolock\" as macro intro'''
+ja = '''マクロロックを含む'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:344:23"]
 
 ["L4G4+YiOQsz+P64Jg5FL/g=="]
 en = '''Use custom intro format'''
+ja = '''マクロの先頭にカスタム形式を使用'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:350:27"]
 
 ["0ToYrBaZr+vb9VtFwGCoeg=="]
 en = '''Macro'''
+ja = '''マクロ'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:402:60"]
 
 ["pIURcS2307txIsA2caZblQ=="]
 en = '''Clear'''
+ja = '''クリア'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:407:61", "src/widgets/food_select.rs:67:61", "src/widgets/potion_select.rs:70:61"]
 
 ["iPpRNkQuRTRXmI+7BDyPng=="]
 en = '''{steps} steps, {duration} seconds'''
+ja = '''{steps}ステップ, {duration}秒'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:420:28", "src/widgets/saved_rotations.rs:402:20"]
 
 ["rT/TIfZ9jXZZJOR6xcY3sA=="]
 en = '''Include delay'''
+ja = '''遅延を含める'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:427:70"]
 
 ["3woNnNLtWMVl9o5wyolFyQ=="]
 en = '''Extra delay'''
+ja = '''追加遅延'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:429:44"]
 
 ["A1SjGQYF1xfTO+6FPtH+nQ=="]
 en = '''Split macro'''
+ja = '''マクロを分ける'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:434:68"]
 
 ["8uKOWUHS0zeATFGNHzbhCg=="]
 en = '''Macro lock / intro'''
+ja = '''マクロロック／先頭'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:435:70"]
 
 ["jw1f6CYtILs3dZRSiPnhTw=="]
 en = '''✏ Edit'''
+ja = '''✏ 編集'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:437:75", "src/widgets/macro_view.rs:455:75"]
 
 ["gS/C6YWCL3vcOBWhu6li6g=="]
 en = '''End-of-macro notification'''
+ja = '''マクロ終了通知'''
 version = "0.0.0"
 appearances = ["src/widgets/macro_view.rs:452:35"]
 
 ["MxqSQgJTyaqY9VdQSKH/eA=="]
 en = '''Simulation'''
+ja = '''シミュレーション'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:75:60"]
 
 ["U0RYlKii9iy0kiehaDyH4g=="]
 en = '''⚠ Some parameters have changed since last solve.'''
+ja = '''⚠ 前回の計算以降、一部パラメータが変更されました。'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:82:36"]
 
 ["IP5j7MLGk64pTel97zh0cQ=="]
 en = '''Progress'''
+ja = '''進行度'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:93:68", "src/widgets/simulator.rs:108:44"]
 
 ["lhVjk5W8FC4vdxhfoqIf4g=="]
 en = '''Quality'''
+ja = '''品質'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:94:67", "src/widgets/simulator.rs:125:44"]
 
 ["L10Gv1OAX2Uqzxno/cscwA=="]
 en = '''Durability'''
+ja = '''耐久'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:95:70", "src/widgets/simulator.rs:141:44"]
 
 ["7LpZW5ceb1VJE7v/npMZQw=="]
 en = '''Calculated assuming worst possible sequence of conditions'''
+ja = '''最悪の条件のシーケンスを想定して計算'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:173:32"]
 
 ["V05L1/PMXNT9BsDP2LOuPQ=="]
 en = '''Calculated assuming Normal conditon on every step'''
+ja = '''すべてのステップで通常条件を想定して計算'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:176:43"]
 
 ["D/ceSymzCAp4349vFS0FrQ=="]
 en = '''Synthesis failed'''
+ja = '''製作失敗'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:182:48"]
 
 ["lr+XyMNzKfepBT38ED0Rvg=="]
 en = '''Tier {tier} collectable'''
+ja = '''{tier} 段階収集品'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:195:55"]
 
 ["TK7YG1a/2LZTIvKOHtZrhw=="]
 en = '''{hq}% HQ'''
+ja = '''{hq}% HQ'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:202:55"]
 
 ["dYoXGUL8QouDDMZBCoKV8Q=="]
 en = '''{value: >5} / {maximum}  (+{overflow} overflow)'''
+ja = '''{value: >5} / {maximum}  (+{overflow} 超過)'''
 version = "0.0.0"
 appearances = ["src/widgets/simulator.rs:301:26"]
 
 ["3jz+nIL+YTpTiCUfv8ZV9g=="]
 en = '''Recipes'''
+ja = '''レシピ'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:46:70"]
 
 ["s/ovMAAC5l5RoZQTq5NHTg=="]
 en = '''Missions'''
+ja = '''ミッション'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:47:78"]
 
 ["3ninXzetsJO21k7Af0PZuA=="]
 en = '''🔍 Search'''
+ja = '''🔍 検索'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:144:38", "src/widgets/food_select.rs:93:42", "src/widgets/potion_select.rs:96:42"]
 
 ["UfUIG2T4uxtuhNjcxVbhIw=="]
 en = '''Select'''
+ja = '''選択'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:208:44", "src/widgets/recipe_select.rs:284:56", "src/widgets/food_select.rs:133:52", "src/widgets/potion_select.rs:137:52"]
 
 ["U71vRCskzp/0ZNKDCqyXYw=="]
 en = '''⚠ Patch {ffxiv_patch} recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.'''
+ja = '''⚠ パッチ {ffxiv_patch} のレシピとアイテムはすでに含まれています。カスタムレシピは上級者向け、または新規レシピがまだ追加されていない場合のみ使用してください。'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:317:12"]
 
 ["d7HtKDFSNezpnAEROlmBfA=="]
 en = '''Level:'''
+ja = '''レベル:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:328:40"]
 
 ["X9WQkgT1iJzBPCuNN/JvnA=="]
 en = '''Recipe Level:'''
+ja = '''レシピレベル:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:339:44"]
 
 ["YFBU1I3swO+hctnHg9pD9g=="]
 en = '''Progress:'''
+ja = '''進行度:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:350:40"]
 
 ["1SwYHyOKKUpeJrqxy6qw3g=="]
 en = '''Quality:'''
+ja = '''品質:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:356:40"]
 
 ["jZQbTryjaUmYZZvlsHUtAQ=="]
 en = '''Initial Quality:'''
+ja = '''初期品質:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:365:44"]
 
 ["W60Qz/MbXdea5Fbt8w36dQ=="]
 en = '''Durability:'''
+ja = '''耐久:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:370:40"]
 
 ["JWHlmVKKcwQdoBto+WywoQ=="]
 en = '''Expert recipe'''
+ja = '''エキスパートレシピ'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:378:31"]
 
 ["NnIkZMZ1I6bzAw6z+/Mkrw=="]
 en = '''Progress divider'''
+ja = '''進行度分割'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:386:44"]
 
 ["utcfvalMOEH1HXXDxo0QiQ=="]
 en = '''Quality divider'''
+ja = '''品質分割'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:390:44"]
 
 ["xG5frC1m0GiyFaKYj6hUbw=="]
 en = '''Progress modifier'''
+ja = '''進行度補正'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:394:44"]
 
 ["IUbEtNqmPZ2zGIfJxqZ8ew=="]
 en = '''Quality modifier'''
+ja = '''品質補正'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:398:44"]
 
 ["Ku75COVkZS7vs5feP8xfIg=="]
 en = '''Progress per 100% efficiency:'''
+ja = '''効率100%時の進行度:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:404:40"]
 
 ["1lyQv8FR7jN32SKj8OGAEQ=="]
 en = '''Quality per 100% efficiency:'''
+ja = '''効率100%時の品質:'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:421:40"]
 
 ["+HWqDKvIsGRlyEP1fjeelQ=="]
 en = '''Override per 100% efficiency values'''
+ja = '''効率100%値を上書き'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:442:35"]
 
 ["xg14pFym75QkPxg+VMf70w=="]
 en = '''Recipe'''
+ja = '''レシピ'''
 version = "0.0.0"
 appearances = ["src/widgets/recipe_select.rs:478:60", "src/widgets/saved_rotations.rs:493:27"]
 
 ["pwNUD9CFWaFvbreERTHQww=="]
 en = '''Food'''
+ja = '''調理品'''
 version = "0.0.0"
 appearances = ["src/widgets/food_select.rs:56:60", "src/widgets/saved_rotations.rs:502:23"]
 
 ["ue2ePHEFngovxxMqHDLNjQ=="]
 en = '''Potion'''
+ja = '''薬品'''
 version = "0.0.0"
 appearances = ["src/widgets/potion_select.rs:59:60", "src/widgets/saved_rotations.rs:507:23"]
 
 ["8m8Cw5TfKnNQZXbgXvFzZg=="]
 en = '''Copy to all jobs'''
+ja = '''全ジョブにコピー'''
 version = "0.0.0"
 appearances = ["src/widgets/stats_edit.rs:32:44"]
 
 ["aMW+XLiXOhzKGx/Pt5IDGQ=="]
 en = '''🗐 Copy crafter config'''
+ja = '''🗐 クラフター設定をコピー'''
 version = "0.0.0"
 appearances = ["src/widgets/stats_edit.rs:70:49"]
 
 ["tS7JmmvGVAF2Bz/tl0mTTg=="]
 en = '''📋 Paste config here to load'''
+ja = '''📋 設定を貼り付けて読み込み'''
 version = "0.0.0"
 appearances = ["src/widgets/stats_edit.rs:85:46"]
 
 ["B7aDbFVnrJ640ZuDhMNUaQ=="]
 en = '''Copy item name'''
+ja = '''アイテム名をコピー'''
 version = "0.0.0"
 appearances = ["src/widgets/item_name_label.rs:42:36"]
 
 ["jPqS6hOpY1D5ul3Z6feibg=="]
 en = '''Copy item ID'''
+ja = '''アイテムIDをコピー'''
 version = "0.0.0"
 appearances = ["src/widgets/item_name_label.rs:52:36"]
 
 ["IOs59+lNVa5aqq42jPjgmA=="]
 en = '''Load rotation'''
+ja = '''ローテーションを読み込み'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:195:50"]
 
 ["FqXoTdiBoc2v0uFVD5lofg=="]
 en = '''Load rotation & recipe'''
+ja = '''ローテーション＆レシピを読み込み'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:196:56"]
 
 ["b8CojbPI+yIlzrjesKLLJQ=="]
 en = '''Load rotation, recipe & consumables'''
+ja = '''ローテーション、レシピ＆消耗品を読み込み'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:198:27"]
 
 ["42TMorbA/2WEwrSbO7/uRA=="]
 en = '''Load'''
+ja = '''読み込み'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:345:64"]
 
 ["NKEGn/3GMJBSdM36Xez7CQ=="]
 en = '''⚠ pre-v0.21.0 rotation. No recipe data.'''
+ja = '''⚠ pre-v0.21.0以前のローテーション。レシピデータなし。'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:366:36"]
 
 ["8L4dKsEo8oVA7jI6qOFhvg=="]
 en = '''{craftsmanship} CMS, {control} Control, {cp} CP'''
+ja = '''{craftsmanship} 作業精度, {control} 加工精度, {cp} CP'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:477:12"]
 
 ["7Xsm5zbfZlRbNkonW0Z3bQ=="]
 en = '''Level {level} {job}'''
+ja = '''レベル {level} {job}'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:486:12"]
 
 ["mvUMd7JfKiB3rr2sVvJG5Q=="]
 en = '''Job'''
+ja = '''ジョブ'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:499:42"]
 
 ["aUHibt51mqLDGB0pHdWF3Q=="]
 en = '''Solver'''
+ja = '''ソルバー'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:510:42"]
 
 ["SmywRw+JVdoQwv6cg9pNhA=="]
 en = '''Settings'''
+ja = '''設定'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:602:37"]
 
 ["LQTzuXu5pMolT+3LjiKvzw=="]
 en = '''Load saved rotations when initiating solve'''
+ja = '''ソルブ開始時に保存済みローテーションを読み込む'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:607:35"]
 
 ["2uyiACh2ZEx6RV9q4KKrpg=="]
 en = '''Default operation on clicking Load button:'''
+ja = '''読み込みボタンをクリックした時のデフォルト操作:'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:610:40"]
 
 ["4IVCPgkwscSoR2m7OKjl0Q=="]
 en = '''⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.'''
+ja = '''⚠ v0.21.0以前に保存されたスキル回しには、レシピデータを読み込むための情報が含まれていません。'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:627:43"]
 
 ["jcQRTspaQuUWgS6PSyj80A=="]
 en = '''Saved macros'''
+ja = '''保存済みマクロ'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:639:60"]
 
 ["QnMLe4Cp8KZLzp3FpPw0/g=="]
 en = '''No saved macros'''
+ja = '''保存されたマクロはありません'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:642:44"]
 
 ["+EtHBl/W4j8dFMG2lnzH9w=="]
 en = '''Solve history'''
+ja = '''計算履歴'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:661:64"]
 
 ["AElYy3JzsSGf2JaaEhWJbg=="]
 en = '''⚠ Oldest rotations will be lost on next solve'''
+ja = '''⚠ 最も古いスキル回しは次回計算で失われます'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:677:51"]
 
 ["xmX78PFspmhv+Qqo+N3oGg=="]
 en = '''No solve history'''
+ja = '''計算履歴なし'''
 version = "0.0.0"
 appearances = ["src/widgets/saved_rotations.rs:688:44"]
 
 ["GxiMz+bxKCA905cFlCIEOw=="]
 en = '''Crafts. +{rel}% ({val}), '''
+ja = '''作業精度 +{rel}% ({val}), '''
 version = "0.0.0"
 appearances = ["src/widgets/util.rs:24:12"]
 
 ["NIu40/HZc2JVk0IpGR6NIw=="]
 en = '''Control +{rel}% ({val}), '''
+ja = '''加工精度 +{rel}% ({val}), '''
 version = "0.0.0"
 appearances = ["src/widgets/util.rs:32:12"]
 
 ["Bgid7uajlPEK0pmvJ7KEfw=="]
 en = '''CP +{rel}% ({val}), '''
+ja = '''CP +{rel}% ({val}), '''
 version = "0.0.0"
 appearances = ["src/widgets/util.rs:40:12"]
