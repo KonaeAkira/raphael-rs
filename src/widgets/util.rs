@@ -105,31 +105,28 @@ pub enum TableColumnWidth {
     Remaining,
 }
 
-pub fn calculate_column_widths(
+pub fn calculate_column_widths<const N: usize>(
     ui: &mut egui::Ui,
-    column_widths: &[TableColumnWidth],
+    desired_widths: [TableColumnWidth; N],
     locale: Locale,
-) -> Vec<f32> {
-    let mut widths = Vec::with_capacity(column_widths.len());
-    let width_used_for_spacing =
-        column_widths.len().saturating_sub(1) as f32 * ui.spacing().item_spacing.x;
+) -> [f32; N] {
+    let width_used_for_spacing = N.saturating_sub(1) as f32 * ui.spacing().item_spacing.x;
     let mut remaining_width = ui.available_width() - width_used_for_spacing;
-    for table_column_width in column_widths {
-        let exact_column_width = match table_column_width {
+    desired_widths.map(|desired_width| {
+        let exact_width = match desired_width {
             TableColumnWidth::SelectButton => {
                 select_text_width(ui, locale) + ui.spacing().button_padding.x
             }
             TableColumnWidth::JobName => max_job_name_text_width(ui, locale),
-            TableColumnWidth::Exact(width) => *width,
+            TableColumnWidth::Exact(width) => width,
             TableColumnWidth::RelativeToRemainingClamped { scale, min, max } => {
-                (remaining_width * scale).clamp(*min, *max)
+                (remaining_width * scale).clamp(min, max)
             }
             TableColumnWidth::Remaining => remaining_width,
         };
-        widths.push(exact_column_width);
-        remaining_width -= exact_column_width;
-    }
-    widths
+        remaining_width -= exact_width;
+        exact_width
+    })
 }
 
 pub fn collapse_persisted(ui: &mut egui::Ui, id: egui::Id, collapsed: &mut bool) {

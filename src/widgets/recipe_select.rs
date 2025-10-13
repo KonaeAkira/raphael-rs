@@ -190,7 +190,7 @@ impl<'a> RecipeSelect<'a> {
         // Column::remainder().clip(true) is buggy when resizing the table
         let column_widths = calculate_column_widths(
             ui,
-            &[
+            [
                 TableColumnWidth::SelectButton,
                 TableColumnWidth::JobName,
                 TableColumnWidth::Remaining,
@@ -247,7 +247,7 @@ impl<'a> RecipeSelect<'a> {
         // See above note, 'Column::remainder().clip(true) is buggy [...]'
         let column_widths = calculate_column_widths(
             ui,
-            &[TableColumnWidth::JobName, TableColumnWidth::Remaining],
+            [TableColumnWidth::JobName, TableColumnWidth::Remaining],
             locale,
         );
 

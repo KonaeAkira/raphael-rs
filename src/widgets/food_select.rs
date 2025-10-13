@@ -118,7 +118,7 @@ impl Widget for FoodSelect<'_> {
                 // Column::remainder().clip(true) is buggy when resizing the table
                 let column_widths = calculate_column_widths(
                     ui,
-                    &[
+                    [
                         TableColumnWidth::SelectButton,
                         TableColumnWidth::RelativeToRemainingClamped {
                             scale: 0.7,
