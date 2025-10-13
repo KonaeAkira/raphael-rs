@@ -74,23 +74,6 @@ pub fn max_text_width(ui: &egui::Ui, text_slice: &[impl ToString]) -> f32 {
     })
 }
 
-pub fn select_text_width(ui: &egui::Ui, locale: Locale) -> f32 {
-    text_width(ui, t!(locale, "Select"))
-}
-
-pub fn max_job_name_text_width(ui: &egui::Ui, locale: Locale) -> f32 {
-    max_text_width(
-        ui,
-        match locale {
-            Locale::EN => &raphael_data::JOB_NAMES_EN,
-            Locale::DE => &raphael_data::JOB_NAMES_DE,
-            Locale::FR => &raphael_data::JOB_NAMES_FR,
-            Locale::JP => &raphael_data::JOB_NAMES_EN,
-            Locale::KR => &raphael_data::JOB_NAMES_KR,
-        },
-    )
-}
-
 pub enum TableColumnWidth {
     SelectButton,
     JobName,
@@ -108,9 +91,18 @@ pub fn calculate_column_widths<const N: usize>(
     desired_widths.map(|desired_width| {
         let exact_width = match desired_width {
             TableColumnWidth::SelectButton => {
-                select_text_width(ui, locale) + ui.spacing().button_padding.x
+                text_width(ui, t!(locale, "Select")) + ui.spacing().button_padding.x
             }
-            TableColumnWidth::JobName => max_job_name_text_width(ui, locale),
+            TableColumnWidth::JobName => max_text_width(
+                ui,
+                match locale {
+                    Locale::EN => &raphael_data::JOB_NAMES_EN,
+                    Locale::DE => &raphael_data::JOB_NAMES_DE,
+                    Locale::FR => &raphael_data::JOB_NAMES_FR,
+                    Locale::JP => &raphael_data::JOB_NAMES_EN,
+                    Locale::KR => &raphael_data::JOB_NAMES_KR,
+                },
+            ),
             TableColumnWidth::RelativeToRemainingClamped { scale, min, max } => {
                 (remaining_width * scale).clamp(min, max)
             }
