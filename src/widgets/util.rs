@@ -82,7 +82,7 @@ pub enum TableColumnWidth {
 }
 
 pub fn calculate_column_widths<const N: usize>(
-    ui: &mut egui::Ui,
+    ui: &egui::Ui,
     desired_widths: [TableColumnWidth; N],
     locale: Locale,
 ) -> [f32; N] {
