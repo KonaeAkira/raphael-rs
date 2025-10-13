@@ -14,6 +14,7 @@ use crate::{
         CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
     },
     context::AppContext,
+    widgets::util::{TableColumnWidth, calculate_column_widths},
 };
 
 use super::{ItemNameLabel, util};
@@ -187,18 +188,23 @@ impl<'a> RecipeSelect<'a> {
         let table_height = 6.3 * line_height + 6.0 * line_spacing;
 
         // Column::remainder().clip(true) is buggy when resizing the table
-        // manually calculate the width of the last col to avoid janky behavior when resizing tables
-        // this is a workaround until this bug is fixed in egui_extras
-        let spacing = 2.0 * ui.spacing().item_spacing.x;
-        let item_name_width = (ui.available_width() - 42.0 - 28.0 - spacing).max(0.0);
+        let column_widths = calculate_column_widths(
+            ui,
+            [
+                TableColumnWidth::SelectButton,
+                TableColumnWidth::JobName,
+                TableColumnWidth::Remaining,
+            ],
+            locale,
+        );
 
         let table = egui_extras::TableBuilder::new(ui)
             .id_salt("RECIPE_SELECT_TABLE")
             .auto_shrink(false)
             .striped(true)
-            .column(Column::exact(42.0))
-            .column(Column::exact(28.0))
-            .column(Column::exact(item_name_width))
+            .column(Column::exact(column_widths[0]))
+            .column(Column::exact(column_widths[1]))
+            .column(Column::exact(column_widths[2]))
             .min_scrolled_height(table_height)
             .max_scroll_height(table_height);
         table.body(|body| {
@@ -239,15 +245,18 @@ impl<'a> RecipeSelect<'a> {
         });
 
         // See above note, 'Column::remainder().clip(true) is buggy [...]'
-        let spacing = ui.spacing().item_spacing.x;
-        let mission_width = (ui.available_width() - 28.0 - spacing).max(0.0);
+        let column_widths = calculate_column_widths(
+            ui,
+            [TableColumnWidth::JobName, TableColumnWidth::Remaining],
+            locale,
+        );
 
         let table = egui_extras::TableBuilder::new(ui)
             .id_salt("MISSION_RECIPE_SELECT_TABLE")
             .auto_shrink(false)
             .striped(true)
-            .column(Column::exact(28.0))
-            .column(Column::exact(mission_width))
+            .column(Column::exact(column_widths[0]))
+            .column(Column::exact(column_widths[1]))
             .min_scrolled_height(table_height)
             .max_scroll_height(table_height);
         table.body(|body| {

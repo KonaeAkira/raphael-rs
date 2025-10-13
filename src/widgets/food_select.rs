@@ -6,7 +6,10 @@ use egui_extras::Column;
 use raphael_data::{Consumable, CrafterStats, Locale, find_meals};
 use raphael_translations::t;
 
-use crate::context::AppContext;
+use crate::{
+    context::AppContext,
+    widgets::util::{TableColumnWidth, calculate_column_widths},
+};
 
 use super::{ItemNameLabel, util};
 
@@ -112,18 +115,28 @@ impl Widget for FoodSelect<'_> {
                 let line_spacing = ui.spacing().item_spacing.y;
                 let table_height = 4.3 * line_height + 4.0 * line_spacing;
 
-                let column_spacing = 2.0 * ui.spacing().item_spacing.x;
-                let available_text_width = ui.available_width() - column_spacing - 42.0;
-                let item_name_width = (0.7 * available_text_width).clamp(220.0, 320.0);
-                let effect_width = (available_text_width - item_name_width).max(0.0);
+                // Column::remainder().clip(true) is buggy when resizing the table
+                let column_widths = calculate_column_widths(
+                    ui,
+                    [
+                        TableColumnWidth::SelectButton,
+                        TableColumnWidth::RelativeToRemainingClamped {
+                            scale: 0.7,
+                            min: 220.0,
+                            max: 320.0,
+                        },
+                        TableColumnWidth::Remaining,
+                    ],
+                    locale,
+                );
 
                 let table = egui_extras::TableBuilder::new(ui)
                     .id_salt("FOOD_SELECT_TABLE")
                     .auto_shrink(false)
                     .striped(true)
-                    .column(Column::exact(42.0))
-                    .column(Column::exact(item_name_width))
-                    .column(Column::exact(effect_width))
+                    .column(Column::exact(column_widths[0]))
+                    .column(Column::exact(column_widths[1]))
+                    .column(Column::exact(column_widths[2]))
                     .min_scrolled_height(table_height)
                     .max_scroll_height(table_height);
                 table.body(|body| {

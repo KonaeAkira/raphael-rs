@@ -5,6 +5,7 @@ use raphael_translations::{t, t_format};
 use crate::{
     config::QualityTarget,
     context::{AppContext, SolverConfig},
+    widgets::util::max_text_width,
 };
 
 use super::{HelpText, util};
@@ -90,15 +91,15 @@ impl Simulator<'_> {
 
                 ui.separator();
 
-                let progress_text_width = text_width(ui, t!(locale, "Progress"));
-                let quality_text_width = text_width(ui, t!(locale, "Quality"));
-                let durability_text_width = text_width(ui, t!(locale, "Durability"));
-                let cp_text_width = text_width(ui, t!(locale, "CP"));
-
-                let max_text_width = progress_text_width
-                    .max(quality_text_width)
-                    .max(durability_text_width)
-                    .max(cp_text_width);
+                let max_text_width = max_text_width(
+                    ui,
+                    &[
+                        t!(locale, "Progress"),
+                        t!(locale, "Quality"),
+                        t!(locale, "Durability"),
+                        t!(locale, "CP"),
+                    ],
+                );
 
                 let text_size = egui::vec2(max_text_width, ui.spacing().interact_size.y);
                 let text_layout = egui::Layout::right_to_left(egui::Align::Center);
@@ -278,17 +279,6 @@ impl egui::Widget for Simulator<'_> {
         })
         .response
     }
-}
-
-fn text_width(ui: &mut egui::Ui, text: impl Into<String>) -> f32 {
-    ui.fonts(|fonts| {
-        let galley = fonts.layout_no_wrap(
-            text.into(),
-            egui::FontId::default(),
-            egui::Color32::default(),
-        );
-        galley.rect.width()
-    })
 }
 
 fn progress_bar_text<T: Copy + std::cmp::Ord + std::ops::Sub<Output = T> + std::fmt::Display>(
