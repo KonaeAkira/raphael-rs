@@ -4,7 +4,7 @@ target = "wasm32-unknown-unknown"
 [target.wasm32-unknown-unknown]
 rustflags = [
     "--cfg=web_sys_unstable_apis", # needed for copy-to-clipboard functionality
-    "-Ctarget-feature=+atomics,+bulk-memory",
+    "-Ctarget-feature=+atomics,+bulk-memory,+simd128",
     "-Clink-arg=--max-memory=4294967296",
     "-Clink-arg=--shared-memory",
     "-Clink-arg=--import-memory",
