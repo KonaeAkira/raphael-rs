@@ -682,9 +682,15 @@ impl MacroSolverApp {
                 let cms_base = &mut self.app_context.active_stats_mut().craftsmanship;
                 let cms_bonus =
                     raphael_data::craftsmanship_bonus(*cms_base, &[selected_food, selected_potion]);
-                let mut cms_total = *cms_base + cms_bonus;
+                let final_value_button_text =
+                    egui::RichText::new((*cms_base + cms_bonus).to_string()).strong();
+                let mut final_value_button =
+                    egui::Button::new(final_value_button_text).min_size(ui.spacing().interact_size);
+                if cms_bonus != 0 {
+                    final_value_button = final_value_button.fill(egui::Color32::LIGHT_GREEN);
+                }
                 ui.style_mut().spacing.item_spacing.x = 5.0;
-                ui.add_enabled(false, egui::DragValue::new(&mut cms_total));
+                ui.add_enabled(false, final_value_button);
                 ui.label("➡");
                 ui.add(egui::DragValue::new(cms_base).range(0..=9000));
             });
@@ -695,9 +701,15 @@ impl MacroSolverApp {
                 let control_base = &mut self.app_context.active_stats_mut().control;
                 let control_bonus =
                     raphael_data::control_bonus(*control_base, &[selected_food, selected_potion]);
-                let mut control_total = *control_base + control_bonus;
+                let final_value_button_text =
+                    egui::RichText::new((*control_base + control_bonus).to_string()).strong();
+                let mut final_value_button =
+                    egui::Button::new(final_value_button_text).min_size(ui.spacing().interact_size);
+                if control_bonus != 0 {
+                    final_value_button = final_value_button.fill(egui::Color32::LIGHT_GREEN);
+                }
                 ui.style_mut().spacing.item_spacing.x = 5.0;
-                ui.add_enabled(false, egui::DragValue::new(&mut control_total));
+                ui.add_enabled(false, final_value_button);
                 ui.label("➡");
                 ui.add(egui::DragValue::new(control_base).range(0..=9000));
             });
@@ -707,9 +719,15 @@ impl MacroSolverApp {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 let cp_base = &mut self.app_context.active_stats_mut().cp;
                 let cp_bonus = raphael_data::cp_bonus(*cp_base, &[selected_food, selected_potion]);
-                let mut cp_total = *cp_base + cp_bonus;
+                let final_value_button_text =
+                    egui::RichText::new((*cp_base + cp_bonus).to_string()).strong();
+                let mut final_value_button =
+                    egui::Button::new(final_value_button_text).min_size(ui.spacing().interact_size);
+                if cp_bonus != 0 {
+                    final_value_button = final_value_button.fill(egui::Color32::LIGHT_GREEN);
+                }
                 ui.style_mut().spacing.item_spacing.x = 5.0;
-                ui.add_enabled(false, egui::DragValue::new(&mut cp_total));
+                ui.add_enabled(false, final_value_button);
                 ui.label("➡");
                 ui.add(egui::DragValue::new(cp_base).range(0..=9000));
             });
