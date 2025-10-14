@@ -20,8 +20,13 @@ impl StringLiteralDetails {
     #[cfg(feature = "update-toml")]
     pub fn source_location_string(&self) -> String {
         let span = self.literal.span();
-        let start = span.start();
-        format!("{}:{}:{}", span.file(), start.line, start.column)
+        let start = span.unwrap().start();
+        format!(
+            "{}:{}:{}",
+            span.unwrap().file(),
+            start.line(),
+            start.column()
+        )
     }
 }
 
