@@ -34,7 +34,7 @@ web-time = "1.1.0"
 
 [package]
 name = "raphael-xiv"
-version = "0.23.1"
+version = "0.24.0"
 edition = "2024"
 default-run = "raphael-xiv"
 
@@ -47,8 +47,8 @@ raphael-solver = { workspace = true, features = ["serde"] }
 raphael-data = { workspace = true, features = ["serde"] }
 raphael-translations = { workspace = true }
 
-egui = "0.32.1"
-egui_extras = { version = "0.32.1", features = ["http", "webp"] }
+egui = "0.33.0"
+egui_extras = { version = "0.33.0", features = ["http", "webp"] }
 
 rayon = { workspace = true }
 serde = { workspace = true }
@@ -62,7 +62,7 @@ env_logger = "0.11.5"
 ehttp = { version = "0.5.0", features = ["json"] }
 # Default features of `eframe` include the "glow" renderer which is not needed if "wgpu" is enabled.
 # To avoid including both in the binary, default features have to be disabled
-eframe = { version = "0.32.1", default-features = false, features = [
+eframe = { version = "0.33.0", default-features = false, features = [
     "accesskit",         # default
     "default_fonts",     # default
     "wayland",           # default
@@ -73,14 +73,14 @@ eframe = { version = "0.32.1", default-features = false, features = [
 ] }
 # Need to opt-in to wgpu as of egui 0.32.0. See release notes of egui for details.
 # https://github.com/emilk/egui/releases/tag/0.32.0
-wgpu = "25"
+wgpu = "27"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-rayon = { version = "1.2", features = ["no-bundler"] }
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 web-sys = "0.3"
-eframe = { version = "0.32.1", features = ["persistence"] }
+eframe = { version = "0.33.0", features = ["persistence"] }
 
 [profile.release]
 opt-level = 3

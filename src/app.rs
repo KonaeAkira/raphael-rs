@@ -162,7 +162,7 @@ impl eframe::App for MacroSolverApp {
         if let Some(error) = self.solver_error.clone() {
             egui::Modal::new(egui::Id::new("solver_error")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-                ui.set_width(480.0f32.min(ctx.screen_rect().width() - 32.0));
+                ui.set_width(480.0f32.min(ctx.content_rect().width() - 32.0));
                 match error {
                     SolverException::NoSolution => {
                         ui.label(egui::RichText::new(t!(locale, "No solution")).strong());

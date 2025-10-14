@@ -386,7 +386,8 @@ fn set_config_menu_visibility(ctx: &egui::Context, visible: bool) {
 fn draw_config_menu(ctx: &egui::Context, config: &mut MacroViewConfig, locale: Locale) {
     egui::containers::Modal::new(egui::Id::new("MACRO_CONFIG_MODAL")).show(ctx, |ui| {
         ui.set_width(
-            (ctx.screen_rect().width() - ui.style().spacing.item_spacing.x * 4.0).clamp(0.0, 360.0),
+            (ctx.content_rect().width() - ui.style().spacing.item_spacing.x * 4.0)
+                .clamp(0.0, 360.0),
         );
         ui.style_mut().spacing.item_spacing.y = 3.0;
 
