@@ -26,6 +26,16 @@ impl std::fmt::Display for Locale {
 pub const JOB_NAMES_EN: [&str; 8] = ["CRP", "BSM", "ARM", "GSM", "LTW", "WVR", "ALC", "CUL"];
 pub const JOB_NAMES_DE: [&str; 8] = ["ZMR", "GRS", "PLA", "GLD", "GER", "WEB", "ALC", "GRM"];
 pub const JOB_NAMES_FR: [&str; 8] = ["MEN", "FRG", "ARM", "ORF", "TAN", "COU", "ALC", "CUI"];
+pub const JOB_NAMES_JP: [&str; 8] = [
+    "木工師",
+    "鍛冶師",
+    "甲冑師",
+    "彫金師",
+    "革細工師",
+    "裁縫師",
+    "錬金術師",
+    "調理師",
+];
 pub const JOB_NAMES_KR: [&str; 8] = [
     "목수", "대장", "갑주", "보석", "가죽", "재봉", "연금", "요리",
 ];
@@ -35,7 +45,7 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
         Locale::EN => JOB_NAMES_EN[job_id as usize],
         Locale::DE => JOB_NAMES_DE[job_id as usize],
         Locale::FR => JOB_NAMES_FR[job_id as usize],
-        Locale::JP => JOB_NAMES_EN[job_id as usize], // JP job abbreviations are the same as EN
+        Locale::JP => JOB_NAMES_JP[job_id as usize],
         Locale::KR => JOB_NAMES_KR[job_id as usize],
     }
 }

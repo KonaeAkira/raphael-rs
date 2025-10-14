@@ -91,7 +91,7 @@ pub fn calculate_column_widths<const N: usize>(
     desired_widths.map(|desired_width| {
         let exact_width = match desired_width {
             TableColumnWidth::SelectButton => {
-                text_width(ui, t!(locale, "Select")) + ui.spacing().button_padding.x
+                text_width(ui, t!(locale, "Select")) + 2.0 * ui.spacing().button_padding.x
             }
             TableColumnWidth::JobName => max_text_width(
                 ui,
@@ -99,7 +99,7 @@ pub fn calculate_column_widths<const N: usize>(
                     Locale::EN => &raphael_data::JOB_NAMES_EN,
                     Locale::DE => &raphael_data::JOB_NAMES_DE,
                     Locale::FR => &raphael_data::JOB_NAMES_FR,
-                    Locale::JP => &raphael_data::JOB_NAMES_EN,
+                    Locale::JP => &raphael_data::JOB_NAMES_JP,
                     Locale::KR => &raphael_data::JOB_NAMES_KR,
                 },
             ),
