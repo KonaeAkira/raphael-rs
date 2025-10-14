@@ -48,7 +48,7 @@ pub fn effect_string(
 }
 
 pub fn text_width(ui: &egui::Ui, text: impl Into<String>) -> f32 {
-    ui.fonts(|fonts| {
+    ui.fonts_mut(|fonts| {
         let galley = fonts.layout_no_wrap(
             text.into(),
             egui::FontId::default(),
@@ -59,7 +59,7 @@ pub fn text_width(ui: &egui::Ui, text: impl Into<String>) -> f32 {
 }
 
 pub fn max_text_width(ui: &egui::Ui, text_slice: &[impl ToString]) -> f32 {
-    ui.fonts(|fonts| {
+    ui.fonts_mut(|fonts| {
         text_slice
             .iter()
             .map(|text| {
