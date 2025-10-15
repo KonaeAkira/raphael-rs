@@ -68,10 +68,7 @@ impl Widget for PotionSelect<'_> {
                     };
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
-                            .add_enabled(
-                                self.selected_consumable.is_some(),
-                                egui::Button::new(t!(locale, "Clear")),
-                            )
+                            .add_enabled(self.selected_consumable.is_some(), egui::Button::new("🗑"))
                             .clicked()
                         {
                             *self.selected_consumable = None;

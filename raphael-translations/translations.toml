@@ -512,13 +512,6 @@ de = '''Makro'''
 version = "0.1.0"
 appearances = ["src/widgets/macro_view.rs:301:61"]
 
-["pIURcS2307txIsA2caZblQ=="]
-en = '''Clear'''
-ja = '''クリア'''
-de = '''Löschen'''
-version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:309:62", "src/widgets/food_select.rs:70:62", "src/widgets/potion_select.rs:73:62"]
-
 ["iPpRNkQuRTRXmI+7BDyPng=="]
 en = '''{steps} steps, {duration} seconds'''
 ja = '''{steps}ステップ, {duration}秒'''
