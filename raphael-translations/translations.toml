@@ -75,15 +75,13 @@ appearances = ["src/app.rs:205:48"]
 en = '''Solving ...'''
 ja = '''計算中…'''
 de = '''Lösen...'''
-de_alt = '''Raphael denkt über eine Lösung nach... '''
 version = "0.1.0"
 appearances = ["src/app.rs:207:48"]
 
 ["CzGfkdakyiaZV+pcVtpfIA=="]
 en = '''Computing ...'''
 ja = '''処理中…'''
-de = '''Rechnen... '''
-de_alt = '''Raphael rechnet... '''
+de = '''Raphael rechnet... '''
 version = "0.1.0"
 appearances = ["src/app.rs:214:49"]
 
