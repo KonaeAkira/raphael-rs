@@ -298,7 +298,7 @@ appearances = ["src/app.rs:812:36"]
 ["dN6QqcmCiKeFu4Xi+6XZsA=="]
 en = '''Download latest release from GitHub'''
 ja = '''GitHubから最新リリースをダウンロード'''
-de = '''Neuste Version von GitHub herunterladen'''
+de = '''Neueste Version von GitHub herunterladen'''
 version = "0.1.0"
 appearances = ["src/app.rs:818:52"]
 
@@ -909,7 +909,7 @@ appearances = ["src/widgets/saved_rotations.rs:632:41"]
 ["4IVCPgkwscSoR2m7OKjl0Q=="]
 en = '''⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.'''
 ja = '''⚠ v0.21.0以前に保存されたスキル回しには、レシピデータを読み込むための情報が含まれていません。'''
-de = '''⚠ Rezeptdaten können nicht geladen werden, wenn die Rotation vor v0.21.0 gespeichert wurde.'''
+de = '''⚠ Rezeptdaten können nicht geladen werden, wenn die Rotation vor v0.21.0 gespeichert wurden.'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:649:44"]
 
