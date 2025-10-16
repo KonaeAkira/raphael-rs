@@ -87,7 +87,8 @@ impl StepLbSolver {
             state.effects.set_muscle_memory(0);
         }
 
-        let reduced_state = ReducedState::from_state(state, step_budget);
+        let reduced_state =
+            ReducedState::from_state(state, &self.settings.simulator_settings, step_budget);
         let pareto_front = match self.solved_states.get(&reduced_state) {
             Some(pareto_front) => pareto_front,
             None => self.solve_state(reduced_state)?,
@@ -129,8 +130,11 @@ impl StepLbSolver {
                         use_action_combo(&self.settings, full_parent_state, action)
                         && !full_child_state.is_final(&self.settings.simulator_settings)
                     {
-                        let child_state =
-                            ReducedState::from_state(full_child_state, child_steps_budget);
+                        let child_state = ReducedState::from_state(
+                            full_child_state,
+                            &self.settings.simulator_settings,
+                            child_steps_budget,
+                        );
                         if !self.solved_states.contains_key(&child_state) {
                             unvisited_states_by_steps[usize::from(action.steps() - 1)]
                                 .insert(child_state);
@@ -191,7 +195,11 @@ impl StepLbSolver {
                 if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget)
                     && !new_state.is_final(&self.settings.simulator_settings)
                 {
-                    let new_state = ReducedState::from_state(new_state, new_step_budget);
+                    let new_state = ReducedState::from_state(
+                        new_state,
+                        &self.settings.simulator_settings,
+                        new_step_budget,
+                    );
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pf_builder.push_slice(pareto_front.iter().map(|value| {
                             ParetoValue::new(value.progress + progress, value.quality + quality)

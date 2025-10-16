@@ -326,10 +326,10 @@ fn issue_216_steplbsolver_crash() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 199538,
+            finish_states: 205025,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 19119,
-                dropped_nodes: 350178,
+                processed_nodes: 19946,
+                dropped_nodes: 364832,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 318520,
@@ -337,8 +337,8 @@ fn issue_216_steplbsolver_crash() {
                 pareto_values: 1267763,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 74728,
-                pareto_values: 330387,
+                states: 61230,
+                pareto_values: 266192,
             },
         }
     "#]];

@@ -34,13 +34,31 @@ impl ReducedState {
         }
     }
 
-    pub fn from_state(state: SimulationState, steps_budget: NonZeroU8) -> Self {
+    pub fn from_state(
+        mut state: SimulationState,
+        settings: &Settings,
+        steps_budget: NonZeroU8,
+    ) -> Self {
         let mut effects = state.effects;
 
         // Make it so that TrainedPerfection can be used an arbitrary amount of times instead of just once.
         // This decreases the number of possible states, as now there are only Active/Inactive states for TrainedPerfection instead of the usual Available/Active/Unavailable.
-        // This also technically loosens the step-lb, but testing shows that rarely has any impact on the number of pruned nodes.
+        // This worsens the lower bound, but this effect is very small most of the time.
         effects.set_trained_perfection_available(true);
+
+        // If MasterMend or ImmaculateMend can be used and the durability is at least 20 points below max durability,
+        // it is always better to use one of those actions instead of TrainedPerfection.
+        // If TrainedPerfection is active, assume that it can be used to its full potential and add 20 durability.
+        // Results in a slightly worse lower bound but hugely reduces state count for high-durability configurations.
+        let durability_restore_action_exists = settings.is_action_allowed::<MasterMend>()
+            || settings.is_action_allowed::<ImmaculateMend>();
+        if durability_restore_action_exists
+            && effects.trained_perfection_active()
+            && state.durability + 20 <= settings.max_durability
+        {
+            effects.set_trained_perfection_active(false);
+            state.durability += 20;
+        }
 
         // Make the effects of GreatStrides and WasteNot last forever.
         // This decreases the number of unique states as now each effect only has 2 possible states

@@ -100,10 +100,10 @@ fn stuffed_peppers() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 863226,
+            finish_states: 874814,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 81472,
-                dropped_nodes: 1587724,
+                processed_nodes: 83148,
+                dropped_nodes: 1620117,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 2271577,
@@ -111,8 +111,8 @@ fn stuffed_peppers() {
                 pareto_values: 39200086,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 921340,
-                pareto_values: 16665213,
+                states: 615711,
+                pareto_values: 10878191,
             },
         }
     "#]];
@@ -151,10 +151,10 @@ fn test_rare_tacos_2() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1472394,
+            finish_states: 1472393,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 3802112,
-                dropped_nodes: 1381,
+                processed_nodes: 3802095,
+                dropped_nodes: 1379,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 2490500,
@@ -162,8 +162,8 @@ fn test_rare_tacos_2() {
                 pareto_values: 70123242,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1634999,
-                pareto_values: 37197066,
+                states: 1056941,
+                pareto_values: 23756150,
             },
         }
     "#]];
@@ -310,8 +310,8 @@ fn test_rare_tacos_4628_4410() {
         MacroSolverStats {
             finish_states: 559037,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 1055996,
-                dropped_nodes: 2660672,
+                processed_nodes: 1056068,
+                dropped_nodes: 2661977,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 2623346,
@@ -319,8 +319,8 @@ fn test_rare_tacos_4628_4410() {
                 pareto_values: 78045031,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 352027,
-                pareto_values: 7690128,
+                states: 220731,
+                pareto_values: 4774973,
             },
         }
     "#]];
