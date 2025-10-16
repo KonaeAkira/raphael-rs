@@ -399,6 +399,9 @@ impl eframe::App for MacroSolverApp {
             });
         });
 
+        let stats_edit_window_size = (ctx.content_rect().size() - egui::Vec2::new(14.0, 14.0))
+            .max(egui::Vec2::ZERO)
+            .min(egui::Vec2::new(400.0, 600.0));
         egui::Window::new(
             egui::RichText::new(t!(locale, "Edit crafter stats"))
                 .strong()
@@ -408,8 +411,8 @@ impl eframe::App for MacroSolverApp {
         .open(&mut self.stats_edit_window_open)
         .collapsible(false)
         .resizable(false)
-        .min_width(400.0)
-        .max_width(400.0)
+        .min_size(stats_edit_window_size)
+        .max_size(stats_edit_window_size)
         .show(ctx, |ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(StatsEdit::new(&mut self.app_context));

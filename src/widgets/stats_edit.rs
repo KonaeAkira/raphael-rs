@@ -26,95 +26,102 @@ impl<'a> StatsEdit<'a> {
 impl Widget for StatsEdit<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let locale = self.locale;
-        ui.vertical(|ui| {
-            for job_id in 0..8 {
-                if job_id != 0 {
-                    ui.separator();
-                }
-                ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(get_job_name(job_id, locale)).strong());
-                    if ui.button(t!(locale, "Copy to all jobs")).clicked() {
-                        let stats = self.crafter_config.crafter_stats[job_id as usize];
-                        self.crafter_config.crafter_stats = [stats; 8];
+        egui::ScrollArea::vertical()
+            .show(ui, |ui| {
+                ui.vertical(|ui| {
+                    for job_id in 0..8 {
+                        if job_id != 0 {
+                            ui.separator();
+                        }
+                        ui.horizontal(|ui| {
+                            ui.label(egui::RichText::new(get_job_name(job_id, locale)).strong());
+                            if ui.button(t!(locale, "Copy to all jobs")).clicked() {
+                                let stats = self.crafter_config.crafter_stats[job_id as usize];
+                                self.crafter_config.crafter_stats = [stats; 8];
+                            }
+                        });
+                        let stats = &mut self.crafter_config.crafter_stats[job_id as usize];
+                        ui.horizontal_wrapped(|ui| {
+                            let drag_value_size = ui.spacing().interact_size;
+                            add_sized_labeled_widget(
+                                ui,
+                                t!(locale, "Craftsmanship"),
+                                drag_value_size,
+                                egui::DragValue::new(&mut stats.craftsmanship).range(1..=9999),
+                            );
+                            add_sized_labeled_widget(
+                                ui,
+                                t!(locale, "Control"),
+                                drag_value_size,
+                                egui::DragValue::new(&mut stats.control).range(1..=9999),
+                            );
+                            add_sized_labeled_widget(
+                                ui,
+                                t!(locale, "CP"),
+                                drag_value_size,
+                                egui::DragValue::new(&mut stats.cp).range(1..=999),
+                            );
+                            add_sized_labeled_widget(
+                                ui,
+                                t!(locale, "Job level"),
+                                drag_value_size,
+                                egui::DragValue::new(&mut stats.level).range(1..=100),
+                            );
+                        });
+                        ui.horizontal_wrapped(|ui| {
+                            ui.checkbox(
+                                &mut stats.manipulation,
+                                action_name(Action::Manipulation, locale),
+                            );
+                            ui.checkbox(
+                                &mut stats.heart_and_soul,
+                                action_name(Action::HeartAndSoul, locale),
+                            );
+                            ui.checkbox(
+                                &mut stats.quick_innovation,
+                                action_name(Action::QuickInnovation, locale),
+                            );
+                        });
                     }
-                });
-                let stats = &mut self.crafter_config.crafter_stats[job_id as usize];
-                ui.horizontal_wrapped(|ui| {
-                    let drag_value_size = ui.spacing().interact_size;
-                    add_sized_labeled_widget(
-                        ui,
-                        t!(locale, "Craftsmanship"),
-                        drag_value_size,
-                        egui::DragValue::new(&mut stats.craftsmanship).range(1..=9999),
-                    );
-                    add_sized_labeled_widget(
-                        ui,
-                        t!(locale, "Control"),
-                        drag_value_size,
-                        egui::DragValue::new(&mut stats.control).range(1..=9999),
-                    );
-                    add_sized_labeled_widget(
-                        ui,
-                        t!(locale, "CP"),
-                        drag_value_size,
-                        egui::DragValue::new(&mut stats.cp).range(1..=999),
-                    );
-                    add_sized_labeled_widget(
-                        ui,
-                        t!(locale, "Job level"),
-                        drag_value_size,
-                        egui::DragValue::new(&mut stats.level).range(1..=100),
-                    );
-                });
-                ui.horizontal_wrapped(|ui| {
-                    ui.checkbox(
-                        &mut stats.manipulation,
-                        action_name(Action::Manipulation, locale),
-                    );
-                    ui.checkbox(
-                        &mut stats.heart_and_soul,
-                        action_name(Action::HeartAndSoul, locale),
-                    );
-                    ui.checkbox(
-                        &mut stats.quick_innovation,
-                        action_name(Action::QuickInnovation, locale),
-                    );
-                });
-            }
 
-            ui.separator();
-            ui.horizontal_wrapped(|ui| {
-                let copy_id = egui::Id::new("config_copy");
-                let button_enabled = ui.ctx().animate_bool_with_time(copy_id, false, 0.25) == 0.0;
-                let button_response = ui.add_enabled(
-                    button_enabled,
-                    egui::Button::new(t!(locale, "🗐 Copy crafter config")),
-                );
-                if button_response.clicked() {
-                    ui.ctx()
-                        .copy_text(ron::to_string(self.crafter_config).unwrap());
-                    ui.ctx().animate_bool_with_time(copy_id, true, 0.0);
-                }
+                    ui.separator();
+                    ui.horizontal_wrapped(|ui| {
+                        let copy_id = egui::Id::new("config_copy");
+                        let button_enabled =
+                            ui.ctx().animate_bool_with_time(copy_id, false, 0.25) == 0.0;
+                        let button_response = ui.add_enabled(
+                            button_enabled,
+                            egui::Button::new(t!(locale, "🗐 Copy crafter config")),
+                        );
+                        if button_response.clicked() {
+                            ui.ctx()
+                                .copy_text(ron::to_string(self.crafter_config).unwrap());
+                            ui.ctx().animate_bool_with_time(copy_id, true, 0.0);
+                        }
 
-                let selected_job = self.crafter_config.selected_job;
-                let paste_id = egui::Id::new("config_paste");
-                let input_enabled = ui.ctx().animate_bool_with_time(paste_id, false, 0.25) == 0.0;
-                let input_string = &mut String::new();
-                let hint_text = t!(locale, "📋 Paste config here to load");
-                let input_response = ui.add_enabled(
-                    input_enabled,
-                    egui::TextEdit::singleline(input_string)
-                        .hint_text(hint_text).desired_width(text_width(ui, hint_text)),
-                );
-                if input_response.changed()
-                    && let Ok(crafter_config) = ron::from_str(input_string)
-                {
-                    *self.crafter_config = crafter_config;
-                    self.crafter_config.selected_job = selected_job;
-                    ui.ctx().animate_bool_with_time(paste_id, true, 0.0);
-                }
-            });
-        })
-        .response
+                        let selected_job = self.crafter_config.selected_job;
+                        let paste_id = egui::Id::new("config_paste");
+                        let input_enabled =
+                            ui.ctx().animate_bool_with_time(paste_id, false, 0.25) == 0.0;
+                        let input_string = &mut String::new();
+                        let hint_text = t!(locale, "📋 Paste config here to load");
+                        let input_response = ui.add_enabled(
+                            input_enabled,
+                            egui::TextEdit::singleline(input_string)
+                                .hint_text(hint_text)
+                                .desired_width(text_width(ui, hint_text)),
+                        );
+                        if input_response.changed()
+                            && let Ok(crafter_config) = ron::from_str(input_string)
+                        {
+                            *self.crafter_config = crafter_config;
+                            self.crafter_config.selected_job = selected_job;
+                            ui.ctx().animate_bool_with_time(paste_id, true, 0.0);
+                        }
+                    });
+                })
+            })
+            .inner
+            .response
     }
 }
