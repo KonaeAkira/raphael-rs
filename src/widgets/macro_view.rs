@@ -304,10 +304,7 @@ impl Widget for MacroView<'_> {
                             set_config_menu_visibility(ui.ctx(), true);
                         };
                         if ui
-                            .add_enabled(
-                                !self.actions.is_empty(),
-                                egui::Button::new(t!(locale, "Clear")),
-                            )
+                            .add_enabled(!self.actions.is_empty(), egui::Button::new("🗑"))
                             .clicked()
                         {
                             self.actions.clear();
