@@ -3,7 +3,11 @@ use raphael_data::{Locale, action_name, get_job_name};
 use raphael_sim::Action;
 use raphael_translations::t;
 
-use crate::{config::CrafterConfig, context::AppContext, widgets::util::text_width};
+use crate::{
+    config::CrafterConfig,
+    context::AppContext,
+    widgets::util::{add_sized_labeled_widget, text_width},
+};
 
 pub struct StatsEdit<'a> {
     locale: Locale,
@@ -35,17 +39,34 @@ impl Widget for StatsEdit<'_> {
                     }
                 });
                 let stats = &mut self.crafter_config.crafter_stats[job_id as usize];
-                ui.horizontal(|ui| {
-                    ui.label(t!(locale, "Craftsmanship"));
-                    ui.add(egui::DragValue::new(&mut stats.craftsmanship).range(1..=9999));
-                    ui.label(t!(locale, "Control"));
-                    ui.add(egui::DragValue::new(&mut stats.control).range(1..=9999));
-                    ui.label(t!(locale, "CP"));
-                    ui.add(egui::DragValue::new(&mut stats.cp).range(1..=999));
-                    ui.label(t!(locale, "Job level"));
-                    ui.add(egui::DragValue::new(&mut stats.level).range(1..=100));
+                ui.horizontal_wrapped(|ui| {
+                    let drag_value_size = ui.spacing().interact_size;
+                    add_sized_labeled_widget(
+                        ui,
+                        t!(locale, "Craftsmanship"),
+                        drag_value_size,
+                        egui::DragValue::new(&mut stats.craftsmanship).range(1..=9999),
+                    );
+                    add_sized_labeled_widget(
+                        ui,
+                        t!(locale, "Control"),
+                        drag_value_size,
+                        egui::DragValue::new(&mut stats.control).range(1..=9999),
+                    );
+                    add_sized_labeled_widget(
+                        ui,
+                        t!(locale, "CP"),
+                        drag_value_size,
+                        egui::DragValue::new(&mut stats.cp).range(1..=999),
+                    );
+                    add_sized_labeled_widget(
+                        ui,
+                        t!(locale, "Job level"),
+                        drag_value_size,
+                        egui::DragValue::new(&mut stats.level).range(1..=100),
+                    );
                 });
-                ui.horizontal(|ui| {
+                ui.horizontal_wrapped(|ui| {
                     ui.checkbox(
                         &mut stats.manipulation,
                         action_name(Action::Manipulation, locale),
