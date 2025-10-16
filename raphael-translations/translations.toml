@@ -503,7 +503,7 @@ appearances = ["src/widgets/macro_view.rs:508:20"]
 ["L4G4+YiOQsz+P64Jg5FL/g=="]
 en = '''Use custom intro format'''
 ja = '''マクロの先頭にカスタム形式を使用'''
-de = '''Benutzerdefiniertes Intro Format nutzen'''
+de = '''Benutzerdefiniertes Intro-Format nutzen'''
 version = "0.1.0"
 appearances = ["src/widgets/macro_view.rs:514:24"]
 
@@ -797,7 +797,7 @@ appearances = ["src/widgets/stats_edit.rs:32:45"]
 ["aMW+XLiXOhzKGx/Pt5IDGQ=="]
 en = '''🗐 Copy crafter config'''
 ja = '''🗐 クラフター設定をコピー'''
-de = '''🗐 Handwerker Konfiguration kopieren'''
+de = '''🗐 Handwerker-Konfiguration kopieren'''
 version = "0.1.0"
 appearances = ["src/widgets/stats_edit.rs:70:50"]
 
