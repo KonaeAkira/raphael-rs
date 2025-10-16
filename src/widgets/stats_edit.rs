@@ -3,7 +3,7 @@ use raphael_data::{Locale, action_name, get_job_name};
 use raphael_sim::Action;
 use raphael_translations::t;
 
-use crate::{config::CrafterConfig, context::AppContext};
+use crate::{config::CrafterConfig, context::AppContext, widgets::util::text_width};
 
 pub struct StatsEdit<'a> {
     locale: Locale,
@@ -61,8 +61,8 @@ impl Widget for StatsEdit<'_> {
                 });
             }
 
-            ui.separator().rect.width();
-            ui.horizontal(|ui| {
+            ui.separator();
+            ui.horizontal_wrapped(|ui| {
                 let copy_id = egui::Id::new("config_copy");
                 let button_enabled = ui.ctx().animate_bool_with_time(copy_id, false, 0.25) == 0.0;
                 let button_response = ui.add_enabled(
@@ -79,10 +79,11 @@ impl Widget for StatsEdit<'_> {
                 let paste_id = egui::Id::new("config_paste");
                 let input_enabled = ui.ctx().animate_bool_with_time(paste_id, false, 0.25) == 0.0;
                 let input_string = &mut String::new();
+                let hint_text = t!(locale, "📋 Paste config here to load");
                 let input_response = ui.add_enabled(
                     input_enabled,
                     egui::TextEdit::singleline(input_string)
-                        .hint_text(t!(locale, "📋 Paste config here to load")),
+                        .hint_text(hint_text).desired_width(text_width(ui, hint_text)),
                 );
                 if input_response.changed()
                     && let Ok(crafter_config) = ron::from_str(input_string)
