@@ -53,7 +53,7 @@ appearances = ["src/app.rs:168:65"]
 ["kv7jCjVAfknUZcCoo2idbQ=="]
 en = '''Make sure that the recipe is set correctly and that your stats are enough to craft this item.'''
 ja = '''レシピが正しく設定されており、ステータスが十分であることを確認してください。'''
-de = '''Stelle sicher, dass die ausgewählten Attribute für die Synthese ausreichen und dass das richtige Rezept ausgewählt ist.'''
+de = '''Stelle sicher, dass die ausgewählten Attribute für die Synthese ausreichen und das richtige Rezept ausgewählt ist.'''
 version = "0.1.0"
 appearances = ["src/app.rs:170:45"]
 
@@ -298,7 +298,7 @@ appearances = ["src/app.rs:812:36"]
 ["dN6QqcmCiKeFu4Xi+6XZsA=="]
 en = '''Download latest release from GitHub'''
 ja = '''GitHubから最新リリースをダウンロード'''
-de = '''Neueste Version von GitHub herunterladen'''
+de = '''Neuste Version von GitHub herunterladen'''
 version = "0.1.0"
 appearances = ["src/app.rs:818:52"]
 
@@ -333,7 +333,7 @@ appearances = ["src/app.rs:895:45"]
 ["ao5RTXAU8JPfZa/+YXPWLQ=="]
 en = '''Backload progress'''
 ja = '''後半型の進捗'''
-de = '''Fortschritt zuletzt'''
+de = '''Fortschritt-Kommandos zuletzt'''
 version = "0.1.0"
 appearances = ["src/app.rs:901:28"]
 
@@ -347,7 +347,7 @@ appearances = ["src/app.rs:903:45"]
 ["4TrzziJN2b/3+NIwV86LoQ=="]
 en = '''Ensure 100% reliability'''
 ja = '''品質の完成率100％保証'''
-de = '''100% zuverlässigkeit garantieren'''
+de = '''100% Zuverlässigkeit garantieren'''
 version = "0.1.0"
 appearances = ["src/app.rs:914:32"]
 
@@ -545,7 +545,7 @@ appearances = ["src/widgets/macro_view.rs:402:57"]
 ["8uKOWUHS0zeATFGNHzbhCg=="]
 en = '''Macro lock / intro'''
 ja = '''マクロロック／先頭'''
-de = '''Makrolock / Intro'''
+de = '''Makroblock / Intro'''
 version = "0.1.0"
 appearances = ["src/widgets/macro_view.rs:405:59"]
 
@@ -909,7 +909,7 @@ appearances = ["src/widgets/saved_rotations.rs:632:41"]
 ["4IVCPgkwscSoR2m7OKjl0Q=="]
 en = '''⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.'''
 ja = '''⚠ v0.21.0以前に保存されたスキル回しには、レシピデータを読み込むための情報が含まれていません。'''
-de = '''⚠ Rezeptdaten können nicht geladen werden, wenn die Rotation vor v0.21.0 gespeichert wurden.'''
+de = '''⚠ Rezeptdaten können nicht geladen werden, wenn die Rotation vor v0.21.0 gespeichert wurde.'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:649:44"]
 
