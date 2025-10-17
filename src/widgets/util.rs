@@ -4,6 +4,21 @@ use raphael_data::{
 use raphael_sim::*;
 use raphael_translations::{t, t_format};
 
+pub fn add_sized_labeled_widget<'a>(
+    ui: &mut egui::Ui,
+    label: impl Into<egui::Atom<'a>>,
+    size: impl Into<egui::Vec2>,
+    widget: impl egui::Widget,
+) {
+    let custom_atom_id = ui.next_auto_id();
+    let response = egui::AtomLayout::new((label.into(), egui::Atom::custom(custom_atom_id, size)))
+        .allocate(ui)
+        .paint(ui);
+    if let Some(rect) = response.rect(custom_atom_id) {
+        ui.put(rect, widget);
+    }
+}
+
 pub fn effect_string(
     consumable: Consumable,
     crater_stats: &CrafterStats,
