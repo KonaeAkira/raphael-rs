@@ -10,14 +10,23 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  check-linux:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
-      - name: Use current MSRV (Rust 1.88.0)
-        run: rustup default 1.88.0
-      - name: Check that everything compiles
-        run: cargo check --workspace
-      - name: Build & run tests
+      - name: Check that workspace builds with MSRV
+        run: rustup default 1.88.0 && cargo check --workspace
+
+  check-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check that workspace builds with MSRV
+        run: rustup default 1.88.0 && cargo check --workspace
+
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run all tests
         run: cargo test --verbose --workspace
