@@ -72,14 +72,6 @@ impl StepLbSolver {
         mut state: SimulationState,
         step_budget: NonZeroU8,
     ) -> Result<Option<u32>, SolverException> {
-        if state.effects.combo() != Combo::None {
-            return Err(internal_error!(
-                "Unexpected combo state.",
-                self.settings,
-                state
-            ));
-        }
-
         let mut required_progress = self.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
             // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
@@ -90,129 +82,18 @@ impl StepLbSolver {
         let reduced_state = ReducedState::from_state(state, step_budget);
         let pareto_front = match self.solved_states.get(&reduced_state) {
             Some(pareto_front) => pareto_front,
-            None => self.solve_state(reduced_state)?,
+            None => solve_state_parallel(
+                reduced_state,
+                &self.settings,
+                &self.iq_quality_lut,
+                &mut self.solved_states,
+            )?,
         };
         let index = pareto_front.partition_point(|value| value.progress < required_progress);
         let quality_ub = pareto_front
             .get(index)
             .map(|value| state.quality + value.quality);
         Ok(quality_ub)
-    }
-
-    fn solve_state(
-        &mut self,
-        seed_state: ReducedState,
-    ) -> Result<&nunny::Slice<ParetoValue>, SolverException> {
-        // Find all transitive children that still need solving and group them by step budget.
-        // This is done with a simple BFS, skipping all states that have already been solved.
-        let mut unvisited_states_by_steps: VecDeque<FxHashSet<ReducedState>> = VecDeque::new();
-        for _ in 0..seed_state.steps_budget.get() {
-            unvisited_states_by_steps.push_back(FxHashSet::default());
-        }
-        unvisited_states_by_steps[0].insert(seed_state);
-        let mut unsolved_state_by_steps: Vec<Vec<ReducedState>> = Vec::new();
-        while let Some(unvisited_states) = unvisited_states_by_steps.pop_front() {
-            if unvisited_states.is_empty() {
-                continue;
-            }
-            let currently_visited_states = unvisited_states.into_iter().collect::<Vec<_>>();
-            for parent_state in &currently_visited_states {
-                let full_parent_state = parent_state.to_state();
-                let parent_steps_budget = parent_state.steps_budget.get();
-                for action in FULL_SEARCH_ACTIONS
-                    .into_iter()
-                    .filter(|action| action.steps() < parent_steps_budget)
-                {
-                    let child_steps_budget =
-                        NonZeroU8::try_from(parent_steps_budget - action.steps()).unwrap();
-                    if let Ok(full_child_state) =
-                        use_action_combo(&self.settings, full_parent_state, action)
-                        && !full_child_state.is_final(&self.settings.simulator_settings)
-                    {
-                        let child_state =
-                            ReducedState::from_state(full_child_state, child_steps_budget);
-                        if !self.solved_states.contains_key(&child_state) {
-                            unvisited_states_by_steps[usize::from(action.steps() - 1)]
-                                .insert(child_state);
-                        }
-                    }
-                }
-            }
-            unsolved_state_by_steps.push(currently_visited_states);
-        }
-
-        // Solve unsolved states in parallel, batched by step budget to ensure the children
-        // of the current batch have already been solved in one of the previous batches.
-        // This is the wavefront technique for parallelizing dynamic programming.
-        for unsolved_states in unsolved_state_by_steps.into_iter().rev() {
-            let solved_states = unsolved_states
-                .into_par_iter()
-                .map_init(
-                    ParetoFrontBuilder::new,
-                    |pf_builder, reduced_state| -> Result<_, SolverException> {
-                        let pareto_front = self.do_solve_state(pf_builder, reduced_state)?;
-                        Ok((reduced_state, pareto_front))
-                    },
-                )
-                .collect::<Result<Vec<_>, SolverException>>()?;
-            self.solved_states.extend(solved_states);
-        }
-
-        match self.solved_states.get(&seed_state) {
-            Some(pareto_front) => Ok(pareto_front),
-            None => Err(internal_error!(
-                "State not found in memoization after solving",
-                self.settings,
-                seed_state
-            )),
-        }
-    }
-
-    fn do_solve_state(
-        &self,
-        pf_builder: &mut ParetoFrontBuilder,
-        state: ReducedState,
-    ) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
-        let cutoff = ParetoValue::new(
-            self.settings.max_progress(),
-            self.settings
-                .max_quality()
-                .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]),
-        );
-        pf_builder.initialize_with_cutoff(cutoff);
-        for action in FULL_SEARCH_ACTIONS {
-            if state.steps_budget.get() < action.steps() {
-                continue;
-            }
-            let new_step_budget = state.steps_budget.get() - action.steps();
-            if let Ok(new_state) = use_action_combo(&self.settings, state.to_state(), action) {
-                let progress = new_state.progress;
-                let quality = new_state.quality;
-                if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget)
-                    && !new_state.is_final(&self.settings.simulator_settings)
-                {
-                    let new_state = ReducedState::from_state(new_state, new_step_budget);
-                    if let Some(pareto_front) = self.solved_states.get(&new_state) {
-                        pf_builder.push_slice(pareto_front.iter().map(|value| {
-                            ParetoValue::new(value.progress + progress, value.quality + quality)
-                        }));
-                    } else {
-                        return Err(internal_error!(
-                            "Required precompute state does not exist.",
-                            self.settings,
-                            action,
-                            state,
-                            new_state
-                        ));
-                    }
-                } else if progress != 0 {
-                    pf_builder.push(ParetoValue::new(progress, quality));
-                }
-            }
-        }
-        pf_builder.result().try_into().map_err(|_| {
-            internal_error!("Solver produced empty Pareto front.", self.settings, state)
-        })
     }
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
@@ -232,4 +113,133 @@ impl Drop for StepLbSolver {
             runtime_stats.pareto_values
         );
     }
+}
+
+fn solve_state_parallel<'a>(
+    seed_state: ReducedState,
+    settings: &SolverSettings,
+    iq_quality_lut: &[u32; 11],
+    solved_states: &'a mut SolvedStates,
+) -> Result<&'a nunny::Slice<ParetoValue>, SolverException> {
+    // Find all transitive children that still need solving and group them by step budget.
+    // This is done with a simple BFS, skipping all states that have already been solved.
+    let mut unvisited_states_by_steps: VecDeque<FxHashSet<ReducedState>> = VecDeque::new();
+    for _ in 0..seed_state.steps_budget.get() {
+        unvisited_states_by_steps.push_back(FxHashSet::default());
+    }
+    unvisited_states_by_steps[0].insert(seed_state);
+    let mut unsolved_state_by_steps: Vec<Vec<ReducedState>> = Vec::new();
+    while let Some(unvisited_states) = unvisited_states_by_steps.pop_front() {
+        if unvisited_states.is_empty() {
+            continue;
+        }
+        let currently_visited_states = unvisited_states.into_iter().collect::<Vec<_>>();
+        for parent_state in &currently_visited_states {
+            let full_parent_state = parent_state.to_state();
+            let parent_steps_budget = parent_state.steps_budget.get();
+            for action in FULL_SEARCH_ACTIONS
+                .into_iter()
+                .filter(|action| action.steps() < parent_steps_budget)
+            {
+                let child_steps_budget =
+                    NonZeroU8::try_from(parent_steps_budget - action.steps()).unwrap();
+                if let Ok(full_child_state) = use_action_combo(settings, full_parent_state, action)
+                    && !full_child_state.is_final(&settings.simulator_settings)
+                {
+                    let child_state =
+                        ReducedState::from_state(full_child_state, child_steps_budget);
+                    if !solved_states.contains_key(&child_state) {
+                        unvisited_states_by_steps[usize::from(action.steps() - 1)]
+                            .insert(child_state);
+                    }
+                }
+            }
+        }
+        unsolved_state_by_steps.push(currently_visited_states);
+    }
+
+    // Solve unsolved states in parallel, batched by step budget to ensure the children
+    // of the current batch have already been solved in one of the previous batches.
+    // This is the wavefront technique for parallelizing dynamic programming.
+    for unsolved_states in unsolved_state_by_steps.into_iter().rev() {
+        let new_solved_states = unsolved_states
+            .into_par_iter()
+            .map_init(
+                ParetoFrontBuilder::new,
+                |pf_builder, reduced_state| -> Result<_, SolverException> {
+                    let pareto_front = merge_child_solutions(
+                        reduced_state,
+                        settings,
+                        iq_quality_lut,
+                        solved_states,
+                        pf_builder,
+                    )?;
+                    Ok((reduced_state, pareto_front))
+                },
+            )
+            .collect::<Result<Vec<_>, SolverException>>()?;
+        solved_states.extend(new_solved_states);
+    }
+
+    match solved_states.get(&seed_state) {
+        Some(pareto_front) => Ok(pareto_front),
+        None => Err(internal_error!(
+            "State not found in memoization after solving",
+            settings,
+            seed_state
+        )),
+    }
+}
+
+fn merge_child_solutions(
+    parent_state: ReducedState,
+    settings: &SolverSettings,
+    iq_quality_lut: &[u32; 11],
+    solved_states: &SolvedStates,
+    pf_builder: &mut ParetoFrontBuilder,
+) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
+    let cutoff = ParetoValue::new(
+        settings.max_progress(),
+        settings
+            .max_quality()
+            .saturating_sub(iq_quality_lut[usize::from(parent_state.effects.inner_quiet())]),
+    );
+    pf_builder.initialize_with_cutoff(cutoff);
+    for action in FULL_SEARCH_ACTIONS {
+        if parent_state.steps_budget.get() < action.steps() {
+            continue;
+        }
+        let new_step_budget = parent_state.steps_budget.get() - action.steps();
+        if let Ok(child_state) = use_action_combo(settings, parent_state.to_state(), action) {
+            let progress = child_state.progress;
+            let quality = child_state.quality;
+            if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget)
+                && !child_state.is_final(&settings.simulator_settings)
+            {
+                let child_state = ReducedState::from_state(child_state, new_step_budget);
+                if let Some(pareto_front) = solved_states.get(&child_state) {
+                    pf_builder.push_slice(pareto_front.iter().map(|value| {
+                        ParetoValue::new(value.progress + progress, value.quality + quality)
+                    }));
+                } else {
+                    return Err(internal_error!(
+                        "Required precompute state does not exist.",
+                        settings,
+                        action,
+                        parent_state,
+                        child_state
+                    ));
+                }
+            } else if progress != 0 {
+                pf_builder.push(ParetoValue::new(progress, quality));
+            }
+        }
+    }
+    pf_builder.result().try_into().map_err(|_| {
+        internal_error!(
+            "Solver produced empty Pareto front.",
+            settings,
+            parent_state
+        )
+    })
 }
