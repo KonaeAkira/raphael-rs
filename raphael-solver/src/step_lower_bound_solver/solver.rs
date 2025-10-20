@@ -12,12 +12,12 @@ use crate::{
 
 use raphael_sim::*;
 use rayon::prelude::*;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::state::ReducedState;
 
 type NonEmptyParetoFront = nunny::Slice<ParetoValue>;
-type SolvedStates = rustc_hash::FxHashMap<ReducedState, Box<NonEmptyParetoFront>>;
+type SolvedStates = FxHashMap<ReducedState, Box<NonEmptyParetoFront>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
@@ -70,10 +70,7 @@ impl StepLbSolver {
         }
     }
 
-    pub fn extend_solved_states(
-        &mut self,
-        new_solved_states: Vec<(ReducedState, Box<nunny::Slice<ParetoValue>>)>,
-    ) {
+    pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates) {
         self.solved_states.extend(new_solved_states);
     }
 
@@ -139,10 +136,8 @@ impl StepLbSolver {
 }
 
 impl<'a> StepLbSolverShard<'a> {
-    pub fn into_solved_states(
-        self,
-    ) -> impl Iterator<Item = (ReducedState, Box<nunny::Slice<ParetoValue>>)> + use<> {
-        self.local_states.into_iter()
+    pub fn solved_states(self) -> SolvedStates {
+        self.local_states
     }
 
     pub fn step_lower_bound(

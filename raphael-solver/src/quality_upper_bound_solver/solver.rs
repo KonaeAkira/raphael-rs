@@ -27,18 +27,20 @@ pub struct QualityUbSolverStats {
     pub pareto_values: usize,
 }
 
+type SolvedStates = FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>;
+
 pub struct QualityUbSolver {
     context: QualityUbSolverContext,
     maximal_templates: FxHashMap<TemplateData, u16>,
-    solved_states: FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
+    solved_states: SolvedStates,
     precomputed_states: usize,
 }
 
 pub struct QualityUbSolverShard<'a> {
     context: &'a QualityUbSolverContext,
     maximal_templates: &'a FxHashMap<TemplateData, u16>,
-    shared_states: &'a FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
-    local_states: FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
+    shared_states: &'a SolvedStates,
+    local_states: SolvedStates,
 }
 
 impl QualityUbSolver {
@@ -64,10 +66,7 @@ impl QualityUbSolver {
         }
     }
 
-    pub fn extend_solved_states(
-        &mut self,
-        new_solved_states: Vec<(ReducedState, Box<nunny::Slice<ParetoValue>>)>,
-    ) {
+    pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates) {
         self.solved_states.extend(new_solved_states);
     }
 
@@ -253,10 +252,8 @@ impl QualityUbSolver {
 }
 
 impl<'a> QualityUbSolverShard<'a> {
-    pub fn into_solved_states(
-        self,
-    ) -> impl Iterator<Item = (ReducedState, Box<nunny::Slice<ParetoValue>>)> {
-        self.local_states.into_iter()
+    pub fn solved_states(self) -> SolvedStates {
+        self.local_states
     }
 
     pub fn quality_upper_bound(

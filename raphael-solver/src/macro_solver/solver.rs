@@ -155,25 +155,23 @@ impl<'a> MacroSolver<'a> {
                 }
             }
 
-            let mut new_finish_solver_states = Vec::new();
-            let mut new_quality_ub_solver_states = Vec::new();
-            let mut new_step_lb_solver_states = Vec::new();
-
-            for thread_data in thread_results {
-                new_finish_solver_states
-                    .extend(thread_data.finish_solver_shard.into_solved_states());
-                new_quality_ub_solver_states
-                    .extend(thread_data.quality_ub_solver_shard.into_solved_states());
-                new_step_lb_solver_states
-                    .extend(thread_data.step_lb_solver_shard.into_solved_states());
+            // Map each `ThreadData` instance to just the hashmaps containing all the newly solved states.
+            // This drops all shared references to `self` which allows us to mutate the inner solvers.
+            let solved_states_per_thread = thread_results
+                .into_iter()
+                .map(|thread_data| {
+                    (
+                        thread_data.finish_solver_shard.solved_states(),
+                        thread_data.quality_ub_solver_shard.solved_states(),
+                        thread_data.step_lb_solver_shard.solved_states(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            for solved_states in solved_states_per_thread {
+                self.finish_solver.extend_solved_states(solved_states.0);
+                self.quality_ub_solver.extend_solved_states(solved_states.1);
+                self.step_lb_solver.extend_solved_states(solved_states.2);
             }
-
-            self.finish_solver
-                .extend_solved_states(new_finish_solver_states);
-            self.quality_ub_solver
-                .extend_solved_states(new_quality_ub_solver_states);
-            self.step_lb_solver
-                .extend_solved_states(new_step_lb_solver_states);
         }
 
         self.search_queue_stats = search_queue.runtime_stats();

@@ -34,15 +34,17 @@ impl ReducedState {
     }
 }
 
+type SolvedStates = FxHashMap<ReducedState, u32>;
+
 pub struct FinishSolver {
     settings: SolverSettings,
-    solved_states: FxHashMap<ReducedState, u32>,
+    solved_states: SolvedStates,
 }
 
 pub struct FinishSolverShard<'a> {
     settings: &'a SolverSettings,
-    shared_states: &'a FxHashMap<ReducedState, u32>,
-    local_states: FxHashMap<ReducedState, u32>,
+    shared_states: &'a SolvedStates,
+    local_states: SolvedStates,
 }
 
 impl FinishSolver {
@@ -53,7 +55,7 @@ impl FinishSolver {
         }
     }
 
-    pub fn extend_solved_states(&mut self, new_solved_states: Vec<(ReducedState, u32)>) {
+    pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates) {
         self.solved_states.extend(new_solved_states);
     }
 
@@ -107,13 +109,13 @@ impl FinishSolver {
 }
 
 impl<'a> FinishSolverShard<'a> {
+    pub fn solved_states(self) -> SolvedStates {
+        self.local_states
+    }
+
     pub fn can_finish(&mut self, state: &SimulationState) -> bool {
         let max_progress = self.solve_max_progress(ReducedState::from_state(state));
         state.progress + max_progress >= self.settings.max_progress()
-    }
-
-    pub fn into_solved_states(self) -> impl Iterator<Item = (ReducedState, u32)> {
-        self.local_states.into_iter()
     }
 
     fn solve_max_progress(&mut self, state: ReducedState) -> u32 {
