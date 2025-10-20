@@ -117,8 +117,8 @@ impl<'a> MacroSolver<'a> {
                 finish_solver_shard: self.finish_solver.create_shard(),
                 quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
                 step_lb_solver_shard: self.step_lb_solver.create_shard(),
-                score_lb: SearchScore::MIN,
-                states: Vec::new(),
+                min_accepted_score: search_queue.min_score(),
+                candidate_states: Vec::new(),
             };
 
             let thread_results = batch
@@ -127,11 +127,11 @@ impl<'a> MacroSolver<'a> {
                 .collect::<Result<Vec<_>, SolverException>>()?;
 
             for thread_data in &thread_results {
-                search_queue.update_min_score(thread_data.score_lb);
+                search_queue.update_min_score(thread_data.min_accepted_score);
             }
 
             for thread_data in &thread_results {
-                for &(state, score, action, parent_id) in &thread_data.states {
+                for &(state, score, action, parent_id) in &thread_data.candidate_states {
                     if state.progress >= self.settings.max_progress() {
                         if solution
                             .as_ref()
@@ -192,13 +192,26 @@ struct ThreadData<'a> {
     finish_solver_shard: FinishSolverShard<'a>,
     quality_ub_solver_shard: QualityUbSolverShard<'a>,
     step_lb_solver_shard: StepLbSolverShard<'a>,
-    score_lb: SearchScore,
-    states: Vec<(SimulationState, SearchScore, ActionCombo, usize)>,
+    min_accepted_score: SearchScore,
+    candidate_states: Vec<(SimulationState, SearchScore, ActionCombo, usize)>,
 }
 
 impl<'a> ThreadData<'a> {
     fn update_min_score(&mut self, score: SearchScore) {
-        self.score_lb = std::cmp::max(self.score_lb, score);
+        self.min_accepted_score = std::cmp::max(self.min_accepted_score, score);
+    }
+
+    fn add_candidate_state(
+        &mut self,
+        state: SimulationState,
+        score: SearchScore,
+        action: ActionCombo,
+        parent_id: usize,
+    ) {
+        if score >= self.min_accepted_score {
+            self.candidate_states
+                .push((state, score, action, parent_id));
+        }
     }
 }
 
@@ -250,18 +263,14 @@ fn thread_search_task(
                         false => score.current_steps + action.steps(),
                     };
 
-                thread_data.states.push((
-                    state,
-                    SearchScore {
-                        quality_upper_bound,
-                        steps_lower_bound,
-                        duration_lower_bound: score.current_duration + action.duration() + 3,
-                        current_steps: score.current_steps + action.steps(),
-                        current_duration: score.current_duration + action.duration(),
-                    },
-                    action,
-                    backtrack_id,
-                ));
+                let child_score = SearchScore {
+                    quality_upper_bound,
+                    steps_lower_bound,
+                    duration_lower_bound: score.current_duration + action.duration() + 3,
+                    current_steps: score.current_steps + action.steps(),
+                    current_duration: score.current_duration + action.duration(),
+                };
+                thread_data.add_candidate_state(state, child_score, action, backtrack_id);
             } else if state.progress >= thread_data.settings.max_progress() {
                 let solution_score = SearchScore {
                     quality_upper_bound: std::cmp::min(
@@ -274,9 +283,7 @@ fn thread_search_task(
                     current_duration: score.current_duration + action.duration(),
                 };
                 thread_data.update_min_score(solution_score);
-                thread_data
-                    .states
-                    .push((state, solution_score, action, backtrack_id));
+                thread_data.add_candidate_state(state, solution_score, action, backtrack_id);
             }
         }
     }

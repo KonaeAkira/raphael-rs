@@ -88,6 +88,10 @@ impl SearchQueue {
         }
     }
 
+    pub fn min_score(&self) -> SearchScore {
+        self.minimum_score
+    }
+
     pub fn update_min_score(&mut self, score: SearchScore) {
         if self.minimum_score >= score {
             return;
