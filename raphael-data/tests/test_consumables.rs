@@ -27,6 +27,40 @@ fn test_rroneek_steak() {
 }
 
 #[test]
+fn test_u16_overflow() {
+    let item_id = 44091;
+    assert_eq!(
+        get_item_name(item_id, true, Locale::EN).unwrap(),
+        "Rroneek Steak \u{e03c}"
+    );
+    let consumable = find_consumable(MEALS, item_id, true).unwrap();
+    // 13108 * 5 mod 1<<16 = 4
+    // 2521 * 26 mod 1<<16 = 10
+    assert_eq!(
+        stat_bonuses([4021, 13108, 2521], &[Some(consumable)]),
+        [0, 97, 92]
+    );
+}
+
+#[test]
+fn test_rroneek_steak_hq() {
+    let item_id = 44091;
+    assert_eq!(
+        get_item_name(item_id, true, Locale::EN).unwrap(),
+        "Rroneek Steak \u{e03c}"
+    );
+    let consumable = find_consumable(MEALS, item_id, true).unwrap();
+    assert_eq!(
+        stat_bonuses([4021, 4032, 550], &[Some(consumable)]),
+        [0, 97, 92]
+    );
+    assert_eq!(
+        stat_bonuses([1000, 1000, 100], &[Some(consumable)]),
+        [0, 50, 26]
+    );
+}
+
+#[test]
 fn test_unbuffed_single_consumable() {
     for consumable in MEALS.iter().chain(POTIONS) {
         let consumables = &[Some(*consumable)];
