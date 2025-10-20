@@ -11,6 +11,15 @@ use rustc_hash::FxHashMap;
 
 use super::state::ReducedState;
 
+#[derive(Debug, Clone)]
+struct QualityUbSolverContext {
+    settings: SolverSettings,
+    interrupt_signal: utils::AtomicFlag,
+    iq_quality_lut: [u32; 11],
+    durability_cost: u16,
+    largest_progress_increase: u32,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct QualityUbSolverStats {
     pub parallel_states: usize,
@@ -19,14 +28,17 @@ pub struct QualityUbSolverStats {
 }
 
 pub struct QualityUbSolver {
-    settings: SolverSettings,
-    interrupt_signal: utils::AtomicFlag,
-    solved_states: FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
-    iq_quality_lut: [u32; 11],
+    context: QualityUbSolverContext,
     maximal_templates: FxHashMap<TemplateData, u16>,
-    durability_cost: u16,
-    largest_progress_increase: u32,
+    solved_states: FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
     precomputed_states: usize,
+}
+
+pub struct QualityUbSolverShard<'a> {
+    context: &'a QualityUbSolverContext,
+    maximal_templates: &'a FxHashMap<TemplateData, u16>,
+    shared_states: &'a FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
+    local_states: FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>,
 }
 
 impl QualityUbSolver {
@@ -37,14 +49,27 @@ impl QualityUbSolver {
             ReducedState::from_state(initial_state, &settings, durability_cost).cp
         };
         Self {
-            settings,
-            interrupt_signal,
+            context: QualityUbSolverContext {
+                settings,
+                interrupt_signal,
+                iq_quality_lut: utils::compute_iq_quality_lut(&settings),
+                durability_cost,
+                largest_progress_increase: utils::largest_single_action_progress_increase(
+                    &settings,
+                ),
+            },
             solved_states: FxHashMap::default(),
-            iq_quality_lut: utils::compute_iq_quality_lut(&settings),
             maximal_templates: FxHashMap::default(),
-            durability_cost,
-            largest_progress_increase: utils::largest_single_action_progress_increase(&settings),
             precomputed_states: 0,
+        }
+    }
+
+    pub fn create_shard(&self) -> QualityUbSolverShard<'_> {
+        QualityUbSolverShard {
+            context: &self.context,
+            maximal_templates: &self.maximal_templates,
+            shared_states: &self.solved_states,
+            local_states: FxHashMap::default(),
         }
     }
 
@@ -53,11 +78,14 @@ impl QualityUbSolver {
         let mut heap = std::collections::BinaryHeap::<Template>::default();
 
         let seed_template = {
-            let seed_effects = Effects::initial(&self.settings.simulator_settings)
+            let seed_effects = Effects::initial(&self.context.settings.simulator_settings)
                 .with_special_quality_state(SpecialQualityState::Normal)
                 .with_trained_perfection_available(false)
                 .with_combo(Combo::None);
-            Template::new(self.settings.max_cp(), TemplateData::new(seed_effects, 0))
+            Template::new(
+                self.context.settings.max_cp(),
+                TemplateData::new(seed_effects, 0),
+            )
         };
         heap.push(seed_template);
 
@@ -67,9 +95,11 @@ impl QualityUbSolver {
                 *entry = template.max_instantiated_cp;
                 let state = template.instantiate(template.max_instantiated_cp).unwrap();
                 for action in FULL_SEARCH_ACTIONS {
-                    if let Some((new_state, _, _)) =
-                        state.use_action(action, &self.settings, self.durability_cost)
-                    {
+                    if let Some((new_state, _, _)) = state.use_action(
+                        action,
+                        &self.context.settings,
+                        self.context.durability_cost,
+                    ) {
                         let new_template_data = TemplateData {
                             effects: new_state.effects,
                             compressed_unreliable_quality: new_state.compressed_unreliable_quality,
@@ -116,8 +146,9 @@ impl QualityUbSolver {
                 .collect();
             // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
             // See `ReducedState::is_final` for details.
-            for cp in (2 * self.durability_cost..=self.settings.max_cp()).step_by(2) {
-                if self.interrupt_signal.is_set() {
+            for cp in (2 * self.context.durability_cost..=self.context.settings.max_cp()).step_by(2)
+            {
+                if self.context.interrupt_signal.is_set() {
                     return Err(SolverException::Interrupted);
                 }
                 let solved_states = templates
@@ -129,10 +160,12 @@ impl QualityUbSolver {
                             let pareto_front = self.solve_precompute_state(pf_builder, state)?;
                             let template_is_maximal = {
                                 // A template is "maximal" if there is no benefit of solving it with higher CP
-                                let required_progress = self.settings.max_progress();
-                                let required_quality = self.settings.max_quality().saturating_sub(
-                                    self.iq_quality_lut[usize::from(state.effects.inner_quiet())],
-                                );
+                                let required_progress = self.context.settings.max_progress();
+                                let required_quality =
+                                    self.context.settings.max_quality().saturating_sub(
+                                        self.context.iq_quality_lut
+                                            [usize::from(state.effects.inner_quiet())],
+                                    );
                                 pareto_front.first().progress >= required_progress
                                     && pareto_front.first().quality >= required_quality
                             };
@@ -168,25 +201,25 @@ impl QualityUbSolver {
         state: ReducedState,
     ) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
         let cutoff = ParetoValue::new(
-            self.settings.max_progress(),
-            self.settings
-                .max_quality()
-                .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]),
+            self.context.settings.max_progress(),
+            self.context.settings.max_quality().saturating_sub(
+                self.context.iq_quality_lut[usize::from(state.effects.inner_quiet())],
+            ),
         );
         pf_builder.initialize_with_cutoff(cutoff);
         for action in FULL_SEARCH_ACTIONS {
             if let Some((new_state, progress, quality)) =
-                state.use_action(action, &self.settings, self.durability_cost)
+                state.use_action(action, &self.context.settings, self.context.durability_cost)
             {
                 let action_offset = ParetoValue::new(progress, quality);
-                if !new_state.is_final(self.durability_cost) {
+                if !new_state.is_final(self.context.durability_cost) {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
                         pf_builder
                             .push_slice(pareto_front.iter().map(|value| *value + action_offset));
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
-                            self.settings,
+                            self.context.settings,
                             action,
                             state,
                             new_state
@@ -200,14 +233,18 @@ impl QualityUbSolver {
                 }
             }
         }
-        pf_builder
-            .result()
-            .try_into()
-            .map_err(|_| internal_error!("Empty precompute Pareto front.", self.settings, state))
+        pf_builder.result().try_into().map_err(|_| {
+            internal_error!(
+                "Empty precompute Pareto front.",
+                self.context.settings,
+                state
+            )
+        })
     }
 
     /// Returns an upper-bound on the maximum Quality achievable from this state while also maxing out Progress.
     /// There is no guarantee on the tightness of the upper-bound.
+    #[deprecated]
     pub fn quality_upper_bound(
         &mut self,
         mut state: SimulationState,
@@ -215,19 +252,21 @@ impl QualityUbSolver {
         if state.effects.combo() != Combo::None {
             return Err(internal_error!(
                 "Unexpected combo state.",
-                self.settings,
+                self.context.settings,
                 state
             ));
         }
 
-        let mut required_progress = self.settings.max_progress() - state.progress;
+        let mut required_progress = self.context.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
             // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
-            required_progress = required_progress.saturating_sub(self.largest_progress_increase);
+            required_progress =
+                required_progress.saturating_sub(self.context.largest_progress_increase);
             state.effects.set_muscle_memory(0);
         }
 
-        let reduced_state = ReducedState::from_state(state, &self.settings, self.durability_cost);
+        let reduced_state =
+            ReducedState::from_state(state, &self.context.settings, self.context.durability_cost);
 
         let template_data = TemplateData::new(
             reduced_state.effects,
@@ -242,13 +281,14 @@ impl QualityUbSolver {
             };
             if let Some(pareto_front) = self.solved_states.get(&reduced_state)
                 && pareto_front.first().progress >= required_progress
-                && pareto_front.first().quality + state.quality >= self.settings.max_quality()
+                && pareto_front.first().quality + state.quality
+                    >= self.context.settings.max_quality()
             {
-                return Ok(self.settings.max_quality());
+                return Ok(self.context.settings.max_quality());
             } else {
                 return Err(internal_error!(
                     "Maximal template list is inconsistent with actual solved states.",
-                    self.settings,
+                    self.context.settings,
                     reduced_state
                 ));
             }
@@ -259,7 +299,7 @@ impl QualityUbSolver {
             let quality = pareto_front
                 .get(index)
                 .map_or(0, |value| state.quality + value.quality);
-            return Ok(std::cmp::min(self.settings.max_quality(), quality));
+            return Ok(std::cmp::min(self.context.settings.max_quality(), quality));
         }
 
         self.solve_state(reduced_state)?;
@@ -269,36 +309,36 @@ impl QualityUbSolver {
             let quality = pareto_front
                 .get(index)
                 .map_or(0, |value| state.quality + value.quality);
-            Ok(std::cmp::min(self.settings.max_quality(), quality))
+            Ok(std::cmp::min(self.context.settings.max_quality(), quality))
         } else {
             Err(internal_error!(
                 "State not found in memoization table after solve.",
-                self.settings,
+                self.context.settings,
                 reduced_state
             ))
         }
     }
 
     fn solve_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
-        if self.interrupt_signal.is_set() {
+        if self.context.interrupt_signal.is_set() {
             return Err(SolverException::Interrupted);
         }
 
         let cutoff = ParetoValue::new(
-            self.settings.max_progress(),
-            self.settings
-                .max_quality()
-                .saturating_sub(self.iq_quality_lut[usize::from(state.effects.inner_quiet())]),
+            self.context.settings.max_progress(),
+            self.context.settings.max_quality().saturating_sub(
+                self.context.iq_quality_lut[usize::from(state.effects.inner_quiet())],
+            ),
         );
         let mut pareto_front_builder = ParetoFrontBuilder::new();
         pareto_front_builder.initialize_with_cutoff(cutoff);
 
         for action in FULL_SEARCH_ACTIONS {
             if let Some((child_state, progress, quality)) =
-                state.use_action(action, &self.settings, self.durability_cost)
+                state.use_action(action, &self.context.settings, self.context.durability_cost)
             {
                 let action_offset = ParetoValue::new(progress, quality);
-                if !child_state.is_final(self.durability_cost) {
+                if !child_state.is_final(self.context.durability_cost) {
                     let child_pareto_front =
                         if let Some(child_pareto_front) = self.solved_states.get(&child_state) {
                             child_pareto_front
@@ -323,7 +363,11 @@ impl QualityUbSolver {
         }
 
         let pareto_front = pareto_front_builder.result().try_into().map_err(|_| {
-            internal_error!("Solver produced empty Pareto front.", self.settings, state)
+            internal_error!(
+                "Solver produced empty Pareto front.",
+                self.context.settings,
+                state
+            )
         });
         self.solved_states.insert(state, pareto_front?);
         Ok(())
@@ -338,15 +382,132 @@ impl QualityUbSolver {
     }
 }
 
-impl Drop for QualityUbSolver {
-    fn drop(&mut self) {
-        let runtime_stats = self.runtime_stats();
-        log::debug!(
-            "QualityUbSolver - par_states: {}, seq_states: {}, values: {}",
-            runtime_stats.parallel_states,
-            runtime_stats.sequential_states,
-            runtime_stats.pareto_values
+impl<'a> QualityUbSolverShard<'a> {
+    pub fn quality_upper_bound(
+        &mut self,
+        mut state: SimulationState,
+    ) -> Result<u32, SolverException> {
+        if state.effects.combo() != Combo::None {
+            return Err(internal_error!(
+                "Unexpected combo state.",
+                self.context.settings,
+                state
+            ));
+        }
+
+        let mut required_progress = self.context.settings.max_progress() - state.progress;
+        if state.effects.muscle_memory() != 0 {
+            // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
+            required_progress =
+                required_progress.saturating_sub(self.context.largest_progress_increase);
+            state.effects.set_muscle_memory(0);
+        }
+
+        let reduced_state =
+            ReducedState::from_state(state, &self.context.settings, self.context.durability_cost);
+
+        let template_data = TemplateData::new(
+            reduced_state.effects,
+            reduced_state.compressed_unreliable_quality,
         );
+        if let Some(&required_cp) = self.maximal_templates.get(&template_data)
+            && reduced_state.cp >= required_cp
+        {
+            let reduced_state = ReducedState {
+                cp: required_cp,
+                ..reduced_state
+            };
+            if let Some(pareto_front) = self.shared_states.get(&reduced_state)
+                && pareto_front.first().progress >= required_progress
+                && pareto_front.first().quality + state.quality
+                    >= self.context.settings.max_quality()
+            {
+                return Ok(self.context.settings.max_quality());
+            } else {
+                return Err(internal_error!(
+                    "Maximal template list is inconsistent with actual solved states.",
+                    self.context.settings,
+                    reduced_state
+                ));
+            }
+        }
+
+        let pareto_front = if let Some(pareto_front) = self.shared_states.get(&reduced_state) {
+            pareto_front
+        } else if let Some(pareto_front) = self.local_states.get(&reduced_state) {
+            pareto_front
+        } else {
+            self.solve_state(reduced_state)?;
+            if let Some(pareto_front) = self.local_states.get(&reduced_state) {
+                pareto_front
+            } else {
+                return Err(internal_error!(
+                    "State not found in memoization table after solve.",
+                    self.context.settings,
+                    reduced_state
+                ));
+            }
+        };
+        let i = pareto_front.partition_point(|value| value.progress < required_progress);
+        let quality = pareto_front.get(i).map_or(0, |v| state.quality + v.quality);
+        Ok(std::cmp::min(self.context.settings.max_quality(), quality))
+    }
+
+    fn solve_state(&mut self, state: ReducedState) -> Result<(), SolverException> {
+        if self.context.interrupt_signal.is_set() {
+            return Err(SolverException::Interrupted);
+        }
+
+        let cutoff = ParetoValue::new(
+            self.context.settings.max_progress(),
+            self.context.settings.max_quality().saturating_sub(
+                self.context.iq_quality_lut[usize::from(state.effects.inner_quiet())],
+            ),
+        );
+        let mut pareto_front_builder = ParetoFrontBuilder::new();
+        pareto_front_builder.initialize_with_cutoff(cutoff);
+
+        for action in FULL_SEARCH_ACTIONS {
+            if let Some((child_state, progress, quality)) =
+                state.use_action(action, &self.context.settings, self.context.durability_cost)
+            {
+                let action_offset = ParetoValue::new(progress, quality);
+                if !child_state.is_final(self.context.durability_cost) {
+                    let child_pareto_front = if let Some(child_pareto_front) =
+                        self.shared_states.get(&child_state)
+                    {
+                        child_pareto_front
+                    } else if let Some(child_pareto_front) = self.local_states.get(&child_state) {
+                        child_pareto_front
+                    } else {
+                        self.solve_state(child_state)?;
+                        self.local_states.get(&child_state).ok_or(internal_error!(
+                            "State not found in memoization table after solving.",
+                        ))?
+                    };
+                    pareto_front_builder.push_slice(
+                        child_pareto_front
+                            .iter()
+                            .map(|value| *value + action_offset),
+                    );
+                    if pareto_front_builder.is_maximal(cutoff) {
+                        break;
+                    }
+                } else if action_offset.progress != 0 {
+                    pareto_front_builder.push(action_offset);
+                }
+            }
+        }
+
+        let pareto_front = pareto_front_builder.result().try_into().map_err(|_| {
+            internal_error!(
+                "Solver produced empty Pareto front.",
+                self.context.settings,
+                state
+            )
+        });
+        self.local_states.insert(state, pareto_front?);
+        Ok(())
     }
 }
 
