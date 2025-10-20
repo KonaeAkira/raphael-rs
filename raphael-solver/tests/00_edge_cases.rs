@@ -140,8 +140,8 @@ fn zero_quality() {
                 pareto_values: 109398,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 33737,
-                pareto_values: 250232,
+                states: 26538,
+                pareto_values: 194222,
             },
         }
     "#]];
@@ -178,10 +178,10 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 239711,
+            finish_states: 251317,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 5568,
-                dropped_nodes: 66119,
+                processed_nodes: 6915,
+                dropped_nodes: 87768,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 389796,
@@ -189,8 +189,8 @@ fn max_quality() {
                 pareto_values: 2236380,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 105076,
-                pareto_values: 678134,
+                states: 77448,
+                pareto_values: 486877,
             },
         }
     "#]];
@@ -326,10 +326,10 @@ fn issue_216_steplbsolver_crash() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 199546,
+            finish_states: 221234,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 19121,
-                dropped_nodes: 350197,
+                processed_nodes: 21746,
+                dropped_nodes: 400463,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 318520,
@@ -337,8 +337,8 @@ fn issue_216_steplbsolver_crash() {
                 pareto_values: 1267763,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 84580,
-                pareto_values: 369990,
+                states: 65748,
+                pareto_values: 289165,
             },
         }
     "#]];
