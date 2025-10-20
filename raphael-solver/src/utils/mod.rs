@@ -77,12 +77,6 @@ impl<T: Copy> Backtracking<T> {
     }
 }
 
-impl<T: Copy> Drop for Backtracking<T> {
-    fn drop(&mut self) {
-        log::debug!("Backtracking - nodes: {}", self.entries.len());
-    }
-}
-
 /// The only way to increase the InnerQuiet effect is to use Quality-increasing actions,
 /// which means that all states with InnerQuiet must have some amount of Quality.
 /// This function finds a lower-bound on the minimum amount of Quality a state with `n` InnerQuiet can have.
