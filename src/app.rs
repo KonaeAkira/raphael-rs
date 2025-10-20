@@ -667,22 +667,38 @@ impl MacroSolverApp {
         });
         ui.separator();
 
+        const BUFFED_STAT_BG_COLOR: egui::Color32 =
+            egui::Color32::from_rgba_unmultiplied_const(144, 238, 144, 128);
+        let consumables = &[selected_food, selected_potion];
         ui.label(egui::RichText::new(t!(locale, "Crafter stats")).strong());
         ui.horizontal(|ui| {
             ui.label(t!(locale, "Craftsmanship"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let cms_base = &mut self.app_context.active_stats_mut().craftsmanship;
-                let cms_bonus =
-                    raphael_data::craftsmanship_bonus(*cms_base, &[selected_food, selected_potion]);
-                let final_value_button_text =
-                    egui::RichText::new((*cms_base + cms_bonus).to_string()).strong();
-                let mut final_value_button =
-                    egui::Button::new(final_value_button_text).min_size(ui.spacing().interact_size);
-                if cms_bonus != 0 {
-                    final_value_button = final_value_button.fill(egui::Color32::LIGHT_GREEN);
-                }
                 ui.style_mut().spacing.item_spacing.x = 5.0;
-                ui.add_enabled(false, final_value_button);
+
+                let cms_base = &mut self.app_context.active_stats_mut().craftsmanship;
+                ui.add_enabled_ui(true, |ui| {
+                    let cms_bonus = raphael_data::craftsmanship_bonus(*cms_base, consumables);
+                    if cms_bonus != 0 {
+                        ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        ui.visuals_mut().widgets.hovered.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        ui.visuals_mut().widgets.active.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                    }
+
+                    let buffed = *cms_base + cms_bonus;
+                    let mut final_value = buffed;
+                    ui.add(
+                        egui::DragValue::new(&mut final_value)
+                            .range(0..=9999)
+                            .update_while_editing(false),
+                    );
+                    if final_value != buffed
+                        && let Some(unbuffed) =
+                            raphael_data::craftsmanship_unbuffed(final_value, consumables)
+                    {
+                        *cms_base = unbuffed;
+                    }
+                });
                 ui.label("➡");
                 ui.add(egui::DragValue::new(cms_base).range(0..=9000));
             });
@@ -690,18 +706,31 @@ impl MacroSolverApp {
         ui.horizontal(|ui| {
             ui.label(t!(locale, "Control"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let control_base = &mut self.app_context.active_stats_mut().control;
-                let control_bonus =
-                    raphael_data::control_bonus(*control_base, &[selected_food, selected_potion]);
-                let final_value_button_text =
-                    egui::RichText::new((*control_base + control_bonus).to_string()).strong();
-                let mut final_value_button =
-                    egui::Button::new(final_value_button_text).min_size(ui.spacing().interact_size);
-                if control_bonus != 0 {
-                    final_value_button = final_value_button.fill(egui::Color32::LIGHT_GREEN);
-                }
                 ui.style_mut().spacing.item_spacing.x = 5.0;
-                ui.add_enabled(false, final_value_button);
+
+                let control_base = &mut self.app_context.active_stats_mut().control;
+                ui.add_enabled_ui(true, |ui| {
+                    let control_bonus = raphael_data::control_bonus(*control_base, consumables);
+                    if control_bonus != 0 {
+                        ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        ui.visuals_mut().widgets.hovered.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        ui.visuals_mut().widgets.active.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                    }
+
+                    let buffed = *control_base + control_bonus;
+                    let mut final_value = buffed;
+                    ui.add(
+                        egui::DragValue::new(&mut final_value)
+                            .range(0..=9999)
+                            .update_while_editing(false),
+                    );
+                    if final_value != buffed
+                        && let Some(unbuffed) =
+                            raphael_data::control_unbuffed(final_value, consumables)
+                    {
+                        *control_base = unbuffed;
+                    }
+                });
                 ui.label("➡");
                 ui.add(egui::DragValue::new(control_base).range(0..=9000));
             });
@@ -709,17 +738,30 @@ impl MacroSolverApp {
         ui.horizontal(|ui| {
             ui.label(t!(locale, "CP"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                let cp_base = &mut self.app_context.active_stats_mut().cp;
-                let cp_bonus = raphael_data::cp_bonus(*cp_base, &[selected_food, selected_potion]);
-                let final_value_button_text =
-                    egui::RichText::new((*cp_base + cp_bonus).to_string()).strong();
-                let mut final_value_button =
-                    egui::Button::new(final_value_button_text).min_size(ui.spacing().interact_size);
-                if cp_bonus != 0 {
-                    final_value_button = final_value_button.fill(egui::Color32::LIGHT_GREEN);
-                }
                 ui.style_mut().spacing.item_spacing.x = 5.0;
-                ui.add_enabled(false, final_value_button);
+
+                let cp_base = &mut self.app_context.active_stats_mut().cp;
+                ui.add_enabled_ui(true, |ui| {
+                    let cp_bonus = raphael_data::cp_bonus(*cp_base, consumables);
+                    if cp_bonus != 0 {
+                        ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        ui.visuals_mut().widgets.hovered.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        ui.visuals_mut().widgets.active.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                    }
+
+                    let buffed = *cp_base + cp_bonus;
+                    let mut final_value = buffed;
+                    ui.add(
+                        egui::DragValue::new(&mut final_value)
+                            .range(0..=9999)
+                            .update_while_editing(false),
+                    );
+                    if final_value != buffed
+                        && let Some(unbuffed) = raphael_data::cp_unbuffed(final_value, consumables)
+                    {
+                        *cp_base = unbuffed;
+                    }
+                });
                 ui.label("➡");
                 ui.add(egui::DragValue::new(cp_base).range(0..=9000));
             });
