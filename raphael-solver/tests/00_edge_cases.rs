@@ -131,7 +131,7 @@ fn zero_quality() {
         MacroSolverStats {
             finish_states: 1660,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 41,
+                processed_nodes: 42,
                 dropped_nodes: 12,
             },
             quality_ub_stats: QualityUbSolverStats {
@@ -180,8 +180,8 @@ fn max_quality() {
         MacroSolverStats {
             finish_states: 239711,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 5567,
-                dropped_nodes: 66122,
+                processed_nodes: 5568,
+                dropped_nodes: 66119,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 389796,
@@ -229,8 +229,8 @@ fn large_progress_quality_increase() {
         MacroSolverStats {
             finish_states: 24,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 0,
-                dropped_nodes: 23,
+                processed_nodes: 1,
+                dropped_nodes: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 178982,
@@ -278,8 +278,8 @@ fn backload_progress_single_delicate_synthesis() {
         MacroSolverStats {
             finish_states: 15,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 0,
-                dropped_nodes: 14,
+                processed_nodes: 1,
+                dropped_nodes: 0,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 3243,
@@ -326,10 +326,10 @@ fn issue_216_steplbsolver_crash() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 199538,
+            finish_states: 199546,
             search_queue_stats: SearchQueueStats {
-                processed_nodes: 19119,
-                dropped_nodes: 350178,
+                processed_nodes: 19121,
+                dropped_nodes: 350197,
             },
             quality_ub_stats: QualityUbSolverStats {
                 parallel_states: 318520,

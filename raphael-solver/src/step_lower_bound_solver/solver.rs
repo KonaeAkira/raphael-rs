@@ -70,8 +70,11 @@ impl StepLbSolver {
         }
     }
 
-    pub fn consume_shard(&mut self, shard: StepLbSolverShard) {
-        self.solved_states.extend(shard.local_states);
+    pub fn extend_solved_states(
+        &mut self,
+        new_solved_states: Vec<(ReducedState, Box<nunny::Slice<ParetoValue>>)>,
+    ) {
+        self.solved_states.extend(new_solved_states);
     }
 
     pub fn step_lower_bound(
@@ -130,6 +133,12 @@ impl StepLbSolver {
 }
 
 impl<'a> StepLbSolverShard<'a> {
+    pub fn into_solved_states(
+        self,
+    ) -> impl Iterator<Item = (ReducedState, Box<nunny::Slice<ParetoValue>>)> {
+        self.local_states.into_iter()
+    }
+
     pub fn step_lower_bound(
         &mut self,
         state: SimulationState,

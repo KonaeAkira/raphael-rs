@@ -64,6 +64,13 @@ impl QualityUbSolver {
         }
     }
 
+    pub fn extend_solved_states(
+        &mut self,
+        new_solved_states: Vec<(ReducedState, Box<nunny::Slice<ParetoValue>>)>,
+    ) {
+        self.solved_states.extend(new_solved_states);
+    }
+
     pub fn create_shard(&self) -> QualityUbSolverShard<'_> {
         QualityUbSolverShard {
             context: &self.context,
@@ -71,10 +78,6 @@ impl QualityUbSolver {
             shared_states: &self.solved_states,
             local_states: FxHashMap::default(),
         }
-    }
-
-    pub fn consume_shard(&mut self, shard: QualityUbSolverShard) {
-        self.solved_states.extend(shard.local_states);
     }
 
     fn generate_precompute_templates(&self) -> Box<[Template]> {
@@ -387,6 +390,12 @@ impl QualityUbSolver {
 }
 
 impl<'a> QualityUbSolverShard<'a> {
+    pub fn into_solved_states(
+        self,
+    ) -> impl Iterator<Item = (ReducedState, Box<nunny::Slice<ParetoValue>>)> {
+        self.local_states.into_iter()
+    }
+
     pub fn quality_upper_bound(
         &mut self,
         mut state: SimulationState,

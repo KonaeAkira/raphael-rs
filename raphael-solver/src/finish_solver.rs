@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct ReducedState {
+pub struct ReducedState {
     durability: u16,
     cp: u16,
     effects: Effects,
@@ -51,6 +51,10 @@ impl FinishSolver {
             settings,
             solved_states: FxHashMap::default(),
         }
+    }
+
+    pub fn extend_solved_states(&mut self, new_solved_states: Vec<(ReducedState, u32)>) {
+        self.solved_states.extend(new_solved_states);
     }
 
     pub fn create_shard(&self) -> FinishSolverShard<'_> {
@@ -111,6 +115,10 @@ impl<'a> FinishSolverShard<'a> {
     pub fn can_finish(&mut self, state: &SimulationState) -> bool {
         let max_progress = self.solve_max_progress(ReducedState::from_state(state));
         state.progress + max_progress >= self.settings.max_progress()
+    }
+
+    pub fn into_solved_states(self) -> impl Iterator<Item = (ReducedState, u32)> {
+        self.local_states.into_iter()
     }
 
     fn solve_max_progress(&mut self, state: ReducedState) -> u32 {
