@@ -56,6 +56,15 @@ impl ReducedState {
             effects.set_waste_not(8);
         }
 
+        // If Innovation and Veneration are both active, set both effects to the same value.
+        // This greatly decreases the number of unique states and in practice does not decrease the lower bound
+        // tightness much.
+        if effects.innovation() != 0 && effects.veneration() != 0 {
+            let innovation_veneration = std::cmp::max(effects.innovation(), effects.veneration());
+            effects.set_innovation(innovation_veneration);
+            effects.set_veneration(innovation_veneration);
+        }
+
         // Clamp all effects down to the steps budget to reduce the number of unique states.
         if effects.manipulation() > steps_budget.get() - 1 {
             effects.set_manipulation(steps_budget.get() - 1);
