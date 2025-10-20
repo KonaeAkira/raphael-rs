@@ -140,8 +140,8 @@ fn zero_quality() {
                 pareto_values: 109398,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 33737,
+                pareto_values: 250232,
             },
         }
     "#]];
@@ -189,8 +189,8 @@ fn max_quality() {
                 pareto_values: 2236380,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 95563,
-                pareto_values: 586735,
+                states: 105076,
+                pareto_values: 678134,
             },
         }
     "#]];
@@ -238,8 +238,8 @@ fn large_progress_quality_increase() {
                 pareto_values: 178982,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 13,
-                pareto_values: 13,
+                states: 14,
+                pareto_values: 14,
             },
         }
     "#]];
@@ -287,8 +287,8 @@ fn backload_progress_single_delicate_synthesis() {
                 pareto_values: 3243,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 9,
-                pareto_values: 9,
+                states: 10,
+                pareto_values: 10,
             },
         }
     "#]];
@@ -337,8 +337,8 @@ fn issue_216_steplbsolver_crash() {
                 pareto_values: 1267763,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 74728,
-                pareto_values: 330387,
+                states: 84580,
+                pareto_values: 369990,
             },
         }
     "#]];

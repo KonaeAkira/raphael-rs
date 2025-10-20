@@ -77,6 +77,12 @@ impl StepLbSolver {
         self.solved_states.extend(new_solved_states);
     }
 
+    pub fn precompute(&mut self) -> Result<(), SolverException> {
+        let initial_state = SimulationState::new(&self.context.settings.simulator_settings);
+        self.step_lower_bound(initial_state, 0)?;
+        Ok(())
+    }
+
     pub fn step_lower_bound(
         &mut self,
         state: SimulationState,
@@ -135,7 +141,7 @@ impl StepLbSolver {
 impl<'a> StepLbSolverShard<'a> {
     pub fn into_solved_states(
         self,
-    ) -> impl Iterator<Item = (ReducedState, Box<nunny::Slice<ParetoValue>>)> {
+    ) -> impl Iterator<Item = (ReducedState, Box<nunny::Slice<ParetoValue>>)> + use<> {
         self.local_states.into_iter()
     }
 

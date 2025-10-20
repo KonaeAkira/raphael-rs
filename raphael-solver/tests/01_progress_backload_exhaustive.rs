@@ -96,8 +96,8 @@ fn rinascita_3700_3280() {
                 pareto_values: 16783500,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 835012,
+                pareto_values: 9658861,
             },
         }
     "#]];
@@ -145,8 +145,8 @@ fn pactmaker_3240_3130() {
                 pareto_values: 13132176,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 835012,
+                pareto_values: 9339298,
             },
         }
     "#]];
@@ -196,8 +196,8 @@ fn pactmaker_3240_3130_heart_and_soul() {
                 pareto_values: 27637851,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 1569034,
+                pareto_values: 19343619,
             },
         }
     "#]];
@@ -245,8 +245,8 @@ fn diadochos_4021_3660() {
                 pareto_values: 17344815,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 921542,
+                pareto_values: 12468961,
             },
         }
     "#]];
@@ -294,8 +294,8 @@ fn indagator_3858_4057() {
                 pareto_values: 16209295,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 661982,
+                pareto_values: 7970301,
             },
         }
     "#]];
@@ -343,8 +343,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
                 pareto_values: 16494243,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1753944,
-                pareto_values: 20037975,
+                states: 1756521,
+                pareto_values: 20040742,
             },
         }
     "#]];
@@ -394,8 +394,8 @@ fn stuffed_peppers_2() {
                 pareto_values: 8685113,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 843369,
-                pareto_values: 7997948,
+                states: 845033,
+                pareto_values: 7999724,
             },
         }
     "#]];
@@ -447,8 +447,8 @@ fn stuffed_peppers_2_heart_and_soul() {
                 pareto_values: 20676360,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1532904,
-                pareto_values: 17146214,
+                states: 1534568,
+                pareto_values: 17147999,
             },
         }
     "#]];
@@ -500,8 +500,8 @@ fn stuffed_peppers_2_quick_innovation() {
                 pareto_values: 17827198,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1572551,
-                pareto_values: 15555612,
+                states: 1574215,
+                pareto_values: 15557388,
             },
         }
     "#]];
@@ -549,8 +549,8 @@ fn rakaznar_lapidary_hammer_4462_4391() {
                 pareto_values: 9640072,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 833285,
-                pareto_values: 8330947,
+                states: 834949,
+                pareto_values: 8332746,
             },
         }
     "#]];
@@ -598,8 +598,8 @@ fn black_star_4048_3997() {
                 pareto_values: 2531249,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 99751,
-                pareto_values: 543891,
+                states: 100295,
+                pareto_values: 544498,
             },
         }
     "#]];
@@ -647,8 +647,8 @@ fn claro_walnut_lumber_4900_4800() {
                 pareto_values: 4421953,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 308102,
-                pareto_values: 1967887,
+                states: 309305,
+                pareto_values: 1969161,
             },
         }
     "#]];
@@ -696,8 +696,8 @@ fn rakaznar_lapidary_hammer_4900_4800() {
                 pareto_values: 7088630,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 655500,
-                pareto_values: 5579324,
+                states: 656936,
+                pareto_values: 5580863,
             },
         }
     "#]];
@@ -745,8 +745,8 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
                 pareto_values: 6152904,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 484722,
-                pareto_values: 3995240,
+                states: 485930,
+                pareto_values: 3996540,
             },
         }
     "#]];
@@ -794,8 +794,8 @@ fn archeo_kingdom_broadsword_4966_4914() {
                 pareto_values: 12661815,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1097607,
-                pareto_values: 10951821,
+                states: 1099531,
+                pareto_values: 10953907,
             },
         }
     "#]];
@@ -843,8 +843,8 @@ fn hardened_survey_plank_5558_5216() {
                 pareto_values: 11580525,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 319667,
-                pareto_values: 2762461,
+                states: 322384,
+                pareto_values: 2765323,
             },
         }
     "#]];

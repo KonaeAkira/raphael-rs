@@ -1,9 +1,12 @@
 use raphael_sim::*;
+use rayon::prelude::*;
 
 use crate::{
-    SolverSettings,
+    AtomicFlag, SolverSettings,
     actions::{FULL_SEARCH_ACTIONS, use_action_combo},
+    quality_upper_bound_solver::{QualityUbSolverShard, state::ReducedState},
     test_utils::*,
+    utils::ParetoValue,
 };
 
 use super::QualityUbSolver;

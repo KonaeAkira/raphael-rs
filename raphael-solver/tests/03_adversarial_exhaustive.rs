@@ -111,8 +111,8 @@ fn stuffed_peppers() {
                 pareto_values: 39200086,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 921610,
-                pareto_values: 16669175,
+                states: 948064,
+                pareto_values: 17159772,
             },
         }
     "#]];
@@ -162,8 +162,8 @@ fn test_rare_tacos_2() {
                 pareto_values: 70123242,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1634902,
-                pareto_values: 37195485,
+                states: 1677388,
+                pareto_values: 38199618,
             },
         }
     "#]];
@@ -217,8 +217,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 pareto_values: 16731261,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 47456,
-                pareto_values: 427587,
+                states: 56056,
+                pareto_values: 501137,
             },
         }
     "#]];
@@ -266,8 +266,8 @@ fn test_indagator_3858_4057() {
                 pareto_values: 64645870,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 728532,
+                pareto_values: 14472388,
             },
         }
     "#]];
@@ -319,8 +319,8 @@ fn test_rare_tacos_4628_4410() {
                 pareto_values: 78045031,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 352014,
-                pareto_values: 7689933,
+                states: 381872,
+                pareto_values: 8421898,
             },
         }
     "#]];
@@ -371,8 +371,8 @@ fn issue_113() {
                 pareto_values: 120610497,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 0,
-                pareto_values: 0,
+                states: 2202570,
+                pareto_values: 65341634,
             },
         }
     "#]];
@@ -421,8 +421,8 @@ fn issue_118() {
                 pareto_values: 25587983,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 208459,
-                pareto_values: 2352862,
+                states: 222393,
+                pareto_values: 2491592,
             },
         }
     "#]];
