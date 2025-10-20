@@ -70,6 +70,10 @@ impl StepLbSolver {
         }
     }
 
+    pub fn consume_shard(&mut self, shard: StepLbSolverShard) {
+        self.solved_states.extend(shard.local_states);
+    }
+
     pub fn step_lower_bound(
         &mut self,
         state: SimulationState,

@@ -61,6 +61,10 @@ impl FinishSolver {
         }
     }
 
+    pub fn consume_shard(&mut self, shard: FinishSolverShard) {
+        self.solved_states.extend(shard.local_states);
+    }
+
     #[deprecated]
     pub fn can_finish(&mut self, state: &SimulationState) -> bool {
         let max_progress = self.solve_max_progress(ReducedState::from_state(state));

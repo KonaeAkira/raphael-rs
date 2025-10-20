@@ -73,6 +73,10 @@ impl QualityUbSolver {
         }
     }
 
+    pub fn consume_shard(&mut self, shard: QualityUbSolverShard) {
+        self.solved_states.extend(shard.local_states);
+    }
+
     fn generate_precompute_templates(&self) -> Box<[Template]> {
         let mut templates = rustc_hash::FxHashMap::<TemplateData, u16>::default();
         let mut heap = std::collections::BinaryHeap::<Template>::default();
