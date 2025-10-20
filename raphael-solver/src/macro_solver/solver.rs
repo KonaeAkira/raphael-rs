@@ -94,7 +94,9 @@ impl<'a> MacroSolver<'a> {
         self.step_lb_solver.precompute()?;
         drop(timer);
 
-        Ok(self.do_solve(initial_state)?.actions())
+        let actions = self.do_solve(initial_state)?.actions();
+        log::debug!("{:?}", self.runtime_stats());
+        Ok(actions)
     }
 
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {

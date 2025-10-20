@@ -193,12 +193,6 @@ impl QualityUbSolver {
                 }));
         }
         self.precomputed_states = self.solved_states.len();
-        log::debug!(
-            "QualityUbSolver - templates: {}, precomputed_states: {}",
-            all_templates.len(),
-            self.solved_states.len()
-        );
-
         Ok(())
     }
 
