@@ -94,13 +94,16 @@ impl<'a> MacroSolver<'a> {
         self.step_lb_solver.precompute()?;
         drop(timer);
 
+        let timer = ScopedTimer::new("Search");
         let actions = self.do_solve(initial_state)?.actions();
+        drop(timer);
+
         log::debug!("{:?}", self.runtime_stats());
+
         Ok(actions)
     }
 
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
-        let _timer = ScopedTimer::new("Search");
         let mut search_queue = SearchQueue::new(state);
         let mut solution: Option<Solution> = None;
 
