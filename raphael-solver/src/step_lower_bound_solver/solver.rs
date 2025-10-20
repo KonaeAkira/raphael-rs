@@ -1,4 +1,7 @@
-use std::num::{NonZero, NonZeroU8};
+use std::{
+    num::{NonZero, NonZeroU8},
+    ops::Deref,
+};
 
 use crate::{
     SolverException, SolverSettings,
@@ -184,8 +187,8 @@ impl<'a> StepLbSolverShard<'a> {
         } else {
             solve_state_sequential(
                 reduced_state,
-                &self.context,
-                &self.shared_states,
+                self.context,
+                self.shared_states,
                 &mut self.local_states,
                 &mut self.pf_builder,
             )?
@@ -300,15 +303,16 @@ fn solve_state_sequential<'a>(
         };
         local_states.insert(state, solution);
     }
-    if let Some(solution) = local_states.get(&seed_state) {
-        Ok(solution)
-    } else {
-        Err(internal_error!(
-            "State not found in memoization after solving",
-            context.settings,
-            seed_state
-        ))
-    }
+    local_states
+        .get(&seed_state)
+        .map(Box::deref)
+        .ok_or_else(|| {
+            internal_error!(
+                "State not found in memoization after solving",
+                context.settings,
+                seed_state
+            )
+        })
 }
 
 fn solve_state_parallel<'a>(
@@ -348,13 +352,14 @@ fn solve_state_parallel<'a>(
         solved_states.extend(current_batch_solutions);
         idx_begin = idx_end;
     }
-    if let Some(solution) = solved_states.get(&seed_state) {
-        Ok(solution)
-    } else {
-        Err(internal_error!(
-            "State not found in memoization after solving",
-            context.settings,
-            seed_state
-        ))
-    }
+    solved_states
+        .get(&seed_state)
+        .map(Box::deref)
+        .ok_or_else(|| {
+            internal_error!(
+                "State not found in memoization after solving",
+                context.settings,
+                seed_state
+            )
+        })
 }
