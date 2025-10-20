@@ -107,13 +107,10 @@ impl<'a> MacroSolver<'a> {
         let mut search_queue = SearchQueue::new(state);
         let mut solution: Option<Solution> = None;
 
-        let mut popped = 0;
         while let Some(batch) = search_queue.pop_batch() {
             if self.interrupt_signal.is_set() {
                 return Err(SolverException::Interrupted);
             }
-            popped += batch.len();
-            (self.progress_callback)(popped);
 
             let create_thread_data = || ThreadData {
                 settings: &self.settings,
@@ -172,6 +169,8 @@ impl<'a> MacroSolver<'a> {
                 self.quality_ub_solver.extend_solved_states(solved_states.1);
                 self.step_lb_solver.extend_solved_states(solved_states.2);
             }
+
+            (self.progress_callback)(search_queue.runtime_stats().processed_nodes);
         }
 
         self.search_queue_stats = search_queue.runtime_stats();
