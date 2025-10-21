@@ -426,7 +426,7 @@ en = '''Unknown item'''
 ja = '''不明なアイテム'''
 de = '''Unbekannter Gegenstand'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:121:31", "src/widgets/macro_view.rs:132:39", "src/widgets/item_name_label.rs:15:39", "src/widgets/saved_rotations.rs:108:35", "src/widgets/saved_rotations.rs:470:39", "src/widgets/saved_rotations.rs:509:43"]
+appearances = ["src/widgets/macro_view.rs:121:31", "src/widgets/macro_view.rs:132:39", "src/widgets/game_data_name_label.rs:63:73", "src/widgets/game_data_name_label.rs:66:39", "src/widgets/saved_rotations.rs:108:35", "src/widgets/saved_rotations.rs:470:39", "src/widgets/saved_rotations.rs:509:43"]
 
 ["vXv1yeY8kh1x9KtxDRdJ8w=="]
 en = '''Use default notification'''
@@ -778,19 +778,26 @@ de = '''📋 Konfiguration hier einfügen, um diese zu laden'''
 version = "0.1.0"
 appearances = ["src/widgets/stats_edit.rs:85:47"]
 
+["ZfKRHRnNdTtPwtYCRVWryg=="]
+en = '''Unknown mission'''
+ja = '''不明なミッション'''
+de = '''Unbekannte Mission'''
+version = "0.1.0"
+appearances = ["src/widgets/game_data_name_label.rs:68:39"]
+
 ["B7aDbFVnrJ640ZuDhMNUaQ=="]
 en = '''Copy item name'''
 ja = '''アイテム名をコピー'''
 de = '''Gegenstandsnamen kopieren'''
 version = "0.1.0"
-appearances = ["src/widgets/item_name_label.rs:42:37"]
+appearances = ["src/widgets/game_data_name_label.rs:99:81"]
 
-["jPqS6hOpY1D5ul3Z6feibg=="]
-en = '''Copy item ID'''
-ja = '''アイテムIDをコピー'''
-de = '''Gegenstands-ID kopieren'''
+["BRKQIjx0bt8q3+KAeg6h0w=="]
+en = '''Copy mission name'''
+ja = '''ミッション名をコピー'''
+de = '''Missionsnamen kopieren'''
 version = "0.1.0"
-appearances = ["src/widgets/item_name_label.rs:52:37"]
+appearances = ["src/widgets/game_data_name_label.rs:100:54"]
 
 ["IOs59+lNVa5aqq42jPjgmA=="]
 en = '''Load rotation'''
