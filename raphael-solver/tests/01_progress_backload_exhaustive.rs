@@ -500,8 +500,8 @@ fn stuffed_peppers_2_quick_innovation() {
                 pareto_values: 17827198,
             },
             step_lb_stats: StepLbSolverStats {
-                states: 1094482,
-                pareto_values: 10934179,
+                states: 602715,
+                pareto_values: 5794281,
             },
         }
     "#]];
