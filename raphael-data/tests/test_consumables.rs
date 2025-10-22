@@ -25,3 +25,93 @@ fn test_rroneek_steak() {
     assert_eq!((consumable.control_rel, consumable.control_max), (5, 97));
     assert_eq!((consumable.cp_rel, consumable.cp_max), (26, 92));
 }
+
+#[test]
+fn test_u16_overflow() {
+    let item_id = 44091;
+    assert_eq!(
+        get_item_name(item_id, true, Locale::EN).unwrap(),
+        "Rroneek Steak \u{e03c}"
+    );
+    let consumable = find_consumable(MEALS, item_id, true).unwrap();
+    // 13108 * 5 mod 1<<16 = 4
+    // 2521 * 26 mod 1<<16 = 10
+    assert_eq!(
+        stat_bonuses([4021, 13108, 2521], &[Some(consumable)]),
+        [0, 97, 92]
+    );
+}
+
+#[test]
+fn test_rroneek_steak_hq() {
+    let item_id = 44091;
+    assert_eq!(
+        get_item_name(item_id, true, Locale::EN).unwrap(),
+        "Rroneek Steak \u{e03c}"
+    );
+    let consumable = find_consumable(MEALS, item_id, true).unwrap();
+    assert_eq!(
+        stat_bonuses([4021, 4032, 550], &[Some(consumable)]),
+        [0, 97, 92]
+    );
+    assert_eq!(
+        stat_bonuses([1000, 1000, 100], &[Some(consumable)]),
+        [0, 50, 26]
+    );
+}
+
+#[test]
+fn test_unbuffed_single_consumable() {
+    for consumable in MEALS.iter().chain(POTIONS) {
+        let consumables = &[Some(*consumable)];
+        for base_stat in 0..=9999 {
+            assert_eq!(
+                craftsmanship_unbuffed(
+                    base_stat + craftsmanship_bonus(base_stat, consumables),
+                    consumables
+                ),
+                Some(base_stat)
+            );
+            assert_eq!(
+                control_unbuffed(
+                    base_stat + control_bonus(base_stat, consumables),
+                    consumables
+                ),
+                Some(base_stat)
+            );
+            assert_eq!(
+                cp_unbuffed(base_stat + cp_bonus(base_stat, consumables), consumables),
+                Some(base_stat)
+            );
+        }
+    }
+}
+
+#[test]
+fn test_unbuffed_consumable_combinations() {
+    for food in MEALS {
+        for potion in POTIONS {
+            let consumables = &[Some(*food), Some(*potion)];
+            for base_stat in 0..=9999 {
+                assert_eq!(
+                    craftsmanship_unbuffed(
+                        base_stat + craftsmanship_bonus(base_stat, consumables),
+                        consumables
+                    ),
+                    Some(base_stat)
+                );
+                assert_eq!(
+                    control_unbuffed(
+                        base_stat + control_bonus(base_stat, consumables),
+                        consumables
+                    ),
+                    Some(base_stat)
+                );
+                assert_eq!(
+                    cp_unbuffed(base_stat + cp_bonus(base_stat, consumables), consumables),
+                    Some(base_stat)
+                );
+            }
+        }
+    }
+}

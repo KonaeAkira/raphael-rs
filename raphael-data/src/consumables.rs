@@ -70,46 +70,31 @@ pub fn stat_bonuses(base_stats: [u16; 3], consumables: &[Option<Consumable>]) ->
         })
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::{Locale, get_item_name};
+pub fn craftsmanship_unbuffed(buffed: u16, consumables: &[Option<Consumable>]) -> Option<u16> {
+    let max_total = consumables
+        .iter()
+        .flatten()
+        .map(|item| item.craft_max)
+        .sum();
 
-    use super::*;
+    (buffed.saturating_sub(max_total)..=buffed)
+        .find(|&prediction| prediction + craftsmanship_bonus(prediction, consumables) == buffed)
+}
 
-    fn find_consumable(item_name: &'static str) -> Option<Consumable> {
-        MEALS
-            .iter()
-            .chain(POTIONS.iter())
-            .find(
-                |consumable| match get_item_name(consumable.item_id, consumable.hq, Locale::EN) {
-                    None => false,
-                    Some(name) => name == item_name,
-                },
-            )
-            .copied()
-    }
+pub fn control_unbuffed(buffed: u16, consumables: &[Option<Consumable>]) -> Option<u16> {
+    let max_total = consumables
+        .iter()
+        .flatten()
+        .map(|item| item.control_max)
+        .sum();
 
-    #[test]
-    fn test_u16_overflow() {
-        let consumable = find_consumable("Rroneek Steak \u{e03c}").unwrap();
-        // 13108 * 5 mod 1<<16 = 4
-        // 2521 * 26 mod 1<<16 = 10
-        assert_eq!(
-            stat_bonuses([4021, 13108, 2521], &[Some(consumable)]),
-            [0, 97, 92]
-        );
-    }
+    (buffed.saturating_sub(max_total)..=buffed)
+        .find(|&prediction| prediction + control_bonus(prediction, consumables) == buffed)
+}
 
-    #[test]
-    fn test_rroneek_steak_hq() {
-        let consumable = find_consumable("Rroneek Steak \u{e03c}").unwrap();
-        assert_eq!(
-            stat_bonuses([4021, 4032, 550], &[Some(consumable)]),
-            [0, 97, 92]
-        );
-        assert_eq!(
-            stat_bonuses([1000, 1000, 100], &[Some(consumable)]),
-            [0, 50, 26]
-        );
-    }
+pub fn cp_unbuffed(buffed: u16, consumables: &[Option<Consumable>]) -> Option<u16> {
+    let max_total = consumables.iter().flatten().map(|item| item.cp_max).sum();
+
+    (buffed.saturating_sub(max_total)..=buffed)
+        .find(|&prediction| prediction + cp_bonus(prediction, consumables) == buffed)
 }
