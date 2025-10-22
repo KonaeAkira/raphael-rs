@@ -38,7 +38,7 @@ pub const JOB_NAMES_JP: [&str; 8] = [
     "錬金術師",
     "調理師",
 ];
-const JOB_NAMES_CN: [&str; 8] = [
+pub const JOB_NAMES_CN: [&str; 8] = [
     "刻木", "锻铁", "铸甲", "雕金", "制革", "裁衣", "炼金", "烹调",
 ];
 pub const JOB_NAMES_KR: [&str; 8] = [

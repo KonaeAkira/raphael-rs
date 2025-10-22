@@ -115,6 +115,7 @@ pub fn calculate_column_widths<const N: usize>(
                     Locale::DE => &raphael_data::JOB_NAMES_DE,
                     Locale::FR => &raphael_data::JOB_NAMES_FR,
                     Locale::JP => &raphael_data::JOB_NAMES_JP,
+                    Locale::CN => &raphael_data::JOB_NAMES_CN,
                     Locale::KR => &raphael_data::JOB_NAMES_KR,
                 },
             ),

@@ -275,6 +275,11 @@ impl eframe::App for MacroSolverApp {
                                 );
                                 ui.selectable_value(
                                     &mut self.app_context.locale,
+                                    Locale::CN,
+                                    format!("{}", Locale::CN),
+                                );
+                                ui.selectable_value(
+                                    &mut self.app_context.locale,
                                     Locale::KR,
                                     format!("{}", Locale::KR),
                                 );
@@ -1063,6 +1068,12 @@ impl MacroSolverApp {
                 "/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
             );
             load_font_dyn(ctx, "NotoSansJP-Regular", uri);
+        } else if self.app_context.locale == Locale::CN {
+            let uri = concat!(
+                env!("BASE_URL"),
+                "/fonts/Noto_Sans_SC/static/NotoSansSC-Regular.ttf"
+            );
+            load_font_dyn(ctx, "NotoSansSC-Regular", uri);
         } else if self.app_context.locale == Locale::KR {
             let uri = concat!(
                 env!("BASE_URL"),
@@ -1123,6 +1134,23 @@ fn load_fonts(ctx: &egui::Context) {
         "NotoSansJP-Regular",
         egui::FontData::from_static(include_bytes!(
             "../assets/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
+        )),
+        vec![
+            InsertFontFamily {
+                family: egui::FontFamily::Proportional,
+                priority: FontPriority::Lowest,
+            },
+            InsertFontFamily {
+                family: egui::FontFamily::Monospace,
+                priority: FontPriority::Lowest,
+            },
+        ],
+    ));
+    #[cfg(not(target_arch = "wasm32"))]
+    ctx.add_font(FontInsert::new(
+        "NotoSansSC-Regular",
+        egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/Noto_Sans_SC/static/NotoSansSC-Regular.ttf"
         )),
         vec![
             InsertFontFamily {
