@@ -71,49 +71,30 @@ pub fn stat_bonuses(base_stats: [u16; 3], consumables: &[Option<Consumable>]) ->
 }
 
 pub fn craftsmanship_unbuffed(buffed: u16, consumables: &[Option<Consumable>]) -> Option<u16> {
-    let (rel_total, max_total) = consumables
+    let max_total = consumables
         .iter()
         .flatten()
-        .map(|item| (item.craft_rel, item.craft_max))
-        .fold((0, 0), |(rel_acc, max_acc), (rel, max)| {
-            (rel_acc + rel, max_acc + max)
-        });
+        .map(|item| item.craft_max)
+        .sum();
 
-    let initial_prediction = (((buffed as u32 * 100) / (100 + rel_total as u32)) as u16)
-        .max(buffed.saturating_sub(max_total));
-
-    (initial_prediction..=buffed)
+    (buffed.saturating_sub(max_total)..=buffed)
         .find(|&prediction| prediction + craftsmanship_bonus(prediction, consumables) == buffed)
 }
 
 pub fn control_unbuffed(buffed: u16, consumables: &[Option<Consumable>]) -> Option<u16> {
-    let (rel_total, max_total) = consumables
+    let max_total = consumables
         .iter()
         .flatten()
-        .map(|item| (item.control_rel, item.control_max))
-        .fold((0, 0), |(rel_acc, max_acc), (rel, max)| {
-            (rel_acc + rel, max_acc + max)
-        });
+        .map(|item| item.control_max)
+        .sum();
 
-    let initial_prediction = (((buffed as u32 * 100) / (100 + rel_total as u32)) as u16)
-        .max(buffed.saturating_sub(max_total));
-
-    (initial_prediction..=buffed)
+    (buffed.saturating_sub(max_total)..=buffed)
         .find(|&prediction| prediction + control_bonus(prediction, consumables) == buffed)
 }
 
 pub fn cp_unbuffed(buffed: u16, consumables: &[Option<Consumable>]) -> Option<u16> {
-    let (rel_total, max_total) = consumables
-        .iter()
-        .flatten()
-        .map(|item| (item.cp_rel, item.cp_max))
-        .fold((0, 0), |(rel_acc, max_acc), (rel, max)| {
-            (rel_acc + rel, max_acc + max)
-        });
+    let max_total = consumables.iter().flatten().map(|item| item.cp_max).sum();
 
-    let initial_prediction = (((buffed as u32 * 100) / (100 + rel_total as u32)) as u16)
-        .max(buffed.saturating_sub(max_total));
-
-    (initial_prediction..=buffed)
+    (buffed.saturating_sub(max_total)..=buffed)
         .find(|&prediction| prediction + cp_bonus(prediction, consumables) == buffed)
 }
