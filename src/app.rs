@@ -677,7 +677,7 @@ impl MacroSolverApp {
                 ui.style_mut().spacing.item_spacing.x = 5.0;
 
                 let cms_base = &mut self.app_context.active_stats_mut().craftsmanship;
-                ui.add_enabled_ui(true, |ui| {
+                ui.scope(|ui| {
                     let cms_bonus = raphael_data::craftsmanship_bonus(*cms_base, consumables);
                     if cms_bonus != 0 {
                         ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
@@ -709,7 +709,7 @@ impl MacroSolverApp {
                 ui.style_mut().spacing.item_spacing.x = 5.0;
 
                 let control_base = &mut self.app_context.active_stats_mut().control;
-                ui.add_enabled_ui(true, |ui| {
+                ui.scope(|ui| {
                     let control_bonus = raphael_data::control_bonus(*control_base, consumables);
                     if control_bonus != 0 {
                         ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
@@ -741,7 +741,7 @@ impl MacroSolverApp {
                 ui.style_mut().spacing.item_spacing.x = 5.0;
 
                 let cp_base = &mut self.app_context.active_stats_mut().cp;
-                ui.add_enabled_ui(true, |ui| {
+                ui.scope(|ui| {
                     let cp_bonus = raphael_data::cp_bonus(*cp_base, consumables);
                     if cp_bonus != 0 {
                         ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
