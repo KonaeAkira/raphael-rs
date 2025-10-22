@@ -250,39 +250,23 @@ impl eframe::App for MacroSolverApp {
                         self.draw_app_config_menu_button(ui, ctx);
 
                         egui::ComboBox::from_id_salt("LOCALE")
-                            .selected_text(format!("{}", self.app_context.locale))
+                            .selected_text(self.app_context.locale.short_code())
                             .width(0.0)
                             .show_ui(ui, |ui| {
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
+                                for locale in [
                                     Locale::EN,
-                                    format!("{}", Locale::EN),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::DE,
-                                    format!("{}", Locale::DE),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::FR,
-                                    format!("{}", Locale::FR),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::JP,
-                                    format!("{}", Locale::JP),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::CN,
-                                    format!("{}", Locale::CN),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::KR,
-                                    format!("{}", Locale::KR),
-                                );
+                                ] {
+                                    ui.selectable_value(
+                                        &mut self.app_context.locale,
+                                        locale,
+                                        locale.short_code(),
+                                    );
+                                }
                             });
 
                         ui.add(

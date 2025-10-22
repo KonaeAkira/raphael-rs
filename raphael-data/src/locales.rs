@@ -12,15 +12,15 @@ pub enum Locale {
     KR,
 }
 
-impl std::fmt::Display for Locale {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Locale {
+    pub fn short_code(self) -> &'static str {
         match self {
-            Self::EN => write!(f, "EN"),
-            Self::DE => write!(f, "DE"),
-            Self::FR => write!(f, "FR"),
-            Self::JP => write!(f, "JP"),
-            Self::CN => write!(f, "CN"),
-            Self::KR => write!(f, "KR"),
+            Locale::EN => "EN",
+            Locale::DE => "DE",
+            Locale::FR => "FR",
+            Locale::JP => "JP",
+            Locale::CN => "CN",
+            Locale::KR => "KR",
         }
     }
 }
