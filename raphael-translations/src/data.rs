@@ -41,7 +41,7 @@ pub fn get_translations(literal_details: StringLiteralDetails) -> Vec<Translatio
 
     let mut translations = Vec::new();
     if let Some(item) = doc.get_mut(hash) {
-        for language_key in &["de", "fr", "ja", "ko"] {
+        for language_key in &["de", "fr", "ja", "chs", "ko"] {
             if let Some(str) = item
                 .get(language_key)
                 .and_then(|item| item.as_value())
