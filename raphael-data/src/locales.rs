@@ -8,6 +8,7 @@ pub enum Locale {
     DE,
     FR,
     JP,
+    CN,
     KR,
 }
 
@@ -18,6 +19,7 @@ impl std::fmt::Display for Locale {
             Self::DE => write!(f, "DE"),
             Self::FR => write!(f, "FR"),
             Self::JP => write!(f, "JP"),
+            Self::CN => write!(f, "CN"),
             Self::KR => write!(f, "KR"),
         }
     }
@@ -36,6 +38,9 @@ pub const JOB_NAMES_JP: [&str; 8] = [
     "錬金術師",
     "調理師",
 ];
+const JOB_NAMES_CN: [&str; 8] = [
+    "刻木", "锻铁", "铸甲", "雕金", "制革", "裁衣", "炼金", "烹调",
+];
 pub const JOB_NAMES_KR: [&str; 8] = [
     "목수", "대장", "갑주", "보석", "가죽", "재봉", "연금", "요리",
 ];
@@ -46,6 +51,7 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
         Locale::DE => JOB_NAMES_DE[job_id as usize],
         Locale::FR => JOB_NAMES_FR[job_id as usize],
         Locale::JP => JOB_NAMES_JP[job_id as usize],
+        Locale::CN => JOB_NAMES_CN[job_id as usize],
         Locale::KR => JOB_NAMES_KR[job_id as usize],
     }
 }
@@ -54,6 +60,7 @@ pub const ITEM_NAMES_EN: NciArray<u32, &str> = include!("../data/item_names_en.r
 pub const ITEM_NAMES_DE: NciArray<u32, &str> = include!("../data/item_names_de.rs");
 pub const ITEM_NAMES_FR: NciArray<u32, &str> = include!("../data/item_names_fr.rs");
 pub const ITEM_NAMES_JP: NciArray<u32, &str> = include!("../data/item_names_jp.rs");
+pub const ITEM_NAMES_CN: NciArray<u32, &str> = include!("../data/item_names_cn.rs");
 pub const ITEM_NAMES_KR: NciArray<u32, &str> = include!("../data/item_names_kr.rs");
 
 pub fn get_raw_item_name(item_id: u32, locale: Locale) -> Option<&'static str> {
@@ -62,6 +69,7 @@ pub fn get_raw_item_name(item_id: u32, locale: Locale) -> Option<&'static str> {
         Locale::DE => ITEM_NAMES_DE.get(item_id).copied(),
         Locale::FR => ITEM_NAMES_FR.get(item_id).copied(),
         Locale::JP => ITEM_NAMES_JP.get(item_id).copied(),
+        Locale::CN => ITEM_NAMES_CN.get(item_id).copied(),
         Locale::KR => ITEM_NAMES_KR.get(item_id).copied(),
     }
 }
@@ -85,6 +93,8 @@ pub static STELLAR_MISSION_NAMES_FR: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_fr.rs");
 pub static STELLAR_MISSION_NAMES_JP: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_jp.rs");
+pub static STELLAR_MISSION_NAMES_CN: NciArray<u32, &str> =
+    include!("../data/stellar_mission_names_cn.rs");
 pub static STELLAR_MISSION_NAMES_KR: NciArray<u32, &str> =
     include!("../data/stellar_mission_names_kr.rs");
 
@@ -94,6 +104,7 @@ pub fn get_stellar_mission_name(mission_id: u32, locale: Locale) -> Option<&'sta
         Locale::DE => STELLAR_MISSION_NAMES_DE.get(mission_id).copied(),
         Locale::FR => STELLAR_MISSION_NAMES_FR.get(mission_id).copied(),
         Locale::JP => STELLAR_MISSION_NAMES_JP.get(mission_id).copied(),
+        Locale::CN => STELLAR_MISSION_NAMES_CN.get(mission_id).copied(),
         Locale::KR => STELLAR_MISSION_NAMES_KR.get(mission_id).copied(),
     }
 }
@@ -104,6 +115,7 @@ pub const fn action_name(action: Action, locale: Locale) -> &'static str {
         Locale::DE => action_name_de(action),
         Locale::FR => action_name_fr(action),
         Locale::JP => action_name_jp(action),
+        Locale::CN => action_name_cn(action),
         Locale::KR => action_name_kr(action),
     }
 }
@@ -249,6 +261,42 @@ const fn action_name_jp(action: Action) -> &'static str {
         Action::TrainedPerfection => "匠の絶技",
         Action::TrainedEye => "匠の早業",
         Action::QuickInnovation => "クイックイノベーション",
+    }
+}
+
+const fn action_name_cn(action: Action) -> &'static str {
+    match action {
+        Action::BasicSynthesis => "制作",
+        Action::BasicTouch => "加工",
+        Action::MasterMend => "精修",
+        Action::Observe => "观察",
+        Action::TricksOfTheTrade => "秘诀",
+        Action::WasteNot => "俭约",
+        Action::Veneration => "崇敬",
+        Action::StandardTouch => "中级加工",
+        Action::GreatStrides => "阔步",
+        Action::Innovation => "改革",
+        Action::WasteNot2 => "长期俭约",
+        Action::ByregotsBlessing => "比尔格的祝福",
+        Action::PreciseTouch => "集中加工",
+        Action::MuscleMemory => "坚信",
+        Action::CarefulSynthesis => "模范制作",
+        Action::Manipulation => "掌握",
+        Action::PrudentTouch => "俭约加工",
+        Action::AdvancedTouch => "上级加工",
+        Action::Reflect => "闲静",
+        Action::PreparatoryTouch => "坯料加工",
+        Action::Groundwork => "坯料制作",
+        Action::DelicateSynthesis => "精密制作",
+        Action::IntensiveSynthesis => "集中制作",
+        Action::HeartAndSoul => "专心致志",
+        Action::PrudentSynthesis => "俭约制作",
+        Action::TrainedFinesse => "工匠的神技",
+        Action::RefinedTouch => "精炼加工",
+        Action::ImmaculateMend => "巧夺天工",
+        Action::TrainedPerfection => "工匠的绝技",
+        Action::TrainedEye => "工匠的神速技巧",
+        Action::QuickInnovation => "快速改革",
     }
 }
 
