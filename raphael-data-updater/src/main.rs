@@ -238,7 +238,8 @@ async fn main() {
     item_names_de.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_fr.retain(|item_name| necessary_items.contains(&item_name.id));
     item_names_jp.retain(|item_name| necessary_items.contains(&item_name.id));
-    item_names_cn.retain(|item_name| necessary_items.contains(&item_name.id));
+    item_names_cn
+        .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
     item_names_kr
         .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
 
