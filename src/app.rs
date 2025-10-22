@@ -250,34 +250,23 @@ impl eframe::App for MacroSolverApp {
                         self.draw_app_config_menu_button(ui, ctx);
 
                         egui::ComboBox::from_id_salt("LOCALE")
-                            .selected_text(format!("{}", self.app_context.locale))
+                            .selected_text(self.app_context.locale.short_code())
                             .width(0.0)
                             .show_ui(ui, |ui| {
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
+                                for locale in [
                                     Locale::EN,
-                                    format!("{}", Locale::EN),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::DE,
-                                    format!("{}", Locale::DE),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::FR,
-                                    format!("{}", Locale::FR),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
                                     Locale::JP,
-                                    format!("{}", Locale::JP),
-                                );
-                                ui.selectable_value(
-                                    &mut self.app_context.locale,
+                                    Locale::CN,
                                     Locale::KR,
-                                    format!("{}", Locale::KR),
-                                );
+                                ] {
+                                    ui.selectable_value(
+                                        &mut self.app_context.locale,
+                                        locale,
+                                        locale.short_code(),
+                                    );
+                                }
                             });
 
                         ui.add(
@@ -1063,6 +1052,12 @@ impl MacroSolverApp {
                 "/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
             );
             load_font_dyn(ctx, "NotoSansJP-Regular", uri);
+        } else if self.app_context.locale == Locale::CN {
+            let uri = concat!(
+                env!("BASE_URL"),
+                "/fonts/Noto_Sans_SC/static/NotoSansSC-Regular.ttf"
+            );
+            load_font_dyn(ctx, "NotoSansSC-Regular", uri);
         } else if self.app_context.locale == Locale::KR {
             let uri = concat!(
                 env!("BASE_URL"),
@@ -1123,6 +1118,23 @@ fn load_fonts(ctx: &egui::Context) {
         "NotoSansJP-Regular",
         egui::FontData::from_static(include_bytes!(
             "../assets/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
+        )),
+        vec![
+            InsertFontFamily {
+                family: egui::FontFamily::Proportional,
+                priority: FontPriority::Lowest,
+            },
+            InsertFontFamily {
+                family: egui::FontFamily::Monospace,
+                priority: FontPriority::Lowest,
+            },
+        ],
+    ));
+    #[cfg(not(target_arch = "wasm32"))]
+    ctx.add_font(FontInsert::new(
+        "NotoSansSC-Regular",
+        egui::FontData::from_static(include_bytes!(
+            "../assets/fonts/Noto_Sans_SC/static/NotoSansSC-Regular.ttf"
         )),
         vec![
             InsertFontFamily {
