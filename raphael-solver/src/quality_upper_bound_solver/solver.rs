@@ -22,9 +22,9 @@ struct QualityUbSolverContext {
 
 #[derive(Debug, Clone, Copy)]
 pub struct QualityUbSolverStats {
-    pub parallel_states: usize,
-    pub sequential_states: usize,
-    pub pareto_values: usize,
+    pub states_on_main: usize,
+    pub states_on_shards: usize,
+    pub values: usize,
 }
 
 type SolvedStates = FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>;
@@ -33,7 +33,7 @@ pub struct QualityUbSolver {
     context: QualityUbSolverContext,
     maximal_templates: FxHashMap<TemplateData, u16>,
     solved_states: SolvedStates,
-    precomputed_states: usize,
+    num_states_solved_on_shards: usize,
 }
 
 pub struct QualityUbSolverShard<'a> {
@@ -62,12 +62,15 @@ impl QualityUbSolver {
             },
             solved_states: FxHashMap::default(),
             maximal_templates: FxHashMap::default(),
-            precomputed_states: 0,
+            num_states_solved_on_shards: 0,
         }
     }
 
     pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates) {
+        let len_before = self.solved_states.len();
         self.solved_states.extend(new_solved_states);
+        let len_after = self.solved_states.len();
+        self.num_states_solved_on_shards += len_after - len_before;
     }
 
     pub fn create_shard(&self) -> QualityUbSolverShard<'_> {
@@ -191,7 +194,6 @@ impl QualityUbSolver {
                         .map(|required_cp| (template.data, required_cp))
                 }));
         }
-        self.precomputed_states = self.solved_states.len();
         Ok(())
     }
 
@@ -244,9 +246,9 @@ impl QualityUbSolver {
 
     pub fn runtime_stats(&self) -> QualityUbSolverStats {
         QualityUbSolverStats {
-            parallel_states: self.precomputed_states,
-            sequential_states: self.solved_states.len() - self.precomputed_states,
-            pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
+            states_on_main: self.solved_states.len() - self.num_states_solved_on_shards,
+            states_on_shards: self.num_states_solved_on_shards,
+            values: self.solved_states.values().map(|value| value.len()).sum(),
         }
     }
 }

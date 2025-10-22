@@ -24,8 +24,9 @@ type SolvedStates = FxHashMap<ReducedState, Box<NonEmptyParetoFront>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
-    pub states: usize,
-    pub pareto_values: usize,
+    pub states_on_main: usize,
+    pub states_on_shards: usize,
+    pub values: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -39,6 +40,7 @@ struct StepLbSolverContext {
 pub struct StepLbSolver {
     context: StepLbSolverContext,
     solved_states: SolvedStates,
+    num_states_solved_on_shards: usize,
 }
 
 pub struct StepLbSolverShard<'a> {
@@ -61,6 +63,7 @@ impl StepLbSolver {
                 largest_progress_increase: largest_single_action_progress_increase(&settings),
             },
             solved_states: SolvedStates::default(),
+            num_states_solved_on_shards: 0,
         }
     }
 
@@ -74,7 +77,10 @@ impl StepLbSolver {
     }
 
     pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates) {
+        let len_before = self.solved_states.len();
         self.solved_states.extend(new_solved_states);
+        let len_after = self.solved_states.len();
+        self.num_states_solved_on_shards += len_after - len_before;
     }
 
     pub fn precompute(&mut self) -> Result<(), SolverException> {
@@ -132,8 +138,9 @@ impl StepLbSolver {
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
         StepLbSolverStats {
-            states: self.solved_states.len(),
-            pareto_values: self.solved_states.values().map(|value| value.len()).sum(),
+            states_on_main: self.solved_states.len() - self.num_states_solved_on_shards,
+            states_on_shards: self.num_states_solved_on_shards,
+            values: self.solved_states.values().map(|value| value.len()).sum(),
         }
     }
 }

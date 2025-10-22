@@ -59,8 +59,8 @@ struct SearchNode {
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SearchQueueStats {
+    pub inserted_nodes: usize,
     pub processed_nodes: usize,
-    pub dropped_nodes: usize,
 }
 
 pub struct SearchQueue {
@@ -70,8 +70,8 @@ pub struct SearchQueue {
     initial_state: SimulationState,
     current_score: SearchScore,
     minimum_score: SearchScore,
+    inserted_nodes: usize,
     processed_nodes: usize,
-    dropped_nodes: usize,
 }
 
 impl SearchQueue {
@@ -83,8 +83,8 @@ impl SearchQueue {
             initial_state,
             current_score: SearchScore::MAX,
             minimum_score: SearchScore::MIN,
+            inserted_nodes: 1, // initial node
             processed_nodes: 0,
-            dropped_nodes: 0,
         }
     }
 
@@ -104,7 +104,6 @@ impl SearchQueue {
             }
             dropped += self.batches.pop_first().unwrap().1.len();
         }
-        self.dropped_nodes += dropped;
         log::trace!(
             "New minimum score: ({}, {}, {}). Nodes dropped: {}",
             score.quality_upper_bound,
@@ -136,6 +135,7 @@ impl SearchQueue {
                 action,
                 parent_id,
             });
+            self.inserted_nodes += 1;
         }
         Ok(())
     }
@@ -176,8 +176,8 @@ impl SearchQueue {
 
     pub fn runtime_stats(&self) -> SearchQueueStats {
         SearchQueueStats {
+            inserted_nodes: self.inserted_nodes,
             processed_nodes: self.processed_nodes,
-            dropped_nodes: self.dropped_nodes,
         }
     }
 }
