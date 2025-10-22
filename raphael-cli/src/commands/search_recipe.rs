@@ -1,5 +1,7 @@
-use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, Recipe, STELLAR_MISSIONS, get_job_name, get_raw_item_name};
+use clap::Args;
+use raphael_data::{RECIPES, Recipe, STELLAR_MISSIONS, get_job_name, get_raw_item_name};
+
+use crate::commands::Language;
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
@@ -24,29 +26,8 @@ pub struct SearchArgs {
     output_field_separator: String,
 
     /// The language the input pattern and output use
-    #[arg(short, long, alias = "locale", value_enum, ignore_case = true, default_value_t = SearchLanguage::EN)]
-    language: SearchLanguage,
-}
-
-#[derive(Copy, Clone, ValueEnum, Debug)]
-pub enum SearchLanguage {
-    EN,
-    DE,
-    FR,
-    JP,
-    KR,
-}
-
-impl From<SearchLanguage> for Locale {
-    fn from(val: SearchLanguage) -> Self {
-        match val {
-            SearchLanguage::EN => Locale::EN,
-            SearchLanguage::DE => Locale::DE,
-            SearchLanguage::FR => Locale::FR,
-            SearchLanguage::JP => Locale::JP,
-            SearchLanguage::KR => Locale::KR,
-        }
-    }
+    #[arg(short, long, alias = "locale", value_enum, ignore_case = true, default_value_t = Language::EN)]
+    language: Language,
 }
 
 pub fn execute(args: &SearchArgs) {
