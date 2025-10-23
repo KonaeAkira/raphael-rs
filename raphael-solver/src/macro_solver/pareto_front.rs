@@ -55,7 +55,7 @@ impl Value {
 impl From<&SimulationState> for Value {
     fn from(state: &SimulationState) -> Self {
         Self(wide::u32x4::new([
-            (u32::from(state.cp) << 16) + u32::from(state.durability),
+            (u32::from(state.cp) << 16) | u32::from(state.durability),
             state.quality,
             state.quality + state.unreliable_quality,
             state.effects.into_bits() & EFFECTS_VALUE_MASK,
