@@ -269,7 +269,7 @@ impl<'a> RecipeSelect<'a> {
                 let row_index = row.index();
                 row.col(|ui| {
                     ui.add(GameDataNameLabel::new(
-                        NameSource::Mission(mission_id),
+                        NameSource::Mission { mission_id },
                         locale,
                     ));
                     for (index, recipe_id) in mission.recipe_ids.iter().enumerate() {

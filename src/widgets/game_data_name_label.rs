@@ -11,26 +11,35 @@ const EXPERT_RECIPE_ICON_COLOR: egui::Color32 = egui::Color32::from_rgb(226, 122
 
 #[derive(Debug, Hash)]
 pub enum NameSource {
-    Item(u32, bool),
-    Recipe(u32, bool),
-    Mission(u32),
+    Item { item_id: u32, hq: bool },
+    Recipe { item_id: u32, expert: bool },
+    Mission { mission_id: u32 },
 }
 
 impl From<&Consumable> for NameSource {
     fn from(consumable: &Consumable) -> Self {
-        Self::Item(consumable.item_id, consumable.hq)
+        Self::Item {
+            item_id: consumable.item_id,
+            hq: consumable.hq,
+        }
     }
 }
 
 impl From<&Ingredient> for NameSource {
     fn from(ingredient: &Ingredient) -> Self {
-        Self::Item(ingredient.item_id, false)
+        Self::Item {
+            item_id: ingredient.item_id,
+            hq: false,
+        }
     }
 }
 
 impl From<&Recipe> for NameSource {
     fn from(recipe: &Recipe) -> Self {
-        Self::Recipe(recipe.item_id, recipe.is_expert)
+        Self::Recipe {
+            item_id: recipe.item_id,
+            expert: recipe.is_expert,
+        }
     }
 }
 
@@ -59,12 +68,12 @@ impl egui::Widget for GameDataNameLabel {
         let style = ui.style();
 
         let name = match name_source {
-            NameSource::Item(item_id, hq) => {
+            NameSource::Item { item_id, hq } => {
                 get_item_name(item_id, hq, locale).unwrap_or(t!(locale, "Unknown item").to_owned())
             }
-            NameSource::Recipe(item_id, _) => get_item_name(item_id, false, locale)
+            NameSource::Recipe { item_id, .. } => get_item_name(item_id, false, locale)
                 .unwrap_or(t!(locale, "Unknown item").to_owned()),
-            NameSource::Mission(mission_id) => get_stellar_mission_name(mission_id, locale)
+            NameSource::Mission { mission_id } => get_stellar_mission_name(mission_id, locale)
                 .unwrap_or(t!(locale, "Unknown mission"))
                 .to_owned(),
         };
@@ -80,9 +89,7 @@ impl egui::Widget for GameDataNameLabel {
             egui::Align::Center,
         );
 
-        if let NameSource::Recipe(_, expert_recipe) = name_source
-            && expert_recipe
-        {
+        if let NameSource::Recipe { expert: true, .. } = name_source {
             egui::RichText::new(format!(" {}", EXPERT_RECIPE_ICON_CHAR))
                 .color(EXPERT_RECIPE_ICON_COLOR)
                 .append_to(
@@ -96,8 +103,8 @@ impl egui::Widget for GameDataNameLabel {
         let response = ui.add(egui::Label::new(layout_job).sense(egui::Sense::CLICK));
         response.context_menu(|ui| {
             let copy_name_button_text = match name_source {
-                NameSource::Item(_, _) | NameSource::Recipe(_, _) => t!(locale, "Copy item name"),
-                NameSource::Mission(_) => t!(locale, "Copy mission name"),
+                NameSource::Item { .. } | NameSource::Recipe { .. } => t!(locale, "Copy item name"),
+                NameSource::Mission { .. } => t!(locale, "Copy mission name"),
             };
             if ui.button(copy_name_button_text).clicked() {
                 let copied_name = name
