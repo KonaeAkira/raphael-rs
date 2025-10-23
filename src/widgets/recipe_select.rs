@@ -5,7 +5,7 @@ use egui::{
 use egui_extras::Column;
 use raphael_data::{
     Consumable, CustomRecipeOverrides, Ingredient, Locale, RLVLS, find_recipes,
-    find_stellar_missions, get_game_settings, get_job_name, get_stellar_mission_name,
+    find_stellar_missions, get_game_settings, get_job_name,
 };
 use raphael_translations::{t, t_format};
 
@@ -15,9 +15,10 @@ use crate::{
     },
     context::AppContext,
     widgets::util::{TableColumnWidth, calculate_column_widths},
+    widgets::{GameDataNameLabel, NameSource},
 };
 
-use super::{ItemNameLabel, util};
+use super::util;
 
 #[derive(Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 enum RecipeSearchDomain {
@@ -223,7 +224,7 @@ impl<'a> RecipeSelect<'a> {
                     ui.label(get_job_name(recipe.job_id, locale));
                 });
                 row.col(|ui| {
-                    ui.add(ItemNameLabel::new(recipe.item_id, false, locale));
+                    ui.add(GameDataNameLabel::new(recipe, locale));
                 });
             });
         });
@@ -267,11 +268,10 @@ impl<'a> RecipeSelect<'a> {
                 });
                 let row_index = row.index();
                 row.col(|ui| {
-                    let mission_name = get_stellar_mission_name(mission_id, locale).unwrap();
-                    ui.label(
-                        egui::RichText::new(mission_name)
-                            .color(ui.style().visuals.widgets.inactive.fg_stroke.color),
-                    );
+                    ui.add(GameDataNameLabel::new(
+                        NameSource::Mission { mission_id },
+                        locale,
+                    ));
                     for (index, recipe_id) in mission.recipe_ids.iter().enumerate() {
                         let recipe = &raphael_data::RECIPES[*recipe_id];
                         const DARKENING_COLOR_DARK_MODE: egui::Color32 =
@@ -297,7 +297,7 @@ impl<'a> RecipeSelect<'a> {
                                         quality_source: QualitySource::HqMaterialList([0; 6]),
                                     }
                                 }
-                                ui.add(ItemNameLabel::new(recipe.item_id, false, locale));
+                                ui.add(GameDataNameLabel::new(recipe, locale));
                                 ui.allocate_space(ui.available_size());
                             });
                         });
@@ -485,11 +485,7 @@ impl Widget for RecipeSelect<'_> {
                         &mut collapsed,
                     );
                     ui.label(egui::RichText::new(t!(locale, "Recipe")).strong());
-                    ui.add(ItemNameLabel::new(
-                        self.recipe_config.recipe.item_id,
-                        false,
-                        locale,
-                    ));
+                    ui.add(GameDataNameLabel::new(&self.recipe_config.recipe, locale));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         let use_custom_recipe =
                             &mut self.custom_recipe_overrides_config.use_custom_recipe;
