@@ -51,10 +51,10 @@ impl std::cmp::Ord for SearchScore {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct SearchNode {
-    state: SimulationState,
-    action: ActionCombo,
-    parent_id: usize,
+pub struct SearchNode {
+    pub state: SimulationState,
+    pub action: ActionCombo,
+    pub parent_id: usize,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -149,22 +149,19 @@ impl SearchQueue {
                 Backtracking::<Action>::SENTINEL,
             )]);
         }
-        if let Some((score, mut batch)) = self.batches.pop_last() {
-            // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
-            batch.sort_unstable_by(|lhs, rhs| {
-                pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
-            });
+        if let Some((score, batch)) = self.batches.pop_last() {
             self.current_score = score;
-            let returned_batch = batch
-                .into_iter()
-                .filter(|node| self.pareto_front.insert(node.state))
-                .map(|node| {
-                    let backtrack_id = self.backtracking.push(node.action, node.parent_id);
-                    (node.state, score, backtrack_id)
-                })
-                .collect::<Vec<_>>();
-            self.processed_nodes += returned_batch.len();
-            Some(returned_batch)
+            let filtered_batch = self.pareto_front.par_insert(batch);
+            self.processed_nodes += filtered_batch.len();
+            Some(
+                filtered_batch
+                    .into_iter()
+                    .map(|node| {
+                        let backtrack_id = self.backtracking.push(node.action, node.parent_id);
+                        (node.state, score, backtrack_id)
+                    })
+                    .collect(),
+            )
         } else {
             None
         }
@@ -180,12 +177,4 @@ impl SearchQueue {
             processed_nodes: self.processed_nodes,
         }
     }
-}
-
-fn pareto_weight(state: &SimulationState) -> u32 {
-    state.cp as u32
-        + state.durability as u32
-        + state.quality
-        + state.unreliable_quality
-        + state.effects.into_bits()
 }

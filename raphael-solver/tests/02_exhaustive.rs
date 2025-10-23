@@ -337,10 +337,10 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 2433096,
+            finish_states: 2433088,
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 13407968,
-                processed_nodes: 1597673,
+                inserted_nodes: 13408429,
+                processed_nodes: 1597734,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 932788,
@@ -849,8 +849,8 @@ fn hardened_survey_plank_5558_5216() {
         MacroSolverStats {
             finish_states: 900043,
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 18326484,
-                processed_nodes: 2024194,
+                inserted_nodes: 18326631,
+                processed_nodes: 2024206,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 969126,

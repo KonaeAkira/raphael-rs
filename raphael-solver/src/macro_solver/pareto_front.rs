@@ -1,5 +1,10 @@
-use raphael_sim::{Effects, SimulationState};
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use std::{cmp::Reverse, collections::hash_map::Entry};
+
+use raphael_sim::{Effects, SimulationState};
+
+use crate::macro_solver::search_queue::SearchNode;
 
 // It is important that this mask doesn't use any effect to its full bit range.
 // Otherwise, `Value::effect_dominates` will break.
@@ -95,44 +100,99 @@ pub struct ParetoFront {
 }
 
 impl ParetoFront {
-    pub fn insert(&mut self, state: SimulationState) -> bool {
-        const MAX_LEAF_SIZE: usize = 200;
-        let new_value = Value::from(&state);
-        let mut node = self.buckets.entry(Key::from(&state)).or_default();
-        while let TreeNode::Intermediate(intermediate) = node {
-            if new_value.cp() < intermediate.partition_point {
-                node = intermediate.lhs.as_mut();
-            } else {
-                node = intermediate.rhs.as_mut();
+    pub fn par_insert(&mut self, search_nodes: Vec<SearchNode>) -> Vec<SearchNode> {
+        let mut insertion_tasks: FxHashMap<Key, InsertionTask> = FxHashMap::default();
+        for node in search_nodes {
+            let key = Key::from(&node.state);
+            match insertion_tasks.entry(key) {
+                Entry::Occupied(occupied_entry) => {
+                    occupied_entry.into_mut().search_nodes.push(node)
+                }
+                Entry::Vacant(vacant_entry) => {
+                    let segment_tree_root = self.buckets.entry(key).or_default();
+                    let mut insertion_task = InsertionTask {
+                        segment_tree_root: TreeNode::default(),
+                        search_nodes: vec![node],
+                    };
+                    // The task takes ownership of the current tree root and gives ownership back when the task is complete.
+                    std::mem::swap(segment_tree_root, &mut insertion_task.segment_tree_root);
+                    vacant_entry.insert(insertion_task);
+                }
             }
         }
-        if let TreeNode::Leaf(leaf) = node {
-            let is_dominated = leaf.values.iter().any(|value| value.dominates(&new_value));
-            if !is_dominated {
-                leaf.values.retain(|value| !new_value.dominates(value));
-                leaf.values.push(new_value);
-            }
-            if leaf.values.len() > MAX_LEAF_SIZE && leaf.range_min + 1 != leaf.range_max {
-                leaf.values.sort_unstable_by_key(Value::cp);
-                let (lhs_values, rhs_values) = leaf.values.split_at(MAX_LEAF_SIZE / 2);
-                let partition_point = rhs_values[0].cp();
-                *node = TreeNode::Intermediate(IntermediateNode {
-                    partition_point,
-                    lhs: Box::new(TreeNode::Leaf(LeafNode {
-                        range_min: leaf.range_min,
-                        range_max: partition_point,
-                        values: lhs_values.into(),
-                    })),
-                    rhs: Box::new(TreeNode::Leaf(LeafNode {
-                        range_min: partition_point,
-                        range_max: leaf.range_max,
-                        values: rhs_values.into(),
-                    })),
-                });
-            }
-            !is_dominated
+        let finished_tasks = insertion_tasks
+            .into_par_iter()
+            .map(|(key, task)| (key, task.execute()))
+            .collect_vec_list();
+        let mut result = Vec::new();
+        for (key, task) in finished_tasks.into_iter().flatten() {
+            // Give back ownership of the tree root.
+            self.buckets.insert(key, task.segment_tree_root);
+            result.extend(task.search_nodes);
+        }
+        result
+    }
+}
+
+struct InsertionTask {
+    segment_tree_root: TreeNode,
+    search_nodes: Vec<SearchNode>,
+}
+
+impl InsertionTask {
+    fn execute(mut self) -> Self {
+        self.search_nodes
+            .sort_unstable_by_key(|node| Reverse(pareto_weight(&node.state)));
+        self.search_nodes
+            .retain(|node| insert_to_tree(&mut self.segment_tree_root, node));
+        self
+    }
+}
+
+fn pareto_weight(state: &SimulationState) -> u32 {
+    state.cp as u32
+        + state.durability as u32
+        + state.quality
+        + state.unreliable_quality
+        + state.effects.into_bits()
+}
+
+fn insert_to_tree(mut tree_node: &mut TreeNode, search_node: &SearchNode) -> bool {
+    const MAX_LEAF_SIZE: usize = 200;
+    let new_value = Value::from(&search_node.state);
+    while let TreeNode::Intermediate(intermediate) = tree_node {
+        if new_value.cp() < intermediate.partition_point {
+            tree_node = intermediate.lhs.as_mut();
         } else {
-            unreachable!()
+            tree_node = intermediate.rhs.as_mut();
         }
+    }
+    if let TreeNode::Leaf(leaf) = tree_node {
+        let is_dominated = leaf.values.iter().any(|value| value.dominates(&new_value));
+        if !is_dominated {
+            leaf.values.retain(|value| !new_value.dominates(value));
+            leaf.values.push(new_value);
+        }
+        if leaf.values.len() > MAX_LEAF_SIZE && leaf.range_min + 1 != leaf.range_max {
+            leaf.values.sort_unstable_by_key(Value::cp);
+            let (lhs_values, rhs_values) = leaf.values.split_at(MAX_LEAF_SIZE / 2);
+            let partition_point = rhs_values[0].cp();
+            *tree_node = TreeNode::Intermediate(IntermediateNode {
+                partition_point,
+                lhs: Box::new(TreeNode::Leaf(LeafNode {
+                    range_min: leaf.range_min,
+                    range_max: partition_point,
+                    values: lhs_values.into(),
+                })),
+                rhs: Box::new(TreeNode::Leaf(LeafNode {
+                    range_min: partition_point,
+                    range_max: leaf.range_max,
+                    values: rhs_values.into(),
+                })),
+            });
+        }
+        !is_dominated
+    } else {
+        unreachable!()
     }
 }
