@@ -96,8 +96,8 @@ impl ParetoFront {
         let mut finished_tasks = insertion_tasks
             .into_par_iter()
             .map(|(key, task)| (key, task.execute()))
-            .collect_vec_list();
-        for (key, task) in finished_tasks.iter_mut().flatten() {
+            .collect::<Vec<_>>();
+        for (key, task) in finished_tasks.iter_mut() {
             std::mem::swap(
                 self.buckets.entry(*key).or_default(),
                 &mut task.existing_values,
@@ -105,7 +105,6 @@ impl ParetoFront {
         }
         finished_tasks
             .into_iter()
-            .flatten()
             .flat_map(|(_key, task)| task.search_nodes)
     }
 }
