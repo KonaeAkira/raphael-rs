@@ -4,6 +4,7 @@ en = '''EXAMPLE \u{e100}''' # filled from Rust source when `update-toml` feature
 de = '''EXAMPLE_DE \u{e100}''' # contents must be a valid Rust string literal
 fr = '''EXAMPLE_FR \u{e100}'''
 ja = '''EXAMPLE_JA \u{e100}'''
+chs = '''EXAMPLE_CHS \u{e100}'''
 ko = '''EXAMPLE_KO \u{e100}'''
 version = "0.0.0" # only written when `update-toml` feature is used
 appearances = [] # only written when `update-toml` feature is used, additionally setting `RAPHAEL_TRANSLATIONS_RESET_APPEARANCES` resets them

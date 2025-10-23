@@ -1,5 +1,7 @@
-use clap::{Args, ValueEnum};
-use raphael_data::{Locale, RECIPES, get_job_name, get_raw_item_name};
+use clap::Args;
+use raphael_data::{RECIPES, get_job_name, get_raw_item_name};
+
+use crate::commands::Language;
 
 #[derive(Args, Debug)]
 pub struct IngredientsArgs {
@@ -8,33 +10,12 @@ pub struct IngredientsArgs {
     pub recipe_id: u32,
 
     /// The language the output uses
-    #[arg(short, long, alias = "locale", value_enum, ignore_case = true, default_value_t = IngredientsLanguage::EN)]
-    language: IngredientsLanguage,
+    #[arg(short, long, alias = "locale", value_enum, ignore_case = true, default_value_t = Language::EN)]
+    language: Language,
 
     /// The delimiter the output uses between fields
     #[arg(long, alias = "OFS", default_value = " ", env = "OFS")]
     output_field_separator: String,
-}
-
-#[derive(Copy, Clone, ValueEnum, Debug)]
-pub enum IngredientsLanguage {
-    EN,
-    DE,
-    FR,
-    JP,
-    KR,
-}
-
-impl From<IngredientsLanguage> for Locale {
-    fn from(val: IngredientsLanguage) -> Self {
-        match val {
-            IngredientsLanguage::EN => Locale::EN,
-            IngredientsLanguage::DE => Locale::DE,
-            IngredientsLanguage::FR => Locale::FR,
-            IngredientsLanguage::JP => Locale::JP,
-            IngredientsLanguage::KR => Locale::KR,
-        }
-    }
 }
 
 pub fn execute(args: &IngredientsArgs) {

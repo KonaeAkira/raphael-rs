@@ -19,10 +19,13 @@ impl Translation {
         string_literal_details: &StringLiteralDetails,
     ) -> Self {
         let locale = match language_key {
-            // "en" => Locale::EN,
+            "en" => unimplemented!(
+                "The entry in the translation TOML is only for reference, the EN string literal argument passed to the macro is used directly."
+            ),
             "de" => Locale::DE,
             "fr" => Locale::FR,
             "ja" => Locale::JP,
+            "chs" => Locale::CN,
             "ko" => Locale::KR,
             _ => panic!("Unsupported language key!"),
         };
@@ -49,12 +52,14 @@ impl From<Locale> for LocaleTokens {
 impl quote::ToTokens for LocaleTokens {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self.0 {
-            // Locale::EN => quote! { ::raphael_data::Locale::EN => #literal },
+            Locale::EN => unimplemented!(
+                "The entry in the translation TOML is only for reference, the EN string literal argument passed to the macro is used directly."
+            ),
             Locale::DE => quote! { ::raphael_data::Locale::DE },
             Locale::FR => quote! { ::raphael_data::Locale::FR },
             Locale::JP => quote! { ::raphael_data::Locale::JP },
+            Locale::CN => quote! { ::raphael_data::Locale::CN },
             Locale::KR => quote! { ::raphael_data::Locale::KR },
-            _ => unimplemented!(),
         }
         .to_tokens(tokens);
     }
