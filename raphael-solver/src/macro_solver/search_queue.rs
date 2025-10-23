@@ -151,17 +151,16 @@ impl SearchQueue {
         }
         if let Some((score, batch)) = self.batches.pop_last() {
             self.current_score = score;
-            let filtered_batch = self.pareto_front.par_insert(batch);
+            let filtered_batch = self
+                .pareto_front
+                .par_insert(batch)
+                .map(|node| {
+                    let backtrack_id = self.backtracking.push(node.action, node.parent_id);
+                    (node.state, score, backtrack_id)
+                })
+                .collect::<Vec<_>>();
             self.processed_nodes += filtered_batch.len();
-            Some(
-                filtered_batch
-                    .into_iter()
-                    .map(|node| {
-                        let backtrack_id = self.backtracking.push(node.action, node.parent_id);
-                        (node.state, score, backtrack_id)
-                    })
-                    .collect(),
-            )
+            Some(filtered_batch)
         } else {
             None
         }

@@ -100,7 +100,10 @@ pub struct ParetoFront {
 }
 
 impl ParetoFront {
-    pub fn par_insert(&mut self, search_nodes: Vec<SearchNode>) -> Vec<SearchNode> {
+    pub fn par_insert(
+        &mut self,
+        search_nodes: Vec<SearchNode>,
+    ) -> impl Iterator<Item = SearchNode> {
         let mut insertion_tasks: FxHashMap<Key, InsertionTask> = FxHashMap::default();
         for node in search_nodes {
             let key = Key::from(&node.state);
@@ -120,17 +123,19 @@ impl ParetoFront {
                 }
             }
         }
-        let finished_tasks = insertion_tasks
+        let mut finished_tasks = insertion_tasks
             .into_par_iter()
             .map(|(key, task)| (key, task.execute()))
             .collect_vec_list();
-        let mut result = Vec::new();
-        for (key, task) in finished_tasks.into_iter().flatten() {
+        for (key, task) in finished_tasks.iter_mut().flatten() {
+            let segment_tree_root = self.buckets.entry(*key).or_default();
             // Give back ownership of the tree root.
-            self.buckets.insert(key, task.segment_tree_root);
-            result.extend(task.search_nodes);
+            std::mem::swap(segment_tree_root, &mut task.segment_tree_root);
         }
-        result
+        finished_tasks
+            .into_iter()
+            .flatten()
+            .flat_map(|(_key, task)| task.search_nodes)
     }
 }
 
