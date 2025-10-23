@@ -331,10 +331,10 @@ fn issue_216_steplbsolver_crash() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 221234,
+            finish_states: 221231,
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 436353,
-                processed_nodes: 21746,
+                inserted_nodes: 436264,
+                processed_nodes: 21741,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 318520,
