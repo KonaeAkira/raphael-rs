@@ -30,24 +30,35 @@ fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u32,
         }
         true
     };
+    let action_rerolls_condition =
+        |action: &Action| *action != Action::QuickInnovation && *action != Action::HeartAndSoul;
 
     settings.adversarial = false;
     let mut min_quality = u32::MAX;
 
-    for mask in 0..(1 << actions.len()) {
+    let condition_mask_len = actions
+        .iter()
+        .copied()
+        .filter(action_rerolls_condition)
+        .count();
+    for mask in 0..(1 << condition_mask_len) {
         if !is_valid_mask(mask) {
             continue;
         }
         let mut state = SimulationState::new(&settings);
-        for (index, action) in actions.iter().enumerate() {
-            let condition = if ((mask >> index) & 1) == 1 {
+        let mut condition_mask_idx = 0;
+        for action in actions {
+            let condition = if ((mask >> condition_mask_idx) & 1) == 1 {
                 Condition::Excellent
-            } else if index == 0 || ((mask >> (index - 1)) & 1) == 0 {
+            } else if condition_mask_idx == 0 || ((mask >> (condition_mask_idx - 1)) & 1) == 0 {
                 Condition::Normal
             } else {
                 Condition::Poor
             };
             state = state.use_action(*action, condition, &settings)?;
+            if action_rerolls_condition(action) {
+                condition_mask_idx += 1;
+            }
         }
         min_quality = std::cmp::min(min_quality, state.quality);
     }
@@ -243,7 +254,7 @@ fn test_exhaustive() {
 /// Test random quality action sequences
 fn test_fuzz() {
     const STEPS: usize = 10;
-    const ACTIONS: [Action; 9] = [
+    const ACTIONS: [Action; 10] = [
         Action::BasicTouch,
         Action::StandardTouch,
         Action::AdvancedTouch,
@@ -253,6 +264,7 @@ fn test_fuzz() {
         Action::GreatStrides,
         Action::ImmaculateMend,
         Action::TricksOfTheTrade,
+        Action::QuickInnovation,
     ];
     for _ in 0..100000 {
         let actions: Vec<Action> =
