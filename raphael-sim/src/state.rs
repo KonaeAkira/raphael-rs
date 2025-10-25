@@ -95,22 +95,22 @@ impl SimulationState {
 
         let quality_increase = A::quality_increase(self, settings, condition);
         if settings.adversarial {
-            let adversarial_guard_active = state.effects.adversarial_guard_active();
-            let adversarial_quality_increase = if adversarial_guard_active {
-                quality_increase
-            } else {
-                A::quality_increase(self, settings, Condition::Poor)
-            };
-            if !adversarial_guard_active && adversarial_quality_increase == 0 {
+            let guard_active = state.effects.adversarial_guard_active();
+            if quality_increase != 0 {
+                if guard_active {
+                    state.quality += quality_increase;
+                    state.unreliable_quality = 0;
+                } else {
+                    let adversarial_quality_increase =
+                        A::quality_increase(self, settings, Condition::Poor);
+                    let quality_diff = quality_increase - adversarial_quality_increase;
+                    state.quality += adversarial_quality_increase
+                        + std::cmp::min(state.unreliable_quality, quality_diff);
+                    state.unreliable_quality =
+                        quality_diff.saturating_sub(state.unreliable_quality);
+                }
+            } else if A::TICK_EFFECTS && !guard_active {
                 state.unreliable_quality = 0;
-            } else if adversarial_guard_active && adversarial_quality_increase != 0 {
-                state.quality += adversarial_quality_increase;
-                state.unreliable_quality = 0;
-            } else if adversarial_quality_increase != 0 {
-                let quality_diff = quality_increase - adversarial_quality_increase;
-                state.quality += adversarial_quality_increase
-                    + std::cmp::min(state.unreliable_quality, quality_diff);
-                state.unreliable_quality = quality_diff.saturating_sub(state.unreliable_quality);
             }
         } else {
             state.quality += quality_increase;
