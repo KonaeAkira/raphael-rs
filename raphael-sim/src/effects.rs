@@ -53,16 +53,16 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
-    pub const fn progress_modifier(self) -> u32 {
-        let mm_mod = 2 * (self.muscle_memory() != 0) as u32;
-        let vene_mod = (self.veneration() != 0) as u32;
-        50 * (2 + mm_mod + vene_mod)
+    pub(crate) const fn progress_modifier(self) -> u32 {
+        let mm_mod = if self.muscle_memory() != 0 { 10 } else { 0 };
+        let vene_mod = if self.veneration() != 0 { 5 } else { 0 };
+        10 + mm_mod + vene_mod
     }
 
-    pub const fn quality_modifier(self) -> u32 {
-        let gs_mod = 2 * (self.great_strides() != 0) as u32;
-        let inno_mod = (self.innovation() != 0) as u32;
-        5 * (self.inner_quiet() as u32 + 10) * (2 + gs_mod + inno_mod)
+    pub(crate) const fn quality_modifier(self) -> u32 {
+        let gs_mod = if self.great_strides() != 0 { 10 } else { 0 };
+        let inno_mod = if self.innovation() != 0 { 5 } else { 0 };
+        (self.inner_quiet() as u32 + 10) * (10 + gs_mod + inno_mod)
     }
 
     pub const fn adversarial_guard_active(self) -> bool {

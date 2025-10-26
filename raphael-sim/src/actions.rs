@@ -24,7 +24,7 @@ pub trait ActionImpl {
     fn progress_increase(state: &SimulationState, settings: &Settings) -> u32 {
         let action_mod = Self::progress_modifier(state, settings);
         let effect_mod = state.effects.progress_modifier();
-        u32::from(settings.base_progress) * action_mod * effect_mod / 10000
+        u32::from(settings.base_progress) * action_mod * effect_mod / 1000
     }
 
     #[inline]
@@ -371,7 +371,7 @@ impl ActionImpl for ByregotsBlessing {
     }
 
     fn quality_modifier(state: &SimulationState, _settings: &Settings) -> u32 {
-        100 + 20 * state.effects.inner_quiet() as u32
+        100 + 20 * u32::from(state.effects.inner_quiet())
     }
 
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
