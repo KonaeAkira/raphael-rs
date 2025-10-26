@@ -1,4 +1,4 @@
-use raphael_sim::{ActionMask, Settings, SimulationState};
+use raphael_sim::{Action, ActionMask, Settings, SimulationState};
 use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 fn main() {
@@ -8,14 +8,14 @@ fn main() {
         .init();
 
     let simulator_settings = Settings {
-        max_cp: 753,
-        max_durability: 20,
-        max_progress: 4700,
-        max_quality: 14900,
-        base_progress: 310,
-        base_quality: 324,
-        job_level: 100,
-        allowed_actions: ActionMask::regular(),
+        max_cp: 59,
+        max_durability: 35,
+        max_progress: 1100,
+        max_quality: 100,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 99,
+        allowed_actions: ActionMask::regular().add(Action::HeartAndSoul),
         adversarial: false,
         backload_progress: false,
     };
@@ -31,7 +31,21 @@ fn main() {
         Box::new(|_| {}),
         AtomicFlag::new(),
     );
-    let actions = solver.solve().unwrap();
+    let initial_state = SimulationState::from_macro(
+        &simulator_settings,
+        &[
+            Action::MuscleMemory,
+            Action::Observe,
+            Action::Observe,
+            Action::Observe,
+            Action::Observe,
+        ],
+    )
+    .unwrap();
+    // enough for FinalAppraisal + H&S + IntensiveSynth + BasicTouch + BasicSynth
+    assert_eq!(initial_state.durability, 25);
+    assert_eq!(initial_state.cp, 1 + 6 + 18);
+    let actions = solver.solve_with_initial_state(initial_state).unwrap();
 
     let quality = SimulationState::from_macro(&simulator_settings, &actions)
         .unwrap()
@@ -45,4 +59,6 @@ fn main() {
         steps,
         duration
     );
+
+    log::info!("{:?}", &actions);
 }
