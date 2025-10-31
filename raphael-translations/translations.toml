@@ -885,7 +885,7 @@ appearances = ["src/widgets/stats_edit.rs:70:50"]
 en = '''📋 Paste config here to load'''
 ja = '''📋 設定を貼り付けて読み込み'''
 de = '''📋 Konfiguration hier einfügen, um diese zu laden'''
-ko = '''📋 설정을 붙여넣기해서 반영'''
+ko = '''📋 설정을 붙여넣기해서 불러오기'''
 version = "0.1.0"
 appearances = ["src/widgets/stats_edit.rs:85:47"]
 
