@@ -61,7 +61,7 @@ appearances = ["src/app.rs:168:65"]
 en = '''Make sure that the recipe is set correctly and that your stats are enough to craft this item.'''
 ja = '''レシピが正しく設定されているか、ステータスが十分であるかを確認してください。'''
 de = '''Stelle sicher, dass die ausgewählten Attribute für die Synthese ausreichen und das richtige Rezept ausgewählt ist.'''
-kp = '''제작법이 알맞게 설정되어있는지, 능력치가 충분한지 확인해 주세요.'''
+ko = '''제작법이 알맞게 설정되어있는지, 능력치가 충분한지 확인해 주세요.'''
 version = "0.1.0"
 appearances = ["src/app.rs:170:45"]
 
@@ -317,7 +317,7 @@ appearances = ["src/app.rs:754:33", "src/widgets/macro_view.rs:127:31", "src/wid
 en = '''Actions'''
 ja = '''アクション'''
 de = '''Kommandos'''
-ko = '''액션'''
+ko = '''기술'''
 version = "0.1.0"
 appearances = ["src/app.rs:758:49"]
 
@@ -325,7 +325,7 @@ appearances = ["src/app.rs:758:49"]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage.'''
 ja = '''⚠ マイスターアクションは計算時間とメモリ使用量が大幅に増加します。'''
 de = '''⚠ Spezialisten-Kommandos benötigen deutlich mehr Zeit und Arbeitsspeicher'''
-ja = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다.'''
+ko = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다.'''
 version = "0.1.0"
 appearances = ["src/app.rs:803:21"]
 
@@ -389,7 +389,7 @@ appearances = ["src/app.rs:901:28"]
 en = '''Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.'''
 ja = '''スキル回しの最後にのみ進行度上昇アクションを使用するスキル回しを見つけます。\n  - 達成可能な品質が下がる可能性があります\n  - マクロ時間が長くなる可能性があります'''
 de = '''Rotation finden, die alle Fortschritt-Kommandos an das Ende der Rotation verschiebt.\n  - Verringert möglicherweise die erreichte Qualität.\n  - Verlängert möglicherweise die Macrolänge.'''
-ko = '''매크로의 뒷부분에서만 작업을 진행합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다. \n - 매크로의 작업시간이 길어질 가능성이 있습니다.'''
+ko = '''매크로의 뒷부분에서만 작업을 진행합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다.\n - 매크로의 작업시간이 길어질 가능성이 있습니다.'''
 version = "0.1.0"
 appearances = ["src/app.rs:903:45"]
 
@@ -525,7 +525,7 @@ appearances = ["src/widgets/macro_view.rs:491:20"]
 en = '''Skip last notification if doing so avoids creating a macro with a single action.'''
 ja = '''1つのみアクションマクロを作成しない場合、最後の通知をスキップします。'''
 de = '''Finale Benachrichtigung auslassen, wenn dadurch die Anzahl an Makros reduziert werden kann.'''
-ko = '''1공정만 들어있는 매크로를 만들지 않는 경우, 마지막 알림은 제외됩니다.'''
+ko = '''1공정만 들어있는 매크로를 만들지 않을 경우, 마지막 알림은 제외됩니다.'''
 version = "0.1.0"
 appearances = ["src/widgets/macro_view.rs:498:17"]
 
