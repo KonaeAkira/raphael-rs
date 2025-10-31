@@ -917,7 +917,7 @@ appearances = ["src/widgets/game_data_name_label.rs:100:54"]
 en = '''Load rotation'''
 ja = '''ローテーションを読み込み'''
 de = '''Rotation laden'''
-ko = '''사이클을 불러오기'''
+ko = '''로테이션을 불러오기'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:196:51"]
 
@@ -925,7 +925,7 @@ appearances = ["src/widgets/saved_rotations.rs:196:51"]
 en = '''Load rotation & recipe'''
 ja = '''ローテーション＆レシピを読み込み'''
 de = '''Rotation und Rezept laden'''
-ko = '''사이클&제작법을 불러오기'''
+ko = '''로테이션&제작법을 불러오기'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:197:57"]
 
@@ -933,7 +933,7 @@ appearances = ["src/widgets/saved_rotations.rs:197:57"]
 en = '''Load rotation, recipe & consumables'''
 ja = '''ローテーション、レシピ＆消耗品を読み込み'''
 de = '''Rotation, Rezept, Gericht und Arznei laden'''
-ko = '''사이클&제작법&소모품을 불러오기'''
+ko = '''로테이션&제작법&소모품을 불러오기'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:199:28"]
 
@@ -949,7 +949,7 @@ appearances = ["src/widgets/saved_rotations.rs:346:65"]
 en = '''⚠ pre-v0.21.0 rotation. No recipe data.'''
 ja = '''⚠ pre-v0.21.0以前のローテーション。レシピデータなし。'''
 de = '''⚠ pre-v0.21.0 Rotation. Keine Rezept-Daten.'''
-ko = '''⚠ pre-v0.21.0 이전의 사이클. 제작법 정보가 없음.'''
+ko = '''⚠ pre-v0.21.0 이전의 로테이션. 제작법 정보가 없음.'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:367:37"]
 
@@ -997,7 +997,7 @@ appearances = ["src/widgets/saved_rotations.rs:624:38"]
 en = '''Load saved rotations when initiating solve'''
 ja = '''ソルブ開始時に保存済みローテーションを読み込む'''
 de = '''Gespeicherte Rotation beim initiieren der Lösung laden'''
-ko = '''계산 시작시에 저장된 사이클을 불러오기'''
+ko = '''계산 시작시에 저장된 로테이션을 불러오기'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:629:36"]
 
@@ -1013,7 +1013,7 @@ appearances = ["src/widgets/saved_rotations.rs:632:41"]
 en = '''⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.'''
 ja = '''⚠ v0.21.0以前に保存されたスキル回しには、レシピデータを読み込むための情報が含まれていません。'''
 de = '''⚠ Rezeptdaten können nicht geladen werden, wenn die Rotation vor v0.21.0 gespeichert wurde.'''
-ko = '''⚠ v0.21.0 이전에 저장된 사이클은, 제작법 정보가 포함되어 있지 않습니다.'''
+ko = '''⚠ v0.21.0 이전에 저장된 로테이션은, 제작법 정보가 포함되어 있지 않습니다.'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:649:44"]
 
@@ -1045,7 +1045,7 @@ appearances = ["src/widgets/saved_rotations.rs:683:65"]
 en = '''⚠ Oldest rotations will be lost on next solve'''
 ja = '''⚠ 最も古いスキル回しは次回計算で失われます。'''
 de = '''⚠ Älteste Rotation wird beim nächsten Lösen gelöscht'''
-ko = '''⚠ 가장 오래된 사이클은 다음 계산시에 사라집니다.'''
+ko = '''⚠ 가장 오래된 로테이션은 다음 계산시에 사라집니다.'''
 version = "0.1.0"
 appearances = ["src/widgets/saved_rotations.rs:699:52"]
 
