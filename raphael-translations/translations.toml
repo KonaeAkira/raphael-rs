@@ -829,7 +829,7 @@ appearances = ["src/widgets/recipe_select.rs:413:41"]
 en = '''Quality per 100% efficiency:'''
 ja = '''効率100%時の品質:'''
 de = '''Qualität pro 100% Effizienz:'''
-ko = ''' 효율 100%시의 품질'''
+ko = '''효율 100%시의 품질'''
 version = "0.1.0"
 appearances = ["src/widgets/recipe_select.rs:430:41"]
 
