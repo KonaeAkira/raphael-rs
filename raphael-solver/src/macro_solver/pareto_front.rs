@@ -1,5 +1,10 @@
-use raphael_sim::{Effects, SimulationState};
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use std::{cmp::Reverse, collections::hash_map::Entry};
+
+use raphael_sim::{Effects, SimulationState};
+
+use crate::macro_solver::search_queue::SearchNode;
 
 // It is important that this mask doesn't use any effect to its full bit range.
 // Otherwise, `Value::effect_dominates` will break.
@@ -45,16 +50,12 @@ impl Value {
         let guarded_value = Self::GUARD | self.0;
         (guarded_value - other.0) & Self::GUARD == Self::GUARD
     }
-
-    fn cp(&self) -> u16 {
-        (self.0.as_array_ref()[0] >> 16) as u16
-    }
 }
 
 impl From<&SimulationState> for Value {
     fn from(state: &SimulationState) -> Self {
         Self(wide::u32x4::new([
-            (u32::from(state.cp) << 16) + u32::from(state.durability),
+            (u32::from(state.cp) << 16) | u32::from(state.durability),
             state.quality,
             state.quality + state.unreliable_quality,
             state.effects.into_bits() & EFFECTS_VALUE_MASK,
@@ -62,77 +63,81 @@ impl From<&SimulationState> for Value {
     }
 }
 
-struct IntermediateNode {
-    partition_point: u16,
-    lhs: Box<TreeNode>,
-    rhs: Box<TreeNode>,
-}
-
-struct LeafNode {
-    range_min: u16,
-    range_max: u16,
-    values: Vec<Value>,
-}
-
-enum TreeNode {
-    Intermediate(IntermediateNode),
-    Leaf(LeafNode),
-}
-
-impl Default for TreeNode {
-    fn default() -> Self {
-        Self::Leaf(LeafNode {
-            range_min: u16::MIN,
-            range_max: u16::MAX,
-            values: Vec::new(),
-        })
-    }
-}
-
 #[derive(Default)]
 pub struct ParetoFront {
-    buckets: FxHashMap<Key, TreeNode>,
+    buckets: FxHashMap<Key, Vec<Value>>,
 }
 
 impl ParetoFront {
-    pub fn insert(&mut self, state: SimulationState) -> bool {
-        const MAX_LEAF_SIZE: usize = 200;
-        let new_value = Value::from(&state);
-        let mut node = self.buckets.entry(Key::from(&state)).or_default();
-        while let TreeNode::Intermediate(intermediate) = node {
-            if new_value.cp() < intermediate.partition_point {
-                node = intermediate.lhs.as_mut();
-            } else {
-                node = intermediate.rhs.as_mut();
+    pub fn par_insert(
+        &mut self,
+        search_nodes: Vec<SearchNode>,
+    ) -> impl Iterator<Item = SearchNode> {
+        let mut insertion_tasks: FxHashMap<Key, InsertionTask> = FxHashMap::default();
+        for node in search_nodes {
+            let key = Key::from(&node.state);
+            match insertion_tasks.entry(key) {
+                Entry::Occupied(occupied_entry) => {
+                    occupied_entry.into_mut().search_nodes.push(node)
+                }
+                Entry::Vacant(vacant_entry) => {
+                    let mut insertion_task = InsertionTask {
+                        existing_values: Vec::new(),
+                        search_nodes: vec![node],
+                    };
+                    std::mem::swap(
+                        self.buckets.entry(key).or_default(),
+                        &mut insertion_task.existing_values,
+                    );
+                    vacant_entry.insert(insertion_task);
+                }
             }
         }
-        if let TreeNode::Leaf(leaf) = node {
-            let is_dominated = leaf.values.iter().any(|value| value.dominates(&new_value));
-            if !is_dominated {
-                leaf.values.retain(|value| !new_value.dominates(value));
-                leaf.values.push(new_value);
-            }
-            if leaf.values.len() > MAX_LEAF_SIZE && leaf.range_min + 1 != leaf.range_max {
-                leaf.values.sort_unstable_by_key(Value::cp);
-                let (lhs_values, rhs_values) = leaf.values.split_at(MAX_LEAF_SIZE / 2);
-                let partition_point = rhs_values[0].cp();
-                *node = TreeNode::Intermediate(IntermediateNode {
-                    partition_point,
-                    lhs: Box::new(TreeNode::Leaf(LeafNode {
-                        range_min: leaf.range_min,
-                        range_max: partition_point,
-                        values: lhs_values.into(),
-                    })),
-                    rhs: Box::new(TreeNode::Leaf(LeafNode {
-                        range_min: partition_point,
-                        range_max: leaf.range_max,
-                        values: rhs_values.into(),
-                    })),
-                });
-            }
-            !is_dominated
-        } else {
-            unreachable!()
+        let mut finished_tasks = insertion_tasks
+            .into_par_iter()
+            .map(|(key, task)| (key, task.execute()))
+            .collect::<Vec<_>>();
+        for (key, task) in finished_tasks.iter_mut() {
+            std::mem::swap(
+                self.buckets.entry(*key).or_default(),
+                &mut task.existing_values,
+            );
         }
+        finished_tasks
+            .into_iter()
+            .flat_map(|(_key, task)| task.search_nodes)
     }
+}
+
+struct InsertionTask {
+    existing_values: Vec<Value>,
+    search_nodes: Vec<SearchNode>,
+}
+
+impl InsertionTask {
+    fn execute(mut self) -> Self {
+        self.search_nodes
+            .sort_unstable_by_key(|node| Reverse(pareto_weight(&node.state)));
+        self.search_nodes
+            .retain(|node| check_and_insert_node(&mut self.existing_values, node));
+        self
+    }
+}
+
+fn pareto_weight(state: &SimulationState) -> u32 {
+    state.cp as u32
+        + state.durability as u32
+        + state.quality
+        + state.unreliable_quality
+        + state.effects.into_bits()
+}
+
+fn check_and_insert_node(values: &mut Vec<Value>, node: &SearchNode) -> bool {
+    let new_value = Value::from(&node.state);
+    let is_dominated = values.iter().any(|value| value.dominates(&new_value));
+    if !is_dominated {
+        values.retain(|value| !new_value.dominates(value));
+        values.push(new_value);
+    }
+    !is_dominated
 }
