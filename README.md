@@ -33,8 +33,8 @@ If you find a macro that beats the generated macro according to the specificatio
 
 ## How does it work?
 
-* Short answer: [A* search](https://en.wikipedia.org/wiki/A*_search_algorithm) + [Pareto optimization](https://en.wikipedia.org/wiki/Multi-objective_optimization) + [Dynamic programming](https://en.wikipedia.org/wiki/Dynamic_programming).
-* Long answer: coming soon<sup>tm</sup>
+* Short answer: Branch-and-bound, best-first-search, dynamic programming, Pareto optimization.
+* Long answer: [Algorithm Overview](https://github.com/KonaeAkira/raphael-rs/wiki/Algorithm-Overview)
 
 ## Building from source
 
