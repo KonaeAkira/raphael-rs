@@ -3,7 +3,7 @@ use std::collections::{BinaryHeap, hash_map::Entry};
 use raphael_sim::{Action, SimulationState};
 use rustc_hash::FxHashMap;
 
-use crate::{SolverException, actions::ActionCombo, macros::internal_error, utils::Backtracking};
+use crate::{actions::ActionCombo, utils::Backtracking};
 
 use super::pareto_front::ParetoFront;
 
@@ -70,8 +70,6 @@ pub struct SearchQueue {
     batches: FxHashMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<ActionCombo>,
     initial_state: SimulationState,
-    current_score: SearchScore,
-    minimum_score: SearchScore,
     inserted_nodes: usize,
     processed_nodes: usize,
 }
@@ -84,88 +82,60 @@ impl SearchQueue {
             batch_ordering: BinaryHeap::default(),
             batches: FxHashMap::default(),
             initial_state,
-            current_score: SearchScore::MAX,
-            minimum_score: SearchScore::MIN,
             inserted_nodes: 1, // initial node
             processed_nodes: 0,
         }
     }
 
-    pub fn min_score(&self) -> SearchScore {
-        self.minimum_score
-    }
-
-    pub fn update_min_score(&mut self, score: SearchScore) {
-        if self.minimum_score >= score {
-            return;
-        }
-        self.minimum_score = score;
-    }
-
-    pub fn try_push(
+    pub fn push(
         &mut self,
         state: SimulationState,
         score: SearchScore,
         action: ActionCombo,
         parent_id: usize,
-    ) -> Result<(), SolverException> {
-        if score >= self.current_score {
-            return Err(internal_error!(
-                "Search score isn't strictly monotonic.",
-                state,
-                action,
-                score,
-                self.current_score
-            ));
-        }
-        if score > self.minimum_score {
-            let node = SearchNode {
-                state,
-                action,
-                parent_id,
-            };
-            match self.batches.entry(score) {
-                Entry::Occupied(occupied_entry) => {
-                    occupied_entry.into_mut().push(node);
-                }
-                Entry::Vacant(vacant_entry) => {
-                    self.batch_ordering.push(score);
-                    vacant_entry.insert(vec![node]);
-                }
+    ) {
+        let node = SearchNode {
+            state,
+            action,
+            parent_id,
+        };
+        match self.batches.entry(score) {
+            Entry::Occupied(occupied_entry) => {
+                occupied_entry.into_mut().push(node);
             }
-            self.inserted_nodes += 1;
+            Entry::Vacant(vacant_entry) => {
+                self.batch_ordering.push(score);
+                vacant_entry.insert(vec![node]);
+            }
         }
-        Ok(())
+        self.inserted_nodes += 1;
     }
 
-    pub fn pop_batch(&mut self) -> Option<Vec<(SimulationState, SearchScore, usize)>> {
+    pub fn pop_batch(&mut self) -> Option<(SearchScore, Vec<(SimulationState, usize)>)> {
         if self.processed_nodes == 0 {
             self.processed_nodes += 1;
-            return Some(vec![(
-                self.initial_state,
-                self.current_score,
-                Backtracking::<Action>::SENTINEL,
-            )]);
+            return Some((
+                SearchScore::MAX,
+                vec![(self.initial_state, Backtracking::<Action>::SENTINEL)],
+            ));
         }
         if let Some(score) = self.batch_ordering.pop()
-            && score >= self.minimum_score
             && let Some(mut batch) = self.batches.remove(&score)
         {
-            self.current_score = score;
             // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
             batch.sort_unstable_by(|lhs, rhs| {
                 pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
             });
-            let returned_batch = batch
+            let filtered_batch = batch
                 .into_iter()
                 .filter(|node| self.pareto_front.insert(node.state))
                 .map(|node| {
                     let backtrack_id = self.backtracking.push(node.action, node.parent_id);
-                    (node.state, score, backtrack_id)
+                    (node.state, backtrack_id)
                 })
                 .collect::<Vec<_>>();
-            self.processed_nodes += returned_batch.len();
-            Some(returned_batch)
+            self.processed_nodes += filtered_batch.len();
+            Some((score, filtered_batch))
         } else {
             None
         }

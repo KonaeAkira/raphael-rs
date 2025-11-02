@@ -133,7 +133,7 @@ fn zero_quality() {
             finish_states: 1660,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 64,
-                processed_nodes: 42,
+                processed_nodes: 52,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 31147,
@@ -183,7 +183,7 @@ fn max_quality() {
             finish_states: 251317,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 97351,
-                processed_nodes: 6915,
+                processed_nodes: 6916,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 389796,
@@ -334,7 +334,7 @@ fn issue_216_steplbsolver_crash() {
             finish_states: 221234,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 436353,
-                processed_nodes: 21746,
+                processed_nodes: 21924,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 318520,

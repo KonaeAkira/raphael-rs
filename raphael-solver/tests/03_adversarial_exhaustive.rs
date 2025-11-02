@@ -103,7 +103,7 @@ fn stuffed_peppers() {
             finish_states: 879227,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 1799797,
-                processed_nodes: 85547,
+                processed_nodes: 85550,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2271577,
@@ -155,7 +155,7 @@ fn test_rare_tacos_2() {
             finish_states: 1472389,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 9023119,
-                processed_nodes: 3803810,
+                processed_nodes: 3803811,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2490500,
@@ -211,7 +211,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
             finish_states: 81293,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 485744,
-                processed_nodes: 33222,
+                processed_nodes: 33227,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1800421,
@@ -261,7 +261,7 @@ fn test_indagator_3858_4057() {
             finish_states: 513152,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 231358,
-                processed_nodes: 20794,
+                processed_nodes: 20796,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2515254,
@@ -315,7 +315,7 @@ fn test_rare_tacos_4628_4410() {
             finish_states: 559040,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 4886370,
-                processed_nodes: 1056176,
+                processed_nodes: 1056177,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2623346,
@@ -368,7 +368,7 @@ fn issue_113() {
             finish_states: 1968977,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 22700001,
-                processed_nodes: 1410146,
+                processed_nodes: 1410147,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 3043236,
@@ -419,7 +419,7 @@ fn issue_118() {
             finish_states: 580302,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 18988662,
-                processed_nodes: 1375109,
+                processed_nodes: 1375111,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1930860,

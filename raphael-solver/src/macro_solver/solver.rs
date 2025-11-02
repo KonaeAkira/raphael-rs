@@ -106,8 +106,11 @@ impl<'a> MacroSolver<'a> {
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
         let mut search_queue = SearchQueue::new(state);
         let mut solution: Option<Solution> = None;
+        let mut min_accepted_score = SearchScore::MIN;
 
-        while let Some(batch) = search_queue.pop_batch() {
+        while let Some((score, batch)) = search_queue.pop_batch()
+            && score >= min_accepted_score
+        {
             if self.interrupt_signal.is_set() {
                 return Err(SolverException::Interrupted);
             }
@@ -117,7 +120,7 @@ impl<'a> MacroSolver<'a> {
                 finish_solver_shard: self.finish_solver.create_shard(),
                 quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
                 step_lb_solver_shard: self.step_lb_solver.create_shard(),
-                min_accepted_score: search_queue.min_score(),
+                min_accepted_score,
                 candidate_states: Vec::new(),
             };
 
@@ -125,16 +128,18 @@ impl<'a> MacroSolver<'a> {
                 .into_par_iter()
                 .try_fold(
                     create_worker_data,
-                    |mut worker_data, (state, score, backtrack_id)| {
+                    |mut worker_data, (state, backtrack_id)| {
                         worker_data.process_state(state, score, backtrack_id)?;
                         Ok(worker_data)
                     },
                 )
                 .collect::<Result<Vec<_>, SolverException>>()?;
 
-            for worker_data in &worker_results {
-                search_queue.update_min_score(worker_data.min_accepted_score);
-            }
+            min_accepted_score = worker_results
+                .iter()
+                .map(|result| result.min_accepted_score)
+                .max()
+                .unwrap_or(min_accepted_score);
 
             for worker_data in &worker_results {
                 for &(state, score, action, parent_id) in &worker_data.candidate_states {
@@ -152,8 +157,8 @@ impl<'a> MacroSolver<'a> {
                             });
                             (self.solution_callback)(&solution.as_ref().unwrap().actions());
                         }
-                    } else {
-                        search_queue.try_push(state, score, action, parent_id)?
+                    } else if score >= min_accepted_score {
+                        search_queue.push(state, score, action, parent_id)
                     }
                 }
             }
