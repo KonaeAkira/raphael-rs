@@ -1,12 +1,13 @@
-use std::collections::BTreeMap;
+use std::collections::{BinaryHeap, hash_map::Entry};
 
 use raphael_sim::{Action, SimulationState};
+use rustc_hash::FxHashMap;
 
-use crate::{SolverException, actions::ActionCombo, macros::internal_error, utils::Backtracking};
+use crate::{actions::ActionCombo, utils::Backtracking};
 
 use super::pareto_front::ParetoFront;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SearchScore {
     pub quality_upper_bound: u32,
     pub steps_lower_bound: u8,
@@ -65,11 +66,10 @@ pub struct SearchQueueStats {
 
 pub struct SearchQueue {
     pareto_front: ParetoFront,
-    batches: BTreeMap<SearchScore, Vec<SearchNode>>,
+    batch_ordering: BinaryHeap<SearchScore>,
+    batches: FxHashMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<ActionCombo>,
     initial_state: SimulationState,
-    current_score: SearchScore,
-    minimum_score: SearchScore,
     inserted_nodes: usize,
     processed_nodes: usize,
 }
@@ -79,92 +79,63 @@ impl SearchQueue {
         Self {
             pareto_front: ParetoFront::default(),
             backtracking: Backtracking::new(),
-            batches: BTreeMap::default(),
+            batch_ordering: BinaryHeap::default(),
+            batches: FxHashMap::default(),
             initial_state,
-            current_score: SearchScore::MAX,
-            minimum_score: SearchScore::MIN,
             inserted_nodes: 1, // initial node
             processed_nodes: 0,
         }
     }
 
-    pub fn min_score(&self) -> SearchScore {
-        self.minimum_score
-    }
-
-    pub fn update_min_score(&mut self, score: SearchScore) {
-        if self.minimum_score >= score {
-            return;
-        }
-        self.minimum_score = score;
-        let mut dropped = 0;
-        while let Some((bucket_score, _)) = self.batches.first_key_value() {
-            if *bucket_score >= self.minimum_score {
-                break;
-            }
-            dropped += self.batches.pop_first().unwrap().1.len();
-        }
-        log::trace!(
-            "New minimum score: ({}, {}, {}). Nodes dropped: {}",
-            score.quality_upper_bound,
-            score.steps_lower_bound,
-            score.duration_lower_bound,
-            dropped
-        );
-    }
-
-    pub fn try_push(
+    pub fn push(
         &mut self,
         state: SimulationState,
         score: SearchScore,
         action: ActionCombo,
         parent_id: usize,
-    ) -> Result<(), SolverException> {
-        if score >= self.current_score {
-            return Err(internal_error!(
-                "Search score isn't strictly monotonic.",
-                state,
-                action,
-                score,
-                self.current_score
-            ));
+    ) {
+        let node = SearchNode {
+            state,
+            action,
+            parent_id,
+        };
+        match self.batches.entry(score) {
+            Entry::Occupied(occupied_entry) => {
+                occupied_entry.into_mut().push(node);
+            }
+            Entry::Vacant(vacant_entry) => {
+                self.batch_ordering.push(score);
+                vacant_entry.insert(vec![node]);
+            }
         }
-        if score > self.minimum_score {
-            self.batches.entry(score).or_default().push(SearchNode {
-                state,
-                action,
-                parent_id,
-            });
-            self.inserted_nodes += 1;
-        }
-        Ok(())
+        self.inserted_nodes += 1;
     }
 
-    pub fn pop_batch(&mut self) -> Option<Vec<(SimulationState, SearchScore, usize)>> {
+    pub fn pop_batch(&mut self) -> Option<(SearchScore, Vec<(SimulationState, usize)>)> {
         if self.processed_nodes == 0 {
             self.processed_nodes += 1;
-            return Some(vec![(
-                self.initial_state,
-                self.current_score,
-                Backtracking::<Action>::SENTINEL,
-            )]);
+            return Some((
+                SearchScore::MAX,
+                vec![(self.initial_state, Backtracking::<Action>::SENTINEL)],
+            ));
         }
-        if let Some((score, mut batch)) = self.batches.pop_last() {
+        if let Some(score) = self.batch_ordering.pop()
+            && let Some(mut batch) = self.batches.remove(&score)
+        {
             // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
             batch.sort_unstable_by(|lhs, rhs| {
                 pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
             });
-            self.current_score = score;
-            let returned_batch = batch
+            let filtered_batch = batch
                 .into_iter()
                 .filter(|node| self.pareto_front.insert(node.state))
                 .map(|node| {
                     let backtrack_id = self.backtracking.push(node.action, node.parent_id);
-                    (node.state, score, backtrack_id)
+                    (node.state, backtrack_id)
                 })
                 .collect::<Vec<_>>();
-            self.processed_nodes += returned_batch.len();
-            Some(returned_batch)
+            self.processed_nodes += filtered_batch.len();
+            Some((score, filtered_batch))
         } else {
             None
         }
