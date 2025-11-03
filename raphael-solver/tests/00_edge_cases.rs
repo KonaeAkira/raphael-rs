@@ -80,7 +80,7 @@ fn unsolvable() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 2864,
+            finish_states: 81186,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 0,
                 processed_nodes: 0,
@@ -130,7 +130,7 @@ fn zero_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1660,
+            finish_states: 5155,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 64,
                 processed_nodes: 42,
@@ -180,7 +180,7 @@ fn max_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 251317,
+            finish_states: 66696,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 97351,
                 processed_nodes: 6915,
@@ -230,7 +230,7 @@ fn large_progress_quality_increase() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 24,
+            finish_states: 21835,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 1,
                 processed_nodes: 1,
@@ -280,7 +280,7 @@ fn backload_progress_single_delicate_synthesis() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 15,
+            finish_states: 3475,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 1,
                 processed_nodes: 1,
@@ -331,7 +331,7 @@ fn issue_216_steplbsolver_crash() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 221234,
+            finish_states: 12801,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 436353,
                 processed_nodes: 21746,

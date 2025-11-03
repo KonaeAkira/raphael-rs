@@ -1,50 +1,44 @@
 use raphael_sim::*;
-use rustc_hash::FxHashMap;
+use rayon::prelude::*;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     SolverSettings,
-    actions::{PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
+    actions::{FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ReducedState {
-    durability: u16,
-    cp: u16,
-    effects: Effects,
+#[derive(Default)]
+struct CpProgressBreakpoints {
+    /// List of CP breakpoints and the associated achievable Progress.
+    /// Sorted in order of ascending CP.
+    breakpoints: Vec<(u16, u32)>,
+    /// The maximum CP at which the state was solved.
+    /// Querying the solution at a CP higher than this may give incorrect results.
+    max_solved_cp: Option<u16>,
 }
 
-impl ReducedState {
-    fn from_state(state: &SimulationState) -> Self {
-        Self {
-            durability: state.durability,
-            cp: state.cp,
-            effects: state.effects.strip_quality_effects(),
+impl CpProgressBreakpoints {
+    fn get_progress(&self, cp: u16) -> Option<u32> {
+        if Some(cp) > self.max_solved_cp {
+            return None;
         }
+        let idx = self.breakpoints.partition_point(|&v| v.0 <= cp);
+        assert!(idx > 0); // the first breakpoint should always be 0 CP.
+        Some(self.breakpoints[idx - 1].1)
     }
 
-    fn to_state(self) -> SimulationState {
-        SimulationState {
-            durability: self.durability,
-            cp: self.cp,
-            progress: 0,
-            quality: 0,
-            unreliable_quality: 0,
-            effects: self.effects,
+    fn add_breakpoint(&mut self, cp: u16, progress: u32) {
+        assert!(Some(cp) > self.max_solved_cp);
+        self.max_solved_cp = Some(cp);
+        if self.breakpoints.last().is_none_or(|last| last.1 < progress) {
+            self.breakpoints.push((cp, progress));
         }
     }
 }
-
-type SolvedStates = FxHashMap<ReducedState, u32>;
 
 pub struct FinishSolver {
     settings: SolverSettings,
-    solved_states: SolvedStates,
-}
-
-pub struct FinishSolverShard<'a> {
-    settings: &'a SolverSettings,
-    shared_states: &'a SolvedStates,
-    local_states: SolvedStates,
+    solved_states: FxHashMap<(u16, Effects), CpProgressBreakpoints>,
 }
 
 impl FinishSolver {
@@ -55,96 +49,114 @@ impl FinishSolver {
         }
     }
 
-    pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates) {
-        self.solved_states.extend(new_solved_states);
+    pub fn can_finish(&self, state: &SimulationState) -> bool {
+        let key = (state.durability, state.effects.strip_quality_effects());
+        if !self.solved_states.contains_key(&key) {
+            dbg!(key);
+        }
+        let breakpoints = self.solved_states.get(&key).unwrap();
+        state.progress + breakpoints.get_progress(state.cp).unwrap() >= self.settings.max_progress()
     }
 
-    pub fn create_shard(&self) -> FinishSolverShard<'_> {
-        FinishSolverShard {
-            settings: &self.settings,
-            shared_states: &self.solved_states,
-            local_states: FxHashMap::default(),
+    pub fn precompute(&mut self) {
+        let mut templates = generate_templates(&self.settings);
+        while !templates.is_empty() {
+            templates
+                .par_iter_mut()
+                .for_each(|template| self.solve_template(template));
+            for template in templates.iter_mut() {
+                if let Some(progress) = template.current_max_progress {
+                    let key = (template.durability, template.effects);
+                    let breakpoints = self.solved_states.entry(key).or_default();
+                    breakpoints.add_breakpoint(template.current_cp, progress);
+                    if progress >= self.settings.max_progress() {
+                        breakpoints.max_solved_cp = Some(u16::MAX);
+                    }
+                    template.current_cp += 1;
+                }
+            }
+            templates.retain(|template| {
+                template.current_cp <= self.settings.max_cp()
+                    && template.current_max_progress < Some(self.settings.max_progress())
+            });
         }
     }
 
-    pub fn can_finish(&mut self, state: &SimulationState) -> bool {
-        let max_progress = self.solve_max_progress(ReducedState::from_state(state));
-        state.progress + max_progress >= self.settings.max_progress()
-    }
-
-    fn solve_max_progress(&mut self, state: ReducedState) -> u32 {
-        match self.solved_states.get(&state) {
-            Some(max_progress) => *max_progress,
-            None => {
-                let mut max_progress = 0;
-                for action in PROGRESS_ONLY_SEARCH_ACTIONS {
-                    if let Ok(new_state) =
-                        use_action_combo(&self.settings, state.to_state(), action)
-                    {
-                        if new_state.is_final(&self.settings.simulator_settings) {
-                            max_progress = std::cmp::max(max_progress, new_state.progress);
-                        } else {
-                            let child_progress =
-                                self.solve_max_progress(ReducedState::from_state(&new_state));
-                            max_progress =
-                                std::cmp::max(max_progress, child_progress + new_state.progress);
-                        }
-                    }
-                    if max_progress >= self.settings.max_progress() {
-                        // stop early if progress is already maxed out
-                        // this optimization would work better with a better action ordering
-                        max_progress = self.settings.max_progress();
-                        break;
-                    }
+    fn solve_template(&self, template: &mut Template) {
+        let state = SimulationState {
+            cp: template.current_cp,
+            durability: template.durability,
+            progress: 0,
+            quality: 0,
+            unreliable_quality: 0,
+            effects: template.effects,
+        };
+        let mut result = 0;
+        for action in PROGRESS_ONLY_SEARCH_ACTIONS {
+            if let Ok(child_state) = use_action_combo(&self.settings, state, action) {
+                let key = (child_state.durability, child_state.effects);
+                if child_state.is_final(&self.settings.simulator_settings) {
+                    result = std::cmp::max(result, child_state.progress);
+                } else if let Some(child_breakpoints) = self.solved_states.get(&key)
+                    && let Some(child_progress) = child_breakpoints.get_progress(child_state.cp)
+                {
+                    result = std::cmp::max(result, child_state.progress + child_progress);
+                } else {
+                    // Required child state has not been solved yet.
+                    // Abort and try again in the next iteration.
+                    return;
                 }
-                self.solved_states.insert(state, max_progress);
-                max_progress
             }
         }
+        template.current_max_progress = Some(result);
     }
 
     pub fn num_states(&self) -> usize {
-        self.solved_states.len()
+        self.solved_states
+            .values()
+            .map(|breakpoints| breakpoints.breakpoints.len())
+            .sum()
     }
 }
 
-impl<'a> FinishSolverShard<'a> {
-    pub fn solved_states(self) -> SolvedStates {
-        self.local_states
-    }
+#[derive(Debug)]
+struct Template {
+    durability: u16,
+    effects: Effects,
+    current_cp: u16,
+    current_max_progress: Option<u32>,
+}
 
-    pub fn can_finish(&mut self, state: &SimulationState) -> bool {
-        let max_progress = self.solve_max_progress(ReducedState::from_state(state));
-        state.progress + max_progress >= self.settings.max_progress()
-    }
-
-    fn solve_max_progress(&mut self, state: ReducedState) -> u32 {
-        if let Some(max_progress) = self.shared_states.get(&state) {
-            *max_progress
-        } else if let Some(max_progress) = self.local_states.get(&state) {
-            *max_progress
-        } else {
-            let mut max_progress = 0;
-            for action in PROGRESS_ONLY_SEARCH_ACTIONS {
-                if let Ok(new_state) = use_action_combo(self.settings, state.to_state(), action) {
-                    if new_state.is_final(&self.settings.simulator_settings) {
-                        max_progress = std::cmp::max(max_progress, new_state.progress);
-                    } else {
-                        let child_progress =
-                            self.solve_max_progress(ReducedState::from_state(&new_state));
-                        max_progress =
-                            std::cmp::max(max_progress, child_progress + new_state.progress);
-                    }
-                }
-                if max_progress >= self.settings.max_progress() {
-                    // stop early if progress is already maxed out
-                    // this optimization would work better with a better action ordering
-                    max_progress = self.settings.max_progress();
-                    break;
+fn generate_templates(settings: &SolverSettings) -> Vec<Template> {
+    let mut initial_state = SimulationState::new(&settings.simulator_settings);
+    initial_state.effects = initial_state.effects.strip_quality_effects();
+    let mut templates = FxHashSet::default();
+    templates.insert((initial_state.durability, initial_state.effects));
+    let mut stack = vec![initial_state];
+    while let Some(mut state) = stack.pop() {
+        state
+            .effects
+            .set_special_quality_state(SpecialQualityState::Normal);
+        for action in FULL_SEARCH_ACTIONS {
+            if let Ok(mut new_state) = use_action_combo(settings, state, action)
+                && new_state.durability > 0
+            {
+                new_state.effects = new_state.effects.strip_quality_effects();
+                new_state.progress = 0;
+                new_state.cp = settings.max_cp();
+                if templates.insert((new_state.durability, new_state.effects)) {
+                    stack.push(new_state);
                 }
             }
-            self.local_states.insert(state, max_progress);
-            max_progress
         }
     }
+    templates
+        .into_iter()
+        .map(|(durability, effects)| Template {
+            durability,
+            effects,
+            current_cp: 0,
+            current_max_progress: None,
+        })
+        .collect()
 }

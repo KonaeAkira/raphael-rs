@@ -100,7 +100,7 @@ fn stuffed_peppers() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 879227,
+            finish_states: 210965,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 1799797,
                 processed_nodes: 85547,
@@ -152,7 +152,7 @@ fn test_rare_tacos_2() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1472389,
+            finish_states: 308710,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 9023119,
                 processed_nodes: 3803810,
@@ -208,7 +208,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 81293,
+            finish_states: 3551,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 485744,
                 processed_nodes: 33222,
@@ -258,7 +258,7 @@ fn test_indagator_3858_4057() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 513152,
+            finish_states: 102529,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 231358,
                 processed_nodes: 20794,
@@ -312,7 +312,7 @@ fn test_rare_tacos_4628_4410() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 559040,
+            finish_states: 65772,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 4886370,
                 processed_nodes: 1056176,
@@ -365,7 +365,7 @@ fn issue_113() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1968977,
+            finish_states: 437006,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 22700001,
                 processed_nodes: 1410146,
@@ -416,7 +416,7 @@ fn issue_118() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 580302,
+            finish_states: 22096,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 18988662,
                 processed_nodes: 1375109,

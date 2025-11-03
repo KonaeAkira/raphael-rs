@@ -3,7 +3,6 @@ use rayon::prelude::*;
 
 use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
-use crate::finish_solver::FinishSolverShard;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::quality_upper_bound_solver::{QualityUbSolverShard, QualityUbSolverStats};
 use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats};
@@ -81,6 +80,7 @@ impl<'a> MacroSolver<'a> {
         let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
         let timer = ScopedTimer::new("Finish Solver");
+        self.finish_solver.precompute();
         if !self.finish_solver.can_finish(&initial_state) {
             return Err(SolverException::NoSolution);
         }
@@ -117,7 +117,7 @@ impl<'a> MacroSolver<'a> {
 
             let create_worker_data = || WorkerData {
                 settings: &self.settings,
-                finish_solver_shard: self.finish_solver.create_shard(),
+                finish_solver: &self.finish_solver,
                 quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
                 step_lb_solver_shard: self.step_lb_solver.create_shard(),
                 min_accepted_score,
@@ -170,16 +170,14 @@ impl<'a> MacroSolver<'a> {
                 .into_iter()
                 .map(|worker_data| {
                     (
-                        worker_data.finish_solver_shard.solved_states(),
                         worker_data.quality_ub_solver_shard.solved_states(),
                         worker_data.step_lb_solver_shard.solved_states(),
                     )
                 })
                 .collect::<Vec<_>>();
             for solved_states in solved_states_per_worker {
-                self.finish_solver.extend_solved_states(solved_states.0);
-                self.quality_ub_solver.extend_solved_states(solved_states.1);
-                self.step_lb_solver.extend_solved_states(solved_states.2);
+                self.quality_ub_solver.extend_solved_states(solved_states.0);
+                self.step_lb_solver.extend_solved_states(solved_states.1);
             }
 
             (self.progress_callback)(search_queue.runtime_stats().processed_nodes);
@@ -201,7 +199,7 @@ impl<'a> MacroSolver<'a> {
 
 struct WorkerData<'a> {
     settings: &'a SolverSettings,
-    finish_solver_shard: FinishSolverShard<'a>,
+    finish_solver: &'a FinishSolver,
     quality_ub_solver_shard: QualityUbSolverShard<'a>,
     step_lb_solver_shard: StepLbSolverShard<'a>,
     min_accepted_score: SearchScore,
@@ -235,7 +233,7 @@ impl<'a> WorkerData<'a> {
         for action in FULL_SEARCH_ACTIONS {
             if let Ok(state) = use_action_combo(self.settings, state, action) {
                 if !state.is_final(&self.settings.simulator_settings) {
-                    if !self.finish_solver_shard.can_finish(&state) {
+                    if !self.finish_solver.can_finish(&state) {
                         continue;
                     }
 

@@ -85,7 +85,7 @@ fn rinascita_3700_3280() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 321209,
+            finish_states: 88341,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 51746,
                 processed_nodes: 3719,
@@ -135,7 +135,7 @@ fn pactmaker_3240_3130() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 298477,
+            finish_states: 81558,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 72819,
                 processed_nodes: 5240,
@@ -187,7 +187,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 273192,
+            finish_states: 142854,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 17646,
                 processed_nodes: 1021,
@@ -237,7 +237,7 @@ fn diadochos_4021_3660() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 522737,
+            finish_states: 125704,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 43698,
                 processed_nodes: 6044,
@@ -287,7 +287,7 @@ fn indagator_3858_4057() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 244964,
+            finish_states: 102529,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 5408,
                 processed_nodes: 342,
@@ -337,7 +337,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 2433096,
+            finish_states: 308710,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 13407968,
                 processed_nodes: 1597673,
@@ -389,7 +389,7 @@ fn stuffed_peppers_2() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 114155,
+            finish_states: 210965,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 3886,
                 processed_nodes: 180,
@@ -443,7 +443,7 @@ fn stuffed_peppers_2_heart_and_soul() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 136794,
+            finish_states: 392377,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 4699,
                 processed_nodes: 192,
@@ -497,7 +497,7 @@ fn stuffed_peppers_2_quick_innovation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 114156,
+            finish_states: 210965,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 4013,
                 processed_nodes: 180,
@@ -547,7 +547,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1224000,
+            finish_states: 386830,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 376873,
                 processed_nodes: 21476,
@@ -597,7 +597,7 @@ fn black_star_4048_3997() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 58979,
+            finish_states: 18046,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 37315,
                 processed_nodes: 2226,
@@ -647,7 +647,7 @@ fn claro_walnut_lumber_4900_4800() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 131269,
+            finish_states: 25429,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 183400,
                 processed_nodes: 8697,
@@ -697,7 +697,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 283542,
+            finish_states: 315896,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 2314,
                 processed_nodes: 109,
@@ -747,7 +747,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 683323,
+            finish_states: 304851,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 171861,
                 processed_nodes: 7939,
@@ -797,7 +797,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 926100,
+            finish_states: 379883,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 209791,
                 processed_nodes: 9797,
@@ -847,7 +847,7 @@ fn hardened_survey_plank_5558_5216() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 900043,
+            finish_states: 37677,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 18326484,
                 processed_nodes: 2024194,
@@ -897,7 +897,7 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 270368,
+            finish_states: 63256,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 358137,
                 processed_nodes: 28100,
@@ -948,7 +948,7 @@ fn ceviche_4900_4800_no_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 517559,
+            finish_states: 446655,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 575,
                 processed_nodes: 30,
@@ -1000,7 +1000,7 @@ fn ce_high_progress_zero_achieved_quality() {
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
-            finish_states: 1751541,
+            finish_states: 535900,
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 663,
                 processed_nodes: 398,
