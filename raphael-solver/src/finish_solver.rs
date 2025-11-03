@@ -3,8 +3,9 @@ use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    SolverSettings,
+    SolverException, SolverSettings,
     actions::{FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
+    macros::internal_error,
 };
 
 #[derive(Default)]
@@ -58,12 +59,20 @@ impl FinishSolver {
         state.progress + breakpoints.get_progress(state.cp).unwrap() >= self.settings.max_progress()
     }
 
-    pub fn precompute(&mut self) {
+    pub fn precompute(&mut self) -> Result<(), SolverException> {
         let mut templates = generate_templates(&self.settings);
         while !templates.is_empty() {
             templates
                 .par_iter_mut()
                 .for_each(|template| self.solve_template(template));
+            if !templates.iter().any(|t| t.current_max_progress.is_some()) {
+                // At least one template must be solved for the precompute loop to make any progress.
+                // No template solved in this iteration means that there also won't be any templates solved in the next iteration and so on.
+                return Err(internal_error!(
+                    "Infinite loop detected in FinishSolver precompute.",
+                    self.settings
+                ));
+            }
             for template in templates.iter_mut() {
                 if let Some(progress) = template.current_max_progress {
                     let key = (template.durability, template.effects);
@@ -80,6 +89,7 @@ impl FinishSolver {
                     && template.current_max_progress < Some(self.settings.max_progress())
             });
         }
+        Ok(())
     }
 
     fn solve_template(&self, template: &mut Template) {
