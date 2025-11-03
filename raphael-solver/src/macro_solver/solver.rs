@@ -3,6 +3,7 @@ use rayon::prelude::*;
 
 use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
+use crate::finish_solver::FinishSolverStats;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::quality_upper_bound_solver::{QualityUbSolverShard, QualityUbSolverStats};
 use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats};
@@ -33,8 +34,8 @@ type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MacroSolverStats {
-    pub finish_states: usize,
     pub search_queue_stats: SearchQueueStats,
+    pub finish_solver_stats: FinishSolverStats,
     pub quality_ub_stats: QualityUbSolverStats,
     pub step_lb_stats: StepLbSolverStats,
 }
@@ -189,8 +190,8 @@ impl<'a> MacroSolver<'a> {
 
     pub fn runtime_stats(&self) -> MacroSolverStats {
         MacroSolverStats {
-            finish_states: self.finish_solver.num_states(),
             search_queue_stats: self.search_queue_stats,
+            finish_solver_stats: self.finish_solver.runtime_stats(),
             quality_ub_stats: self.quality_ub_solver.runtime_stats(),
             step_lb_stats: self.step_lb_solver.runtime_stats(),
         }

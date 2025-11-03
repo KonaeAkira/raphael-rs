@@ -41,6 +41,12 @@ impl CpProgressBreakpoints {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct FinishSolverStats {
+    pub states: usize,
+    pub values: usize,
+}
+
 pub struct FinishSolver {
     settings: SolverSettings,
     solved_states: FxHashMap<(u16, Effects), CpProgressBreakpoints>,
@@ -139,11 +145,15 @@ impl FinishSolver {
         template.current_max_progress = Some(result);
     }
 
-    pub fn num_states(&self) -> usize {
-        self.solved_states
-            .values()
-            .map(|breakpoints| breakpoints.breakpoints.len())
-            .sum()
+    pub fn runtime_stats(&self) -> FinishSolverStats {
+        FinishSolverStats {
+            states: self.solved_states.len(),
+            values: self
+                .solved_states
+                .values()
+                .map(|breakpoints| breakpoints.breakpoints.len())
+                .sum(),
+        }
     }
 }
 
