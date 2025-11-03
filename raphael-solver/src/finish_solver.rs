@@ -23,13 +23,17 @@ impl CpProgressBreakpoints {
         if Some(cp) > self.max_solved_cp {
             return None;
         }
-        let idx = self.breakpoints.partition_point(|&v| v.0 <= cp);
-        assert!(idx > 0); // the first breakpoint should always be 0 CP.
-        Some(self.breakpoints[idx - 1].1)
+        let partition_idx = self.breakpoints.partition_point(|&v| v.0 <= cp);
+        partition_idx
+            .checked_sub(1)
+            .map(|idx| self.breakpoints[idx].1)
+            .or(Some(0))
     }
 
+    /// Add a new (CP, Durability) breakpoint.
+    /// Breakpoints must be added with strictly increasing CP, otherwise `get_progress` may return wrong results.
+    /// If the new breakpoint does not have strictly better Progress than the previous breakpoint, it is ignored.
     fn add_breakpoint(&mut self, cp: u16, progress: u32) {
-        assert!(Some(cp) > self.max_solved_cp);
         self.max_solved_cp = Some(cp);
         if self.breakpoints.last().is_none_or(|last| last.1 < progress) {
             self.breakpoints.push((cp, progress));
@@ -50,13 +54,27 @@ impl FinishSolver {
         }
     }
 
-    pub fn can_finish(&self, state: &SimulationState) -> bool {
+    /// Calling this method before calling `FinishSolver::precompute` will return a `SolverException`.
+    pub fn can_finish(&self, state: &SimulationState) -> Result<bool, SolverException> {
         let key = (state.durability, state.effects.strip_quality_effects());
         if !self.solved_states.contains_key(&key) {
             dbg!(key);
         }
-        let breakpoints = self.solved_states.get(&key).unwrap();
-        state.progress + breakpoints.get_progress(state.cp).unwrap() >= self.settings.max_progress()
+        let breakpoints = self.solved_states.get(&key).ok_or_else(|| {
+            internal_error!(
+                "State not found in FinishSolver solved states.",
+                self.settings,
+                state
+            )
+        })?;
+        let max_additional_progress = breakpoints.get_progress(state.cp).ok_or_else(|| {
+            internal_error!(
+                "State found in FinishSolver solved states but with not enough CP.",
+                self.settings,
+                state
+            )
+        })?;
+        Ok(state.progress + max_additional_progress >= self.settings.max_progress())
     }
 
     pub fn precompute(&mut self) -> Result<(), SolverException> {
@@ -73,7 +91,7 @@ impl FinishSolver {
                     self.settings
                 ));
             }
-            for template in templates.iter_mut() {
+            for template in &mut templates {
                 if let Some(progress) = template.current_max_progress {
                     let key = (template.durability, template.effects);
                     let breakpoints = self.solved_states.entry(key).or_default();

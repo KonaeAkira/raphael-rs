@@ -81,7 +81,7 @@ impl<'a> MacroSolver<'a> {
 
         let timer = ScopedTimer::new("Finish Solver");
         self.finish_solver.precompute()?;
-        if !self.finish_solver.can_finish(&initial_state) {
+        if !self.finish_solver.can_finish(&initial_state)? {
             return Err(SolverException::NoSolution);
         }
         drop(timer);
@@ -233,7 +233,7 @@ impl<'a> WorkerData<'a> {
         for action in FULL_SEARCH_ACTIONS {
             if let Ok(state) = use_action_combo(self.settings, state, action) {
                 if !state.is_final(&self.settings.simulator_settings) {
-                    if !self.finish_solver.can_finish(&state) {
+                    if !self.finish_solver.can_finish(&state)? {
                         continue;
                     }
 
