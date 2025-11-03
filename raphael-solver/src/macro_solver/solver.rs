@@ -140,6 +140,7 @@ impl<'a> MacroSolver<'a> {
                 .map(|result| result.min_accepted_score)
                 .max()
                 .unwrap_or(min_accepted_score);
+            search_queue.drop_nodes_below_score(min_accepted_score);
 
             for worker_data in &worker_results {
                 for &(state, score, action, parent_id) in &worker_data.candidate_states {

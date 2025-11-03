@@ -1,4 +1,4 @@
-use std::collections::{BinaryHeap, hash_map::Entry};
+use std::collections::{BTreeSet, hash_map::Entry};
 
 use raphael_sim::{Action, SimulationState};
 use rustc_hash::FxHashMap;
@@ -66,7 +66,7 @@ pub struct SearchQueueStats {
 
 pub struct SearchQueue {
     pareto_front: ParetoFront,
-    batch_ordering: BinaryHeap<SearchScore>,
+    batch_ordering: BTreeSet<SearchScore>,
     batches: FxHashMap<SearchScore, Vec<SearchNode>>,
     backtracking: Backtracking<ActionCombo>,
     initial_state: SimulationState,
@@ -79,7 +79,7 @@ impl SearchQueue {
         Self {
             pareto_front: ParetoFront::default(),
             backtracking: Backtracking::new(),
-            batch_ordering: BinaryHeap::default(),
+            batch_ordering: BTreeSet::default(),
             batches: FxHashMap::default(),
             initial_state,
             inserted_nodes: 1, // initial node
@@ -104,11 +104,24 @@ impl SearchQueue {
                 occupied_entry.into_mut().push(node);
             }
             Entry::Vacant(vacant_entry) => {
-                self.batch_ordering.push(score);
+                self.batch_ordering.insert(score);
                 vacant_entry.insert(vec![node]);
             }
         }
         self.inserted_nodes += 1;
+    }
+
+    pub fn drop_nodes_below_score(&mut self, min_score: SearchScore) {
+        let mut dropped = 0;
+        while let Some(&score) = self.batch_ordering.first()
+            && score < min_score
+        {
+            self.batch_ordering.pop_first();
+            dropped += self.batches.remove(&score).map_or(0, |batch| batch.len());
+        }
+        if dropped != 0 {
+            log::trace!("{dropped} nodes dropped ({min_score:?})");
+        }
     }
 
     pub fn pop_batch(&mut self) -> Option<(SearchScore, Vec<(SimulationState, usize)>)> {
@@ -119,7 +132,7 @@ impl SearchQueue {
                 vec![(self.initial_state, Backtracking::<Action>::SENTINEL)],
             ));
         }
-        if let Some(score) = self.batch_ordering.pop()
+        if let Some(score) = self.batch_ordering.pop_last()
             && let Some(mut batch) = self.batches.remove(&score)
         {
             // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
