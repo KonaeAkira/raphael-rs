@@ -3,8 +3,8 @@
 set -euxo pipefail
 
 cmds=(
-    "raphael-cli solve --recipe-id 35829 --stats 4900 4800 620 --level 100 --manipulation"
-    # "raphael-cli solve --recipe-id 35830 --stats 5428 5333 737 --level 100 --manipulation --heart-and-soul"
+    "solve -r 35829 -s 4900 4800 620 -l 100 --manipulation"
+    # "solve -r 35830 -s 5428 5333 737 -l 100 --manipulation --heart-and-soul"
 )
 
 cargo install --path raphael-cli
@@ -13,5 +13,5 @@ echo "| Command | Time | Memory |"
 echo "| ------- | ---: | -----: |"
 for cmd in "${cmds[@]}"
 do
-    /usr/bin/time --format "| \`$cmd\` | %e s | %M kB |" bash -c "$cmd &> /dev/null" 2>&1
+    /usr/bin/time --format "| \`$cmd\` | %e s | %M kB |" bash -c "raphael-cli $cmd &> /dev/null" 2>&1
 done
