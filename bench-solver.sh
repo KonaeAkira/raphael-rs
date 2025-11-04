@@ -3,8 +3,9 @@
 set -euxo pipefail
 
 cmds=(
-    "solve -r 35829 -s 4900 4800 620 -l 100 --manipulation"
-    # "solve -r 35830 -s 5428 5333 737 -l 100 --manipulation --heart-and-soul"
+    "solve -r 35829 -s 4900 4800 620 --manipulation" # Rarefied Tacos de Carne Asada
+    "solve -r 35829 -s 4900 4800 620 --manipulation --adversarial" # Rarefied Tacos de Carne Asada
+    "solve -r 35830 -s 5428 5333 737 --manipulation --heart-and-soul" # Archeo Kingdom Broadsword
 )
 
 cargo install --path raphael-cli
