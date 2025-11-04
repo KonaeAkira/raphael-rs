@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -euxo pipefail
 
 cmds=(
     "raphael-cli solve --recipe-id 35829 --stats 4900 4800 620 --level 100 --manipulation"

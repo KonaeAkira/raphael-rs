@@ -14,16 +14,16 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.base_ref }}
-      - name: Run benchmark
-        run: echo Benchmarking \`${{ github.base_ref }}\` > message.txt && /tmp/bench-solver.sh >> message.txt
+      - run: echo Benchmarking \`${{ github.base_ref }}\` > /tmp/pr-message.txt
+      - run: /tmp/bench-solver.sh >> /tmp/pr-message.txt
 
       - name: Checkout feature branch
         uses: actions/checkout@v3
-      - name: Run benchmark
-        run: echo Benchmarking \`${{ github.ref }}\` >> message.txt && /tmp/bench-solver.sh >> message.txt
+      - run: echo Benchmarking \`${{ github.ref }}\` >> /tmp/pr-message.txt
+      - run: /tmp/bench-solver.sh >> /tmp/pr-message.txt
 
       - name: Add result as comment on PR
         uses: thollander/actions-comment-pull-request@v3
         with:
           comment-tag: benchmark
-          file-path: message.txt
+          file-path: /tmp/pr-message.txt
