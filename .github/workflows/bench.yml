@@ -8,7 +8,7 @@ env:
 jobs:
   bench_solver:
     runs-on: self-hosted
-    name: Benchmark
+    name: benchmark-cli
     permissions:
       pull-requests: write
     steps:
@@ -25,6 +25,8 @@ jobs:
 
       - name: Checkout merge ref
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
       - run: echo Benchmarking \`${{ github.ref }}\` >> /tmp/pr-message.txt
       - run: /tmp/bench-solver.sh >> /tmp/pr-message.txt
 
