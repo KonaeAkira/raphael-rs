@@ -2,27 +2,32 @@ name: Benchmark
 
 on: pull_request
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   bench_solver:
     runs-on: self-hosted
     name: Benchmark
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v3
       - run: cp bench-solver.sh /tmp/bench-solver.sh
 
-      - name: Checkout target branch
+      - name: Checkout base ref
         uses: actions/checkout@v3
         with:
           ref: ${{ github.base_ref }}
       - run: echo Benchmarking \`${{ github.base_ref }}\` > /tmp/pr-message.txt
       - run: /tmp/bench-solver.sh >> /tmp/pr-message.txt
 
-      - name: Checkout feature branch
+      - name: Checkout merge ref
         uses: actions/checkout@v3
       - run: echo Benchmarking \`${{ github.ref }}\` >> /tmp/pr-message.txt
       - run: /tmp/bench-solver.sh >> /tmp/pr-message.txt
 
-      - name: Add result as comment on PR
+      - name: Add benchmark result as comment on PR
         uses: thollander/actions-comment-pull-request@v3
         with:
           comment-tag: benchmark
