@@ -1,3 +1,5 @@
+name: Benchmark
+
 on: pull_request
 
 jobs:
@@ -5,17 +7,20 @@ jobs:
     runs-on: self-hosted
     name: Benchmark
     steps:
+      - uses: actions/checkout@v3
+      - run: cp bench-solver.sh /tmp/bench-solver.sh
+
       - name: Checkout target branch
         uses: actions/checkout@v3
         with:
           ref: ${{ github.base_ref }}
       - name: Run benchmark
-        run: echo Benchmarking \`${{ github.base_ref }}\` > message.txt && "${{ github.workspace }}/bench-solver.sh" >> message.txt
+        run: echo Benchmarking \`${{ github.base_ref }}\` > message.txt && /tmp/bench-solver.sh >> message.txt
 
       - name: Checkout feature branch
         uses: actions/checkout@v3
       - name: Run benchmark
-        run: echo Benchmarking \`${{ github.ref }}\` >> message.txt && "${{ github.workspace }}/bench-solver.sh" >> message.txt
+        run: echo Benchmarking \`${{ github.ref }}\` >> message.txt && /tmp/bench-solver.sh >> message.txt
 
       - name: Add result as comment on PR
         uses: thollander/actions-comment-pull-request@v3
