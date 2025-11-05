@@ -1,4 +1,4 @@
-name: Publish Release Assets
+name: Publish release assets
 
 on:
   release:

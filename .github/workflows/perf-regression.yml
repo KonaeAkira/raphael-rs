@@ -1,4 +1,4 @@
-name: Benchmark
+name: Perf regression
 
 on: pull_request
 
@@ -29,6 +29,8 @@ jobs:
           ref: ${{ github.ref }}
       - run: echo Benchmarking \`${{ github.ref }}\` >> /tmp/pr-message.txt
       - run: /tmp/bench-solver.sh >> /tmp/pr-message.txt
+
+      - run: cat /tmp/pr-message.txt
 
       - name: Add benchmark result as comment on PR
         uses: thollander/actions-comment-pull-request@v3
