@@ -47,7 +47,7 @@ impl Value {
     }
 
     fn cp(&self) -> u16 {
-        (self.0.as_array_ref()[0] >> 16) as u16
+        (self.0.as_array()[0] >> 16) as u16
     }
 }
 

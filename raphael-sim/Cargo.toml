@@ -9,11 +9,11 @@ workspace = true
 crate-type = ["rlib"]
 
 [dev-dependencies]
-criterion = "0.5.1"
-rand = "0.9.1"
+criterion = "0.7.0"
+rand = "0.9.2"
 
 [dependencies]
-bitfield-struct = "0.8.0"
+bitfield-struct = "0.12.1"
 strum = "0.27"
 strum_macros = "0.27"
 serde = { workspace = true, optional = true }

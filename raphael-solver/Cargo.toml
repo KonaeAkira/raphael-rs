@@ -10,20 +10,20 @@ crate-type = ["rlib"]
 
 [dependencies]
 raphael-sim = { workspace = true }
-rustc-hash = "1.1.0"
-bitfield-struct = "0.8.0"
+rustc-hash = "2.1.1"
+bitfield-struct = "0.12.1"
 rayon = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true, optional = true }
 web-time = { workspace = true }
-wide = "0.7.33"
+wide = "0.8.1"
 nunny = "0.2.2"
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]
 
 [dev-dependencies]
-rand = "0.9.1"
-env_logger = "0.11.5"
+rand = "0.9.2"
+env_logger = "0.11.8"
 expect-test = "1.5.1"
 test-case = "3.3.1"

@@ -27,7 +27,7 @@ raphael-sim = { path = "raphael-sim" }
 raphael-solver = { path = "raphael-solver" }
 raphael-data = { path = "raphael-data" }
 raphael-translations = { path = "raphael-translations" }
-rayon = "1.10"
+rayon = "1.11"
 serde = { version = "1.0", features = ["derive"] }
 log = { version = "0.4", features = ["std"] }
 web-time = "1.1.0"
@@ -54,11 +54,11 @@ rayon = { workspace = true }
 serde = { workspace = true }
 log = { workspace = true }
 web-time = { workspace = true }
-ron = "0.8"
+ron = "0.11"
 semver = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-env_logger = "0.11.5"
+env_logger = "0.11.8"
 ehttp = { version = "0.5.0", features = ["json"] }
 # Default features of `eframe` include the "glow" renderer which is not needed if "wgpu" is enabled.
 # To avoid including both in the binary, default features have to be disabled
@@ -76,7 +76,7 @@ eframe = { version = "0.33.0", default-features = false, features = [
 wgpu = "27"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-rayon = { version = "1.2", features = ["no-bundler"] }
+wasm-bindgen-rayon = { version = "1.3", features = ["no-bundler"] }
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 web-sys = "0.3"
