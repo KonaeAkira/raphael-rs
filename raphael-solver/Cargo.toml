@@ -18,6 +18,7 @@ serde = { workspace = true, optional = true }
 web-time = { workspace = true }
 wide = "0.7.33"
 nunny = "0.2.2"
+thread_local = "1.1.9"
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]

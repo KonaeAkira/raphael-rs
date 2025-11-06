@@ -1,5 +1,6 @@
 use raphael_sim::*;
 use rayon::prelude::*;
+use thread_local::ThreadLocal;
 
 use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
@@ -11,6 +12,7 @@ use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
 use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
+use std::cell::RefCell;
 use std::vec::Vec;
 
 #[derive(Clone)]
@@ -116,35 +118,37 @@ impl<'a> MacroSolver<'a> {
                 return Err(SolverException::Interrupted);
             }
 
-            let create_worker_data = || WorkerData {
-                settings: &self.settings,
-                finish_solver: &self.finish_solver,
-                quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
-                step_lb_solver_shard: self.step_lb_solver.create_shard(),
-                min_accepted_score,
-                candidate_states: Vec::new(),
-            };
+            let thread_results = ThreadLocal::<RefCell<WorkerData>>::new();
+            batch.into_par_iter().try_for_each_init(
+                || {
+                    thread_results.get_or(|| {
+                        RefCell::new(WorkerData {
+                            settings: &self.settings,
+                            finish_solver: &self.finish_solver,
+                            quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
+                            step_lb_solver_shard: self.step_lb_solver.create_shard(),
+                            min_accepted_score,
+                            candidate_states: Vec::new(),
+                        })
+                    })
+                },
+                |thread_local_result, (state, backtrack_id)| {
+                    thread_local_result
+                        .borrow_mut()
+                        .process_state(state, score, backtrack_id)
+                },
+            )?;
+            let thread_results = thread_results.into_iter().collect::<Vec<_>>();
 
-            let worker_results = batch
-                .into_par_iter()
-                .try_fold(
-                    create_worker_data,
-                    |mut worker_data, (state, backtrack_id)| {
-                        worker_data.process_state(state, score, backtrack_id)?;
-                        Ok(worker_data)
-                    },
-                )
-                .collect::<Result<Vec<_>, SolverException>>()?;
-
-            min_accepted_score = worker_results
+            min_accepted_score = thread_results
                 .iter()
-                .map(|result| result.min_accepted_score)
+                .map(|result| result.borrow().min_accepted_score)
                 .max()
                 .unwrap_or(min_accepted_score);
             search_queue.drop_nodes_below_score(min_accepted_score);
 
-            for worker_data in &worker_results {
-                for &(state, score, action, parent_id) in &worker_data.candidate_states {
+            for worker_data in thread_results.iter() {
+                for &(state, score, action, parent_id) in &worker_data.borrow().candidate_states {
                     if state.progress >= self.settings.max_progress() {
                         if solution
                             .as_ref()
@@ -167,12 +171,13 @@ impl<'a> MacroSolver<'a> {
 
             // Map each `WorkerData` instance to just the hashmaps containing all the newly solved states.
             // This drops all shared references to `self` which allows for mutating the inner solvers.
-            let solved_states_per_worker = worker_results
+            let solved_states_per_worker = thread_results
                 .into_iter()
-                .map(|worker_data| {
+                .map(|thread_result| {
+                    let thread_result = thread_result.into_inner();
                     (
-                        worker_data.quality_ub_solver_shard.solved_states(),
-                        worker_data.step_lb_solver_shard.solved_states(),
+                        thread_result.quality_ub_solver_shard.solved_states(),
+                        thread_result.step_lb_solver_shard.solved_states(),
                     )
                 })
                 .collect::<Vec<_>>();
