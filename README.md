@@ -39,7 +39,7 @@ If you find a macro that beats the generated macro according to the specificatio
 ## Building from source
 
 The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
-The minimal supported Rust version (MSRV) is 1.88.0.
+The current minimal supported Rust version (MSRV) is 1.89.0.
 
 ### Native GUI
 
@@ -90,5 +90,5 @@ Before submitting a pull request, make sure all tests are ok by running:
 cargo test --workspace
 ```
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > Pull requests should be opened against the `preview` branch. The `main` branch is for releasing.

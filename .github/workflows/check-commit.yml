@@ -15,14 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check that workspace builds with MSRV
-        run: rustup default 1.88.0 && cargo check --workspace
+        run: rustup default 1.89.0 && cargo check --workspace
 
   check-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - name: Check that workspace builds with MSRV
-        run: rustup default 1.88.0 && cargo check --workspace
+        run: rustup default 1.89.0 && cargo check --workspace
 
   run-tests:
     runs-on: ubuntu-latest

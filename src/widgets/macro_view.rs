@@ -302,7 +302,7 @@ impl Widget for MacroView<'_> {
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui.button("⚙").clicked() {
                             set_config_menu_visibility(ui.ctx(), true);
-                        };
+                        }
                         if ui
                             .add_enabled(!self.actions.is_empty(), egui::Button::new("🗑"))
                             .clicked()
