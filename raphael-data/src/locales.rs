@@ -15,12 +15,12 @@ pub enum Locale {
 impl Locale {
     pub fn short_code(self) -> &'static str {
         match self {
-            Locale::EN => "EN",
-            Locale::DE => "DE",
-            Locale::FR => "FR",
-            Locale::JP => "JP",
-            Locale::CN => "CN",
-            Locale::KR => "KR",
+            Self::EN => "EN",
+            Self::DE => "DE",
+            Self::FR => "FR",
+            Self::JP => "JP",
+            Self::CN => "CN",
+            Self::KR => "KR",
         }
     }
 }

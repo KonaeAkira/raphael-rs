@@ -168,8 +168,9 @@ impl PartialEq for Rotation {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum LoadOperation {
+    #[default]
     Rotation,
     RotationRecipe,
     RotationRecipeConsumables,
@@ -200,12 +201,6 @@ impl std::fmt::Display for LoadOperationDisplay {
             }
         };
         write!(f, "{}", output_str)
-    }
-}
-
-impl Default for LoadOperation {
-    fn default() -> Self {
-        Self::Rotation
     }
 }
 
