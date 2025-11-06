@@ -124,6 +124,10 @@ impl SearchQueue {
         }
     }
 
+    pub fn next_batch_score(&self) -> Option<&SearchScore> {
+        self.batch_ordering.last()
+    }
+
     pub fn pop_batch(&mut self) -> Option<(SearchScore, Vec<(SimulationState, usize)>)> {
         if self.processed_nodes == 0 {
             self.processed_nodes += 1;

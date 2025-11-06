@@ -86,7 +86,7 @@ fn rinascita_3700_3280() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 5091,
+                inserted_nodes: 5092,
                 processed_nodes: 457,
             },
             finish_solver_stats: FinishSolverStats {
@@ -139,7 +139,7 @@ fn pactmaker_3240_3130() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 42206,
+                inserted_nodes: 42207,
                 processed_nodes: 4631,
             },
             finish_solver_stats: FinishSolverStats {
@@ -247,7 +247,7 @@ fn diadochos_4021_3660() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 7609,
+                inserted_nodes: 7612,
                 processed_nodes: 1627,
             },
             finish_solver_stats: FinishSolverStats {
@@ -354,7 +354,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 431840,
-                processed_nodes: 70818,
+                processed_nodes: 70825,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -409,7 +409,7 @@ fn stuffed_peppers_2() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 46128,
-                processed_nodes: 2788,
+                processed_nodes: 2790,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -523,7 +523,7 @@ fn stuffed_peppers_2_quick_innovation() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 47108,
-                processed_nodes: 2788,
+                processed_nodes: 2790,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -629,7 +629,7 @@ fn black_star_4048_3997() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 146191,
-                processed_nodes: 10245,
+                processed_nodes: 10401,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3248,
@@ -682,7 +682,7 @@ fn claro_walnut_lumber_4900_4800() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 503332,
-                processed_nodes: 28603,
+                processed_nodes: 28616,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 8079,
@@ -735,7 +735,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 5598,
-                processed_nodes: 362,
+                processed_nodes: 370,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -788,7 +788,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 15034,
-                processed_nodes: 930,
+                processed_nodes: 955,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -841,7 +841,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 265762,
-                processed_nodes: 15512,
+                processed_nodes: 15517,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 13977,
@@ -894,7 +894,7 @@ fn hardened_survey_plank_5558_5216() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 1228817,
-                processed_nodes: 172660,
+                processed_nodes: 172676,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3619,

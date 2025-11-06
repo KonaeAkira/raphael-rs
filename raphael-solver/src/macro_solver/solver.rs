@@ -11,8 +11,6 @@ use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
 use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
-use std::vec::Vec;
-
 #[derive(Clone)]
 struct Solution {
     score: (SearchScore, u32),
@@ -109,32 +107,60 @@ impl<'a> MacroSolver<'a> {
         let mut solution: Option<Solution> = None;
         let mut min_accepted_score = SearchScore::MIN;
 
-        while let Some((score, batch)) = search_queue.pop_batch()
-            && score >= min_accepted_score
-        {
+        let mut next_score_and_batch = None;
+
+        loop {
             if self.interrupt_signal.is_set() {
                 return Err(SolverException::Interrupted);
             }
 
-            let create_worker_data = || WorkerData {
-                settings: &self.settings,
-                finish_solver: &self.finish_solver,
-                quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
-                step_lb_solver_shard: self.step_lb_solver.create_shard(),
-                min_accepted_score,
-                candidate_states: Vec::new(),
+            let (score, batch) = if let Some((score, batch)) = next_score_and_batch.take() {
+                (score, batch)
+            } else if let Some((score, batch)) = search_queue.pop_batch() {
+                (score, batch)
+            } else {
+                break; // Search queue is empty.
             };
 
-            let worker_results = batch
-                .into_par_iter()
-                .try_fold(
-                    create_worker_data,
-                    |mut worker_data, (state, backtrack_id)| {
-                        worker_data.process_state(state, score, backtrack_id)?;
-                        Ok(worker_data)
-                    },
-                )
-                .collect::<Result<Vec<_>, SolverException>>()?;
+            if score < min_accepted_score {
+                break;
+            }
+
+            // Retrieving the next batch is expensive because that's when the Pareto-dominance checking happens.
+            // If possible, we want to prefetch the next batch at the same time we are iterating over the current batch.
+            // Prefetching is possible if all of the following conditions are satisfied:
+            // - The next batch's score is the score immediately after the current batch's score, i.e. there are no possible score values between this batch's score and the next batch's score.
+            // - Nodes in the current batch cannot have children with the same score as the next batch.
+            let (_, worker_results) = rayon::join(
+                || {
+                    if let Some(next_score) = search_queue.next_batch_score()
+                        && next_score.current_duration == score.current_duration + 1
+                    {
+                        next_score_and_batch = search_queue.pop_batch();
+                    }
+                },
+                || {
+                    let create_worker_data = || WorkerData {
+                        settings: &self.settings,
+                        finish_solver: &self.finish_solver,
+                        quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
+                        step_lb_solver_shard: self.step_lb_solver.create_shard(),
+                        min_accepted_score,
+                        candidate_states: Vec::new(),
+                    };
+                    batch
+                        .into_par_iter()
+                        .try_fold(
+                            create_worker_data,
+                            |mut worker_data, (state, backtrack_id)| {
+                                worker_data.process_state(state, score, backtrack_id)?;
+                                Ok(worker_data)
+                            },
+                        )
+                        .collect::<Result<Vec<_>, SolverException>>()
+                },
+            );
+            let worker_results = worker_results?;
 
             min_accepted_score = worker_results
                 .iter()

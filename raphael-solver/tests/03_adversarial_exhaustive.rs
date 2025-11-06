@@ -102,7 +102,7 @@ fn stuffed_peppers() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 1799797,
-                processed_nodes: 85547,
+                processed_nodes: 85550,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -157,7 +157,7 @@ fn test_rare_tacos_2() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 9023119,
-                processed_nodes: 3803810,
+                processed_nodes: 3803811,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -216,7 +216,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 485744,
-                processed_nodes: 33222,
+                processed_nodes: 33227,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 798,

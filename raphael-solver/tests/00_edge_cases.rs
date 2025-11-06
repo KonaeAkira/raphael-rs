@@ -188,7 +188,7 @@ fn max_quality() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 97351,
-                processed_nodes: 6915,
+                processed_nodes: 6916,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
@@ -348,7 +348,7 @@ fn issue_216_steplbsolver_crash() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 436353,
-                processed_nodes: 21746,
+                processed_nodes: 21924,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 9851,
