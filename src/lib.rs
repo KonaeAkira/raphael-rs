@@ -1,4 +1,4 @@
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
 mod app;
@@ -9,6 +9,6 @@ mod context;
 mod thread_pool;
 mod widgets;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 pub static OOM_PANIC_OCCURED: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);

@@ -151,7 +151,7 @@ pub fn collapse_temporary(ui: &mut egui::Ui, id: egui::Id, collapsed: &mut bool)
     }
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 pub fn get_action_icon(action: Action, job_id: u8) -> egui::Image<'static> {
     let image_path = format!(
         "{}/action-icons/{}/{}.webp",
@@ -162,7 +162,7 @@ pub fn get_action_icon(action: Action, job_id: u8) -> egui::Image<'static> {
     egui::Image::new(image_path)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 macro_rules! action_icon {
     ( $name:literal, $job_id:expr ) => {
         match $job_id {
@@ -182,7 +182,7 @@ macro_rules! action_icon {
     };
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 pub fn get_action_icon(action: Action, job_id: u8) -> egui::Image<'static> {
     egui::Image::new(match action {
         Action::BasicSynthesis => action_icon!("Basic Synthesis", job_id),

@@ -1,7 +1,7 @@
 [build]
-target = "wasm32-unknown-unknown"
+target = "wasm64-unknown-unknown"
 
-[target.wasm32-unknown-unknown]
+[target.wasm64-unknown-unknown]
 rustflags = [
     "--cfg=web_sys_unstable_apis", # needed for copy-to-clipboard functionality
     "-Ctarget-feature=+atomics,+bulk-memory,+simd128",

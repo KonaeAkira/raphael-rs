@@ -2,7 +2,7 @@ use std::num::NonZeroUsize;
 
 static THREAD_POOL_INIT: std::sync::Once = std::sync::Once::new();
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 static THREAD_POOL_IS_INITIALIZED: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
@@ -16,7 +16,7 @@ pub fn initialization_attempted() -> bool {
     THREAD_POOL_INIT.is_completed()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 fn initialize(num_threads: Option<NonZeroUsize>) {
     let num_threads = num_threads.unwrap_or_else(default_thread_count);
     match rayon::ThreadPoolBuilder::new()
@@ -34,7 +34,7 @@ fn initialize(num_threads: Option<NonZeroUsize>) {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 fn initialize(num_threads: Option<NonZeroUsize>) {
     let num_threads = match num_threads {
         Some(num_threads) => num_threads,
@@ -52,7 +52,7 @@ fn initialize(num_threads: Option<NonZeroUsize>) {
     });
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 pub fn default_thread_count() -> NonZeroUsize {
     std::thread::available_parallelism().map_or(NonZeroUsize::new(4).unwrap(), |detected| {
         let num_threads = std::cmp::max(2, detected.get() / 2);
@@ -60,7 +60,7 @@ pub fn default_thread_count() -> NonZeroUsize {
     })
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 pub fn default_thread_count() -> NonZeroUsize {
     let window = web_sys::window().unwrap();
     let detected = window.navigator().hardware_concurrency() as usize;
@@ -68,12 +68,12 @@ pub fn default_thread_count() -> NonZeroUsize {
     NonZeroUsize::new((detected / 2).clamp(2, 8)).unwrap()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 pub fn is_initialized() -> bool {
     THREAD_POOL_INIT.is_completed()
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 pub fn is_initialized() -> bool {
     THREAD_POOL_IS_INITIALIZED.load(std::sync::atomic::Ordering::Relaxed)
 }

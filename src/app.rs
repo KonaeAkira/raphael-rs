@@ -73,7 +73,7 @@ impl MacroSolverApp {
         load_fonts(&cc.egui_ctx);
 
         let latest_version = Arc::new(Mutex::new(semver::Version::new(0, 0, 0)));
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(target_family = "wasm"))]
         fetch_latest_version(latest_version.clone());
 
         Self {
@@ -106,7 +106,7 @@ impl eframe::App for MacroSolverApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let locale = self.app_context.locale;
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(target_family = "wasm")]
         self.load_fonts_dyn(ctx);
 
         self.process_solver_events();
@@ -188,7 +188,7 @@ impl eframe::App for MacroSolverApp {
         }
 
         if self.solver_pending {
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(target_family = "wasm")]
             if crate::OOM_PANIC_OCCURED.load(std::sync::atomic::Ordering::Relaxed) {
                 eframe::wasm_bindgen::throw_val("OOM panic".into());
             }
@@ -549,10 +549,10 @@ impl MacroSolverApp {
                         });
                     });
                     if thread_pool::initialization_attempted() {
-                        #[cfg(target_arch = "wasm32")]
+                        #[cfg(target_family = "wasm")]
                         let app_restart_text =
                             t!(locale, "Reload the page to change max solver threads.");
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(not(target_family = "wasm"))]
                         let app_restart_text =
                             t!(locale, "Restart the app to change max solver threads.");
                         ui.label(
@@ -848,7 +848,7 @@ impl MacroSolverApp {
             >= QuickInnovation::LEVEL_REQUIREMENT
             && self.app_context.active_stats().quick_innovation;
         if heart_and_soul_enabled || quick_innovation_enabled {
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(not(target_family = "wasm"))]
             ui.label(
                 egui::RichText::new(t!(
                     locale,
@@ -857,7 +857,7 @@ impl MacroSolverApp {
                 .small()
                 .color(ui.visuals().warn_fg_color),
             );
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(target_family = "wasm")]
             {
                 ui.label(
                     egui::RichText::new(
@@ -1074,19 +1074,19 @@ impl MacroSolverApp {
     }
 
     fn experimental_warning_text(locale: Locale) -> &'static str {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(target_family = "wasm"))]
         return t!(
             locale,
             "⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory."
         );
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(target_family = "wasm")]
         return t!(
             locale,
             "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely."
         );
     }
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(target_family = "wasm")]
     fn load_fonts_dyn(&self, ctx: &egui::Context) {
         if self.app_context.locale == Locale::JP {
             let uri = concat!(
@@ -1110,7 +1110,7 @@ impl MacroSolverApp {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(target_family = "wasm")]
 fn load_font_dyn(ctx: &egui::Context, font_name: &str, uri: &str) {
     use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
     let id = egui::Id::new(format!("{} loaded", uri));
@@ -1155,7 +1155,7 @@ fn load_fonts(ctx: &egui::Context) {
             },
         ],
     ));
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(target_family = "wasm"))]
     ctx.add_font(FontInsert::new(
         "NotoSansJP-Regular",
         egui::FontData::from_static(include_bytes!(
@@ -1172,7 +1172,7 @@ fn load_fonts(ctx: &egui::Context) {
             },
         ],
     ));
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(target_family = "wasm"))]
     ctx.add_font(FontInsert::new(
         "NotoSansSC-Regular",
         egui::FontData::from_static(include_bytes!(
@@ -1189,7 +1189,7 @@ fn load_fonts(ctx: &egui::Context) {
             },
         ],
     ));
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(target_family = "wasm"))]
     ctx.add_font(FontInsert::new(
         "NotoSansKR-Regular",
         egui::FontData::from_static(include_bytes!(
@@ -1245,7 +1245,7 @@ fn spawn_solver(
     });
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 fn fetch_latest_version(latest_version: Arc<Mutex<semver::Version>>) {
     #[derive(Deserialize)]
     struct ApiResponse {

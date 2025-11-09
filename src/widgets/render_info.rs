@@ -200,7 +200,7 @@ impl<'a> RenderInfo<'a> {
         });
         ui.separator();
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(target_family = "wasm"))]
         if let Some(wgpu_render_state) = frame.wgpu_render_state() {
             let adapter = &wgpu_render_state.adapter;
             let eframe::wgpu::AdapterInfo {

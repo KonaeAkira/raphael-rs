@@ -1,5 +1,18 @@
-[alias]
-tr = "test --package raphael-solver --test *"
-tr1 = "test --package raphael-solver --test * -- -Z unstable-options --report-time --test-threads=1"
-rr = "run --release --package raphael-solver --example macro_solver_example"
-ud = "run --package raphael-data-updater"
+[build]
+target = "wasm64-unknown-unknown"
+
+[target.wasm64-unknown-unknown]
+rustflags = [
+    "--cfg=web_sys_unstable_apis", # needed for copy-to-clipboard functionality
+    "-Ctarget-feature=+atomics,+bulk-memory,+simd128",
+    "-Clink-arg=--max-memory=4294967296",
+    "-Clink-arg=--shared-memory",
+    "-Clink-arg=--import-memory",
+    "-Clink-arg=--export=__wasm_init_tls",
+    "-Clink-arg=--export=__tls_size",
+    "-Clink-arg=--export=__tls_align",
+    "-Clink-arg=--export=__tls_base",
+]
+
+[unstable]
+build-std = ["panic_abort", "std"]
