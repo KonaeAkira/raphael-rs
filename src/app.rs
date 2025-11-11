@@ -4,7 +4,6 @@ use std::sync::{Arc, Mutex};
 
 use raphael_solver::SolverException;
 use raphael_translations::{t, t_format};
-use serde::Deserialize;
 
 use egui::{Align, CursorIcon, Id, Layout, TextStyle};
 use raphael_data::{Locale, action_name, get_job_name};
@@ -1247,7 +1246,7 @@ fn spawn_solver(
 
 #[cfg(not(target_arch = "wasm32"))]
 fn fetch_latest_version(latest_version: Arc<Mutex<semver::Version>>) {
-    #[derive(Deserialize)]
+    #[derive(serde::Deserialize)]
     struct ApiResponse {
         tag_name: String,
     }
