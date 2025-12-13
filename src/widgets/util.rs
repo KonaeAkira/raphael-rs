@@ -117,6 +117,7 @@ pub fn calculate_column_widths<const N: usize>(
                     Locale::JP => &raphael_data::JOB_NAMES_JP,
                     Locale::CN => &raphael_data::JOB_NAMES_CN,
                     Locale::KR => &raphael_data::JOB_NAMES_KR,
+                    Locale::TW => &raphael_data::JOB_NAMES_TW,
                 },
             ),
             TableColumnWidth::RelativeToRemainingClamped { scale, min, max } => {

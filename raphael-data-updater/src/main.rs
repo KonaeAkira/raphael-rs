@@ -4,24 +4,27 @@ use std::{fs::File, io::BufWriter};
 
 use raphael_data_updater::*;
 
-async fn fetch_and_parse<T: SheetData>(lang: &str) -> Vec<T> {
+async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>) -> Vec<T> {
     const XIV_API: &str = "https://v2.xivapi.com/api";
     const BOILMASTER_CN: &str = "https://boilmaster-chs.augenfrosch.dev/api";
-    const BOILMASTER_KO: &str = "https://boilmaster-ko.augenfrosch.dev/api";
+    const BOILMASTER_KR: &str = "https://boilmaster-ko.augenfrosch.dev/api";
+    const BOILMASTER_TW: &str = "https://boilmaster-tc.augenfrosch.dev/api";
     let api_endpoint = match lang {
         "chs" => BOILMASTER_CN,
-        "ko" => BOILMASTER_KO,
+        "ko" => BOILMASTER_KR,
+        "tc" => BOILMASTER_TW,
         _ => XIV_API,
     };
     let mut rows = Vec::new();
     loop {
         let last_row_id = rows.last().map_or(0, |row: &T| row.row_id());
         let query = format!(
-            "{api_endpoint}/sheet/{}?limit=1000&fields={}&after={}&language={}",
+            "{api_endpoint}/sheet/{}?limit=1000&fields={}&after={}&language={}{}",
             T::SHEET,
             T::REQUIRED_FIELDS.join(","),
             last_row_id,
             lang,
+            schema_override.map_or("".to_owned(), |s| format!("&schema={}", s)),
         );
         let response = reqwest::get(query).await.unwrap();
         let json = json::parse(&response.text().await.unwrap()).unwrap();
@@ -148,34 +151,39 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
 async fn main() {
     env_logger::builder().format_timestamp(None).init();
 
-    let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>("en").await });
+    let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>("en", None).await });
     let level_adjust_table_entries =
-        tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>("en").await });
-    let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>("en").await });
-    let items = tokio::spawn(async { fetch_and_parse::<Item>("en").await });
-    let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>("en").await });
-    let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>("en").await });
-    let stellar_missions = tokio::spawn(async { fetch_and_parse::<StellarMission>("en").await });
+        tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>("en", None).await });
+    let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>("en", None).await });
+    let items = tokio::spawn(async { fetch_and_parse::<Item>("en", None).await });
+    let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>("en", None).await });
+    let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>("en", None).await });
+    let stellar_missions =
+        tokio::spawn(async { fetch_and_parse::<StellarMission>("en", None).await });
 
-    let item_names_en = tokio::spawn(async { fetch_and_parse::<ItemName>("en").await });
-    let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>("de").await });
-    let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>("fr").await });
-    let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja").await });
-    let item_names_cn = tokio::spawn(async { fetch_and_parse::<ItemName>("chs").await });
-    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("ko").await });
+    let item_names_en = tokio::spawn(async { fetch_and_parse::<ItemName>("en", None).await });
+    let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>("de", None).await });
+    let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>("fr", None).await });
+    let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja", None).await });
+    let item_names_cn = tokio::spawn(async { fetch_and_parse::<ItemName>("chs", None).await });
+    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("ko", None).await });
+    let item_names_tw = tokio::spawn(async { fetch_and_parse::<ItemName>("tc", None).await });
 
     let stellar_mission_names_en =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("en").await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("en", None).await });
     let stellar_mission_names_de =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("de").await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("de", None).await });
     let stellar_mission_names_fr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("fr").await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("fr", None).await });
     let stellar_mission_names_jp =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ja").await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ja", None).await });
     let stellar_mission_names_cn =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("chs").await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("chs", None).await });
     let stellar_mission_names_kr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ko").await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ko", None).await });
+    let stellar_mission_names_tw = tokio::spawn(async {
+        fetch_and_parse::<StellarMissionName>("tc", Some("exdschema@2:rev:cc92abc")).await
+    });
 
     let rlvls = rlvls.await.unwrap();
     let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
@@ -194,6 +202,7 @@ async fn main() {
     let mut item_names_jp = item_names_jp.await.unwrap();
     let mut item_names_cn = item_names_cn.await.unwrap();
     let mut item_names_kr = item_names_kr.await.unwrap();
+    let mut item_names_tw = item_names_tw.await.unwrap();
 
     let mut stellar_mission_names_en = stellar_mission_names_en.await.unwrap();
     let mut stellar_mission_names_de = stellar_mission_names_de.await.unwrap();
@@ -201,6 +210,7 @@ async fn main() {
     let mut stellar_mission_names_jp = stellar_mission_names_jp.await.unwrap();
     let mut stellar_mission_names_cn = stellar_mission_names_cn.await.unwrap();
     let mut stellar_mission_names_kr = stellar_mission_names_kr.await.unwrap();
+    let mut stellar_mission_names_tw = stellar_mission_names_tw.await.unwrap();
 
     // For some reason some recipes have items with ID 0 as their result
     recipes.retain(|recipe| recipe.item_id != 0);
@@ -242,6 +252,8 @@ async fn main() {
         .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
     item_names_kr
         .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
+    item_names_tw
+        .retain(|item_name| necessary_items.contains(&item_name.id) && !item_name.name.is_empty());
 
     // Parsing of stellar mission json already filters out gatherer only missions
     let crafter_stellar_missions: HashSet<u32> = stellar_missions
@@ -264,6 +276,10 @@ async fn main() {
         crafter_stellar_missions.contains(&stellar_mission_name.id)
             && !stellar_mission_name.name.is_empty()
     });
+    stellar_mission_names_tw.retain(|stellar_mission_name| {
+        crafter_stellar_missions.contains(&stellar_mission_name.id)
+            && !stellar_mission_name.name.is_empty()
+    });
 
     export_rlvls(&rlvls);
     export_level_adjust_table(&level_adjust_table_entries);
@@ -279,6 +295,7 @@ async fn main() {
     export_item_names(&item_names_jp, "jp");
     export_item_names(&item_names_cn, "cn");
     export_item_names(&item_names_kr, "kr");
+    export_item_names(&item_names_tw, "tw");
 
     export_stellar_mission_names(&stellar_mission_names_en, "en");
     export_stellar_mission_names(&stellar_mission_names_de, "de");
@@ -286,4 +303,5 @@ async fn main() {
     export_stellar_mission_names(&stellar_mission_names_jp, "jp");
     export_stellar_mission_names(&stellar_mission_names_cn, "cn");
     export_stellar_mission_names(&stellar_mission_names_kr, "kr");
+    export_stellar_mission_names(&stellar_mission_names_tw, "tw");
 }

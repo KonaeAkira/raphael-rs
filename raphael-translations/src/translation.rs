@@ -27,6 +27,7 @@ impl Translation {
             "ja" => Locale::JP,
             "chs" => Locale::CN,
             "ko" => Locale::KR,
+            "tc" => Locale::TW,
             _ => panic!("Unsupported language key!"),
         };
 
@@ -60,6 +61,7 @@ impl quote::ToTokens for LocaleTokens {
             Locale::JP => quote! { ::raphael_data::Locale::JP },
             Locale::CN => quote! { ::raphael_data::Locale::CN },
             Locale::KR => quote! { ::raphael_data::Locale::KR },
+            Locale::TW => quote! { ::raphael_data::Locale::TW },
         }
         .to_tokens(tokens);
     }

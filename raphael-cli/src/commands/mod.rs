@@ -13,6 +13,7 @@ pub enum Language {
     JP,
     CN,
     KR,
+    TW,
 }
 
 impl From<Language> for Locale {
@@ -24,6 +25,7 @@ impl From<Language> for Locale {
             Language::JP => Locale::JP,
             Language::CN => Locale::CN,
             Language::KR => Locale::KR,
+            Language::TW => Locale::TW,
         }
     }
 }
