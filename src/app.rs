@@ -259,6 +259,7 @@ impl eframe::App for MacroSolverApp {
                                     Locale::JP,
                                     Locale::CN,
                                     Locale::KR,
+                                    Locale::TW,
                                 ] {
                                     ui.selectable_value(
                                         &mut self.app_context.locale,
