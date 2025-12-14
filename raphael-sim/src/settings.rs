@@ -18,6 +18,7 @@ pub struct Settings {
 }
 
 impl Settings {
+    #[inline]
     pub fn is_action_allowed<ACTION: ActionImpl>(&self) -> bool {
         self.job_level >= ACTION::LEVEL_REQUIREMENT
             && self.allowed_actions.has_mask(ACTION::ACTION_MASK)
@@ -55,10 +56,12 @@ impl ActionMask {
             .remove(Action::QuickInnovation)
     }
 
+    #[inline]
     pub const fn has(self, action: Action) -> bool {
         (self.mask & (1 << action as u64)) != 0
     }
 
+    #[inline]
     pub const fn has_mask(self, other: Self) -> bool {
         (self.mask & other.mask) == other.mask
     }

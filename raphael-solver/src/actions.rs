@@ -131,6 +131,7 @@ pub const PROGRESS_ONLY_SEARCH_ACTIONS: [ActionCombo; 14] = [
     ActionCombo::Single(Action::TrainedPerfection),
 ];
 
+#[inline]
 pub fn use_action_combo(
     settings: &SolverSettings,
     mut state: SimulationState,
