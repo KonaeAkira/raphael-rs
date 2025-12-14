@@ -53,6 +53,7 @@ impl SimulationState {
         (state, errors)
     }
 
+    #[inline]
     pub fn is_final(&self, settings: &Settings) -> bool {
         self.durability == 0 || self.progress >= u32::from(settings.max_progress)
     }
@@ -75,6 +76,7 @@ impl SimulationState {
         }
     }
 
+    #[inline]
     pub fn use_action_impl<A: ActionImpl>(
         &self,
         settings: &Settings,
@@ -85,10 +87,9 @@ impl SimulationState {
 
         let mut state = *self;
 
-        if A::base_durability_cost(&state, settings) != 0 {
-            state.durability = state
-                .durability
-                .saturating_sub(A::durability_cost(self, settings, condition));
+        let durability_cost = A::durability_cost(self, settings, condition);
+        if durability_cost != 0 {
+            state.durability = state.durability.saturating_sub(durability_cost);
         }
 
         state.cp -= A::cp_cost(self, settings, condition);

@@ -41,6 +41,7 @@ impl std::cmp::PartialOrd for SearchScore {
 }
 
 impl std::cmp::Ord for SearchScore {
+    #[inline]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.quality_upper_bound
             .cmp(&other.quality_upper_bound)

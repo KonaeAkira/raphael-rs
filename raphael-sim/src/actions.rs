@@ -40,6 +40,7 @@ pub trait ActionImpl {
         u32::from(settings.base_quality) * action_mod * effect_mod * condition_mod / 20000
     }
 
+    #[inline]
     fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> u16 {
         if state.effects.trained_perfection_active() {
             return 0;

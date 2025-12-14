@@ -21,6 +21,7 @@ struct Key {
 }
 
 impl From<&SimulationState> for Key {
+    #[inline]
     fn from(state: &SimulationState) -> Self {
         Self {
             progress: state.progress,
@@ -40,18 +41,20 @@ impl Value {
         EFFECTS_KEY_MASK, // Effects
     ]);
 
-    /// `A` dominates `B` if every member of `A` is geq the corresponding member in `B`.
+    #[inline]
     fn dominates(&self, other: &Self) -> bool {
         let guarded_value = Self::GUARD | self.0;
         (guarded_value - other.0) & Self::GUARD == Self::GUARD
     }
 
+    #[inline]
     fn cp(&self) -> u16 {
         (self.0.as_array()[0] >> 16) as u16
     }
 }
 
 impl From<&SimulationState> for Value {
+    #[inline]
     fn from(state: &SimulationState) -> Self {
         Self(wide::u32x4::new([
             (u32::from(state.cp) << 16) + u32::from(state.durability),

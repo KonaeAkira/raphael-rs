@@ -53,18 +53,21 @@ impl Effects {
             .with_combo(Combo::SynthesisBegin)
     }
 
+    #[inline(always)]
     pub(crate) const fn progress_modifier(self) -> u32 {
         let mm_mod = if self.muscle_memory() != 0 { 10 } else { 0 };
         let vene_mod = if self.veneration() != 0 { 5 } else { 0 };
         10 + mm_mod + vene_mod
     }
 
+    #[inline(always)]
     pub(crate) const fn quality_modifier(self) -> u32 {
         let gs_mod = if self.great_strides() != 0 { 10 } else { 0 };
         let inno_mod = if self.innovation() != 0 { 5 } else { 0 };
         (self.inner_quiet() as u32 + 10) * (10 + gs_mod + inno_mod)
     }
 
+    #[inline]
     pub const fn adversarial_guard_active(self) -> bool {
         matches!(
             self.special_quality_state(),
@@ -72,6 +75,7 @@ impl Effects {
         )
     }
 
+    #[inline]
     pub const fn quality_actions_allowed(self) -> bool {
         !matches!(self.special_quality_state(), SpecialQualityState::Forbidden)
     }
