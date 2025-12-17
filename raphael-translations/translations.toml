@@ -18,7 +18,7 @@ chs = '''新版本可用'''
 tc = '''有可用的更新！'''
 ko = '''이용 가능한 업데이트가 있습니다!'''
 version = "0.1.0"
-appearances = ["src/app.rs:122:61"]
+appearances = ["src/app.rs:121:61"]
 
 ["mmItiM569HXD61xmESBQbQ=="]
 en = '''Download from GitHub'''
@@ -28,7 +28,7 @@ chs = '''从 Github 下载'''
 tc = '''從 GitHub 下載'''
 ko = '''GitHub에서 다운로드'''
 version = "0.1.0"
-appearances = ["src/app.rs:126:32"]
+appearances = ["src/app.rs:125:32"]
 
 ["WEDujLYYyOU8tQIkwVosEA=="]
 en = '''Your stats are below the minimum requirement for this recipe.'''
@@ -38,7 +38,7 @@ chs = '''你的属性不满足该配方的最低要求。'''
 tc = '''你的屬性低於此配方的最低要求。'''
 ko = '''이 제작법을 실행하기에는 능력치가 부족합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:147:21"]
+appearances = ["src/app.rs:146:21"]
 
 ["Y80Ti6XzzJh0HsgP3We95Q=="]
 en = '''Requirement: {req_cms} Craftsmanship, {req_ctrl} Control.'''
@@ -48,7 +48,7 @@ chs = '''属性要求：作业精度 {req_cms}，加工精度 {req_ctrl}。'''
 tc = '''屬性要求：作業精度 {req_cms}，加工精度 {req_ctrl}。'''
 ko = '''필요 능력치: 작업 숙련도 {req_cms}, 가공 숙련도 {req_ctrl}'''
 version = "0.1.0"
-appearances = ["src/app.rs:151:21"]
+appearances = ["src/app.rs:150:21"]
 
 ["Y5J9bsBCle+CMto6M6JHxw=="]
 en = '''Close'''
@@ -58,7 +58,7 @@ chs = '''关闭'''
 tc = '''關閉'''
 ko = '''닫기'''
 version = "0.1.0"
-appearances = ["src/app.rs:155:45", "src/app.rs:183:45", "src/widgets/macro_view.rs:429:37"]
+appearances = ["src/app.rs:154:45", "src/app.rs:182:45", "src/widgets/macro_view.rs:427:37"]
 
 ["pgzB+gD4MKo66zNoY8FNpQ=="]
 en = '''No solution'''
@@ -68,7 +68,7 @@ chs = '''没有求解结果'''
 tc = '''無解法'''
 ko = '''완성 불가능'''
 version = "0.1.0"
-appearances = ["src/app.rs:168:65"]
+appearances = ["src/app.rs:167:65"]
 
 ["kv7jCjVAfknUZcCoo2idbQ=="]
 en = '''Make sure that the recipe is set correctly and that your stats are enough to craft this item.'''
@@ -78,7 +78,7 @@ chs = '''请确保配方选择正确，且你的属性满足配方的要求'''
 tc = '''請確認配方是否正確設定，且屬性足以製作此物品。'''
 ko = '''제작법이 알맞게 설정되어있는지, 능력치가 충분한지 확인해 주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:170:45"]
+appearances = ["src/app.rs:169:45"]
 
 ["M7yKz7+xN0NbELcsdUS9mQ=="]
 en = '''Internal Solver Error'''
@@ -88,7 +88,7 @@ chs = '''求解器内部错误'''
 tc = '''內部求解器錯誤'''
 ko = '''내부 연산 오류'''
 version = "0.1.0"
-appearances = ["src/app.rs:176:65"]
+appearances = ["src/app.rs:175:65"]
 
 ["RGfRJgcMUrxdE5tDqHmKmw=="]
 en = '''Cancelling ...'''
@@ -98,7 +98,7 @@ chs = '''正在取消……'''
 tc = '''正在取消...'''
 ko = '''취소중...'''
 version = "0.1.0"
-appearances = ["src/app.rs:205:48"]
+appearances = ["src/app.rs:204:48"]
 
 ["jjl4qe3qMoWXStCHXMxtQw=="]
 en = '''Solving ...'''
@@ -108,7 +108,7 @@ chs = '''求解中……'''
 tc = '''求解中...'''
 ko = '''계산중...'''
 version = "0.1.0"
-appearances = ["src/app.rs:207:48"]
+appearances = ["src/app.rs:206:48"]
 
 ["CzGfkdakyiaZV+pcVtpfIA=="]
 en = '''Computing ...'''
@@ -118,7 +118,7 @@ chs = '''计算中……'''
 tc = '''計算中...'''
 ko = '''처리중...'''
 version = "0.1.0"
-appearances = ["src/app.rs:214:49"]
+appearances = ["src/app.rs:213:49"]
 
 ["BARUl+J0medS35cQtNh2aQ=="]
 en = '''{num} nodes visited'''
@@ -128,7 +128,7 @@ chs = '''已访问 {num} 个节点'''
 tc = '''已訪問 {num} 個節點'''
 ko = '''검색한 노드 수: {num}'''
 version = "0.1.0"
-appearances = ["src/app.rs:227:56"]
+appearances = ["src/app.rs:226:56"]
 
 ["OoX2q/JxMzmzTwg2Ed6zIA=="]
 en = '''Cancel'''
@@ -138,7 +138,7 @@ chs = '''取消'''
 tc = '''取消'''
 ko = '''취소'''
 version = "0.1.0"
-appearances = ["src/app.rs:235:89"]
+appearances = ["src/app.rs:234:89"]
 
 ["cg3EbR6nwnyIL1Q//glDgQ=="]
 en = '''View source on GitHub'''
@@ -148,7 +148,7 @@ chs = '''在 Github 上查看源代码'''
 tc = '''在 GitHub 上查看原始碼'''
 ko = '''GitHub에서 소스코드를 보기'''
 version = "0.1.0"
-appearances = ["src/app.rs:285:44"]
+appearances = ["src/app.rs:274:44"]
 
 ["lWmzPzSl47iiMaVVE3XEhg=="]
 en = '''Join Discord'''
@@ -158,7 +158,7 @@ chs = '''加入 Discord 服务器'''
 tc = '''加入 Discord'''
 ko = '''Discord에 참가'''
 version = "0.1.0"
-appearances = ["src/app.rs:293:44"]
+appearances = ["src/app.rs:282:44"]
 
 ["R8QWfFt31+imn5zc8sqPpQ=="]
 en = '''Support me on Ko-fi'''
@@ -168,7 +168,7 @@ chs = '''在 Ko-fi 上支持我'''
 tc = '''在 Ko-fi 上支持我'''
 ko = '''Ko-fi를 서포트'''
 version = "0.1.0"
-appearances = ["src/app.rs:301:44"]
+appearances = ["src/app.rs:290:44"]
 
 ["korDyKclck7un9L9GomIqw=="]
 en = '''Edit crafter stats'''
@@ -178,7 +178,7 @@ chs = '''编辑配装属性'''
 tc = '''編輯能工巧匠屬性'''
 ko = '''제작자 능력치를 편집'''
 version = "0.1.0"
-appearances = ["src/app.rs:403:44"]
+appearances = ["src/app.rs:395:44"]
 
 ["j6ZOcmHFeUUvSQL3tC6w8Q=="]
 en = '''Saved macros & solve history'''
@@ -188,7 +188,7 @@ chs = '''保存的宏 & 求解历史'''
 tc = '''已保存的巨集與求解紀錄'''
 ko = '''저장된 매크로 & 매크로 이력'''
 version = "0.1.0"
-appearances = ["src/app.rs:419:44"]
+appearances = ["src/app.rs:411:44"]
 
 ["1hnF2qPsDblAcEC031aNiQ=="]
 en = '''⚙ Settings'''
@@ -198,7 +198,7 @@ chs = '''⚙ 设置'''
 tc = '''⚙ 設定'''
 ko = '''⚙ 설정'''
 version = "0.1.0"
-appearances = ["src/app.rs:475:64"]
+appearances = ["src/app.rs:467:64"]
 
 ["io7ohp3lMzZa3WQzo2EXwA=="]
 en = '''Zoom'''
@@ -208,7 +208,7 @@ chs = '''缩放'''
 tc = '''縮放'''
 ko = '''줌'''
 version = "0.1.0"
-appearances = ["src/app.rs:484:45"]
+appearances = ["src/app.rs:476:45"]
 
 ["M8PiJj/aRi0rpRN+ej1g9A=="]
 en = '''Reset'''
@@ -218,7 +218,7 @@ chs = '''重置'''
 tc = '''重置'''
 ko = '''리셋'''
 version = "0.1.0"
-appearances = ["src/app.rs:495:57"]
+appearances = ["src/app.rs:487:57"]
 
 ["pONACX6lY+V99UWTe/kqrg=="]
 en = '''Theme'''
@@ -228,7 +228,7 @@ chs = '''主题'''
 tc = '''主題'''
 ko = '''테마'''
 version = "0.1.0"
-appearances = ["src/app.rs:521:45"]
+appearances = ["src/app.rs:513:45"]
 
 ["Dzp4BVgWJRKCJfNNkYIVlg=="]
 en = '''Max solver threads'''
@@ -238,7 +238,7 @@ chs = '''最大求解器线程数'''
 tc = '''最大求解器執行緒數'''
 ko = '''최대 연산 스레드 수'''
 version = "0.1.0"
-appearances = ["src/app.rs:527:45"]
+appearances = ["src/app.rs:519:45"]
 
 ["jShO4IYyVbGBOM8dCrtLKg=="]
 en = '''Auto'''
@@ -248,7 +248,7 @@ chs = '''自动'''
 tc = '''自動'''
 ko = '''자동'''
 version = "0.1.0"
-appearances = ["src/app.rs:532:78"]
+appearances = ["src/app.rs:524:78"]
 
 ["BLHRlxc+VXt0l9NBBt9tfw=="]
 en = '''Reload the page to change max solver threads.'''
@@ -258,7 +258,7 @@ chs = '''重新加载页面以修改最大求解器线程数'''
 tc = '''重新載入頁面以修改最大求解器執行緒數'''
 ko = '''최대 스레드 수를 변경하기 위해서는, 페이지를 새로고침 해주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:562:40"]
+appearances = ["src/app.rs:554:40"]
 
 ["vjDFd4nGKfXhhYyK/tHwPA=="]
 en = '''Restart the app to change max solver threads.'''
@@ -268,7 +268,7 @@ chs = '''重启 App 以修改最大求解器线程数'''
 tc = '''重新啟動應用程式以修改最大求解器執行緒數'''
 ko = '''최대 스레드 수를 변경하기 위해서는, 프로그램을 다시 실행해 주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:565:40"]
+appearances = ["src/app.rs:557:40"]
 
 ["nn9ZpD3bAAqndQIWAbRgFw=="]
 en = '''⚠ Unavailable after the solver was started.'''
@@ -278,7 +278,7 @@ chs = '''⚠ 在求解开始后不可用'''
 tc = '''⚠ 在計算開始後不可用'''
 ko = '''⚠ 계산 시작 후에는 사용할수 없습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:569:33"]
+appearances = ["src/app.rs:561:33"]
 
 ["zmui7MOfCBvDo46GmrsyHQ=="]
 en = '''Solve'''
@@ -288,7 +288,7 @@ chs = '''求解'''
 tc = '''開始計算'''
 ko = '''계산 시작'''
 version = "0.1.0"
-appearances = ["src/app.rs:610:67"]
+appearances = ["src/app.rs:602:67"]
 
 ["1U/QcBQBwNxZFTVzOiPbZQ=="]
 en = '''Loaded from saved rotations'''
@@ -298,7 +298,7 @@ chs = '''从已保存的手法中加载'''
 tc = '''從已保存的求解紀錄中載入'''
 ko = '''저장된 매크로를 불러오기'''
 version = "0.1.0"
-appearances = ["src/app.rs:633:45"]
+appearances = ["src/app.rs:625:45"]
 
 ["GHsBdCyhgje4wH1aGIXomA=="]
 en = '''Elapsed time: {dur:.2}s'''
@@ -308,7 +308,7 @@ chs = '''运行时间：{dur:.2}秒'''
 tc = '''經過時間: {dur:.2}秒'''
 ko = '''경과 시간: {dur:.2}초'''
 version = "0.1.0"
-appearances = ["src/app.rs:637:29"]
+appearances = ["src/app.rs:629:29"]
 
 ["86xP6SinOkg3PnEMcQj2jQ=="]
 en = '''Configuration'''
@@ -318,7 +318,7 @@ chs = '''设置'''
 tc = '''設定'''
 ko = '''설정'''
 version = "0.1.0"
-appearances = ["src/app.rs:656:53"]
+appearances = ["src/app.rs:648:53"]
 
 ["L2JTnghPt1d+Oa4OEEF1JA=="]
 en = '''Crafter stats'''
@@ -328,7 +328,7 @@ chs = '''装备属性'''
 tc = '''能工巧匠屬性'''
 ko = '''제작자 능력치'''
 version = "0.1.0"
-appearances = ["src/app.rs:678:49", "src/widgets/saved_rotations.rs:496:28", "src/widgets/saved_rotations.rs:513:43"]
+appearances = ["src/app.rs:673:49", "src/widgets/saved_rotations.rs:491:28", "src/widgets/saved_rotations.rs:508:43"]
 
 ["djUZraHVrnziMltlgh1vrw=="]
 en = '''Craftsmanship'''
@@ -338,7 +338,7 @@ chs = '''作业精度'''
 tc = '''作業精度'''
 ko = '''작업 숙련도'''
 version = "0.1.0"
-appearances = ["src/app.rs:680:33", "src/widgets/stats_edit.rs:39:41"]
+appearances = ["src/app.rs:675:33", "src/widgets/stats_edit.rs:48:44"]
 
 ["KJUTCL5V/kZ2/dZUokILbw=="]
 en = '''Control'''
@@ -348,7 +348,7 @@ chs = '''加工精度'''
 tc = '''加工精度'''
 ko = '''가공 숙련도'''
 version = "0.1.0"
-appearances = ["src/app.rs:693:33", "src/widgets/stats_edit.rs:41:41"]
+appearances = ["src/app.rs:707:33", "src/widgets/stats_edit.rs:54:44"]
 
 ["xiuBlBU0Sotio+aM9OVj/g=="]
 en = '''CP'''
@@ -358,7 +358,7 @@ chs = '''制作力'''
 tc = '''CP'''
 ko = '''CP'''
 version = "0.1.0"
-appearances = ["src/app.rs:706:33", "src/widgets/simulator.rs:100:36", "src/widgets/simulator.rs:159:45", "src/widgets/stats_edit.rs:43:41"]
+appearances = ["src/app.rs:739:33", "src/widgets/simulator.rs:100:36", "src/widgets/simulator.rs:159:45", "src/widgets/stats_edit.rs:60:44"]
 
 ["gvQDIapOj6o9a+eE3FQ/4w=="]
 en = '''Job level'''
@@ -368,7 +368,7 @@ chs = '''职业等级'''
 tc = '''職業等級'''
 ko = '''잡 레벨'''
 version = "0.1.0"
-appearances = ["src/app.rs:718:33", "src/widgets/stats_edit.rs:45:41"]
+appearances = ["src/app.rs:770:33", "src/widgets/stats_edit.rs:66:44"]
 
 ["cC4Pa/1y2f2sfxzRiK/t7w=="]
 en = '''HQ materials'''
@@ -378,7 +378,7 @@ chs = '''HQ 素材'''
 tc = '''HQ 素材'''
 ko = '''HQ 재료'''
 version = "0.1.0"
-appearances = ["src/app.rs:728:49"]
+appearances = ["src/app.rs:780:49"]
 
 ["kUunSSnuVLUo8LUXOeOV3g=="]
 en = '''None'''
@@ -388,7 +388,7 @@ chs = '''无'''
 tc = '''無'''
 ko = '''없음'''
 version = "0.1.0"
-appearances = ["src/app.rs:754:33", "src/widgets/macro_view.rs:127:31", "src/widgets/macro_view.rs:134:31", "src/widgets/macro_view.rs:365:41", "src/widgets/food_select.rs:61:53", "src/widgets/potion_select.rs:64:53", "src/widgets/saved_rotations.rs:471:32"]
+appearances = ["src/app.rs:806:33", "src/widgets/macro_view.rs:127:31", "src/widgets/macro_view.rs:134:31", "src/widgets/macro_view.rs:362:41", "src/widgets/food_select.rs:62:53", "src/widgets/potion_select.rs:65:53", "src/widgets/saved_rotations.rs:466:32"]
 
 ["zx/fjNOuB8BwC8A4Cf9wEQ=="]
 en = '''Actions'''
@@ -398,7 +398,7 @@ chs = '''技能'''
 tc = '''技能'''
 ko = '''기술'''
 version = "0.1.0"
-appearances = ["src/app.rs:758:49"]
+appearances = ["src/app.rs:810:49"]
 
 ["Nqynjr3uw4cXS6wQ7r6QMQ=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage.'''
@@ -408,7 +408,7 @@ chs = '''⚠ 使用专家技能会大幅增加求解时间和内存使用量'''
 tc = '''⚠ 使用專家技能會大幅增加求解時間和記憶體使用量'''
 ko = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:803:21"]
+appearances = ["src/app.rs:855:21"]
 
 ["78TQLq2ZFZ/qmx/LqLc/Xg=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions.'''
@@ -418,7 +418,7 @@ chs = '''⚠ 使用专家技能会大幅增加求解时间和内存使用量。�
 tc = '''⚠ 使用專家技能會大幅增加求解時間和記憶體使用量。建議下載並使用應用程式版本以啟用專家技能。'''
 ko = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다. 사용하시는 경우에는 프로그램 버전 사용을 추천합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:812:36"]
+appearances = ["src/app.rs:864:36"]
 
 ["dN6QqcmCiKeFu4Xi+6XZsA=="]
 en = '''Download latest release from GitHub'''
@@ -428,7 +428,7 @@ chs = '''从 Github 下载最新版本'''
 tc = '''從 GitHub 下載最新版本'''
 ko = '''GitHub에서 최신 릴리즈를 다운로드'''
 version = "0.1.0"
-appearances = ["src/app.rs:818:52"]
+appearances = ["src/app.rs:870:52"]
 
 ["yngZyyailHQ73P49MTwWog=="]
 en = '''Solver settings'''
@@ -438,7 +438,7 @@ chs = '''求解器设置'''
 tc = '''求解器設定'''
 ko = '''계산 설정'''
 version = "0.1.0"
-appearances = ["src/app.rs:825:49"]
+appearances = ["src/app.rs:877:49"]
 
 ["F6hizp5LhBRSpJLhSSSKSw=="]
 en = '''Target quality'''
@@ -448,7 +448,7 @@ chs = '''目标品质'''
 tc = '''目標品質'''
 ko = '''목표 품질'''
 version = "0.1.0"
-appearances = ["src/app.rs:827:33"]
+appearances = ["src/app.rs:879:33"]
 
 ["2AVyYXMX37CrN/9Gvhfyuw=="]
 en = '''Solution must reach target quality'''
@@ -458,7 +458,7 @@ chs = '''解决方案必须满足目标品质'''
 tc = '''解法必須達到目標品質'''
 ko = '''목표 품질을 반드시 달성합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:893:28"]
+appearances = ["src/app.rs:931:28"]
 
 ["p7HyJWFYYWHKe39OAg2LrQ=="]
 en = '''Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off.'''
@@ -468,7 +468,7 @@ chs = '''通过跳过无法达到目标品质的候选解决方案来减少内�
 tc = '''透過無視無法達到目標品質的候選解法來減少記憶體使用量。基本上，要麼得到一個達到目標品質的解，否則就沒有解。如果想知道距離達到目標品質的差距，請保持該選項關閉。'''
 ko = '''목표 품질에 도달하지 못하는 경우를 제외해서 메모리 사용량을 줄입니다. 기본적으로는 목표 품질을 달성하거나, 매크로를 완성하지 못합니다. 목표 품질을 어느정도까지 달성할수 있는지 확인하고 싶은 경우에는, 이 옵션을 꺼주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:895:45"]
+appearances = ["src/app.rs:933:45"]
 
 ["ao5RTXAU8JPfZa/+YXPWLQ=="]
 en = '''Backload progress'''
@@ -478,7 +478,7 @@ chs = '''后置作业技能'''
 tc = '''後置作業技能'''
 ko = '''작업량을 나중에 달성'''
 version = "0.1.0"
-appearances = ["src/app.rs:901:28"]
+appearances = ["src/app.rs:939:28"]
 
 ["wFvVGJ0ERIy0TrxLLi5LAw=="]
 en = '''Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.'''
@@ -488,7 +488,7 @@ chs = '''仅考虑在宏的最后使用作业技能的手法。\n  - 可能导�
 ts = '''僅考慮在巨集的最後使用作業技能的手法。\n  - 可能導致可達到的品質更低。\n  - 可能導致巨集的長度更長。'''
 ko = '''매크로의 뒷부분에서만 작업을 진행합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다.\n - 매크로의 작업시간이 길어질 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:903:45"]
+appearances = ["src/app.rs:941:45"]
 
 ["4TrzziJN2b/3+NIwV86LoQ=="]
 en = '''Ensure 100% reliability'''
@@ -498,7 +498,7 @@ chs = '''确保 100% 可靠（防黑球）'''
 tc = '''確保 100% 可靠'''
 ko = '''품질 100％를 보증'''
 version = "0.1.0"
-appearances = ["src/app.rs:914:32"]
+appearances = ["src/app.rs:952:32"]
 
 ["seCI2n41FD+21Bg6X3etyQ=="]
 en = '''Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro.'''
@@ -508,7 +508,7 @@ chs = '''找出能确保无论运气多差，出现何种制作状态均能保�
 tc = '''找出能確保無論運氣多差，出現何種製作狀態均能保證達到目標品質的手法。\n  - 可能導致可達到的品質更低。\n  - 可能導致巨集的長度更長。\n  - 求解所需的時間更久。\n求解器不會嘗試用秘訣技能“吃掉”最高品質狀態，所以部分情況下這個選項不會產生最優的巨集。'''
 ko = '''저품질 비레고로 인한 품질 하락을 방지합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다.\n - 매크로의 작업시간이 길어질 가능성이 있습니다.\n - 계산시간이 대폭 늘어날 가능성이 있습니다.\n - 계산기가 '비결'을 사용해서 품질을 더 올릴수는 없기때문에, 이 옵션이 최적의 매크로를 생성하지 못할 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:917:45"]
+appearances = ["src/app.rs:955:45"]
 
 ["+DwRW5ozbiRozBNupYmv0A=="]
 en = '''⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.'''
@@ -518,7 +518,7 @@ chs = '''⚠ 实验性特性\n这个选项可能需要非常多的内存（有�
 tc = '''⚠ 實驗性功能\n此選項可能會使用大量記憶體（有時甚至超過4GB），可能導致系統記憶體不足。'''
 ko = '''⚠ 실험실 기능\n이 옵션은 메모리를 많이 사용할 가능성이 있습니다 (경우에 따라서 4GB 이상): 시스템의 메모리가 부족하게 되는 경우가 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:1028:13"]
+appearances = ["src/app.rs:1066:13"]
 
 ["l/rSN+oK2pKV8ohfHf/Ovg=="] # This is no longer accurate with the change to the web versions OOM panic handling, all expected crashes are now caught via JavaScript and always show a (currently untranslated) modal. (WebAssembly is also misspelled)
 en = '''⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.'''
@@ -528,7 +528,7 @@ chs = '''⚠ 实验性特性\n由于32位WebAssembly的限制，求解器在使�
 tc = '''⚠ 實驗性功能\n當達到32位元WebAssembly的4GB記憶體上限時，可能會導致求解器當機，並使使用者介面無限期停留在「求解中」狀態。'''
 ko = '''⚠ 실험실 기능\n32비트 WebAssembly의 메모리 상한 4GB에 도달하면, 계산기가 작동을 멈추고 UI가 '계산중' 상태에서 영원히 정지할 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:1033:13"]
+appearances = ["src/app.rs:1071:13"]
 
 ["sVLTzHCZb8cp/NrYNctl5Q=="]
 en = '''0% quality'''
@@ -538,7 +538,17 @@ chs = '''品质 0%'''
 tc = '''品質 0%'''
 ko = '''품질 0%'''
 version = "0.1.0"
-appearances = ["src/config.rs:125:51"]
+appearances = ["src/config.rs:102:47"]
+
+["4JONSgp5jniUI1DDEMABHg=="]
+en = '''50% quality'''
+ja = '''品質50%'''
+de = '''50% Qualität'''
+chs = '''品质 50%'''
+tc = '''品質 50%'''
+ko = '''품질 50%'''
+version = "0.1.0"
+appearances = ["src/config.rs:103:47"]
 
 ["7LMvbyCAJCGtVTLCvbNaaQ=="]
 en = '''55% quality'''
@@ -548,7 +558,7 @@ chs = '''品质 55%'''
 tc = '''品質 55%'''
 ko = '''품질 55%'''
 version = "0.1.0"
-appearances = ["src/config.rs:126:60"]
+appearances = ["src/config.rs:104:56"]
 
 ["BSMfvg4Sw2tq11bcAydqFw=="]
 en = '''75% quality'''
@@ -558,7 +568,7 @@ chs = '''品质 75%'''
 tc = '''品質 75%'''
 ko = '''품질 75%'''
 version = "0.1.0"
-appearances = ["src/config.rs:127:60"]
+appearances = ["src/config.rs:105:56"]
 
 ["UJHSBbmagIHL0VdGkb/BIg=="]
 en = '''95% quality'''
@@ -568,7 +578,7 @@ chs = '''品质 95%'''
 tc = '''品質 95%'''
 ko = '''품질 95%'''
 version = "0.1.0"
-appearances = ["src/config.rs:128:60"]
+appearances = ["src/config.rs:106:56"]
 
 ["przcbn6z8pNaEr1YCEAcaA=="]
 en = '''100% quality'''
@@ -578,7 +588,7 @@ chs = '''品质 100%'''
 tc = '''品質 100%'''
 ko = '''품질 100%'''
 version = "0.1.0"
-appearances = ["src/config.rs:129:51"]
+appearances = ["src/config.rs:107:47"]
 
 ["HNz1pOvAceAt8ecM09QFpA=="]
 en = '''Custom'''
@@ -588,7 +598,7 @@ chs = '''自定义'''
 tc = '''自訂'''
 ko = '''사용자 설정'''
 version = "0.1.0"
-appearances = ["src/config.rs:130:56", "src/widgets/recipe_select.rs:497:69"]
+appearances = ["src/config.rs:108:52", "src/widgets/recipe_select.rs:493:69"]
 
 ["u8MNP8lLoB18+dt06cfdzQ=="]
 en = '''The format can be any arbitrary text or FFXIV command.\n\nThe following placeholders can be used to output their respective value:\n  - {index} : the index or number of the macro block\n  - {max_index} : the maximum index or number of macro blocks\n  - {item_name} : the name of the selected recipe's item result\n  - {food} : the name of the selected food\n  - {potion} : the name of the selected potion\n  - {craftsmanship} : the base craftsmanship stat\n  - {control} : the base control stat\n  - {cp} : the base CP stat'''
@@ -608,7 +618,7 @@ chs = '''未知物品'''
 tc = '''未知物品'''
 ko = '''알 수 없는 아이템'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:121:31", "src/widgets/macro_view.rs:132:39", "src/widgets/game_data_name_label.rs:63:73", "src/widgets/game_data_name_label.rs:66:39", "src/widgets/saved_rotations.rs:108:35", "src/widgets/saved_rotations.rs:470:39", "src/widgets/saved_rotations.rs:509:43"]
+appearances = ["src/widgets/macro_view.rs:121:31", "src/widgets/macro_view.rs:132:39", "src/widgets/game_data_name_label.rs:72:73", "src/widgets/game_data_name_label.rs:75:39", "src/widgets/saved_rotations.rs:108:35", "src/widgets/saved_rotations.rs:465:39", "src/widgets/saved_rotations.rs:504:43"]
 
 ["vXv1yeY8kh1x9KtxDRdJ8w=="]
 en = '''Use default notification'''
@@ -618,7 +628,7 @@ chs = '''使用默认通知'''
 tc = '''使用預設通知'''
 ko = '''기본 알림을 사용'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:445:24"]
+appearances = ["src/widgets/macro_view.rs:443:24"]
 
 ["RD5bQ2/SwHLXRbJ41nWayg=="]
 en = '''Use custom notification format'''
@@ -628,7 +638,7 @@ chs = '''使用自定义通知格式'''
 tc = '''使用自訂通知格式'''
 ko = '''사용자 정의 알림을 사용'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:459:24"]
+appearances = ["src/widgets/macro_view.rs:457:24"]
 
 ["ZJJiE3i2OtYlS4C4WFwMCQ=="]
 en = '''Use different format for last notification'''
@@ -638,7 +648,7 @@ chs = '''为最后一个宏使用不同的通知格式'''
 ts = '''為最後一個巨集使用不同的通知格式'''
 ko = '''마지막 알림에 다른 형식을 사용'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:476:32"]
+appearances = ["src/widgets/macro_view.rs:474:32"]
 
 ["zJY/uvQE4a+/EQbayvw3WA=="]
 en = '''Avoid single-action macros'''
@@ -648,7 +658,7 @@ chs = '''避免一个宏中只包含一个技能'''
 ts = '''避免一個巨集中只包含一個技能'''
 ko = '''1공정만 들어있는 매크로 사용을 회피'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:491:20"]
+appearances = ["src/widgets/macro_view.rs:489:20"]
 
 ["oEJQBMU5ApSo7b6TUvt/3w=="]
 en = '''Skip last notification if doing so avoids creating a macro with a single action.'''
@@ -658,7 +668,7 @@ chs = '''允许跳过最后一个宏里的通知，以避免创建只包含单�
 tc = '''允許跳過最後一個巨集裡的通知，以避免建立只包含單個技能的巨集'''
 ko = '''1공정만 들어있는 매크로를 만들지 않을 경우, 마지막 알림은 제외됩니다.'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:498:17"]
+appearances = ["src/widgets/macro_view.rs:496:17"]
 
 ["VCj4aAUHiSC0XQqJrc5hhQ=="]
 en = '''Use \"/macrolock\" as macro intro'''
@@ -668,7 +678,7 @@ chs = '''使用“/macrolock”作为宏的开头'''
 tc = '''使用“/macrolock”作為巨集的開頭'''
 ko = '''매크로 잠금을 포함'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:508:20"]
+appearances = ["src/widgets/macro_view.rs:506:20"]
 
 ["L4G4+YiOQsz+P64Jg5FL/g=="]
 en = '''Use custom intro format'''
@@ -678,7 +688,7 @@ chs = '''使用自定义的开头格式'''
 tc = '''使用自訂的開頭格式'''
 ko = '''매크로 앞부분에 사용자 정의 형식을 사용'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:514:24"]
+appearances = ["src/widgets/macro_view.rs:512:24"]
 
 ["0ToYrBaZr+vb9VtFwGCoeg=="]
 en = '''Macro'''
@@ -698,7 +708,7 @@ chs = '''{steps} 步，{duration} 秒'''
 tc = '''{steps} 步，{duration} 秒'''
 ko = '''{steps} 공정, {duration}초'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:322:29", "src/widgets/saved_rotations.rs:403:21"]
+appearances = ["src/widgets/macro_view.rs:319:29", "src/widgets/saved_rotations.rs:398:21"]
 
 ["rT/TIfZ9jXZZJOR6xcY3sA=="]
 en = '''Include delay'''
@@ -708,7 +718,7 @@ chs = '''包含延迟（<wait.x>）'''
 tc = '''包含延遲（<wait.x>）'''
 ko = '''대기시간을 포함 (<wait.x>)'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:394:63"]
+appearances = ["src/widgets/macro_view.rs:392:63"]
 
 ["3woNnNLtWMVl9o5wyolFyQ=="]
 en = '''Extra delay'''
@@ -718,7 +728,7 @@ chs = '''额外延迟'''
 tc = '''額外延遲'''
 ko = '''추가 대기시간'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:396:37"]
+appearances = ["src/widgets/macro_view.rs:394:37"]
 
 ["A1SjGQYF1xfTO+6FPtH+nQ=="]
 en = '''Split macro'''
@@ -728,7 +738,7 @@ chs = '''分割宏'''
 tc = '''分割巨集'''
 ko = '''매크로를 분리'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:402:57"]
+appearances = ["src/widgets/macro_view.rs:400:57"]
 
 ["8uKOWUHS0zeATFGNHzbhCg=="]
 en = '''Macro lock / intro'''
@@ -738,7 +748,7 @@ chs = '''宏锁 / 开头'''
 tc = '''巨集鎖 / 開頭'''
 ko = '''매크로 잠금 / 시작시'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:405:59"]
+appearances = ["src/widgets/macro_view.rs:403:59"]
 
 ["gS/C6YWCL3vcOBWhu6li6g=="]
 en = '''End-of-macro notification'''
@@ -748,7 +758,7 @@ chs = '''宏结束通知'''
 tc = '''巨集結束通知'''
 ko = '''매크로 종료 알림'''
 version = "0.1.0"
-appearances = ["src/widgets/macro_view.rs:416:24"]
+appearances = ["src/widgets/macro_view.rs:414:24"]
 
 ["MxqSQgJTyaqY9VdQSKH/eA=="]
 en = '''Simulation'''
@@ -868,7 +878,7 @@ chs = '''配方'''
 tc = '''配方'''
 ko = '''제작법'''
 version = "0.1.0"
-appearances = ["src/widgets/recipe_select.rs:47:71"]
+appearances = ["src/widgets/recipe_select.rs:48:71"]
 
 ["s/ovMAAC5l5RoZQTq5NHTg=="]
 en = '''Missions'''
@@ -878,7 +888,7 @@ chs = '''任务'''
 tc = '''任務'''
 ko = '''임무'''
 version = "0.1.0"
-appearances = ["src/widgets/recipe_select.rs:48:79"]
+appearances = ["src/widgets/recipe_select.rs:49:79"]
 
 ["3ninXzetsJO21k7Af0PZuA=="]
 en = '''🔍 Search'''
@@ -888,7 +898,7 @@ chs = '''🔍 搜索'''
 tc = '''🔍 搜尋'''
 ko = '''🔍 검색'''
 version = "0.1.0"
-appearances = ["src/widgets/recipe_select.rs:145:39", "src/widgets/food_select.rs:96:43", "src/widgets/potion_select.rs:99:43"]
+appearances = ["src/widgets/recipe_select.rs:146:39", "src/widgets/food_select.rs:92:43", "src/widgets/potion_select.rs:95:43"]
 
 ["UfUIG2T4uxtuhNjcxVbhIw=="]
 en = '''Select'''
@@ -898,7 +908,7 @@ chs = '''选择'''
 tc = '''選擇'''
 ko = '''선택'''
 version = "0.1.0"
-appearances = ["src/widgets/recipe_select.rs:214:45", "src/widgets/recipe_select.rs:293:57", "src/widgets/food_select.rs:146:53", "src/widgets/potion_select.rs:150:53", "src/widgets/util.rs:94:43"]
+appearances = ["src/widgets/recipe_select.rs:215:45", "src/widgets/recipe_select.rs:293:57", "src/widgets/food_select.rs:142:53", "src/widgets/potion_select.rs:146:53", "src/widgets/util.rs:109:43"]
 
 ["U71vRCskzp/0ZNKDCqyXYw=="]
 en = '''⚠ Patch {ffxiv_patch} recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.'''
@@ -1053,7 +1063,7 @@ chs = '''配方'''
 tc = '''配方'''
 ko = '''제작법'''
 version = "0.1.0"
-appearances = ["src/widgets/recipe_select.rs:487:61", "src/widgets/saved_rotations.rs:495:28", "src/widgets/saved_rotations.rs:507:28"]
+appearances = ["src/widgets/recipe_select.rs:487:61", "src/widgets/saved_rotations.rs:490:28", "src/widgets/saved_rotations.rs:502:28"]
 
 ["pwNUD9CFWaFvbreERTHQww=="]
 en = '''Food'''
@@ -1063,7 +1073,7 @@ chs = '''食物'''
 tc = '''食物'''
 ko = '''음식'''
 version = "0.1.0"
-appearances = ["src/widgets/food_select.rs:59:61", "src/widgets/saved_rotations.rs:498:28", "src/widgets/saved_rotations.rs:517:24"]
+appearances = ["src/widgets/food_select.rs:60:61", "src/widgets/saved_rotations.rs:493:28", "src/widgets/saved_rotations.rs:512:24"]
 
 ["ue2ePHEFngovxxMqHDLNjQ=="]
 en = '''Potion'''
@@ -1073,7 +1083,7 @@ chs = '''药品'''
 tc = '''藥水'''
 ko = '''약품'''
 version = "0.1.0"
-appearances = ["src/widgets/potion_select.rs:62:61", "src/widgets/saved_rotations.rs:499:28", "src/widgets/saved_rotations.rs:523:24"]
+appearances = ["src/widgets/potion_select.rs:63:61", "src/widgets/saved_rotations.rs:494:28", "src/widgets/saved_rotations.rs:518:24"]
 
 ["8m8Cw5TfKnNQZXbgXvFzZg=="]
 en = '''Copy to all jobs'''
@@ -1083,7 +1093,7 @@ chs = '''拷贝到所有职业'''
 tc = '''複製到所有職業'''
 ko = '''모든 잡에 복사'''
 version = "0.1.0"
-appearances = ["src/widgets/stats_edit.rs:32:45"]
+appearances = ["src/widgets/stats_edit.rs:38:53"]
 
 ["aMW+XLiXOhzKGx/Pt5IDGQ=="]
 en = '''🗐 Copy crafter config'''
@@ -1093,7 +1103,7 @@ chs = '''🗐 拷贝玩家配置'''
 tc = '''🗐 複製能工巧匠設定'''
 ko = '''🗐 제작자 설정을 복사'''
 version = "0.1.0"
-appearances = ["src/widgets/stats_edit.rs:70:50"]
+appearances = ["src/widgets/stats_edit.rs:94:58"]
 
 ["tS7JmmvGVAF2Bz/tl0mTTg=="]
 en = '''📋 Paste config here to load'''
@@ -1103,7 +1113,7 @@ chs = '''📋 在此处粘贴以加载配置'''
 tc = '''📋 在此處貼上以載入設定'''
 ko = '''📋 설정을 붙여넣기해서 불러오기'''
 version = "0.1.0"
-appearances = ["src/widgets/stats_edit.rs:85:47"]
+appearances = ["src/widgets/stats_edit.rs:107:52"]
 
 ["ZfKRHRnNdTtPwtYCRVWryg=="]
 en = '''Unknown mission'''
@@ -1113,7 +1123,7 @@ chs = '''未知的任务'''
 tc = '''未知的任務'''
 ko = '''알 수 없는 임무'''
 version = "0.1.0"
-appearances = ["src/widgets/game_data_name_label.rs:68:39"]
+appearances = ["src/widgets/game_data_name_label.rs:77:39"]
 
 ["B7aDbFVnrJ640ZuDhMNUaQ=="]
 en = '''Copy item name'''
@@ -1123,7 +1133,7 @@ chs = '''复制物品名'''
 tc = '''複製物品名稱'''
 ko = '''아이템 이름을 복사'''
 version = "0.1.0"
-appearances = ["src/widgets/game_data_name_label.rs:99:81"]
+appearances = ["src/widgets/game_data_name_label.rs:106:83"]
 
 ["BRKQIjx0bt8q3+KAeg6h0w=="]
 en = '''Copy mission name'''
@@ -1133,7 +1143,7 @@ chs = '''复制任务名'''
 tc = '''複製任務名稱'''
 ko = '''임무 이름을 복사'''
 version = "0.1.0"
-appearances = ["src/widgets/game_data_name_label.rs:100:54"]
+appearances = ["src/widgets/game_data_name_label.rs:107:58"]
 
 ["IOs59+lNVa5aqq42jPjgmA=="]
 en = '''Load rotation'''
@@ -1143,7 +1153,7 @@ chs = '''加载手法'''
 tc = '''載入解法'''
 ko = '''로테이션을 불러오기'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:196:51"]
+appearances = ["src/widgets/saved_rotations.rs:197:51"]
 
 ["FqXoTdiBoc2v0uFVD5lofg=="]
 en = '''Load rotation & recipe'''
@@ -1153,7 +1163,7 @@ chs = '''加载手法和配方'''
 tc = '''載入解法和配方'''
 ko = '''로테이션&제작법을 불러오기'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:197:57"]
+appearances = ["src/widgets/saved_rotations.rs:198:57"]
 
 ["b8CojbPI+yIlzrjesKLLJQ=="]
 en = '''Load rotation, recipe & consumables'''
@@ -1163,7 +1173,7 @@ chs = '''加载手法、配方和消耗品'''
 tc = '''載入解法、配方和消耗品'''
 ko = '''로테이션&제작법&소모품을 불러오기'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:199:28"]
+appearances = ["src/widgets/saved_rotations.rs:200:28"]
 
 ["42TMorbA/2WEwrSbO7/uRA=="]
 en = '''Load'''
@@ -1173,7 +1183,7 @@ chs = '''加载'''
 tc = '''加載'''
 ko = '''불러오기'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:346:65"]
+appearances = ["src/widgets/saved_rotations.rs:341:65"]
 
 ["NKEGn/3GMJBSdM36Xez7CQ=="]
 en = '''⚠ pre-v0.21.0 rotation. No recipe data.'''
@@ -1183,7 +1193,7 @@ chs = '''⚠ 早于 v0.21.0 的手法。无配方数据。'''
 tc = '''⚠ 早於 v0.21.0 的手法。無配方數據。'''
 ko = '''⚠ pre-v0.21.0 이전의 로테이션. 제작법 정보가 없음.'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:367:37"]
+appearances = ["src/widgets/saved_rotations.rs:362:37"]
 
 ["8L4dKsEo8oVA7jI6qOFhvg=="]
 en = '''{craftsmanship} CMS, {control} Control, {cp} CP'''
@@ -1193,7 +1203,7 @@ chs = '''{craftsmanship} 作业精度，{control} 加工精度，{cp} 制作力'
 tc = '''{craftsmanship} 作業精度，{control} 加工精度，{cp} CP'''
 ko = '''{craftsmanship} 작업 숙련도, {control} 가공 숙련도, {cp} CP'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:479:13"]
+appearances = ["src/widgets/saved_rotations.rs:474:13"]
 
 ["7Xsm5zbfZlRbNkonW0Z3bQ=="]
 en = '''Level {level} {job}'''
@@ -1203,7 +1213,7 @@ chs = '''{level}级 {job}'''
 tc = '''{level}級 {job}'''
 ko = '''레벨 {level} {job}'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:488:13"]
+appearances = ["src/widgets/saved_rotations.rs:483:13"]
 
 ["mvUMd7JfKiB3rr2sVvJG5Q=="]
 en = '''Job'''
@@ -1213,7 +1223,7 @@ chs = '''职业'''
 tc = '''職業'''
 ko = '''잡'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:497:28", "src/widgets/saved_rotations.rs:514:43"]
+appearances = ["src/widgets/saved_rotations.rs:492:28", "src/widgets/saved_rotations.rs:509:43"]
 
 ["aUHibt51mqLDGB0pHdWF3Q=="]
 en = '''Solver'''
@@ -1223,7 +1233,7 @@ chs = '''求解器'''
 tc = '''求解器'''
 ko = '''계산기'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:500:28", "src/widgets/saved_rotations.rs:529:24"]
+appearances = ["src/widgets/saved_rotations.rs:495:28", "src/widgets/saved_rotations.rs:524:24"]
 
 ["SmywRw+JVdoQwv6cg9pNhA=="]
 en = '''Settings'''
@@ -1233,7 +1243,7 @@ chs = '''设置'''
 tc = '''設定'''
 ko = '''설정'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:624:38"]
+appearances = ["src/widgets/saved_rotations.rs:619:38"]
 
 ["LQTzuXu5pMolT+3LjiKvzw=="]
 en = '''Load saved rotations when initiating solve'''
@@ -1242,7 +1252,7 @@ de = '''Gespeicherte Rotation beim initiieren der Lösung laden'''
 chs = '''初始化求解时加载保存的手法'''
 ko = '''계산 시작시에 저장된 로테이션을 불러오기'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:629:36"]
+appearances = ["src/widgets/saved_rotations.rs:624:36"]
 
 ["2uyiACh2ZEx6RV9q4KKrpg=="]
 en = '''Default operation on clicking Load button:'''
@@ -1252,7 +1262,7 @@ chs = '''点击加载按钮时的默认操作'''
 tc = '''點擊加載按鈕時的預設操作'''
 ko = '''불러오기 버튼을 클릭했을 때의 기본 동작'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:632:41"]
+appearances = ["src/widgets/saved_rotations.rs:627:41"]
 
 ["4IVCPgkwscSoR2m7OKjl0Q=="]
 en = '''⚠ Rotations saved before v0.21.0 do not contain the necessary information to load recipe data.'''
@@ -1262,7 +1272,7 @@ chs = '''⚠ 在 v0.21.0 之前保存的手法，不包含加载配方所必要�
 tc = '''⚠ 在 v0.21.0 之前保存的手法，不包含載入配方所必要的數據'''
 ko = '''⚠ v0.21.0 이전에 저장된 로테이션은, 제작법 정보가 포함되어 있지 않습니다.'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:649:44"]
+appearances = ["src/widgets/saved_rotations.rs:644:44"]
 
 ["jcQRTspaQuUWgS6PSyj80A=="]
 en = '''Saved macros'''
@@ -1272,7 +1282,7 @@ chs = '''保存宏'''
 tc = '''已保存的巨集'''
 ko = '''저장된 매크로'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:661:61"]
+appearances = ["src/widgets/saved_rotations.rs:656:61"]
 
 ["QnMLe4Cp8KZLzp3FpPw0/g=="]
 en = '''No saved macros'''
@@ -1282,7 +1292,7 @@ chs = '''没有保存的宏'''
 tc = '''沒有保存的巨集'''
 ko = '''저장된 매크로가 없습니다.'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:664:45"]
+appearances = ["src/widgets/saved_rotations.rs:659:45"]
 
 ["+EtHBl/W4j8dFMG2lnzH9w=="]
 en = '''Solve history'''
@@ -1292,7 +1302,7 @@ chs = '''求解历史'''
 tc = '''解法紀錄'''
 ko = '''계산 이력'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:683:65"]
+appearances = ["src/widgets/saved_rotations.rs:678:65"]
 
 ["AElYy3JzsSGf2JaaEhWJbg=="]
 en = '''⚠ Oldest rotations will be lost on next solve'''
@@ -1302,7 +1312,7 @@ chs = '''⚠ 最早的手法将会在下一次求解中丢失'''
 tc = '''⚠ 最舊的解法將會在下一次計算中遺失'''
 ko = '''⚠ 가장 오래된 로테이션은 다음 계산시에 사라집니다.'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:699:52"]
+appearances = ["src/widgets/saved_rotations.rs:694:52"]
 
 ["xmX78PFspmhv+Qqo+N3oGg=="]
 en = '''No solve history'''
@@ -1312,7 +1322,7 @@ chs = '''求解历史为空'''
 tc = '''無求解紀錄'''
 ko = '''계산 이력 없음'''
 version = "0.1.0"
-appearances = ["src/widgets/saved_rotations.rs:710:45"]
+appearances = ["src/widgets/saved_rotations.rs:705:45"]
 
 ["GxiMz+bxKCA905cFlCIEOw=="]
 en = '''Crafts. +{rel}% ({val}), '''
@@ -1322,7 +1332,7 @@ chs = '''作业精度 +{rel}% ({val}), '''
 tc = '''作業精度 +{rel}% ({val}), '''
 ko = '''작업 숙련도 +{rel}% ({val}), '''
 version = "0.1.0"
-appearances = ["src/widgets/util.rs:24:13"]
+appearances = ["src/widgets/util.rs:39:13"]
 
 ["NIu40/HZc2JVk0IpGR6NIw=="]
 en = '''Control +{rel}% ({val}), '''
@@ -1332,7 +1342,7 @@ chs = '''加工精度 +{rel}% ({val}), '''
 tc = '''加工精度 +{rel}% ({val}), '''
 ko = '''가공 숙련도 +{rel}% ({val}), '''
 version = "0.1.0"
-appearances = ["src/widgets/util.rs:32:13"]
+appearances = ["src/widgets/util.rs:47:13"]
 
 ["Bgid7uajlPEK0pmvJ7KEfw=="]
 en = '''CP +{rel}% ({val}), '''
@@ -1342,4 +1352,4 @@ chs = '''制作力 +{rel}% ({val}), '''
 tc = '''CP +{rel}% ({val}), '''
 ko = '''CP +{rel}% ({val}), '''
 version = "0.1.0"
-appearances = ["src/widgets/util.rs:40:13"]
+appearances = ["src/widgets/util.rs:55:13"]
