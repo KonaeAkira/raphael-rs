@@ -902,36 +902,22 @@ impl MacroSolverApp {
                             .display(locale)
                     ))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(
-                            &mut self.app_context.solver_config.quality_target,
+                        let selectable_targets = [
                             QualityTarget::Zero,
-                            format!("{}", QualityTarget::Zero.display(locale)),
-                        );
-                        ui.selectable_value(
-                            &mut self.app_context.solver_config.quality_target,
+                            QualityTarget::Half,
                             QualityTarget::CollectableT1,
-                            format!("{}", QualityTarget::CollectableT1.display(locale)),
-                        );
-                        ui.selectable_value(
-                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT2,
-                            format!("{}", QualityTarget::CollectableT2.display(locale)),
-                        );
-                        ui.selectable_value(
-                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT3,
-                            format!("{}", QualityTarget::CollectableT3.display(locale)),
-                        );
-                        ui.selectable_value(
-                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Full,
-                            format!("{}", QualityTarget::Full.display(locale)),
-                        );
-                        ui.selectable_value(
-                            &mut self.app_context.solver_config.quality_target,
-                            QualityTarget::Custom(current_value),
-                            format!("{}", QualityTarget::Custom(0).display(locale)),
-                        )
+                            QualityTarget::Custom(0),
+                        ];
+                        for target in selectable_targets {
+                            ui.selectable_value(
+                                &mut self.app_context.solver_config.quality_target,
+                                target,
+                                target.display(locale),
+                            );
+                        }
                     });
             });
         });

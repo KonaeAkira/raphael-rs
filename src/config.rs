@@ -75,6 +75,7 @@ impl Default for CrafterConfig {
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum QualityTarget {
     Zero,
+    Half,
     CollectableT1,
     CollectableT2,
     CollectableT3,
@@ -87,6 +88,7 @@ impl QualityTarget {
     pub fn get_target(self, max_quality: u16) -> u16 {
         match self {
             Self::Zero => 0,
+            Self::Half => max_quality / 2,
             Self::CollectableT1 => (max_quality as u32 * 55 / 100) as u16,
             Self::CollectableT2 => (max_quality as u32 * 75 / 100) as u16,
             Self::CollectableT3 => (max_quality as u32 * 95 / 100) as u16,
@@ -94,36 +96,16 @@ impl QualityTarget {
             Self::Custom(quality) => quality,
         }
     }
-}
 
-struct QualityTargetDisplay {
-    quality_target: QualityTarget,
-    locale: Locale,
-}
-
-impl QualityTarget {
-    pub fn display(self, locale: Locale) -> impl std::fmt::Display {
-        QualityTargetDisplay {
-            quality_target: self,
-            locale,
+    pub fn display(self, locale: Locale) -> &'static str {
+        match self {
+            QualityTarget::Zero => t!(locale, "0% quality"),
+            QualityTarget::Half => t!(locale, "50% quality"),
+            QualityTarget::CollectableT1 => t!(locale, "55% quality"),
+            QualityTarget::CollectableT2 => t!(locale, "75% quality"),
+            QualityTarget::CollectableT3 => t!(locale, "95% quality"),
+            QualityTarget::Full => t!(locale, "100% quality"),
+            QualityTarget::Custom(_) => t!(locale, "Custom"),
         }
-    }
-}
-
-impl std::fmt::Display for QualityTargetDisplay {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let locale = self.locale;
-        write!(
-            f,
-            "{}",
-            match self.quality_target {
-                QualityTarget::Zero => t!(locale, "0% quality"),
-                QualityTarget::CollectableT1 => t!(locale, "55% quality"),
-                QualityTarget::CollectableT2 => t!(locale, "75% quality"),
-                QualityTarget::CollectableT3 => t!(locale, "95% quality"),
-                QualityTarget::Full => t!(locale, "100% quality"),
-                QualityTarget::Custom(_) => t!(locale, "Custom"),
-            }
-        )
     }
 }
