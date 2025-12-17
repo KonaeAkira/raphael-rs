@@ -905,37 +905,37 @@ impl MacroSolverApp {
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Zero,
-                            format!("{}", QualityTarget::Zero.display(locale)),
+                            QualityTarget::Zero.display(locale),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Half,
-                            format!("{}", QualityTarget::Half.display(locale)),
+                            QualityTarget::Half.display(locale),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT1,
-                            format!("{}", QualityTarget::CollectableT1.display(locale)),
+                            QualityTarget::CollectableT1.display(locale),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT2,
-                            format!("{}", QualityTarget::CollectableT2.display(locale)),
+                            QualityTarget::CollectableT2.display(locale),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT3,
-                            format!("{}", QualityTarget::CollectableT3.display(locale)),
+                            QualityTarget::CollectableT3.display(locale),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Full,
-                            format!("{}", QualityTarget::Full.display(locale)),
+                            QualityTarget::Full.display(locale),
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
                             QualityTarget::Custom(current_value),
-                            format!("{}", QualityTarget::Custom(0).display(locale)),
+                            QualityTarget::Custom(0).display(locale),
                         )
                     });
             });
