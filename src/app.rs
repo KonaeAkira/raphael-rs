@@ -909,6 +909,11 @@ impl MacroSolverApp {
                         );
                         ui.selectable_value(
                             &mut self.app_context.solver_config.quality_target,
+                            QualityTarget::Half,
+                            format!("{}", QualityTarget::Half.display(locale)),
+                        );
+                        ui.selectable_value(
+                            &mut self.app_context.solver_config.quality_target,
                             QualityTarget::CollectableT1,
                             format!("{}", QualityTarget::CollectableT1.display(locale)),
                         );
