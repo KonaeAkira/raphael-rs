@@ -2,7 +2,9 @@
 [<img src="https://img.shields.io/discord/1244140502643904522?label=Discord&logo=discord&logoColor=white"/>](https://discord.com/invite/m2aCy3y8he)
 [<img src="https://img.shields.io/github/downloads/KonaeAkira/raphael-rs/total?label=Downloads&color=%23dedede"/>](https://github.com/KonaeAkira/raphael-rs/releases)
 
-:link: [www.raphael-xiv.com](https://www.raphael-xiv.com/)
+:link: [www.raphael-xiv.com](https://www.raphael-xiv.com/) (stable release)
+
+:link: [preview.raphael-rs.pages.dev](https://preview.raphael-rs.pages.dev/) (dev preview)
 
 Raphael is a crafting rotation solver for the online game Final Fantasy XIV.
 It produces crafting macros that are tailored to your stats.
