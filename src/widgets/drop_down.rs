@@ -35,7 +35,6 @@ where
         // when selecting a new value.
         let max_label_width = max_text_width(ui, value_labels);
         let combo_box_width = max_label_width
-            + ui.spacing().icon_spacing
             + ui.spacing().icon_width
             + 2.0 * ui.spacing().button_padding.x;
 
