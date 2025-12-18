@@ -889,7 +889,7 @@ impl MacroSolverApp {
                     QualityTarget::CollectableT2,
                     QualityTarget::CollectableT3,
                     QualityTarget::Full,
-                    QualityTarget::Custom(0),
+                    QualityTarget::Custom(current_value),
                 ];
                 ui.add(DropDown::new(
                     "TARGET_QUALITY",
