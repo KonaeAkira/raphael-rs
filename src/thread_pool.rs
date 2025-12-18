@@ -36,10 +36,7 @@ fn initialize(num_threads: Option<NonZeroUsize>) {
 
 #[cfg(target_arch = "wasm32")]
 fn initialize(num_threads: Option<NonZeroUsize>) {
-    let num_threads = match num_threads {
-        Some(num_threads) => num_threads,
-        None => default_thread_count(),
-    };
+    let num_threads = num_threads.unwrap_or_else(default_thread_count);
     let future = wasm_bindgen_futures::JsFuture::from(crate::init_thread_pool(num_threads.get()));
     wasm_bindgen_futures::spawn_local(async move {
         let result = future.await;
