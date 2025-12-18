@@ -1,5 +1,5 @@
 use raphael_data::Locale;
-use raphael_sim::{Action, Settings, SimulationState};
+use raphael_sim::{Action, Condition, Settings, SimulationState};
 use raphael_translations::{t, t_format};
 
 use crate::{
@@ -229,6 +229,31 @@ impl Simulator<'_> {
                         let response = ui
                             .add(image)
                             .on_hover_text(raphael_data::action_name(*action, self.locale));
+                        response.context_menu(|ui| {
+                            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                                ui.close_menu();
+                                return;
+                            }
+                            ui.label(egui::RichText::new("Assume next condition"));
+                            ui.separator();
+                            for condition in [
+                                Condition::Normal,
+                                Condition::Good,
+                                Condition::Excellent,
+                                Condition::Poor,
+                            ] {
+                                let label = format!("{:?}", condition);
+                                if ui.button(label).clicked() {
+                                    ui.close_menu();
+                                    ui.ctx().data_mut(|data| {
+                                        data.insert_temp(
+                                            egui::Id::new("SOLVER_BRANCH_REQUEST"),
+                                            (step_index, condition),
+                                        );
+                                    });
+                                }
+                            }
+                        });
                         if error.is_err() {
                             egui::Image::new(egui::include_image!(
                                 "../../assets/action-icons/disabled.webp"

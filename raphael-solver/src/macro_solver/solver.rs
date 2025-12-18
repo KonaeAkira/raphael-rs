@@ -2,13 +2,13 @@ use raphael_sim::*;
 use rayon::prelude::*;
 
 use super::search_queue::{SearchQueueStats, SearchScore};
-use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
+use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo_with_condition};
 use crate::finish_solver::FinishSolverStats;
 use crate::macro_solver::search_queue::SearchQueue;
 use crate::quality_upper_bound_solver::{QualityUbSolverShard, QualityUbSolverStats};
 use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats};
-use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
+use crate::utils::{AtomicFlag, Backtracking};
 use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
 use std::vec::Vec;
@@ -71,14 +71,23 @@ impl<'a> MacroSolver<'a> {
     }
 
     pub fn solve(&mut self) -> Result<Vec<Action>, SolverException> {
+        self.solve_from(
+            SimulationState::new(&self.settings.simulator_settings),
+            Condition::Normal,
+        )
+    }
+
+    pub fn solve_from(
+        &mut self,
+        initial_state: SimulationState,
+        initial_condition: Condition,
+    ) -> Result<Vec<Action>, SolverException> {
         log::debug!(
             "rayon::current_num_threads() = {}",
             rayon::current_num_threads()
         );
 
         let _total_time = ScopedTimer::new("Total Time");
-
-        let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
         let timer = ScopedTimer::new("Finish Solver");
         self.finish_solver.precompute()?;
@@ -96,7 +105,7 @@ impl<'a> MacroSolver<'a> {
         drop(timer);
 
         let timer = ScopedTimer::new("Search");
-        let actions = self.do_solve(initial_state)?.actions();
+        let actions = self.do_solve(initial_state, initial_condition)?.actions();
         drop(timer);
 
         log::debug!("{:?}", self.runtime_stats());
@@ -104,7 +113,11 @@ impl<'a> MacroSolver<'a> {
         Ok(actions)
     }
 
-    fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
+    fn do_solve(
+        &mut self,
+        state: SimulationState,
+        initial_condition: Condition,
+    ) -> Result<Solution, SolverException> {
         let mut search_queue = SearchQueue::new(state);
         let mut solution: Option<Solution> = None;
         let mut min_accepted_score = SearchScore::MIN;
@@ -123,6 +136,7 @@ impl<'a> MacroSolver<'a> {
                 step_lb_solver_shard: self.step_lb_solver.create_shard(),
                 min_accepted_score,
                 candidate_states: Vec::new(),
+                initial_condition,
             };
 
             let worker_results = batch
@@ -130,7 +144,12 @@ impl<'a> MacroSolver<'a> {
                 .try_fold(
                     create_worker_data,
                     |mut worker_data, (state, backtrack_id)| {
-                        worker_data.process_state(state, score, backtrack_id)?;
+                        worker_data.process_state(
+                            state,
+                            score,
+                            backtrack_id == Backtracking::<Action>::SENTINEL,
+                            backtrack_id,
+                        )?;
                         Ok(worker_data)
                     },
                 )
@@ -205,6 +224,7 @@ struct WorkerData<'a> {
     step_lb_solver_shard: StepLbSolverShard<'a>,
     min_accepted_score: SearchScore,
     candidate_states: Vec<(SimulationState, SearchScore, ActionCombo, usize)>,
+    initial_condition: Condition,
 }
 
 impl<'a> WorkerData<'a> {
@@ -229,10 +249,18 @@ impl<'a> WorkerData<'a> {
         &mut self,
         state: SimulationState,
         score: SearchScore,
+        use_initial_condition: bool,
         backtrack_id: usize,
     ) -> Result<(), SolverException> {
+        let condition = if use_initial_condition {
+            self.initial_condition
+        } else {
+            Condition::Normal
+        };
         for action in FULL_SEARCH_ACTIONS {
-            if let Ok(state) = use_action_combo(self.settings, state, action) {
+            if let Ok(state) =
+                use_action_combo_with_condition(self.settings, state, action, condition)
+            {
                 if !state.is_final(&self.settings.simulator_settings) {
                     if !self.finish_solver.can_finish(&state)? {
                         continue;
