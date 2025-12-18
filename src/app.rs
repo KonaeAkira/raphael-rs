@@ -1104,7 +1104,7 @@ fn load_font_dyn(ctx: &egui::Context, font_name: &str, uri: &str) {
         ));
         ctx.data_mut(|data| *data.get_temp_mut_or_default(id) = true);
         log::debug!("Font loaded: {}", font_name);
-    };
+    }
 }
 
 fn load_fonts(ctx: &egui::Context) {
