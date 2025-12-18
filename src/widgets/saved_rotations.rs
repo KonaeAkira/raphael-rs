@@ -494,6 +494,7 @@ impl<'a> RotationWidget<'a> {
                 t!(locale, "Potion"),
                 t!(locale, "Solver"),
             ],
+            egui::TextStyle::Body,
         );
 
         if let Some(recipe) = recipe {
