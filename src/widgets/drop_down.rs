@@ -34,9 +34,8 @@ where
         // Calculate the maximum width beforehand to make sure the drop down does not resize
         // when selecting a new value.
         let max_label_width = max_text_width(ui, value_labels);
-        let combo_box_width = max_label_width
-            + ui.spacing().icon_width
-            + 2.0 * ui.spacing().button_padding.x;
+        let combo_box_width =
+            max_label_width + ui.spacing().icon_width + 2.0 * ui.spacing().button_padding.x;
 
         egui::ComboBox::from_id_salt(self.id)
             .width(combo_box_width)

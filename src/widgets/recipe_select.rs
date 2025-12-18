@@ -32,8 +32,8 @@ enum SearchDomain {
 impl SearchDomain {
     fn display(self, locale: Locale) -> &'static str {
         match self {
-            SearchDomain::Recipes => t!(locale, "Recipes"),
-            SearchDomain::StellarMissions => t!(locale, "Missions"),
+            Self::Recipes => t!(locale, "Recipes"),
+            Self::StellarMissions => t!(locale, "Missions"),
         }
     }
 }

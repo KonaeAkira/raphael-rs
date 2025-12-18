@@ -93,7 +93,7 @@ impl Simulator<'_> {
 
                 let max_text_width = max_text_width(
                     ui,
-                    &[
+                    [
                         t!(locale, "Progress"),
                         t!(locale, "Quality"),
                         t!(locale, "Durability"),
