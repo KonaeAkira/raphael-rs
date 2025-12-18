@@ -248,26 +248,21 @@ impl eframe::App for MacroSolverApp {
                         ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
                         self.draw_app_config_menu_button(ui, ctx);
 
-                        egui::ComboBox::from_id_salt("LOCALE")
-                            .selected_text(self.app_context.locale.short_code())
-                            .width(0.0)
-                            .show_ui(ui, |ui| {
-                                for locale in [
-                                    Locale::EN,
-                                    Locale::DE,
-                                    Locale::FR,
-                                    Locale::JP,
-                                    Locale::CN,
-                                    Locale::KR,
-                                    Locale::TW,
-                                ] {
-                                    ui.selectable_value(
-                                        &mut self.app_context.locale,
-                                        locale,
-                                        locale.short_code(),
-                                    );
-                                }
-                            });
+                        let selectable_locales = [
+                            Locale::EN,
+                            Locale::DE,
+                            Locale::FR,
+                            Locale::JP,
+                            Locale::CN,
+                            Locale::KR,
+                            Locale::TW,
+                        ];
+                        ui.add(DropDown::new(
+                            "LOCALE",
+                            &mut self.app_context.locale,
+                            selectable_locales,
+                            Locale::short_code,
+                        ));
 
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
@@ -651,18 +646,12 @@ impl MacroSolverApp {
                 if ui.button("✏").clicked() {
                     self.stats_edit_window_open = true;
                 }
-                egui::ComboBox::from_id_salt("SELECTED_JOB")
-                    .width(20.0)
-                    .selected_text(get_job_name(self.app_context.selected_job(), locale))
-                    .show_ui(ui, |ui| {
-                        for i in 0..8 {
-                            ui.selectable_value(
-                                self.app_context.selected_job_mut(),
-                                i,
-                                get_job_name(i, locale),
-                            );
-                        }
-                    });
+                ui.add(DropDown::new(
+                    "SELECTED_JOB",
+                    self.app_context.selected_job_mut(),
+                    [0, 1, 2, 3, 4, 5, 6, 7],
+                    |job_id: u8| get_job_name(job_id, locale),
+                ));
             });
         });
         ui.separator();
@@ -893,32 +882,21 @@ impl MacroSolverApp {
                         ui.add_enabled(false, egui::DragValue::new(&mut current_value));
                     }
                 }
-                egui::ComboBox::from_id_salt("TARGET_QUALITY")
-                    .selected_text(format!(
-                        "{}",
-                        self.app_context
-                            .solver_config
-                            .quality_target
-                            .display(locale)
-                    ))
-                    .show_ui(ui, |ui| {
-                        let selectable_targets = [
-                            QualityTarget::Zero,
-                            QualityTarget::Half,
-                            QualityTarget::CollectableT1,
-                            QualityTarget::CollectableT2,
-                            QualityTarget::CollectableT3,
-                            QualityTarget::Full,
-                            QualityTarget::Custom(0),
-                        ];
-                        for target in selectable_targets {
-                            ui.selectable_value(
-                                &mut self.app_context.solver_config.quality_target,
-                                target,
-                                target.display(locale),
-                            );
-                        }
-                    });
+                let selectable_targets = [
+                    QualityTarget::Zero,
+                    QualityTarget::Half,
+                    QualityTarget::CollectableT1,
+                    QualityTarget::CollectableT2,
+                    QualityTarget::CollectableT3,
+                    QualityTarget::Full,
+                    QualityTarget::Custom(current_value),
+                ];
+                ui.add(DropDown::new(
+                    "TARGET_QUALITY",
+                    &mut self.app_context.solver_config.quality_target,
+                    selectable_targets,
+                    |value: QualityTarget| value.display(locale),
+                ));
             });
         });
 

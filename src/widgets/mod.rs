@@ -22,6 +22,9 @@ pub use stats_edit::StatsEdit;
 mod help_text;
 pub use help_text::HelpText;
 
+mod drop_down;
+pub use drop_down::DropDown;
+
 mod game_data_name_label;
 pub use game_data_name_label::{GameDataNameLabel, NameSource};
 

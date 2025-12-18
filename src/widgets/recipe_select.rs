@@ -14,39 +14,26 @@ use crate::{
         CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
     },
     context::AppContext,
-    widgets::util::{TableColumnWidth, calculate_column_widths},
-    widgets::{GameDataNameLabel, NameSource},
+    widgets::{
+        DropDown, GameDataNameLabel, NameSource,
+        util::{TableColumnWidth, calculate_column_widths},
+    },
 };
 
 use super::util;
 
-#[derive(Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-enum RecipeSearchDomain {
+#[derive(Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+enum SearchDomain {
     #[default]
     Recipes,
     StellarMissions,
 }
 
-struct RecipeSearchDomainDisplay {
-    recipe_search_domain: RecipeSearchDomain,
-    locale: Locale,
-}
-
-impl RecipeSearchDomain {
-    fn display(self, locale: Locale) -> impl std::fmt::Display {
-        RecipeSearchDomainDisplay {
-            recipe_search_domain: self,
-            locale,
-        }
-    }
-}
-
-impl std::fmt::Display for RecipeSearchDomainDisplay {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let locale = self.locale;
-        match self.recipe_search_domain {
-            RecipeSearchDomain::Recipes => write!(f, "{}", t!(locale, "Recipes")),
-            RecipeSearchDomain::StellarMissions => write!(f, "{}", t!(locale, "Missions")),
+impl SearchDomain {
+    fn display(self, locale: Locale) -> &'static str {
+        match self {
+            Self::Recipes => t!(locale, "Recipes"),
+            Self::StellarMissions => t!(locale, "Missions"),
         }
     }
 }
@@ -113,34 +100,25 @@ impl<'a> RecipeSelect<'a> {
     fn draw_normal_recipe_select(self, ui: &mut egui::Ui) {
         let locale = self.locale;
         let mut search_text = String::new();
-        let mut search_domain = RecipeSearchDomain::default();
+        let mut search_domain = SearchDomain::default();
         ui.ctx().data_mut(|data| {
             if let Some(text) = data.get_persisted::<String>(Id::new("RECIPE_SEARCH_TEXT")) {
                 search_text = text;
             }
             if let Some(domain) =
-                data.get_persisted::<RecipeSearchDomain>(Id::new("RECIPE_SEARCH_DOMAIN"))
+                data.get_persisted::<SearchDomain>(Id::new("RECIPE_SEARCH_DOMAIN"))
             {
                 search_domain = domain;
             }
         });
 
         ui.horizontal(|ui| {
-            egui::ComboBox::from_id_salt("LOCALE")
-                .selected_text(format!("{}", search_domain.clone().display(locale)))
-                .width(72.0)
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut search_domain,
-                        RecipeSearchDomain::Recipes,
-                        format!("{}", RecipeSearchDomain::Recipes.display(locale)),
-                    );
-                    ui.selectable_value(
-                        &mut search_domain,
-                        RecipeSearchDomain::StellarMissions,
-                        format!("{}", RecipeSearchDomain::StellarMissions.display(locale)),
-                    );
-                });
+            ui.add(DropDown::new(
+                "RECIPE_SEARCH_DOMAIN",
+                &mut search_domain,
+                [SearchDomain::Recipes, SearchDomain::StellarMissions],
+                |search_domain: SearchDomain| search_domain.display(locale),
+            ));
             if egui::TextEdit::singleline(&mut search_text)
                 .desired_width(f32::INFINITY)
                 .hint_text(t!(locale, "🔍 Search"))
@@ -154,7 +132,7 @@ impl<'a> RecipeSelect<'a> {
         ui.separator();
 
         match search_domain {
-            RecipeSearchDomain::Recipes => {
+            SearchDomain::Recipes => {
                 let search_result = ui.ctx().memory_mut(|mem| {
                     mem.caches
                         .cache::<RecipeSearchCache<'_>>()
@@ -162,7 +140,7 @@ impl<'a> RecipeSelect<'a> {
                 });
                 self.draw_recipe_select_table(ui, search_result);
             }
-            RecipeSearchDomain::StellarMissions => {
+            SearchDomain::StellarMissions => {
                 let search_result = ui.ctx().memory_mut(|mem| {
                     mem.caches
                         .cache::<StellarMissionSearchCache<'_>>()

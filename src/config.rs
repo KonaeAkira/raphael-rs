@@ -99,13 +99,13 @@ impl QualityTarget {
 
     pub fn display(self, locale: Locale) -> &'static str {
         match self {
-            QualityTarget::Zero => t!(locale, "0% quality"),
-            QualityTarget::Half => t!(locale, "50% quality"),
-            QualityTarget::CollectableT1 => t!(locale, "55% quality"),
-            QualityTarget::CollectableT2 => t!(locale, "75% quality"),
-            QualityTarget::CollectableT3 => t!(locale, "95% quality"),
-            QualityTarget::Full => t!(locale, "100% quality"),
-            QualityTarget::Custom(_) => t!(locale, "Custom"),
+            Self::Zero => t!(locale, "0% quality"),
+            Self::Half => t!(locale, "50% quality"),
+            Self::CollectableT1 => t!(locale, "55% quality"),
+            Self::CollectableT2 => t!(locale, "75% quality"),
+            Self::CollectableT3 => t!(locale, "95% quality"),
+            Self::Full => t!(locale, "100% quality"),
+            Self::Custom(_) => t!(locale, "Custom"),
         }
     }
 }

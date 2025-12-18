@@ -128,10 +128,6 @@ impl AppContext {
         game_settings
     }
 
-    pub fn selected_job(&self) -> u8 {
-        self.crafter_config.selected_job
-    }
-
     pub fn selected_job_mut(&mut self) -> &mut u8 {
         &mut self.crafter_config.selected_job
     }

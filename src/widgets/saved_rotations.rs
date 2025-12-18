@@ -486,7 +486,7 @@ impl<'a> RotationWidget<'a> {
         );
         let max_key_width = max_text_width(
             ui,
-            &[
+            [
                 t!(locale, "Recipe"),
                 t!(locale, "Crafter stats"),
                 t!(locale, "Job"),
