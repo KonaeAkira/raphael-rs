@@ -17,13 +17,12 @@ jobs:
       - name: Check that workspace builds with MSRV
         run: cargo +1.89.0 check --workspace
 
-      - name: Check for clippy warnings when building native version
-        run: cargo clippy --workspace
-
-      - name: Install required components for web version
+      - name: Install required components
         run: rustup component add --toolchain nightly clippy rust-src
+      - name: Check for clippy warnings when building native version
+        run: cargo +nightly clippy --workspace -- -Dwarnings
       - name: Check for clippy warnings when building web version
-        run: BASE_URL=localhost cargo +nightly clippy --config ./.cargo/config_wasm.toml
+        run: BASE_URL=localhost cargo +nightly clippy --config ./.cargo/config_wasm.toml -- -Dwarnings
 
   check-windows:
     runs-on: windows-latest
