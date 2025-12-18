@@ -73,10 +73,10 @@ pub fn text_width(ui: &egui::Ui, text: impl Into<String>) -> f32 {
     })
 }
 
-pub fn max_text_width(ui: &egui::Ui, text_slice: &[impl ToString]) -> f32 {
+pub fn max_text_width(ui: &egui::Ui, texts: impl IntoIterator<Item = impl ToString>) -> f32 {
     ui.fonts_mut(|fonts| {
-        text_slice
-            .iter()
+        texts
+            .into_iter()
             .map(|text| {
                 let galley = fonts.layout_no_wrap(
                     text.to_string(),
