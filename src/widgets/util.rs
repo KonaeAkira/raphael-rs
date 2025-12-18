@@ -1,3 +1,4 @@
+use egui::TextStyle;
 use raphael_data::{
     Consumable, CrafterStats, Locale, control_bonus, cp_bonus, craftsmanship_bonus,
 };
@@ -62,25 +63,27 @@ pub fn effect_string(
     effect
 }
 
-pub fn text_width(ui: &egui::Ui, text: impl Into<String>) -> f32 {
+pub fn text_width(ui: &egui::Ui, text: impl Into<String>, text_style: TextStyle) -> f32 {
+    let font_id = text_style.resolve(ui.style());
     ui.fonts_mut(|fonts| {
-        let galley = fonts.layout_no_wrap(
-            text.into(),
-            egui::FontId::default(),
-            egui::Color32::default(),
-        );
+        let galley = fonts.layout_no_wrap(text.into(), font_id, egui::Color32::default());
         galley.rect.width()
     })
 }
 
-pub fn max_text_width(ui: &egui::Ui, texts: impl IntoIterator<Item = impl ToString>) -> f32 {
+pub fn max_text_width(
+    ui: &egui::Ui,
+    texts: impl IntoIterator<Item = impl ToString>,
+    text_style: TextStyle,
+) -> f32 {
+    let font_id = text_style.resolve(ui.style());
     ui.fonts_mut(|fonts| {
         texts
             .into_iter()
             .map(|text| {
                 let galley = fonts.layout_no_wrap(
                     text.to_string(),
-                    egui::FontId::default(),
+                    font_id.clone(),
                     egui::Color32::default(),
                 );
                 galley.rect.width()
@@ -106,7 +109,8 @@ pub fn calculate_column_widths<const N: usize>(
     desired_widths.map(|desired_width| {
         let exact_width = match desired_width {
             TableColumnWidth::SelectButton => {
-                text_width(ui, t!(locale, "Select")) + 2.0 * ui.spacing().button_padding.x
+                text_width(ui, t!(locale, "Select"), TextStyle::Button)
+                    + 2.0 * ui.spacing().button_padding.x
             }
             TableColumnWidth::JobName => max_text_width(
                 ui,
@@ -119,6 +123,7 @@ pub fn calculate_column_widths<const N: usize>(
                     Locale::KR => &raphael_data::JOB_NAMES_KR,
                     Locale::TW => &raphael_data::JOB_NAMES_TW,
                 },
+                TextStyle::Body,
             ),
             TableColumnWidth::RelativeToRemainingClamped { scale, min, max } => {
                 (remaining_width * scale).clamp(min, max)

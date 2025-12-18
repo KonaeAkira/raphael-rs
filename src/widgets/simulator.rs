@@ -99,6 +99,7 @@ impl Simulator<'_> {
                         t!(locale, "Durability"),
                         t!(locale, "CP"),
                     ],
+                    egui::TextStyle::Body,
                 );
 
                 let text_size = egui::vec2(max_text_width, ui.spacing().interact_size.y);

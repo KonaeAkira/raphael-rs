@@ -109,7 +109,7 @@ impl Widget for StatsEdit<'_> {
                             input_enabled,
                             egui::TextEdit::singleline(input_string)
                                 .hint_text(hint_text)
-                                .desired_width(text_width(ui, hint_text)),
+                                .desired_width(text_width(ui, hint_text, egui::TextStyle::Body)),
                         );
                         if input_response.changed()
                             && let Ok(crafter_config) = ron::from_str(input_string)
