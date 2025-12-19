@@ -310,6 +310,11 @@ impl<'a> WorkerData<'a> {
                     };
                     self.add_candidate_state(state, child_score, action, backtrack_id);
                 } else if state.progress >= self.settings.max_progress() {
+                    if !self.settings.allow_non_max_quality_solutions
+                        && state.quality < self.settings.max_quality()
+                    {
+                        continue;
+                    }
                     let solution_score = SearchScore {
                         quality_upper_bound: std::cmp::min(
                             state.quality,

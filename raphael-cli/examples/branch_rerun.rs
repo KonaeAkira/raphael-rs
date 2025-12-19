@@ -1,5 +1,6 @@
 use raphael_data::{CrafterStats, RECIPES, get_game_settings};
 use raphael_sim::{Action, Condition, SimulationState};
+use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Scenario: Grade 2 Gemsap of Dexterity with fixed stats
@@ -70,8 +71,43 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // Re-optimize tail: lock in steps 1-14 (Reflect through Observe), force Excellent on step 15, and let the solver find the best continuation.
+    let prefix_len = 14;
+    let prefix: Vec<_> = base_actions.iter().cloned().take(prefix_len).collect();
+    let prefix_state = SimulationState::from_macro(&game_settings, &prefix)
+        .map_err(|e| format!("Failed to simulate prefix: {e}"))?;
+    let solver_settings = SolverSettings {
+        simulator_settings: game_settings.clone(),
+        allow_non_max_quality_solutions: true,
+    };
+    let mut macro_solver = MacroSolver::new(
+        solver_settings,
+        Box::new(|_| {}),
+        Box::new(|_| {}),
+        AtomicFlag::new(),
+    );
+    let optimized_tail = macro_solver
+        .solve_from(prefix_state, Condition::Excellent)
+        .map_err(|e| format!("Solve failed from prefix: {e:?}"))?;
+    let combined: Vec<_> = prefix
+        .iter()
+        .cloned()
+        .chain(optimized_tail.iter().cloned())
+        .collect();
+    let combined_state = SimulationState::from_macro(&game_settings, &combined)
+        .map_err(|e| format!("Combined simulation failed: {e}"))?;
+
     println!("\nBaseline final state: {baseline_state:?}");
-    println!("Branch final state (Excellent on step 15): {branch_state:?}");
+    println!("Branch final state (Excellent on step 15, same actions): {branch_state:?}");
+    println!("\nSolver-optimized tail from step 15 = Excellent:");
+    for (idx, action) in optimized_tail.iter().enumerate() {
+        println!("{:>2}: {:?}", prefix_len + idx + 1, action);
+    }
+    println!(
+        "Combined length: {} steps (<=19 required)\nFinal combined state: {:?}",
+        combined.len(),
+        combined_state
+    );
 
     Ok(())
 }
