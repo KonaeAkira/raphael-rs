@@ -8,7 +8,9 @@ use raphael_translations::{t, t_format};
 use egui::{Align, CursorIcon, Id, Layout, TextStyle};
 use raphael_data::{Locale, action_name, get_job_name};
 
-use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
+use raphael_sim::{
+    Action, ActionImpl, Condition, HeartAndSoul, Manipulation, QuickInnovation, SimulationState,
+};
 
 use crate::config::{QualitySource, QualityTarget};
 use crate::context::AppContext;
@@ -19,6 +21,12 @@ enum SolverEvent {
     Actions(Vec<Action>),
     LoadedFromHistory(),
     Finished(Option<SolverException>),
+}
+
+#[derive(Clone)]
+struct SolverBranch {
+    prefix_actions: Vec<Action>,
+    initial_condition: Condition,
 }
 
 #[cfg(any(debug_assertions, feature = "dev-panel"))]
@@ -50,6 +58,7 @@ pub struct MacroSolverApp {
 
     solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
     solver_interrupt: raphael_solver::AtomicFlag,
+    solver_branch: Option<SolverBranch>,
 }
 
 impl MacroSolverApp {
@@ -97,6 +106,7 @@ impl MacroSolverApp {
 
             solver_events: Arc::new(Mutex::new(VecDeque::new())),
             solver_interrupt: raphael_solver::AtomicFlag::new(),
+            solver_branch: None,
         }
     }
 }
@@ -574,7 +584,24 @@ impl MacroSolverApp {
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        ui.add(Simulator::new(&self.app_context, ui.ctx(), &self.actions));
+        let response = ui.add(Simulator::new(&self.app_context, ui.ctx(), &self.actions));
+        if response.clicked() {
+            // no-op: allow the widget to receive interactions
+        }
+        if let Some((index, condition)) = ui
+            .ctx()
+            .data_mut(|data| data.remove::<(usize, Condition)>(Id::new("SOLVER_BRANCH_REQUEST")))
+        {
+            if !self.solver_pending && index < self.actions.len() {
+                self.actions.truncate(index + 1);
+                let prefix_actions = self.actions.clone();
+                self.solver_branch = Some(SolverBranch {
+                    prefix_actions,
+                    initial_condition: condition,
+                });
+                self.on_solve_initiated(ui.ctx());
+            }
+        }
     }
 
     fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {
@@ -1037,7 +1064,29 @@ impl MacroSolverApp {
                 .quality_target
                 .get_target(game_settings.max_quality);
             game_settings.max_quality = target_quality.saturating_sub(initial_quality);
-            self.actions = Vec::new();
+            let (initial_state, initial_condition, prefix_actions) =
+                if let Some(branch) = self.solver_branch.take() {
+                    let state =
+                        match SimulationState::from_macro(&game_settings, &branch.prefix_actions) {
+                            Ok(state) => state,
+                            Err(_) => {
+                                self.solver_pending = false;
+                                self.solver_error = Some(SolverException::InternalError(
+                                    "Failed to simulate existing actions".into(),
+                                ));
+                                return;
+                            }
+                        };
+                    self.actions = branch.prefix_actions.clone();
+                    (state, branch.initial_condition, branch.prefix_actions)
+                } else {
+                    self.actions = Vec::new();
+                    (
+                        SimulationState::new(&game_settings),
+                        Condition::Normal,
+                        Vec::new(),
+                    )
+                };
             self.solver_progress = 0;
             self.start_time = web_time::Instant::now();
             let solver_settings = raphael_solver::SolverSettings {
@@ -1051,6 +1100,9 @@ impl MacroSolverApp {
                 solver_settings,
                 self.solver_events.clone(),
                 self.solver_interrupt.clone(),
+                initial_state,
+                initial_condition,
+                prefix_actions,
             );
         }
     }
@@ -1221,10 +1273,18 @@ fn spawn_solver(
     solver_settings: raphael_solver::SolverSettings,
     solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
     solver_interrupt: raphael_solver::AtomicFlag,
+    initial_state: SimulationState,
+    initial_condition: Condition,
+    prefix_actions: Vec<Action>,
 ) {
     let events = solver_events.clone();
     let solution_callback = move |actions: &[raphael_sim::Action]| {
-        let event = SolverEvent::Actions(actions.to_vec());
+        let combined_actions = prefix_actions
+            .iter()
+            .copied()
+            .chain(actions.iter().copied())
+            .collect();
+        let event = SolverEvent::Actions(combined_actions);
         events.lock().unwrap().push_back(event);
     };
     let events = solver_events.clone();
@@ -1240,7 +1300,7 @@ fn spawn_solver(
             Box::new(progress_callback),
             solver_interrupt,
         );
-        match macro_solver.solve() {
+        match macro_solver.solve_from(initial_state, initial_condition) {
             Ok(actions) => {
                 let mut solver_events = solver_events.lock().unwrap();
                 solver_events.push_back(SolverEvent::Actions(actions));

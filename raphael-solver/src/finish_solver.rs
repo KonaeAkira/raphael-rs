@@ -62,10 +62,13 @@ impl FinishSolver {
 
     /// Calling this method before calling `FinishSolver::precompute` will return a `SolverException`.
     pub fn can_finish(&self, state: &SimulationState) -> Result<bool, SolverException> {
-        let key = (state.durability, state.effects.strip_quality_effects());
-        if !self.solved_states.contains_key(&key) {
-            dbg!(key);
-        }
+        let key = (
+            state.durability,
+            state
+                .effects
+                .strip_quality_effects()
+                .with_combo(Combo::None),
+        );
         let breakpoints = self.solved_states.get(&key).ok_or_else(|| {
             internal_error!(
                 "State not found in FinishSolver solved states.",
@@ -128,7 +131,10 @@ impl FinishSolver {
         let mut result = 0;
         for action in PROGRESS_ONLY_SEARCH_ACTIONS {
             if let Ok(child_state) = use_action_combo(&self.settings, state, action) {
-                let key = (child_state.durability, child_state.effects);
+                let key = (
+                    child_state.durability,
+                    child_state.effects.with_combo(Combo::None),
+                );
                 if child_state.is_final(&self.settings.simulator_settings) {
                     result = std::cmp::max(result, child_state.progress);
                 } else if let Some(child_breakpoints) = self.solved_states.get(&key)
@@ -167,7 +173,10 @@ struct Template {
 
 fn generate_templates(settings: &SolverSettings) -> Vec<Template> {
     let mut initial_state = SimulationState::new(&settings.simulator_settings);
-    initial_state.effects = initial_state.effects.strip_quality_effects();
+    initial_state.effects = initial_state
+        .effects
+        .strip_quality_effects()
+        .with_combo(Combo::None);
     let mut templates = FxHashSet::default();
     templates.insert((initial_state.durability, initial_state.effects));
     let mut stack = vec![initial_state];
@@ -179,7 +188,10 @@ fn generate_templates(settings: &SolverSettings) -> Vec<Template> {
             if let Ok(mut new_state) = use_action_combo(settings, state, action)
                 && new_state.durability > 0
             {
-                new_state.effects = new_state.effects.strip_quality_effects();
+                new_state.effects = new_state
+                    .effects
+                    .strip_quality_effects()
+                    .with_combo(Combo::None);
                 new_state.progress = 0;
                 new_state.cp = settings.max_cp();
                 if templates.insert((new_state.durability, new_state.effects)) {
