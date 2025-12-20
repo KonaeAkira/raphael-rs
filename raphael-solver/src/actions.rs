@@ -133,11 +133,22 @@ pub const PROGRESS_ONLY_SEARCH_ACTIONS: [ActionCombo; 14] = [
 
 pub fn use_action_combo(
     settings: &SolverSettings,
-    mut state: SimulationState,
+    state: SimulationState,
     action_combo: ActionCombo,
 ) -> Result<SimulationState, &'static str> {
+    use_action_combo_with_condition(settings, state, action_combo, Condition::Normal)
+}
+
+pub fn use_action_combo_with_condition(
+    settings: &SolverSettings,
+    mut state: SimulationState,
+    action_combo: ActionCombo,
+    initial_condition: Condition,
+) -> Result<SimulationState, &'static str> {
+    let mut condition = initial_condition;
     for action in action_combo.actions() {
-        state = state.use_action(*action, Condition::Normal, &settings.simulator_settings)?;
+        state = state.use_action(*action, condition, &settings.simulator_settings)?;
+        condition = Condition::Normal;
     }
     state.effects.set_combo(Combo::None);
     Ok(state)
