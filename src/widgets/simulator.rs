@@ -231,7 +231,7 @@ impl Simulator<'_> {
                             .on_hover_text(raphael_data::action_name(*action, self.locale));
                         response.context_menu(|ui| {
                             if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                                ui.close();
+                                ui.close_menu();
                                 return;
                             }
                             ui.label(egui::RichText::new("Assume next condition"));
@@ -244,7 +244,7 @@ impl Simulator<'_> {
                             ] {
                                 let label = format!("{:?}", condition);
                                 if ui.button(label).clicked() {
-                                    ui.close();
+                                    ui.close_menu();
                                     ui.ctx().data_mut(|data| {
                                         data.insert_temp(
                                             egui::Id::new("SOLVER_BRANCH_REQUEST"),
