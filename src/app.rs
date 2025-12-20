@@ -588,10 +588,10 @@ impl MacroSolverApp {
         if response.clicked() {
             // no-op: allow the widget to receive interactions
         }
-        let branch_request = ui
+        if let Some((index, condition)) = ui
             .ctx()
-            .data_mut(|data| data.remove::<(usize, Condition)>(Id::new("SOLVER_BRANCH_REQUEST")));
-        if let Some((index, condition)) = branch_request {
+            .data_mut(|data| data.remove::<(usize, Condition)>(Id::new("SOLVER_BRANCH_REQUEST")))
+        {
             if !self.solver_pending && index < self.actions.len() {
                 self.actions.truncate(index + 1);
                 let prefix_actions = self.actions.clone();
