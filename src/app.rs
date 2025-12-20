@@ -590,7 +590,7 @@ impl MacroSolverApp {
         }
         if let Some((index, condition)) = ui
             .ctx()
-            .data_mut(|data| data.take_temp::<(usize, Condition)>(Id::new("SOLVER_BRANCH_REQUEST")))
+            .data_mut(|data| data.remove::<(usize, Condition)>(Id::new("SOLVER_BRANCH_REQUEST")))
         {
             if !self.solver_pending && index < self.actions.len() {
                 self.actions.truncate(index + 1);
