@@ -11,7 +11,7 @@ pub struct ItemAction {
 
 impl SheetData for ItemAction {
     const SHEET: &'static str = "ItemAction";
-    const REQUIRED_FIELDS: &[&str] = &["Action@as(raw)", "Data"];
+    const REQUIRED_FIELDS: &[&str] = &["Action@as(raw)", "Data@as(raw)"];
 
     fn row_id(&self) -> u32 {
         self.id
@@ -22,7 +22,12 @@ impl SheetData for ItemAction {
         Some(Self {
             id: value["row_id"].as_u32().unwrap(),
             type_id: fields["Action@as(raw)"].as_u32().unwrap(),
-            item_food_id: fields["Data"].members().nth(1).unwrap().as_u32().unwrap(),
+            item_food_id: fields["Data@as(raw)"]
+                .members()
+                .nth(1)
+                .unwrap()
+                .as_u32()
+                .unwrap(),
         })
     }
 }
