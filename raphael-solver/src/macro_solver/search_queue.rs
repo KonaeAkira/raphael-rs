@@ -1,9 +1,12 @@
 use std::collections::{BTreeSet, hash_map::Entry};
 
-use raphael_sim::{Action, SimulationState};
+use raphael_sim::SimulationState;
 use rustc_hash::FxHashMap;
 
-use crate::{actions::ActionCombo, utils::Backtracking};
+use crate::{
+    SolverSettings,
+    actions::{ActionCombo, use_action_combo},
+};
 
 use super::pareto_front::ParetoFront;
 
@@ -52,10 +55,22 @@ impl std::cmp::Ord for SearchScore {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct SearchNode {
-    state: SimulationState,
+struct CandidateNode {
+    parent_idx: usize,
     action: ActionCombo,
-    parent_id: usize,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct VisitedNode {
+    parent_idx: Option<usize>,
+    action: Option<ActionCombo>,
+    state: SimulationState,
+}
+
+#[derive(Debug)]
+pub struct Batch {
+    pub score: SearchScore,
+    pub nodes: Vec<(SimulationState, usize)>,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -65,40 +80,34 @@ pub struct SearchQueueStats {
 }
 
 pub struct SearchQueue {
+    settings: SolverSettings,
     pareto_front: ParetoFront,
     batch_ordering: BTreeSet<SearchScore>,
-    batches: FxHashMap<SearchScore, Vec<SearchNode>>,
-    backtracking: Backtracking<ActionCombo>,
-    initial_state: SimulationState,
-    inserted_nodes: usize,
-    processed_nodes: usize,
+    batches: FxHashMap<SearchScore, Vec<CandidateNode>>,
+    visited_nodes: Vec<VisitedNode>,
+    num_inserted_nodes: usize,
+    initial_state_visited: bool,
 }
 
 impl SearchQueue {
-    pub fn new(initial_state: SimulationState) -> Self {
+    pub fn new(settings: SolverSettings, initial_state: SimulationState) -> Self {
         Self {
+            settings,
             pareto_front: ParetoFront::default(),
-            backtracking: Backtracking::new(),
             batch_ordering: BTreeSet::default(),
             batches: FxHashMap::default(),
-            initial_state,
-            inserted_nodes: 1, // initial node
-            processed_nodes: 0,
+            visited_nodes: vec![VisitedNode {
+                parent_idx: None,
+                action: None,
+                state: initial_state,
+            }],
+            num_inserted_nodes: 1, // initial node
+            initial_state_visited: false,
         }
     }
 
-    pub fn push(
-        &mut self,
-        state: SimulationState,
-        score: SearchScore,
-        action: ActionCombo,
-        parent_id: usize,
-    ) {
-        let node = SearchNode {
-            state,
-            action,
-            parent_id,
-        };
+    pub fn push(&mut self, score: SearchScore, action: ActionCombo, parent_idx: usize) {
+        let node = CandidateNode { parent_idx, action };
         match self.batches.entry(score) {
             Entry::Occupied(occupied_entry) => {
                 occupied_entry.into_mut().push(node);
@@ -108,7 +117,7 @@ impl SearchQueue {
                 vacant_entry.insert(vec![node]);
             }
         }
-        self.inserted_nodes += 1;
+        self.num_inserted_nodes += 1;
     }
 
     pub fn drop_nodes_below_score(&mut self, min_score: SearchScore) {
@@ -124,44 +133,67 @@ impl SearchQueue {
         }
     }
 
-    pub fn pop_batch(&mut self) -> Option<(SearchScore, Vec<(SimulationState, usize)>)> {
-        if self.processed_nodes == 0 {
-            self.processed_nodes += 1;
-            return Some((
-                SearchScore::MAX,
-                vec![(self.initial_state, Backtracking::<Action>::SENTINEL)],
-            ));
+    pub fn pop_batch(&mut self) -> Option<Batch> {
+        if !self.initial_state_visited {
+            self.initial_state_visited = true;
+            let initial_state = self.visited_nodes[0].state;
+            return Some(Batch {
+                score: SearchScore::MAX,
+                nodes: vec![(initial_state, 0)],
+            });
         }
         if let Some(score) = self.batch_ordering.pop_last()
-            && let Some(mut batch) = self.batches.remove(&score)
+            && let Some(batch) = self.batches.remove(&score)
         {
-            // sort the bucket to prevent inserting a node to the pareto front that is later dominated by another node in the same bucket
+            let mut batch = batch
+                .into_iter()
+                .map(|candidate_node| {
+                    let parent_node_state = self.visited_nodes[candidate_node.parent_idx].state;
+                    let candidate_node_state =
+                        use_action_combo(&self.settings, parent_node_state, candidate_node.action);
+                    VisitedNode {
+                        parent_idx: Some(candidate_node.parent_idx),
+                        action: Some(candidate_node.action),
+                        state: candidate_node_state.unwrap(),
+                    }
+                })
+                .collect::<Vec<_>>();
+            // Filter out Pareto-dominated nodes.
             batch.sort_unstable_by(|lhs, rhs| {
                 pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
             });
-            let filtered_batch = batch
-                .into_iter()
-                .filter(|node| self.pareto_front.insert(node.state))
-                .map(|node| {
-                    let backtrack_id = self.backtracking.push(node.action, node.parent_id);
-                    (node.state, backtrack_id)
-                })
+            batch.retain(|node| self.pareto_front.insert(node.state));
+            // Construct the returned batch.
+            // Each node in the returned batch tracks its own idx, not the idx of its parent.
+            let ret = batch
+                .iter()
+                .enumerate()
+                .map(|(idx, node)| (node.state, self.visited_nodes.len() + idx))
                 .collect::<Vec<_>>();
-            self.processed_nodes += filtered_batch.len();
-            Some((score, filtered_batch))
+            self.visited_nodes.extend(batch);
+            Some(Batch { score, nodes: ret })
         } else {
             None
         }
     }
 
-    pub fn backtrack(&self, backtrack_id: usize) -> impl Iterator<Item = ActionCombo> {
-        self.backtracking.get_items(backtrack_id)
+    pub fn get_actions_from_node_idx(&self, idx: usize) -> impl Iterator<Item = ActionCombo> {
+        let mut actions = Vec::new();
+        let mut next_idx = Some(idx);
+        while let Some(idx) = next_idx {
+            let node = &self.visited_nodes[idx];
+            if let Some(action) = node.action {
+                actions.push(action);
+            }
+            next_idx = node.parent_idx;
+        }
+        actions.into_iter().rev()
     }
 
     pub fn runtime_stats(&self) -> SearchQueueStats {
         SearchQueueStats {
-            inserted_nodes: self.inserted_nodes,
-            processed_nodes: self.processed_nodes,
+            inserted_nodes: self.num_inserted_nodes,
+            processed_nodes: self.visited_nodes.len(),
         }
     }
 }
