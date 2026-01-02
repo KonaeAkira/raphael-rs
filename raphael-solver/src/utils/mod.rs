@@ -34,49 +34,6 @@ impl Drop for ScopedTimer {
     }
 }
 
-struct Entry<T> {
-    item: T,
-    depth: u8,
-    parent_index: usize,
-}
-
-pub struct Backtracking<T: Copy> {
-    entries: Vec<Entry<T>>,
-}
-
-impl<T: Copy> Backtracking<T> {
-    pub const SENTINEL: usize = usize::MAX;
-
-    pub fn new() -> Self {
-        Self {
-            entries: Vec::new(),
-        }
-    }
-
-    pub fn get_items(&self, mut index: usize) -> impl Iterator<Item = T> {
-        let mut items = Vec::new();
-        while index != Self::SENTINEL {
-            items.push(self.entries[index].item);
-            index = self.entries[index].parent_index;
-        }
-        items.into_iter().rev()
-    }
-
-    pub fn push(&mut self, item: T, parent_index: usize) -> usize {
-        let depth = if parent_index == Self::SENTINEL {
-            1
-        } else {
-            self.entries[parent_index].depth + 1
-        };
-        self.entries.push(Entry {
-            item,
-            depth,
-            parent_index,
-        });
-        self.entries.len() - 1
-    }
-}
-
 /// The only way to increase the InnerQuiet effect is to use Quality-increasing actions,
 /// which means that all states with InnerQuiet must have some amount of Quality.
 /// This function finds a lower-bound on the minimum amount of Quality a state with `n` InnerQuiet can have.

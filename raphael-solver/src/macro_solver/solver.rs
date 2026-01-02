@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
 use crate::finish_solver::FinishSolverStats;
-use crate::macro_solver::search_queue::SearchQueue;
+use crate::macro_solver::search_queue::{Batch, SearchQueue};
 use crate::quality_upper_bound_solver::{QualityUbSolverShard, QualityUbSolverStats};
 use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats};
 use crate::utils::AtomicFlag;
@@ -105,11 +105,14 @@ impl<'a> MacroSolver<'a> {
     }
 
     fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
-        let mut search_queue = SearchQueue::new(state);
+        let mut search_queue = SearchQueue::new(self.settings, state);
         let mut solution: Option<Solution> = None;
         let mut min_accepted_score = SearchScore::MIN;
 
-        while let Some((score, batch)) = search_queue.pop_batch()
+        while let Some(Batch {
+            score,
+            nodes: batch,
+        }) = search_queue.pop_batch()
             && score >= min_accepted_score
         {
             if self.interrupt_signal.is_set() {
@@ -153,14 +156,14 @@ impl<'a> MacroSolver<'a> {
                             solution = Some(Solution {
                                 score: (score, state.quality),
                                 solver_actions: search_queue
-                                    .backtrack(parent_id)
+                                    .get_actions_from_node_idx(parent_id)
                                     .chain(std::iter::once(action))
                                     .collect(),
                             });
                             (self.solution_callback)(&solution.as_ref().unwrap().actions());
                         }
                     } else if score >= min_accepted_score {
-                        search_queue.push(state, score, action, parent_id)
+                        search_queue.push(score, action, parent_id)
                     }
                 }
             }
