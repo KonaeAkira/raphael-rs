@@ -4,7 +4,7 @@ use raphael_translations::{t, t_format};
 
 use crate::{
     config::QualityTarget,
-    context::{AppContext, SolverConfig},
+    context::AppContext,
     widgets::{
         hq_probability::HqDistributionWidget,
         util::{get_action_icon, max_text_width},
@@ -21,22 +21,12 @@ pub struct Simulator<'a> {
     locale: Locale,
 }
 
-fn config_changed(
-    settings: &raphael_sim::Settings,
-    initial_quality: u16,
-    solver_config: &SolverConfig,
-    ctx: &egui::Context,
-) -> bool {
-    ctx.data(|data| {
-        match data.get_temp::<(Settings, u16, SolverConfig)>(egui::Id::new("LAST_SOLVE_PARAMS")) {
-            Some((saved_settings, saved_initial_quality, saved_solver_config)) => {
-                *settings != saved_settings
-                    || initial_quality != saved_initial_quality
-                    || *solver_config != saved_solver_config
-            }
-            None => false,
-        }
-    })
+fn config_changed(app_context: &AppContext, ctx: &egui::Context) -> bool {
+    let settings = app_context.game_settings();
+    let solver_config = app_context.solver_config;
+    let initial_quality = app_context.initial_quality();
+    let config = (settings, initial_quality, solver_config);
+    ctx.data(|data| data.get_temp(egui::Id::new("LAST_SOLVE_PARAMS")) != Some(config))
 }
 
 impl<'a> Simulator<'a> {
@@ -44,25 +34,23 @@ impl<'a> Simulator<'a> {
         let AppContext {
             locale,
             recipe_config,
-            solver_config,
             crafter_config,
             ..
         } = app_context;
         let mut settings = app_context.game_settings();
-        settings.adversarial = false;
         let initial_quality = app_context.initial_quality();
         let item_always_collectable = raphael_data::ITEMS
             .get(recipe_config.recipe.item_id)
             .map(|item| item.always_collectable)
             .unwrap_or_default();
-        let config_changed = config_changed(&settings, initial_quality, solver_config, ctx);
+        settings.adversarial = false;
         Self {
             settings,
             initial_quality,
             job_id: crafter_config.selected_job,
             actions,
             item_always_collectable,
-            config_changed,
+            config_changed: config_changed(app_context, ctx),
             locale: *locale,
         }
     }
