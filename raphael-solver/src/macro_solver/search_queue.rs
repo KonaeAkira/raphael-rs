@@ -75,8 +75,8 @@ enum VisitedNode {
 impl VisitedNode {
     fn state(&self) -> &SimulationState {
         match self {
-            VisitedNode::Root { state } => state,
-            VisitedNode::Intermediate { state, .. } => state,
+            Self::Root { state } => state,
+            Self::Intermediate { state, .. } => state,
         }
     }
 }
