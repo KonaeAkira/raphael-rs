@@ -5,7 +5,7 @@ use raphael_translations::{t, t_format};
 use crate::{
     config::QualityTarget,
     context::{AppContext, SolverConfig},
-    widgets::util::max_text_width,
+    widgets::{hq_probability::HqDistributionWidget, util::max_text_width},
 };
 
 use super::{HelpText, util};
@@ -47,7 +47,8 @@ impl<'a> Simulator<'a> {
             crafter_config,
             ..
         } = app_context;
-        let settings = app_context.game_settings();
+        let mut settings = app_context.game_settings();
+        settings.adversarial = false;
         let initial_quality = app_context.initial_quality();
         let item_always_collectable = raphael_data::ITEMS
             .get(recipe_config.recipe.item_id)
@@ -169,15 +170,6 @@ impl Simulator<'_> {
                 ui.horizontal(|ui| {
                     ui.with_layout(text_layout, |ui| {
                         ui.set_height(ui.style().spacing.interact_size.y);
-                        ui.add(HelpText::new(match self.settings.adversarial {
-                            true => t!(
-                                locale,
-                                "Calculated assuming worst possible sequence of conditions"
-                            ),
-                            false => {
-                                t!(locale, "Calculated assuming Normal conditon on every step")
-                            }
-                        }));
                         if !state.is_final(&self.settings) {
                             // do nothing
                         } else if state.progress < u32::from(self.settings.max_progress) {
@@ -196,12 +188,10 @@ impl Simulator<'_> {
                             };
                             ui.label(t_format!(locale, "Tier {tier} collectable"));
                         } else {
-                            let hq = raphael_data::hq_percentage(
-                                u32::from(self.initial_quality) + state.quality,
-                                self.settings.max_quality,
-                            )
-                            .unwrap_or(0);
-                            ui.label(t_format!(locale, "{hq}% HQ"));
+                            ui.add(HqDistributionWidget::new(
+                                self.settings,
+                                self.actions.iter().copied().collect(),
+                            ));
                         }
                     });
                 });
