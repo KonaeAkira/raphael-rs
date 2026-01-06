@@ -353,7 +353,7 @@ const fn action_name_tw(action: Action) -> &'static str {
         Action::BasicSynthesis => "製作",
         Action::BasicTouch => "加工",
         Action::MasterMend => "精修",
-        Action::Observe => "精修",
+        Action::Observe => "觀察",
         Action::TricksOfTheTrade => "秘訣",
         Action::WasteNot => "儉約",
         Action::Veneration => "崇敬",
