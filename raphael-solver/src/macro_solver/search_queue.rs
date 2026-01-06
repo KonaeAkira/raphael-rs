@@ -61,10 +61,24 @@ struct CandidateNode {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct VisitedNode {
-    parent_idx: Option<usize>,
-    action: Option<ActionCombo>,
-    state: SimulationState,
+enum VisitedNode {
+    Root {
+        state: SimulationState,
+    },
+    Intermediate {
+        parent_idx: usize,
+        action: ActionCombo,
+        state: SimulationState,
+    },
+}
+
+impl VisitedNode {
+    fn state(&self) -> &SimulationState {
+        match self {
+            Self::Root { state } => state,
+            Self::Intermediate { state, .. } => state,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -96,9 +110,7 @@ impl SearchQueue {
             pareto_front: ParetoFront::default(),
             batch_ordering: BTreeSet::default(),
             batches: FxHashMap::default(),
-            visited_nodes: vec![VisitedNode {
-                parent_idx: None,
-                action: None,
+            visited_nodes: vec![VisitedNode::Root {
                 state: initial_state,
             }],
             num_inserted_nodes: 1, // initial node
@@ -136,10 +148,9 @@ impl SearchQueue {
     pub fn pop_batch(&mut self) -> Option<Batch> {
         if !self.initial_state_visited {
             self.initial_state_visited = true;
-            let initial_state = self.visited_nodes[0].state;
             return Some(Batch {
                 score: SearchScore::MAX,
-                nodes: vec![(initial_state, 0)],
+                nodes: vec![(*self.visited_nodes[0].state(), 0)],
             });
         }
         if let Some(score) = self.batch_ordering.pop_last()
@@ -148,27 +159,27 @@ impl SearchQueue {
             let mut batch = batch
                 .into_iter()
                 .map(|candidate_node| {
-                    let parent_node_state = self.visited_nodes[candidate_node.parent_idx].state;
+                    let parent_node_state = *self.visited_nodes[candidate_node.parent_idx].state();
                     let candidate_node_state =
                         use_action_combo(&self.settings, parent_node_state, candidate_node.action);
-                    VisitedNode {
-                        parent_idx: Some(candidate_node.parent_idx),
-                        action: Some(candidate_node.action),
+                    VisitedNode::Intermediate {
+                        parent_idx: candidate_node.parent_idx,
+                        action: candidate_node.action,
                         state: candidate_node_state.unwrap(),
                     }
                 })
                 .collect::<Vec<_>>();
             // Filter out Pareto-dominated nodes.
             batch.sort_unstable_by(|lhs, rhs| {
-                pareto_weight(&rhs.state).cmp(&pareto_weight(&lhs.state))
+                pareto_weight(rhs.state()).cmp(&pareto_weight(lhs.state()))
             });
-            batch.retain(|node| self.pareto_front.insert(node.state));
+            batch.retain(|node| self.pareto_front.insert(*node.state()));
             // Construct the returned batch.
             // Each node in the returned batch tracks its own idx, not the idx of its parent.
             let ret = batch
                 .iter()
                 .enumerate()
-                .map(|(idx, node)| (node.state, self.visited_nodes.len() + idx))
+                .map(|(idx, node)| (*node.state(), self.visited_nodes.len() + idx))
                 .collect::<Vec<_>>();
             self.visited_nodes.extend(batch);
             Some(Batch { score, nodes: ret })
@@ -177,15 +188,14 @@ impl SearchQueue {
         }
     }
 
-    pub fn get_actions_from_node_idx(&self, idx: usize) -> impl Iterator<Item = ActionCombo> {
+    pub fn get_actions_from_node_idx(&self, mut idx: usize) -> impl Iterator<Item = ActionCombo> {
         let mut actions = Vec::new();
-        let mut next_idx = Some(idx);
-        while let Some(idx) = next_idx {
-            let node = &self.visited_nodes[idx];
-            if let Some(action) = node.action {
-                actions.push(action);
-            }
-            next_idx = node.parent_idx;
+        while let VisitedNode::Intermediate {
+            parent_idx, action, ..
+        } = self.visited_nodes[idx]
+        {
+            actions.push(action);
+            idx = parent_idx;
         }
         actions.into_iter().rev()
     }
