@@ -90,34 +90,39 @@ fn solve(
         return distribution.clone();
     }
 
-    let next_condition_probabilities = match condition {
-        Condition::Normal => solve_args.condition_probabilities.as_ref(),
-        Condition::Good | Condition::Poor => &[(Condition::Normal, 100)],
-        Condition::Excellent => &[(Condition::Poor, 100)],
-    };
-
-    let mut distribution = QualityDistribution::empty();
-    for &(condition, condition_probability) in next_condition_probabilities {
-        let action_result = state.use_action(
+    let next_state = state
+        .use_action(
             solve_args.actions[step],
             condition,
             &solve_args.simulator_settings,
-        );
-        let next_state = action_result.map_or(state, |next_state| next_state);
-        let action_quality = next_state.quality;
-        let mut next_distribution = if step + 1 >= solve_args.actions.len() {
-            if next_state.progress >= u32::from(solve_args.simulator_settings.max_progress) {
-                QualityDistribution::zero()
-            } else {
-                QualityDistribution::empty()
-            }
-        } else {
-            solve(solve_args, memoization, next_state, condition, step + 1)
+        )
+        .unwrap_or(state);
+    let action_quality = next_state.quality;
+
+    let mut distribution = if step + 1 < solve_args.actions.len() {
+        let mut distribution = QualityDistribution::empty();
+        let next_condition_probabilities = match condition {
+            Condition::Normal => solve_args.condition_probabilities.as_ref(),
+            Condition::Good | Condition::Poor => &[(Condition::Normal, 100)],
+            Condition::Excellent => &[(Condition::Poor, 100)],
         };
-        next_distribution.add_quality(action_quality);
-        next_distribution.mul_probability(f32::from(condition_probability) / 100.0);
-        distribution = QualityDistribution::combine(distribution, next_distribution);
-    }
+        for &(next_condition, next_condition_probability) in next_condition_probabilities {
+            let mut next_distribution = solve(
+                solve_args,
+                memoization,
+                next_state,
+                next_condition,
+                step + 1,
+            );
+            next_distribution.mul_probability(f32::from(next_condition_probability) / 100.0);
+            distribution = QualityDistribution::combine(distribution, next_distribution);
+        }
+        distribution
+    } else {
+        QualityDistribution::zero()
+    };
+
+    distribution.add_quality(action_quality);
     memoization.insert((state, condition, step), distribution.clone());
     distribution
 }
