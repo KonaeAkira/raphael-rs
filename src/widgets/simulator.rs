@@ -5,10 +5,11 @@ use raphael_translations::{t, t_format};
 use crate::{
     config::QualityTarget,
     context::{AppContext, SolverConfig},
-    widgets::{hq_probability::HqDistributionWidget, util::max_text_width},
+    widgets::{
+        hq_probability::HqDistributionWidget,
+        util::{get_action_icon, max_text_width},
+    },
 };
-
-use super::{HelpText, util};
 
 pub struct Simulator<'a> {
     settings: Settings,
@@ -210,7 +211,7 @@ impl Simulator<'_> {
                     for (step_index, (action, error)) in
                         self.actions.iter().zip(errors.iter()).enumerate()
                     {
-                        let image = util::get_action_icon(*action, self.job_id)
+                        let image = get_action_icon(*action, self.job_id)
                             .fit_to_exact_size(egui::Vec2::new(30.0, 30.0))
                             .corner_radius(4.0)
                             .tint(match error {

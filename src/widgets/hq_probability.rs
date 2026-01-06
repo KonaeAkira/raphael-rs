@@ -103,10 +103,7 @@ fn solve(
             condition,
             &solve_args.simulator_settings,
         );
-        let next_state = match action_result {
-            Ok(next_state) => next_state,
-            Err(_) => state,
-        };
+        let next_state = action_result.map_or(state, |next_state| next_state);
         let action_quality = next_state.quality;
         let mut next_distribution = if step + 1 >= solve_args.actions.len() {
             if next_state.progress >= u32::from(solve_args.simulator_settings.max_progress) {
@@ -207,8 +204,8 @@ impl QualityDistribution {
         let min_hq_percentage = distribution.iter().position(|&p| p > 0.0).unwrap_or(0) as u8;
         let max_hq_percentage = distribution.iter().rposition(|&p| p > 0.0).unwrap_or(0) as u8;
         let mut avg_hq_percentage = 0.0;
-        for i in 0..101 {
-            avg_hq_percentage += i as f32 * distribution[i];
+        for (hq_percent, &probability) in distribution.iter().enumerate() {
+            avg_hq_percentage += hq_percent as f32 * probability;
         }
         HqDistribution {
             min_hq_percentage,
