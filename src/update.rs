@@ -1,7 +1,5 @@
-use std::{
-    error::Error,
-    sync::{LazyLock, Mutex},
-};
+use std::error::Error;
+use std::sync::{LazyLock, Mutex};
 
 use raphael_data::Locale;
 use raphael_translations::t;
@@ -43,19 +41,37 @@ pub fn show_update_dialogue(ctx: &egui::Context, locale: Locale) {
     }
     egui::Modal::new(egui::Id::new("UPDATE_DIALOGUE")).show(ctx, |ui| {
         ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
+        ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
+        ui.separator();
         ui.horizontal(|ui| {
-            ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
-            ui.label(format!("(v{})", latest_version));
+            ui.label(format!("v{} ➡ v{} ", *CURRENT_VERSION, latest_version));
+            ui.add(egui::Hyperlink::from_label_and_url(
+                t!(locale, "(view on GitHub)"),
+                "https://github.com/KonaeAkira/raphael-rs/releases/latest",
+            ));
         });
-        ui.add(egui::Hyperlink::from_label_and_url(
-            t!(locale, "Download from GitHub"),
-            "https://github.com/KonaeAkira/raphael-rs/releases/latest",
-        ));
         ui.separator();
         ui.vertical_centered_justified(|ui| {
-            if ui.button("Close").clicked() {
+            if ui.button(t!(locale, "Update")).clicked() {
+                let result = update_and_close_application();
+                log::error!("{:?}", result);
+            }
+            if ui.button(t!(locale, "Close")).clicked() {
                 *latest_version = semver::Version::new(0, 0, 0);
             }
         });
     });
+}
+
+fn update_and_close_application() -> self_update::errors::Result<()> {
+    self_update::backends::github::Update::configure()
+        .repo_owner("KonaeAkira")
+        .repo_name("raphael-rs")
+        .bin_name("raphael-xiv")
+        .current_version(env!("CARGO_PKG_VERSION"))
+        .show_output(false)
+        .no_confirm(true)
+        .build()?
+        .update()?;
+    std::process::exit(0);
 }
