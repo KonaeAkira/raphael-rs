@@ -58,7 +58,7 @@ fn show_update_prompt(ctx: &egui::Context, locale: Locale) {
         ui.separator();
         ui.vertical_centered_justified(|ui| {
             if ui.button(t!(locale, "Update")).clicked() {
-                let result = update_and_close_application();
+                let result = update_and_close_application(ctx);
                 if let Err(error) = result {
                     log::error!("Error while downloading update: {:?}", &error);
                     ctx.data_mut(|mem| {
@@ -97,7 +97,7 @@ fn show_error_message(ctx: &egui::Context, locale: Locale) {
     });
 }
 
-fn update_and_close_application() -> self_update::errors::Result<()> {
+fn update_and_close_application(ctx: &egui::Context) -> self_update::errors::Result<()> {
     self_update::backends::github::Update::configure()
         .repo_owner("KonaeAkira")
         .repo_name("raphael-rs")
@@ -107,5 +107,7 @@ fn update_and_close_application() -> self_update::errors::Result<()> {
         .no_confirm(true)
         .build()?
         .update()?;
-    std::process::exit(0);
+    // Gracefully close the application.
+    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+    Ok(())
 }
