@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex};
 
 use raphael_solver::SolverException;
@@ -33,9 +32,6 @@ pub struct MacroSolverApp {
 
     #[cfg(any(debug_assertions, feature = "dev-panel"))]
     dev_panel_state: DevPanelState,
-
-    latest_version: Arc<Mutex<semver::Version>>,
-    current_version: semver::Version,
 
     stats_edit_window_open: bool,
     saved_rotations_window_open: bool,
@@ -71,18 +67,14 @@ impl MacroSolverApp {
 
         load_fonts(&cc.egui_ctx);
 
-        let latest_version = Arc::new(Mutex::new(semver::Version::new(0, 0, 0)));
         #[cfg(not(target_arch = "wasm32"))]
-        fetch_latest_version(latest_version.clone());
+        crate::update::check_for_update();
 
         Self {
             app_context,
 
             #[cfg(any(debug_assertions, feature = "dev-panel"))]
             dev_panel_state: DevPanelState::default(),
-
-            latest_version: latest_version.clone(),
-            current_version: semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap(),
 
             stats_edit_window_open: false,
             saved_rotations_window_open: false,
@@ -110,29 +102,8 @@ impl eframe::App for MacroSolverApp {
 
         self.process_solver_events();
 
-        if self
-            .current_version
-            .lt(self.latest_version.lock().unwrap().deref())
-        {
-            egui::Modal::new(egui::Id::new("version_check")).show(ctx, |ui| {
-                let mut latest_version = self.latest_version.lock().unwrap();
-                ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
-                ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
-                    ui.label(format!("(v{})", latest_version.deref()));
-                });
-                ui.add(egui::Hyperlink::from_label_and_url(
-                    t!(locale, "Download from GitHub"),
-                    "https://github.com/KonaeAkira/raphael-rs/releases/latest",
-                ));
-                ui.separator();
-                ui.vertical_centered_justified(|ui| {
-                    if ui.button("Close").clicked() {
-                        *latest_version.deref_mut() = semver::Version::new(0, 0, 0);
-                    }
-                });
-            });
-        }
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::update::show_dialogues(ctx, locale);
 
         if self.missing_stats_error_window_open {
             egui::Modal::new(egui::Id::new("min_stats_warning")).show(ctx, |ui| {
@@ -1230,26 +1201,4 @@ fn spawn_solver(
                 .push_back(SolverEvent::Finished(Some(exception))),
         }
     });
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn fetch_latest_version(latest_version: Arc<Mutex<semver::Version>>) {
-    #[derive(serde::Deserialize)]
-    struct ApiResponse {
-        tag_name: String,
-    }
-    let uri = "https://api.github.com/repos/KonaeAkira/raphael-rs/releases/latest";
-    let process_response =
-        |response: ehttp::Result::<ehttp::Response>| -> Result<semver::Version, Box<dyn std::error::Error>> {
-            let json = response?.json::<ApiResponse>()?;
-            let version = semver::Version::parse(json.tag_name.trim_start_matches('v'))?;
-            Ok(version)
-        };
-    ehttp::fetch(
-        ehttp::Request::get(uri),
-        move |result: ehttp::Result<ehttp::Response>| match process_response(result) {
-            Ok(version) => *latest_version.lock().unwrap() = version,
-            Err(error) => log::error!("{error}"),
-        },
-    );
 }

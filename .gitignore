@@ -16,6 +16,7 @@ Cargo.lock
 # Ignore IDE config files
 .vscode/
 .idea/
+.zed/
 
 # Ignore build directories
 docs/
