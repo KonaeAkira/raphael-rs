@@ -1,5 +1,6 @@
 use std::env::consts::{ARCH, OS};
 use std::error::Error;
+use std::io::Write;
 use std::sync::{LazyLock, Mutex};
 
 use raphael_data::Locale;
@@ -19,7 +20,7 @@ enum UpdateStatus {
         latest_version: semver::Version,
         asset_url: String,
     },
-    Downloading,
+    Updating,
     Error(String),
     Complete,
 }
@@ -68,82 +69,81 @@ pub fn check_for_update() {
 pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
     let mut update_status = UPDATE_STATUS.lock().unwrap();
     match update_status.clone() {
-        UpdateStatus::Available { latest_version, .. } => {
-            show_update_prompt(ctx, locale, &mut update_status, latest_version);
+        UpdateStatus::None => (), // Do nothing.
+        UpdateStatus::Available {
+            latest_version,
+            asset_url,
+        } => {
+            egui::Modal::new(egui::Id::new("UPDATE_DIALOGUE")).show(ctx, |ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
+                ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
+                ui.separator();
+                ui.horizontal(|ui| {
+                    ui.label(format!("v{} ➡ v{} ", *CURRENT_VERSION, latest_version));
+                    ui.add(egui::Hyperlink::from_label_and_url(
+                        t!(locale, "(view on GitHub)"),
+                        "https://github.com/KonaeAkira/raphael-rs/releases/latest",
+                    ));
+                });
+                ui.separator();
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button(t!(locale, "Update")).clicked() {
+                        *update_status = UpdateStatus::Updating;
+                        download_and_replace_executable(&asset_url);
+                    }
+                    if ui.button(t!(locale, "Close")).clicked() {
+                        *update_status = UpdateStatus::None;
+                    }
+                });
+            });
+        }
+        UpdateStatus::Updating => {
+            egui::Modal::new(egui::Id::new("UPDATING")).show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label(t!(locale, "Updating..."));
+                });
+            });
         }
         UpdateStatus::Error(error_message) => {
-            show_error_message(ctx, locale, &mut update_status, error_message);
+            egui::Modal::new(egui::Id::new("UPDATE_ERROR_DIALOGUE")).show(ctx, |ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
+                ui.label(egui::RichText::new(t!(locale, "Error")).strong());
+                ui.separator();
+                ui.monospace(error_message);
+                ui.separator();
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button(t!(locale, "Close")).clicked() {
+                        *update_status = UpdateStatus::None;
+                    }
+                });
+            });
         }
-        _ => (),
+        UpdateStatus::Complete => {
+            // Gracefully close the application.
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
     };
 }
 
-fn show_update_prompt(
-    ctx: &egui::Context,
-    locale: Locale,
-    update_status: &mut UpdateStatus,
-    latest_version: semver::Version,
-) {
-    egui::Modal::new(egui::Id::new("UPDATE_DIALOGUE")).show(ctx, |ui| {
-        ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
-        ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
-        ui.separator();
-        ui.horizontal(|ui| {
-            ui.label(format!("v{} ➡ v{} ", *CURRENT_VERSION, latest_version));
-            ui.add(egui::Hyperlink::from_label_and_url(
-                t!(locale, "(view on GitHub)"),
-                "https://github.com/KonaeAkira/raphael-rs/releases/latest",
-            ));
-        });
-        ui.separator();
-        ui.vertical_centered_justified(|ui| {
-            if ui.button(t!(locale, "Update")).clicked() {
-                let result = update_and_close_application(ctx);
-                if let Err(error) = result {
-                    log::error!("Error while downloading update: {:?}", &error);
-                    *update_status = UpdateStatus::Error(format!("{:?}", error));
-                } else {
-                    *update_status = UpdateStatus::Complete;
-                }
+fn download_and_replace_executable(asset_url: &str) {
+    let process_response =
+        |response: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
+            let bytes = response?.bytes;
+            let mut temp_exe = tempfile::NamedTempFile::new()?;
+            temp_exe.write(&bytes)?;
+            self_replace::self_replace(&temp_exe)?;
+            *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Complete;
+            Ok(())
+        };
+    ehttp::fetch(
+        ehttp::Request::get(asset_url),
+        move |result: ehttp::Result<ehttp::Response>| {
+            if let Err(error) = process_response(result) {
+                let error_message = format!("{:?}", error);
+                log::error!("Error when updating to latest version: {}", &error_message);
+                *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Error(error_message);
             }
-            if ui.button(t!(locale, "Close")).clicked() {
-                *update_status = UpdateStatus::None;
-            }
-        });
-    });
-}
-
-fn show_error_message(
-    ctx: &egui::Context,
-    locale: Locale,
-    update_status: &mut UpdateStatus,
-    error: String,
-) {
-    egui::Modal::new(egui::Id::new("UPDATE_ERROR_DIALOGUE")).show(ctx, |ui| {
-        ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
-        ui.label(egui::RichText::new(t!(locale, "Error")).strong());
-        ui.separator();
-        ui.monospace(format!("{:?}", error));
-        ui.separator();
-        ui.vertical_centered_justified(|ui| {
-            if ui.button(t!(locale, "Close")).clicked() {
-                *update_status = UpdateStatus::None;
-            }
-        });
-    });
-}
-
-fn update_and_close_application(ctx: &egui::Context) -> self_update::errors::Result<()> {
-    self_update::backends::github::Update::configure()
-        .repo_owner("KonaeAkira")
-        .repo_name("raphael-s")
-        .bin_name("raphael-xiv")
-        .current_version(env!("CARGO_PKG_VERSION"))
-        .show_output(false)
-        .no_confirm(true)
-        .build()?
-        .update()?;
-    // Gracefully close the application.
-    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-    Ok(())
+        },
+    );
 }

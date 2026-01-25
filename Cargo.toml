@@ -59,7 +59,8 @@ semver = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11.8"
-self_update = "0.42.0"
+self-replace = "1.5.0"
+tempfile = "3.24.0"
 ehttp = { version = "0.5.0", features = ["json"] }
 # Default features of `eframe` include the "glow" renderer which is not needed if "wgpu" is enabled.
 # To avoid including both in the binary, default features have to be disabled
