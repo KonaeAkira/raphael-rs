@@ -22,7 +22,7 @@ enum UpdateStatus {
     },
     Updating,
     Error(String),
-    Complete,
+    Success,
 }
 
 pub fn check_for_update() {
@@ -67,6 +67,7 @@ pub fn check_for_update() {
 }
 
 pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
+    let modal_id = egui::Id::new("UPDATE_MODAL");
     let mut update_status = UPDATE_STATUS.lock().unwrap();
     match update_status.clone() {
         UpdateStatus::None => (), // Do nothing.
@@ -74,7 +75,7 @@ pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
             latest_version,
             asset_url,
         } => {
-            egui::Modal::new(egui::Id::new("UPDATE_DIALOGUE")).show(ctx, |ui| {
+            egui::Modal::new(modal_id.with("AVAILABLE")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
                 ui.separator();
@@ -98,7 +99,7 @@ pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
             });
         }
         UpdateStatus::Updating => {
-            egui::Modal::new(egui::Id::new("UPDATING")).show(ctx, |ui| {
+            egui::Modal::new(modal_id.with("UPDATING")).show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.spinner();
                     ui.label(t!(locale, "Updating..."));
@@ -106,7 +107,7 @@ pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
             });
         }
         UpdateStatus::Error(error_message) => {
-            egui::Modal::new(egui::Id::new("UPDATE_ERROR_DIALOGUE")).show(ctx, |ui| {
+            egui::Modal::new(modal_id.with("ERROR")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new(t!(locale, "Error")).strong());
                 ui.separator();
@@ -119,9 +120,23 @@ pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
                 });
             });
         }
-        UpdateStatus::Complete => {
-            // Gracefully close the application.
-            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        UpdateStatus::Success => {
+            egui::Modal::new(modal_id.with("SUCCESS")).show(ctx, |ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
+                ui.label(egui::RichText::new(t!(locale, "Success")).strong());
+                ui.separator();
+                ui.label(t!(
+                    locale,
+                    "Reopen the application for the updated version."
+                ));
+                ui.separator();
+                ui.vertical_centered_justified(|ui| {
+                    if ui.button(t!(locale, "Close")).clicked() {
+                        // Gracefully close the application.
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                });
+            });
         }
     }
 }
@@ -133,7 +148,7 @@ fn download_and_replace_executable(asset_url: &str) {
             let mut temp_exe = tempfile::NamedTempFile::new()?;
             temp_exe.write_all(&bytes)?;
             self_replace::self_replace(&temp_exe)?;
-            *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Complete;
+            *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Success;
             Ok(())
         };
     ehttp::fetch(
