@@ -55,10 +55,10 @@ serde = { workspace = true }
 log = { workspace = true }
 web-time = { workspace = true }
 ron = "0.11"
-semver = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11.8"
+semver = "1.0"
 self-replace = "1.5.0"
 tempfile = "3.24.0"
 ehttp = { version = "0.5.0", features = ["json"] }
