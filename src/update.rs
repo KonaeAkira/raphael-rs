@@ -31,7 +31,12 @@ pub fn fetch_latest_version() {
     );
 }
 
-pub fn show_update_dialogue(ctx: &egui::Context, locale: Locale) {
+pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
+    show_update_prompt(ctx, locale);
+    show_error_message(ctx, locale);
+}
+
+fn show_update_prompt(ctx: &egui::Context, locale: Locale) {
     let mut latest_version = match LATEST_VERSION.try_lock() {
         Ok(mutex_guard) => mutex_guard,
         Err(_) => return,
@@ -54,10 +59,39 @@ pub fn show_update_dialogue(ctx: &egui::Context, locale: Locale) {
         ui.vertical_centered_justified(|ui| {
             if ui.button(t!(locale, "Update")).clicked() {
                 let result = update_and_close_application();
-                log::error!("{:?}", result);
+                if let Err(error) = result {
+                    log::error!("Error while downloading update: {:?}", &error);
+                    ctx.data_mut(|mem| {
+                        // The error cannot be stored because it does not implement Clone.
+                        // Therefore we need to stringify it.
+                        let error_message = format!("{:?}", error);
+                        mem.insert_temp(egui::Id::new("UPDATE_ERROR"), error_message);
+                    });
+                }
+                // Reset the latest version to stop this dialogue from being shown.
+                *latest_version = semver::Version::new(0, 0, 0);
             }
             if ui.button(t!(locale, "Close")).clicked() {
+                // Reset the latest version to stop this dialogue from being shown.
                 *latest_version = semver::Version::new(0, 0, 0);
+            }
+        });
+    });
+}
+
+fn show_error_message(ctx: &egui::Context, locale: Locale) {
+    let Some(error) = ctx.data(|mem| mem.get_temp::<String>(egui::Id::new("UPDATE_ERROR"))) else {
+        return;
+    };
+    egui::Modal::new(egui::Id::new("UPDATE_ERROR_DIALOGUE")).show(ctx, |ui| {
+        ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
+        ui.label(egui::RichText::new(t!(locale, "Error")).strong());
+        ui.separator();
+        ui.monospace(error);
+        ui.separator();
+        ui.vertical_centered_justified(|ui| {
+            if ui.button(t!(locale, "Close")).clicked() {
+                ctx.data_mut(|mem| mem.remove_temp::<String>(egui::Id::new("UPDATE_ERROR")));
             }
         });
     });

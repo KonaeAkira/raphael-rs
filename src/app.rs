@@ -11,8 +11,6 @@ use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovatio
 
 use crate::config::{QualitySource, QualityTarget};
 use crate::context::AppContext;
-#[cfg(not(target_arch = "wasm32"))]
-use crate::update::{fetch_latest_version, show_update_dialogue};
 use crate::{thread_pool, widgets::*};
 
 enum SolverEvent {
@@ -70,7 +68,7 @@ impl MacroSolverApp {
         load_fonts(&cc.egui_ctx);
 
         #[cfg(not(target_arch = "wasm32"))]
-        fetch_latest_version();
+        crate::update::fetch_latest_version();
 
         Self {
             app_context,
@@ -105,7 +103,7 @@ impl eframe::App for MacroSolverApp {
         self.process_solver_events();
 
         #[cfg(not(target_arch = "wasm32"))]
-        show_update_dialogue(ctx, locale);
+        crate::update::show_dialogues(ctx, locale);
 
         if self.missing_stats_error_window_open {
             egui::Modal::new(egui::Id::new("min_stats_warning")).show(ctx, |ui| {
