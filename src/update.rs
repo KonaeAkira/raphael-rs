@@ -123,7 +123,7 @@ pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
             // Gracefully close the application.
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
-    };
+    }
 }
 
 fn download_and_replace_executable(asset_url: &str) {
@@ -131,7 +131,7 @@ fn download_and_replace_executable(asset_url: &str) {
         |response: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
             let bytes = response?.bytes;
             let mut temp_exe = tempfile::NamedTempFile::new()?;
-            temp_exe.write(&bytes)?;
+            temp_exe.write_all(&bytes)?;
             self_replace::self_replace(&temp_exe)?;
             *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Complete;
             Ok(())
