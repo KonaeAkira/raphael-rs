@@ -1,3 +1,4 @@
+use std::env::consts::{ARCH, OS};
 use std::error::Error;
 use std::sync::{LazyLock, Mutex};
 
@@ -8,42 +9,81 @@ const GH_RELEASE_API: &str = "https://api.github.com/repos/KonaeAkira/raphael-rs
 
 static CURRENT_VERSION: LazyLock<semver::Version> =
     LazyLock::new(|| semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap());
-static LATEST_VERSION: LazyLock<Mutex<semver::Version>> =
-    LazyLock::new(|| Mutex::new(semver::Version::new(0, 0, 0)));
+static UPDATE_STATUS: LazyLock<Mutex<UpdateStatus>> = LazyLock::new(Mutex::default);
 
-pub fn fetch_latest_version() {
+#[derive(Debug, Clone, Default)]
+enum UpdateStatus {
+    #[default]
+    None,
+    Available {
+        latest_version: semver::Version,
+        asset_url: String,
+    },
+    Downloading,
+    Error(String),
+    Complete,
+}
+
+pub fn check_for_update() {
+    #[derive(serde::Deserialize)]
+    struct Asset {
+        name: String,
+        browser_download_url: String,
+    }
     #[derive(serde::Deserialize)]
     struct ApiResponse {
         tag_name: String,
+        assets: Vec<Asset>,
     }
     let process_response =
-        |response: ehttp::Result<ehttp::Response>| -> Result<semver::Version, Box<dyn Error>> {
-            let json = response?.json::<ApiResponse>()?;
-            let version = semver::Version::parse(json.tag_name.trim_start_matches('v'))?;
-            Ok(version)
+        |response: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
+            let parsed_response = response?.json::<ApiResponse>()?;
+            let latest_version =
+                semver::Version::parse(parsed_response.tag_name.trim_start_matches('v'))?;
+            if CURRENT_VERSION.ge(&latest_version) {
+                log::info!("Already up-to-date. Latest version: {}.", &latest_version);
+                return Ok(());
+            }
+            for asset in parsed_response.assets {
+                if asset.name.contains(OS) && asset.name.contains(ARCH) {
+                    *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Available {
+                        latest_version,
+                        asset_url: asset.browser_download_url,
+                    };
+                    return Ok(());
+                }
+            }
+            Err("Newer version exists but no compatible asset was found.".into())
         };
     ehttp::fetch(
         ehttp::Request::get(GH_RELEASE_API),
-        move |result: ehttp::Result<ehttp::Response>| match process_response(result) {
-            Ok(version) => *LATEST_VERSION.lock().unwrap() = version,
-            Err(error) => log::error!("Error when fetching latest version: {error}"),
+        move |result: ehttp::Result<ehttp::Response>| {
+            if let Err(error) = process_response(result) {
+                log::error!("Error when fetching latest version: {error}");
+            }
         },
     );
 }
 
 pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
-    show_update_prompt(ctx, locale);
-    show_error_message(ctx, locale);
+    let mut update_status = UPDATE_STATUS.lock().unwrap();
+    match update_status.clone() {
+        UpdateStatus::Available { latest_version, .. } => {
+            show_update_prompt(ctx, locale, &mut update_status, latest_version);
+        }
+        UpdateStatus::Error(error_message) => {
+            show_error_message(ctx, locale, &mut update_status, error_message);
+        }
+        _ => (),
+    };
 }
 
-fn show_update_prompt(ctx: &egui::Context, locale: Locale) {
-    let mut latest_version = match LATEST_VERSION.try_lock() {
-        Ok(mutex_guard) => mutex_guard,
-        Err(_) => return,
-    };
-    if CURRENT_VERSION.ge(&latest_version) {
-        return;
-    }
+fn show_update_prompt(
+    ctx: &egui::Context,
+    locale: Locale,
+    update_status: &mut UpdateStatus,
+    latest_version: semver::Version,
+) {
     egui::Modal::new(egui::Id::new("UPDATE_DIALOGUE")).show(ctx, |ui| {
         ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
         ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
@@ -61,37 +101,33 @@ fn show_update_prompt(ctx: &egui::Context, locale: Locale) {
                 let result = update_and_close_application(ctx);
                 if let Err(error) = result {
                     log::error!("Error while downloading update: {:?}", &error);
-                    ctx.data_mut(|mem| {
-                        // The error cannot be stored because it does not implement Clone.
-                        // Therefore we need to stringify it.
-                        let error_message = format!("{:?}", error);
-                        mem.insert_temp(egui::Id::new("UPDATE_ERROR"), error_message);
-                    });
+                    *update_status = UpdateStatus::Error(format!("{:?}", error));
+                } else {
+                    *update_status = UpdateStatus::Complete;
                 }
-                // Reset the latest version to stop this dialogue from being shown.
-                *latest_version = semver::Version::new(0, 0, 0);
             }
             if ui.button(t!(locale, "Close")).clicked() {
-                // Reset the latest version to stop this dialogue from being shown.
-                *latest_version = semver::Version::new(0, 0, 0);
+                *update_status = UpdateStatus::None;
             }
         });
     });
 }
 
-fn show_error_message(ctx: &egui::Context, locale: Locale) {
-    let Some(error) = ctx.data(|mem| mem.get_temp::<String>(egui::Id::new("UPDATE_ERROR"))) else {
-        return;
-    };
+fn show_error_message(
+    ctx: &egui::Context,
+    locale: Locale,
+    update_status: &mut UpdateStatus,
+    error: String,
+) {
     egui::Modal::new(egui::Id::new("UPDATE_ERROR_DIALOGUE")).show(ctx, |ui| {
         ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
         ui.label(egui::RichText::new(t!(locale, "Error")).strong());
         ui.separator();
-        ui.monospace(error);
+        ui.monospace(format!("{:?}", error));
         ui.separator();
         ui.vertical_centered_justified(|ui| {
             if ui.button(t!(locale, "Close")).clicked() {
-                ctx.data_mut(|mem| mem.remove_temp::<String>(egui::Id::new("UPDATE_ERROR")));
+                *update_status = UpdateStatus::None;
             }
         });
     });
@@ -100,7 +136,7 @@ fn show_error_message(ctx: &egui::Context, locale: Locale) {
 fn update_and_close_application(ctx: &egui::Context) -> self_update::errors::Result<()> {
     self_update::backends::github::Update::configure()
         .repo_owner("KonaeAkira")
-        .repo_name("raphael-rs")
+        .repo_name("raphael-s")
         .bin_name("raphael-xiv")
         .current_version(env!("CARGO_PKG_VERSION"))
         .show_output(false)

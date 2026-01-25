@@ -68,7 +68,7 @@ impl MacroSolverApp {
         load_fonts(&cc.egui_ctx);
 
         #[cfg(not(target_arch = "wasm32"))]
-        crate::update::fetch_latest_version();
+        crate::update::check_for_update();
 
         Self {
             app_context,
