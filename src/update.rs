@@ -17,7 +17,7 @@ enum UpdateStatus {
     None,
     Available {
         latest_version: semver::Version,
-        asset_url: String,
+        asset_url: Option<String>,
     },
     Updating,
     Error(String),
@@ -44,16 +44,16 @@ pub fn check_for_update() {
                 log::info!("Already up-to-date. Latest version: {}.", &latest_version);
                 return Ok(());
             }
-            for asset in parsed_response.assets {
-                if is_compatible_executable(&asset.name) {
-                    *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Available {
-                        latest_version,
-                        asset_url: asset.browser_download_url,
-                    };
-                    return Ok(());
-                }
-            }
-            Err("Newer version exists but no compatible asset was found.".into())
+            let asset_url = parsed_response
+                .assets
+                .into_iter()
+                .find(|asset| is_compatible_executable(&asset.name))
+                .map(|asset| asset.browser_download_url);
+            *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Available {
+                latest_version,
+                asset_url,
+            };
+            Ok(())
         };
     ehttp::fetch(
         ehttp::Request::get(GH_RELEASE_API),
@@ -87,7 +87,9 @@ pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
                 });
                 ui.separator();
                 ui.vertical_centered_justified(|ui| {
-                    if ui.button(t!(locale, "Update")).clicked() {
+                    if let Some(asset_url) = asset_url
+                        && ui.button(t!(locale, "Update")).clicked()
+                    {
                         *update_status = UpdateStatus::Updating;
                         download_and_replace_executable(&asset_url);
                     }
