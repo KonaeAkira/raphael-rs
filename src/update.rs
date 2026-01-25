@@ -1,4 +1,3 @@
-use std::env::consts::{ARCH, OS};
 use std::error::Error;
 use std::io::Write;
 use std::sync::{LazyLock, Mutex};
@@ -46,7 +45,7 @@ pub fn check_for_update() {
                 return Ok(());
             }
             for asset in parsed_response.assets {
-                if asset.name.contains(OS) && asset.name.contains(ARCH) {
+                if is_compatible_executable(&asset.name) {
                     *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Available {
                         latest_version,
                         asset_url: asset.browser_download_url,
@@ -139,6 +138,11 @@ pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
             });
         }
     }
+}
+
+fn is_compatible_executable(asset_name: &str) -> bool {
+    use std::env::consts::{ARCH, OS};
+    asset_name.starts_with("raphael") && asset_name.contains(ARCH) && asset_name.contains(OS)
 }
 
 fn download_and_replace_executable(asset_url: &str) {
