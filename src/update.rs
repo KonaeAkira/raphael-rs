@@ -36,8 +36,12 @@ pub fn check_for_update() {
         assets: Vec<Asset>,
     }
     let process_response =
-        |response: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
-            let parsed_response = response?.json::<ApiResponse>()?;
+        |fetch_result: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
+            let response = fetch_result?;
+            if !response.ok {
+                return Err(format!("{} {}", response.status, response.status_text).into());
+            }
+            let parsed_response = response.json::<ApiResponse>()?;
             let latest_version =
                 semver::Version::parse(parsed_response.tag_name.trim_start_matches('v'))?;
             if CURRENT_VERSION.ge(&latest_version) {
@@ -149,10 +153,13 @@ fn is_compatible_executable(asset_name: &str) -> bool {
 
 fn download_and_replace_executable(asset_url: &str) {
     let process_response =
-        |response: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
-            let bytes = response?.bytes;
+        |fetch_result: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
+            let response = fetch_result?;
+            if !response.ok {
+                return Err(format!("{} {}", response.status, response.status_text).into());
+            }
             let mut temp_exe = tempfile::NamedTempFile::new()?;
-            temp_exe.write_all(&bytes)?;
+            temp_exe.write_all(&response.bytes)?;
             self_replace::self_replace(&temp_exe)?;
             *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Success;
             Ok(())
