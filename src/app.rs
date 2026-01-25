@@ -137,16 +137,25 @@ impl eframe::App for MacroSolverApp {
                     SolverException::NoSolution => {
                         ui.label(egui::RichText::new(t!(locale, "No solution")).strong());
                         ui.separator();
-                        ui.label(t!(locale, "Make sure that the recipe is set correctly and that your stats are enough to craft this item."));
+                        ui.label(t!(locale, "Cannot complete synthesis."));
+                        if self.app_context.solver_config.must_reach_target_quality
+                            && self.app_context.game_settings().max_quality != 0
+                        {
+                            ui.label(t!(locale, "Try lowering target quality."));
+                        }
                     }
                     SolverException::Interrupted => {
                         self.solver_error = None;
-                    },
+                    }
                     SolverException::InternalError(message) => {
                         ui.label(egui::RichText::new(t!(locale, "Internal Solver Error")).strong());
                         ui.separator();
-                        ui.add(MultilineMonospace::new(message).max_height(320.0).scrollable(true));
-                    },
+                        ui.add(
+                            MultilineMonospace::new(message)
+                                .max_height(320.0)
+                                .scrollable(true),
+                        );
+                    }
                 }
                 ui.separator();
                 ui.vertical_centered_justified(|ui| {
