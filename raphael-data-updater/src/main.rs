@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::io::Write;
+use std::time::Duration;
 use std::{fs::File, io::BufWriter};
 
 use raphael_data_updater::*;
@@ -28,17 +29,19 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
         );
 
         let mut remaining_attempts = 3;
+        let mut retry_cooldown = Duration::from_secs(2);
         let response = loop {
             remaining_attempts -= 1;
             match reqwest::get(&query).await {
                 Ok(response) => break response,
                 Err(error) => {
-                    if remaining_attempts == 0 {
+                    if remaining_attempts > 0 {
+                        log::warn!("{:?}. Retrying...", error);
+                        std::thread::sleep(retry_cooldown);
+                        retry_cooldown *= 2;
+                    } else {
                         log::error!("{:?}. Retry attempts exhausted.", error);
                         panic!("Failed to query API.");
-                    } else {
-                        log::warn!("{:?}. Retrying...", error);
-                        std::thread::sleep(std::time::Duration::from_secs(3));
                     }
                 }
             }
