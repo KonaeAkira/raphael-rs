@@ -26,7 +26,24 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
             lang,
             schema_override.map_or("".to_owned(), |s| format!("&schema={}", s)),
         );
-        let response = reqwest::get(query).await.unwrap();
+
+        let mut remaining_attempts = 3;
+        let response = loop {
+            remaining_attempts -= 1;
+            match reqwest::get(&query).await {
+                Ok(response) => break response,
+                Err(error) => {
+                    if remaining_attempts == 0 {
+                        log::error!("{:?}. Retry attempts exhausted.", error);
+                        panic!("Failed to query API.");
+                    } else {
+                        log::warn!("{:?}. Retrying...", error);
+                        std::thread::sleep(std::time::Duration::from_secs(3));
+                    }
+                }
+            }
+        };
+
         let json = json::parse(&response.text().await.unwrap()).unwrap();
 
         let size = rows.len();
@@ -34,7 +51,7 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
         if size == rows.len() {
             return rows;
         }
-        log::debug!("\"{}\": total fetched: {}", T::SHEET, rows.len());
+        log::info!("\"{}\": total fetched: {}", T::SHEET, rows.len());
     }
 }
 
