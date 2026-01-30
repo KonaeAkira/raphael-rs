@@ -60,6 +60,7 @@ impl ActionCombo {
                 Action::QuickInnovation => &[Action::QuickInnovation],
                 Action::ImmaculateMend => &[Action::ImmaculateMend],
                 Action::TrainedPerfection => &[Action::TrainedPerfection],
+                Action::StellarSteadyHand => &[Action::StellarSteadyHand],
             },
         }
     }

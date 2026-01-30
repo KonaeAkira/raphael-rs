@@ -31,7 +31,14 @@ pub struct Effects {
     #[bits(2)]
     pub combo: Combo,
 
-    #[bits(32)]
+    #[bits(2)]
+    /// Remaining usages of the Stellar Steady Hand action.
+    pub stellar_steady_hand_charges: u8,
+    #[bits(2)]
+    /// Remaining duration of the effect from the Stellar Steady Hand action.
+    pub stellar_steady_hand: u8,
+
+    #[bits(28)]
     pub _padding: u32,
 }
 
@@ -111,6 +118,7 @@ const EFFECTS_BIT_0: u64 = Effects::new()
     .with_great_strides(1)
     .with_muscle_memory(1)
     .with_manipulation(1)
+    .with_stellar_steady_hand(1)
     .into_bits();
 
 const EFFECTS_BIT_1: u64 = Effects::new()
@@ -121,6 +129,7 @@ const EFFECTS_BIT_1: u64 = Effects::new()
     .with_great_strides(2)
     .with_muscle_memory(2)
     .with_manipulation(2)
+    .with_stellar_steady_hand(2)
     .into_bits();
 
 const EFFECTS_BIT_2: u64 = Effects::new()

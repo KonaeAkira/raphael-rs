@@ -222,5 +222,6 @@ pub fn get_action_icon(action: Action, job_id: u8) -> egui::Image<'static> {
         Action::QuickInnovation => action_icon!("Quick Innovation", job_id),
         Action::ImmaculateMend => action_icon!("Immaculate Mend", job_id),
         Action::TrainedPerfection => action_icon!("Trained Perfection", job_id),
+        Action::StellarSteadyHand => action_icon!("Stellar Steady Hand", job_id),
     })
 }

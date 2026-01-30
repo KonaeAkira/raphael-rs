@@ -165,6 +165,7 @@ const fn action_name_en(action: Action) -> &'static str {
         Action::TrainedPerfection => "Trained Perfection",
         Action::TrainedEye => "Trained Eye",
         Action::QuickInnovation => "Quick Innovation",
+        Action::StellarSteadyHand => "Stellar Steady Hand",
     }
 }
 
@@ -201,6 +202,7 @@ const fn action_name_de(action: Action) -> &'static str {
         Action::TrainedPerfection => "Meisters Beitrag",
         Action::TrainedEye => "Flinke Hand",
         Action::QuickInnovation => "Spontane Innovation",
+        Action::StellarSteadyHand => todo!(),
     }
 }
 
@@ -237,6 +239,7 @@ const fn action_name_fr(action: Action) -> &'static str {
         Action::TrainedPerfection => "Main suprême",
         Action::TrainedEye => "Main preste",
         Action::QuickInnovation => "Innovation instantanée",
+        Action::StellarSteadyHand => todo!(),
     }
 }
 
@@ -273,6 +276,7 @@ const fn action_name_jp(action: Action) -> &'static str {
         Action::TrainedPerfection => "匠の絶技",
         Action::TrainedEye => "匠の早業",
         Action::QuickInnovation => "クイックイノベーション",
+        Action::StellarSteadyHand => todo!(),
     }
 }
 
@@ -309,6 +313,7 @@ const fn action_name_cn(action: Action) -> &'static str {
         Action::TrainedPerfection => "工匠的绝技",
         Action::TrainedEye => "工匠的神速技巧",
         Action::QuickInnovation => "快速改革",
+        Action::StellarSteadyHand => todo!(),
     }
 }
 
@@ -345,6 +350,7 @@ const fn action_name_kr(action: Action) -> &'static str {
         Action::TrainedPerfection => "장인의 초절 기술",
         Action::TrainedEye => "장인의 날랜손",
         Action::QuickInnovation => "신속한 혁신",
+        Action::StellarSteadyHand => todo!(),
     }
 }
 
@@ -381,5 +387,6 @@ const fn action_name_tw(action: Action) -> &'static str {
         Action::TrainedPerfection => "工匠的絕技",
         Action::TrainedEye => "工匠的神速技巧",
         Action::QuickInnovation => "快速改革",
+        Action::StellarSteadyHand => todo!(),
     }
 }

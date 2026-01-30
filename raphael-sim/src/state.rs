@@ -206,6 +206,9 @@ impl SimulationState {
             Action::TrainedPerfection => {
                 self.use_action_impl::<TrainedPerfection>(settings, condition)
             }
+            Action::StellarSteadyHand => {
+                self.use_action_impl::<StellarSteadyHand>(settings, condition)
+            }
         }
     }
 }

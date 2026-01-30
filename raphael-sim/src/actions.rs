@@ -1,6 +1,9 @@
 use crate::{ActionMask, Condition, Effects, Settings, SimulationState};
 
-const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u64::MAX).with_combo(Combo::None);
+const DEFAULT_EFFECT_RESET_MASK: Effects = {
+    assert!(Combo::None.into_bits() == 0);
+    Effects::from_bits(u64::MAX).with_combo(Combo::None)
+};
 
 pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
@@ -1030,6 +1033,35 @@ impl ActionImpl for TrainedPerfection {
     }
 }
 
+pub struct StellarSteadyHand {}
+impl StellarSteadyHand {}
+impl ActionImpl for StellarSteadyHand {
+    const LEVEL_REQUIREMENT: u8 = 90;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StellarSteadyHand);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_stellar_steady_hand(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_stellar_steady_hand(3);
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        if state.effects.stellar_steady_hand_charges() == 0 {
+            return Err("No Stellar Steady Hand usages remaining.");
+        }
+        Ok(())
+    }
+
+    fn transform(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
+        let remaining = state
+            .effects
+            .stellar_steady_hand_charges()
+            .saturating_sub(1);
+        state.effects.set_stellar_steady_hand_charges(remaining);
+    }
+}
+
 #[derive(strum_macros::EnumIter, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Action {
@@ -1064,6 +1096,7 @@ pub enum Action {
     QuickInnovation,
     ImmaculateMend,
     TrainedPerfection,
+    StellarSteadyHand,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -1128,6 +1161,7 @@ impl Action {
             Self::TrainedPerfection => 3,
             Self::TrainedEye => 3,
             Self::QuickInnovation => 3,
+            Self::StellarSteadyHand => todo!(),
         }
     }
 
@@ -1164,6 +1198,7 @@ impl Action {
             Self::QuickInnovation => 100459,
             Self::ImmaculateMend => 100467,
             Self::TrainedPerfection => 100475,
+            Self::StellarSteadyHand => todo!(),
         }
     }
 }
