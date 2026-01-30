@@ -209,6 +209,7 @@ impl SimulationState {
             Action::StellarSteadyHand => {
                 self.use_action_impl::<StellarSteadyHand>(settings, condition)
             }
+            Action::RapidSynthesis => self.use_action_impl::<RapidSynthesis>(settings, condition),
         }
     }
 }

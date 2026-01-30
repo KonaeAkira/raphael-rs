@@ -61,6 +61,7 @@ impl ActionCombo {
                 Action::ImmaculateMend => &[Action::ImmaculateMend],
                 Action::TrainedPerfection => &[Action::TrainedPerfection],
                 Action::StellarSteadyHand => &[Action::StellarSteadyHand],
+                Action::RapidSynthesis => &[Action::RapidSynthesis],
             },
         }
     }

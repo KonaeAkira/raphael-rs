@@ -1034,7 +1034,6 @@ impl ActionImpl for TrainedPerfection {
 }
 
 pub struct StellarSteadyHand {}
-impl StellarSteadyHand {}
 impl ActionImpl for StellarSteadyHand {
     const LEVEL_REQUIREMENT: u8 = 90;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StellarSteadyHand);
@@ -1059,6 +1058,41 @@ impl ActionImpl for StellarSteadyHand {
             .stellar_steady_hand_charges()
             .saturating_sub(1);
         state.effects.set_stellar_steady_hand_charges(remaining);
+    }
+}
+
+pub struct RapidSynthesis {}
+impl ActionImpl for RapidSynthesis {
+    const LEVEL_REQUIREMENT: u8 = 9;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::RapidSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err("Rapid Synthesis can only be used when Stellar Steady Hand is active.");
+        }
+        Ok(())
+    }
+
+    fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
+        match settings.job_level {
+            0..63 => 250,
+            63.. => 500,
+        }
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
     }
 }
 
@@ -1097,6 +1131,7 @@ pub enum Action {
     ImmaculateMend,
     TrainedPerfection,
     StellarSteadyHand,
+    RapidSynthesis,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -1162,6 +1197,7 @@ impl Action {
             Self::TrainedEye => 3,
             Self::QuickInnovation => 3,
             Self::StellarSteadyHand => todo!(),
+            Self::RapidSynthesis => 3,
         }
     }
 
@@ -1199,6 +1235,7 @@ impl Action {
             Self::ImmaculateMend => 100467,
             Self::TrainedPerfection => 100475,
             Self::StellarSteadyHand => todo!(),
+            Self::RapidSynthesis => 100363,
         }
     }
 }
