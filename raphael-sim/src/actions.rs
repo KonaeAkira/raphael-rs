@@ -1,6 +1,6 @@
 use crate::{ActionMask, Condition, Effects, Settings, SimulationState};
 
-const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX).with_combo(Combo::None);
+const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u64::MAX).with_combo(Combo::None);
 
 pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
@@ -232,7 +232,7 @@ impl ActionImpl for StandardTouch {
     const LEVEL_REQUIREMENT: u8 = 18;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StandardTouch);
 
-    const EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX)
+    const EFFECT_RESET_MASK: Effects = Effects::from_bits(u64::MAX)
         .with_great_strides(0)
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();

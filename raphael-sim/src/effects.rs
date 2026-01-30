@@ -1,6 +1,6 @@
 use crate::{Combo, Settings};
 
-#[bitfield_struct::bitfield(u32, default = false)]
+#[bitfield_struct::bitfield(u64, default = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Effects {
     #[bits(4)]
@@ -30,6 +30,9 @@ pub struct Effects {
 
     #[bits(2)]
     pub combo: Combo,
+
+    #[bits(32)]
+    pub _padding: u32,
 }
 
 impl Effects {
@@ -101,7 +104,7 @@ impl Effects {
     }
 }
 
-const EFFECTS_BIT_0: u32 = Effects::new()
+const EFFECTS_BIT_0: u64 = Effects::new()
     .with_waste_not(1)
     .with_innovation(1)
     .with_veneration(1)
@@ -110,7 +113,7 @@ const EFFECTS_BIT_0: u32 = Effects::new()
     .with_manipulation(1)
     .into_bits();
 
-const EFFECTS_BIT_1: u32 = Effects::new()
+const EFFECTS_BIT_1: u64 = Effects::new()
     .with_special_quality_state(SpecialQualityState::AdversarialGuard)
     .with_waste_not(2)
     .with_innovation(2)
@@ -120,7 +123,7 @@ const EFFECTS_BIT_1: u32 = Effects::new()
     .with_manipulation(2)
     .into_bits();
 
-const EFFECTS_BIT_2: u32 = Effects::new()
+const EFFECTS_BIT_2: u64 = Effects::new()
     .with_waste_not(4)
     .with_innovation(4)
     .with_veneration(4)
@@ -128,7 +131,7 @@ const EFFECTS_BIT_2: u32 = Effects::new()
     .with_manipulation(4)
     .into_bits();
 
-const EFFECTS_BIT_3: u32 = Effects::new()
+const EFFECTS_BIT_3: u64 = Effects::new()
     .with_waste_not(8)
     .with_manipulation(8)
     .into_bits();
