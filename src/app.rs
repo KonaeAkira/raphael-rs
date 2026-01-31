@@ -7,7 +7,9 @@ use raphael_translations::{t, t_format};
 use egui::{Align, CursorIcon, Id, Layout, TextStyle};
 use raphael_data::{Locale, action_name, get_job_name};
 
-use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
+use raphael_sim::{
+    Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, StellarSteadyHand,
+};
 
 use crate::config::{QualitySource, QualityTarget};
 use crate::context::AppContext;
@@ -810,6 +812,14 @@ impl MacroSolverApp {
                 egui::Checkbox::new(&mut false, action_name(Action::QuickInnovation, locale)),
             );
         }
+        // This is only a temporary solution to enable using Stellar Steady Hand in the UI.
+        // TODO: Design permanent solution.
+        ui.horizontal(|ui| {
+            ui.label(action_name(Action::StellarSteadyHand, locale));
+            ui.add(egui::DragValue::new(
+                &mut self.app_context.stellar_steady_hand_charges,
+            ));
+        });
         let heart_and_soul_enabled = self.app_context.active_stats().level
             >= HeartAndSoul::LEVEL_REQUIREMENT
             && self.app_context.active_stats().heart_and_soul;
