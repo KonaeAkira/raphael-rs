@@ -726,3 +726,116 @@ fn test_quick_innovation() {
         Err("Quick Innovation cannot be used while Innovation is active.")
     );
 }
+
+#[test]
+fn test_stellar_steady_hand() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 2,
+        ..SETTINGS
+    };
+    // Test that using Stellar Steady Hand gives the correct effect duration (3)
+    // and decreases the number of remaining charges.
+    let state = SimulationState::from_macro(&settings, &[Action::StellarSteadyHand]).unwrap();
+    assert_eq!(state.effects.stellar_steady_hand(), 3);
+    assert_eq!(state.effects.stellar_steady_hand_charges(), 1);
+    // Test that Stellar Steady Hand resets the effect duration if the effect is active.
+    let state = state
+        .use_action(Action::StellarSteadyHand, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(state.effects.stellar_steady_hand(), 3);
+    assert_eq!(state.effects.stellar_steady_hand_charges(), 0);
+    // Test that Stellar Steady Hand cannot be used if there are no remaining charges.
+    let state = state.use_action(Action::StellarSteadyHand, Condition::Normal, &settings);
+    assert_eq!(Err("No Stellar Steady Hand usages remaining."), state);
+}
+
+#[test]
+fn test_rapid_synthesis() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 1,
+        ..SETTINGS
+    };
+    // Test that Rapid Synthesis can be used while Stellar Steady Hand is active.
+    // Rapid Synthesis has a lower progress efficiency below level 63, but there is currently
+    // no scenario to use the action below level 63 so the lower efficiency is not tested.
+    let state = SimulationState::from_macro(
+        &settings,
+        &[Action::StellarSteadyHand, Action::RapidSynthesis],
+    )
+    .unwrap();
+    assert_eq!(state.progress, 500);
+    assert_eq!(state.durability, settings.max_durability - 10);
+    assert_eq!(state.cp, settings.max_cp);
+    // Test that Rapid Synthesis cannot be used if Stellar Steady Hand is not active.
+    let state = SimulationState::from_macro(&settings, &[Action::RapidSynthesis]);
+    assert_eq!(
+        Err("Action can only be used when Stellar Steady Hand is active."),
+        state
+    );
+}
+
+#[test]
+fn test_hasty_touch() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 1,
+        ..SETTINGS
+    };
+    // Test that Hasty Touch can be used while Stellar Steady Hand is active.
+    let state =
+        SimulationState::from_macro(&settings, &[Action::StellarSteadyHand, Action::HastyTouch])
+            .unwrap();
+    assert_eq!(state.quality, 100);
+    assert_eq!(state.durability, settings.max_durability - 10);
+    assert_eq!(state.cp, settings.max_cp);
+    assert_eq!(state.effects.expedience(), true);
+    // Test that Hasty Touch cannot be used if Stellar Steady Hand is not active.
+    let state = SimulationState::from_macro(&settings, &[Action::HastyTouch]);
+    assert_eq!(
+        Err("Action can only be used when Stellar Steady Hand is active."),
+        state
+    );
+}
+
+#[test]
+fn test_daring_touch() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 1,
+        ..SETTINGS
+    };
+    // Test that Daring Touch can be used while Stellar Steady Hand and Expedience are active.
+    let state = SimulationState::from_macro(
+        &settings,
+        &[
+            Action::StellarSteadyHand,
+            Action::HastyTouch,
+            Action::DaringTouch,
+        ],
+    )
+    .unwrap();
+    assert_eq!(state.quality, 265);
+    assert_eq!(state.durability, settings.max_durability - 20);
+    assert_eq!(state.cp, settings.max_cp);
+    assert_eq!(state.effects.expedience(), false);
+    // Test that Hasty Touch cannot be used if Stellar Steady Hand is not active.
+    let state = SimulationState::from_macro(
+        &settings,
+        &[
+            Action::StellarSteadyHand,
+            Action::Observe,
+            Action::Observe,
+            Action::HastyTouch,
+            Action::DaringTouch,
+        ],
+    );
+    assert_eq!(
+        Err("Action can only be used when Stellar Steady Hand is active."),
+        state
+    );
+    // Test that Daring touch cannot be used if Expedience is not active.
+    let state =
+        SimulationState::from_macro(&settings, &[Action::StellarSteadyHand, Action::DaringTouch]);
+    assert_eq!(
+        Err("Action can only be used when Expedience is active."),
+        state
+    );
+}

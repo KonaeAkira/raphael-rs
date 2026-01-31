@@ -1104,7 +1104,7 @@ impl ActionImpl for HastyTouch {
     const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
         .with_great_strides(0)
         .with_trained_perfection_active(false);
-    const EFFECT_SET_MASK: Effects = Effects::new();
+    const EFFECT_SET_MASK: Effects = Effects::new().with_expedience(true);
 
     fn precondition(
         state: &SimulationState,
@@ -1155,7 +1155,7 @@ impl ActionImpl for DaringTouch {
     }
 
     fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
-        100
+        150
     }
 
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
