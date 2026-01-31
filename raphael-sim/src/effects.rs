@@ -38,7 +38,10 @@ pub struct Effects {
     /// Remaining duration of the effect from the Stellar Steady Hand action.
     pub stellar_steady_hand: u8,
 
-    #[bits(28)]
+    /// Combo effect from Hasty Touch that enables usage of Daring Touch.
+    pub expedience: bool,
+
+    #[bits(27)]
     pub _padding: u32,
 }
 
@@ -119,6 +122,7 @@ const EFFECTS_BIT_0: u64 = Effects::new()
     .with_muscle_memory(1)
     .with_manipulation(1)
     .with_stellar_steady_hand(1)
+    .with_expedience(true)
     .into_bits();
 
 const EFFECTS_BIT_1: u64 = Effects::new()

@@ -1079,7 +1079,7 @@ impl ActionImpl for RapidSynthesis {
         // Only actions with 100% success rate are supported.
         // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
         if state.effects.stellar_steady_hand() == 0 {
-            return Err("Rapid Synthesis can only be used when Stellar Steady Hand is active.");
+            return Err("Action can only be used when Stellar Steady Hand is active.");
         }
         Ok(())
     }
@@ -1089,6 +1089,73 @@ impl ActionImpl for RapidSynthesis {
             0..63 => 250,
             63.. => 500,
         }
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
+pub struct HastyTouch {}
+impl ActionImpl for HastyTouch {
+    const LEVEL_REQUIREMENT: u8 = 9;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HastyTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err("Action can only be used when Stellar Steady Hand is active.");
+        }
+        Ok(())
+    }
+
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
+        100
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
+pub struct DaringTouch {}
+impl ActionImpl for DaringTouch {
+    const LEVEL_REQUIREMENT: u8 = 96;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HastyTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err("Action can only be used when Stellar Steady Hand is active.");
+        }
+        if !state.effects.expedience() {
+            return Err("Action can only be used when Expedience is active.");
+        }
+        Ok(())
+    }
+
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
+        100
     }
 
     fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
@@ -1132,6 +1199,8 @@ pub enum Action {
     TrainedPerfection,
     StellarSteadyHand,
     RapidSynthesis,
+    HastyTouch,
+    DaringTouch,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -1198,6 +1267,8 @@ impl Action {
             Self::QuickInnovation => 3,
             Self::StellarSteadyHand => todo!(),
             Self::RapidSynthesis => 3,
+            Self::HastyTouch => 3,
+            Self::DaringTouch => 3,
         }
     }
 
@@ -1236,6 +1307,8 @@ impl Action {
             Self::TrainedPerfection => 100475,
             Self::StellarSteadyHand => todo!(),
             Self::RapidSynthesis => 100363,
+            Self::HastyTouch => 100355,
+            Self::DaringTouch => 100451,
         }
     }
 }

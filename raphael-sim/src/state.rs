@@ -210,6 +210,8 @@ impl SimulationState {
                 self.use_action_impl::<StellarSteadyHand>(settings, condition)
             }
             Action::RapidSynthesis => self.use_action_impl::<RapidSynthesis>(settings, condition),
+            Action::HastyTouch => self.use_action_impl::<HastyTouch>(settings, condition),
+            Action::DaringTouch => self.use_action_impl::<DaringTouch>(settings, condition),
         }
     }
 }

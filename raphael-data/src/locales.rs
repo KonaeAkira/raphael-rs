@@ -167,6 +167,8 @@ const fn action_name_en(action: Action) -> &'static str {
         Action::QuickInnovation => "Quick Innovation",
         Action::StellarSteadyHand => "Stellar Steady Hand",
         Action::RapidSynthesis => "Rapid Synthesis",
+        Action::HastyTouch => "Hasty Touch",
+        Action::DaringTouch => "Daring Touch",
     }
 }
 
@@ -205,6 +207,8 @@ const fn action_name_de(action: Action) -> &'static str {
         Action::QuickInnovation => "Spontane Innovation",
         Action::StellarSteadyHand => todo!(),
         Action::RapidSynthesis => todo!(),
+        Action::HastyTouch => todo!(),
+        Action::DaringTouch => todo!(),
     }
 }
 
@@ -243,6 +247,8 @@ const fn action_name_fr(action: Action) -> &'static str {
         Action::QuickInnovation => "Innovation instantanée",
         Action::StellarSteadyHand => todo!(),
         Action::RapidSynthesis => todo!(),
+        Action::HastyTouch => todo!(),
+        Action::DaringTouch => todo!(),
     }
 }
 
@@ -281,6 +287,8 @@ const fn action_name_jp(action: Action) -> &'static str {
         Action::QuickInnovation => "クイックイノベーション",
         Action::StellarSteadyHand => todo!(),
         Action::RapidSynthesis => todo!(),
+        Action::HastyTouch => todo!(),
+        Action::DaringTouch => todo!(),
     }
 }
 
@@ -319,6 +327,8 @@ const fn action_name_cn(action: Action) -> &'static str {
         Action::QuickInnovation => "快速改革",
         Action::StellarSteadyHand => todo!(),
         Action::RapidSynthesis => todo!(),
+        Action::HastyTouch => todo!(),
+        Action::DaringTouch => todo!(),
     }
 }
 
@@ -357,6 +367,8 @@ const fn action_name_kr(action: Action) -> &'static str {
         Action::QuickInnovation => "신속한 혁신",
         Action::StellarSteadyHand => todo!(),
         Action::RapidSynthesis => todo!(),
+        Action::HastyTouch => todo!(),
+        Action::DaringTouch => todo!(),
     }
 }
 
@@ -395,5 +407,7 @@ const fn action_name_tw(action: Action) -> &'static str {
         Action::QuickInnovation => "快速改革",
         Action::StellarSteadyHand => todo!(),
         Action::RapidSynthesis => todo!(),
+        Action::HastyTouch => todo!(),
+        Action::DaringTouch => todo!(),
     }
 }
