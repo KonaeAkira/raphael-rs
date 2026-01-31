@@ -64,6 +64,7 @@ impl Effects {
                 settings.is_action_allowed::<crate::actions::QuickInnovation>(),
             )
             .with_combo(Combo::SynthesisBegin)
+            .with_stellar_steady_hand_charges(settings.stellar_steady_hand_charges)
     }
 
     pub(crate) const fn progress_modifier(self) -> u32 {

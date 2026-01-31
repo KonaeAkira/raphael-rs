@@ -11,6 +11,7 @@ const SETTINGS: Settings = Settings {
     allowed_actions: ActionMask::all(),
     adversarial: false,
     backload_progress: false,
+    stellar_steady_hand_charges: 0,
 };
 
 /// Returns the 4 primary stats of a state:

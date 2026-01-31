@@ -11,6 +11,7 @@ const SETTINGS: Settings = Settings {
     allowed_actions: ActionMask::all(),
     adversarial: true,
     backload_progress: true,
+    stellar_steady_hand_charges: 0,
 };
 
 #[test]

@@ -68,6 +68,7 @@ fn unsolvable() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -116,6 +117,7 @@ fn zero_quality() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -169,6 +171,7 @@ fn max_quality() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -222,6 +225,7 @@ fn large_progress_quality_increase() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -275,6 +279,7 @@ fn backload_progress_single_delicate_synthesis() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -329,6 +334,7 @@ fn issue_216_steplbsolver_crash() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
