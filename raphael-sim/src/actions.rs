@@ -1265,7 +1265,7 @@ impl Action {
             Self::TrainedPerfection => 3,
             Self::TrainedEye => 3,
             Self::QuickInnovation => 3,
-            Self::StellarSteadyHand => 3, // TODO: verify
+            Self::StellarSteadyHand => 2,
             Self::RapidSynthesis => 3,
             Self::HastyTouch => 3,
             Self::DaringTouch => 3,
