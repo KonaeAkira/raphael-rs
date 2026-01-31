@@ -1,5 +1,5 @@
 use egui::{Align, Layout, Widget};
-use raphael_data::{Locale, action_name, get_item_name};
+use raphael_data::{Locale, get_item_name, macro_name};
 use raphael_sim::Action;
 use raphael_translations::{t, t_format};
 use serde::{Deserialize, Serialize};
@@ -205,13 +205,13 @@ impl MacroTextBox {
             if config.include_delay {
                 format!(
                     "/ac \"{}\" <wait.{}>",
-                    action_name(*action, fixed_formatting_data.locale),
+                    macro_name(*action, fixed_formatting_data.locale),
                     action.time_cost() + config.extra_delay
                 )
             } else {
                 format!(
                     "/ac \"{}\"",
-                    action_name(*action, fixed_formatting_data.locale)
+                    macro_name(*action, fixed_formatting_data.locale)
                 )
             }
         }));

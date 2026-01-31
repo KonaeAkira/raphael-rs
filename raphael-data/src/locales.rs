@@ -132,6 +132,21 @@ pub const fn action_name(action: Action, locale: Locale) -> &'static str {
     }
 }
 
+/// Returns the name of an action to be used in macros.
+/// The macro name for an action may be different from its normal display name.
+pub const fn macro_name(action: Action, locale: Locale) -> &'static str {
+    match action {
+        Action::StellarSteadyHand => match locale {
+            Locale::EN => "Duty Action II",
+            _ => todo!(),
+        },
+        // Hasty Touch turns into Daring Touch while under the effect of Expedience.
+        Action::DaringTouch => action_name(Action::HastyTouch, locale),
+        // Use the normal action display name for other actions.
+        _ => action_name(action, locale),
+    }
+}
+
 const fn action_name_en(action: Action) -> &'static str {
     match action {
         Action::BasicSynthesis => "Basic Synthesis",
