@@ -145,54 +145,63 @@ impl QualityUbSolver {
         for (heart_and_soul, quick_innovation) in
             [(false, false), (false, true), (true, false), (true, true)]
         {
-            let mut templates: Vec<_> = all_templates
-                .iter()
-                .filter(|template| {
-                    template.data.effects.heart_and_soul_available() == heart_and_soul
-                        && template.data.effects.quick_innovation_available() == quick_innovation
-                })
-                .copied()
-                .collect();
-            // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
-            // See `ReducedState::is_final` for details.
-            for cp in (2 * self.context.durability_cost..=self.context.settings.max_cp()).step_by(2)
-            {
-                if self.context.interrupt_signal.is_set() {
-                    return Err(SolverException::Interrupted);
+            for stellar_steady_hand in 0..3 {
+                let mut templates: Vec<_> = all_templates
+                    .iter()
+                    .filter(|template| {
+                        template.data.effects.heart_and_soul_available() == heart_and_soul
+                            && template.data.effects.quick_innovation_available()
+                                == quick_innovation
+                            && template.data.effects.stellar_steady_hand_charges()
+                                == stellar_steady_hand
+                    })
+                    .copied()
+                    .collect();
+                // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
+                // See `ReducedState::is_final` for details.
+                for cp in
+                    (2 * self.context.durability_cost..=self.context.settings.max_cp()).step_by(2)
+                {
+                    if self.context.interrupt_signal.is_set() {
+                        return Err(SolverException::Interrupted);
+                    }
+                    let solved_states = templates
+                        .par_iter_mut()
+                        .filter_map(|template| {
+                            template.instantiate(cp).map(|state| (template, state))
+                        })
+                        .map_init(
+                            ParetoFrontBuilder::new,
+                            |pf_builder, (template, state)| -> Result<_, SolverException> {
+                                let pareto_front =
+                                    self.solve_precompute_state(pf_builder, state)?;
+                                let template_is_maximal = {
+                                    // A template is "maximal" if there is no benefit of solving it with higher CP
+                                    let required_progress = self.context.settings.max_progress();
+                                    let required_quality =
+                                        self.context.settings.max_quality().saturating_sub(
+                                            self.context.iq_quality_lut
+                                                [usize::from(state.effects.inner_quiet())],
+                                        );
+                                    pareto_front.first().progress >= required_progress
+                                        && pareto_front.first().quality >= required_quality
+                                };
+                                if template_is_maximal {
+                                    template.required_cp_for_max_progress_and_quality = Some(cp);
+                                }
+                                Ok((state, pareto_front))
+                            },
+                        )
+                        .collect::<Result<Vec<_>, SolverException>>()?;
+                    self.solved_states.extend(solved_states);
                 }
-                let solved_states = templates
-                    .par_iter_mut()
-                    .filter_map(|template| template.instantiate(cp).map(|state| (template, state)))
-                    .map_init(
-                        ParetoFrontBuilder::new,
-                        |pf_builder, (template, state)| -> Result<_, SolverException> {
-                            let pareto_front = self.solve_precompute_state(pf_builder, state)?;
-                            let template_is_maximal = {
-                                // A template is "maximal" if there is no benefit of solving it with higher CP
-                                let required_progress = self.context.settings.max_progress();
-                                let required_quality =
-                                    self.context.settings.max_quality().saturating_sub(
-                                        self.context.iq_quality_lut
-                                            [usize::from(state.effects.inner_quiet())],
-                                    );
-                                pareto_front.first().progress >= required_progress
-                                    && pareto_front.first().quality >= required_quality
-                            };
-                            if template_is_maximal {
-                                template.required_cp_for_max_progress_and_quality = Some(cp);
-                            }
-                            Ok((state, pareto_front))
-                        },
-                    )
-                    .collect::<Result<Vec<_>, SolverException>>()?;
-                self.solved_states.extend(solved_states);
+                self.maximal_templates
+                    .extend(templates.into_iter().filter_map(|template| {
+                        template
+                            .required_cp_for_max_progress_and_quality
+                            .map(|required_cp| (template.data, required_cp))
+                    }));
             }
-            self.maximal_templates
-                .extend(templates.into_iter().filter_map(|template| {
-                    template
-                        .required_cp_for_max_progress_and_quality
-                        .map(|required_cp| (template.data, required_cp))
-                }));
         }
         Ok(())
     }
