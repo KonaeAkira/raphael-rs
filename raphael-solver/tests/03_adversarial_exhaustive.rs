@@ -69,6 +69,7 @@ const SETTINGS: Settings = Settings {
         .remove(Action::QuickInnovation),
     adversarial: true,
     backload_progress: false,
+    stellar_steady_hand_charges: 0,
 };
 
 #[test]
@@ -138,6 +139,7 @@ fn test_rare_tacos_2() {
         allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -197,6 +199,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
             .remove(Action::QuickInnovation),
         adversarial: true,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -250,6 +253,7 @@ fn test_indagator_3858_4057() {
         allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -307,6 +311,7 @@ fn test_rare_tacos_4628_4410() {
             .remove(Action::QuickInnovation),
         adversarial: true,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -363,6 +368,7 @@ fn issue_113() {
         allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -417,6 +423,7 @@ fn issue_118() {
         allowed_actions: ActionMask::regular(),
         adversarial: true,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,

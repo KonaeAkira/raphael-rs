@@ -51,6 +51,7 @@ fn test_roast_chicken() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -87,6 +88,7 @@ fn test_turali_pineapple_ponzecake() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
     let initial_quality = get_initial_quality(crafter_stats, recipe, [0, 1, 0, 0, 0, 0]);
@@ -124,6 +126,7 @@ fn test_smaller_water_otter_hardware() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -156,6 +159,7 @@ fn test_grade_8_tincture() {
             allowed_actions: ActionMask::all().remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -192,6 +196,7 @@ fn test_claro_walnut_spinning_wheel() {
                 .remove(Action::HeartAndSoul),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -225,6 +230,7 @@ fn test_habitat_chair_lv100() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -259,6 +265,7 @@ fn test_habitat_chair_lv97() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -293,6 +300,7 @@ fn test_habitat_chair_lv98() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -327,6 +335,7 @@ fn test_standard_indurate_rings_lv93() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -361,6 +370,7 @@ fn test_lunar_alloy_ingots_lv90() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -395,6 +405,7 @@ fn test_standard_high_density_fiberboard_lv91() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }
@@ -428,6 +439,7 @@ fn test_lunar_alloy_ingots_lv10() {
                 .remove(Action::QuickInnovation),
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         }
     );
 }

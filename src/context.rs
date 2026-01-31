@@ -37,6 +37,8 @@ pub struct AppContext {
     pub macro_view_config: MacroViewConfig,
     pub saved_rotations_config: SavedRotationsConfig,
     pub saved_rotations_data: SavedRotationsData,
+    // TODO: remove temporary implementation
+    pub stellar_steady_hand_charges: u8,
 }
 
 impl AppContext {
@@ -61,6 +63,7 @@ impl AppContext {
                 SavedRotationsConfig::default(),
             ),
             saved_rotations_data: load(cc, "SAVED_ROTATIONS", SavedRotationsData::default()),
+            stellar_steady_hand_charges: 0,
         }
     }
 
@@ -125,6 +128,7 @@ impl AppContext {
         );
         game_settings.adversarial = solver_config.adversarial;
         game_settings.backload_progress = solver_config.backload_progress;
+        game_settings.stellar_steady_hand_charges = self.stellar_steady_hand_charges;
         game_settings
     }
 
