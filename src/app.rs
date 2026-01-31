@@ -7,9 +7,7 @@ use raphael_translations::{t, t_format};
 use egui::{Align, CursorIcon, Id, Layout, TextStyle};
 use raphael_data::{Locale, action_name, get_job_name};
 
-use raphael_sim::{
-    Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation, StellarSteadyHand,
-};
+use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
 
 use crate::config::{QualitySource, QualityTarget};
 use crate::context::AppContext;

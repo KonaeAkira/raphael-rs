@@ -1121,7 +1121,7 @@ fn ce_stellar_steady_hand() {
             SolutionScore {
                 capped_quality: 12000,
                 steps: 18,
-                duration: 49,
+                duration: 48,
                 overflow_quality: 168,
             },
         )
