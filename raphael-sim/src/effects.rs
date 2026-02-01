@@ -111,6 +111,7 @@ impl Effects {
             .with_inner_quiet(0)
             .with_innovation(0)
             .with_great_strides(0)
+            .with_expedience(false)
             .with_quick_innovation_available(false)
     }
 }

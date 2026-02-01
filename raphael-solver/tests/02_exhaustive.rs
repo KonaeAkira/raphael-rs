@@ -1133,8 +1133,8 @@ fn ce_stellar_steady_hand() {
                 processed_nodes: 76,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 62610,
-                values: 626509,
+                states: 56216,
+                values: 547898,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 3048508,

@@ -63,9 +63,6 @@ impl FinishSolver {
     /// Calling this method before calling `FinishSolver::precompute` will return a `SolverException`.
     pub fn can_finish(&self, state: &SimulationState) -> Result<bool, SolverException> {
         let key = (state.durability, state.effects.strip_quality_effects());
-        if !self.solved_states.contains_key(&key) {
-            dbg!(key);
-        }
         let breakpoints = self.solved_states.get(&key).ok_or_else(|| {
             internal_error!(
                 "State not found in FinishSolver solved states.",
@@ -167,6 +164,7 @@ struct Template {
 
 fn generate_templates(settings: &SolverSettings) -> Vec<Template> {
     let mut initial_state = SimulationState::new(&settings.simulator_settings);
+    initial_state.cp = 1000;
     initial_state.effects = initial_state.effects.strip_quality_effects();
     let mut templates = FxHashSet::default();
     templates.insert((initial_state.durability, initial_state.effects));
@@ -179,9 +177,9 @@ fn generate_templates(settings: &SolverSettings) -> Vec<Template> {
             if let Ok(mut new_state) = use_action_combo(settings, state, action)
                 && new_state.durability > 0
             {
-                new_state.effects = new_state.effects.strip_quality_effects();
                 new_state.progress = 0;
-                new_state.cp = settings.max_cp();
+                new_state.cp = 1000;
+                new_state.effects = new_state.effects.strip_quality_effects();
                 if templates.insert((new_state.durability, new_state.effects)) {
                     stack.push(new_state);
                 }
