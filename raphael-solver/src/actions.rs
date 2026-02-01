@@ -146,7 +146,7 @@ pub fn use_action_combo(
     settings: &SolverSettings,
     mut state: SimulationState,
     action_combo: ActionCombo,
-) -> Result<SimulationState, &'static str> {
+) -> Result<SimulationState, ActionError> {
     for action in action_combo.actions() {
         state = state.use_action(*action, Condition::Normal, &settings.simulator_settings)?;
     }

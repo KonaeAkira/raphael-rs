@@ -1,4 +1,4 @@
-use raphael_sim::{Action, ActionMask, Condition, Settings, SimulationState};
+use raphael_sim::{Action, ActionError, ActionMask, Condition, Settings, SimulationState};
 const SETTINGS: Settings = Settings {
     max_cp: 1000,
     max_durability: 80,
@@ -14,7 +14,7 @@ const SETTINGS: Settings = Settings {
 };
 
 /// Calculate the minimum achievable Quality across all possible Condition rolls
-fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u32, &'static str> {
+fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u32, ActionError> {
     let is_valid_mask = |mut mask: i32| {
         // a 1-bit denotes an Excellent proc
         if (mask & 1) != 0 {
@@ -74,25 +74,17 @@ fn test_simple() {
         Action::PreparatoryTouch,
         Action::BasicSynthesis,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 100);
-        assert_eq!(state.quality, 100);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 100);
+    assert_eq!(state.quality, 100);
 }
 
 #[test]
 fn test_short_quality_opener() {
     let actions = [Action::Reflect];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 300);
-        assert_eq!(state.quality, 300);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 300);
+    assert_eq!(state.quality, 300);
 }
 
 #[test]
@@ -103,13 +95,9 @@ fn test_long_quality_opener() {
         Action::PreparatoryTouch,
         Action::PreparatoryTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 1140);
-        assert_eq!(state.quality, 1140);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 1140);
+    assert_eq!(state.quality, 1140);
 }
 
 #[test]
@@ -123,13 +111,9 @@ fn test_alternating_quality_actions() {
         Action::GreatStrides,
         Action::BasicTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 440);
-        assert_eq!(state.quality, 440);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 440);
+    assert_eq!(state.quality, 440);
 }
 
 #[test]
@@ -144,13 +128,9 @@ fn test_double_status_drops() {
         Action::GreatStrides,
         Action::BasicTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 525);
-        assert_eq!(state.quality, 525);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 525);
+    assert_eq!(state.quality, 525);
 }
 
 #[test]
@@ -165,13 +145,9 @@ fn test_two_action_drops() {
         Action::GreatStrides,
         Action::BasicTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 607);
-        assert_eq!(state.quality, 607);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 607);
+    assert_eq!(state.quality, 607);
 }
 
 #[test]
@@ -187,13 +163,9 @@ fn test_dp() {
         Action::GreatStrides,
         Action::PreparatoryTouch,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 952);
-        assert_eq!(state.quality, 952);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 952);
+    assert_eq!(state.quality, 952);
 }
 
 #[test]
@@ -218,13 +190,9 @@ fn test_long_sequence() {
         Action::ByregotsBlessing,
         Action::CarefulSynthesis,
     ];
-    let state = SimulationState::from_macro(&SETTINGS, &actions);
-    if let Ok(state) = state {
-        assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 2924);
-        assert_eq!(state.quality, 2924);
-    } else {
-        panic!("Unexpected err: {}", state.err().unwrap());
-    }
+    let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+    assert_eq!(guaranteed_quality(SETTINGS, &actions).unwrap(), 2924);
+    assert_eq!(state.quality, 2924);
 }
 
 #[test]
@@ -238,16 +206,12 @@ fn test_exhaustive() {
                 _ => Action::PrudentTouch,
             })
             .collect();
-        let state = SimulationState::from_macro(&SETTINGS, &actions);
-        if let Ok(state) = state {
-            dbg!(&actions);
-            assert_eq!(
-                state.quality,
-                guaranteed_quality(SETTINGS, &actions).unwrap()
-            );
-        } else {
-            panic!("Unexpected err: {}", state.err().unwrap());
-        }
+        let state = SimulationState::from_macro(&SETTINGS, &actions).unwrap();
+        dbg!(&actions);
+        assert_eq!(
+            state.quality,
+            guaranteed_quality(SETTINGS, &actions).unwrap()
+        );
     }
 }
 

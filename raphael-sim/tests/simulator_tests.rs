@@ -1,4 +1,4 @@
-use raphael_sim::{Action, ActionMask, Condition, Settings, SimulationState};
+use raphael_sim::{Action, ActionError, ActionMask, Condition, Settings, SimulationState};
 
 fn simulate(
     settings: &Settings,
@@ -41,7 +41,7 @@ fn test_level_requirement() {
     let error = SimulationState::new(&settings)
         .use_action(Action::ImmaculateMend, Condition::Normal, &settings)
         .unwrap_err();
-    assert_eq!(error, "Level not high enough");
+    assert_eq!(error, ActionError::InsufficientLevels);
 }
 
 #[test]
