@@ -56,8 +56,8 @@ impl QualityUbSolver {
                 interrupt_signal,
                 iq_quality_lut: utils::compute_iq_quality_lut(&settings),
                 durability_cost,
-                largest_progress_increase: utils::largest_single_action_progress_increase(
-                    &settings,
+                largest_progress_increase: utils::maximum_muscle_memory_utilization(
+                    &settings.simulator_settings,
                 ),
             },
             solved_states: FxHashMap::default(),

@@ -23,6 +23,8 @@ pub struct Settings {
 }
 
 impl Settings {
+    /// An action is allowed if the current level meets the level requirement of the action
+    /// and if the action isn't explicitly forbidden by the action mask.
     pub fn is_action_allowed<ACTION: ActionImpl>(&self) -> bool {
         self.job_level >= ACTION::LEVEL_REQUIREMENT
             && self.allowed_actions.has_mask(ACTION::ACTION_MASK)
