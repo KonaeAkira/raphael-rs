@@ -1,6 +1,9 @@
 use crate::{ActionMask, Condition, Effects, Settings, SimulationState};
 
-const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX).with_combo(Combo::None);
+const DEFAULT_EFFECT_RESET_MASK: Effects = {
+    assert!(Combo::None.into_bits() == 0);
+    Effects::from_bits(u64::MAX).with_combo(Combo::None)
+};
 
 pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
@@ -232,7 +235,7 @@ impl ActionImpl for StandardTouch {
     const LEVEL_REQUIREMENT: u8 = 18;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StandardTouch);
 
-    const EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX)
+    const EFFECT_RESET_MASK: Effects = Effects::from_bits(u64::MAX)
         .with_great_strides(0)
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();
@@ -1030,6 +1033,136 @@ impl ActionImpl for TrainedPerfection {
     }
 }
 
+pub struct StellarSteadyHand {}
+impl ActionImpl for StellarSteadyHand {
+    const LEVEL_REQUIREMENT: u8 = 90;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StellarSteadyHand);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_stellar_steady_hand(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_stellar_steady_hand(3);
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        if state.effects.stellar_steady_hand_charges() == 0 {
+            return Err("No Stellar Steady Hand usages remaining.");
+        }
+        Ok(())
+    }
+
+    fn transform(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
+        let remaining = state
+            .effects
+            .stellar_steady_hand_charges()
+            .saturating_sub(1);
+        state.effects.set_stellar_steady_hand_charges(remaining);
+    }
+}
+
+pub struct RapidSynthesis {}
+impl ActionImpl for RapidSynthesis {
+    const LEVEL_REQUIREMENT: u8 = 9;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::RapidSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err("Action can only be used when Stellar Steady Hand is active.");
+        }
+        Ok(())
+    }
+
+    fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
+        match settings.job_level {
+            0..63 => 250,
+            63.. => 500,
+        }
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
+pub struct HastyTouch {}
+impl ActionImpl for HastyTouch {
+    const LEVEL_REQUIREMENT: u8 = 9;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HastyTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_expedience(true);
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err("Action can only be used when Stellar Steady Hand is active.");
+        }
+        Ok(())
+    }
+
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
+        100
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
+pub struct DaringTouch {}
+impl ActionImpl for DaringTouch {
+    const LEVEL_REQUIREMENT: u8 = 96;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HastyTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), &'static str> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err("Action can only be used when Stellar Steady Hand is active.");
+        }
+        if !state.effects.expedience() {
+            return Err("Action can only be used when Expedience is active.");
+        }
+        Ok(())
+    }
+
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
+        150
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
 #[derive(strum_macros::EnumIter, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Action {
@@ -1064,6 +1197,10 @@ pub enum Action {
     QuickInnovation,
     ImmaculateMend,
     TrainedPerfection,
+    StellarSteadyHand,
+    RapidSynthesis,
+    HastyTouch,
+    DaringTouch,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -1128,6 +1265,10 @@ impl Action {
             Self::TrainedPerfection => 3,
             Self::TrainedEye => 3,
             Self::QuickInnovation => 3,
+            Self::StellarSteadyHand => 2,
+            Self::RapidSynthesis => 3,
+            Self::HastyTouch => 3,
+            Self::DaringTouch => 3,
         }
     }
 
@@ -1164,6 +1305,10 @@ impl Action {
             Self::QuickInnovation => 100459,
             Self::ImmaculateMend => 100467,
             Self::TrainedPerfection => 100475,
+            Self::StellarSteadyHand => 46843,
+            Self::RapidSynthesis => 100363,
+            Self::HastyTouch => 100355,
+            Self::DaringTouch => 100451,
         }
     }
 }

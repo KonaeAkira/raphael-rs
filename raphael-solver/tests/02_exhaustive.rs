@@ -68,6 +68,7 @@ fn rinascita_3700_3280() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -121,6 +122,7 @@ fn pactmaker_3240_3130() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -176,6 +178,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -229,6 +232,7 @@ fn diadochos_4021_3660() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -282,6 +286,7 @@ fn indagator_3858_4057() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -335,6 +340,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -390,6 +396,7 @@ fn stuffed_peppers_2() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -447,6 +454,7 @@ fn stuffed_peppers_2_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -504,6 +512,7 @@ fn stuffed_peppers_2_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -557,6 +566,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -610,6 +620,7 @@ fn black_star_4048_3997() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -663,6 +674,7 @@ fn claro_walnut_lumber_4900_4800() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -716,6 +728,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -769,6 +782,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -822,6 +836,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -875,6 +890,7 @@ fn hardened_survey_plank_5558_5216() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -928,6 +944,7 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
         allowed_actions: ActionMask::all().remove(Action::TrainedEye),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -982,6 +999,7 @@ fn ceviche_4900_4800_no_quality() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -1037,6 +1055,7 @@ fn ce_high_progress_zero_achieved_quality() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -1071,6 +1090,116 @@ fn ce_high_progress_zero_achieved_quality() {
                 states_on_main: 450021,
                 states_on_shards: 0,
                 values: 1030226,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+fn ce_stellar_steady_hand() {
+    // Oizys Scrap Wood (4900 Craftsmanship, 4800 Control)
+    let simulator_settings = Settings {
+        max_cp: 450,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12000,
+        base_progress: 261,
+        base_quality: 266,
+        job_level: 100,
+        allowed_actions: ActionMask::regular().remove(Action::Manipulation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 1,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: false,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 12000,
+                steps: 22,
+                duration: 60,
+                overflow_quality: 21,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 1586508,
+                processed_nodes: 366678,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 10207,
+                values: 107674,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 2408386,
+                states_on_shards: 84286,
+                values: 50005756,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 673566,
+                states_on_shards: 203080,
+                values: 17231284,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+fn ce_stellar_steady_hand_2() {
+    // Oizys Scrap Wood (4900 Craftsmanship, 4800 Control)
+    let simulator_settings = Settings {
+        max_cp: 450,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12000,
+        base_progress: 261,
+        base_quality: 266,
+        job_level: 100,
+        allowed_actions: ActionMask::regular().remove(Action::Manipulation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 2,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: false,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 12000,
+                steps: 20,
+                duration: 53,
+                overflow_quality: 327,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 1459023,
+                processed_nodes: 151388,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 16581,
+                values: 113302,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 4310883,
+                states_on_shards: 39626,
+                values: 74576231,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 1079473,
+                states_on_shards: 451445,
+                values: 29106449,
             },
         }
     "#]];

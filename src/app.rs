@@ -810,6 +810,15 @@ impl MacroSolverApp {
                 egui::Checkbox::new(&mut false, action_name(Action::QuickInnovation, locale)),
             );
         }
+        // This is only a temporary solution to enable using Stellar Steady Hand in the UI.
+        // TODO: Design permanent solution.
+        ui.horizontal(|ui| {
+            ui.label(action_name(Action::StellarSteadyHand, locale));
+            ui.add(
+                egui::DragValue::new(&mut self.app_context.stellar_steady_hand_charges)
+                    .range(0..=3),
+            );
+        });
         let heart_and_soul_enabled = self.app_context.active_stats().level
             >= HeartAndSoul::LEVEL_REQUIREMENT
             && self.app_context.active_stats().heart_and_soul;

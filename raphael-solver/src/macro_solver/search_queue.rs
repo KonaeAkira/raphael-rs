@@ -208,10 +208,10 @@ impl SearchQueue {
     }
 }
 
-fn pareto_weight(state: &SimulationState) -> u32 {
-    state.cp as u32
-        + state.durability as u32
-        + state.quality
-        + state.unreliable_quality
+fn pareto_weight(state: &SimulationState) -> u64 {
+    u64::from(state.cp)
+        + u64::from(state.durability)
+        + u64::from(state.quality)
+        + u64::from(state.unreliable_quality)
         + state.effects.into_bits()
 }

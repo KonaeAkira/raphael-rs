@@ -10,6 +10,7 @@ const SETTINGS: Settings = Settings {
     allowed_actions: ActionMask::all(),
     adversarial: true,
     backload_progress: false,
+    stellar_steady_hand_charges: 0,
 };
 
 /// Calculate the minimum achievable Quality across all possible Condition rolls
