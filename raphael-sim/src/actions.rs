@@ -1160,6 +1160,7 @@ impl ActionImpl for DaringTouch {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum ActionError {
     /// Actions may be specifically disabled by setting the action mask in the settings.
     Disabled,
