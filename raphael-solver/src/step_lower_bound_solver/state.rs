@@ -67,6 +67,12 @@ impl ReducedState {
             effects.set_veneration(innovation_veneration);
         }
 
+        // The remaining Stellar Steady Hand effect is enough to last until the end of the synthesis,
+        // so there is no need to ever use Stellar Steady Hand again.
+        if effects.stellar_steady_hand() >= steps_budget.get() {
+            effects.set_stellar_steady_hand_charges(0);
+        }
+
         // Clamp all effects down to the steps budget to reduce the number of unique states.
         if effects.manipulation() > steps_budget.get() - 1 {
             effects.set_manipulation(steps_budget.get() - 1);
@@ -76,6 +82,9 @@ impl ReducedState {
         }
         if effects.innovation() > steps_budget.get() {
             effects.set_innovation(steps_budget.get());
+        }
+        if effects.stellar_steady_hand() > steps_budget.get() {
+            effects.set_stellar_steady_hand(steps_budget.get());
         }
 
         // The StepLbSolver does not implement adversarial mode.

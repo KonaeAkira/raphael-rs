@@ -1142,9 +1142,9 @@ fn ce_stellar_steady_hand() {
                 values: 50005756,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 680005,
+                states_on_main: 673566,
                 states_on_shards: 203080,
-                values: 17252554,
+                values: 17231284,
             },
         }
     "#]];
@@ -1197,9 +1197,9 @@ fn ce_stellar_steady_hand_2() {
                 values: 74576231,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 1106015,
+                states_on_main: 1079473,
                 states_on_shards: 451445,
-                values: 29223927,
+                values: 29106449,
             },
         }
     "#]];
