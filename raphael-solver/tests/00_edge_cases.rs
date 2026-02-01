@@ -427,9 +427,9 @@ fn daring_touch_interrupted_combo() {
                 values: 26452,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 521,
-                states_on_shards: 1722,
-                values: 5571,
+                states_on_main: 401,
+                states_on_shards: 1482,
+                values: 4811,
             },
         }
     "#]];
