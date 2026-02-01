@@ -1305,7 +1305,7 @@ impl Action {
             Self::QuickInnovation => 100459,
             Self::ImmaculateMend => 100467,
             Self::TrainedPerfection => 100475,
-            Self::StellarSteadyHand => todo!(),
+            Self::StellarSteadyHand => 46843,
             Self::RapidSynthesis => 100363,
             Self::HastyTouch => 100355,
             Self::DaringTouch => 100451,
