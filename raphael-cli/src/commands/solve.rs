@@ -64,6 +64,10 @@ pub struct SolveArgs {
     #[arg(long, default_value_t = false)]
     pub quick_innovation: bool,
 
+    /// Set the maximum number of Stellar Steady Hand uses
+    #[arg(long)]
+    pub stellar_steady_hand: Option<u8>,
+
     /// Set initial quality, value is clamped to 100% quality
     #[arg(long, alias = "initial")]
     pub initial_quality: Option<u16>,
@@ -310,6 +314,9 @@ pub fn execute(args: &SolveArgs) {
         get_game_settings(recipe, custom_recipe_overrides, crafter_stats, food, potion);
     settings.adversarial = args.adversarial;
     settings.backload_progress = args.backload_progress;
+    if let Some(stellar_steady_hand) = args.stellar_steady_hand {
+        settings.stellar_steady_hand_charges = stellar_steady_hand.min(3);
+    }
 
     let target_quality = match args.target_quality {
         Some(target) => target.clamp(0, settings.max_quality),
