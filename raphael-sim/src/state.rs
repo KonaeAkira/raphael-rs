@@ -24,7 +24,7 @@ impl SimulationState {
         }
     }
 
-    pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, &'static str> {
+    pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, ActionError> {
         let mut state = Self::new(settings);
         for action in actions {
             state = state.use_action(*action, Condition::Normal, settings)?;
@@ -35,7 +35,7 @@ impl SimulationState {
     pub fn from_macro_continue_on_error(
         settings: &Settings,
         actions: &[Action],
-    ) -> (Self, Vec<Result<(), &'static str>>) {
+    ) -> (Self, Vec<Result<(), ActionError>>) {
         let mut state = Self::new(settings);
         let mut errors = Vec::new();
         for action in actions {
@@ -61,15 +61,15 @@ impl SimulationState {
         &self,
         settings: &Settings,
         condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if settings.job_level < A::LEVEL_REQUIREMENT {
-            Err("Level not high enough")
+            Err(ActionError::InsufficientLevels)
         } else if !settings.allowed_actions.has_mask(A::ACTION_MASK) {
-            Err("Action disabled by action mask")
+            Err(ActionError::Disabled)
         } else if self.is_final(settings) {
-            Err("State is final")
+            Err(ActionError::StateIsFinal)
         } else if A::cp_cost(self, settings, condition) > self.cp {
-            Err("Not enough CP")
+            Err(ActionError::InsufficientCP)
         } else {
             Ok(())
         }
@@ -79,7 +79,7 @@ impl SimulationState {
         &self,
         settings: &Settings,
         condition: Condition,
-    ) -> Result<Self, &'static str> {
+    ) -> Result<Self, ActionError> {
         self.check_common_preconditions::<A>(settings, condition)?;
         A::precondition(self, settings, condition)?;
 
@@ -157,7 +157,7 @@ impl SimulationState {
         action: Action,
         condition: Condition,
         settings: &Settings,
-    ) -> Result<Self, &'static str> {
+    ) -> Result<Self, ActionError> {
         match action {
             Action::BasicSynthesis => self.use_action_impl::<BasicSynthesis>(settings, condition),
             Action::BasicTouch => self.use_action_impl::<BasicTouch>(settings, condition),

@@ -1,4 +1,6 @@
-use raphael_sim::{Action, ActionMask, Condition, Settings, SimulationState, SpecialQualityState};
+use raphael_sim::{
+    Action, ActionError, ActionMask, Condition, Settings, SimulationState, SpecialQualityState,
+};
 
 const SETTINGS: Settings = Settings {
     max_cp: 500,
@@ -52,23 +54,20 @@ fn test_quality_actions_forbidden() {
     .unwrap();
 
     let result = state.use_action(Action::BasicTouch, Condition::Normal, &SETTINGS);
-    assert_eq!(result, Err("Forbidden by backload_progress setting"));
+    assert_eq!(result, Err(ActionError::QualityAfterProgress));
 
     let result = state.use_action(Action::PreciseTouch, Condition::Good, &SETTINGS);
-    assert_eq!(result, Err("Forbidden by backload_progress setting"));
+    assert_eq!(result, Err(ActionError::QualityAfterProgress));
 
     let result = state.use_action(Action::Innovation, Condition::Normal, &SETTINGS);
-    assert_eq!(result, Err("Forbidden by backload_progress setting"));
+    assert_eq!(result, Err(ActionError::QualityAfterProgress));
 
     let result = state.use_action(Action::GreatStrides, Condition::Normal, &SETTINGS);
-    assert_eq!(result, Err("Forbidden by backload_progress setting"));
+    assert_eq!(result, Err(ActionError::QualityAfterProgress));
 
     // Using a Progress-action resets Inner Quiet.
     let result = state.use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS);
-    assert_eq!(
-        result,
-        Err("Cannot use Byregot's Blessing when Inner Quiet is 0.")
-    );
+    assert_eq!(result, Err(ActionError::SpecialConditionNotMet));
 }
 
 #[test]
