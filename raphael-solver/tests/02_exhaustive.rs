@@ -1100,14 +1100,14 @@ fn ce_high_progress_zero_achieved_quality() {
 fn ce_stellar_steady_hand() {
     // Oizys Scrap Wood (4900 Craftsmanship, 4800 Control)
     let simulator_settings = Settings {
-        max_cp: 560,
+        max_cp: 450,
         max_durability: 80,
         max_progress: 6600,
         max_quality: 12000,
         base_progress: 261,
         base_quality: 266,
         job_level: 100,
-        allowed_actions: ActionMask::regular(),
+        allowed_actions: ActionMask::regular().remove(Action::Manipulation),
         adversarial: false,
         backload_progress: false,
         stellar_steady_hand_charges: 1,
@@ -1120,31 +1120,86 @@ fn ce_stellar_steady_hand() {
         Ok(
             SolutionScore {
                 capped_quality: 12000,
-                steps: 18,
-                duration: 48,
-                overflow_quality: 168,
+                steps: 22,
+                duration: 60,
+                overflow_quality: 21,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1651,
-                processed_nodes: 76,
+                inserted_nodes: 1586508,
+                processed_nodes: 366678,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 56216,
-                values: 547898,
+                states: 10207,
+                values: 107674,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 3048508,
-                states_on_shards: 25,
-                values: 60065330,
+                states_on_main: 2408386,
+                states_on_shards: 84286,
+                values: 50005756,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 2754703,
-                states_on_shards: 859017,
-                values: 78702798,
+                states_on_main: 680005,
+                states_on_shards: 203080,
+                values: 17252554,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+fn ce_stellar_steady_hand_2() {
+    // Oizys Scrap Wood (4900 Craftsmanship, 4800 Control)
+    let simulator_settings = Settings {
+        max_cp: 450,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12000,
+        base_progress: 261,
+        base_quality: 266,
+        job_level: 100,
+        allowed_actions: ActionMask::regular().remove(Action::Manipulation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 2,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: false,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 12000,
+                steps: 20,
+                duration: 53,
+                overflow_quality: 327,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 1459023,
+                processed_nodes: 151388,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 16581,
+                values: 113302,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 4310883,
+                states_on_shards: 39626,
+                values: 74576231,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 1106015,
+                states_on_shards: 451445,
+                values: 29223927,
             },
         }
     "#]];
