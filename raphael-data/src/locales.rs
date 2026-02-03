@@ -385,7 +385,7 @@ const fn action_name_kr(action: Action) -> &'static str {
         Action::TrainedPerfection => "장인의 초절 기술",
         Action::TrainedEye => "장인의 날랜손",
         Action::QuickInnovation => "신속한 혁신",
-        Action::StellarSteadyHand => "Stellar Steady Hand",
+        Action::StellarSteadyHand => "우주 안정된 솜씨",
         Action::RapidSynthesis => "강행 작업",
         Action::HastyTouch => "성급한 손길",
         Action::DaringTouch => "대담한 손길",
