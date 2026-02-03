@@ -377,6 +377,62 @@ fn issue_216_steplbsolver_crash() {
 }
 
 #[test]
+/// https://github.com/KonaeAkira/raphael-rs/issues/312
+fn issue_312_quick_innovation_reflect() {
+    let simulator_settings = Settings {
+        max_cp: 18,
+        max_durability: 55,
+        max_progress: 550,
+        max_quality: 1399,
+        base_progress: 306,
+        base_quality: 311,
+        job_level: 100,
+        allowed_actions: ActionMask::regular().add(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 0,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 933,
+                steps: 2,
+                duration: 6,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 102,
+                processed_nodes: 70,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 10132,
+                values: 10218,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 28849,
+                states_on_shards: 14,
+                values: 33562,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 45,
+                states_on_shards: 130,
+                values: 261,
+            },
+        }
+    "#]];
+    let actions = test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+    assert_eq!(actions, [Action::Reflect, Action::CarefulSynthesis]);
+}
+
+#[test]
 /// The Hasty Touch > Daring Touch "combo" is not actually a combo, as Daring Touch is enabled
 /// by the Expedience effect, which means that actions that don't tick effects such as Quick Innovation
 /// may be used inbetween Hasty Touch and Daring Touch.
