@@ -156,7 +156,7 @@ ja = '''Ko-fiでサポート'''
 de = '''Unterstütze mich auf Ko-fi'''
 chs = '''在 Ko-fi 上支持我'''
 tc = '''在 Ko-fi 上支持我'''
-ko = '''Ko-fi를 서포트'''
+ko = '''Ko-fi에서 후원하기'''
 version = "0.1.0"
 appearances = ["src/app.rs:265:44"]
 
@@ -1346,40 +1346,48 @@ appearances = ["src/widgets/util.rs:56:13"]
 
 ["i3Fb6AUAHaQjLbXdqa8ylQ=="]
 en = '''(view on GitHub)'''
+ko = '''(GitHub에서 보기)'''
 version = "0.1.0"
 appearances = ["src/update.rs:88:36"]
 
 ["0vDFoN7tLsgAC8wcO4vGCQ=="]
 en = '''Update'''
+ko = '''업데이트'''
 version = "0.1.0"
 appearances = ["src/update.rs:95:49"]
 
 ["UZwZGTpphvKbSGBqaaIoxA=="]
 en = '''Updating...'''
+ko = '''업데이트 중...'''
 version = "0.1.0"
 appearances = ["src/update.rs:110:41"]
 
 ["ez2D1JyjIPsFZin5+In9fA=="]
 en = '''Error'''
+ko = '''오류'''
 version = "0.1.0"
 appearances = ["src/update.rs:117:57"]
 
 ["BuU3Rnt3iI21VfworZoj1w=="]
 en = '''Success'''
+ko = '''성공'''
 version = "0.1.0"
 appearances = ["src/update.rs:131:57"]
 
 ["K+5D9VRdCiAgb8fdq0bNTA=="]
 en = '''Reopen the application for the updated version.'''
+ko = '''업데이트된 버전을 사용하려면 프로그램을 다시 실행해 주세요.'''
 version = "0.1.0"
 appearances = ["src/update.rs:135:21"]
 
 ["CkV9oiOV/WiGYS3o5qoT3Q=="]
 en = '''Cannot complete synthesis.'''
+ko = '''제작을 완료할 수 없습니다.'''
 version = "0.1.0"
 appearances = ["src/app.rs:140:45"]
 
 ["0B9HEzrjVznLUlK3rkpsmA=="]
 en = '''Try lowering target quality.'''
+ko = '''목표 품질을 낮춰 보세요.'''
 version = "0.1.0"
 appearances = ["src/app.rs:144:49"]
