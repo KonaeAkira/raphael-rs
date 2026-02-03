@@ -367,7 +367,7 @@ impl eframe::App for MacroSolverApp {
             (ctx.content_rect().size() - egui::Vec2::new(14.0, 45.0)).max(egui::Vec2::ZERO);
         let stats_edit_window_size = maximum_visible_window_size.min(egui::Vec2::new(412.0, 650.0));
         egui::Window::new(
-            egui::RichText::new(t!(locale, "Edit crafter stats"))
+            egui::RichText::new(t!(locale, "Crafter stats"))
                 .strong()
                 .text_style(TextStyle::Body),
         )

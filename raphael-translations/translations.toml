@@ -160,16 +160,6 @@ ko = '''Ko-fi에서 후원하기'''
 version = "0.1.0"
 appearances = ["src/app.rs:265:44"]
 
-["korDyKclck7un9L9GomIqw=="]
-en = '''Edit crafter stats'''
-ja = '''クラフターのステータスを編集'''
-de = '''Syntheseattribute bearbeiten'''
-chs = '''编辑配装属性'''
-tc = '''編輯能工巧匠屬性'''
-ko = '''제작자 능력치를 편집'''
-version = "0.1.0"
-appearances = ["src/app.rs:370:44"]
-
 ["j6ZOcmHFeUUvSQL3tC6w8Q=="]
 en = '''Saved macros & solve history'''
 ja = '''保存済みマクロと計算履歴'''
@@ -318,7 +308,7 @@ chs = '''装备属性'''
 tc = '''能工巧匠屬性'''
 ko = '''제작자 능력치'''
 version = "0.1.0"
-appearances = ["src/app.rs:642:49", "src/widgets/saved_rotations.rs:491:28", "src/widgets/saved_rotations.rs:509:43"]
+appearances = ["src/app.rs:370:44", "src/app.rs:642:49", "src/widgets/saved_rotations.rs:491:28", "src/widgets/saved_rotations.rs:509:43"]
 
 ["djUZraHVrnziMltlgh1vrw=="]
 en = '''Craftsmanship'''
@@ -398,7 +388,7 @@ chs = '''⚠ 使用专家技能会大幅增加求解时间和内存使用量'''
 tc = '''⚠ 使用專家技能會大幅增加求解時間和記憶體使用量'''
 ko = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:824:21"]
+appearances = ["src/app.rs:833:21"]
 
 ["78TQLq2ZFZ/qmx/LqLc/Xg=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions.'''
@@ -408,7 +398,7 @@ chs = '''⚠ 使用专家技能会大幅增加求解时间和内存使用量。�
 tc = '''⚠ 使用專家技能會大幅增加求解時間和記憶體使用量。建議下載並使用應用程式版本以啟用專家技能。'''
 ko = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다. 사용하시는 경우에는 프로그램 버전 사용을 추천합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:833:36"]
+appearances = ["src/app.rs:842:36"]
 
 ["dN6QqcmCiKeFu4Xi+6XZsA=="]
 en = '''Download latest release from GitHub'''
@@ -418,7 +408,7 @@ chs = '''从 Github 下载最新版本'''
 tc = '''從 GitHub 下載最新版本'''
 ko = '''GitHub에서 최신 릴리즈를 다운로드'''
 version = "0.1.0"
-appearances = ["src/app.rs:839:52"]
+appearances = ["src/app.rs:848:52"]
 
 ["yngZyyailHQ73P49MTwWog=="]
 en = '''Solver settings'''
@@ -428,7 +418,7 @@ chs = '''求解器设置'''
 tc = '''求解器設定'''
 ko = '''계산 설정'''
 version = "0.1.0"
-appearances = ["src/app.rs:846:49"]
+appearances = ["src/app.rs:855:49"]
 
 ["F6hizp5LhBRSpJLhSSSKSw=="]
 en = '''Target quality'''
@@ -438,7 +428,7 @@ chs = '''目标品质'''
 tc = '''目標品質'''
 ko = '''목표 품질'''
 version = "0.1.0"
-appearances = ["src/app.rs:848:33"]
+appearances = ["src/app.rs:857:33"]
 
 ["2AVyYXMX37CrN/9Gvhfyuw=="]
 en = '''Solution must reach target quality'''
@@ -448,7 +438,7 @@ chs = '''解决方案必须满足目标品质'''
 tc = '''解法必須達到目標品質'''
 ko = '''목표 품질을 반드시 달성합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:889:28"]
+appearances = ["src/app.rs:898:28"]
 
 ["p7HyJWFYYWHKe39OAg2LrQ=="]
 en = '''Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off.'''
@@ -458,7 +448,7 @@ chs = '''通过跳过无法达到目标品质的候选解决方案来减少内�
 tc = '''透過無視無法達到目標品質的候選解法來減少記憶體使用量。基本上，要麼得到一個達到目標品質的解，否則就沒有解。如果想知道距離達到目標品質的差距，請保持該選項關閉。'''
 ko = '''목표 품질에 도달하지 못하는 경우를 제외해서 메모리 사용량을 줄입니다. 기본적으로는 목표 품질을 달성하거나, 매크로를 완성하지 못합니다. 목표 품질을 어느정도까지 달성할수 있는지 확인하고 싶은 경우에는, 이 옵션을 꺼주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:891:45"]
+appearances = ["src/app.rs:900:45"]
 
 ["ao5RTXAU8JPfZa/+YXPWLQ=="]
 en = '''Backload progress'''
@@ -468,7 +458,7 @@ chs = '''后置作业技能'''
 tc = '''後置作業技能'''
 ko = '''작업량을 나중에 달성'''
 version = "0.1.0"
-appearances = ["src/app.rs:897:28"]
+appearances = ["src/app.rs:906:28"]
 
 ["wFvVGJ0ERIy0TrxLLi5LAw=="]
 en = '''Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.'''
@@ -478,7 +468,7 @@ chs = '''仅考虑在宏的最后使用作业技能的手法。\n  - 可能导�
 ts = '''僅考慮在巨集的最後使用作業技能的手法。\n  - 可能導致可達到的品質更低。\n  - 可能導致巨集的長度更長。'''
 ko = '''매크로의 뒷부분에서만 작업을 진행합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다.\n - 매크로의 작업시간이 길어질 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:899:45"]
+appearances = ["src/app.rs:908:45"]
 
 ["4TrzziJN2b/3+NIwV86LoQ=="]
 en = '''Ensure 100% reliability'''
@@ -488,7 +478,7 @@ chs = '''确保 100% 可靠（防黑球）'''
 tc = '''確保 100% 可靠'''
 ko = '''품질 100％를 보증'''
 version = "0.1.0"
-appearances = ["src/app.rs:910:32"]
+appearances = ["src/app.rs:919:32"]
 
 ["seCI2n41FD+21Bg6X3etyQ=="]
 en = '''Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro.'''
@@ -498,7 +488,7 @@ chs = '''找出能确保无论运气多差，出现何种制作状态均能保�
 tc = '''找出能確保無論運氣多差，出現何種製作狀態均能保證達到目標品質的手法。\n  - 可能導致可達到的品質更低。\n  - 可能導致巨集的長度更長。\n  - 求解所需的時間更久。\n求解器不會嘗試用秘訣技能“吃掉”最高品質狀態，所以部分情況下這個選項不會產生最優的巨集。'''
 ko = '''저품질 비레고로 인한 품질 하락을 방지합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다.\n - 매크로의 작업시간이 길어질 가능성이 있습니다.\n - 계산시간이 대폭 늘어날 가능성이 있습니다.\n - 계산기가 '비결'을 사용해서 품질을 더 올릴수는 없기때문에, 이 옵션이 최적의 매크로를 생성하지 못할 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:913:45"]
+appearances = ["src/app.rs:922:45"]
 
 ["+DwRW5ozbiRozBNupYmv0A=="]
 en = '''⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.'''
@@ -508,7 +498,7 @@ chs = '''⚠ 实验性特性\n这个选项可能需要非常多的内存（有�
 tc = '''⚠ 實驗性功能\n此選項可能會使用大量記憶體（有時甚至超過4GB），可能導致系統記憶體不足。'''
 ko = '''⚠ 실험실 기능\n이 옵션은 메모리를 많이 사용할 가능성이 있습니다 (경우에 따라서 4GB 이상): 시스템의 메모리가 부족하게 되는 경우가 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:1024:13"]
+appearances = ["src/app.rs:1033:13"]
 
 ["l/rSN+oK2pKV8ohfHf/Ovg=="] # This is no longer accurate with the change to the web versions OOM panic handling, all expected crashes are now caught via JavaScript and always show a (currently untranslated) modal. (WebAssembly is also misspelled)
 en = '''⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.'''
@@ -518,7 +508,7 @@ chs = '''⚠ 实验性特性\n由于32位WebAssembly的限制，求解器在使�
 tc = '''⚠ 實驗性功能\n當達到32位元WebAssembly的4GB記憶體上限時，可能會導致求解器當機，並使使用者介面無限期停留在「求解中」狀態。'''
 ko = '''⚠ 실험실 기능\n32비트 WebAssembly의 메모리 상한 4GB에 도달하면, 계산기가 작동을 멈추고 UI가 '계산중' 상태에서 영원히 정지할 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:1029:13"]
+appearances = ["src/app.rs:1038:13"]
 
 ["sVLTzHCZb8cp/NrYNctl5Q=="]
 en = '''0% quality'''
