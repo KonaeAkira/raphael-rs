@@ -128,15 +128,25 @@ impl SimulationState {
             return Ok(state);
         }
 
+        let is_synthesis_begin = state.effects.combo() == Combo::SynthesisBegin;
         state.effects =
             Effects::from_bits(state.effects.into_bits() & A::EFFECT_RESET_MASK.into_bits());
+        if !A::TICK_EFFECTS && is_synthesis_begin {
+            // SynthesisBegin is implemented as a combo but it is in reality not a combo.
+            // Actions that require the SynthesisBegin "combo" actually check the step count,
+            // which does not increase when using actions such as QuickInnovation.
+            state.effects.set_combo(Combo::SynthesisBegin);
+        }
+
         A::transform(&mut state, settings, condition);
+
         if A::TICK_EFFECTS {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
             state.effects = state.effects.tick_down();
         }
+
         state.effects =
             Effects::from_bits(state.effects.into_bits() | A::EFFECT_SET_MASK.into_bits());
 
