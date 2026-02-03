@@ -109,7 +109,7 @@ impl SimulationState {
                     state.unreliable_quality =
                         quality_diff.saturating_sub(state.unreliable_quality);
                 }
-            } else if A::TICK_EFFECTS && !guard_active {
+            } else if A::INCREASES_STEP_COUNT && !guard_active {
                 state.unreliable_quality = 0;
             }
         } else {
@@ -131,7 +131,7 @@ impl SimulationState {
         let is_synthesis_begin = state.effects.combo() == Combo::SynthesisBegin;
         state.effects =
             Effects::from_bits(state.effects.into_bits() & A::EFFECT_RESET_MASK.into_bits());
-        if !A::TICK_EFFECTS && is_synthesis_begin {
+        if !A::INCREASES_STEP_COUNT && is_synthesis_begin {
             // SynthesisBegin is implemented as a combo but it is in reality not a combo.
             // Actions that require the SynthesisBegin "combo" actually check the step count,
             // which does not increase when using actions such as QuickInnovation.
@@ -140,7 +140,7 @@ impl SimulationState {
 
         A::transform(&mut state, settings, condition);
 
-        if A::TICK_EFFECTS {
+        if A::INCREASES_STEP_COUNT {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
