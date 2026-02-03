@@ -249,18 +249,18 @@ fn large_progress_quality_increase() {
                 processed_nodes: 1,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 21835,
-                values: 21835,
+                states: 21848,
+                values: 21848,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 178982,
-                states_on_shards: 0,
-                values: 178982,
+                states_on_shards: 5,
+                values: 178987,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 1,
-                states_on_shards: 12,
-                values: 13,
+                states_on_shards: 13,
+                values: 14,
             },
         }
     "#]];
@@ -303,8 +303,8 @@ fn backload_progress_single_delicate_synthesis() {
                 processed_nodes: 1,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 3475,
-                values: 3475,
+                states: 3478,
+                values: 3478,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 3243,
@@ -377,6 +377,69 @@ fn issue_216_steplbsolver_crash() {
 }
 
 #[test]
+/// https://github.com/KonaeAkira/raphael-rs/issues/312
+fn issue_312_quick_innovation_reflect() {
+    let simulator_settings = Settings {
+        max_cp: 18,
+        max_durability: 55,
+        max_progress: 550,
+        max_quality: 1399,
+        base_progress: 306,
+        base_quality: 311,
+        job_level: 100,
+        allowed_actions: ActionMask::regular().add(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 0,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 1399,
+                steps: 3,
+                duration: 9,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 17,
+                processed_nodes: 4,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 10142,
+                values: 10228,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 28849,
+                states_on_shards: 1,
+                values: 33547,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 46,
+                states_on_shards: 75,
+                values: 194,
+            },
+        }
+    "#]];
+    let actions = test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+    assert_eq!(
+        actions,
+        [
+            Action::QuickInnovation,
+            Action::Reflect,
+            Action::CarefulSynthesis
+        ]
+    );
+}
+
+#[test]
 /// The Hasty Touch > Daring Touch "combo" is not actually a combo, as Daring Touch is enabled
 /// by the Expedience effect, which means that actions that don't tick effects such as Quick Innovation
 /// may be used inbetween Hasty Touch and Daring Touch.
@@ -423,13 +486,13 @@ fn daring_touch_interrupted_combo() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 22280,
-                states_on_shards: 42,
-                values: 26452,
+                states_on_shards: 43,
+                values: 26453,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 401,
+                states_on_main: 403,
                 states_on_shards: 1482,
-                values: 4811,
+                values: 4815,
             },
         }
     "#]];

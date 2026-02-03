@@ -540,13 +540,13 @@ fn stuffed_peppers_2_quick_innovation() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1477069,
-                states_on_shards: 0,
-                values: 17827198,
+                states_on_shards: 5,
+                values: 17827203,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 432516,
-                states_on_shards: 170199,
-                values: 5794281,
+                states_on_main: 432530,
+                states_on_shards: 170200,
+                values: 5794412,
             },
         }
     "#]];

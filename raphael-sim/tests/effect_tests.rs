@@ -86,3 +86,19 @@ fn test_expedience() {
         .unwrap();
     assert_eq!(state.effects.expedience(), true);
 }
+
+#[test]
+/// It's possible to use actions that do not increase step count without invalidating
+/// the synthesis begin requirement.
+fn test_synthesis_begin() {
+    let state = SimulationState::from_macro(
+        &SETTINGS,
+        &[
+            Action::QuickInnovation,
+            Action::HeartAndSoul,
+            Action::MuscleMemory,
+        ],
+    )
+    .unwrap();
+    assert_eq!(state.effects.muscle_memory(), 5);
+}

@@ -9,8 +9,8 @@ pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
     /// All bits of this mask must be present in the settings' action mask for the action to be enabled.
     const ACTION_MASK: ActionMask;
-    /// Does this action trigger ticking effects (e.g. Manipulation)?
-    const TICK_EFFECTS: bool = true;
+    /// Does this action increase the step count when used?
+    const INCREASES_STEP_COUNT: bool = true;
 
     const EFFECT_RESET_MASK: Effects;
     const EFFECT_SET_MASK: Effects;
@@ -832,7 +832,7 @@ pub struct HeartAndSoul {}
 impl ActionImpl for HeartAndSoul {
     const LEVEL_REQUIREMENT: u8 = 86;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HeartAndSoul);
-    const TICK_EFFECTS: bool = false;
+    const INCREASES_STEP_COUNT: bool = false;
 
     const EFFECT_RESET_MASK: Effects =
         DEFAULT_EFFECT_RESET_MASK.with_heart_and_soul_available(false);
@@ -964,7 +964,7 @@ pub struct QuickInnovation {}
 impl ActionImpl for QuickInnovation {
     const LEVEL_REQUIREMENT: u8 = 96;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::QuickInnovation);
-    const TICK_EFFECTS: bool = false;
+    const INCREASES_STEP_COUNT: bool = false;
 
     const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
         .with_quick_innovation_available(false)

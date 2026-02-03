@@ -540,13 +540,13 @@ fn stuffed_peppers_2_quick_innovation() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1405659,
-                states_on_shards: 0,
-                values: 21872304,
+                states_on_shards: 5,
+                values: 21872309,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 378435,
-                states_on_shards: 159328,
-                values: 9141198,
+                states_on_main: 378448,
+                states_on_shards: 159329,
+                values: 9141421,
             },
         }
     "#]];
@@ -953,9 +953,9 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
-                capped_quality: 11378,
-                steps: 23,
-                duration: 63,
+                capped_quality: 11427,
+                steps: 25,
+                duration: 68,
                 overflow_quality: 0,
             },
         )
@@ -963,8 +963,8 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 358137,
-                processed_nodes: 28100,
+                inserted_nodes: 439861,
+                processed_nodes: 41992,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 6867,
@@ -972,13 +972,13 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2397570,
-                states_on_shards: 106158,
-                values: 38833493,
+                states_on_shards: 114989,
+                values: 39004486,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 370080,
+                states_on_main: 370097,
                 states_on_shards: 0,
-                values: 6335993,
+                values: 6336270,
             },
         }
     "#]];

@@ -152,7 +152,9 @@ pub fn use_action_combo(
     }
     // All combos are already implemented as ActionCombo, so we reset the combo to None for cases
     // where the full combo is not used, reducing state space.
-    state.effects.set_combo(Combo::None);
+    if state.effects.combo() != Combo::SynthesisBegin {
+        state.effects.set_combo(Combo::None);
+    }
     // Expedience enables Daring Touch, but Daring Touch can only be used if Stellar Steady Hand is active.
     if state.effects.stellar_steady_hand() == 0 {
         state.effects.set_expedience(false);
