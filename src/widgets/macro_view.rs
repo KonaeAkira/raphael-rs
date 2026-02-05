@@ -1,10 +1,15 @@
+use std::collections::VecDeque;
+
 use egui::{Align, Layout, Widget};
 use raphael_data::{Locale, get_item_name, macro_name};
 use raphael_sim::Action;
 use raphael_translations::{t, t_format};
 use serde::{Deserialize, Serialize};
 
-use crate::{context::AppContext, widgets::HelpText};
+use crate::{
+    context::AppContext,
+    widgets::{HelpText, MultilineMonospace},
+};
 
 #[inline]
 fn custom_format_help_text_string(locale: Locale) -> &'static str {
@@ -102,150 +107,6 @@ impl Default for MacroIntroConfig {
     }
 }
 
-struct MacroTextBox {
-    text: String,
-    id: egui::Id,
-}
-
-#[derive(Debug)]
-struct FixedFormattingData {
-    pub locale: Locale,
-    pub notification_format: String,
-    pub last_notification_format: String,
-    pub intro_format: String,
-}
-
-fn preformat_fixed_data(format: &str, app_context: &AppContext) -> String {
-    let locale = app_context.locale;
-    let item_name = get_item_name(app_context.recipe_config.recipe.item_id, false, locale)
-        .unwrap_or(t!(locale, "Unknown item").to_owned());
-    let food_string = app_context
-        .selected_food
-        .map(|food| {
-            get_item_name(food.item_id, food.hq, locale).unwrap_or("Unknown item".to_owned())
-        })
-        .unwrap_or(t!(locale, "None").to_owned());
-    let potion_string = app_context
-        .selected_potion
-        .map(|potion| {
-            get_item_name(potion.item_id, potion.hq, locale)
-                .unwrap_or(t!(locale, "Unknown item").to_owned())
-        })
-        .unwrap_or(t!(locale, "None").to_owned());
-    format
-        .replace("{item_name}", &item_name)
-        .replace("{food}", &food_string)
-        .replace("{potion}", &potion_string)
-        .replace(
-            "{craftsmanship}",
-            &app_context.active_stats().craftsmanship.to_string(),
-        )
-        .replace("{control}", &app_context.active_stats().control.to_string())
-        .replace("{cp}", &app_context.active_stats().cp.to_string())
-        .replace("{level}", &app_context.active_stats().level.to_string())
-}
-
-impl FixedFormattingData {
-    pub fn new(app_context: &AppContext) -> Self {
-        Self {
-            locale: app_context.locale,
-            notification_format: preformat_fixed_data(
-                &app_context
-                    .macro_view_config
-                    .notification_config
-                    .custom_notification_format,
-                app_context,
-            ),
-            last_notification_format: preformat_fixed_data(
-                &app_context
-                    .macro_view_config
-                    .notification_config
-                    .custom_last_notification_format,
-                app_context,
-            ),
-            intro_format: preformat_fixed_data(
-                &app_context
-                    .macro_view_config
-                    .intro_config
-                    .custom_intro_format,
-                app_context,
-            ),
-        }
-    }
-}
-
-fn format_custom_macro_command(command_format: &str, index: usize, max_index: usize) -> String {
-    command_format
-        .replace("{index}", &index.to_string())
-        .replace("{max_index}", &max_index.to_string())
-}
-
-impl MacroTextBox {
-    pub fn new(
-        index: usize,
-        max_index: usize,
-        actions: &[Action],
-        fixed_formatting_data: &FixedFormattingData,
-        config: &MacroViewConfig,
-        newline: &'static str,
-    ) -> Self {
-        let mut lines: Vec<String> = Vec::new();
-        if config.intro_enabled {
-            if config.intro_config.default_intro {
-                lines.push("/macrolock".to_string());
-            } else {
-                lines.push(format_custom_macro_command(
-                    &fixed_formatting_data.intro_format,
-                    index,
-                    max_index,
-                ))
-            }
-        }
-        lines.extend(actions.iter().map(|action| {
-            if config.include_delay {
-                format!(
-                    "/ac \"{}\" <wait.{}>",
-                    macro_name(*action, fixed_formatting_data.locale),
-                    action.time_cost() + config.extra_delay
-                )
-            } else {
-                format!(
-                    "/ac \"{}\"",
-                    macro_name(*action, fixed_formatting_data.locale)
-                )
-            }
-        }));
-        if config.notification_enabled && lines.len() < 15 {
-            if config.notification_config.default_notification {
-                lines.push(format!(
-                    "/echo Macro finished ({}/{}) <se.{}>",
-                    index, max_index, config.notification_config.notification_sound
-                ));
-            } else {
-                let notification = if config.notification_config.different_last_notification
-                    && index == max_index
-                {
-                    &fixed_formatting_data.last_notification_format
-                } else {
-                    &fixed_formatting_data.notification_format
-                };
-
-                lines.push(format_custom_macro_command(notification, index, max_index))
-            }
-        }
-        Self {
-            text: lines.join(newline),
-            id: egui::Id::new(("MACRO_TEXT", index)),
-        }
-    }
-}
-
-impl Widget for MacroTextBox {
-    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        ui.add(super::MultilineMonospace::new(self.id, self.text).scrollable([true, false]))
-    }
-}
-
 pub struct MacroView<'a> {
     app_context: &'a mut AppContext,
     actions: &'a mut Vec<Action>,
@@ -262,14 +123,10 @@ impl<'a> MacroView<'a> {
 
 impl Widget for MacroView<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let fixed_fromatting_data = FixedFormattingData::new(self.app_context);
-        let config = &mut self.app_context.macro_view_config;
         let locale = self.app_context.locale;
-
         if config_menu_is_visible(ui.ctx()) {
-            draw_config_menu(ui.ctx(), config, locale);
+            draw_config_menu(ui.ctx(), &mut self.app_context.macro_view_config, locale);
         }
-
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
@@ -297,48 +154,21 @@ impl Widget for MacroView<'_> {
                         ));
                     });
                 });
-
                 ui.separator();
-
-                let mut chunks = Vec::new();
-                let mut remaining_actions = self.actions.as_slice();
-                while !remaining_actions.is_empty() {
-                    let max_chunk_size = if config.split_macro {
-                        let chunk_size = 15 - usize::from(config.intro_enabled);
-                        let avoid_notif = config.notification_config.avoid_single_action_macro
-                            && remaining_actions.len() == chunk_size;
-                        let has_notif = config.notification_enabled && !avoid_notif;
-                        chunk_size - usize::from(has_notif)
-                    } else {
-                        usize::MAX
-                    };
-                    let (this_chunk, remaining) = remaining_actions
-                        .split_at(std::cmp::min(max_chunk_size, remaining_actions.len()));
-                    chunks.push(this_chunk);
-                    remaining_actions = remaining;
-                }
-
-                let newline = match ui.ctx().os() {
-                    egui::os::OperatingSystem::Mac => "\n",
-                    _ => "\r\n",
-                };
-                let num_chunks = chunks.len();
-                for (index, actions) in chunks.into_iter().enumerate() {
-                    ui.add(MacroTextBox::new(
-                        index + 1,
-                        num_chunks,
-                        actions,
-                        &fixed_fromatting_data,
-                        config,
-                        newline,
-                    ));
-                }
-
                 if self.actions.is_empty() {
                     ui.label(t!(locale, "None"));
+                } else {
+                    let newline = match ui.ctx().os() {
+                        egui::os::OperatingSystem::Mac => "\n",
+                        _ => "\r\n",
+                    };
+                    let macros = create_macros(self.app_context, self.actions, newline);
+                    for (macro_idx, macro_text) in macros.into_iter().enumerate() {
+                        let id = egui::Id::new("MACRO_TEXT_BOX").with(macro_idx);
+                        ui.add(MultilineMonospace::new(id, macro_text).scrollable([true, false]));
+                    }
                 }
-
-                // fill the remaining space
+                // Fill the remaining space.
                 ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
             });
         })
@@ -485,4 +315,102 @@ fn draw_macro_intro_subconfig(ui: &mut egui::Ui, intro_cfg: &mut MacroIntroConfi
                 .hint_text("/macrolock <wait.5>"),
         );
     });
+}
+
+fn create_macros(app_context: &AppContext, actions: &[Action], newline: &str) -> Vec<String> {
+    let config = &app_context.macro_view_config;
+
+    let mut lines = VecDeque::new();
+
+    if config.intro_enabled {
+        if config.intro_config.default_intro {
+            lines.push_back("/macrolock".to_string());
+        } else {
+            lines.push_back(config.intro_config.custom_intro_format.clone());
+        };
+    }
+
+    for action in actions {
+        if config.include_delay {
+            lines.push_back(format!(
+                "/ac \"{}\" <wait.{}>",
+                macro_name(*action, app_context.locale),
+                action.time_cost() + config.extra_delay
+            ));
+        } else {
+            lines.push_back(format!(
+                "/ac \"{}\"",
+                macro_name(*action, app_context.locale)
+            ));
+        }
+    }
+
+    let max_macro_len = if config.split_macro { 15 } else { usize::MAX };
+
+    let mut macros = Vec::new();
+    let mut current_macro = Vec::new();
+    while let Some(line) = lines.pop_front() {
+        current_macro.push(line);
+        if config.notification_enabled
+            && current_macro.len() + 1 <= max_macro_len // Has place for notification.
+            && (current_macro.len() + 1 == max_macro_len || lines.is_empty()) // Is end of macro.
+            && !(config.notification_config.avoid_single_action_macro && lines.len() == 1)
+        {
+            let notification_command = if config.notification_config.default_notification {
+                format!(
+                    "/echo Macro finished ({{index}}/{{max_index}}) <se.{}>",
+                    config.notification_config.notification_sound
+                )
+            } else if config.notification_config.different_last_notification && lines.is_empty() {
+                config
+                    .notification_config
+                    .custom_last_notification_format
+                    .clone()
+            } else {
+                config
+                    .notification_config
+                    .custom_notification_format
+                    .clone()
+            };
+            current_macro.push(notification_command);
+        }
+        if current_macro.len() >= max_macro_len || lines.is_empty() {
+            macros.push(current_macro.join(newline));
+            current_macro.clear();
+        }
+    }
+
+    let locale = app_context.locale;
+    let item_name = get_item_name(app_context.recipe_config.recipe.item_id, false, locale)
+        .unwrap_or(t!(locale, "Unknown item").to_owned());
+    let food_name = match app_context.selected_food {
+        Some(item) => {
+            get_item_name(item.item_id, item.hq, locale).unwrap_or("Unknown item".to_owned())
+        }
+        None => t!(locale, "None").to_owned(),
+    };
+    let potion_name = match app_context.selected_potion {
+        Some(item) => {
+            get_item_name(item.item_id, item.hq, locale).unwrap_or("Unknown item".to_owned())
+        }
+        None => t!(locale, "None").to_owned(),
+    };
+    let max_index = macros.len().to_string();
+    for (macro_idx, macro_text) in macros.iter_mut().enumerate() {
+        *macro_text = macro_text
+            .replace("{index}", &(macro_idx + 1).to_string())
+            .replace("{max_index}", &max_index)
+            .replace("{item_name}", &item_name)
+            .replace("{food}", &food_name)
+            .replace("{potion}", &potion_name)
+            .replace(
+                "{craftsmanship}",
+                &app_context.active_stats().craftsmanship.to_string(),
+            )
+            .replace("{control}", &app_context.active_stats().control.to_string())
+            .replace("{cp}", &app_context.active_stats().cp.to_string())
+            .replace("{level}", &app_context.active_stats().level.to_string());
+    }
+
+    macros
 }

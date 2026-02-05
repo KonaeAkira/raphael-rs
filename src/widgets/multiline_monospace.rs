@@ -67,7 +67,8 @@ impl egui::Widget for MultilineMonospace {
             ui.set_max_size(ui.available_size());
             ui.horizontal_top(|ui| {
                 let mut scroll_area = egui::ScrollArea::new(self.scroll_direction_enabled)
-                    .max_height(self.max_height);
+                    .max_height(self.max_height)
+                    .id_salt(self.id);
                 if text_changed {
                     // Reset scroll if text has changed.
                     scroll_area = scroll_area.scroll_offset([0.0, 0.0].into());
