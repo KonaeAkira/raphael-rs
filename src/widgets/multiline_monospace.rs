@@ -7,22 +7,23 @@ pub struct MultilineMonospace {
 }
 
 struct CopyTextButton<'a> {
+    id: egui::Id,
     text: &'a str,
 }
 
 impl<'a> CopyTextButton<'a> {
-    pub fn new(text: &'a str) -> Self {
-        Self { text }
+    pub fn new(id: egui::Id, text: &'a str) -> Self {
+        Self { id, text }
     }
 }
 
 impl egui::Widget for CopyTextButton<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-            if ui.ctx().animate_bool_with_time(ui.id(), false, 1.5) == 0.0 {
+            if ui.ctx().animate_bool_with_time(self.id, false, 1.5) == 0.0 {
                 if ui.button("🗐").clicked() {
                     ui.ctx().copy_text(self.text.to_owned());
-                    ui.ctx().animate_bool_with_time(ui.id(), true, 0.0);
+                    ui.ctx().animate_bool_with_time(self.id, true, 0.0);
                 }
             } else {
                 ui.add_enabled(false, egui::Button::new("🗐"));
@@ -68,7 +69,7 @@ impl egui::Widget for MultilineMonospace {
             ui.horizontal_top(|ui| {
                 let mut scroll_area = egui::ScrollArea::new(self.scroll_direction_enabled)
                     .max_height(self.max_height)
-                    .id_salt(self.id);
+                    .id_salt(self.id.with("scroll_area"));
                 if text_changed {
                     // Reset scroll if text has changed.
                     scroll_area = scroll_area.scroll_offset([0.0, 0.0].into());
@@ -78,7 +79,7 @@ impl egui::Widget for MultilineMonospace {
                 });
                 ui.put(
                     egui::Rect::from_min_max(ui.max_rect().left_top(), ui.max_rect().right_top()),
-                    CopyTextButton::new(&self.text),
+                    CopyTextButton::new(self.id.with("copy_button"), &self.text),
                 );
             });
         })
