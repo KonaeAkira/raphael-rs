@@ -1,4 +1,4 @@
-use raphael_sim::{Action, ActionMask, Condition, Settings, SimulationState};
+use raphael_sim::{Action, ActionError, ActionMask, Condition, Settings, SimulationState};
 
 fn simulate(
     settings: &Settings,
@@ -36,11 +36,12 @@ fn test_level_requirement() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let error = SimulationState::new(&settings)
         .use_action(Action::ImmaculateMend, Condition::Normal, &settings)
         .unwrap_err();
-    assert_eq!(error, "Level not high enough");
+    assert_eq!(error, ActionError::InsufficientLevels);
 }
 
 #[test]
@@ -58,6 +59,7 @@ fn test_random_926ae85b() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let actions = [
         Action::BasicSynthesis,
@@ -87,6 +89,7 @@ fn test_random_3c721e47() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let actions = [
         Action::MuscleMemory,
@@ -120,6 +123,7 @@ fn test_random_3ba90d3a() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let actions = [
         Action::Veneration,
@@ -156,6 +160,7 @@ fn test_random_bce2650c() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let actions = [
         Action::MuscleMemory,
@@ -207,6 +212,7 @@ fn test_ingame_be9fc5c2() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let states = simulate(
         &settings,
@@ -279,6 +285,7 @@ fn test_ingame_d11d9c68() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let actions = [
         Action::Reflect,
@@ -335,6 +342,7 @@ fn test_ingame_f9f0dac7() {
         allowed_actions: ActionMask::all(),
         adversarial: true,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let actions = [
         Action::Reflect,
@@ -422,6 +430,7 @@ fn test_ingame_4866545e() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let actions = [
         Action::Reflect,

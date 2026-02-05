@@ -18,6 +18,7 @@ fn main() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
 
     let solver_settings = SolverSettings {

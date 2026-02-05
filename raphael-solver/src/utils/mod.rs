@@ -78,16 +78,37 @@ pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
     result
 }
 
-pub fn largest_single_action_progress_increase(settings: &SolverSettings) -> u32 {
-    let state = SimulationState::new(&settings.simulator_settings);
-    assert_eq!(state.progress, 0);
-    FULL_SEARCH_ACTIONS
-        .iter()
-        .filter_map(|&action| {
-            use_action_combo(settings, state, action)
-                .ok()
-                .map(|state| state.progress)
-        })
-        .max()
-        .unwrap()
+/// Returns the maximum additional Progress gained by having the Muscle Memory effect.
+pub fn maximum_muscle_memory_utilization(settings: &Settings) -> u32 {
+    let mut state = SimulationState::new(settings);
+    let mut result = 0;
+    if settings.is_action_allowed::<BasicSynthesis>() {
+        result = result.max(BasicSynthesis::progress_increase(&state, settings));
+    }
+    if settings.is_action_allowed::<CarefulSynthesis>() {
+        result = result.max(CarefulSynthesis::progress_increase(&state, settings));
+    }
+    if settings.is_action_allowed::<Groundwork>() {
+        // Prevent Groundwork efficiency from halving in very-low durability settings.
+        state.effects.set_trained_perfection_active(true);
+        result = result.max(Groundwork::progress_increase(&state, settings));
+    }
+    if settings.is_action_allowed::<PrudentSynthesis>() {
+        result = result.max(PrudentSynthesis::progress_increase(&state, settings));
+    }
+    if settings.is_action_allowed::<DelicateSynthesis>() {
+        result = result.max(DelicateSynthesis::progress_increase(&state, settings));
+    }
+    if settings.is_action_allowed::<HeartAndSoul>()
+        && settings.is_action_allowed::<IntensiveSynthesis>()
+    {
+        result = result.max(IntensiveSynthesis::progress_increase(&state, settings));
+    }
+    if settings.stellar_steady_hand_charges != 0
+        && settings.is_action_allowed::<StellarSteadyHand>()
+        && settings.is_action_allowed::<RapidSynthesis>()
+    {
+        result = result.max(RapidSynthesis::progress_increase(&state, settings));
+    }
+    result
 }

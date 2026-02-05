@@ -13,11 +13,18 @@ pub struct Settings {
     pub job_level: u8,
     pub allowed_actions: ActionMask,
     pub adversarial: bool,
-    /// If `backload_progress` is set, after using any action that increases Progress, the simulator will forbid the use of actions that directly increase Quality.
+
+    /// If set, the simulator will forbid the use of Quality-increasing actions after
+    /// Progress has increased at least once.
     pub backload_progress: bool,
+
+    /// The number of Stellar Steady Hand uses available at the start of the synthesis.
+    pub stellar_steady_hand_charges: u8,
 }
 
 impl Settings {
+    /// An action is allowed if the current level meets the level requirement of the action
+    /// and if the action isn't explicitly forbidden by the action mask.
     pub fn is_action_allowed<ACTION: ActionImpl>(&self) -> bool {
         self.job_level >= ACTION::LEVEL_REQUIREMENT
             && self.allowed_actions.has_mask(ACTION::ACTION_MASK)

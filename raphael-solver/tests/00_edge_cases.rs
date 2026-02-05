@@ -29,7 +29,7 @@ fn test_with_settings(
     settings: SolverSettings,
     expected_score: expect_test::Expect,
     expected_runtime_stats: expect_test::Expect,
-) {
+) -> Vec<Action> {
     let mut solver = MacroSolver::new(
         settings,
         Box::new(|_| {}),
@@ -37,7 +37,7 @@ fn test_with_settings(
         AtomicFlag::new(),
     );
     let result = solver.solve();
-    let score = result.map(|actions| {
+    let score = result.clone().map(|actions| {
         let final_state =
             SimulationState::from_macro(&settings.simulator_settings, &actions).unwrap();
         assert!(final_state.progress >= settings.max_progress());
@@ -53,6 +53,7 @@ fn test_with_settings(
     });
     expected_score.assert_debug_eq(&score);
     expected_runtime_stats.assert_debug_eq(&solver.runtime_stats());
+    result.unwrap_or_default()
 }
 
 #[test]
@@ -68,6 +69,7 @@ fn unsolvable() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -116,6 +118,7 @@ fn zero_quality() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -138,8 +141,8 @@ fn zero_quality() {
                 processed_nodes: 42,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 526,
-                values: 5155,
+                states: 4659,
+                values: 49135,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 31147,
@@ -169,6 +172,7 @@ fn max_quality() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -222,6 +226,7 @@ fn large_progress_quality_increase() {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -244,18 +249,18 @@ fn large_progress_quality_increase() {
                 processed_nodes: 1,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 21835,
-                values: 21835,
+                states: 21848,
+                values: 21848,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 178982,
-                states_on_shards: 0,
-                values: 178982,
+                states_on_shards: 5,
+                values: 178987,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 1,
-                states_on_shards: 12,
-                values: 13,
+                states_on_shards: 13,
+                values: 14,
             },
         }
     "#]];
@@ -275,6 +280,7 @@ fn backload_progress_single_delicate_synthesis() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -297,8 +303,8 @@ fn backload_progress_single_delicate_synthesis() {
                 processed_nodes: 1,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 3475,
-                values: 3475,
+                states: 3478,
+                values: 3478,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 3243,
@@ -329,6 +335,7 @@ fn issue_216_steplbsolver_crash() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -367,4 +374,137 @@ fn issue_216_steplbsolver_crash() {
         }
     "#]];
     test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
+
+#[test]
+/// https://github.com/KonaeAkira/raphael-rs/issues/312
+fn issue_312_quick_innovation_reflect() {
+    let simulator_settings = Settings {
+        max_cp: 18,
+        max_durability: 55,
+        max_progress: 550,
+        max_quality: 1399,
+        base_progress: 306,
+        base_quality: 311,
+        job_level: 100,
+        allowed_actions: ActionMask::regular().add(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 0,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 1399,
+                steps: 3,
+                duration: 9,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 17,
+                processed_nodes: 4,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 10142,
+                values: 10228,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 28849,
+                states_on_shards: 1,
+                values: 33547,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 46,
+                states_on_shards: 75,
+                values: 194,
+            },
+        }
+    "#]];
+    let actions = test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+    assert_eq!(
+        actions,
+        [
+            Action::QuickInnovation,
+            Action::Reflect,
+            Action::CarefulSynthesis
+        ]
+    );
+}
+
+#[test]
+/// The Hasty Touch > Daring Touch "combo" is not actually a combo, as Daring Touch is enabled
+/// by the Expedience effect, which means that actions that don't tick effects such as Quick Innovation
+/// may be used inbetween Hasty Touch and Daring Touch.
+///
+/// This is a specially constructed case where using Hasty Touch > Quick Innovation > Daring Touch
+/// is optimal to test that the solver doesn't accidentally "optimize away" this particular case.
+fn daring_touch_interrupted_combo() {
+    let simulator_settings = Settings {
+        max_cp: 0,
+        max_durability: 30,
+        max_progress: 500,
+        max_quality: 347,
+        base_progress: 100,
+        base_quality: 100,
+        job_level: 100,
+        allowed_actions: ActionMask::regular().add(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 1,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 347,
+                steps: 5,
+                duration: 14,
+                overflow_quality: 0,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 29,
+                processed_nodes: 10,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 24476,
+                values: 24476,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 22280,
+                states_on_shards: 43,
+                values: 26453,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 403,
+                states_on_shards: 1482,
+                values: 4815,
+            },
+        }
+    "#]];
+    let actions = test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+    assert_eq!(
+        actions,
+        [
+            Action::StellarSteadyHand,
+            Action::HastyTouch,
+            Action::QuickInnovation,
+            Action::DaringTouch,
+            Action::RapidSynthesis
+        ]
+    );
 }

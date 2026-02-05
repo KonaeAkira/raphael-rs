@@ -16,6 +16,7 @@ fn bench_use_action(c: &mut Criterion) {
         allowed_actions: ActionMask::all(),
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 0,
     };
     let state = SimulationState::new(&settings);
 

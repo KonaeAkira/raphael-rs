@@ -1,13 +1,16 @@
 use crate::{ActionMask, Condition, Effects, Settings, SimulationState};
 
-const DEFAULT_EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX).with_combo(Combo::None);
+const DEFAULT_EFFECT_RESET_MASK: Effects = {
+    assert!(Combo::None.into_bits() == 0);
+    Effects::from_bits(u64::MAX).with_combo(Combo::None)
+};
 
 pub trait ActionImpl {
     const LEVEL_REQUIREMENT: u8;
     /// All bits of this mask must be present in the settings' action mask for the action to be enabled.
     const ACTION_MASK: ActionMask;
-    /// Does this action trigger ticking effects (e.g. Manipulation)?
-    const TICK_EFFECTS: bool = true;
+    /// Does this action increase the step count when used?
+    const INCREASES_STEP_COUNT: bool = true;
 
     const EFFECT_RESET_MASK: Effects;
     const EFFECT_SET_MASK: Effects;
@@ -16,7 +19,7 @@ pub trait ActionImpl {
         _state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         Ok(())
     }
 
@@ -106,9 +109,9 @@ impl ActionImpl for BasicTouch {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -175,14 +178,12 @@ impl ActionImpl for TricksOfTheTrade {
         state: &SimulationState,
         _settings: &Settings,
         condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.heart_and_soul_active()
             && condition != Condition::Good
             && condition != Condition::Excellent
         {
-            return Err(
-                "Tricks of the Trade can only be used when the condition is Good or Excellent.",
-            );
+            return Err(ActionError::SpecialConditionNotMet);
         }
         Ok(())
     }
@@ -232,7 +233,7 @@ impl ActionImpl for StandardTouch {
     const LEVEL_REQUIREMENT: u8 = 18;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StandardTouch);
 
-    const EFFECT_RESET_MASK: Effects = Effects::from_bits(u32::MAX)
+    const EFFECT_RESET_MASK: Effects = Effects::from_bits(u64::MAX)
         .with_great_strides(0)
         .with_trained_perfection_active(false);
     const EFFECT_SET_MASK: Effects = Effects::new();
@@ -241,9 +242,9 @@ impl ActionImpl for StandardTouch {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -288,9 +289,9 @@ impl ActionImpl for GreatStrides {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -316,9 +317,9 @@ impl ActionImpl for Innovation {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -360,11 +361,11 @@ impl ActionImpl for ByregotsBlessing {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.inner_quiet() == 0 {
-            Err("Cannot use Byregot's Blessing when Inner Quiet is 0.")
+            Err(ActionError::SpecialConditionNotMet)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -397,14 +398,14 @@ impl ActionImpl for PreciseTouch {
         state: &SimulationState,
         _settings: &Settings,
         condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.heart_and_soul_active()
             && condition != Condition::Good
             && condition != Condition::Excellent
         {
-            Err("Precise Touch can only be used when the condition is Good or Excellent.")
+            Err(ActionError::SpecialConditionNotMet)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -445,9 +446,9 @@ impl ActionImpl for MuscleMemory {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.combo() != Combo::SynthesisBegin {
-            return Err("Muscle Memory can only be used at synthesis begin.");
+            return Err(ActionError::ComboRequirementNotMet);
         }
         Ok(())
     }
@@ -521,11 +522,11 @@ impl ActionImpl for PrudentTouch {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.waste_not() != 0 {
-            Err("Prudent Touch cannot be used while Waste Not is active.")
+            Err(ActionError::SpecialConditionNotMet)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -558,9 +559,9 @@ impl ActionImpl for AdvancedTouch {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -595,11 +596,11 @@ impl ActionImpl for Reflect {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.combo() != Combo::SynthesisBegin {
-            Err("Reflect can only be used at synthesis begin.")
+            Err(ActionError::ComboRequirementNotMet)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -640,9 +641,9 @@ impl ActionImpl for PreparatoryTouch {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -711,9 +712,9 @@ impl ActionImpl for DelicateSynthesis {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -753,14 +754,12 @@ impl ActionImpl for IntensiveSynthesis {
         state: &SimulationState,
         _settings: &Settings,
         condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.heart_and_soul_active()
             && condition != Condition::Good
             && condition != Condition::Excellent
         {
-            return Err(
-                "Intensive Synthesis can only be used when the condition is Good or Excellent.",
-            );
+            return Err(ActionError::SpecialConditionNotMet);
         }
         Ok(())
     }
@@ -798,11 +797,11 @@ impl ActionImpl for TrainedEye {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.combo() != Combo::SynthesisBegin {
-            Err("Trained Eye can only be used at synthesis begin.")
+            Err(ActionError::ComboRequirementNotMet)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -833,7 +832,7 @@ pub struct HeartAndSoul {}
 impl ActionImpl for HeartAndSoul {
     const LEVEL_REQUIREMENT: u8 = 86;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HeartAndSoul);
-    const TICK_EFFECTS: bool = false;
+    const INCREASES_STEP_COUNT: bool = false;
 
     const EFFECT_RESET_MASK: Effects =
         DEFAULT_EFFECT_RESET_MASK.with_heart_and_soul_available(false);
@@ -843,9 +842,9 @@ impl ActionImpl for HeartAndSoul {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.heart_and_soul_available() {
-            return Err("Heart and Sould can only be used once per synthesis.");
+            return Err(ActionError::NoRemainingUses);
         }
         Ok(())
     }
@@ -865,9 +864,9 @@ impl ActionImpl for PrudentSynthesis {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.waste_not() != 0 {
-            return Err("Prudent Synthesis cannot be used while Waste Not is active.");
+            return Err(ActionError::SpecialConditionNotMet);
         }
         Ok(())
     }
@@ -897,11 +896,11 @@ impl ActionImpl for TrainedFinesse {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.inner_quiet() < 10 {
-            Err("Trained Finesse can only be used when Inner Quiet is 10.")
+            Err(ActionError::SpecialConditionNotMet)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -933,11 +932,11 @@ impl ActionImpl for RefinedTouch {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.combo() != Combo::BasicTouch {
-            Err("Refined Touch can only be used after Observe or Basic Touch.")
+            Err(ActionError::ComboRequirementNotMet)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -965,7 +964,7 @@ pub struct QuickInnovation {}
 impl ActionImpl for QuickInnovation {
     const LEVEL_REQUIREMENT: u8 = 96;
     const ACTION_MASK: ActionMask = ActionMask::none().add(Action::QuickInnovation);
-    const TICK_EFFECTS: bool = false;
+    const INCREASES_STEP_COUNT: bool = false;
 
     const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
         .with_quick_innovation_available(false)
@@ -976,13 +975,13 @@ impl ActionImpl for QuickInnovation {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if state.effects.innovation() != 0 {
-            Err("Quick Innovation cannot be used while Innovation is active.")
+            Err(ActionError::SpecialConditionNotMet)
         } else if !state.effects.quick_innovation_available() {
-            Err("Quick Innovation can only be used once per synthesis.")
+            Err(ActionError::NoRemainingUses)
         } else if !state.effects.quality_actions_allowed() {
-            Err("Forbidden by backload_progress setting")
+            Err(ActionError::QualityAfterProgress)
         } else {
             Ok(())
         }
@@ -1022,12 +1021,178 @@ impl ActionImpl for TrainedPerfection {
         state: &SimulationState,
         _settings: &Settings,
         _condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if !state.effects.trained_perfection_available() {
-            return Err("Trained Perfection can only be used once per synthesis.");
+            return Err(ActionError::NoRemainingUses);
         }
         Ok(())
     }
+}
+
+pub struct StellarSteadyHand {}
+impl ActionImpl for StellarSteadyHand {
+    const LEVEL_REQUIREMENT: u8 = 90;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::StellarSteadyHand);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK.with_stellar_steady_hand(0);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_stellar_steady_hand(3);
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), ActionError> {
+        if state.effects.stellar_steady_hand_charges() == 0 {
+            return Err(ActionError::NoRemainingUses);
+        }
+        Ok(())
+    }
+
+    fn transform(state: &mut SimulationState, _settings: &Settings, _condition: Condition) {
+        let remaining = state
+            .effects
+            .stellar_steady_hand_charges()
+            .saturating_sub(1);
+        state.effects.set_stellar_steady_hand_charges(remaining);
+    }
+}
+
+pub struct RapidSynthesis {}
+impl ActionImpl for RapidSynthesis {
+    const LEVEL_REQUIREMENT: u8 = 9;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::RapidSynthesis);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_muscle_memory(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), ActionError> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err(ActionError::UnreliableAction);
+        }
+        Ok(())
+    }
+
+    fn progress_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
+        match settings.job_level {
+            0..63 => 250,
+            63.. => 500,
+        }
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
+pub struct HastyTouch {}
+impl ActionImpl for HastyTouch {
+    const LEVEL_REQUIREMENT: u8 = 9;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HastyTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new().with_expedience(true);
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), ActionError> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err(ActionError::UnreliableAction);
+        }
+        Ok(())
+    }
+
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
+        100
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
+pub struct DaringTouch {}
+impl ActionImpl for DaringTouch {
+    const LEVEL_REQUIREMENT: u8 = 96;
+    const ACTION_MASK: ActionMask = ActionMask::none().add(Action::HastyTouch);
+
+    const EFFECT_RESET_MASK: Effects = DEFAULT_EFFECT_RESET_MASK
+        .with_great_strides(0)
+        .with_trained_perfection_active(false);
+    const EFFECT_SET_MASK: Effects = Effects::new();
+
+    fn precondition(
+        state: &SimulationState,
+        _settings: &Settings,
+        _condition: Condition,
+    ) -> Result<(), ActionError> {
+        // Only actions with 100% success rate are supported.
+        // Stellar Steady Hand is the only way to achieve 100% success rate with Rapid Synthesis.
+        if state.effects.stellar_steady_hand() == 0 {
+            return Err(ActionError::UnreliableAction);
+        }
+        if !state.effects.expedience() {
+            return Err(ActionError::SpecialConditionNotMet);
+        }
+        Ok(())
+    }
+
+    fn quality_modifier(_state: &SimulationState, _settings: &Settings) -> u32 {
+        150
+    }
+
+    fn base_durability_cost(_state: &SimulationState, _settings: &Settings) -> u16 {
+        10
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ActionError {
+    /// Actions may be specifically disabled by setting the action mask in the settings.
+    Disabled,
+
+    /// The synthesis is already complete, e.g. by reaching max Progress or zero Durability.
+    StateIsFinal,
+
+    /// The level requirement of the action is higher the level of the crafter.
+    InsufficientLevels,
+
+    /// Not enough CP to use action.
+    InsufficientCP,
+
+    /// The action does not have a 100% success rate.
+    /// Actions with inherent success rate below 100% may still be used under conditions that
+    /// increase the reliability to 100%, such as Stellar Steady Hand.
+    UnreliableAction,
+
+    /// Some actions may only be used a limited number of times per synthesis.
+    NoRemainingUses,
+
+    /// If the `backload_progress` options is enabled, then it is forbidden to use a Quality-increasing
+    /// action after Progress has increased at least once.
+    QualityAfterProgress,
+
+    /// Some actions can only be used as a combo right after some other action.
+    /// This error is also used for actions that can only be used at the beginning of the synthesis.
+    ComboRequirementNotMet,
+
+    /// Some actions require additional specific conditions to be met.
+    /// E.g. Prudent Touch can only be used if the Waste Not effect is not active.
+    SpecialConditionNotMet,
 }
 
 #[derive(strum_macros::EnumIter, Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -1064,6 +1229,10 @@ pub enum Action {
     QuickInnovation,
     ImmaculateMend,
     TrainedPerfection,
+    StellarSteadyHand,
+    RapidSynthesis,
+    HastyTouch,
+    DaringTouch,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -1128,6 +1297,10 @@ impl Action {
             Self::TrainedPerfection => 3,
             Self::TrainedEye => 3,
             Self::QuickInnovation => 3,
+            Self::StellarSteadyHand => 2,
+            Self::RapidSynthesis => 3,
+            Self::HastyTouch => 3,
+            Self::DaringTouch => 3,
         }
     }
 
@@ -1164,6 +1337,10 @@ impl Action {
             Self::QuickInnovation => 100459,
             Self::ImmaculateMend => 100467,
             Self::TrainedPerfection => 100475,
+            Self::StellarSteadyHand => 46843,
+            Self::RapidSynthesis => 100363,
+            Self::HastyTouch => 100355,
+            Self::DaringTouch => 100451,
         }
     }
 }

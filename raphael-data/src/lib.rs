@@ -147,6 +147,7 @@ pub fn get_game_settings(
             allowed_actions,
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         },
         None => Settings {
             max_cp: cp as _,
@@ -159,6 +160,7 @@ pub fn get_game_settings(
             allowed_actions,
             adversarial: false,
             backload_progress: false,
+            stellar_steady_hand_charges: 0,
         },
     }
 }

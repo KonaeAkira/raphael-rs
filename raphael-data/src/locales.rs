@@ -132,6 +132,26 @@ pub const fn action_name(action: Action, locale: Locale) -> &'static str {
     }
 }
 
+/// Returns the name of an action to be used in macros.
+/// The macro name for an action may be different from its normal display name.
+pub const fn macro_name(action: Action, locale: Locale) -> &'static str {
+    match action {
+        Action::StellarSteadyHand => match locale {
+            Locale::EN => "Duty Action II",
+            Locale::DE => "Spezialkommando 2",
+            Locale::FR => "Action de mission 2",
+            Locale::JP => "コンテンツアクション2",
+            Locale::CN => "任务指令2",
+            Locale::KR => "임무용 기술 2",
+            Locale::TW => "任務指令2",
+        },
+        // Hasty Touch turns into Daring Touch while under the effect of Expedience.
+        Action::DaringTouch => action_name(Action::HastyTouch, locale),
+        // Use the normal action display name for other actions.
+        _ => action_name(action, locale),
+    }
+}
+
 const fn action_name_en(action: Action) -> &'static str {
     match action {
         Action::BasicSynthesis => "Basic Synthesis",
@@ -165,6 +185,10 @@ const fn action_name_en(action: Action) -> &'static str {
         Action::TrainedPerfection => "Trained Perfection",
         Action::TrainedEye => "Trained Eye",
         Action::QuickInnovation => "Quick Innovation",
+        Action::StellarSteadyHand => "Stellar Steady Hand",
+        Action::RapidSynthesis => "Rapid Synthesis",
+        Action::HastyTouch => "Hasty Touch",
+        Action::DaringTouch => "Daring Touch",
     }
 }
 
@@ -201,6 +225,10 @@ const fn action_name_de(action: Action) -> &'static str {
         Action::TrainedPerfection => "Meisters Beitrag",
         Action::TrainedEye => "Flinke Hand",
         Action::QuickInnovation => "Spontane Innovation",
+        Action::StellarSteadyHand => "Kosmo-Ruhige Hand",
+        Action::RapidSynthesis => "Schnelle Bearbeitung",
+        Action::HastyTouch => "Hastige Veredelung",
+        Action::DaringTouch => "Kühne Veredelung",
     }
 }
 
@@ -237,6 +265,10 @@ const fn action_name_fr(action: Action) -> &'static str {
         Action::TrainedPerfection => "Main suprême",
         Action::TrainedEye => "Main preste",
         Action::QuickInnovation => "Innovation instantanée",
+        Action::StellarSteadyHand => "Cosmomain sûre",
+        Action::RapidSynthesis => "Travail rapide",
+        Action::HastyTouch => "Ouvrage hâtif",
+        Action::DaringTouch => "Ouvrage audacieux",
     }
 }
 
@@ -273,6 +305,10 @@ const fn action_name_jp(action: Action) -> &'static str {
         Action::TrainedPerfection => "匠の絶技",
         Action::TrainedEye => "匠の早業",
         Action::QuickInnovation => "クイックイノベーション",
+        Action::StellarSteadyHand => "コスモステディハンド",
+        Action::RapidSynthesis => "突貫作業",
+        Action::HastyTouch => "ヘイスティタッチ",
+        Action::DaringTouch => "デアリングタッチ",
     }
 }
 
@@ -309,6 +345,10 @@ const fn action_name_cn(action: Action) -> &'static str {
         Action::TrainedPerfection => "工匠的绝技",
         Action::TrainedEye => "工匠的神速技巧",
         Action::QuickInnovation => "快速改革",
+        Action::StellarSteadyHand => "宇宙稳手",
+        Action::RapidSynthesis => "高速制作",
+        Action::HastyTouch => "仓促",
+        Action::DaringTouch => "冒进",
     }
 }
 
@@ -345,6 +385,10 @@ const fn action_name_kr(action: Action) -> &'static str {
         Action::TrainedPerfection => "장인의 초절 기술",
         Action::TrainedEye => "장인의 날랜손",
         Action::QuickInnovation => "신속한 혁신",
+        Action::StellarSteadyHand => "우주 안정된 솜씨",
+        Action::RapidSynthesis => "강행 작업",
+        Action::HastyTouch => "성급한 손길",
+        Action::DaringTouch => "대담한 손길",
     }
 }
 
@@ -381,5 +425,9 @@ const fn action_name_tw(action: Action) -> &'static str {
         Action::TrainedPerfection => "工匠的絕技",
         Action::TrainedEye => "工匠的神速技巧",
         Action::QuickInnovation => "快速改革",
+        Action::StellarSteadyHand => "Stellar Steady Hand",
+        Action::RapidSynthesis => "高速製作",
+        Action::HastyTouch => "倉促",
+        Action::DaringTouch => "冒進",
     }
 }

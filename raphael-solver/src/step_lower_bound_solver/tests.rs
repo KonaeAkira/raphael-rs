@@ -55,6 +55,7 @@ fn consistency(max_durability: u16, allowed_actions: ActionMask) {
         allowed_actions,
         adversarial: false,
         backload_progress: false,
+        stellar_steady_hand_charges: 1,
     };
     let solver_settings = SolverSettings {
         simulator_settings,

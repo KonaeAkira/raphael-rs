@@ -68,6 +68,7 @@ fn rinascita_3700_3280() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -121,6 +122,7 @@ fn pactmaker_3240_3130() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -176,6 +178,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -229,6 +232,7 @@ fn diadochos_4021_3660() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -282,6 +286,7 @@ fn indagator_3858_4057() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -335,6 +340,7 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -390,6 +396,7 @@ fn stuffed_peppers_2() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -447,6 +454,7 @@ fn stuffed_peppers_2_heart_and_soul() {
             .remove(Action::QuickInnovation),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -504,6 +512,7 @@ fn stuffed_peppers_2_quick_innovation() {
             .remove(Action::HeartAndSoul),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -531,13 +540,13 @@ fn stuffed_peppers_2_quick_innovation() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1477069,
-                states_on_shards: 0,
-                values: 17827198,
+                states_on_shards: 5,
+                values: 17827203,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 432516,
-                states_on_shards: 170199,
-                values: 5794281,
+                states_on_main: 432530,
+                states_on_shards: 170200,
+                values: 5794412,
             },
         }
     "#]];
@@ -557,6 +566,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -610,6 +620,7 @@ fn black_star_4048_3997() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -663,6 +674,7 @@ fn claro_walnut_lumber_4900_4800() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -716,6 +728,7 @@ fn rakaznar_lapidary_hammer_4900_4800() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -769,6 +782,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -822,6 +836,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,
@@ -875,6 +890,7 @@ fn hardened_survey_plank_5558_5216() {
         allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: true,
+        stellar_steady_hand_charges: 0,
     };
     let solver_settings = SolverSettings {
         simulator_settings,

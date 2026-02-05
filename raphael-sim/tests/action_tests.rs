@@ -11,6 +11,7 @@ const SETTINGS: Settings = Settings {
     allowed_actions: ActionMask::all(),
     adversarial: false,
     backload_progress: false,
+    stellar_steady_hand_charges: 0,
 };
 
 /// Returns the 4 primary stats of a state:
@@ -96,10 +97,7 @@ fn test_tricks_of_the_trade() {
     let error = SimulationState::new(&SETTINGS)
         .use_action(Action::TricksOfTheTrade, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(
-        error,
-        "Tricks of the Trade can only be used when the condition is Good or Excellent."
-    );
+    assert_eq!(error, ActionError::SpecialConditionNotMet);
     // Can use when condition is Good or Excellent
     let initial_state = SimulationState {
         cp: SETTINGS.max_cp - 25, // test maximum restored CP
@@ -203,10 +201,7 @@ fn test_byregots_blessing() {
     let error = SimulationState::new(&SETTINGS)
         .use_action(Action::ByregotsBlessing, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(
-        error,
-        "Cannot use Byregot's Blessing when Inner Quiet is 0."
-    );
+    assert_eq!(error, ActionError::SpecialConditionNotMet);
     // Quality efficiency scales with inner quiet
     let mut initial_state = SimulationState::new(&SETTINGS);
     initial_state.effects.set_inner_quiet(5);
@@ -230,10 +225,7 @@ fn test_precise_touch() {
     let error = SimulationState::new(&SETTINGS)
         .use_action(Action::PreciseTouch, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(
-        error,
-        "Precise Touch can only be used when the condition is Good or Excellent."
-    );
+    assert_eq!(error, ActionError::SpecialConditionNotMet);
     // Can use when condition is Good or Excellent
     let state = SimulationState::new(&SETTINGS)
         .use_action(Action::PreciseTouch, Condition::Good, &SETTINGS)
@@ -268,7 +260,7 @@ fn test_muscle_memory() {
     let error = initial_state
         .use_action(Action::MuscleMemory, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(error, "Muscle Memory can only be used at synthesis begin.");
+    assert_eq!(error, ActionError::ComboRequirementNotMet);
     // Precondition fulfilled
     let state = SimulationState::new(&SETTINGS)
         .use_action(Action::MuscleMemory, Condition::Normal, &SETTINGS)
@@ -334,10 +326,7 @@ fn test_prudent_touch() {
     let error = initial_state
         .use_action(Action::PrudentTouch, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(
-        error,
-        "Prudent Touch cannot be used while Waste Not is active."
-    );
+    assert_eq!(error, ActionError::SpecialConditionNotMet);
 }
 
 #[test]
@@ -366,7 +355,7 @@ fn test_reflect() {
     let error = initial_state
         .use_action(Action::Reflect, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(error, "Reflect can only be used at synthesis begin.");
+    assert_eq!(error, ActionError::ComboRequirementNotMet);
     // Precondition fulfilled
     let state = SimulationState::new(&SETTINGS)
         .use_action(Action::Reflect, Condition::Normal, &SETTINGS)
@@ -468,10 +457,7 @@ fn test_intensive_synthesis() {
     let error = SimulationState::new(&SETTINGS)
         .use_action(Action::IntensiveSynthesis, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(
-        error,
-        "Intensive Synthesis can only be used when the condition is Good or Excellent."
-    );
+    assert_eq!(error, ActionError::SpecialConditionNotMet);
     // Can use when condition is Good or Excellent
     let state = SimulationState::new(&SETTINGS)
         .use_action(Action::IntensiveSynthesis, Condition::Good, &SETTINGS)
@@ -507,7 +493,7 @@ fn test_trained_eye() {
     let error = initial_state
         .use_action(Action::TrainedEye, Condition::Normal, &SETTINGS)
         .unwrap_err();
-    assert_eq!(error, "Trained Eye can only be used at synthesis begin.");
+    assert_eq!(error, ActionError::ComboRequirementNotMet);
     // Precondition fulfilled
     let state = SimulationState::new(&SETTINGS)
         .use_action(Action::TrainedEye, Condition::Normal, &SETTINGS)
@@ -523,10 +509,7 @@ fn test_trained_eye() {
 fn test_prudent_synthesis() {
     let state =
         SimulationState::from_macro(&SETTINGS, &[Action::WasteNot, Action::PrudentSynthesis]);
-    assert_eq!(
-        state,
-        Err("Prudent Synthesis cannot be used while Waste Not is active.")
-    );
+    assert_eq!(state, Err(ActionError::SpecialConditionNotMet));
 }
 
 #[test]
@@ -539,27 +522,16 @@ fn test_trained_finesse() {
             Action::TrainedFinesse,
         ],
     );
-    assert_eq!(
-        state,
-        Err("Trained Finesse can only be used when Inner Quiet is 10.")
-    );
+    assert_eq!(state, Err(ActionError::SpecialConditionNotMet));
 }
 
 #[test]
 fn test_refined_touch() {
-    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::RefinedTouch]);
-    match state {
-        Ok(state) => {
-            assert_eq!(state.effects.inner_quiet(), 3);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
-    assert!(matches!(state, Ok(_)));
+    let state = SimulationState::from_macro(&SETTINGS, &[Action::BasicTouch, Action::RefinedTouch])
+        .unwrap();
+    assert_eq!(state.effects.inner_quiet(), 3);
     let state = SimulationState::from_macro(&SETTINGS, &[Action::RefinedTouch]);
-    assert_eq!(
-        state,
-        Err("Refined Touch can only be used after Observe or Basic Touch.")
-    );
+    assert_eq!(state, Err(ActionError::ComboRequirementNotMet));
 }
 
 #[test]
@@ -572,13 +544,9 @@ fn test_immaculate_mend() {
             Action::Groundwork,
             Action::ImmaculateMend,
         ],
-    );
-    match state {
-        Ok(state) => {
-            assert_eq!(state.durability, SETTINGS.max_durability);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
+    )
+    .unwrap();
+    assert_eq!(state.durability, SETTINGS.max_durability);
 }
 
 #[test]
@@ -590,21 +558,14 @@ fn test_trained_perfection() {
             Action::Observe, // 0-durability actions don't proc Trained Perfection
             Action::Groundwork,
         ],
-    );
-    match state {
-        Ok(state) => {
-            assert_eq!(state.durability, SETTINGS.max_durability);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    };
+    )
+    .unwrap();
+    assert_eq!(state.durability, SETTINGS.max_durability);
     let state = SimulationState::from_macro(
         &SETTINGS,
         &[Action::TrainedPerfection, Action::TrainedPerfection],
     );
-    assert_eq!(
-        state,
-        Err("Trained Perfection can only be used once per synthesis.")
-    );
+    assert_eq!(state, Err(ActionError::NoRemainingUses));
 }
 
 #[test]
@@ -620,20 +581,16 @@ fn test_heart_and_soul() {
             Action::BasicTouch,
             Action::HeartAndSoul,
         ],
-    );
-    match state {
-        Ok(state) => {
-            assert_eq!(state.effects.combo(), Combo::None); // combo is removed
-            assert_eq!(
-                state.effects.special_quality_state(),
-                SpecialQualityState::AdversarialGuard
-            ); // condition is not re-rolled
-            assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
-            assert_eq!(state.effects.heart_and_soul_available(), false);
-            assert_eq!(state.effects.heart_and_soul_active(), true);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
+    )
+    .unwrap();
+    assert_eq!(state.effects.combo(), Combo::None); // combo is removed
+    assert_eq!(
+        state.effects.special_quality_state(),
+        SpecialQualityState::AdversarialGuard
+    ); // condition is not re-rolled
+    assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
+    assert_eq!(state.effects.heart_and_soul_available(), false);
+    assert_eq!(state.effects.heart_and_soul_active(), true);
     let state = SimulationState::from_macro(
         &settings,
         &[
@@ -641,31 +598,19 @@ fn test_heart_and_soul() {
             Action::PrudentSynthesis,
             Action::MasterMend,
         ],
-    );
-    match state {
-        Ok(state) => {
-            assert_eq!(state.effects.heart_and_soul_active(), true); // effect stays active until used
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
+    )
+    .unwrap();
+    assert_eq!(state.effects.heart_and_soul_active(), true); // effect stays active until used
     let state = SimulationState::from_macro(
         &settings,
         &[Action::HeartAndSoul, Action::IntensiveSynthesis],
-    );
-    match state {
-        Ok(state) => {
-            assert_eq!(state.effects.heart_and_soul_active(), false); // effect is used up
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
+    )
+    .unwrap();
+    assert_eq!(state.effects.heart_and_soul_active(), false); // effect is used up
     let state =
-        SimulationState::from_macro(&settings, &[Action::HeartAndSoul, Action::PreciseTouch]);
-    match state {
-        Ok(state) => {
-            assert_eq!(state.effects.heart_and_soul_active(), false); // effect is used up
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
+        SimulationState::from_macro(&settings, &[Action::HeartAndSoul, Action::PreciseTouch])
+            .unwrap();
+    assert_eq!(state.effects.heart_and_soul_active(), false); // effect is used up
     let state = SimulationState::from_macro(
         &settings,
         &[
@@ -674,10 +619,7 @@ fn test_heart_and_soul() {
             Action::HeartAndSoul,
         ],
     );
-    assert_eq!(
-        state,
-        Err("Heart and Sould can only be used once per synthesis.")
-    );
+    assert_eq!(state, Err(ActionError::NoRemainingUses));
 }
 
 #[test]
@@ -693,19 +635,15 @@ fn test_quick_innovation() {
             Action::BasicTouch,
             Action::QuickInnovation,
         ],
-    );
-    match state {
-        Ok(state) => {
-            assert_eq!(state.effects.combo(), Combo::None); // combo is removed
-            assert_eq!(
-                state.effects.special_quality_state(),
-                SpecialQualityState::AdversarialGuard
-            ); // condition is not re-rolled
-            assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
-            assert_eq!(state.effects.innovation(), 1);
-        }
-        Err(e) => panic!("Unexpected error: {}", e),
-    }
+    )
+    .unwrap();
+    assert_eq!(state.effects.combo(), Combo::None); // combo is removed
+    assert_eq!(
+        state.effects.special_quality_state(),
+        SpecialQualityState::AdversarialGuard
+    ); // condition is not re-rolled
+    assert_eq!(state.effects.manipulation(), 7); // effects are not ticked
+    assert_eq!(state.effects.innovation(), 1);
     let state = SimulationState::from_macro(
         &setings,
         &[
@@ -714,14 +652,109 @@ fn test_quick_innovation() {
             Action::QuickInnovation,
         ],
     );
-    assert_eq!(
-        state,
-        Err("Quick Innovation can only be used once per synthesis.")
-    );
+    assert_eq!(state, Err(ActionError::NoRemainingUses));
     let state =
         SimulationState::from_macro(&setings, &[Action::Innovation, Action::QuickInnovation]);
-    assert_eq!(
-        state,
-        Err("Quick Innovation cannot be used while Innovation is active.")
+    assert_eq!(state, Err(ActionError::SpecialConditionNotMet));
+}
+
+#[test]
+fn test_stellar_steady_hand() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 2,
+        ..SETTINGS
+    };
+    // Test that using Stellar Steady Hand gives the correct effect duration (3)
+    // and decreases the number of remaining charges.
+    let state = SimulationState::from_macro(&settings, &[Action::StellarSteadyHand]).unwrap();
+    assert_eq!(state.effects.stellar_steady_hand(), 3);
+    assert_eq!(state.effects.stellar_steady_hand_charges(), 1);
+    // Test that Stellar Steady Hand resets the effect duration if the effect is active.
+    let state = state
+        .use_action(Action::StellarSteadyHand, Condition::Normal, &settings)
+        .unwrap();
+    assert_eq!(state.effects.stellar_steady_hand(), 3);
+    assert_eq!(state.effects.stellar_steady_hand_charges(), 0);
+    // Test that Stellar Steady Hand cannot be used if there are no remaining charges.
+    let state = state.use_action(Action::StellarSteadyHand, Condition::Normal, &settings);
+    assert_eq!(Err(ActionError::NoRemainingUses), state);
+}
+
+#[test]
+fn test_rapid_synthesis() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 1,
+        ..SETTINGS
+    };
+    // Test that Rapid Synthesis can be used while Stellar Steady Hand is active.
+    // Rapid Synthesis has a lower progress efficiency below level 63, but there is currently
+    // no scenario to use the action below level 63 so the lower efficiency is not tested.
+    let state = SimulationState::from_macro(
+        &settings,
+        &[Action::StellarSteadyHand, Action::RapidSynthesis],
+    )
+    .unwrap();
+    assert_eq!(state.progress, 500);
+    assert_eq!(state.durability, settings.max_durability - 10);
+    assert_eq!(state.cp, settings.max_cp);
+    // Test that Rapid Synthesis cannot be used if Stellar Steady Hand is not active.
+    let state = SimulationState::from_macro(&settings, &[Action::RapidSynthesis]);
+    assert_eq!(Err(ActionError::UnreliableAction), state);
+}
+
+#[test]
+fn test_hasty_touch() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 1,
+        ..SETTINGS
+    };
+    // Test that Hasty Touch can be used while Stellar Steady Hand is active.
+    let state =
+        SimulationState::from_macro(&settings, &[Action::StellarSteadyHand, Action::HastyTouch])
+            .unwrap();
+    assert_eq!(state.quality, 100);
+    assert_eq!(state.durability, settings.max_durability - 10);
+    assert_eq!(state.cp, settings.max_cp);
+    assert_eq!(state.effects.expedience(), true);
+    // Test that Hasty Touch cannot be used if Stellar Steady Hand is not active.
+    let state = SimulationState::from_macro(&settings, &[Action::HastyTouch]);
+    assert_eq!(Err(ActionError::UnreliableAction), state);
+}
+
+#[test]
+fn test_daring_touch() {
+    let settings = Settings {
+        stellar_steady_hand_charges: 1,
+        ..SETTINGS
+    };
+    // Test that Daring Touch can be used while Stellar Steady Hand and Expedience are active.
+    let state = SimulationState::from_macro(
+        &settings,
+        &[
+            Action::StellarSteadyHand,
+            Action::HastyTouch,
+            Action::DaringTouch,
+        ],
+    )
+    .unwrap();
+    assert_eq!(state.quality, 265);
+    assert_eq!(state.durability, settings.max_durability - 20);
+    assert_eq!(state.cp, settings.max_cp);
+    assert_eq!(state.effects.expedience(), false);
+    // Test that Hasty Touch cannot be used if Stellar Steady Hand is not active.
+    let state = SimulationState::from_macro(
+        &settings,
+        &[
+            Action::StellarSteadyHand,
+            Action::Observe,
+            Action::Observe,
+            Action::HastyTouch,
+            Action::DaringTouch,
+        ],
     );
+    assert_eq!(Err(ActionError::UnreliableAction), state);
+    // Test that Daring touch cannot be used if Expedience is not active.
+    let state =
+        SimulationState::from_macro(&settings, &[Action::StellarSteadyHand, Action::DaringTouch]);
+    assert_eq!(Err(ActionError::SpecialConditionNotMet), state);
 }

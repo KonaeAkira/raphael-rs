@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 
 // It is important that this mask doesn't use any effect to its full bit range.
 // Otherwise, `Value::effect_dominates` will break.
-const EFFECTS_VALUE_MASK: u32 = Effects::new()
+const EFFECTS_VALUE_MASK: u64 = Effects::new()
     .with_inner_quiet(1)
     .with_manipulation(3)
     .with_waste_not(3)
@@ -12,12 +12,12 @@ const EFFECTS_VALUE_MASK: u32 = Effects::new()
     .with_innovation(3)
     .into_bits();
 
-const EFFECTS_KEY_MASK: u32 = !EFFECTS_VALUE_MASK;
+const EFFECTS_KEY_MASK: u64 = !EFFECTS_VALUE_MASK;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct Key {
     progress: u32,
-    effects: u32,
+    effects: u64,
 }
 
 impl From<&SimulationState> for Key {
@@ -33,12 +33,21 @@ impl From<&SimulationState> for Key {
 struct Value(wide::u32x4);
 
 impl Value {
-    pub const GUARD: wide::u32x4 = wide::u32x4::new([
-        0x80008000,       // CP and Durability
-        0x80000000,       // Quality
-        0x80000000,       // Unreliable quality
-        EFFECTS_KEY_MASK, // Effects
-    ]);
+    /// Guard value for Pareto-dominance check.
+    /// Value A dominates B is subtracting B from A leaves the guard bits unchanged.
+    const GUARD: wide::u32x4 = {
+        // The effect bits used for comparison are truncated to 32 bits to make
+        // everything fit into a 128-bit SIMD value.
+        // The asserts make sure that no information is lost when truncating.
+        assert!(EFFECTS_KEY_MASK >> 32 == 0xffffffff);
+        assert!(EFFECTS_VALUE_MASK >> 32 == 0x00000000);
+        wide::u32x4::new([
+            0x80008000,              // CP and Durability
+            0x80000000,              // Quality
+            0x80000000,              // Unreliable quality
+            EFFECTS_KEY_MASK as u32, // Effects
+        ])
+    };
 
     /// `A` dominates `B` if every member of `A` is geq the corresponding member in `B`.
     fn dominates(&self, other: &Self) -> bool {
@@ -57,7 +66,7 @@ impl From<&SimulationState> for Value {
             (u32::from(state.cp) << 16) + u32::from(state.durability),
             state.quality,
             state.quality + state.unreliable_quality,
-            state.effects.into_bits() & EFFECTS_VALUE_MASK,
+            (state.effects.into_bits() & EFFECTS_VALUE_MASK) as u32,
         ]))
     }
 }

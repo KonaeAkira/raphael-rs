@@ -11,6 +11,7 @@ const SETTINGS: Settings = Settings {
     allowed_actions: ActionMask::all(),
     adversarial: false,
     backload_progress: false,
+    stellar_steady_hand_charges: 0,
 };
 
 /// Returns the 4 primary stats of a state:
@@ -44,4 +45,60 @@ fn test_trained_perfection() {
         .use_action(Action::Observe, Condition::Normal, &SETTINGS)
         .unwrap();
     assert_eq!(state.effects.trained_perfection_active(), true);
+}
+
+#[test]
+fn test_stellar_steady_hand() {
+    let mut state = SimulationState {
+        effects: Effects::new().with_stellar_steady_hand(3),
+        ..SimulationState::new(&SETTINGS)
+    };
+    // Test that the duration of Stellar Steady Hand decreases after every action.
+    while state.effects.stellar_steady_hand() > 0 {
+        let new_state = state
+            .use_action(Action::Observe, Condition::Normal, &SETTINGS)
+            .unwrap();
+        assert_eq!(
+            new_state.effects.stellar_steady_hand(),
+            state.effects.stellar_steady_hand() - 1
+        );
+        state = new_state;
+    }
+}
+
+#[test]
+fn test_expedience() {
+    let initial_state = SimulationState {
+        effects: Effects::new()
+            .with_expedience(true)
+            .with_heart_and_soul_available(true),
+        ..SimulationState::new(&SETTINGS)
+    };
+    // Expedience goes away after using an action.
+    let state = initial_state
+        .use_action(Action::BasicSynthesis, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(state.effects.expedience(), false);
+    // Expedience effect doesn't wear off when using an action that doesn't tick effects
+    // such as Heart and Soul.
+    let state = initial_state
+        .use_action(Action::HeartAndSoul, Condition::Normal, &SETTINGS)
+        .unwrap();
+    assert_eq!(state.effects.expedience(), true);
+}
+
+#[test]
+/// It's possible to use actions that do not increase step count without invalidating
+/// the synthesis begin requirement.
+fn test_synthesis_begin() {
+    let state = SimulationState::from_macro(
+        &SETTINGS,
+        &[
+            Action::QuickInnovation,
+            Action::HeartAndSoul,
+            Action::MuscleMemory,
+        ],
+    )
+    .unwrap();
+    assert_eq!(state.effects.muscle_memory(), 5);
 }

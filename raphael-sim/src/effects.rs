@@ -1,6 +1,6 @@
 use crate::{Combo, Settings};
 
-#[bitfield_struct::bitfield(u32, default = false)]
+#[bitfield_struct::bitfield(u64, default = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Effects {
     #[bits(4)]
@@ -30,6 +30,19 @@ pub struct Effects {
 
     #[bits(2)]
     pub combo: Combo,
+
+    #[bits(2)]
+    /// Remaining usages of the Stellar Steady Hand action.
+    pub stellar_steady_hand_charges: u8,
+    #[bits(2)]
+    /// Remaining duration of the effect from the Stellar Steady Hand action.
+    pub stellar_steady_hand: u8,
+
+    /// Combo effect from Hasty Touch that enables usage of Daring Touch.
+    pub expedience: bool,
+
+    #[bits(27)]
+    pub _padding: u32,
 }
 
 impl Effects {
@@ -51,6 +64,7 @@ impl Effects {
                 settings.is_action_allowed::<crate::actions::QuickInnovation>(),
             )
             .with_combo(Combo::SynthesisBegin)
+            .with_stellar_steady_hand_charges(settings.stellar_steady_hand_charges)
     }
 
     pub(crate) const fn progress_modifier(self) -> u32 {
@@ -97,20 +111,23 @@ impl Effects {
             .with_inner_quiet(0)
             .with_innovation(0)
             .with_great_strides(0)
+            .with_expedience(false)
             .with_quick_innovation_available(false)
     }
 }
 
-const EFFECTS_BIT_0: u32 = Effects::new()
+const EFFECTS_BIT_0: u64 = Effects::new()
     .with_waste_not(1)
     .with_innovation(1)
     .with_veneration(1)
     .with_great_strides(1)
     .with_muscle_memory(1)
     .with_manipulation(1)
+    .with_stellar_steady_hand(1)
+    .with_expedience(true)
     .into_bits();
 
-const EFFECTS_BIT_1: u32 = Effects::new()
+const EFFECTS_BIT_1: u64 = Effects::new()
     .with_special_quality_state(SpecialQualityState::AdversarialGuard)
     .with_waste_not(2)
     .with_innovation(2)
@@ -118,9 +135,10 @@ const EFFECTS_BIT_1: u32 = Effects::new()
     .with_great_strides(2)
     .with_muscle_memory(2)
     .with_manipulation(2)
+    .with_stellar_steady_hand(2)
     .into_bits();
 
-const EFFECTS_BIT_2: u32 = Effects::new()
+const EFFECTS_BIT_2: u64 = Effects::new()
     .with_waste_not(4)
     .with_innovation(4)
     .with_veneration(4)
@@ -128,7 +146,7 @@ const EFFECTS_BIT_2: u32 = Effects::new()
     .with_manipulation(4)
     .into_bits();
 
-const EFFECTS_BIT_3: u32 = Effects::new()
+const EFFECTS_BIT_3: u64 = Effects::new()
     .with_waste_not(8)
     .with_manipulation(8)
     .into_bits();

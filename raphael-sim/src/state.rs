@@ -24,7 +24,7 @@ impl SimulationState {
         }
     }
 
-    pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, &'static str> {
+    pub fn from_macro(settings: &Settings, actions: &[Action]) -> Result<Self, ActionError> {
         let mut state = Self::new(settings);
         for action in actions {
             state = state.use_action(*action, Condition::Normal, settings)?;
@@ -35,7 +35,7 @@ impl SimulationState {
     pub fn from_macro_continue_on_error(
         settings: &Settings,
         actions: &[Action],
-    ) -> (Self, Vec<Result<(), &'static str>>) {
+    ) -> (Self, Vec<Result<(), ActionError>>) {
         let mut state = Self::new(settings);
         let mut errors = Vec::new();
         for action in actions {
@@ -61,15 +61,15 @@ impl SimulationState {
         &self,
         settings: &Settings,
         condition: Condition,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ActionError> {
         if settings.job_level < A::LEVEL_REQUIREMENT {
-            Err("Level not high enough")
+            Err(ActionError::InsufficientLevels)
         } else if !settings.allowed_actions.has_mask(A::ACTION_MASK) {
-            Err("Action disabled by action mask")
+            Err(ActionError::Disabled)
         } else if self.is_final(settings) {
-            Err("State is final")
+            Err(ActionError::StateIsFinal)
         } else if A::cp_cost(self, settings, condition) > self.cp {
-            Err("Not enough CP")
+            Err(ActionError::InsufficientCP)
         } else {
             Ok(())
         }
@@ -79,7 +79,7 @@ impl SimulationState {
         &self,
         settings: &Settings,
         condition: Condition,
-    ) -> Result<Self, &'static str> {
+    ) -> Result<Self, ActionError> {
         self.check_common_preconditions::<A>(settings, condition)?;
         A::precondition(self, settings, condition)?;
 
@@ -109,7 +109,7 @@ impl SimulationState {
                     state.unreliable_quality =
                         quality_diff.saturating_sub(state.unreliable_quality);
                 }
-            } else if A::TICK_EFFECTS && !guard_active {
+            } else if A::INCREASES_STEP_COUNT && !guard_active {
                 state.unreliable_quality = 0;
             }
         } else {
@@ -128,15 +128,25 @@ impl SimulationState {
             return Ok(state);
         }
 
+        let is_synthesis_begin = state.effects.combo() == Combo::SynthesisBegin;
         state.effects =
             Effects::from_bits(state.effects.into_bits() & A::EFFECT_RESET_MASK.into_bits());
+        if !A::INCREASES_STEP_COUNT && is_synthesis_begin {
+            // SynthesisBegin is implemented as a combo but it is in reality not a combo.
+            // Actions that require the SynthesisBegin "combo" actually check the step count,
+            // which does not increase when using actions such as QuickInnovation.
+            state.effects.set_combo(Combo::SynthesisBegin);
+        }
+
         A::transform(&mut state, settings, condition);
-        if A::TICK_EFFECTS {
+
+        if A::INCREASES_STEP_COUNT {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
             state.effects = state.effects.tick_down();
         }
+
         state.effects =
             Effects::from_bits(state.effects.into_bits() | A::EFFECT_SET_MASK.into_bits());
 
@@ -157,7 +167,7 @@ impl SimulationState {
         action: Action,
         condition: Condition,
         settings: &Settings,
-    ) -> Result<Self, &'static str> {
+    ) -> Result<Self, ActionError> {
         match action {
             Action::BasicSynthesis => self.use_action_impl::<BasicSynthesis>(settings, condition),
             Action::BasicTouch => self.use_action_impl::<BasicTouch>(settings, condition),
@@ -206,6 +216,12 @@ impl SimulationState {
             Action::TrainedPerfection => {
                 self.use_action_impl::<TrainedPerfection>(settings, condition)
             }
+            Action::StellarSteadyHand => {
+                self.use_action_impl::<StellarSteadyHand>(settings, condition)
+            }
+            Action::RapidSynthesis => self.use_action_impl::<RapidSynthesis>(settings, condition),
+            Action::HastyTouch => self.use_action_impl::<HastyTouch>(settings, condition),
+            Action::DaringTouch => self.use_action_impl::<DaringTouch>(settings, condition),
         }
     }
 }

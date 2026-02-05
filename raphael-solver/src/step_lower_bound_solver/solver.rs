@@ -7,10 +7,7 @@ use crate::{
     SolverException, SolverSettings,
     actions::{FULL_SEARCH_ACTIONS, use_action_combo},
     macros::internal_error,
-    utils::{
-        self, ParetoFrontBuilder, ParetoValue, compute_iq_quality_lut,
-        largest_single_action_progress_increase,
-    },
+    utils::{self, ParetoFrontBuilder, ParetoValue, compute_iq_quality_lut},
 };
 
 use raphael_sim::*;
@@ -60,7 +57,9 @@ impl StepLbSolver {
                 settings,
                 interrupt_signal,
                 iq_quality_lut,
-                largest_progress_increase: largest_single_action_progress_increase(&settings),
+                largest_progress_increase: utils::maximum_muscle_memory_utilization(
+                    &settings.simulator_settings,
+                ),
             },
             solved_states: SolvedStates::default(),
             num_states_solved_on_shards: 0,
