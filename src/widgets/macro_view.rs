@@ -242,11 +242,7 @@ impl MacroTextBox {
 
 impl Widget for MacroTextBox {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        ui.add(
-            super::MultilineMonospace::new(self.text)
-                .scrollable([true, false])
-                .id_salt(self.id),
-        )
+        ui.add(super::MultilineMonospace::new(self.id, self.text).scrollable([true, false]))
     }
 }
 
@@ -273,26 +269,6 @@ impl Widget for MacroView<'_> {
         if config_menu_is_visible(ui.ctx()) {
             draw_config_menu(ui.ctx(), config, locale);
         }
-
-        ui.ctx().data_mut(|d| {
-            let actions_hash_id = egui::Id::new("ACTIONS_HASH");
-            let current_actions_hash =
-                egui::ahash::RandomState::with_seeds(1, 2, 3, 4).hash_one(&self.actions);
-            if let Some(stored_hash) = d.get_temp::<u64>(actions_hash_id)
-                && stored_hash != current_actions_hash
-            {
-                for index in 0..=4 {
-                    let macro_text_id = egui::Id::new(("MACRO_TEXT", index));
-                    if let Some(ui_id) = d.get_temp::<egui::Id>(macro_text_id) {
-                        // This has to match the exact sequence of hashes `egui::ScrollArea` does to work
-                        let id_salt = egui::Id::new(macro_text_id);
-                        let id = ui_id.with(id_salt);
-                        d.remove::<egui::scroll_area::State>(id);
-                    }
-                }
-            }
-            d.insert_temp(actions_hash_id, current_actions_hash);
-        });
 
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);

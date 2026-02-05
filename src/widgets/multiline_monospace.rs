@@ -1,9 +1,9 @@
 /// Copyable multiline monospace text box
 pub struct MultilineMonospace {
+    id: egui::Id,
     text: String,
     max_height: f32,
     scroll_direction_enabled: egui::Vec2b,
-    id_salt: Option<egui::Id>,
 }
 
 struct CopyTextButton<'a> {
@@ -33,12 +33,12 @@ impl egui::Widget for CopyTextButton<'_> {
 }
 
 impl MultilineMonospace {
-    pub fn new(text: String) -> Self {
+    pub fn new(id: egui::Id, text: String) -> Self {
         Self {
+            id,
             text,
             max_height: f32::INFINITY,
             scroll_direction_enabled: egui::Vec2b::default(),
-            id_salt: None,
         }
     }
 
@@ -51,23 +51,26 @@ impl MultilineMonospace {
         self.scroll_direction_enabled = direction_enabled.into();
         self
     }
-
-    pub fn id_salt(mut self, id_salt: egui::Id) -> Self {
-        self.id_salt = Some(id_salt);
-        self
-    }
 }
 
 impl egui::Widget for MultilineMonospace {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let text_changed = ui.ctx().data_mut(|mem| {
+            let previous_text_mem_id = self.id.with("previous_text");
+            let text_changed = mem
+                .get_temp::<String>(previous_text_mem_id)
+                .is_some_and(|previous_text| previous_text != self.text);
+            mem.insert_temp(previous_text_mem_id, self.text.clone());
+            text_changed
+        });
         ui.group(|ui| {
             ui.set_max_size(ui.available_size());
             ui.horizontal_top(|ui| {
                 let mut scroll_area = egui::ScrollArea::new(self.scroll_direction_enabled)
                     .max_height(self.max_height);
-                if let Some(id_salt) = self.id_salt {
-                    scroll_area = scroll_area.id_salt(id_salt);
-                    ui.ctx().data_mut(|d| d.insert_temp(id_salt, ui.id()));
+                if text_changed {
+                    // Reset scroll if text has changed.
+                    scroll_area = scroll_area.scroll_offset([0.0, 0.0].into());
                 }
                 scroll_area.show(ui, |ui| {
                     ui.monospace(&self.text);

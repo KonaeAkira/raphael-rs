@@ -151,7 +151,7 @@ impl eframe::App for MacroSolverApp {
                         ui.label(egui::RichText::new(t!(locale, "Internal Solver Error")).strong());
                         ui.separator();
                         ui.add(
-                            MultilineMonospace::new(message)
+                            MultilineMonospace::new("SOLVER_ERROR".into(), message)
                                 .max_height(320.0)
                                 .scrollable(true),
                         );
