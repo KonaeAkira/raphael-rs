@@ -684,4 +684,63 @@ mod tests {
             /ac "Basic Synthesis" <wait.3>"#]]
         .assert_eq(&macros[1]);
     }
+
+    #[test]
+    fn custom_formatters() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.split_macro = true;
+        config.intro_enabled = true;
+        config.intro_config.default_intro = false;
+        config.intro_config.custom_intro_format =
+            "/echo food={food}, potion={potion}, stats={craftsmanship} {control} {cp} {level} <wait.5>".to_string();
+        config.notification_enabled = true;
+        config.notification_config.default_notification = false;
+        config.notification_config.custom_notification_format =
+            "/echo Crafting {item_name} in progress: {index}/{max_index} <se.1>".to_string();
+        config.notification_config.different_last_notification = true;
+        config.notification_config.custom_last_notification_format =
+            "/echo Crafting {item_name} done: {index}/{max_index} <se.1>".to_string();
+        let actions = [
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+        ];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 2);
+        expect_test::expect![[r#"
+            /echo food=Test Food, potion=Test Potion, stats=4900 4800 620 100 <wait.5>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /echo Crafting Test Item in progress: 1/2 <se.1>"#]]
+        .assert_eq(&macros[0]);
+        expect_test::expect![[r#"
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /echo Crafting Test Item done: 2/2 <se.1>"#]]
+        .assert_eq(&macros[1]);
+    }
 }
