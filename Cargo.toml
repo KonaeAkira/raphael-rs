@@ -83,6 +83,10 @@ console_error_panic_hook = "0.1.7"
 web-sys = "0.3"
 eframe = { version = "0.33.2", features = ["persistence"] }
 
+[dev-dependencies]
+expect-test = "1.5.1"
+strum = "0.27"
+
 [profile.release]
 opt-level = 3
 lto = "fat"

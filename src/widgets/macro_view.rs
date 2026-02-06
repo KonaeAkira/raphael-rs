@@ -162,7 +162,9 @@ impl Widget for MacroView<'_> {
                         egui::os::OperatingSystem::Mac => "\n",
                         _ => "\r\n",
                     };
-                    let macros = create_macros(self.app_context, self.actions, newline);
+                    let context = MacroContextData::from_app_context(self.app_context);
+                    let config = &self.app_context.macro_view_config;
+                    let macros = create_macros(&context, config, self.actions, newline);
                     for (macro_idx, macro_text) in macros.into_iter().enumerate() {
                         let id = egui::Id::new("MACRO_TEXT_BOX").with(macro_idx);
                         ui.add(MultilineMonospace::new(id, macro_text).scrollable([true, false]));
@@ -317,9 +319,48 @@ fn draw_macro_intro_subconfig(ui: &mut egui::Ui, intro_cfg: &mut MacroIntroConfi
     });
 }
 
-fn create_macros(app_context: &AppContext, actions: &[Action], newline: &str) -> Vec<String> {
-    let config = &app_context.macro_view_config;
+/// Extra data from the app context that is needed to create macros.
+struct MacroContextData {
+    locale: Locale,
+    item_name: String,
+    food_name: String,
+    potion_name: String,
+    crafter_stats: raphael_data::CrafterStats,
+}
 
+impl MacroContextData {
+    fn from_app_context(app_context: &AppContext) -> Self {
+        let locale = app_context.locale;
+        let item_name = get_item_name(app_context.recipe_config.recipe.item_id, false, locale)
+            .unwrap_or(t!(locale, "Unknown item").to_owned());
+        let food_name = match app_context.selected_food {
+            Some(item) => {
+                get_item_name(item.item_id, item.hq, locale).unwrap_or("Unknown item".to_owned())
+            }
+            None => t!(locale, "None").to_owned(),
+        };
+        let potion_name = match app_context.selected_potion {
+            Some(item) => {
+                get_item_name(item.item_id, item.hq, locale).unwrap_or("Unknown item".to_owned())
+            }
+            None => t!(locale, "None").to_owned(),
+        };
+        Self {
+            locale,
+            item_name,
+            food_name,
+            potion_name,
+            crafter_stats: *app_context.active_stats(),
+        }
+    }
+}
+
+fn create_macros(
+    context: &MacroContextData,
+    config: &MacroViewConfig,
+    actions: &[Action],
+    newline: &str,
+) -> Vec<String> {
     let mut lines = VecDeque::new();
 
     if config.intro_enabled {
@@ -334,14 +375,11 @@ fn create_macros(app_context: &AppContext, actions: &[Action], newline: &str) ->
         if config.include_delay {
             lines.push_back(format!(
                 "/ac \"{}\" <wait.{}>",
-                macro_name(*action, app_context.locale),
+                macro_name(*action, context.locale),
                 action.time_cost() + config.extra_delay
             ));
         } else {
-            lines.push_back(format!(
-                "/ac \"{}\"",
-                macro_name(*action, app_context.locale)
-            ));
+            lines.push_back(format!("/ac \"{}\"", macro_name(*action, context.locale)));
         }
     }
 
@@ -380,37 +418,270 @@ fn create_macros(app_context: &AppContext, actions: &[Action], newline: &str) ->
         }
     }
 
-    let locale = app_context.locale;
-    let item_name = get_item_name(app_context.recipe_config.recipe.item_id, false, locale)
-        .unwrap_or(t!(locale, "Unknown item").to_owned());
-    let food_name = match app_context.selected_food {
-        Some(item) => {
-            get_item_name(item.item_id, item.hq, locale).unwrap_or("Unknown item".to_owned())
-        }
-        None => t!(locale, "None").to_owned(),
-    };
-    let potion_name = match app_context.selected_potion {
-        Some(item) => {
-            get_item_name(item.item_id, item.hq, locale).unwrap_or("Unknown item".to_owned())
-        }
-        None => t!(locale, "None").to_owned(),
-    };
     let max_index = macros.len().to_string();
     for (macro_idx, macro_text) in macros.iter_mut().enumerate() {
         *macro_text = macro_text
             .replace("{index}", &(macro_idx + 1).to_string())
             .replace("{max_index}", &max_index)
-            .replace("{item_name}", &item_name)
-            .replace("{food}", &food_name)
-            .replace("{potion}", &potion_name)
+            .replace("{item_name}", &context.item_name)
+            .replace("{food}", &context.food_name)
+            .replace("{potion}", &context.potion_name)
             .replace(
                 "{craftsmanship}",
-                &app_context.active_stats().craftsmanship.to_string(),
+                &context.crafter_stats.craftsmanship.to_string(),
             )
-            .replace("{control}", &app_context.active_stats().control.to_string())
-            .replace("{cp}", &app_context.active_stats().cp.to_string())
-            .replace("{level}", &app_context.active_stats().level.to_string());
+            .replace("{control}", &context.crafter_stats.control.to_string())
+            .replace("{cp}", &context.crafter_stats.cp.to_string())
+            .replace("{level}", &context.crafter_stats.level.to_string());
     }
 
     macros
+}
+
+#[cfg(test)]
+mod tests {
+    use strum::IntoEnumIterator;
+
+    use super::*;
+
+    fn default_context() -> MacroContextData {
+        MacroContextData {
+            locale: Locale::EN,
+            item_name: "Test Item".to_string(),
+            food_name: "Test Food".to_string(),
+            potion_name: "Test Potion".to_string(),
+            crafter_stats: raphael_data::CrafterStats::default(),
+        }
+    }
+
+    #[test]
+    fn empty_macro() {
+        let context = default_context();
+        let config = MacroViewConfig::default();
+        let macros = create_macros(&context, &config, &[], "\n");
+        assert!(macros.is_empty());
+    }
+
+    #[test]
+    /// This case actually doesn't happen in practice because `create_macros` is not called
+    /// when there are no actions. This test only exists to track current behavior.
+    fn empty_macro_with_lock_and_notification() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.intro_enabled = true;
+        config.notification_enabled = true;
+        let macros = create_macros(&context, &config, &[], "\n");
+        assert_eq!(macros.len(), 1);
+        expect_test::expect![[r#"
+            /macrolock
+            /echo Macro finished (1/1) <se.1>"#]]
+        .assert_eq(&macros[0]);
+    }
+
+    #[test]
+    /// This test serves two purposes:
+    /// - Test the behavior of the default macro config.
+    /// - Test the stringification for all actions.
+    fn default_settings_all_actions() {
+        let context = default_context();
+        let config = MacroViewConfig::default();
+        let actions = Action::iter().collect::<Vec<_>>();
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 3);
+        expect_test::expect![[r#"
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Touch" <wait.3>
+            /ac "Master's Mend" <wait.3>
+            /ac "Observe" <wait.3>
+            /ac "Tricks of the Trade" <wait.3>
+            /ac "Waste Not" <wait.2>
+            /ac "Veneration" <wait.2>
+            /ac "Standard Touch" <wait.3>
+            /ac "Great Strides" <wait.2>
+            /ac "Innovation" <wait.2>
+            /ac "Waste Not II" <wait.2>
+            /ac "Byregot's Blessing" <wait.3>
+            /ac "Precise Touch" <wait.3>
+            /ac "Muscle Memory" <wait.3>
+            /ac "Careful Synthesis" <wait.3>"#]]
+        .assert_eq(&macros[0]);
+        expect_test::expect![[r#"
+            /ac "Manipulation" <wait.2>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Advanced Touch" <wait.3>
+            /ac "Reflect" <wait.3>
+            /ac "Preparatory Touch" <wait.3>
+            /ac "Groundwork" <wait.3>
+            /ac "Delicate Synthesis" <wait.3>
+            /ac "Intensive Synthesis" <wait.3>
+            /ac "Trained Eye" <wait.3>
+            /ac "Heart and Soul" <wait.3>
+            /ac "Prudent Synthesis" <wait.3>
+            /ac "Trained Finesse" <wait.3>
+            /ac "Refined Touch" <wait.3>
+            /ac "Quick Innovation" <wait.3>
+            /ac "Immaculate Mend" <wait.3>"#]]
+        .assert_eq(&macros[1]);
+        expect_test::expect![[r#"
+            /ac "Trained Perfection" <wait.3>
+            /ac "Duty Action II" <wait.2>
+            /ac "Rapid Synthesis" <wait.3>
+            /ac "Hasty Touch" <wait.3>
+            /ac "Hasty Touch" <wait.3>"#]]
+        .assert_eq(&macros[2]);
+    }
+
+    #[test]
+    /// Test that the last notification is skipped when it would create a single-action macro.
+    fn skip_last_notification() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.split_macro = true;
+        config.notification_enabled = true;
+        config.notification_config.avoid_single_action_macro = true;
+        let actions = [
+            Action::MuscleMemory,
+            Action::WasteNot,
+            Action::Veneration,
+            Action::Groundwork,
+            Action::Groundwork,
+            Action::Groundwork,
+            Action::PrudentSynthesis,
+            Action::MasterMend,
+            Action::PrudentTouch,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::PrudentTouch,
+            Action::PrudentTouch,
+            Action::PrudentTouch,
+            Action::MasterMend,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::BasicTouch,
+            Action::StandardTouch,
+            Action::AdvancedTouch,
+            Action::GreatStrides,
+            Action::Innovation,
+            Action::Observe,
+            Action::AdvancedTouch,
+            Action::GreatStrides,
+            Action::ByregotsBlessing,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+        ];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 2);
+        expect_test::expect![[r#"
+            /ac "Muscle Memory" <wait.3>
+            /ac "Waste Not" <wait.2>
+            /ac "Veneration" <wait.2>
+            /ac "Groundwork" <wait.3>
+            /ac "Groundwork" <wait.3>
+            /ac "Groundwork" <wait.3>
+            /ac "Prudent Synthesis" <wait.3>
+            /ac "Master's Mend" <wait.3>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Innovation" <wait.2>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Prudent Touch" <wait.3>
+            /echo Macro finished (1/2) <se.1>"#]]
+        .assert_eq(&macros[0]);
+        expect_test::expect![[r#"
+            /ac "Master's Mend" <wait.3>
+            /ac "Innovation" <wait.2>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Basic Touch" <wait.3>
+            /ac "Standard Touch" <wait.3>
+            /ac "Advanced Touch" <wait.3>
+            /ac "Great Strides" <wait.2>
+            /ac "Innovation" <wait.2>
+            /ac "Observe" <wait.3>
+            /ac "Advanced Touch" <wait.3>
+            /ac "Great Strides" <wait.2>
+            /ac "Byregot's Blessing" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>"#]]
+        .assert_eq(&macros[1]);
+    }
+
+    #[test]
+    /// Test that the last notification skip behavior still works when macro lock is enabled.
+    fn skip_last_notification_with_macro_lock() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.split_macro = true;
+        config.intro_enabled = true;
+        config.notification_enabled = true;
+        config.notification_config.avoid_single_action_macro = true;
+        let actions = [
+            Action::MuscleMemory,
+            Action::WasteNot,
+            Action::Veneration,
+            Action::Groundwork,
+            Action::Groundwork,
+            Action::Groundwork,
+            Action::PrudentSynthesis,
+            Action::MasterMend,
+            Action::PrudentTouch,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::PrudentTouch,
+            Action::PrudentTouch,
+            Action::PrudentTouch,
+            Action::MasterMend,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::BasicTouch,
+            Action::StandardTouch,
+            Action::AdvancedTouch,
+            Action::GreatStrides,
+            Action::Innovation,
+            Action::Observe,
+            Action::AdvancedTouch,
+            Action::GreatStrides,
+            Action::ByregotsBlessing,
+            Action::BasicSynthesis,
+            Action::BasicSynthesis,
+        ];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 2);
+        expect_test::expect![[r#"
+            /macrolock
+            /ac "Muscle Memory" <wait.3>
+            /ac "Waste Not" <wait.2>
+            /ac "Veneration" <wait.2>
+            /ac "Groundwork" <wait.3>
+            /ac "Groundwork" <wait.3>
+            /ac "Groundwork" <wait.3>
+            /ac "Prudent Synthesis" <wait.3>
+            /ac "Master's Mend" <wait.3>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Innovation" <wait.2>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Prudent Touch" <wait.3>
+            /echo Macro finished (1/2) <se.1>"#]]
+        .assert_eq(&macros[0]);
+        expect_test::expect![[r#"
+            /ac "Prudent Touch" <wait.3>
+            /ac "Master's Mend" <wait.3>
+            /ac "Innovation" <wait.2>
+            /ac "Prudent Touch" <wait.3>
+            /ac "Basic Touch" <wait.3>
+            /ac "Standard Touch" <wait.3>
+            /ac "Advanced Touch" <wait.3>
+            /ac "Great Strides" <wait.2>
+            /ac "Innovation" <wait.2>
+            /ac "Observe" <wait.3>
+            /ac "Advanced Touch" <wait.3>
+            /ac "Great Strides" <wait.2>
+            /ac "Byregot's Blessing" <wait.3>
+            /ac "Basic Synthesis" <wait.3>
+            /ac "Basic Synthesis" <wait.3>"#]]
+        .assert_eq(&macros[1]);
+    }
 }
