@@ -327,7 +327,7 @@ fn create_macros(app_context: &AppContext, actions: &[Action], newline: &str) ->
             lines.push_back("/macrolock".to_string());
         } else {
             lines.push_back(config.intro_config.custom_intro_format.clone());
-        };
+        }
     }
 
     for action in actions {
@@ -352,7 +352,7 @@ fn create_macros(app_context: &AppContext, actions: &[Action], newline: &str) ->
     while let Some(line) = lines.pop_front() {
         current_macro.push(line);
         if config.notification_enabled
-            && current_macro.len() + 1 <= max_macro_len // Has place for notification.
+            && current_macro.len() < max_macro_len // Has place for notification.
             && (current_macro.len() + 1 == max_macro_len || lines.is_empty()) // Is end of macro.
             && !(config.notification_config.avoid_single_action_macro && lines.len() == 1)
         {
