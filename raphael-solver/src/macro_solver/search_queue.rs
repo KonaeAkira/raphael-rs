@@ -1,7 +1,5 @@
 use std::collections::{BTreeSet, hash_map::Entry};
 
-#[cfg(target_pointer_width = "32")]
-use raphael_sim::Action;
 use raphael_sim::SimulationState;
 use rustc_hash::FxHashMap;
 
