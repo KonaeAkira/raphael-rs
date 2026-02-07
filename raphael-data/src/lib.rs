@@ -72,6 +72,7 @@ pub struct Recipe {
 #[derive(Debug)]
 pub struct StellarMission {
     pub job_id: u8,
+    pub stellar_steady_hand_charges: u8,
     pub recipe_ids: &'static [u32],
 }
 
