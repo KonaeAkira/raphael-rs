@@ -20,7 +20,7 @@ impl ActionCombo {
     pub const fn into_bits(self) -> u8 {
         match self {
             Self::Single(action) => action.into_bits(),
-            Self::TricksOfTheTrade => Action::COUNT as u8 + 0,
+            Self::TricksOfTheTrade => Action::COUNT as u8,
             Self::IntensiveSynthesis => Action::COUNT as u8 + 1,
             Self::PreciseTouch => Action::COUNT as u8 + 2,
             Self::StandardTouch => Action::COUNT as u8 + 3,
