@@ -1,3 +1,5 @@
+use strum_macros::{EnumCount, EnumIter};
+
 use crate::{ActionMask, Condition, Effects, Settings, SimulationState};
 
 const DEFAULT_EFFECT_RESET_MASK: Effects = {
@@ -1195,9 +1197,12 @@ pub enum ActionError {
     SpecialConditionNotMet,
 }
 
-#[derive(strum_macros::EnumIter, Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[bitfield_struct::bitenum]
+#[repr(u8)]
+#[derive(EnumIter, EnumCount, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Action {
+    #[fallback]
     BasicSynthesis,
     BasicTouch,
     MasterMend,

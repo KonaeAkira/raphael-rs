@@ -1,5 +1,7 @@
 use std::collections::{BTreeSet, hash_map::Entry};
 
+#[cfg(target_pointer_width = "32")]
+use raphael_sim::Action;
 use raphael_sim::SimulationState;
 use rustc_hash::FxHashMap;
 
@@ -54,9 +56,21 @@ impl std::cmp::Ord for SearchScore {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[cfg(target_pointer_width = "32")]
+#[bitfield_struct::bitfield(u32)]
 struct CandidateNode {
+    #[bits(26)]
     parent_idx: usize,
+    #[bits(6)]
+    action: ActionCombo,
+}
+
+#[cfg(target_pointer_width = "64")]
+#[bitfield_struct::bitfield(u64)]
+struct CandidateNode {
+    #[bits(58)]
+    parent_idx: usize,
+    #[bits(6)]
     action: ActionCombo,
 }
 
@@ -119,7 +133,9 @@ impl SearchQueue {
     }
 
     pub fn push(&mut self, score: SearchScore, action: ActionCombo, parent_idx: usize) {
-        let node = CandidateNode { parent_idx, action };
+        let node = CandidateNode::new()
+            .with_parent_idx(parent_idx)
+            .with_action(action);
         match self.batches.entry(score) {
             Entry::Occupied(occupied_entry) => {
                 occupied_entry.into_mut().push(node);
@@ -159,12 +175,16 @@ impl SearchQueue {
             let mut batch = batch
                 .into_iter()
                 .map(|candidate_node| {
-                    let parent_node_state = *self.visited_nodes[candidate_node.parent_idx].state();
-                    let candidate_node_state =
-                        use_action_combo(&self.settings, parent_node_state, candidate_node.action);
+                    let parent_node_state =
+                        *self.visited_nodes[candidate_node.parent_idx()].state();
+                    let candidate_node_state = use_action_combo(
+                        &self.settings,
+                        parent_node_state,
+                        candidate_node.action(),
+                    );
                     VisitedNode::Intermediate {
-                        parent_idx: candidate_node.parent_idx,
-                        action: candidate_node.action,
+                        parent_idx: candidate_node.parent_idx(),
+                        action: candidate_node.action(),
                         state: candidate_node_state.unwrap(),
                     }
                 })
