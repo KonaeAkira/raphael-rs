@@ -83,6 +83,25 @@ fn export_stellar_missions(stellar_missions: &[StellarMission]) {
     log::info!("Generated \"{}\"", path.display());
 }
 
+fn export_recipe_to_stellar_mission_links(stellar_missions: &[StellarMission]) {
+    let path =
+        std::path::absolute("./raphael-data/data/recipe_to_stellar_mission_link.rs").unwrap();
+    let mut links = Vec::new();
+    for stellar_mission in stellar_missions {
+        for recipe_id in &stellar_mission.recipe_ids {
+            links.push((*recipe_id, stellar_mission.id));
+        }
+    }
+    links.sort();
+    let mut writer = BufWriter::new(File::create(&path).unwrap());
+    writeln!(writer, "nci_array! {{").unwrap();
+    for link in links {
+        writeln!(writer, "{} => {},", link.0, link.1,).unwrap();
+    }
+    writeln!(writer, "}}").unwrap();
+    log::info!("Generated \"{}\"", path.display());
+}
+
 fn export_item_names(item_names: &[ItemName], lang: &str) {
     let path = std::path::absolute(format!("./raphael-data/data/item_names_{lang}.rs")).unwrap();
     let mut writer = BufWriter::new(File::create(&path).unwrap());
@@ -244,6 +263,7 @@ async fn main() {
     export_potions(&potions);
     export_items(&items);
     export_stellar_missions(&stellar_missions);
+    export_recipe_to_stellar_mission_links(&stellar_missions);
 
     export_item_names(&item_names_en, Lang::EN.shortcode());
     export_item_names(&item_names_de, Lang::DE.shortcode());

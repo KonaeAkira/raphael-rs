@@ -82,6 +82,8 @@ pub const RECIPES: NciArray<u32, Recipe> = include!("../data/recipes.rs");
 pub const ITEMS: NciArray<u32, Item> = include!("../data/items.rs");
 
 pub const STELLAR_MISSIONS: NciArray<u32, StellarMission> = include!("../data/stellar_missions.rs");
+pub const RECIPE_TO_STELLAR_MISSION_LINKS: NciArray<u32, u32> =
+    include!("../data/recipe_to_stellar_mission_link.rs");
 
 pub fn get_game_settings(
     recipe: Recipe,
