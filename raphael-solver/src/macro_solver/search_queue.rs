@@ -132,9 +132,14 @@ impl SearchQueue {
         }
     }
 
-    pub fn push(&mut self, score: SearchScore, action: ActionCombo, parent_idx: usize) {
+    pub fn push(
+        &mut self,
+        score: SearchScore,
+        action: ActionCombo,
+        parent_idx: usize,
+    ) -> Result<(), ()> {
         let node = CandidateNode::new()
-            .with_parent_idx(parent_idx)
+            .with_parent_idx_checked(parent_idx)?
             .with_action(action);
         match self.batches.entry(score) {
             Entry::Occupied(occupied_entry) => {
@@ -146,6 +151,7 @@ impl SearchQueue {
             }
         }
         self.num_inserted_nodes += 1;
+        Ok(())
     }
 
     pub fn drop_nodes_below_score(&mut self, min_score: SearchScore) {
