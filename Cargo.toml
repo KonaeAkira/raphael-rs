@@ -19,7 +19,6 @@ clippy.default_trait_access = "warn"
 clippy.explicit_iter_loop = "warn"
 clippy.unnecessary_semicolon = "warn"
 clippy.redundant_closure_for_method_calls = "warn"
-clippy.option_if_let_else = "warn"
 clippy.use_self = "warn"
 
 [workspace.dependencies]
@@ -83,6 +82,10 @@ wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.7"
 web-sys = "0.3"
 eframe = { version = "0.33.2", features = ["persistence"] }
+
+[dev-dependencies]
+expect-test = "1.5.1"
+strum = "0.27"
 
 [profile.release]
 opt-level = 3
