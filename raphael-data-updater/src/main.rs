@@ -62,7 +62,7 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
         if size == rows.len() {
             return rows;
         }
-        log::info!("\"{}\": total fetched: {}", T::SHEET, rows.len());
+        log::debug!("\"{}\": total fetched: {}", T::SHEET, rows.len());
     }
 }
 
@@ -75,7 +75,7 @@ fn export_rlvls(rlvls: &[RecipeLevel]) {
         writeln!(&mut writer, "{rlvl},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("rlvls exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry]) {
@@ -87,7 +87,7 @@ fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry
         writeln!(&mut writer, "{entry},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("Level adjust table exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_recipes(recipes: &[Recipe]) {
@@ -98,7 +98,7 @@ fn export_recipes(recipes: &[Recipe]) {
         writeln!(writer, "{} => {},", recipe.id, recipe,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("recipes exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_items(items: &[Item]) {
@@ -109,7 +109,7 @@ fn export_items(items: &[Item]) {
         writeln!(writer, "{} => {},", item.id, item,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("items exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_meals(consumables: &[Consumable]) {
@@ -120,7 +120,7 @@ fn export_meals(consumables: &[Consumable]) {
         writeln!(&mut writer, "{consumable},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("meals exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_potions(consumables: &[Consumable]) {
@@ -131,7 +131,7 @@ fn export_potions(consumables: &[Consumable]) {
         writeln!(&mut writer, "{consumable},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("potions exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_stellar_missions(stellar_missions: &[StellarMission]) {
@@ -142,7 +142,7 @@ fn export_stellar_missions(stellar_missions: &[StellarMission]) {
         writeln!(writer, "{} => {},", stellar_mission.id, stellar_mission,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("stellar missions exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_item_names(item_names: &[ItemName], lang: &str) {
@@ -153,7 +153,7 @@ fn export_item_names(item_names: &[ItemName], lang: &str) {
         writeln!(writer, "{} => {:?},", item_name.id, item_name.name,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("item names exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], lang: &str) {
@@ -172,7 +172,7 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
         .unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("stellar mission names exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 #[tokio::main]
