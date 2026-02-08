@@ -1,7 +1,7 @@
 use std::collections::HashSet;
-use std::io::Write;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 use std::time::Duration;
-use std::{fs::File, io::BufWriter};
 
 use raphael_data_updater::*;
 
