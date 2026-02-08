@@ -12,11 +12,22 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
         "tc" => "https://boilmaster-tc.augenfrosch.dev/api",
         _ => "https://v2.xivapi.com/api",
     };
+
     let client = reqwest::Client::new();
+    let get_response_text = async move |url: &str| -> Result<String, reqwest::Error> {
+        client
+            .get(url)
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await
+    };
+
     let mut rows = Vec::new();
     loop {
         let last_row_id = rows.last().map_or(0, |row: &T| row.row_id());
-        let query = format!(
+        let query_url = format!(
             "{api_endpoint}/sheet/{}?limit=1000&fields={}&after={}&language={}{}",
             T::SHEET,
             T::REQUIRED_FIELDS.join(","),
@@ -27,9 +38,9 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
 
         let mut remaining_attempts = 3;
         let mut retry_cooldown = Duration::from_secs(2);
-        let response = loop {
+        let response_text = loop {
             remaining_attempts -= 1;
-            match client.get(&query).send().await {
+            match get_response_text(&query_url).await {
                 Ok(response) => break response,
                 Err(error) => {
                     if remaining_attempts > 0 {
@@ -44,7 +55,7 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
             }
         };
 
-        let json = json::parse(&response.text().await.unwrap()).unwrap();
+        let json = json::parse(&response_text).unwrap();
 
         let size = rows.len();
         rows.extend(json["rows"].members().filter_map(T::from_json));
