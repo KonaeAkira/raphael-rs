@@ -6,15 +6,11 @@ use std::{fs::File, io::BufWriter};
 use raphael_data_updater::*;
 
 async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>) -> Vec<T> {
-    const XIV_API: &str = "https://v2.xivapi.com/api";
-    const BOILMASTER_CN: &str = "https://boilmaster-chs.augenfrosch.dev/api";
-    const BOILMASTER_KR: &str = "https://boilmaster-ko.augenfrosch.dev/api";
-    const BOILMASTER_TW: &str = "https://boilmaster-tc.augenfrosch.dev/api";
     let api_endpoint = match lang {
-        "chs" => BOILMASTER_CN,
-        "ko" => BOILMASTER_KR,
-        "tc" => BOILMASTER_TW,
-        _ => XIV_API,
+        "chs" => "https://boilmaster-chs.augenfrosch.dev/api",
+        "ko" => "https://boilmaster-ko.augenfrosch.dev/api",
+        "tc" => "https://boilmaster-tc.augenfrosch.dev/api",
+        _ => "https://v2.xivapi.com/api",
     };
     let mut rows = Vec::new();
     loop {
