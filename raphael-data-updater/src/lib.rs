@@ -32,7 +32,7 @@ pub async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&
     };
 
     let client = reqwest::Client::new();
-    let get_response_text = async move |url: &str| -> Result<String, reqwest::Error> {
+    let get_response_text = async |url: &str| -> Result<String, reqwest::Error> {
         client
             .get(url)
             .send()
