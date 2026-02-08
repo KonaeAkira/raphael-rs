@@ -1,70 +1,8 @@
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufWriter, Write};
-use std::time::Duration;
 
 use raphael_data_updater::*;
-
-async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>) -> Vec<T> {
-    let api_endpoint = match lang {
-        "chs" => "https://boilmaster-chs.augenfrosch.dev/api",
-        "ko" => "https://boilmaster-ko.augenfrosch.dev/api",
-        "tc" => "https://boilmaster-tc.augenfrosch.dev/api",
-        _ => "https://v2.xivapi.com/api",
-    };
-
-    let client = reqwest::Client::new();
-    let get_response_text = async move |url: &str| -> Result<String, reqwest::Error> {
-        client
-            .get(url)
-            .send()
-            .await?
-            .error_for_status()?
-            .text()
-            .await
-    };
-
-    let mut rows = Vec::new();
-    loop {
-        let last_row_id = rows.last().map_or(0, |row: &T| row.row_id());
-        let query_url = format!(
-            "{api_endpoint}/sheet/{}?limit=1000&fields={}&after={}&language={}{}",
-            T::SHEET,
-            T::REQUIRED_FIELDS.join(","),
-            last_row_id,
-            lang,
-            schema_override.map_or("".to_owned(), |s| format!("&schema={}", s)),
-        );
-
-        let mut remaining_attempts = 3;
-        let mut retry_cooldown = Duration::from_secs(2);
-        let response_text = loop {
-            remaining_attempts -= 1;
-            match get_response_text(&query_url).await {
-                Ok(response) => break response,
-                Err(error) => {
-                    if remaining_attempts > 0 {
-                        log::warn!("{:?}. Retrying...", error);
-                        std::thread::sleep(retry_cooldown);
-                        retry_cooldown *= 2;
-                    } else {
-                        log::error!("{:?}. Retry attempts exhausted.", error);
-                        panic!("Failed to query API.");
-                    }
-                }
-            }
-        };
-
-        let json = json::parse(&response_text).unwrap();
-
-        let size = rows.len();
-        rows.extend(json["rows"].members().filter_map(T::from_json));
-        if size == rows.len() {
-            return rows;
-        }
-        log::debug!("\"{}\": total fetched: {}", T::SHEET, rows.len());
-    }
-}
 
 fn export_rlvls(rlvls: &[RecipeLevel]) {
     let path = std::path::absolute("./raphael-data/data/rlvls.rs").unwrap();
