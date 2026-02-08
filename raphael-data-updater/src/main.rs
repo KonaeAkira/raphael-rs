@@ -12,6 +12,7 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
         "tc" => "https://boilmaster-tc.augenfrosch.dev/api",
         _ => "https://v2.xivapi.com/api",
     };
+    let client = reqwest::Client::new();
     let mut rows = Vec::new();
     loop {
         let last_row_id = rows.last().map_or(0, |row: &T| row.row_id());
@@ -28,7 +29,7 @@ async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>
         let mut retry_cooldown = Duration::from_secs(2);
         let response = loop {
             remaining_attempts -= 1;
-            match reqwest::get(&query).await {
+            match client.get(&query).send().await {
                 Ok(response) => break response,
                 Err(error) => {
                     if remaining_attempts > 0 {
