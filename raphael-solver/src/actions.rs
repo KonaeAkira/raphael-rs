@@ -1,3 +1,5 @@
+use strum::EnumCount;
+
 use raphael_sim::*;
 
 use crate::SolverSettings;
@@ -15,6 +17,40 @@ pub enum ActionCombo {
 }
 
 impl ActionCombo {
+    pub const fn into_bits(self) -> u8 {
+        match self {
+            Self::Single(action) => action.into_bits(),
+            Self::TricksOfTheTrade => Action::COUNT as u8,
+            Self::IntensiveSynthesis => Action::COUNT as u8 + 1,
+            Self::PreciseTouch => Action::COUNT as u8 + 2,
+            Self::StandardTouch => Action::COUNT as u8 + 3,
+            Self::AdvancedTouch => Action::COUNT as u8 + 4,
+            Self::FocusedTouch => Action::COUNT as u8 + 5,
+            Self::RefinedTouch => Action::COUNT as u8 + 6,
+        }
+    }
+
+    pub const fn from_bits(bits: u8) -> Self {
+        const N: u8 = Action::COUNT as u8;
+        if bits < N {
+            Self::Single(Action::from_bits(bits))
+        } else if bits == N {
+            Self::TricksOfTheTrade
+        } else if bits == N + 1 {
+            Self::IntensiveSynthesis
+        } else if bits == N + 2 {
+            Self::PreciseTouch
+        } else if bits == N + 3 {
+            Self::StandardTouch
+        } else if bits == N + 4 {
+            Self::AdvancedTouch
+        } else if bits == N + 5 {
+            Self::FocusedTouch
+        } else {
+            Self::RefinedTouch
+        }
+    }
+
     pub const fn actions(self) -> &'static [Action] {
         match self {
             Self::TricksOfTheTrade => &[Action::HeartAndSoul, Action::TricksOfTheTrade],

@@ -5,6 +5,7 @@ use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
 use crate::finish_solver::FinishSolverStats;
 use crate::macro_solver::search_queue::{Batch, SearchQueue};
+use crate::macros::internal_error;
 use crate::quality_upper_bound_solver::{QualityUbSolverShard, QualityUbSolverStats};
 use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats};
 use crate::utils::AtomicFlag;
@@ -163,7 +164,15 @@ impl<'a> MacroSolver<'a> {
                             (self.solution_callback)(&solution.as_ref().unwrap().actions());
                         }
                     } else if score >= min_accepted_score {
-                        search_queue.push(score, action, parent_id)
+                        search_queue.push(score, action, parent_id).map_err(|_| {
+                            internal_error!(
+                                "Cannot insert into search queue.",
+                                self.settings,
+                                state,
+                                action,
+                                parent_id
+                            )
+                        })?;
                     }
                 }
             }
