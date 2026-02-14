@@ -1,62 +1,8 @@
 use std::collections::HashSet;
-use std::io::Write;
-use std::time::Duration;
-use std::{fs::File, io::BufWriter};
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
 use raphael_data_updater::*;
-
-async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>) -> Vec<T> {
-    const XIV_API: &str = "https://v2.xivapi.com/api";
-    const BOILMASTER_CN: &str = "https://boilmaster-chs.augenfrosch.dev/api";
-    const BOILMASTER_KR: &str = "https://boilmaster-ko.augenfrosch.dev/api";
-    const BOILMASTER_TW: &str = "https://boilmaster-tc.augenfrosch.dev/api";
-    let api_endpoint = match lang {
-        "chs" => BOILMASTER_CN,
-        "ko" => BOILMASTER_KR,
-        "tc" => BOILMASTER_TW,
-        _ => XIV_API,
-    };
-    let mut rows = Vec::new();
-    loop {
-        let last_row_id = rows.last().map_or(0, |row: &T| row.row_id());
-        let query = format!(
-            "{api_endpoint}/sheet/{}?limit=1000&fields={}&after={}&language={}{}",
-            T::SHEET,
-            T::REQUIRED_FIELDS.join(","),
-            last_row_id,
-            lang,
-            schema_override.map_or("".to_owned(), |s| format!("&schema={}", s)),
-        );
-
-        let mut remaining_attempts = 3;
-        let mut retry_cooldown = Duration::from_secs(2);
-        let response = loop {
-            remaining_attempts -= 1;
-            match reqwest::get(&query).await {
-                Ok(response) => break response,
-                Err(error) => {
-                    if remaining_attempts > 0 {
-                        log::warn!("{:?}. Retrying...", error);
-                        std::thread::sleep(retry_cooldown);
-                        retry_cooldown *= 2;
-                    } else {
-                        log::error!("{:?}. Retry attempts exhausted.", error);
-                        panic!("Failed to query API.");
-                    }
-                }
-            }
-        };
-
-        let json = json::parse(&response.text().await.unwrap()).unwrap();
-
-        let size = rows.len();
-        rows.extend(json["rows"].members().filter_map(T::from_json));
-        if size == rows.len() {
-            return rows;
-        }
-        log::info!("\"{}\": total fetched: {}", T::SHEET, rows.len());
-    }
-}
 
 fn export_rlvls(rlvls: &[RecipeLevel]) {
     let path = std::path::absolute("./raphael-data/data/rlvls.rs").unwrap();
@@ -67,7 +13,7 @@ fn export_rlvls(rlvls: &[RecipeLevel]) {
         writeln!(&mut writer, "{rlvl},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("rlvls exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry]) {
@@ -79,7 +25,7 @@ fn export_level_adjust_table(level_adjust_table_entries: &[LevelAdjustTableEntry
         writeln!(&mut writer, "{entry},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("Level adjust table exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_recipes(recipes: &[Recipe]) {
@@ -90,7 +36,7 @@ fn export_recipes(recipes: &[Recipe]) {
         writeln!(writer, "{} => {},", recipe.id, recipe,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("recipes exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_items(items: &[Item]) {
@@ -101,7 +47,7 @@ fn export_items(items: &[Item]) {
         writeln!(writer, "{} => {},", item.id, item,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("items exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_meals(consumables: &[Consumable]) {
@@ -112,7 +58,7 @@ fn export_meals(consumables: &[Consumable]) {
         writeln!(&mut writer, "{consumable},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("meals exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_potions(consumables: &[Consumable]) {
@@ -123,7 +69,7 @@ fn export_potions(consumables: &[Consumable]) {
         writeln!(&mut writer, "{consumable},").unwrap();
     }
     writeln!(&mut writer, "]").unwrap();
-    log::info!("potions exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_stellar_missions(stellar_missions: &[StellarMission]) {
@@ -134,7 +80,7 @@ fn export_stellar_missions(stellar_missions: &[StellarMission]) {
         writeln!(writer, "{} => {},", stellar_mission.id, stellar_mission,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("stellar missions exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_item_names(item_names: &[ItemName], lang: &str) {
@@ -145,7 +91,7 @@ fn export_item_names(item_names: &[ItemName], lang: &str) {
         writeln!(writer, "{} => {:?},", item_name.id, item_name.name,).unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("item names exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], lang: &str) {
@@ -164,49 +110,39 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
         .unwrap();
     }
     writeln!(writer, "}}").unwrap();
-    log::info!("stellar mission names exported to \"{}\"", path.display());
+    log::info!("Generated \"{}\"", path.display());
 }
 
 #[tokio::main]
 async fn main() {
     env_logger::builder().format_timestamp(None).init();
 
-    let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>("en", None).await });
-    let level_adjust_table_entries =
-        tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>("en", None).await });
-    let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>("en", None).await });
-    let items = tokio::spawn(async { fetch_and_parse::<Item>("en", None).await });
-    let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>("en", None).await });
-    let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>("en", None).await });
-    let stellar_missions =
-        tokio::spawn(async { fetch_and_parse::<StellarMission>("en", None).await });
+    let rlvls = tokio::spawn(fetch_and_parse::<RecipeLevel>(Lang::EN));
+    let level_adjust_table = tokio::spawn(fetch_and_parse::<LevelAdjustTableEntry>(Lang::EN));
+    let recipes = tokio::spawn(fetch_and_parse::<Recipe>(Lang::EN));
+    let items = tokio::spawn(fetch_and_parse::<Item>(Lang::EN));
+    let item_actions = tokio::spawn(fetch_and_parse::<ItemAction>(Lang::EN));
+    let item_foods = tokio::spawn(fetch_and_parse::<ItemFood>(Lang::EN));
+    let stellar_missions = tokio::spawn(fetch_and_parse::<StellarMission>(Lang::EN));
 
-    let item_names_en = tokio::spawn(async { fetch_and_parse::<ItemName>("en", None).await });
-    let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>("de", None).await });
-    let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>("fr", None).await });
-    let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja", None).await });
-    let item_names_cn = tokio::spawn(async { fetch_and_parse::<ItemName>("chs", None).await });
-    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("ko", None).await });
-    let item_names_tw = tokio::spawn(async { fetch_and_parse::<ItemName>("tc", None).await });
+    let item_names_en = tokio::spawn(fetch_and_parse::<ItemName>(Lang::EN));
+    let item_names_de = tokio::spawn(fetch_and_parse::<ItemName>(Lang::DE));
+    let item_names_fr = tokio::spawn(fetch_and_parse::<ItemName>(Lang::FR));
+    let item_names_jp = tokio::spawn(fetch_and_parse::<ItemName>(Lang::JP));
+    let item_names_cn = tokio::spawn(fetch_and_parse::<ItemName>(Lang::CN));
+    let item_names_kr = tokio::spawn(fetch_and_parse::<ItemName>(Lang::KR));
+    let item_names_tw = tokio::spawn(fetch_and_parse::<ItemName>(Lang::TW));
 
-    let stellar_mission_names_en =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("en", None).await });
-    let stellar_mission_names_de =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("de", None).await });
-    let stellar_mission_names_fr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("fr", None).await });
-    let stellar_mission_names_jp =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ja", None).await });
-    let stellar_mission_names_cn =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("chs", None).await });
-    let stellar_mission_names_kr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ko", None).await });
-    let stellar_mission_names_tw = tokio::spawn(async {
-        fetch_and_parse::<StellarMissionName>("tc", Some("exdschema@2:rev:cc92abc")).await
-    });
+    let stellar_mission_names_en = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::EN));
+    let stellar_mission_names_de = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::DE));
+    let stellar_mission_names_fr = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::FR));
+    let stellar_mission_names_jp = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::JP));
+    let stellar_mission_names_cn = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::CN));
+    let stellar_mission_names_kr = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::KR));
+    let stellar_mission_names_tw = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::TW));
 
     let rlvls = rlvls.await.unwrap();
-    let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
+    let level_adjust_table = level_adjust_table.await.unwrap();
     let mut recipes = recipes.await.unwrap();
     let mut items = items.await.unwrap();
 
@@ -302,26 +238,26 @@ async fn main() {
     });
 
     export_rlvls(&rlvls);
-    export_level_adjust_table(&level_adjust_table_entries);
+    export_level_adjust_table(&level_adjust_table);
     export_recipes(&recipes);
     export_meals(&meals);
     export_potions(&potions);
     export_items(&items);
     export_stellar_missions(&stellar_missions);
 
-    export_item_names(&item_names_en, "en");
-    export_item_names(&item_names_de, "de");
-    export_item_names(&item_names_fr, "fr");
-    export_item_names(&item_names_jp, "jp");
-    export_item_names(&item_names_cn, "cn");
-    export_item_names(&item_names_kr, "kr");
-    export_item_names(&item_names_tw, "tw");
+    export_item_names(&item_names_en, Lang::EN.shortcode());
+    export_item_names(&item_names_de, Lang::DE.shortcode());
+    export_item_names(&item_names_fr, Lang::FR.shortcode());
+    export_item_names(&item_names_jp, Lang::JP.shortcode());
+    export_item_names(&item_names_cn, Lang::CN.shortcode());
+    export_item_names(&item_names_kr, Lang::KR.shortcode());
+    export_item_names(&item_names_tw, Lang::TW.shortcode());
 
-    export_stellar_mission_names(&stellar_mission_names_en, "en");
-    export_stellar_mission_names(&stellar_mission_names_de, "de");
-    export_stellar_mission_names(&stellar_mission_names_fr, "fr");
-    export_stellar_mission_names(&stellar_mission_names_jp, "jp");
-    export_stellar_mission_names(&stellar_mission_names_cn, "cn");
-    export_stellar_mission_names(&stellar_mission_names_kr, "kr");
-    export_stellar_mission_names(&stellar_mission_names_tw, "tw");
+    export_stellar_mission_names(&stellar_mission_names_en, Lang::EN.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_de, Lang::DE.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_fr, Lang::FR.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_jp, Lang::JP.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_cn, Lang::CN.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_kr, Lang::KR.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_tw, Lang::TW.shortcode());
 }
