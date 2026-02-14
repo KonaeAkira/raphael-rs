@@ -116,6 +116,6 @@ pub async fn fetch_and_parse<T: SheetData>(lang: Lang) -> Vec<T> {
         if size == rows.len() {
             return rows;
         }
-        log::debug!("\"{}\": total fetched: {}", T::SHEET, rows.len());
+        log::debug!("{} {lang:?}: total fetched: {}", T::SHEET, rows.len());
     }
 }
