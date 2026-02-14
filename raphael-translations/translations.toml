@@ -790,26 +790,6 @@ ko = '''내구도'''
 version = "0.1.0"
 appearances = ["src/widgets/simulator.rs:99:36", "src/widgets/simulator.rs:143:45"]
 
-["7LpZW5ceb1VJE7v/npMZQw=="]
-en = '''Calculated assuming worst possible sequence of conditions'''
-ja = '''最悪の条件のシーケンスを想定して計算'''
-de = '''Berechnet mit schlechtmöglichsten Zuständen'''
-chs = '''在可能出现的最差的制作状态序列的前提下计算'''
-tc = '''在可能出現的最差製作狀態序列的前提下計算'''
-ko = '''최악 조건의 상태를 상정하여 계산'''
-version = "0.1.0"
-appearances = ["src/widgets/simulator.rs:175:33"]
-
-["V05L1/PMXNT9BsDP2LOuPQ=="]
-en = '''Calculated assuming Normal conditon on every step'''
-ja = '''すべてのステップで通常条件を想定して計算'''
-de = '''Berechnet mit \"Ausreichend\" als Zustand in jedem Schritt'''
-chs = '''在每一步都是“通常”制作状态的前提下计算'''
-tc = '''在每一步都是「通常」製作狀態的前提下計算'''
-ko = '''모든 공정이 보통 상태인 것으로 상정하여 계산'''
-version = "0.1.0"
-appearances = ["src/widgets/simulator.rs:178:44"]
-
 ["D/ceSymzCAp4349vFS0FrQ=="]
 en = '''Synthesis failed'''
 ja = '''製作失敗'''

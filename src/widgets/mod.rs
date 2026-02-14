@@ -28,6 +28,8 @@ pub use drop_down::DropDown;
 mod game_data_name_label;
 pub use game_data_name_label::{GameDataNameLabel, NameSource};
 
+mod hq_probability;
+
 mod saved_rotations;
 pub use saved_rotations::{
     Rotation, SavedRotationsConfig, SavedRotationsData, SavedRotationsWidget,
