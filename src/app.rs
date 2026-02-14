@@ -107,8 +107,8 @@ impl eframe::App for MacroSolverApp {
 
         if self.missing_stats_error_window_open {
             egui::Modal::new(egui::Id::new("min_stats_warning")).show(ctx, |ui| {
-                let req_cms = self.app_context.recipe_config.recipe.req_craftsmanship;
-                let req_ctrl = self.app_context.recipe_config.recipe.req_control;
+                let req_cms = self.app_context.recipe_config.recipe().req_craftsmanship;
+                let req_ctrl = self.app_context.recipe_config.recipe().req_control;
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new("Error").strong());
                 ui.separator();
@@ -748,7 +748,7 @@ impl MacroSolverApp {
 
         ui.label(egui::RichText::new(t!(locale, "HQ materials")).strong());
         let mut has_hq_ingredient = false;
-        let recipe_ingredients = self.app_context.recipe_config.recipe.ingredients;
+        let recipe_ingredients = self.app_context.recipe_config.recipe().ingredients;
         if let QualitySource::HqMaterialList(provided_ingredients) =
             &mut self.app_context.recipe_config.quality_source
         {
@@ -908,12 +908,12 @@ impl MacroSolverApp {
             ui.add(HelpText::new(t!(locale, "Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.")));
         });
 
-        if self.app_context.recipe_config.recipe.is_expert {
+        if self.app_context.recipe_config.recipe().is_expert {
             self.app_context.solver_config.adversarial = false;
         }
         ui.horizontal(|ui| {
             ui.add_enabled(
-                !self.app_context.recipe_config.recipe.is_expert,
+                !self.app_context.recipe_config.recipe().is_expert,
                 egui::Checkbox::new(
                     &mut self.app_context.solver_config.adversarial,
                     t!(locale, "Ensure 100% reliability"),
@@ -936,8 +936,8 @@ impl MacroSolverApp {
                 data.insert_temp(Id::new("SOLVE_INITIATED"), false);
             });
 
-            let craftsmanship_req = self.app_context.recipe_config.recipe.req_craftsmanship;
-            let control_req = self.app_context.recipe_config.recipe.req_control;
+            let craftsmanship_req = self.app_context.recipe_config.recipe().req_craftsmanship;
+            let control_req = self.app_context.recipe_config.recipe().req_control;
             let active_stats = self.app_context.active_stats();
             let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
                 active_stats.craftsmanship,

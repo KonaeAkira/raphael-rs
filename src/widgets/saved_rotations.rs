@@ -3,15 +3,13 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use raphael_data::{Consumable, CrafterStats, Locale, Recipe};
+use raphael_data::{Consumable, CrafterStats, CustomRecipeOverrides, Locale, Recipe};
 use raphael_sim::*;
 use raphael_translations::{t, t_format};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::{
-        CrafterConfig, CustomRecipeOverridesConfiguration, QualitySource, RecipeConfiguration,
-    },
+    config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
     context::{AppContext, SolverConfig},
     widgets::util::max_text_width,
 };
@@ -24,32 +22,28 @@ fn generate_unique_rotation_id() -> u64 {
     hasher.finish()
 }
 
+// Kept for compatibility with old data; TODO: test if this works
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct CustomRecipeOverridesConfiguration {
+    pub custom_recipe_overrides: CustomRecipeOverrides,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RecipeInfo {
     NormalRecipe(u32),
     CustomRecipe(Recipe, CustomRecipeOverridesConfiguration),
 }
 
-impl RecipeInfo {
-    pub fn create_from(
-        recipe: &Recipe,
-        custom_recipe_overrides_configuration: &CustomRecipeOverridesConfiguration,
-    ) -> Self {
-        if custom_recipe_overrides_configuration.use_custom_recipe {
-            Self::CustomRecipe(*recipe, *custom_recipe_overrides_configuration)
-        } else {
-            Self::NormalRecipe(
-                raphael_data::RECIPES
-                    .entries()
-                    .find_map(|(recipe_id, recipe_entry)| {
-                        if recipe_entry == recipe {
-                            Some(recipe_id)
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap_or_default(),
-            )
+impl From<&RecipeSource> for RecipeInfo {
+    fn from(recipe_source: &RecipeSource) -> Self {
+        match recipe_source {
+            RecipeSource::Normal { id, .. } => Self::NormalRecipe(*id),
+            RecipeSource::Custom { data, overrides } => Self::CustomRecipe(
+                *data,
+                CustomRecipeOverridesConfiguration {
+                    custom_recipe_overrides: *overrides,
+                },
+            ),
         }
     }
 }
@@ -95,7 +89,6 @@ impl Rotation {
         let AppContext {
             locale,
             recipe_config,
-            custom_recipe_overrides_config,
             selected_food: food,
             selected_potion: potion,
             crafter_config,
@@ -104,7 +97,7 @@ impl Rotation {
         } = app_context;
         let game_settings = app_context.game_settings();
         let initial_quality = app_context.initial_quality();
-        let name = raphael_data::get_item_name(recipe_config.recipe.item_id, false, *locale)
+        let name = raphael_data::get_item_name(recipe_config.recipe().item_id, false, *locale)
             .unwrap_or(t!(locale, "Unknown item").to_owned());
         let solver_params = format!(
             "Raphael v{}{}{}",
@@ -123,10 +116,7 @@ impl Rotation {
             name,
             solver: solver_params,
             actions,
-            recipe_info: Some(RecipeInfo::create_from(
-                &recipe_config.recipe,
-                custom_recipe_overrides_config,
-            )),
+            recipe_info: Some(RecipeInfo::from(&recipe_config.recipe_source)),
             solve_info: Some(SolveInfo::new(
                 &game_settings,
                 initial_quality,
@@ -279,7 +269,6 @@ struct RotationWidget<'a> {
     actions: &'a mut Vec<Action>,
     crafter_config: &'a mut CrafterConfig,
     recipe_config: &'a mut RecipeConfiguration,
-    custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
     selected_food: &'a mut Option<Consumable>,
     selected_potion: &'a mut Option<Consumable>,
 }
@@ -288,7 +277,6 @@ struct LimitedAppContext<'a> {
     pub locale: Locale,
     pub default_load_operation: LoadOperation,
     pub recipe_config: &'a mut RecipeConfiguration,
-    pub custom_recipe_overrides_config: &'a mut CustomRecipeOverridesConfiguration,
     pub selected_food: &'a mut Option<Consumable>,
     pub selected_potion: &'a mut Option<Consumable>,
     pub crafter_config: &'a mut CrafterConfig,
@@ -311,7 +299,6 @@ impl<'a> RotationWidget<'a> {
             actions,
             crafter_config: limited_app_context.crafter_config,
             recipe_config: limited_app_context.recipe_config,
-            custom_recipe_overrides_config: limited_app_context.custom_recipe_overrides_config,
             selected_food: limited_app_context.selected_food,
             selected_potion: limited_app_context.selected_potion,
         }
@@ -408,21 +395,25 @@ impl<'a> RotationWidget<'a> {
                 RecipeInfo::NormalRecipe(recipe_id) => {
                     if let Some(recipe) = raphael_data::RECIPES.get(*recipe_id) {
                         *self.recipe_config = RecipeConfiguration {
-                            recipe: *recipe,
+                            recipe_source: RecipeSource::Normal {
+                                id: *recipe_id,
+                                data: *recipe,
+                            },
                             quality_source: QualitySource::HqMaterialList([0; 6]),
                         };
                         self.crafter_config.selected_job = recipe.job_id;
-                        self.custom_recipe_overrides_config.use_custom_recipe = false;
                     } else {
                         log::debug!("Unable to find recipe with recipe_id={:?}", recipe_id);
                     }
                 }
                 RecipeInfo::CustomRecipe(recipe, custom_recipe_overrides_config) => {
                     *self.recipe_config = RecipeConfiguration {
-                        recipe: *recipe,
+                        recipe_source: RecipeSource::Custom {
+                            data: *recipe,
+                            overrides: custom_recipe_overrides_config.custom_recipe_overrides,
+                        },
                         quality_source: QualitySource::Value(0),
                     };
-                    *self.custom_recipe_overrides_config = *custom_recipe_overrides_config;
                     self.crafter_config.selected_job = recipe.job_id;
                 }
             }
@@ -595,7 +586,6 @@ impl egui::Widget for SavedRotationsWidget<'_> {
             locale,
             // app_config,
             recipe_config,
-            custom_recipe_overrides_config,
             selected_food,
             selected_potion,
             crafter_config,
@@ -609,7 +599,6 @@ impl egui::Widget for SavedRotationsWidget<'_> {
             locale: *locale,
             default_load_operation: config.default_load_operation,
             recipe_config,
-            custom_recipe_overrides_config,
             selected_food,
             selected_potion,
             crafter_config,
