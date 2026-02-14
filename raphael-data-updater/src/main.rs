@@ -117,41 +117,32 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
 async fn main() {
     env_logger::builder().format_timestamp(None).init();
 
-    let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>(Lang::EN).await });
-    let level_adjust_table_entries =
-        tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>(Lang::EN).await });
-    let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>(Lang::EN).await });
-    let items = tokio::spawn(async { fetch_and_parse::<Item>(Lang::EN).await });
-    let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>(Lang::EN).await });
-    let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>(Lang::EN).await });
-    let stellar_missions =
-        tokio::spawn(async { fetch_and_parse::<StellarMission>(Lang::EN).await });
+    let rlvls = tokio::spawn(fetch_and_parse::<RecipeLevel>(Lang::EN));
+    let level_adjust_table = tokio::spawn(fetch_and_parse::<LevelAdjustTableEntry>(Lang::EN));
+    let recipes = tokio::spawn(fetch_and_parse::<Recipe>(Lang::EN));
+    let items = tokio::spawn(fetch_and_parse::<Item>(Lang::EN));
+    let item_actions = tokio::spawn(fetch_and_parse::<ItemAction>(Lang::EN));
+    let item_foods = tokio::spawn(fetch_and_parse::<ItemFood>(Lang::EN));
+    let stellar_missions = tokio::spawn(fetch_and_parse::<StellarMission>(Lang::EN));
 
-    let item_names_en = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::EN).await });
-    let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::DE).await });
-    let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::FR).await });
-    let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::JP).await });
-    let item_names_cn = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::CN).await });
-    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::KR).await });
-    let item_names_tw = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::TW).await });
+    let item_names_en = tokio::spawn(fetch_and_parse::<ItemName>(Lang::EN));
+    let item_names_de = tokio::spawn(fetch_and_parse::<ItemName>(Lang::DE));
+    let item_names_fr = tokio::spawn(fetch_and_parse::<ItemName>(Lang::FR));
+    let item_names_jp = tokio::spawn(fetch_and_parse::<ItemName>(Lang::JP));
+    let item_names_cn = tokio::spawn(fetch_and_parse::<ItemName>(Lang::CN));
+    let item_names_kr = tokio::spawn(fetch_and_parse::<ItemName>(Lang::KR));
+    let item_names_tw = tokio::spawn(fetch_and_parse::<ItemName>(Lang::TW));
 
-    let stellar_mission_names_en =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::EN).await });
-    let stellar_mission_names_de =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::DE).await });
-    let stellar_mission_names_fr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::FR).await });
-    let stellar_mission_names_jp =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::JP).await });
-    let stellar_mission_names_cn =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::CN).await });
-    let stellar_mission_names_kr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::KR).await });
-    let stellar_mission_names_tw =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::TW).await });
+    let stellar_mission_names_en = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::EN));
+    let stellar_mission_names_de = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::DE));
+    let stellar_mission_names_fr = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::FR));
+    let stellar_mission_names_jp = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::JP));
+    let stellar_mission_names_cn = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::CN));
+    let stellar_mission_names_kr = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::KR));
+    let stellar_mission_names_tw = tokio::spawn(fetch_and_parse::<StellarMissionName>(Lang::TW));
 
     let rlvls = rlvls.await.unwrap();
-    let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
+    let level_adjust_table = level_adjust_table.await.unwrap();
     let mut recipes = recipes.await.unwrap();
     let mut items = items.await.unwrap();
 
@@ -247,7 +238,7 @@ async fn main() {
     });
 
     export_rlvls(&rlvls);
-    export_level_adjust_table(&level_adjust_table_entries);
+    export_level_adjust_table(&level_adjust_table);
     export_recipes(&recipes);
     export_meals(&meals);
     export_potions(&potions);
