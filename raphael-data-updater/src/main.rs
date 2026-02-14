@@ -117,39 +117,38 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
 async fn main() {
     env_logger::builder().format_timestamp(None).init();
 
-    let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>("en", None).await });
+    let rlvls = tokio::spawn(async { fetch_and_parse::<RecipeLevel>(Lang::EN).await });
     let level_adjust_table_entries =
-        tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>("en", None).await });
-    let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>("en", None).await });
-    let items = tokio::spawn(async { fetch_and_parse::<Item>("en", None).await });
-    let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>("en", None).await });
-    let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>("en", None).await });
+        tokio::spawn(async { fetch_and_parse::<LevelAdjustTableEntry>(Lang::EN).await });
+    let recipes = tokio::spawn(async { fetch_and_parse::<Recipe>(Lang::EN).await });
+    let items = tokio::spawn(async { fetch_and_parse::<Item>(Lang::EN).await });
+    let item_actions = tokio::spawn(async { fetch_and_parse::<ItemAction>(Lang::EN).await });
+    let item_foods = tokio::spawn(async { fetch_and_parse::<ItemFood>(Lang::EN).await });
     let stellar_missions =
-        tokio::spawn(async { fetch_and_parse::<StellarMission>("en", None).await });
+        tokio::spawn(async { fetch_and_parse::<StellarMission>(Lang::EN).await });
 
-    let item_names_en = tokio::spawn(async { fetch_and_parse::<ItemName>("en", None).await });
-    let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>("de", None).await });
-    let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>("fr", None).await });
-    let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>("ja", None).await });
-    let item_names_cn = tokio::spawn(async { fetch_and_parse::<ItemName>("chs", None).await });
-    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>("ko", None).await });
-    let item_names_tw = tokio::spawn(async { fetch_and_parse::<ItemName>("tc", None).await });
+    let item_names_en = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::EN).await });
+    let item_names_de = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::DE).await });
+    let item_names_fr = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::FR).await });
+    let item_names_jp = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::JP).await });
+    let item_names_cn = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::CN).await });
+    let item_names_kr = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::KR).await });
+    let item_names_tw = tokio::spawn(async { fetch_and_parse::<ItemName>(Lang::TW).await });
 
     let stellar_mission_names_en =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("en", None).await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::EN).await });
     let stellar_mission_names_de =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("de", None).await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::DE).await });
     let stellar_mission_names_fr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("fr", None).await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::FR).await });
     let stellar_mission_names_jp =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ja", None).await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::JP).await });
     let stellar_mission_names_cn =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("chs", None).await });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::CN).await });
     let stellar_mission_names_kr =
-        tokio::spawn(async { fetch_and_parse::<StellarMissionName>("ko", None).await });
-    let stellar_mission_names_tw = tokio::spawn(async {
-        fetch_and_parse::<StellarMissionName>("tc", Some("exdschema@2:rev:cc92abc")).await
-    });
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::KR).await });
+    let stellar_mission_names_tw =
+        tokio::spawn(async { fetch_and_parse::<StellarMissionName>(Lang::TW).await });
 
     let rlvls = rlvls.await.unwrap();
     let level_adjust_table_entries = level_adjust_table_entries.await.unwrap();
@@ -255,19 +254,19 @@ async fn main() {
     export_items(&items);
     export_stellar_missions(&stellar_missions);
 
-    export_item_names(&item_names_en, "en");
-    export_item_names(&item_names_de, "de");
-    export_item_names(&item_names_fr, "fr");
-    export_item_names(&item_names_jp, "jp");
-    export_item_names(&item_names_cn, "cn");
-    export_item_names(&item_names_kr, "kr");
-    export_item_names(&item_names_tw, "tw");
+    export_item_names(&item_names_en, Lang::EN.shortcode());
+    export_item_names(&item_names_de, Lang::DE.shortcode());
+    export_item_names(&item_names_fr, Lang::FR.shortcode());
+    export_item_names(&item_names_jp, Lang::JP.shortcode());
+    export_item_names(&item_names_cn, Lang::CN.shortcode());
+    export_item_names(&item_names_kr, Lang::KR.shortcode());
+    export_item_names(&item_names_tw, Lang::TW.shortcode());
 
-    export_stellar_mission_names(&stellar_mission_names_en, "en");
-    export_stellar_mission_names(&stellar_mission_names_de, "de");
-    export_stellar_mission_names(&stellar_mission_names_fr, "fr");
-    export_stellar_mission_names(&stellar_mission_names_jp, "jp");
-    export_stellar_mission_names(&stellar_mission_names_cn, "cn");
-    export_stellar_mission_names(&stellar_mission_names_kr, "kr");
-    export_stellar_mission_names(&stellar_mission_names_tw, "tw");
+    export_stellar_mission_names(&stellar_mission_names_en, Lang::EN.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_de, Lang::DE.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_fr, Lang::FR.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_jp, Lang::JP.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_cn, Lang::CN.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_kr, Lang::KR.shortcode());
+    export_stellar_mission_names(&stellar_mission_names_tw, Lang::TW.shortcode());
 }

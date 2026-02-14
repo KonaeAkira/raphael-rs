@@ -16,6 +16,47 @@ pub use consumable::{Consumable, ItemAction, ItemFood, instantiate_consumables};
 mod stellar_mission;
 pub use stellar_mission::{StellarMission, StellarMissionName};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Lang {
+    EN,
+    DE,
+    FR,
+    JP,
+    CN,
+    KR,
+    TW,
+}
+
+impl Lang {
+    pub fn shortcode(self) -> &'static str {
+        match self {
+            Self::EN => "en",
+            Self::DE => "de",
+            Self::FR => "fr",
+            Self::JP => "jp",
+            Self::CN => "cn",
+            Self::KR => "kr",
+            Self::TW => "tw",
+        }
+    }
+
+    fn api_endpoint(self) -> &'static str {
+        match self {
+            Self::EN | Self::DE | Self::FR | Self::JP => "https://v2.xivapi.com/api",
+            Self::CN => "https://boilmaster-chs.augenfrosch.dev/api",
+            Self::KR => "https://boilmaster-ko.augenfrosch.dev/api",
+            Self::TW => "https://boilmaster-tc.augenfrosch.dev/api",
+        }
+    }
+
+    fn schema_override(self) -> Option<&'static str> {
+        match self {
+            Self::TW => Some("exdschema@2:rev:cc92abc"),
+            _ => None,
+        }
+    }
+}
+
 pub trait SheetData: Sized {
     const SHEET: &'static str;
     const REQUIRED_FIELDS: &[&str];
@@ -23,14 +64,7 @@ pub trait SheetData: Sized {
     fn from_json(value: &json::JsonValue) -> Option<Self>;
 }
 
-pub async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&str>) -> Vec<T> {
-    let api_endpoint = match lang {
-        "chs" => "https://boilmaster-chs.augenfrosch.dev/api",
-        "ko" => "https://boilmaster-ko.augenfrosch.dev/api",
-        "tc" => "https://boilmaster-tc.augenfrosch.dev/api",
-        _ => "https://v2.xivapi.com/api",
-    };
-
+pub async fn fetch_and_parse<T: SheetData>(lang: Lang) -> Vec<T> {
     let client = reqwest::Client::new();
     let get_response_text = async |url: &str| -> Result<String, reqwest::Error> {
         client
@@ -46,12 +80,14 @@ pub async fn fetch_and_parse<T: SheetData>(lang: &str, schema_override: Option<&
     loop {
         let last_row_id = rows.last().map_or(0, |row: &T| row.row_id());
         let query_url = format!(
-            "{api_endpoint}/sheet/{}?limit=1000&fields={}&after={}&language={}{}",
+            "{}/sheet/{}?limit=1000&fields={}&after={}&language={}{}",
+            lang.api_endpoint(),
             T::SHEET,
             T::REQUIRED_FIELDS.join(","),
             last_row_id,
-            lang,
-            schema_override.map_or("".to_owned(), |s| format!("&schema={}", s)),
+            lang.shortcode(),
+            lang.schema_override()
+                .map_or("".to_owned(), |s| format!("&schema={}", s)),
         );
 
         let mut remaining_attempts = 3;
