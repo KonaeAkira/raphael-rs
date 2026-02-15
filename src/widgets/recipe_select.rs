@@ -4,13 +4,14 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{
-    Consumable, Locale, RLVLS, find_recipes, find_stellar_missions, get_game_settings, get_job_name,
+    Consumable, Locale, RLVLS, Recipe, find_recipes, find_stellar_missions, get_game_settings,
+    get_job_name,
 };
 use raphael_translations::{t, t_format};
 
 use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
-    context::AppContext,
+    context::{AppContext, SolverConfig},
     widgets::{
         DropDown, GameDataNameLabel, NameSource,
         util::{TableColumnWidth, calculate_column_widths},
@@ -66,6 +67,7 @@ type StellarMissionSearchCache<'a> =
 pub struct RecipeSelect<'a> {
     crafter_config: &'a mut CrafterConfig,
     recipe_config: &'a mut RecipeConfiguration,
+    solver_config: &'a mut SolverConfig,
     selected_food: Option<Consumable>, // used for base prog/qual display
     selected_potion: Option<Consumable>, // used for base prog/qual display
     locale: Locale,
@@ -79,19 +81,35 @@ impl<'a> RecipeSelect<'a> {
             selected_food,
             selected_potion,
             crafter_config,
+            solver_config,
             ..
         } = app_context;
 
         Self {
             crafter_config,
             recipe_config,
+            solver_config,
             selected_food: *selected_food,
             selected_potion: *selected_potion,
             locale: *locale,
         }
     }
 
-    fn draw_normal_recipe_select(self, ui: &mut egui::Ui) {
+    fn select_normal_recipe(&mut self, recipe_id: u32, recipe: Recipe) {
+        self.crafter_config.selected_job = recipe.job_id;
+        let recipe_source = RecipeSource::Normal {
+            id: recipe_id,
+            data: recipe,
+        };
+        *self.recipe_config = RecipeConfiguration {
+            recipe_source,
+            quality_source: QualitySource::HqMaterialList([0; 6]),
+        };
+        self.solver_config.stellar_steady_hand_charges =
+            recipe_source.default_stellar_steady_hand_charges(); // MAYBE should just be 0
+    }
+
+    fn draw_normal_recipe_select(&mut self, ui: &mut egui::Ui) {
         let locale = self.locale;
         let mut search_text = String::new();
         let mut search_domain = SearchDomain::default();
@@ -151,7 +169,7 @@ impl<'a> RecipeSelect<'a> {
     }
 
     fn draw_recipe_select_table(
-        self,
+        &mut self,
         ui: &mut egui::Ui,
         search_result: Vec<raphael_data::RecipeSearchEntry>,
     ) {
@@ -185,14 +203,7 @@ impl<'a> RecipeSelect<'a> {
                 let (recipe_id, recipe) = search_result[row.index()];
                 row.col(|ui| {
                     if ui.button(t!(locale, "Select")).clicked() {
-                        self.crafter_config.selected_job = recipe.job_id;
-                        *self.recipe_config = RecipeConfiguration {
-                            recipe_source: RecipeSource::Normal {
-                                id: recipe_id,
-                                data: *recipe,
-                            },
-                            quality_source: QualitySource::HqMaterialList([0; 6]),
-                        }
+                        self.select_normal_recipe(recipe_id, *recipe);
                     }
                 });
                 row.col(|ui| {
@@ -206,7 +217,7 @@ impl<'a> RecipeSelect<'a> {
     }
 
     fn draw_mission_recipe_select(
-        self,
+        &mut self,
         ui: &mut egui::Ui,
         search_result: Vec<raphael_data::StellarMissionSearchEntry>,
     ) {
@@ -266,14 +277,7 @@ impl<'a> RecipeSelect<'a> {
                         egui::Frame::new().fill(background_color).show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 if ui.button(t!(locale, "Select")).clicked() {
-                                    self.crafter_config.selected_job = recipe.job_id;
-                                    *self.recipe_config = RecipeConfiguration {
-                                        recipe_source: RecipeSource::Normal {
-                                            id: *recipe_id,
-                                            data: *recipe,
-                                        },
-                                        quality_source: QualitySource::HqMaterialList([0; 6]),
-                                    }
+                                    self.select_normal_recipe(*recipe_id, *recipe);
                                 }
                                 ui.add(GameDataNameLabel::new(recipe, locale));
                                 ui.allocate_space(ui.available_size());
@@ -441,7 +445,7 @@ impl<'a> RecipeSelect<'a> {
 }
 
 impl Widget for RecipeSelect<'_> {
-    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+    fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
         let locale = self.locale;
         let mut show_custom_recipe_select = false;
         ui.ctx().data_mut(|data| {
