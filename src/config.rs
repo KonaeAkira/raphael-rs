@@ -1,7 +1,8 @@
 use std::num::NonZeroUsize;
 
 use raphael_data::{
-    CrafterStats, CustomRecipeOverrides, Ingredient, LEVEL_ADJUST_TABLE, Locale, Recipe,
+    CrafterStats, CustomRecipeOverrides, Ingredient, LEVEL_ADJUST_TABLE, Locale,
+    RECIPE_TO_STELLAR_MISSION_LINKS, Recipe, STELLAR_MISSIONS,
 };
 use raphael_sim::Settings;
 use raphael_translations::t;
@@ -69,6 +70,19 @@ impl RecipeSource {
                 }
             }
             RecipeSource::Custom { .. } => self,
+        }
+    }
+
+    pub fn max_stellar_steady_hand_charges(&self) -> u8 {
+        match self {
+            RecipeSource::Normal { id, .. } => {
+                RECIPE_TO_STELLAR_MISSION_LINKS
+                    .get(*id)
+                    .map_or(0, |stellar_mission_id| {
+                        STELLAR_MISSIONS[*stellar_mission_id].stellar_steady_hand_charges
+                    })
+            }
+            RecipeSource::Custom { .. } => 3,
         }
     }
 }

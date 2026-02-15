@@ -812,14 +812,28 @@ impl MacroSolverApp {
         }
         // This is only a temporary solution to enable using Stellar Steady Hand in the UI.
         // TODO: Design permanent solution.
+        let mut max_stellar_steady_hand_charges = self
+            .app_context
+            .recipe_config
+            .recipe_source
+            .max_stellar_steady_hand_charges();
         ui.horizontal(|ui| {
             ui.label(action_name(Action::StellarSteadyHand, locale));
-            ui.add(
-                egui::DragValue::new(
-                    &mut self.app_context.solver_config.stellar_steady_hand_charges,
-                )
-                .range(0..=3),
-            );
+
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
+                ui.add_enabled(
+                    false,
+                    egui::DragValue::new(&mut max_stellar_steady_hand_charges),
+                );
+                ui.monospace("/");
+                ui.add_enabled(
+                    max_stellar_steady_hand_charges > 0,
+                    egui::DragValue::new(
+                        &mut self.app_context.solver_config.stellar_steady_hand_charges,
+                    )
+                    .range(0..=max_stellar_steady_hand_charges),
+                );
+            });
         });
         let heart_and_soul_enabled = self.app_context.active_stats().level
             >= HeartAndSoul::LEVEL_REQUIREMENT
