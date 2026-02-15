@@ -79,7 +79,14 @@ pub trait SheetData: Sized {
 }
 
 pub async fn fetch_and_parse<T: SheetData>(lang: Lang) -> Vec<T> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .user_agent(concat!(
+            env!("CARGO_PKG_NAME"),
+            "/",
+            env!("CARGO_PKG_VERSION"),
+        ))
+        .build()
+        .unwrap();
     let get_response_text = async |url: &str| -> Result<String, reqwest::Error> {
         client
             .get(url)
