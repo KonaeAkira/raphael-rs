@@ -112,6 +112,13 @@ pub async fn fetch_and_parse<T: SheetData>(lang: Lang) -> Vec<T> {
             match get_response_text(&query_url).await {
                 Ok(response) => break response,
                 Err(error) => {
+                    let is_client_error = error
+                        .status()
+                        .is_some_and(|status_code| status_code.is_client_error());
+                    if is_client_error {
+                        log::error!("{:?}. Error is a client error, not retrying.", error);
+                        panic!("Failed to query API.");
+                    }
                     if remaining_attempts > 0 {
                         log::warn!("{:?}. Retrying...", error);
                         std::thread::sleep(retry_cooldown);
