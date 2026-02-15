@@ -815,8 +815,10 @@ impl MacroSolverApp {
         ui.horizontal(|ui| {
             ui.label(action_name(Action::StellarSteadyHand, locale));
             ui.add(
-                egui::DragValue::new(&mut self.app_context.stellar_steady_hand_charges)
-                    .range(0..=3),
+                egui::DragValue::new(
+                    &mut self.app_context.solver_config.stellar_steady_hand_charges,
+                )
+                .range(0..=3),
             );
         });
         let heart_and_soul_enabled = self.app_context.active_stats().level
