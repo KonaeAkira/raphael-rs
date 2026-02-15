@@ -22,7 +22,7 @@ fn generate_unique_rotation_id() -> u64 {
     hasher.finish()
 }
 
-// Kept for compatibility with old data; TODO: test if this works
+// Kept for compatibility with old data using the derived deserialization
 #[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct CustomRecipeOverridesConfiguration {
     pub custom_recipe_overrides: CustomRecipeOverrides,
