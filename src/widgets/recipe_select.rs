@@ -467,25 +467,22 @@ impl Widget for RecipeSelect<'_> {
                         if ui
                             .checkbox(&mut show_custom_recipe_select, t!(locale, "Custom"))
                             .changed()
+                            && show_custom_recipe_select
+                            && let RecipeSource::Normal { .. } = self.recipe_config.recipe_source
                         {
-                            if show_custom_recipe_select
-                                && let RecipeSource::Normal { .. } =
-                                    self.recipe_config.recipe_source
-                            {
-                                let default_game_settings = get_game_settings(
-                                    *self.recipe_config.recipe(),
-                                    None,
-                                    *self.crafter_config.active_stats(),
-                                    self.selected_food,
-                                    self.selected_potion,
+                            let default_game_settings = get_game_settings(
+                                *self.recipe_config.recipe(),
+                                None,
+                                *self.crafter_config.active_stats(),
+                                self.selected_food,
+                                self.selected_potion,
+                            );
+                            self.recipe_config.recipe_source =
+                                self.recipe_config.recipe_source.into_custom(
+                                    self.crafter_config.active_stats().level,
+                                    default_game_settings,
                                 );
-                                self.recipe_config.recipe_source =
-                                    self.recipe_config.recipe_source.into_custom(
-                                        self.crafter_config.active_stats().level,
-                                        default_game_settings,
-                                    );
-                                self.recipe_config.quality_source = QualitySource::Value(0);
-                            }
+                            self.recipe_config.quality_source = QualitySource::Value(0);
                         }
                     });
                 });

@@ -44,7 +44,7 @@ pub enum RecipeSource {
 impl RecipeSource {
     pub fn into_custom(self, job_level: u8, settings: Settings) -> Self {
         match self {
-            RecipeSource::Normal { mut data, .. } => {
+            Self::Normal { mut data, .. } => {
                 data.item_id = 0;
 
                 if data.max_level_scaling != 0 {
@@ -58,7 +58,7 @@ impl RecipeSource {
                 data.material_factor = 0;
                 data.ingredients = [Ingredient::default(); 6];
 
-                RecipeSource::Custom {
+                Self::Custom {
                     data,
                     overrides: CustomRecipeOverrides {
                         max_progress_override: settings.max_progress,
@@ -69,20 +69,20 @@ impl RecipeSource {
                     },
                 }
             }
-            RecipeSource::Custom { .. } => self,
+            Self::Custom { .. } => self,
         }
     }
 
     pub fn max_stellar_steady_hand_charges(&self) -> u8 {
         match self {
-            RecipeSource::Normal { id, .. } => {
+            Self::Normal { id, .. } => {
                 RECIPE_TO_STELLAR_MISSION_LINKS
                     .get(*id)
                     .map_or(0, |stellar_mission_id| {
                         STELLAR_MISSIONS[*stellar_mission_id].stellar_steady_hand_charges
                     })
             }
-            RecipeSource::Custom { .. } => 3,
+            Self::Custom { .. } => 3,
         }
     }
 }
