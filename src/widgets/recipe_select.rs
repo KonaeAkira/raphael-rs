@@ -299,7 +299,7 @@ impl<'a> RecipeSelect<'a> {
             self.selected_potion,
         );
         let (recipe, custom_recipe_overrides) = match &mut self.recipe_config.recipe_source {
-            RecipeSource::Normal { .. } => unreachable!(
+            RecipeSource::Normal { .. } => unimplemented!(
                 "Custom recipe select should only be drawn for an actual custom recipe"
             ),
             RecipeSource::Custom { data, overrides } => (data, overrides),
@@ -449,7 +449,10 @@ impl Widget for RecipeSelect<'_> {
         let locale = self.locale;
         let mut show_custom_recipe_select = false;
         ui.ctx().data_mut(|data| {
-            if let Some(selection) = data.get_persisted(Id::new("RECIPE_SEARCH_CUSTOM_SELECTED")) {
+            if let RecipeSource::Custom { .. } = self.recipe_config.recipe_source
+                && let Some(selection) =
+                    data.get_persisted(Id::new("RECIPE_SEARCH_CUSTOM_SELECTED"))
+            {
                 show_custom_recipe_select = selection;
             }
         });
