@@ -153,20 +153,16 @@ impl Widget for MacroView<'_> {
                     });
                 });
                 ui.separator();
-                if self.actions.is_empty() {
-                    ui.label(t!(locale, "None"));
-                } else {
-                    let newline = match ui.ctx().os() {
-                        egui::os::OperatingSystem::Mac => "\n",
-                        _ => "\r\n",
-                    };
-                    let context = MacroContextData::from_app_context(self.app_context);
-                    let config = &self.app_context.macro_view_config;
-                    let macros = create_macros(&context, config, self.actions, newline);
-                    for (macro_idx, macro_text) in macros.into_iter().enumerate() {
-                        let id = egui::Id::new("MACRO_TEXT_BOX").with(macro_idx);
-                        ui.add(MultilineMonospace::new(id, macro_text).scrollable([true, false]));
-                    }
+                let newline = match ui.ctx().os() {
+                    egui::os::OperatingSystem::Mac => "\n",
+                    _ => "\r\n",
+                };
+                let context = MacroContextData::from_app_context(self.app_context);
+                let config = &self.app_context.macro_view_config;
+                let macros = create_macros(&context, config, self.actions, newline);
+                for (macro_idx, macro_text) in macros.into_iter().enumerate() {
+                    let id = egui::Id::new("MACRO_TEXT_BOX").with(macro_idx);
+                    ui.add(MultilineMonospace::new(id, macro_text).scrollable([true, false]));
                 }
                 // Fill the remaining space.
                 ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
