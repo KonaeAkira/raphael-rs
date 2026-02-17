@@ -105,8 +105,7 @@ impl<'a> RecipeSelect<'a> {
             recipe_source,
             quality_source: QualitySource::HqMaterialList([0; 6]),
         };
-        self.solver_config.stellar_steady_hand_charges =
-            recipe_source.default_stellar_steady_hand_charges(); // MAYBE should just be 0
+        self.solver_config.stellar_steady_hand_charges = 0;
     }
 
     fn draw_normal_recipe_select(&mut self, ui: &mut egui::Ui) {

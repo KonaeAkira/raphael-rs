@@ -268,6 +268,7 @@ struct RotationWidget<'a> {
     rotation: &'a Rotation,
     actions: &'a mut Vec<Action>,
     crafter_config: &'a mut CrafterConfig,
+    solver_config: &'a mut SolverConfig,
     recipe_config: &'a mut RecipeConfiguration,
     selected_food: &'a mut Option<Consumable>,
     selected_potion: &'a mut Option<Consumable>,
@@ -280,6 +281,7 @@ struct LimitedAppContext<'a> {
     pub selected_food: &'a mut Option<Consumable>,
     pub selected_potion: &'a mut Option<Consumable>,
     pub crafter_config: &'a mut CrafterConfig,
+    pub solver_config: &'a mut SolverConfig,
 }
 
 impl<'a> RotationWidget<'a> {
@@ -298,6 +300,7 @@ impl<'a> RotationWidget<'a> {
             rotation,
             actions,
             crafter_config: limited_app_context.crafter_config,
+            solver_config: limited_app_context.solver_config,
             recipe_config: limited_app_context.recipe_config,
             selected_food: limited_app_context.selected_food,
             selected_potion: limited_app_context.selected_potion,
@@ -402,6 +405,7 @@ impl<'a> RotationWidget<'a> {
                             quality_source: QualitySource::HqMaterialList([0; 6]),
                         };
                         self.crafter_config.selected_job = recipe.job_id;
+                        self.solver_config.stellar_steady_hand_charges = 0;
                     } else {
                         log::debug!("Unable to find recipe with recipe_id={:?}", recipe_id);
                     }
@@ -415,6 +419,7 @@ impl<'a> RotationWidget<'a> {
                         quality_source: QualitySource::Value(0),
                     };
                     self.crafter_config.selected_job = recipe.job_id;
+                    self.solver_config.stellar_steady_hand_charges = 0;
                 }
             }
         }
@@ -584,13 +589,11 @@ impl egui::Widget for SavedRotationsWidget<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let AppContext {
             locale,
-            // app_config,
             recipe_config,
             selected_food,
             selected_potion,
             crafter_config,
-            // solver_config,
-            // macro_view_config,
+            solver_config,
             saved_rotations_config: config,
             saved_rotations_data: rotations,
             ..
@@ -602,6 +605,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
             selected_food,
             selected_potion,
             crafter_config,
+            solver_config,
         };
 
         ui.vertical(|ui| {

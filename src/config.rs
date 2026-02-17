@@ -73,23 +73,6 @@ impl RecipeSource {
         }
     }
 
-    // TODO: figure out if this heuristic works (seems like it doesn't; see Oizys EX+ sequential missions)
-    // or determine how to properly calculate the number of safely usable charges for gold rating
-    pub fn default_stellar_steady_hand_charges(&self) -> u8 {
-        match self {
-            Self::Normal { id, .. } => {
-                RECIPE_TO_STELLAR_MISSION_LINKS
-                    .get(*id)
-                    .map_or(0, |stellar_mission_id| {
-                        u8::from(
-                            STELLAR_MISSIONS[*stellar_mission_id].stellar_steady_hand_charges > 0,
-                        )
-                    })
-            }
-            Self::Custom { .. } => 0,
-        }
-    }
-
     pub fn max_stellar_steady_hand_charges(&self) -> u8 {
         match self {
             Self::Normal { id, .. } => {
