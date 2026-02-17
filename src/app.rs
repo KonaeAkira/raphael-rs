@@ -815,7 +815,7 @@ impl MacroSolverApp {
             .recipe_config
             .recipe_source
             .max_stellar_steady_hand_charges();
-        ui.add_enabled_ui(max_stellar_steady_hand_charges > 0, |ui| {
+        if max_stellar_steady_hand_charges > 0 {
             ui.horizontal(|ui| {
                 ui.label(action_name(Action::StellarSteadyHand, locale));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
@@ -832,7 +832,9 @@ impl MacroSolverApp {
                     );
                 });
             });
-        });
+        } else {
+            self.app_context.solver_config.stellar_steady_hand_charges = 0;
+        }
         let heart_and_soul_enabled = self.app_context.active_stats().level
             >= HeartAndSoul::LEVEL_REQUIREMENT
             && self.app_context.active_stats().heart_and_soul;
