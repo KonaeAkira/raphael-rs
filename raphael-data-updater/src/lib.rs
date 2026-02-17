@@ -28,6 +28,20 @@ pub enum Lang {
 }
 
 impl Lang {
+    /// Language code used for xivapi.
+    pub fn xivapi_langcode(self) -> &'static str {
+        match self {
+            Self::EN => "en",
+            Self::DE => "de",
+            Self::FR => "fr",
+            Self::JP => "ja",
+            Self::CN => "chs",
+            Self::KR => "ko",
+            Self::TW => "tc",
+        }
+    }
+
+    /// Shortcode used within raphael.
     pub fn shortcode(self) -> &'static str {
         match self {
             Self::EN => "en",
@@ -85,7 +99,7 @@ pub async fn fetch_and_parse<T: SheetData>(lang: Lang) -> Vec<T> {
             T::SHEET,
             T::REQUIRED_FIELDS.join(","),
             last_row_id,
-            lang.shortcode(),
+            lang.xivapi_langcode(),
             lang.schema_override()
                 .map_or("".to_owned(), |s| format!("&schema={}", s)),
         );

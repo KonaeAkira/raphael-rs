@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use egui::{Align, Layout, Widget};
 use raphael_data::{Locale, get_item_name, macro_name};
 use raphael_sim::Action;
@@ -155,20 +153,16 @@ impl Widget for MacroView<'_> {
                     });
                 });
                 ui.separator();
-                if self.actions.is_empty() {
-                    ui.label(t!(locale, "None"));
-                } else {
-                    let newline = match ui.ctx().os() {
-                        egui::os::OperatingSystem::Mac => "\n",
-                        _ => "\r\n",
-                    };
-                    let context = MacroContextData::from_app_context(self.app_context);
-                    let config = &self.app_context.macro_view_config;
-                    let macros = create_macros(&context, config, self.actions, newline);
-                    for (macro_idx, macro_text) in macros.into_iter().enumerate() {
-                        let id = egui::Id::new("MACRO_TEXT_BOX").with(macro_idx);
-                        ui.add(MultilineMonospace::new(id, macro_text).scrollable([true, false]));
-                    }
+                let newline = match ui.ctx().os() {
+                    egui::os::OperatingSystem::Mac => "\n",
+                    _ => "\r\n",
+                };
+                let context = MacroContextData::from_app_context(self.app_context);
+                let config = &self.app_context.macro_view_config;
+                let macros = create_macros(&context, config, self.actions, newline);
+                for (macro_idx, macro_text) in macros.into_iter().enumerate() {
+                    let id = egui::Id::new("MACRO_TEXT_BOX").with(macro_idx);
+                    ui.add(MultilineMonospace::new(id, macro_text).scrollable([true, false]));
                 }
                 // Fill the remaining space.
                 ui.with_layout(Layout::bottom_up(Align::LEFT), |_| {});
@@ -361,45 +355,43 @@ fn create_macros(
     actions: &[Action],
     newline: &str,
 ) -> Vec<String> {
-    let mut lines = VecDeque::new();
-
-    if config.intro_enabled {
-        if config.intro_config.default_intro {
-            lines.push_back("/macrolock".to_string());
-        } else {
-            lines.push_back(config.intro_config.custom_intro_format.clone());
+    let max_macro_len = if config.split_macro { 15 } else { usize::MAX };
+    let mut macros = Vec::new();
+    let mut current_macro = Vec::new();
+    for (current_idx, action) in actions.iter().enumerate() {
+        let remaining_actions = actions.len() - current_idx - 1;
+        // Macro intro
+        if config.intro_enabled && current_macro.is_empty() {
+            if config.intro_config.default_intro {
+                current_macro.push("/macrolock".to_string());
+            } else {
+                current_macro.push(config.intro_config.custom_intro_format.clone());
+            }
         }
-    }
-
-    for action in actions {
+        // Action
         if config.include_delay {
-            lines.push_back(format!(
+            current_macro.push(format!(
                 "/ac \"{}\" <wait.{}>",
                 macro_name(*action, context.locale),
                 action.time_cost() + config.extra_delay
             ));
         } else {
-            lines.push_back(format!("/ac \"{}\"", macro_name(*action, context.locale)));
+            current_macro.push(format!("/ac \"{}\"", macro_name(*action, context.locale)));
         }
-    }
-
-    let max_macro_len = if config.split_macro { 15 } else { usize::MAX };
-
-    let mut macros = Vec::new();
-    let mut current_macro = Vec::new();
-    while let Some(line) = lines.pop_front() {
-        current_macro.push(line);
+        // Macro outro
         if config.notification_enabled
             && current_macro.len() < max_macro_len // Has place for notification.
-            && (current_macro.len() + 1 == max_macro_len || lines.is_empty()) // Is end of macro.
-            && !(config.notification_config.avoid_single_action_macro && lines.len() == 1)
+            && (current_macro.len() + 1 == max_macro_len || remaining_actions == 0) // Is end of macro.
+            && !(config.notification_config.avoid_single_action_macro && remaining_actions == 1)
         {
             let notification_command = if config.notification_config.default_notification {
                 format!(
                     "/echo Macro finished ({{index}}/{{max_index}}) <se.{}>",
                     config.notification_config.notification_sound
                 )
-            } else if config.notification_config.different_last_notification && lines.is_empty() {
+            } else if config.notification_config.different_last_notification
+                && remaining_actions == 0
+            {
                 config
                     .notification_config
                     .custom_last_notification_format
@@ -412,7 +404,7 @@ fn create_macros(
             };
             current_macro.push(notification_command);
         }
-        if current_macro.len() >= max_macro_len || lines.is_empty() {
+        if current_macro.len() >= max_macro_len || remaining_actions == 0 {
             macros.push(current_macro.join(newline));
             current_macro.clear();
         }
@@ -471,11 +463,7 @@ mod tests {
         config.intro_enabled = true;
         config.notification_enabled = true;
         let macros = create_macros(&context, &config, &[], "\n");
-        assert_eq!(macros.len(), 1);
-        expect_test::expect![[r#"
-            /macrolock
-            /echo Macro finished (1/1) <se.1>"#]]
-        .assert_eq(&macros[0]);
+        assert_eq!(macros.len(), 0);
     }
 
     #[test]
@@ -645,7 +633,6 @@ mod tests {
             Action::GreatStrides,
             Action::ByregotsBlessing,
             Action::BasicSynthesis,
-            Action::BasicSynthesis,
         ];
         let macros = create_macros(&context, &config, &actions, "\n");
         assert_eq!(macros.len(), 2);
@@ -667,6 +654,7 @@ mod tests {
             /echo Macro finished (1/2) <se.1>"#]]
         .assert_eq(&macros[0]);
         expect_test::expect![[r#"
+            /macrolock
             /ac "Prudent Touch" <wait.3>
             /ac "Master's Mend" <wait.3>
             /ac "Innovation" <wait.2>
@@ -680,7 +668,6 @@ mod tests {
             /ac "Advanced Touch" <wait.3>
             /ac "Great Strides" <wait.2>
             /ac "Byregot's Blessing" <wait.3>
-            /ac "Basic Synthesis" <wait.3>
             /ac "Basic Synthesis" <wait.3>"#]]
         .assert_eq(&macros[1]);
     }
@@ -738,6 +725,7 @@ mod tests {
             /echo Crafting Test Item in progress: 1/2 <se.1>"#]]
         .assert_eq(&macros[0]);
         expect_test::expect![[r#"
+            /echo food=Test Food, potion=Test Potion, stats=4900 4800 620 100 <wait.5>
             /ac "Basic Synthesis" <wait.3>
             /ac "Basic Synthesis" <wait.3>
             /echo Crafting Test Item done: 2/2 <se.1>"#]]
