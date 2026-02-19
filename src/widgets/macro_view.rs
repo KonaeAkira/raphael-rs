@@ -325,7 +325,7 @@ struct MacroContextData {
 impl MacroContextData {
     fn from_app_context(app_context: &AppContext) -> Self {
         let locale = app_context.locale;
-        let item_name = get_item_name(app_context.recipe_config.recipe.item_id, false, locale)
+        let item_name = get_item_name(app_context.recipe_config.recipe().item_id, false, locale)
             .unwrap_or(t!(locale, "Unknown item").to_owned());
         let food_name = match app_context.selected_food {
             Some(item) => {

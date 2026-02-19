@@ -50,7 +50,7 @@ impl<'a> Simulator<'a> {
         let settings = app_context.game_settings();
         let initial_quality = app_context.initial_quality();
         let item_always_collectable = raphael_data::ITEMS
-            .get(recipe_config.recipe.item_id)
+            .get(recipe_config.recipe().item_id)
             .map(|item| item.always_collectable)
             .unwrap_or_default();
         let config_changed = config_changed(&settings, initial_quality, solver_config, ctx);
