@@ -77,7 +77,7 @@ impl ReducedState {
             cp: self.cp,
             progress: 0,
             quality: 0,
-            unreliable_quality: u32::from(self.compressed_unreliable_quality)
+            unreliable_quality: u16::from(self.compressed_unreliable_quality)
                 * (2 * settings.base_quality()),
             effects: self.effects,
         }
@@ -97,7 +97,7 @@ impl ReducedState {
         action: ActionCombo,
         settings: &SolverSettings,
         durability_cost: u16,
-    ) -> Option<(Self, u32, u32)> {
+    ) -> Option<(Self, u16, u16)> {
         match action {
             ActionCombo::Single(
                 Action::MasterMend | Action::ImmaculateMend | Action::Manipulation,

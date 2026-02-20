@@ -16,7 +16,7 @@ const EFFECTS_KEY_MASK: u64 = !EFFECTS_VALUE_MASK;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 struct Key {
-    progress: u32,
+    progress: u16,
     effects: u64,
 }
 
@@ -64,8 +64,8 @@ impl From<&SimulationState> for Value {
     fn from(state: &SimulationState) -> Self {
         Self(wide::u32x4::new([
             (u32::from(state.cp) << 16) + u32::from(state.durability),
-            state.quality,
-            state.quality + state.unreliable_quality,
+            u32::from(state.quality),
+            u32::from(state.quality) + u32::from(state.unreliable_quality),
             (state.effects.into_bits() & EFFECTS_VALUE_MASK) as u32,
         ]))
     }

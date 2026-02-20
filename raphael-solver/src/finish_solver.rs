@@ -12,14 +12,14 @@ use crate::{
 struct CpProgressBreakpoints {
     /// List of CP breakpoints and the associated achievable Progress.
     /// Sorted in order of ascending CP.
-    breakpoints: Vec<(u16, u32)>,
+    breakpoints: Vec<(u16, u16)>,
     /// The maximum CP at which the state was solved.
     /// Querying the solution at a CP higher than this may give incorrect results.
     max_solved_cp: Option<u16>,
 }
 
 impl CpProgressBreakpoints {
-    fn get_progress(&self, cp: u16) -> Option<u32> {
+    fn get_progress(&self, cp: u16) -> Option<u16> {
         if Some(cp) > self.max_solved_cp {
             return None;
         }
@@ -33,7 +33,7 @@ impl CpProgressBreakpoints {
     /// Add a new (CP, Durability) breakpoint.
     /// Breakpoints must be added with strictly increasing CP, otherwise `get_progress` may return wrong results.
     /// If the new breakpoint does not have strictly better Progress than the previous breakpoint, it is ignored.
-    fn add_breakpoint(&mut self, cp: u16, progress: u32) {
+    fn add_breakpoint(&mut self, cp: u16, progress: u16) {
         self.max_solved_cp = Some(cp);
         if self.breakpoints.last().is_none_or(|last| last.1 < progress) {
             self.breakpoints.push((cp, progress));
@@ -159,7 +159,7 @@ struct Template {
     durability: u16,
     effects: Effects,
     current_cp: u16,
-    current_max_progress: Option<u32>,
+    current_max_progress: Option<u16>,
 }
 
 fn generate_templates(settings: &SolverSettings) -> Vec<Template> {

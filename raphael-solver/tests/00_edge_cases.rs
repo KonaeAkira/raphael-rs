@@ -5,10 +5,10 @@ use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]
 struct SolutionScore {
-    pub capped_quality: u32,
+    pub capped_quality: u16,
     pub steps: u8,
     pub duration: u8,
-    pub overflow_quality: u32,
+    pub overflow_quality: u16,
 }
 
 fn is_progress_backloaded(settings: &SolverSettings, actions: &[Action]) -> bool {

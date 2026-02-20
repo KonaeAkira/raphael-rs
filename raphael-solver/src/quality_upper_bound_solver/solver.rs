@@ -15,9 +15,9 @@ use super::state::ReducedState;
 struct QualityUbSolverContext {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
-    iq_quality_lut: [u32; 11],
+    iq_quality_lut: [u16; 11],
     durability_cost: u16,
-    largest_progress_increase: u32,
+    largest_progress_increase: u16,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -270,7 +270,7 @@ impl<'a> QualityUbSolverShard<'a> {
     pub fn quality_upper_bound(
         &mut self,
         mut state: SimulationState,
-    ) -> Result<u32, SolverException> {
+    ) -> Result<u16, SolverException> {
         let mut required_progress = self.context.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
             // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.

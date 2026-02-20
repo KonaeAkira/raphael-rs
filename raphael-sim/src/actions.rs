@@ -26,14 +26,15 @@ pub trait ActionImpl {
     }
 
     #[inline]
-    fn progress_increase(state: &SimulationState, settings: &Settings) -> u32 {
+    fn progress_increase(state: &SimulationState, settings: &Settings) -> u16 {
         let action_mod = Self::progress_modifier(state, settings);
         let effect_mod = state.effects.progress_modifier();
-        u32::from(settings.base_progress) * action_mod * effect_mod / 1000
+        let progress = u32::from(settings.base_progress) * action_mod * effect_mod / 1000;
+        progress.try_into().unwrap_or(u16::MAX)
     }
 
     #[inline]
-    fn quality_increase(state: &SimulationState, settings: &Settings, condition: Condition) -> u32 {
+    fn quality_increase(state: &SimulationState, settings: &Settings, condition: Condition) -> u16 {
         let action_mod = Self::quality_modifier(state, settings);
         let effect_mod = state.effects.quality_modifier();
         let condition_mod = match condition {
@@ -42,7 +43,9 @@ pub trait ActionImpl {
             Condition::Excellent => 8,
             Condition::Poor => 1,
         };
-        u32::from(settings.base_quality) * action_mod * effect_mod * condition_mod / 20000
+        let quality =
+            u32::from(settings.base_quality) * action_mod * effect_mod * condition_mod / 20000;
+        quality.try_into().unwrap_or(u16::MAX)
     }
 
     fn durability_cost(state: &SimulationState, settings: &Settings, _condition: Condition) -> u16 {
@@ -810,11 +813,11 @@ impl ActionImpl for TrainedEye {
     }
 
     fn quality_increase(
-        _state: &SimulationState,
+        state: &SimulationState,
         settings: &Settings,
         _condition: Condition,
-    ) -> u32 {
-        u32::from(settings.max_quality)
+    ) -> u16 {
+        state.quality.saturating_sub(settings.max_quality)
     }
 
     fn quality_modifier(_state: &SimulationState, settings: &Settings) -> u32 {

@@ -1,11 +1,11 @@
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ParetoValue {
-    pub progress: u32,
-    pub quality: u32,
+    pub progress: u16,
+    pub quality: u16,
 }
 
 impl ParetoValue {
-    pub const fn new(progress: u32, quality: u32) -> Self {
+    pub const fn new(progress: u16, quality: u16) -> Self {
         Self { progress, quality }
     }
 }
@@ -27,7 +27,7 @@ pub struct ParetoFrontBuilder {
 impl ParetoFrontBuilder {
     pub fn new() -> Self {
         Self {
-            cutoff: ParetoValue::new(u32::MAX, u32::MAX),
+            cutoff: ParetoValue::new(u16::MAX, u16::MAX),
             result: Vec::new(),
             merge_buffer: Vec::new(),
         }

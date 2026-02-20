@@ -30,8 +30,8 @@ pub struct StepLbSolverStats {
 struct StepLbSolverContext {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
-    iq_quality_lut: [u32; 11],
-    largest_progress_increase: u32,
+    iq_quality_lut: [u16; 11],
+    largest_progress_increase: u16,
 }
 
 pub struct StepLbSolver {
@@ -115,7 +115,7 @@ impl StepLbSolver {
         &mut self,
         mut state: SimulationState,
         step_budget: NonZeroU8,
-    ) -> Result<Option<u32>, SolverException> {
+    ) -> Result<Option<u16>, SolverException> {
         let mut required_progress = self.context.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
             // Assume MuscleMemory can be used to its max potential and remove the effect
@@ -176,7 +176,7 @@ impl<'a> StepLbSolverShard<'a> {
         &mut self,
         mut state: SimulationState,
         step_budget: NonZeroU8,
-    ) -> Result<Option<u32>, SolverException> {
+    ) -> Result<Option<u16>, SolverException> {
         let mut required_progress = self.context.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
             // Assume MuscleMemory can be used to its max potential and remove the effect

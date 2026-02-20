@@ -23,8 +23,8 @@ fn check_consistency(solver_settings: SolverSettings) {
             let child_upper_bound = match use_action_combo(&solver_settings, state, action) {
                 Ok(child) => match child.is_final(&solver_settings.simulator_settings) {
                     false => solver_shard.quality_upper_bound(child).unwrap(),
-                    true if child.progress >= u32::from(solver_settings.max_progress()) => {
-                        std::cmp::min(u32::from(solver_settings.max_quality()), child.quality)
+                    true if child.progress >= solver_settings.max_progress() => {
+                        std::cmp::min(solver_settings.max_quality(), child.quality)
                     }
                     true => 0,
                 },
