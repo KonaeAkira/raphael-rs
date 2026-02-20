@@ -200,7 +200,9 @@ impl<'a> StepLbSolverShard<'a> {
             )?
         };
         let idx = pareto_front.partition_point(|value| value.progress < required_progress);
-        let quality_ub = pareto_front.get(idx).map(|v| state.quality + v.quality);
+        let quality_ub = pareto_front
+            .get(idx)
+            .map(|value| state.quality.saturating_add(value.quality));
         Ok(quality_ub)
     }
 }
@@ -252,16 +254,17 @@ fn construct_solution<'a>(
         }
         let new_step_budget = state.steps_budget.get() - action.steps();
         if let Ok(child_state) = use_action_combo(&context.settings, state.to_state(), action) {
-            let progress = child_state.progress;
-            let quality = child_state.quality;
+            let action_value = ParetoValue::new(child_state.progress, child_state.quality);
             if let Ok(new_step_budget) = NonZeroU8::try_from(new_step_budget)
                 && !child_state.is_final(&context.settings.simulator_settings)
             {
                 let child_state = ReducedState::from_state(child_state, new_step_budget);
                 if let Some(pareto_front) = get_solution(child_state) {
-                    pf_builder.push_slice(pareto_front.iter().map(|value| {
-                        ParetoValue::new(value.progress + progress, value.quality + quality)
-                    }));
+                    pf_builder.push_slice(
+                        pareto_front
+                            .iter()
+                            .map(|value| value.saturating_add(action_value)),
+                    );
                 } else {
                     return Err(internal_error!(
                         "Required child state does not exist.",
@@ -271,8 +274,8 @@ fn construct_solution<'a>(
                         child_state
                     ));
                 }
-            } else if progress != 0 {
-                pf_builder.push(ParetoValue::new(progress, quality));
+            } else if action_value.progress != 0 {
+                pf_builder.push(action_value);
             }
         }
     }

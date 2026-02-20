@@ -218,13 +218,13 @@ fn large_progress_quality_increase() {
     let simulator_settings = Settings {
         max_cp: 300,
         max_durability: 40,
-        max_progress: 100,
-        max_quality: 100,
-        base_progress: 5000,
-        base_quality: 5000,
+        max_progress: u16::MAX,
+        max_quality: u16::MAX,
+        base_progress: 10000,
+        base_quality: 10000,
         job_level: 100,
         allowed_actions: ActionMask::all(),
-        adversarial: false,
+        adversarial: true,
         backload_progress: false,
         stellar_steady_hand_charges: 0,
     };
@@ -235,32 +235,32 @@ fn large_progress_quality_increase() {
     let expected_score = expect![[r#"
         Ok(
             SolutionScore {
-                capped_quality: 100,
-                steps: 1,
-                duration: 3,
-                overflow_quality: 4900,
+                capped_quality: 65535,
+                steps: 6,
+                duration: 16,
+                overflow_quality: 0,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1,
-                processed_nodes: 1,
+                inserted_nodes: 17644,
+                processed_nodes: 907,
             },
             finish_solver_stats: FinishSolverStats {
-                states: 21848,
-                values: 21848,
+                states: 27451,
+                values: 37675,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 178982,
-                states_on_shards: 5,
-                values: 178987,
+                states_on_main: 2208900,
+                states_on_shards: 40,
+                values: 8280034,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 1,
-                states_on_shards: 13,
-                values: 14,
+                states_on_main: 1140,
+                states_on_shards: 10709,
+                values: 49859,
             },
         }
     "#]];

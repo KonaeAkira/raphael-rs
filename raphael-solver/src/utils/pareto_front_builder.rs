@@ -8,13 +8,12 @@ impl ParetoValue {
     pub const fn new(progress: u16, quality: u16) -> Self {
         Self { progress, quality }
     }
-}
 
-impl std::ops::Add for ParetoValue {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Self::new(self.progress + rhs.progress, self.quality + rhs.quality)
+    pub const fn saturating_add(self, rhs: Self) -> Self {
+        Self {
+            progress: self.progress.saturating_add(rhs.progress),
+            quality: self.quality.saturating_add(rhs.quality),
+        }
     }
 }
 

@@ -98,14 +98,16 @@ impl SimulationState {
             let guard_active = state.effects.adversarial_guard_active();
             if quality_increase != 0 {
                 if guard_active {
-                    state.quality += quality_increase;
+                    state.quality = state.quality.saturating_add(quality_increase);
                     state.unreliable_quality = 0;
                 } else {
                     let adversarial_quality_increase =
                         A::quality_increase(self, settings, Condition::Poor);
                     let quality_diff = quality_increase - adversarial_quality_increase;
-                    state.quality += adversarial_quality_increase
-                        + std::cmp::min(state.unreliable_quality, quality_diff);
+                    state.quality = state
+                        .quality
+                        .saturating_add(adversarial_quality_increase)
+                        .saturating_add(std::cmp::min(state.unreliable_quality, quality_diff));
                     state.unreliable_quality =
                         quality_diff.saturating_sub(state.unreliable_quality);
                 }
@@ -113,7 +115,7 @@ impl SimulationState {
                 state.unreliable_quality = 0;
             }
         } else {
-            state.quality += quality_increase;
+            state.quality = state.quality.saturating_add(quality_increase);
         }
         if quality_increase != 0 && settings.job_level >= 11 {
             state
@@ -122,7 +124,7 @@ impl SimulationState {
         }
 
         let progress_increase = A::progress_increase(self, settings);
-        state.progress += progress_increase;
+        state.progress = state.progress.saturating_add(progress_increase);
 
         if state.is_final(settings) {
             return Ok(state);

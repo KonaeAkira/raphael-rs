@@ -77,7 +77,7 @@ impl FinishSolver {
                 state
             )
         })?;
-        Ok(state.progress + max_additional_progress >= self.settings.max_progress())
+        Ok(state.progress.saturating_add(max_additional_progress) >= self.settings.max_progress())
     }
 
     pub fn precompute(&mut self) -> Result<(), SolverException> {
@@ -131,7 +131,7 @@ impl FinishSolver {
                 } else if let Some(child_breakpoints) = self.solved_states.get(&key)
                     && let Some(child_progress) = child_breakpoints.get_progress(child_state.cp)
                 {
-                    result = std::cmp::max(result, child_state.progress + child_progress);
+                    result = result.max(child_state.progress.saturating_add(child_progress));
                 } else {
                     // Required child state has not been solved yet.
                     // Abort and try again in the next iteration.
