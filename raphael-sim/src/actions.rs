@@ -817,7 +817,7 @@ impl ActionImpl for TrainedEye {
         settings: &Settings,
         _condition: Condition,
     ) -> u16 {
-        state.quality.saturating_sub(settings.max_quality)
+        settings.max_quality.saturating_sub(state.quality)
     }
 
     fn quality_modifier(_state: &SimulationState, settings: &Settings) -> u32 {
