@@ -16,7 +16,7 @@ use std::vec::Vec;
 
 #[derive(Clone)]
 struct Solution {
-    score: (SearchScore, u32),
+    score: (SearchScore, u16),
     solver_actions: Vec<ActionCombo>,
 }
 

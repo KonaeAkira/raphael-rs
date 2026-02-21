@@ -1,20 +1,19 @@
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ParetoValue {
-    pub progress: u32,
-    pub quality: u32,
+    pub progress: u16,
+    pub quality: u16,
 }
 
 impl ParetoValue {
-    pub const fn new(progress: u32, quality: u32) -> Self {
+    pub const fn new(progress: u16, quality: u16) -> Self {
         Self { progress, quality }
     }
-}
 
-impl std::ops::Add for ParetoValue {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Self::new(self.progress + rhs.progress, self.quality + rhs.quality)
+    pub const fn saturating_add(self, rhs: Self) -> Self {
+        Self {
+            progress: self.progress.saturating_add(rhs.progress),
+            quality: self.quality.saturating_add(rhs.quality),
+        }
     }
 }
 
@@ -27,7 +26,7 @@ pub struct ParetoFrontBuilder {
 impl ParetoFrontBuilder {
     pub fn new() -> Self {
         Self {
-            cutoff: ParetoValue::new(u32::MAX, u32::MAX),
+            cutoff: ParetoValue::new(u16::MAX, u16::MAX),
             result: Vec::new(),
             merge_buffer: Vec::new(),
         }

@@ -358,7 +358,7 @@ pub fn execute(args: &SolveArgs) {
 
     let final_state = SimulationState::from_macro(&settings, &actions).unwrap();
     let state_quality = final_state.quality;
-    let final_quality = state_quality + u32::from(initial_quality);
+    let final_quality = state_quality.saturating_add(initial_quality);
     let steps = actions.len();
     let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
     let action_ids: Vec<u32> = actions.iter().map(|f| f.action_id()).collect();
