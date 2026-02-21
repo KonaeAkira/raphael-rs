@@ -104,10 +104,33 @@ pub struct ParetoFront {
 }
 
 impl ParetoFront {
-    pub fn insert(&mut self, state: SimulationState) -> bool {
+    /// Inserts all non-dominated elements into the pareto front while also removing dominated values
+    /// from the pareto front. Returns an iterator over elements that were inserted.
+    pub fn insert_batch<T>(
+        &mut self,
+        mut elements: Vec<T>,
+        to_state: impl Fn(&T) -> &SimulationState,
+    ) -> impl Iterator<Item = T> {
+        // Sort elements in a way that ensures an element cannot be dominated
+        // by another element that comes later in the list.
+        elements.sort_unstable_by_key(|element| {
+            let state = to_state(element);
+            let weight = u64::from(state.cp)
+                + u64::from(state.durability)
+                + u64::from(state.quality)
+                + u64::from(state.unreliable_quality)
+                + state.effects.into_bits();
+            std::cmp::Reverse(weight)
+        });
+        elements
+            .into_iter()
+            .filter(move |element| self.insert(to_state(element)))
+    }
+
+    fn insert(&mut self, state: &SimulationState) -> bool {
         const MAX_LEAF_SIZE: usize = 200;
-        let new_value = Value::from(&state);
-        let mut node = self.buckets.entry(Key::from(&state)).or_default();
+        let new_value = Value::from(state);
+        let mut node = self.buckets.entry(Key::from(state)).or_default();
         while let TreeNode::Intermediate(intermediate) = node {
             if new_value.cp() < intermediate.partition_point {
                 node = intermediate.lhs.as_mut();
