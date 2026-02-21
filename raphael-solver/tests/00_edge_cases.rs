@@ -236,8 +236,8 @@ fn large_progress_quality_increase() {
         Ok(
             SolutionScore {
                 capped_quality: 65535,
-                steps: 6,
-                duration: 16,
+                steps: 4,
+                duration: 11,
                 overflow_quality: 0,
             },
         )
@@ -245,8 +245,8 @@ fn large_progress_quality_increase() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 17644,
-                processed_nodes: 907,
+                inserted_nodes: 76,
+                processed_nodes: 18,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 27451,
@@ -254,13 +254,13 @@ fn large_progress_quality_increase() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2208900,
-                states_on_shards: 40,
-                values: 8280034,
+                states_on_shards: 22,
+                values: 8280016,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 1140,
-                states_on_shards: 10709,
-                values: 49859,
+                states_on_main: 320,
+                states_on_shards: 5236,
+                values: 22793,
             },
         }
     "#]];
