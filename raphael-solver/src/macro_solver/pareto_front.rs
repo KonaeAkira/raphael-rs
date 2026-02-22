@@ -111,20 +111,9 @@ impl ParetoFront {
     /// from the pareto front. Returns an iterator over elements that were inserted.
     pub fn insert_batch<T: Send>(
         &mut self,
-        mut elements: Vec<T>,
+        elements: Vec<T>,
         to_state: impl Fn(&T) -> &SimulationState + Sync,
     ) -> impl Iterator<Item = T> {
-        // Sort elements in a way that ensures an element cannot be dominated
-        // by another element that comes later in the list.
-        elements.sort_unstable_by_key(|element| {
-            let state = to_state(element);
-            let weight = u64::from(state.cp)
-                + u64::from(state.durability)
-                + u64::from(state.quality)
-                + u64::from(state.unreliable_quality)
-                + state.effects.into_bits();
-            std::cmp::Reverse(weight)
-        });
         // Make sure all keys exist in the parallel hashmap.
         for element in &elements {
             self.buckets
@@ -143,6 +132,17 @@ impl ParetoFront {
             .into_par_iter()
             .with_max_len(1)
             .map(|(key, mut elements)| {
+                // Sort elements in a way that ensures an element cannot be dominated
+                // by another element that comes later in the list.
+                elements.sort_unstable_by_key(|element| {
+                    let state = to_state(element);
+                    let weight = u64::from(state.cp)
+                        + u64::from(state.durability)
+                        + u64::from(state.quality)
+                        + u64::from(state.unreliable_quality)
+                        + state.effects.into_bits();
+                    std::cmp::Reverse(weight)
+                });
                 let mut root_node = self.buckets.get(&key).unwrap().lock().unwrap();
                 elements.retain(|element| Self::insert(to_state(element), &mut root_node));
                 elements

@@ -359,8 +359,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 431853,
-                processed_nodes: 70823,
+                inserted_nodes: 431803,
+                processed_nodes: 70815,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -373,8 +373,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 943777,
-                states_on_shards: 274380,
-                values: 14294761,
+                states_on_shards: 274390,
+                values: 14294760,
             },
         }
     "#]];
@@ -639,8 +639,8 @@ fn black_star_4048_3997() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 146206,
-                processed_nodes: 10246,
+                inserted_nodes: 146191,
+                processed_nodes: 10245,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3248,
@@ -693,8 +693,8 @@ fn claro_walnut_lumber_4900_4800() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 503314,
-                processed_nodes: 28602,
+                inserted_nodes: 503224,
+                processed_nodes: 28597,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 8079,
@@ -909,8 +909,8 @@ fn hardened_survey_plank_5558_5216() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1228731,
-                processed_nodes: 172652,
+                inserted_nodes: 1228859,
+                processed_nodes: 172661,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3619,
