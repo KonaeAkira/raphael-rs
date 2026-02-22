@@ -166,7 +166,6 @@ impl ParetoFront {
     fn insert(state: &SimulationState, mut node: &mut TreeNode) -> bool {
         const MAX_LEAF_SIZE: usize = 200;
         let new_value = Value::from(state);
-        // let mut node = self.buckets.entry(Key::from(state)).or_default();
         while let TreeNode::Intermediate(intermediate) = node {
             if new_value.cp() < intermediate.partition_point {
                 node = intermediate.lhs.as_mut();
