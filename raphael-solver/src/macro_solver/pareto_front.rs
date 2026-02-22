@@ -1,7 +1,8 @@
-use dashmap::DashMap;
+use std::sync::Mutex;
+
 use raphael_sim::{Effects, SimulationState};
 use rayon::prelude::*;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 
 // It is important that this mask doesn't use any effect to its full bit range.
 // Otherwise, `Value::effect_dominates` will break.
@@ -102,7 +103,7 @@ impl Default for TreeNode {
 
 #[derive(Default)]
 pub struct ParetoFront {
-    buckets: DashMap<Key, TreeNode, FxBuildHasher>,
+    buckets: FxHashMap<Key, Mutex<TreeNode>>,
 }
 
 impl ParetoFront {
@@ -130,23 +131,20 @@ impl ParetoFront {
                 .entry(Key::from(to_state(element)))
                 .or_default();
         }
-        // Group elements by their shard to reduce contention in the parallel hashmap.
-        let mut elements_by_shard: FxHashMap<usize, Vec<T>> = FxHashMap::default();
+        // Group elements by their key to reduce contention in the hashmap.
+        let mut elements_by_key: FxHashMap<Key, Vec<T>> = FxHashMap::default();
         for element in elements {
             let key = Key::from(to_state(&element));
-            let hash = self.buckets.hash_usize(&key);
-            let shard = self.buckets.determine_shard(hash);
-            elements_by_shard.entry(shard).or_default().push(element);
+            elements_by_key.entry(key).or_default().push(element);
         }
+        let elements_by_key = Vec::from_iter(elements_by_key.into_iter());
         // Update pareto front and return non-dominated elements.
-        let non_dominated_elements = elements_by_shard
+        let non_dominated_elements = elements_by_key
             .into_par_iter()
-            .map(|(_shard, mut elements)| {
-                elements.retain(|element| {
-                    let key = Key::from(to_state(element));
-                    let mut root_node = self.buckets.entry(key).or_default();
-                    Self::insert(to_state(element), root_node.value_mut())
-                });
+            .with_max_len(1)
+            .map(|(key, mut elements)| {
+                let mut root_node = self.buckets.get(&key).unwrap().lock().unwrap();
+                elements.retain(|element| Self::insert(to_state(element), &mut root_node));
                 elements
             })
             .collect_vec_list();
