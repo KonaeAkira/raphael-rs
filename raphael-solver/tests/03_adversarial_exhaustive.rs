@@ -102,8 +102,8 @@ fn stuffed_peppers() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1810685,
-                processed_nodes: 86079,
+                inserted_nodes: 1806300,
+                processed_nodes: 85863,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -116,8 +116,8 @@ fn stuffed_peppers() {
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 366835,
-                states_on_shards: 304684,
-                values: 12130167,
+                states_on_shards: 304801,
+                values: 12131882,
             },
         }
     "#]];
@@ -158,8 +158,8 @@ fn test_rare_tacos_2() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 9011521,
-                processed_nodes: 3800093,
+                inserted_nodes: 9016822,
+                processed_nodes: 3801980,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -172,8 +172,8 @@ fn test_rare_tacos_2() {
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 878246,
-                states_on_shards: 281376,
-                values: 27870537,
+                states_on_shards: 281647,
+                values: 27873987,
             },
         }
     "#]];
@@ -218,8 +218,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 485937,
-                processed_nodes: 33248,
+                inserted_nodes: 484906,
+                processed_nodes: 33166,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 798,
@@ -227,8 +227,8 @@ fn test_mountain_chromite_ingot_no_manipulation() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1800421,
-                states_on_shards: 42372,
-                values: 16756728,
+                states_on_shards: 42373,
+                values: 16756719,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 28922,
@@ -330,8 +330,8 @@ fn test_rare_tacos_4628_4410() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 4868783,
-                processed_nodes: 1055110,
+                inserted_nodes: 4881826,
+                processed_nodes: 1055885,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 2966,
@@ -344,8 +344,8 @@ fn test_rare_tacos_4628_4410() {
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 213458,
-                states_on_shards: 36388,
-                values: 5821779,
+                states_on_shards: 36392,
+                values: 5821840,
             },
         }
     "#]];
@@ -387,8 +387,8 @@ fn issue_113() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 22699558,
-                processed_nodes: 1410125,
+                inserted_nodes: 22701824,
+                processed_nodes: 1410264,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 13977,
@@ -442,8 +442,8 @@ fn issue_118() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 19011500,
-                processed_nodes: 1376562,
+                inserted_nodes: 18992408,
+                processed_nodes: 1375324,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3619,
@@ -451,8 +451,8 @@ fn issue_118() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1930860,
-                states_on_shards: 61634,
-                values: 25588419,
+                states_on_shards: 61637,
+                values: 25588473,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 100860,

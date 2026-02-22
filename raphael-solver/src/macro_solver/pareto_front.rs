@@ -17,7 +17,7 @@ const EFFECTS_VALUE_MASK: u64 = Effects::new()
 
 const EFFECTS_KEY_MASK: u64 = !EFFECTS_VALUE_MASK;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Key {
     progress: u16,
     effects: u64,
@@ -109,18 +109,30 @@ pub struct ParetoFront {
 impl ParetoFront {
     /// Inserts all non-dominated elements into the pareto front while also removing dominated values
     /// from the pareto front. Returns an iterator over elements that were inserted.
-    pub fn insert_batch<T: Send>(
+    pub fn insert_batch<T: Clone + Send + Sync>(
         &mut self,
-        elements: Vec<T>,
+        mut elements: Vec<T>,
         to_state: impl Fn(&T) -> &SimulationState + Sync,
     ) -> impl Iterator<Item = T> {
-        // Group elements by their key to reduce contention in the hashmap.
-        let mut elements_by_key: FxHashMap<Key, Vec<T>> = FxHashMap::default();
-        for element in elements {
-            let key = Key::from(to_state(&element));
-            elements_by_key.entry(key).or_default().push(element);
-        }
-        let elements_by_key = Vec::from_iter(elements_by_key);
+        // Group elements by their key to avoid contention in the hashmap.
+        let elements_by_key: Vec<(Key, &[T])> = {
+            let mut result = Vec::new();
+            elements.par_sort_unstable_by_key(|element| Key::from(to_state(element)));
+            let mut elements_slice = elements.as_slice();
+            for idx in (1..elements_slice.len()).rev() {
+                let lhs_key = Key::from(to_state(&elements_slice[idx - 1]));
+                let rhs_key = Key::from(to_state(&elements_slice[idx]));
+                if lhs_key != rhs_key {
+                    let rhs_slice = elements_slice.split_off(idx..).unwrap();
+                    result.push((rhs_key, rhs_slice));
+                }
+            }
+            if !elements_slice.is_empty() {
+                let key = Key::from(to_state(elements_slice.first().unwrap()));
+                result.push((key, elements_slice));
+            }
+            result
+        };
         // Make sure all keys exist in the hashmap.
         for (key, _elements) in &elements_by_key {
             self.buckets.entry(*key).or_default();
@@ -129,7 +141,9 @@ impl ParetoFront {
         let non_dominated_elements = elements_by_key
             .into_par_iter()
             .with_max_len(1)
-            .map(|(key, mut elements)| {
+            .map(|(key, elements)| {
+                // Copy elements into own Vec to prevent false sharing.
+                let mut elements = elements.to_vec();
                 // Sort elements in a way that ensures an element cannot be dominated
                 // by another element that comes later in the list.
                 elements.sort_unstable_by_key(|element| {
