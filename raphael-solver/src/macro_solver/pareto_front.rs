@@ -114,12 +114,6 @@ impl ParetoFront {
         elements: Vec<T>,
         to_state: impl Fn(&T) -> &SimulationState + Sync,
     ) -> impl Iterator<Item = T> {
-        // Make sure all keys exist in the parallel hashmap.
-        for element in &elements {
-            self.buckets
-                .entry(Key::from(to_state(element)))
-                .or_default();
-        }
         // Group elements by their key to reduce contention in the hashmap.
         let mut elements_by_key: FxHashMap<Key, Vec<T>> = FxHashMap::default();
         for element in elements {
@@ -127,6 +121,10 @@ impl ParetoFront {
             elements_by_key.entry(key).or_default().push(element);
         }
         let elements_by_key = Vec::from_iter(elements_by_key.into_iter());
+        // Make sure all keys exist in the hashmap.
+        for (key, _elements) in &elements_by_key {
+            self.buckets.entry(*key).or_default();
+        }
         // Update pareto front and return non-dominated elements.
         let non_dominated_elements = elements_by_key
             .into_par_iter()
