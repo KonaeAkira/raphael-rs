@@ -120,7 +120,7 @@ impl ParetoFront {
             let key = Key::from(to_state(&element));
             elements_by_key.entry(key).or_default().push(element);
         }
-        let elements_by_key = Vec::from_iter(elements_by_key.into_iter());
+        let elements_by_key = Vec::from_iter(elements_by_key);
         // Make sure all keys exist in the hashmap.
         for (key, _elements) in &elements_by_key {
             self.buckets.entry(*key).or_default();
