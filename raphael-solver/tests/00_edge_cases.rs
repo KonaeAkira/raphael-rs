@@ -354,8 +354,8 @@ fn issue_216_steplbsolver_crash() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 436353,
-                processed_nodes: 21746,
+                inserted_nodes: 436375,
+                processed_nodes: 21747,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 9851,

@@ -359,8 +359,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 431840,
-                processed_nodes: 70818,
+                inserted_nodes: 431853,
+                processed_nodes: 70823,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -639,8 +639,8 @@ fn black_star_4048_3997() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 146191,
-                processed_nodes: 10245,
+                inserted_nodes: 146206,
+                processed_nodes: 10246,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3248,
@@ -693,8 +693,8 @@ fn claro_walnut_lumber_4900_4800() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 503332,
-                processed_nodes: 28603,
+                inserted_nodes: 503314,
+                processed_nodes: 28602,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 8079,
@@ -909,8 +909,8 @@ fn hardened_survey_plank_5558_5216() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1228817,
-                processed_nodes: 172660,
+                inserted_nodes: 1228731,
+                processed_nodes: 172652,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3619,

@@ -1,5 +1,7 @@
+use dashmap::DashMap;
 use raphael_sim::{Effects, SimulationState};
-use rustc_hash::FxHashMap;
+use rayon::prelude::*;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 // It is important that this mask doesn't use any effect to its full bit range.
 // Otherwise, `Value::effect_dominates` will break.
@@ -100,16 +102,16 @@ impl Default for TreeNode {
 
 #[derive(Default)]
 pub struct ParetoFront {
-    buckets: FxHashMap<Key, TreeNode>,
+    buckets: DashMap<Key, TreeNode, FxBuildHasher>,
 }
 
 impl ParetoFront {
     /// Inserts all non-dominated elements into the pareto front while also removing dominated values
     /// from the pareto front. Returns an iterator over elements that were inserted.
-    pub fn insert_batch<T>(
+    pub fn insert_batch<T: Send>(
         &mut self,
         mut elements: Vec<T>,
-        to_state: impl Fn(&T) -> &SimulationState,
+        to_state: impl Fn(&T) -> &SimulationState + Sync,
     ) -> impl Iterator<Item = T> {
         // Sort elements in a way that ensures an element cannot be dominated
         // by another element that comes later in the list.
@@ -122,15 +124,28 @@ impl ParetoFront {
                 + state.effects.into_bits();
             std::cmp::Reverse(weight)
         });
-        elements
-            .into_iter()
-            .filter(move |element| self.insert(to_state(element)))
+        // Group elements by their key to reduce contention in the parallel hashmap.
+        let mut elements_by_key: FxHashMap<Key, Vec<T>> = FxHashMap::default();
+        for element in elements {
+            let key = Key::from(to_state(&element));
+            elements_by_key.entry(key).or_default().push(element);
+        }
+        // Update pareto front and return non-dominated elements.
+        let non_dominated_elements = elements_by_key
+            .into_par_iter()
+            .map(|(key, mut elements)| {
+                let mut root_node = self.buckets.entry(key).or_default();
+                elements.retain(|element| Self::insert(to_state(element), root_node.value_mut()));
+                elements
+            })
+            .collect_vec_list();
+        non_dominated_elements.into_iter().flatten().flatten()
     }
 
-    fn insert(&mut self, state: &SimulationState) -> bool {
+    fn insert(state: &SimulationState, mut node: &mut TreeNode) -> bool {
         const MAX_LEAF_SIZE: usize = 200;
         let new_value = Value::from(state);
-        let mut node = self.buckets.entry(Key::from(state)).or_default();
+        // let mut node = self.buckets.entry(Key::from(state)).or_default();
         while let TreeNode::Intermediate(intermediate) = node {
             if new_value.cp() < intermediate.partition_point {
                 node = intermediate.lhs.as_mut();
