@@ -159,8 +159,8 @@ impl ParetoFront {
                 elements.retain(|element| Self::insert(to_state(element), &mut root_node));
                 elements
             })
-            .collect_vec_list();
-        non_dominated_elements.into_iter().flatten().flatten()
+            .collect::<Vec<_>>();
+        non_dominated_elements.into_iter().flatten()
     }
 
     fn insert(state: &SimulationState, mut node: &mut TreeNode) -> bool {
