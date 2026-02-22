@@ -124,18 +124,29 @@ impl ParetoFront {
                 + state.effects.into_bits();
             std::cmp::Reverse(weight)
         });
-        // Group elements by their key to reduce contention in the parallel hashmap.
-        let mut elements_by_key: FxHashMap<Key, Vec<T>> = FxHashMap::default();
+        // Make sure all keys exist in the parallel hashmap.
+        for element in &elements {
+            self.buckets
+                .entry(Key::from(to_state(element)))
+                .or_default();
+        }
+        // Group elements by their shard to reduce contention in the parallel hashmap.
+        let mut elements_by_shard: FxHashMap<usize, Vec<T>> = FxHashMap::default();
         for element in elements {
             let key = Key::from(to_state(&element));
-            elements_by_key.entry(key).or_default().push(element);
+            let hash = self.buckets.hash_usize(&key);
+            let shard = self.buckets.determine_shard(hash);
+            elements_by_shard.entry(shard).or_default().push(element);
         }
         // Update pareto front and return non-dominated elements.
-        let non_dominated_elements = elements_by_key
+        let non_dominated_elements = elements_by_shard
             .into_par_iter()
-            .map(|(key, mut elements)| {
-                let mut root_node = self.buckets.entry(key).or_default();
-                elements.retain(|element| Self::insert(to_state(element), root_node.value_mut()));
+            .map(|(_shard, mut elements)| {
+                elements.retain(|element| {
+                    let key = Key::from(to_state(element));
+                    let mut root_node = self.buckets.entry(key).or_default();
+                    Self::insert(to_state(element), root_node.value_mut())
+                });
                 elements
             })
             .collect_vec_list();

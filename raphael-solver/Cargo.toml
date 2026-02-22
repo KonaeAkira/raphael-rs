@@ -19,7 +19,7 @@ web-time = { workspace = true }
 wide = "0.8.2"
 nunny = "0.2.2"
 strum = "0.27"
-dashmap = "6.1.0"
+dashmap = { version = "6.1.0", features = ["raw-api"] }
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]
