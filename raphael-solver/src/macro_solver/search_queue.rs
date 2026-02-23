@@ -1,6 +1,7 @@
 use std::collections::{BTreeSet, hash_map::Entry};
 
 use raphael_sim::SimulationState;
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -177,7 +178,7 @@ impl SearchQueue {
             && let Some(batch) = self.batches.remove(&score)
         {
             let batch = batch
-                .into_iter()
+                .into_par_iter()
                 .map(|candidate_node| {
                     let parent_node_state =
                         *self.visited_nodes[candidate_node.parent_idx()].state();
