@@ -134,7 +134,15 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
 
 #[tokio::main]
 async fn main() {
-    env_logger::builder().format_timestamp(None).init();
+    // Set log level to `Info` if not specified via `env_logger`'s default environment variable
+    if std::env::var_os("RUST_LOG").is_none() {
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .format_timestamp(None)
+            .init();
+    } else {
+        env_logger::builder().format_timestamp(None).init();
+    }
 
     let global_version = tokio::spawn(fetch_latest_version_key(Lang::EN));
     let cn_version = tokio::spawn(fetch_latest_version_key(Lang::CN));
