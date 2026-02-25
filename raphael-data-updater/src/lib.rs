@@ -1,4 +1,9 @@
 mod recipe;
+use std::{
+    fs::File,
+    io::{Read, Seek, Write},
+};
+
 pub use recipe::Recipe;
 
 mod rlvl;
@@ -15,6 +20,7 @@ pub use consumable::{Consumable, ItemAction, ItemFood, instantiate_consumables};
 
 mod stellar_mission;
 pub use stellar_mission::{StellarMission, StellarMissionName};
+use toml_edit::DocumentMut;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Lang {
@@ -69,6 +75,77 @@ impl Lang {
             _ => None,
         }
     }
+}
+
+pub struct LatestVersions {
+    pub global: String,
+    pub cn: String,
+    pub kr: String,
+    pub tw: String,
+    file: File,
+    toml: DocumentMut,
+}
+
+impl LatestVersions {
+    pub fn new(global: String, cn: String, kr: String, tw: String) -> Self {
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("latest-versions.toml"))
+            .expect("Failed to open latest versions TOML file!");
+        file.lock().unwrap();
+        let mut latest_versions = String::new();
+        file.read_to_string(&mut latest_versions).unwrap();
+        let toml = latest_versions.parse::<DocumentMut>().unwrap();
+
+        Self {
+            global,
+            cn,
+            kr,
+            tw,
+            file,
+            toml,
+        }
+    }
+
+    pub fn versions_match_saved(&self) -> bool {
+        self.toml["global"].as_str() == Some(&self.global)
+            && self.toml["cn"].as_str() == Some(&self.cn)
+            && self.toml["kr"].as_str() == Some(&self.kr)
+            && self.toml["tw"].as_str() == Some(&self.tw)
+    }
+
+    pub fn write_versions_to_file(mut self) {
+        self.toml["global"] = toml_edit::value(self.global);
+        self.toml["cn"] = toml_edit::value(self.cn);
+        self.toml["kr"] = toml_edit::value(self.kr);
+        self.toml["tw"] = toml_edit::value(self.tw);
+        self.file.set_len(0).unwrap();
+        self.file.rewind().unwrap();
+        self.file
+            .write_all(self.toml.to_string().as_bytes())
+            .unwrap();
+    }
+}
+
+pub async fn fetch_latest_version_key(lang: Lang) -> Result<String, reqwest::Error> {
+    let response_text = reqwest::Client::new()
+        .get(format!("{}/version", lang.api_endpoint()))
+        .send()
+        .await?
+        .text()
+        .await?;
+    let json = json::parse(&response_text).unwrap();
+    Ok(json["versions"]
+        .members()
+        .find_map(|version| {
+            if version["names"].contains("latest") {
+                Some(version["key"].as_str().unwrap().to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap())
 }
 
 pub trait SheetData: Sized {
