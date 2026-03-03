@@ -83,6 +83,7 @@ pub async fn fetch_and_parse<T: SheetData>(lang: Lang) -> Vec<T> {
     let get_response_text = async |url: &str| -> Result<String, reqwest::Error> {
         client
             .get(url)
+            .timeout(std::time::Duration::from_secs(5))
             .send()
             .await?
             .error_for_status()?
@@ -128,8 +129,9 @@ pub async fn fetch_and_parse<T: SheetData>(lang: Lang) -> Vec<T> {
         let size = rows.len();
         rows.extend(json["rows"].members().filter_map(T::from_json));
         if size == rows.len() {
+            log::info!("{} {lang:?}: Done fetching ({} rows)", T::SHEET, rows.len());
             return rows;
         }
-        log::debug!("{} {lang:?}: total fetched: {}", T::SHEET, rows.len());
+        log::debug!("{} {lang:?}: Fetching ({} rows)", T::SHEET, rows.len());
     }
 }
