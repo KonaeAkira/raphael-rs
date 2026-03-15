@@ -17,3 +17,7 @@ target/
 # Ignore build directories
 docs/
 distrib/
+
+# Ignore perf data
+perf.data
+perf.data.old
