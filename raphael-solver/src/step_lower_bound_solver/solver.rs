@@ -1,4 +1,5 @@
 use std::{
+    cell::RefCell,
     num::{NonZero, NonZeroU8},
     ops::Deref,
 };
@@ -18,6 +19,10 @@ use super::state::ReducedState;
 
 type NonEmptyParetoFront = nunny::Slice<ParetoValue>;
 type SolvedStates = FxHashMap<ReducedState, Box<NonEmptyParetoFront>>;
+
+thread_local! {
+    static THREAD_LOCAL_PF_BUILDER: RefCell<ParetoFrontBuilder> = const { RefCell::new(ParetoFrontBuilder::new()) };
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
@@ -348,14 +353,13 @@ fn solve_state_parallel<'a>(
             let get_solution = |state| solved_states.get(&state);
             current_batch
                 .par_iter()
-                .map_init(
-                    ParetoFrontBuilder::new,
-                    |pf_builder, state| -> Result<_, SolverException> {
+                .map(|state| -> Result<_, SolverException> {
+                    THREAD_LOCAL_PF_BUILDER.with_borrow_mut(|pf_builder| {
                         let solution =
                             construct_solution(*state, context, pf_builder, get_solution)?;
                         Ok((*state, solution))
-                    },
-                )
+                    })
+                })
                 .collect::<Result<Vec<_>, SolverException>>()?
         };
         solved_states.extend(current_batch_solutions);

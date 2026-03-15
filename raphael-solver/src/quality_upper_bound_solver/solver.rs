@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use crate::{
     SolverException, SolverSettings,
     actions::FULL_SEARCH_ACTIONS,
@@ -10,6 +12,10 @@ use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use rustc_hash::FxHashMap;
 
 use super::state::ReducedState;
+
+thread_local! {
+    static THREAD_LOCAL_PF_BUILDER: RefCell<ParetoFrontBuilder> = const { RefCell::new(ParetoFrontBuilder::new()) };
+}
 
 #[derive(Debug, Clone)]
 struct QualityUbSolverContext {
@@ -170,9 +176,8 @@ impl QualityUbSolver {
                         .filter_map(|template| {
                             template.instantiate(cp).map(|state| (template, state))
                         })
-                        .map_init(
-                            ParetoFrontBuilder::new,
-                            |pf_builder, (template, state)| -> Result<_, SolverException> {
+                        .map(|(template, state)| -> Result<_, SolverException> {
+                            THREAD_LOCAL_PF_BUILDER.with_borrow_mut(|pf_builder| {
                                 let pareto_front =
                                     self.solve_precompute_state(pf_builder, state)?;
                                 let template_is_maximal = {
@@ -190,8 +195,8 @@ impl QualityUbSolver {
                                     template.required_cp_for_max_progress_and_quality = Some(cp);
                                 }
                                 Ok((state, pareto_front))
-                            },
-                        )
+                            })
+                        })
                         .collect::<Result<Vec<_>, SolverException>>()?;
                     self.solved_states.extend(solved_states);
                 }
@@ -276,7 +281,8 @@ impl<'a> QualityUbSolverShard<'a> {
     ) -> Result<u16, SolverException> {
         let mut required_progress = self.context.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
-            // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
+            // Assume MuscleMemory can be used to its max potential and remove the effect to reduce
+            // the number of states that need to be solved.
             required_progress =
                 required_progress.saturating_sub(self.context.largest_progress_increase);
             state.effects.set_muscle_memory(0);
