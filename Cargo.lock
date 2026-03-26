@@ -3513,7 +3513,7 @@ dependencies = [
 
 [[package]]
 name = "raphael-xiv"
-version = "0.27.0"
+version = "0.28.0"
 dependencies = [
  "console_error_panic_hook",
  "eframe",
