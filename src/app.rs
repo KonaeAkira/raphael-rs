@@ -219,7 +219,7 @@ impl eframe::App for MacroSolverApp {
             });
         }
 
-        egui::TopBottomPanel::top("top_panel").show(ui, |ui| {
+        egui::Panel::top("top_panel").show_inside(ui, |ui| {
             egui::ScrollArea::horizontal()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
@@ -289,15 +289,15 @@ impl eframe::App for MacroSolverApp {
 
         #[cfg(any(debug_assertions, feature = "dev-panel"))]
         if self.dev_panel_state.show_dev_panel {
-            egui::SidePanel::right("dev_panel")
+            egui::Panel::right("dev_panel")
                 .resizable(true)
-                .show(ui, |ui| {
+                .show_inside(ui, |ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                     RenderInfo::new(&mut self.dev_panel_state.render_info_state).ui(ui, _frame);
                 });
         }
 
-        egui::CentralPanel::default().show(ui, |ui| {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 self.draw_simulator_widget(ui);
                 ui.with_layout(
@@ -573,9 +573,9 @@ impl MacroSolverApp {
                     }
                     ui.add_space(-5.0);
                     ui.vertical_centered_justified(|ui| {
-                        let text_color = ui.ctx().style().visuals.selection.stroke.color;
+                        let text_color = ui.global_style().visuals.selection.stroke.color;
                         let text = egui::RichText::new(t!(locale, "Solve")).color(text_color);
-                        let fill_color = ui.ctx().style().visuals.selection.bg_fill;
+                        let fill_color = ui.global_style().visuals.selection.bg_fill;
                         let id = egui::Id::new("SOLVE_INITIATED");
                         let mut solve_initiated = ui
                             .ctx()
