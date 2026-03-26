@@ -98,7 +98,7 @@ impl eframe::App for MacroSolverApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let locale = self.app_context.locale;
         #[cfg(target_arch = "wasm32")]
-        self.load_fonts_dyn(ctx);
+        self.load_fonts_dyn(ui);
 
         self.process_solver_events();
 
