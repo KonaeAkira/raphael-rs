@@ -154,12 +154,11 @@ impl<'a> MacroSolver<'a> {
                             .as_ref()
                             .is_none_or(|solution| solution.score < (score, state.quality))
                         {
+                            let mut actions = search_queue.get_actions_from_node_idx(parent_id);
+                            actions.push(action);
                             solution = Some(Solution {
                                 score: (score, state.quality),
-                                solver_actions: search_queue
-                                    .get_actions_from_node_idx(parent_id)
-                                    .chain(std::iter::once(action))
-                                    .collect(),
+                                solver_actions: actions,
                             });
                             (self.solution_callback)(&solution.as_ref().unwrap().actions());
                         }
