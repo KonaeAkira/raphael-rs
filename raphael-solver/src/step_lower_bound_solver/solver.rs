@@ -24,6 +24,7 @@ pub struct StepLbSolverStats {
     pub states_on_main: usize,
     pub states_on_shards: usize,
     pub values: usize,
+    pub unique_values: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -136,10 +137,18 @@ impl StepLbSolver {
     }
 
     pub fn runtime_stats(&self) -> StepLbSolverStats {
+        let mut unique_pareto_fronts = FxHashSet::default();
+        let mut unique_pareto_values = 0;
+        for pareto_front in self.solved_states.values() {
+            if unique_pareto_fronts.insert(pareto_front.clone()) {
+                unique_pareto_values += pareto_front.len();
+            }
+        }
         StepLbSolverStats {
             states_on_main: self.solved_states.len() - self.num_states_solved_on_shards,
             states_on_shards: self.num_states_solved_on_shards,
             values: self.solved_states.values().map(|value| value.len()).sum(),
+            unique_values: unique_pareto_values,
         }
     }
 }

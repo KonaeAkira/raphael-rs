@@ -93,16 +93,19 @@ fn rinascita_3700_3280() {
             finish_solver_stats: FinishSolverStats {
                 states: 5308,
                 values: 88341,
+                unique_values: 41546,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 957930,
                 states_on_shards: 42813,
                 values: 16783500,
+                unique_values: 8221650,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 579412,
                 states_on_shards: 0,
                 values: 6563554,
+                unique_values: 877557,
             },
         }
     "#]];
@@ -147,16 +150,19 @@ fn pactmaker_3240_3130() {
             finish_solver_stats: FinishSolverStats {
                 states: 5308,
                 values: 81558,
+                unique_values: 34790,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 818130,
                 states_on_shards: 44933,
                 values: 13132176,
+                unique_values: 6754299,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 579412,
                 states_on_shards: 0,
                 values: 6355536,
+                unique_values: 833724,
             },
         }
     "#]];
@@ -203,16 +209,19 @@ fn pactmaker_3240_3130_heart_and_soul() {
             finish_solver_stats: FinishSolverStats {
                 states: 10250,
                 values: 142854,
+                unique_values: 59293,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1690660,
                 states_on_shards: 84617,
                 values: 27637851,
+                unique_values: 13498754,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 1089001,
                 states_on_shards: 0,
                 values: 13225920,
+                unique_values: 1683837,
             },
         }
     "#]];
@@ -257,16 +266,19 @@ fn diadochos_4021_3660() {
             finish_solver_stats: FinishSolverStats {
                 states: 5308,
                 values: 125704,
+                unique_values: 69877,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 888030,
                 states_on_shards: 44397,
                 values: 17344815,
+                unique_values: 10127193,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 638953,
                 states_on_shards: 0,
                 values: 8453810,
+                unique_values: 1393003,
             },
         }
     "#]];
@@ -311,16 +323,19 @@ fn indagator_3858_4057() {
             finish_solver_stats: FinishSolverStats {
                 states: 5308,
                 values: 102529,
+                unique_values: 51429,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 971910,
                 states_on_shards: 45972,
                 values: 16209295,
+                unique_values: 8702322,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 460345,
                 states_on_shards: 0,
                 values: 5446159,
+                unique_values: 936638,
             },
         }
     "#]];
@@ -365,16 +380,19 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
                 values: 308710,
+                unique_values: 100045,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 945752,
                 states_on_shards: 12609,
                 values: 16494731,
+                unique_values: 9427482,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 943777,
                 states_on_shards: 274390,
                 values: 14294760,
+                unique_values: 2102078,
             },
         }
     "#]];
@@ -421,16 +439,19 @@ fn stuffed_peppers_2() {
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
                 values: 210965,
+                unique_values: 54130,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 727703,
                 states_on_shards: 0,
                 values: 8685113,
+                unique_values: 5531155,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 429544,
                 states_on_shards: 165904,
                 values: 5727333,
+                unique_values: 806225,
             },
         }
     "#]];
@@ -479,16 +500,19 @@ fn stuffed_peppers_2_heart_and_soul() {
             finish_solver_stats: FinishSolverStats {
                 states: 31096,
                 values: 392377,
+                unique_values: 97776,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1547790,
                 states_on_shards: 0,
                 values: 20676360,
+                unique_values: 12422565,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 723616,
                 states_on_shards: 362430,
                 values: 12388376,
+                unique_values: 1847350,
             },
         }
     "#]];
@@ -537,16 +561,19 @@ fn stuffed_peppers_2_quick_innovation() {
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
                 values: 210965,
+                unique_values: 54130,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1477069,
                 states_on_shards: 5,
                 values: 17827203,
+                unique_values: 10874867,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 432530,
                 states_on_shards: 170200,
                 values: 5794412,
+                unique_values: 810470,
             },
         }
     "#]];
@@ -591,16 +618,19 @@ fn rakaznar_lapidary_hammer_4462_4391() {
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
                 values: 386830,
+                unique_values: 134849,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 750109,
                 states_on_shards: 1,
                 values: 9640072,
+                unique_values: 7265402,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 429544,
                 states_on_shards: 159765,
                 values: 6075722,
+                unique_values: 1201943,
             },
         }
     "#]];
@@ -645,16 +675,19 @@ fn black_star_4048_3997() {
             finish_solver_stats: FinishSolverStats {
                 states: 3248,
                 values: 18046,
+                unique_values: 5745,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 448545,
                 states_on_shards: 20,
                 values: 2531249,
+                unique_values: 1088796,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 28376,
                 states_on_shards: 45625,
                 values: 388325,
+                unique_values: 110383,
             },
         }
     "#]];
@@ -699,16 +732,19 @@ fn claro_walnut_lumber_4900_4800() {
             finish_solver_stats: FinishSolverStats {
                 states: 8079,
                 values: 25429,
+                unique_values: 3175,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 632525,
                 states_on_shards: 39,
                 values: 4421953,
+                unique_values: 1719516,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 115313,
                 states_on_shards: 110075,
                 values: 1402012,
+                unique_values: 281680,
             },
         }
     "#]];
@@ -753,16 +789,19 @@ fn rakaznar_lapidary_hammer_4900_4800() {
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
                 values: 315896,
+                unique_values: 105264,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 654113,
                 states_on_shards: 0,
                 values: 7088630,
+                unique_values: 5310935,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 321119,
                 states_on_shards: 147971,
                 values: 4047950,
+                unique_values: 659348,
             },
         }
     "#]];
@@ -807,16 +846,19 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
                 values: 304851,
+                unique_values: 95789,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 620174,
                 states_on_shards: 0,
                 values: 6152904,
+                unique_values: 4629640,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 229899,
                 states_on_shards: 117353,
                 values: 2906499,
+                unique_values: 493145,
             },
         }
     "#]];
@@ -861,16 +903,19 @@ fn archeo_kingdom_broadsword_4966_4914() {
             finish_solver_stats: FinishSolverStats {
                 states: 13977,
                 values: 379883,
+                unique_values: 158743,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 871349,
                 states_on_shards: 0,
                 values: 12661815,
+                unique_values: 9193521,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 513399,
                 states_on_shards: 260572,
                 values: 7813209,
+                unique_values: 1512472,
             },
         }
     "#]];
@@ -915,16 +960,19 @@ fn hardened_survey_plank_5558_5216() {
             finish_solver_stats: FinishSolverStats {
                 states: 3619,
                 values: 37677,
+                unique_values: 19300,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 994029,
                 states_on_shards: 9788,
                 values: 11580610,
+                unique_values: 4833789,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 169611,
                 states_on_shards: 64599,
                 values: 2038001,
+                unique_values: 576761,
             },
         }
     "#]];

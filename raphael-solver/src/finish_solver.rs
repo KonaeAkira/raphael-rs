@@ -8,7 +8,7 @@ use crate::{
     macros::internal_error,
 };
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 struct Breakpoint {
     cp: u16,
     progress: u16,
@@ -55,6 +55,7 @@ impl CpProgressBreakpoints {
 pub struct FinishSolverStats {
     pub states: usize,
     pub values: usize,
+    pub unique_values: usize,
 }
 
 pub struct FinishSolver {
@@ -131,6 +132,13 @@ impl FinishSolver {
             });
         }
         self.set_cp_for_guaranteed_finish();
+        // let mut count = std::collections::BTreeMap::<usize, usize>::default();
+        // for breakpoints in self.solved_states.values() {
+        //     *count.entry(breakpoints.breakpoints.len()).or_default() += 1;
+        // }
+        // for (len, cnt) in count {
+        //     println!("len = {}, cnt = {}", len, cnt);
+        // }
         Ok(())
     }
 
@@ -178,6 +186,13 @@ impl FinishSolver {
     }
 
     pub fn runtime_stats(&self) -> FinishSolverStats {
+        let mut seen = FxHashSet::default();
+        let mut unique_values = 0;
+        for breakpoint in self.solved_states.values() {
+            if seen.insert(breakpoint.breakpoints.clone()) {
+                unique_values += breakpoint.breakpoints.len();
+            }
+        }
         FinishSolverStats {
             states: self.solved_states.len(),
             values: self
@@ -185,6 +200,7 @@ impl FinishSolver {
                 .values()
                 .map(|breakpoints| breakpoints.breakpoints.len())
                 .sum(),
+            unique_values,
         }
     }
 }

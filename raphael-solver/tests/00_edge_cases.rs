@@ -89,16 +89,19 @@ fn unsolvable() {
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
                 values: 81186,
+                unique_values: 36935,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 0,
                 states_on_shards: 0,
                 values: 0,
+                unique_values: 0,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
                 states_on_shards: 0,
                 values: 0,
+                unique_values: 0,
             },
         }
     "#]];
@@ -143,16 +146,19 @@ fn zero_quality() {
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
                 values: 49135,
+                unique_values: 14487,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 31147,
                 states_on_shards: 0,
                 values: 109398,
+                unique_values: 58480,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 26538,
                 states_on_shards: 0,
                 values: 194222,
+                unique_values: 114085,
             },
         }
     "#]];
@@ -197,16 +203,19 @@ fn max_quality() {
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
                 values: 66696,
+                unique_values: 31053,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 389796,
                 states_on_shards: 514,
                 values: 2236380,
+                unique_values: 1570262,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 26538,
                 states_on_shards: 50910,
                 values: 486877,
+                unique_values: 177925,
             },
         }
     "#]];
@@ -251,16 +260,19 @@ fn large_progress_quality_increase() {
             finish_solver_stats: FinishSolverStats {
                 states: 27451,
                 values: 37675,
+                unique_values: 729,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2208900,
                 states_on_shards: 22,
                 values: 8280016,
+                unique_values: 2285044,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 320,
                 states_on_shards: 5236,
                 values: 22793,
+                unique_values: 6534,
             },
         }
     "#]];
@@ -305,16 +317,19 @@ fn backload_progress_single_delicate_synthesis() {
             finish_solver_stats: FinishSolverStats {
                 states: 3478,
                 values: 3478,
+                unique_values: 2,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 3243,
                 states_on_shards: 0,
                 values: 3243,
+                unique_values: 2,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 1,
                 states_on_shards: 9,
                 values: 10,
+                unique_values: 2,
             },
         }
     "#]];
@@ -360,16 +375,19 @@ fn issue_216_steplbsolver_crash() {
             finish_solver_stats: FinishSolverStats {
                 states: 9851,
                 values: 12801,
+                unique_values: 329,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 318520,
                 states_on_shards: 0,
                 values: 1267763,
+                unique_values: 663414,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 36739,
                 states_on_shards: 29009,
                 values: 289165,
+                unique_values: 87312,
             },
         }
     "#]];
@@ -415,16 +433,19 @@ fn issue_312_quick_innovation_reflect() {
             finish_solver_stats: FinishSolverStats {
                 states: 10142,
                 values: 10228,
+                unique_values: 16,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 28849,
                 states_on_shards: 1,
                 values: 33547,
+                unique_values: 842,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 46,
                 states_on_shards: 75,
                 values: 194,
+                unique_values: 55,
             },
         }
     "#]];
@@ -483,16 +504,19 @@ fn daring_touch_interrupted_combo() {
             finish_solver_stats: FinishSolverStats {
                 states: 24476,
                 values: 24476,
+                unique_values: 60,
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 22280,
                 states_on_shards: 43,
                 values: 26453,
+                unique_values: 649,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 403,
                 states_on_shards: 1482,
                 values: 4815,
+                unique_values: 920,
             },
         }
     "#]];

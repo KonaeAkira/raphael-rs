@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct ParetoValue {
     pub progress: u16,
     pub quality: u16,

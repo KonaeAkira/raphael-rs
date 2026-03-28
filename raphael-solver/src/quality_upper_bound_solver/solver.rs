@@ -7,7 +7,7 @@ use crate::{
 
 use raphael_sim::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::state::ReducedState;
 
@@ -25,6 +25,7 @@ pub struct QualityUbSolverStats {
     pub states_on_main: usize,
     pub states_on_shards: usize,
     pub values: usize,
+    pub unique_values: usize,
 }
 
 type SolvedStates = FxHashMap<ReducedState, Box<nunny::Slice<ParetoValue>>>;
@@ -257,10 +258,18 @@ impl QualityUbSolver {
     }
 
     pub fn runtime_stats(&self) -> QualityUbSolverStats {
+        let mut unique_pareto_fronts = FxHashSet::default();
+        let mut unique_pareto_values = 0;
+        for pareto_front in self.solved_states.values() {
+            if unique_pareto_fronts.insert(pareto_front.clone()) {
+                unique_pareto_values += pareto_front.len();
+            }
+        }
         QualityUbSolverStats {
             states_on_main: self.solved_states.len() - self.num_states_solved_on_shards,
             states_on_shards: self.num_states_solved_on_shards,
             values: self.solved_states.values().map(|value| value.len()).sum(),
+            unique_values: unique_pareto_values,
         }
     }
 }
