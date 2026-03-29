@@ -13,6 +13,7 @@ pub enum ActionCombo {
     AdvancedTouch,      // Basic Touch + Standard Touch + Advanced Touch
     FocusedTouch,       // Observe + AdvancedTouch
     RefinedTouch,       // Basic Touch + Refined Touch
+    None,               // No action
     Single(Action),
 }
 
@@ -27,6 +28,7 @@ impl ActionCombo {
             Self::AdvancedTouch => Action::COUNT as u8 + 4,
             Self::FocusedTouch => Action::COUNT as u8 + 5,
             Self::RefinedTouch => Action::COUNT as u8 + 6,
+            Self::None => Action::COUNT as u8 + 7,
         }
     }
 
@@ -46,8 +48,10 @@ impl ActionCombo {
             Self::AdvancedTouch
         } else if bits == N + 5 {
             Self::FocusedTouch
-        } else {
+        } else if bits == N + 6 {
             Self::RefinedTouch
+        } else {
+            Self::None
         }
     }
 
@@ -64,6 +68,7 @@ impl ActionCombo {
             ],
             Self::FocusedTouch => &[Action::Observe, Action::AdvancedTouch],
             Self::RefinedTouch => &[Action::BasicTouch, Action::RefinedTouch],
+            Self::None => &[],
             Self::Single(action) => match action {
                 Action::BasicSynthesis => &[Action::BasicSynthesis],
                 Action::BasicTouch => &[Action::BasicTouch],

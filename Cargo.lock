@@ -3492,6 +3492,7 @@ dependencies = [
  "rayon",
  "rustc-hash 2.1.1",
  "serde",
+ "smallvec",
  "strum",
  "test-case",
  "web-time",
