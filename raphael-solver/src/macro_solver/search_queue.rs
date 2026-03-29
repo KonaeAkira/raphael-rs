@@ -3,6 +3,7 @@ use std::collections::{BTreeSet, hash_map::Entry};
 use raphael_sim::SimulationState;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use crate::{
     SolverSettings,
@@ -191,8 +192,8 @@ impl SearchQueue {
         }
     }
 
-    pub fn get_actions_from_node_idx(&self, mut idx: usize) -> Vec<ActionCombo> {
-        let mut actions = Vec::new();
+    pub fn get_actions_from_node_idx(&self, mut idx: usize) -> SmallVec<[ActionCombo; 56]> {
+        let mut actions = SmallVec::new();
         while idx > 0 {
             let search_node = self.visited_nodes[idx];
             actions.push(search_node.action());

@@ -158,7 +158,7 @@ impl<'a> MacroSolver<'a> {
                             actions.push(action);
                             solution = Some(Solution {
                                 score: (score, state.quality),
-                                solver_actions: actions,
+                                solver_actions: actions.into_vec(),
                             });
                             (self.solution_callback)(&solution.as_ref().unwrap().actions());
                         }
