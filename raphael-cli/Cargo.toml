@@ -3,6 +3,10 @@ name = "raphael-cli"
 version = "0.2.2"
 edition = "2024"
 
+[[bench]]
+name = "bench_cli"
+harness = false
+
 [dependencies]
 raphael-sim = { workspace = true }
 raphael-solver = { workspace = true }
