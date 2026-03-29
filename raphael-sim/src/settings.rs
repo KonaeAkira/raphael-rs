@@ -19,6 +19,7 @@ pub struct Settings {
     pub backload_progress: bool,
 
     /// The number of Stellar Steady Hand uses available at the start of the synthesis.
+    #[cfg_attr(feature = "serde", serde(default))]
     pub stellar_steady_hand_charges: u8,
 }
 

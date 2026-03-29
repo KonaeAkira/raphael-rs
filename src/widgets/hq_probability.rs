@@ -38,6 +38,7 @@ impl egui::Widget for HqDistributionWidget {
             mem.caches
                 .cache::<HqDistributionSolverCache>()
                 .get(&solve_args)
+                .clone()
         });
 
         ui.label(format!(
@@ -142,7 +143,7 @@ struct HqDistribution {
 
 #[derive(Debug, Clone)]
 struct QualityDistribution {
-    data_points: Vec<(u32, f32)>,
+    data_points: Vec<(u16, f32)>,
 }
 
 impl QualityDistribution {
@@ -160,7 +161,7 @@ impl QualityDistribution {
         }
     }
 
-    fn add_quality(&mut self, q: u32) {
+    fn add_quality(&mut self, q: u16) {
         for (quality, _) in &mut self.data_points {
             *quality = quality.saturating_add(q);
         }

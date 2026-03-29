@@ -15,9 +15,9 @@ use super::state::ReducedState;
 struct QualityUbSolverContext {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
-    iq_quality_lut: [u32; 11],
+    iq_quality_lut: [u16; 11],
     durability_cost: u16,
-    largest_progress_increase: u32,
+    largest_progress_increase: u16,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -222,11 +222,14 @@ impl QualityUbSolver {
             if let Some((new_state, progress, quality)) =
                 state.use_action(action, &self.context.settings, self.context.durability_cost)
             {
-                let action_offset = ParetoValue::new(progress, quality);
+                let action_value = ParetoValue::new(progress, quality);
                 if !new_state.is_final(self.context.durability_cost) {
                     if let Some(pareto_front) = self.solved_states.get(&new_state) {
-                        pf_builder
-                            .push_slice(pareto_front.iter().map(|value| *value + action_offset));
+                        pf_builder.push_slice(
+                            pareto_front
+                                .iter()
+                                .map(|value| value.saturating_add(action_value)),
+                        );
                     } else {
                         return Err(internal_error!(
                             "Required precompute state does not exist.",
@@ -237,7 +240,7 @@ impl QualityUbSolver {
                         ));
                     }
                 } else if progress != 0 {
-                    pf_builder.push(action_offset);
+                    pf_builder.push(action_value);
                 }
                 if pf_builder.is_maximal(cutoff) {
                     break;
@@ -270,7 +273,7 @@ impl<'a> QualityUbSolverShard<'a> {
     pub fn quality_upper_bound(
         &mut self,
         mut state: SimulationState,
-    ) -> Result<u32, SolverException> {
+    ) -> Result<u16, SolverException> {
         let mut required_progress = self.context.settings.max_progress() - state.progress;
         if state.effects.muscle_memory() != 0 {
             // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
@@ -295,7 +298,7 @@ impl<'a> QualityUbSolverShard<'a> {
             };
             if let Some(pareto_front) = self.shared_states.get(&reduced_state)
                 && pareto_front.first().progress >= required_progress
-                && pareto_front.first().quality + state.quality
+                && pareto_front.first().quality.saturating_add(state.quality)
                     >= self.context.settings.max_quality()
             {
                 return Ok(self.context.settings.max_quality());
@@ -325,7 +328,9 @@ impl<'a> QualityUbSolverShard<'a> {
             }
         };
         let i = pareto_front.partition_point(|value| value.progress < required_progress);
-        let quality = pareto_front.get(i).map_or(0, |v| state.quality + v.quality);
+        let quality = pareto_front
+            .get(i)
+            .map_or(0, |value| state.quality.saturating_add(value.quality));
         Ok(std::cmp::min(self.context.settings.max_quality(), quality))
     }
 
@@ -347,7 +352,7 @@ impl<'a> QualityUbSolverShard<'a> {
             if let Some((child_state, progress, quality)) =
                 state.use_action(action, &self.context.settings, self.context.durability_cost)
             {
-                let action_offset = ParetoValue::new(progress, quality);
+                let action_value = ParetoValue::new(progress, quality);
                 if !child_state.is_final(self.context.durability_cost) {
                     let child_pareto_front = if let Some(child_pareto_front) =
                         self.shared_states.get(&child_state)
@@ -364,13 +369,13 @@ impl<'a> QualityUbSolverShard<'a> {
                     pareto_front_builder.push_slice(
                         child_pareto_front
                             .iter()
-                            .map(|value| *value + action_offset),
+                            .map(|value| value.saturating_add(action_value)),
                     );
                     if pareto_front_builder.is_maximal(cutoff) {
                         break;
                     }
-                } else if action_offset.progress != 0 {
-                    pareto_front_builder.push(action_offset);
+                } else if action_value.progress != 0 {
+                    pareto_front_builder.push(action_value);
                 }
             }
         }

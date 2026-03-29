@@ -37,7 +37,7 @@ impl Drop for ScopedTimer {
 /// The only way to increase the InnerQuiet effect is to use Quality-increasing actions,
 /// which means that all states with InnerQuiet must have some amount of Quality.
 /// This function finds a lower-bound on the minimum amount of Quality a state with `n` InnerQuiet can have.
-pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
+pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u16; 11] {
     if settings.simulator_settings.adversarial {
         // TODO: implement this for adversarial mode
         return [0; 11];
@@ -49,7 +49,7 @@ pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
         // TODO: implement this for heart and soul
         return [0; 11];
     }
-    let mut result = [u32::MAX; 11];
+    let mut result = [u16::MAX; 11];
     result[0] = 0;
     for iq in 0..10 {
         let state = SimulationState {
@@ -79,7 +79,7 @@ pub fn compute_iq_quality_lut(settings: &SolverSettings) -> [u32; 11] {
 }
 
 /// Returns the maximum additional Progress gained by having the Muscle Memory effect.
-pub fn maximum_muscle_memory_utilization(settings: &Settings) -> u32 {
+pub fn maximum_muscle_memory_utilization(settings: &Settings) -> u16 {
     let mut state = SimulationState::new(settings);
     let mut result = 0;
     if settings.is_action_allowed::<BasicSynthesis>() {

@@ -1,10 +1,12 @@
 use std::collections::{BTreeSet, hash_map::Entry};
 
 use raphael_sim::SimulationState;
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use crate::{
-    SolverSettings,
+    SolverException, SolverSettings,
     actions::{ActionCombo, use_action_combo},
 };
 
@@ -12,7 +14,7 @@ use super::pareto_front::ParetoFront;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SearchScore {
-    pub quality_upper_bound: u32,
+    pub quality_upper_bound: u16,
     pub steps_lower_bound: u8,
     pub duration_lower_bound: u8,
     pub current_steps: u8,
@@ -29,7 +31,7 @@ impl SearchScore {
     };
 
     pub const MAX: Self = Self {
-        quality_upper_bound: u32::MAX,
+        quality_upper_bound: u16::MAX,
         steps_lower_bound: 0,
         duration_lower_bound: 0,
         current_steps: 0,
@@ -56,7 +58,7 @@ impl std::cmp::Ord for SearchScore {
 
 #[cfg(target_pointer_width = "32")]
 #[bitfield_struct::bitfield(u32)]
-struct CandidateNode {
+struct SearchNode {
     #[bits(26)]
     parent_idx: usize,
     #[bits(6)]
@@ -65,32 +67,11 @@ struct CandidateNode {
 
 #[cfg(target_pointer_width = "64")]
 #[bitfield_struct::bitfield(u64)]
-struct CandidateNode {
+struct SearchNode {
     #[bits(58)]
     parent_idx: usize,
     #[bits(6)]
     action: ActionCombo,
-}
-
-#[derive(Debug, Clone, Copy)]
-enum VisitedNode {
-    Root {
-        state: SimulationState,
-    },
-    Intermediate {
-        parent_idx: usize,
-        action: ActionCombo,
-        state: SimulationState,
-    },
-}
-
-impl VisitedNode {
-    fn state(&self) -> &SimulationState {
-        match self {
-            Self::Root { state } => state,
-            Self::Intermediate { state, .. } => state,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -109,25 +90,25 @@ pub struct SearchQueue {
     settings: SolverSettings,
     pareto_front: ParetoFront,
     batch_ordering: BTreeSet<SearchScore>,
-    batches: FxHashMap<SearchScore, Vec<CandidateNode>>,
-    visited_nodes: Vec<VisitedNode>,
+    batches: FxHashMap<SearchScore, Vec<SearchNode>>,
+    visited_nodes: Vec<SearchNode>,
     num_inserted_nodes: usize,
-    initial_state_visited: bool,
+    initial_state: SimulationState,
 }
 
 impl SearchQueue {
     pub fn new(settings: SolverSettings, initial_state: SimulationState) -> Self {
-        Self {
+        let mut search_queue = Self {
             settings,
             pareto_front: ParetoFront::default(),
             batch_ordering: BTreeSet::default(),
             batches: FxHashMap::default(),
-            visited_nodes: vec![VisitedNode::Root {
-                state: initial_state,
-            }],
-            num_inserted_nodes: 1, // initial node
-            initial_state_visited: false,
-        }
+            visited_nodes: Vec::new(),
+            num_inserted_nodes: 0,
+            initial_state,
+        };
+        let _ = search_queue.push(SearchScore::MAX, ActionCombo::None, 0);
+        search_queue
     }
 
     pub fn push(
@@ -135,9 +116,10 @@ impl SearchQueue {
         score: SearchScore,
         action: ActionCombo,
         parent_idx: usize,
-    ) -> Result<(), ()> {
-        let node = CandidateNode::new()
-            .with_parent_idx_checked(parent_idx)?
+    ) -> Result<(), SolverException> {
+        let node = SearchNode::new()
+            .with_parent_idx_checked(parent_idx)
+            .map_err(|_| SolverException::SearchQueueCapacityExceeded)?
             .with_action(action);
         match self.batches.entry(score) {
             Entry::Occupied(occupied_entry) => {
@@ -166,62 +148,60 @@ impl SearchQueue {
     }
 
     pub fn pop_batch(&mut self) -> Option<Batch> {
-        if !self.initial_state_visited {
-            self.initial_state_visited = true;
-            return Some(Batch {
-                score: SearchScore::MAX,
-                nodes: vec![(*self.visited_nodes[0].state(), 0)],
-            });
-        }
         if let Some(score) = self.batch_ordering.pop_last()
             && let Some(batch) = self.batches.remove(&score)
         {
-            let mut batch = batch
-                .into_iter()
-                .map(|candidate_node| {
-                    let parent_node_state =
-                        *self.visited_nodes[candidate_node.parent_idx()].state();
-                    let candidate_node_state = use_action_combo(
-                        &self.settings,
-                        parent_node_state,
-                        candidate_node.action(),
-                    );
-                    VisitedNode::Intermediate {
-                        parent_idx: candidate_node.parent_idx(),
-                        action: candidate_node.action(),
-                        state: candidate_node_state.unwrap(),
+            // Because each node only stores the previous action and idx of the parent, we first need
+            // to backtrack and replay all actions from the initial state to get the current state.
+            let batch = batch
+                .into_par_iter()
+                .map(|search_node| {
+                    let mut state = self.initial_state;
+                    let actions = self.get_actions_from_node_idx(search_node.parent_idx());
+                    for action in actions {
+                        state = use_action_combo(&self.settings, state, action).unwrap();
                     }
+                    state = use_action_combo(&self.settings, state, search_node.action()).unwrap();
+                    (search_node, state)
                 })
-                .collect::<Vec<_>>();
+                .collect();
             // Filter out Pareto-dominated nodes.
-            batch.sort_unstable_by(|lhs, rhs| {
-                pareto_weight(rhs.state()).cmp(&pareto_weight(lhs.state()))
-            });
-            batch.retain(|node| self.pareto_front.insert(*node.state()));
-            // Construct the returned batch.
-            // Each node in the returned batch tracks its own idx, not the idx of its parent.
-            let ret = batch
-                .iter()
-                .enumerate()
-                .map(|(idx, node)| (*node.state(), self.visited_nodes.len() + idx))
+            let non_dominated_nodes = self
+                .pareto_front
+                .insert_batch(batch, |expanded_node| &expanded_node.1)
                 .collect::<Vec<_>>();
-            self.visited_nodes.extend(batch);
-            Some(Batch { score, nodes: ret })
+            let batch = Batch {
+                score,
+                nodes: non_dominated_nodes
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, node)| {
+                        let state = node.1;
+                        let self_idx = self.visited_nodes.len() + idx;
+                        (state, self_idx)
+                    })
+                    .collect(),
+            };
+            self.visited_nodes.extend(
+                non_dominated_nodes
+                    .into_iter()
+                    .map(|expanded_node| expanded_node.0),
+            );
+            Some(batch)
         } else {
             None
         }
     }
 
-    pub fn get_actions_from_node_idx(&self, mut idx: usize) -> impl Iterator<Item = ActionCombo> {
-        let mut actions = Vec::new();
-        while let VisitedNode::Intermediate {
-            parent_idx, action, ..
-        } = self.visited_nodes[idx]
-        {
-            actions.push(action);
-            idx = parent_idx;
+    pub fn get_actions_from_node_idx(&self, mut idx: usize) -> SmallVec<[ActionCombo; 56]> {
+        let mut actions = SmallVec::new();
+        while idx > 0 {
+            let search_node = self.visited_nodes[idx];
+            actions.push(search_node.action());
+            idx = search_node.parent_idx();
         }
-        actions.into_iter().rev()
+        actions.reverse();
+        actions
     }
 
     pub fn runtime_stats(&self) -> SearchQueueStats {
@@ -230,12 +210,4 @@ impl SearchQueue {
             processed_nodes: self.visited_nodes.len(),
         }
     }
-}
-
-fn pareto_weight(state: &SimulationState) -> u64 {
-    u64::from(state.cp)
-        + u64::from(state.durability)
-        + u64::from(state.quality)
-        + u64::from(state.unreliable_quality)
-        + state.effects.into_bits()
 }

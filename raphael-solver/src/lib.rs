@@ -23,6 +23,16 @@ pub mod test_utils;
 pub enum SolverException {
     NoSolution,
     Interrupted,
+    /// The `SearchQueueCapacityExceeded` error is raised when there are no more valid
+    /// indices for the already visited nodes in the search queue.
+    ///
+    /// On 32-bit platforms, the index into the queue is stored as a 26-bit integer.
+    /// This means that there can be a maximum of 67,108,864 nodes visited before
+    /// the indices are exhausted.
+    ///
+    /// On 64-bit platforms, the index is a 56-bit integer, so this error is realistically
+    /// never raised on 64-bit platforms.
+    SearchQueueCapacityExceeded,
     InternalError(String),
 }
 
@@ -31,6 +41,7 @@ impl std::fmt::Debug for SolverException {
         match self {
             Self::NoSolution => write!(f, "NoSolution"),
             Self::Interrupted => write!(f, "Interrupted"),
+            Self::SearchQueueCapacityExceeded => write!(f, "SearchQueueCapacityExceeded"),
             Self::InternalError(message) => f.write_str(message),
         }
     }
@@ -74,23 +85,19 @@ impl SolverSettings {
         self.simulator_settings.max_cp
     }
 
-    pub fn max_progress(&self) -> u32 {
-        #[allow(clippy::useless_conversion)]
-        u32::from(self.simulator_settings.max_progress)
+    pub fn max_progress(&self) -> u16 {
+        self.simulator_settings.max_progress
     }
 
-    pub fn max_quality(&self) -> u32 {
-        #[allow(clippy::useless_conversion)]
-        u32::from(self.simulator_settings.max_quality)
+    pub fn max_quality(&self) -> u16 {
+        self.simulator_settings.max_quality
     }
 
-    pub fn base_progress(&self) -> u32 {
-        #[allow(clippy::useless_conversion)]
-        u32::from(self.simulator_settings.base_progress)
+    pub fn base_progress(&self) -> u16 {
+        self.simulator_settings.base_progress
     }
 
-    pub fn base_quality(&self) -> u32 {
-        #[allow(clippy::useless_conversion)]
-        u32::from(self.simulator_settings.base_quality)
+    pub fn base_quality(&self) -> u16 {
+        self.simulator_settings.base_quality
     }
 }

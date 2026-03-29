@@ -100,10 +100,9 @@ impl Widget for PotionSelect<'_> {
                 }
                 ui.separator();
 
-                let mut search_result = Vec::new();
-                ui.ctx().memory_mut(|mem| {
+                let search_result = ui.ctx().memory_mut(|mem| {
                     let search_cache = mem.caches.cache::<PotionSearchCache<'_>>();
-                    search_result = search_cache.get((&search_text, self.locale));
+                    search_cache.get((&search_text, self.locale)).clone()
                 });
 
                 ui.ctx().data_mut(|data| {

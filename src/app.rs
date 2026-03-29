@@ -95,20 +95,20 @@ impl MacroSolverApp {
 
 impl eframe::App for MacroSolverApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let locale = self.app_context.locale;
         #[cfg(target_arch = "wasm32")]
-        self.load_fonts_dyn(ctx);
+        self.load_fonts_dyn(ui);
 
         self.process_solver_events();
 
         #[cfg(not(target_arch = "wasm32"))]
-        crate::update::show_dialogues(ctx, locale);
+        crate::update::show_dialogues(ui, locale);
 
         if self.missing_stats_error_window_open {
-            egui::Modal::new(egui::Id::new("min_stats_warning")).show(ctx, |ui| {
-                let req_cms = self.app_context.recipe_config.recipe.req_craftsmanship;
-                let req_ctrl = self.app_context.recipe_config.recipe.req_control;
+            egui::Modal::new(egui::Id::new("min_stats_warning")).show(ui, |ui| {
+                let req_cms = self.app_context.recipe_config.recipe().req_craftsmanship;
+                let req_ctrl = self.app_context.recipe_config.recipe().req_control;
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new("Error").strong());
                 ui.separator();
@@ -130,9 +130,9 @@ impl eframe::App for MacroSolverApp {
         }
 
         if let Some(error) = self.solver_error.clone() {
-            egui::Modal::new(egui::Id::new("solver_error")).show(ctx, |ui| {
+            egui::Modal::new(egui::Id::new("solver_error")).show(ui, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-                ui.set_width(480.0f32.min(ctx.content_rect().width() - 32.0));
+                ui.set_width(480.0f32.min(ui.content_rect().width() - 32.0));
                 match error {
                     SolverException::NoSolution => {
                         ui.label(egui::RichText::new(t!(locale, "No solution")).strong());
@@ -146,6 +146,20 @@ impl eframe::App for MacroSolverApp {
                     }
                     SolverException::Interrupted => {
                         self.solver_error = None;
+                    }
+                    SolverException::SearchQueueCapacityExceeded => {
+                        ui.label(
+                            egui::RichText::new(t!(locale, "Search Queue Capacity Exceeded"))
+                                .strong(),
+                        );
+                        ui.separator();
+                        ui.label(t!(locale, "The number of nodes in the search queue exceeded the limit of the 32-bit web version."));
+                        ui.label(t!(locale, "Solving this configuration requires a 64-bit version of Raphael."));
+                        ui.add(egui::Hyperlink::from_label_and_url(
+                            egui::RichText::new(t!(locale, "Download latest release from GitHub"))
+                                .small(),
+                            "https://github.com/KonaeAkira/raphael-rs/releases/latest",
+                        ));
                     }
                     SolverException::InternalError(message) => {
                         ui.label(egui::RichText::new(t!(locale, "Internal Solver Error")).strong());
@@ -172,7 +186,7 @@ impl eframe::App for MacroSolverApp {
                 eframe::wasm_bindgen::throw_val("OOM panic".into());
             }
             let interrupt_pending = self.solver_interrupt.is_set();
-            egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
+            egui::Modal::new(egui::Id::new("solver_busy")).show(ui, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.set_width(180.0);
                 ui.horizontal(|ui| {
@@ -219,14 +233,14 @@ impl eframe::App for MacroSolverApp {
             });
         }
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+        egui::Panel::top("top_panel").show_inside(ui, |ui| {
             egui::ScrollArea::horizontal()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
                     egui::containers::menu::MenuBar::new().ui(ui, |ui| {
                         ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                         ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
-                        self.draw_app_config_menu_button(ui, ctx);
+                        self.draw_app_config_menu_button(ui);
 
                         let selectable_locales = [
                             Locale::EN,
@@ -289,15 +303,15 @@ impl eframe::App for MacroSolverApp {
 
         #[cfg(any(debug_assertions, feature = "dev-panel"))]
         if self.dev_panel_state.show_dev_panel {
-            egui::SidePanel::right("dev_panel")
+            egui::Panel::right("dev_panel")
                 .resizable(true)
-                .show(ctx, |ui| {
+                .show_inside(ui, |ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                     RenderInfo::new(&mut self.dev_panel_state.render_info_state).ui(ui, _frame);
                 });
         }
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 self.draw_simulator_widget(ui);
                 ui.with_layout(
@@ -364,7 +378,7 @@ impl eframe::App for MacroSolverApp {
         });
 
         let maximum_visible_window_size =
-            (ctx.content_rect().size() - egui::Vec2::new(14.0, 45.0)).max(egui::Vec2::ZERO);
+            (ui.content_rect().size() - egui::Vec2::new(14.0, 45.0)).max(egui::Vec2::ZERO);
         let stats_edit_window_size = maximum_visible_window_size.min(egui::Vec2::new(412.0, 650.0));
         egui::Window::new(
             egui::RichText::new(t!(locale, "Crafter stats"))
@@ -377,7 +391,7 @@ impl eframe::App for MacroSolverApp {
         .resizable(false)
         .min_size(stats_edit_window_size)
         .max_size(stats_edit_window_size)
-        .show(ctx, |ui| {
+        .show(ui, |ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(StatsEdit::new(&mut self.app_context));
         });
@@ -391,7 +405,7 @@ impl eframe::App for MacroSolverApp {
         .open(&mut self.saved_rotations_window_open)
         .collapsible(false)
         .default_size((400.0, 600.0))
-        .show(ctx, |ui| {
+        .show(ui, |ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(SavedRotationsWidget::new(
                 &mut self.app_context,
@@ -435,7 +449,7 @@ impl MacroSolverApp {
         }
     }
 
-    fn draw_app_config_menu_button(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+    fn draw_app_config_menu_button(&mut self, ui: &mut egui::Ui) {
         let locale = self.app_context.locale;
         ui.add_enabled_ui(true, |ui| {
             ui.reset_style();
@@ -450,7 +464,7 @@ impl MacroSolverApp {
                     ui.horizontal(|ui| {
                         ui.label(t!(locale, "Zoom"));
 
-                        let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
+                        let mut zoom_percentage = (ui.zoom_factor() * 100.0).round() as u16;
                         ui.horizontal(|ui| {
                             ui.style_mut().spacing.item_spacing.x = 4.0;
                             ui.add_enabled_ui(zoom_percentage > 50, |ui| {
@@ -480,7 +494,7 @@ impl MacroSolverApp {
                         );
 
                         self.app_context.app_config.zoom_percentage = zoom_percentage;
-                        ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
+                        ui.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
                     });
 
                     ui.separator();
@@ -573,9 +587,9 @@ impl MacroSolverApp {
                     }
                     ui.add_space(-5.0);
                     ui.vertical_centered_justified(|ui| {
-                        let text_color = ui.ctx().style().visuals.selection.stroke.color;
+                        let text_color = ui.global_style().visuals.selection.stroke.color;
                         let text = egui::RichText::new(t!(locale, "Solve")).color(text_color);
-                        let fill_color = ui.ctx().style().visuals.selection.bg_fill;
+                        let fill_color = ui.global_style().visuals.selection.bg_fill;
                         let id = egui::Id::new("SOLVE_INITIATED");
                         let mut solve_initiated = ui
                             .ctx()
@@ -748,7 +762,7 @@ impl MacroSolverApp {
 
         ui.label(egui::RichText::new(t!(locale, "HQ materials")).strong());
         let mut has_hq_ingredient = false;
-        let recipe_ingredients = self.app_context.recipe_config.recipe.ingredients;
+        let recipe_ingredients = self.app_context.recipe_config.recipe().ingredients;
         if let QualitySource::HqMaterialList(provided_ingredients) =
             &mut self.app_context.recipe_config.quality_source
         {
@@ -810,15 +824,31 @@ impl MacroSolverApp {
                 egui::Checkbox::new(&mut false, action_name(Action::QuickInnovation, locale)),
             );
         }
-        // This is only a temporary solution to enable using Stellar Steady Hand in the UI.
-        // TODO: Design permanent solution.
-        ui.horizontal(|ui| {
-            ui.label(action_name(Action::StellarSteadyHand, locale));
-            ui.add(
-                egui::DragValue::new(&mut self.app_context.stellar_steady_hand_charges)
-                    .range(0..=3),
-            );
-        });
+        let mut max_stellar_steady_hand_charges = self
+            .app_context
+            .recipe_config
+            .recipe_source
+            .max_stellar_steady_hand_charges();
+        if max_stellar_steady_hand_charges > 0 {
+            ui.horizontal(|ui| {
+                ui.label(action_name(Action::StellarSteadyHand, locale));
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui: &mut egui::Ui| {
+                    ui.add_enabled(
+                        false,
+                        egui::DragValue::new(&mut max_stellar_steady_hand_charges),
+                    );
+                    ui.monospace("/");
+                    ui.add(
+                        egui::DragValue::new(
+                            &mut self.app_context.solver_config.stellar_steady_hand_charges,
+                        )
+                        .range(0..=max_stellar_steady_hand_charges),
+                    );
+                });
+            });
+        } else {
+            self.app_context.solver_config.stellar_steady_hand_charges = 0;
+        }
         let heart_and_soul_enabled = self.app_context.active_stats().level
             >= HeartAndSoul::LEVEL_REQUIREMENT
             && self.app_context.active_stats().heart_and_soul;
@@ -908,12 +938,12 @@ impl MacroSolverApp {
             ui.add(HelpText::new(t!(locale, "Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.")));
         });
 
-        if self.app_context.recipe_config.recipe.is_expert {
+        if self.app_context.recipe_config.recipe().is_expert {
             self.app_context.solver_config.adversarial = false;
         }
         ui.horizontal(|ui| {
             ui.add_enabled(
-                !self.app_context.recipe_config.recipe.is_expert,
+                !self.app_context.recipe_config.recipe().is_expert,
                 egui::Checkbox::new(
                     &mut self.app_context.solver_config.adversarial,
                     t!(locale, "Ensure 100% reliability"),
@@ -936,8 +966,8 @@ impl MacroSolverApp {
                 data.insert_temp(Id::new("SOLVE_INITIATED"), false);
             });
 
-            let craftsmanship_req = self.app_context.recipe_config.recipe.req_craftsmanship;
-            let control_req = self.app_context.recipe_config.recipe.req_control;
+            let craftsmanship_req = self.app_context.recipe_config.recipe().req_craftsmanship;
+            let control_req = self.app_context.recipe_config.recipe().req_control;
             let active_stats = self.app_context.active_stats();
             let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
                 active_stats.craftsmanship,

@@ -8,35 +8,45 @@ use crate::{
     macros::internal_error,
 };
 
+#[derive(Debug, Default, Clone, Copy)]
+struct Breakpoint {
+    cp: u16,
+    progress: u16,
+}
+
 #[derive(Default)]
 struct CpProgressBreakpoints {
     /// List of CP breakpoints and the associated achievable Progress.
     /// Sorted in order of ascending CP.
-    breakpoints: Vec<(u16, u32)>,
+    breakpoints: Vec<Breakpoint>,
     /// The maximum CP at which the state was solved.
     /// Querying the solution at a CP higher than this may give incorrect results.
     max_solved_cp: Option<u16>,
 }
 
 impl CpProgressBreakpoints {
-    fn get_progress(&self, cp: u16) -> Option<u32> {
+    fn get_progress(&self, cp: u16) -> Option<u16> {
         if Some(cp) > self.max_solved_cp {
             return None;
         }
-        let partition_idx = self.breakpoints.partition_point(|&v| v.0 <= cp);
+        let partition_idx = self.breakpoints.partition_point(|&v| v.cp <= cp);
         partition_idx
             .checked_sub(1)
-            .map(|idx| self.breakpoints[idx].1)
+            .map(|idx| self.breakpoints[idx].progress)
             .or(Some(0))
     }
 
     /// Add a new (CP, Durability) breakpoint.
     /// Breakpoints must be added with strictly increasing CP, otherwise `get_progress` may return wrong results.
     /// If the new breakpoint does not have strictly better Progress than the previous breakpoint, it is ignored.
-    fn add_breakpoint(&mut self, cp: u16, progress: u32) {
+    fn add_breakpoint(&mut self, cp: u16, progress: u16) {
         self.max_solved_cp = Some(cp);
-        if self.breakpoints.last().is_none_or(|last| last.1 < progress) {
-            self.breakpoints.push((cp, progress));
+        if self
+            .breakpoints
+            .last()
+            .is_none_or(|last| last.progress < progress)
+        {
+            self.breakpoints.push(Breakpoint { cp, progress });
         }
     }
 }
@@ -50,6 +60,10 @@ pub struct FinishSolverStats {
 pub struct FinishSolver {
     settings: SolverSettings,
     solved_states: FxHashMap<(u16, Effects), CpProgressBreakpoints>,
+    /// The amount of CP required to guarantee being able to get Progess to 100% from any state.
+    /// `None` if no such CP value exists.
+    /// The purpose of this value is to skip the hashmap lookup for states with high enough CP.
+    cp_for_guaranteed_finish: Option<u16>,
 }
 
 impl FinishSolver {
@@ -57,11 +71,17 @@ impl FinishSolver {
         Self {
             settings,
             solved_states: FxHashMap::default(),
+            cp_for_guaranteed_finish: None,
         }
     }
 
     /// Calling this method before calling `FinishSolver::precompute` will return a `SolverException`.
     pub fn can_finish(&self, state: &SimulationState) -> Result<bool, SolverException> {
+        if let Some(required_cp) = self.cp_for_guaranteed_finish
+            && required_cp <= state.cp
+        {
+            return Ok(true);
+        }
         let key = (state.durability, state.effects.strip_quality_effects());
         let breakpoints = self.solved_states.get(&key).ok_or_else(|| {
             internal_error!(
@@ -77,7 +97,7 @@ impl FinishSolver {
                 state
             )
         })?;
-        Ok(state.progress + max_additional_progress >= self.settings.max_progress())
+        Ok(state.progress.saturating_add(max_additional_progress) >= self.settings.max_progress())
     }
 
     pub fn precompute(&mut self) -> Result<(), SolverException> {
@@ -110,7 +130,22 @@ impl FinishSolver {
                     && template.current_max_progress < Some(self.settings.max_progress())
             });
         }
+        self.set_cp_for_guaranteed_finish();
         Ok(())
+    }
+
+    fn set_cp_for_guaranteed_finish(&mut self) {
+        let mut required_cp = 0;
+        for breakpoints in self.solved_states.values() {
+            if let Some(breakpoint) = breakpoints.breakpoints.last()
+                && breakpoint.progress >= self.settings.max_progress()
+            {
+                required_cp = required_cp.max(breakpoint.cp);
+            } else {
+                return;
+            }
+        }
+        self.cp_for_guaranteed_finish = Some(required_cp);
     }
 
     fn solve_template(&self, template: &mut Template) {
@@ -131,7 +166,7 @@ impl FinishSolver {
                 } else if let Some(child_breakpoints) = self.solved_states.get(&key)
                     && let Some(child_progress) = child_breakpoints.get_progress(child_state.cp)
                 {
-                    result = std::cmp::max(result, child_state.progress + child_progress);
+                    result = result.max(child_state.progress.saturating_add(child_progress));
                 } else {
                     // Required child state has not been solved yet.
                     // Abort and try again in the next iteration.
@@ -159,7 +194,7 @@ struct Template {
     durability: u16,
     effects: Effects,
     current_cp: u16,
-    current_max_progress: Option<u32>,
+    current_max_progress: Option<u16>,
 }
 
 fn generate_templates(settings: &SolverSettings) -> Vec<Template> {

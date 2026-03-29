@@ -14,7 +14,7 @@ const SETTINGS: Settings = Settings {
 };
 
 /// Calculate the minimum achievable Quality across all possible Condition rolls
-fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u32, ActionError> {
+fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u16, ActionError> {
     let is_valid_mask = |mut mask: i32| {
         // a 1-bit denotes an Excellent proc
         if (mask & 1) != 0 {
@@ -35,7 +35,7 @@ fn guaranteed_quality(mut settings: Settings, actions: &[Action]) -> Result<u32,
         |action: &Action| *action != Action::QuickInnovation && *action != Action::HeartAndSoul;
 
     settings.adversarial = false;
-    let mut min_quality = u32::MAX;
+    let mut min_quality = u16::MAX;
 
     let condition_mask_len = actions
         .iter()

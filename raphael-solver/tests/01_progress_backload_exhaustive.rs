@@ -5,10 +5,10 @@ use raphael_solver::{AtomicFlag, MacroSolver, SolverSettings};
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]
 struct SolutionScore {
-    pub capped_quality: u32,
+    pub capped_quality: u16,
     pub steps: u8,
     pub duration: u8,
-    pub overflow_quality: u32,
+    pub overflow_quality: u16,
 }
 
 fn is_progress_backloaded(settings: &SolverSettings, actions: &[Action]) -> bool {
@@ -359,8 +359,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 431840,
-                processed_nodes: 70818,
+                inserted_nodes: 431806,
+                processed_nodes: 70816,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -373,8 +373,8 @@ fn rarefied_tacos_de_carne_asada_4785_4758() {
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 943777,
-                states_on_shards: 274380,
-                values: 14294761,
+                states_on_shards: 274390,
+                values: 14294760,
             },
         }
     "#]];
@@ -693,8 +693,8 @@ fn claro_walnut_lumber_4900_4800() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 503332,
-                processed_nodes: 28603,
+                inserted_nodes: 503314,
+                processed_nodes: 28602,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 8079,
@@ -909,8 +909,8 @@ fn hardened_survey_plank_5558_5216() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1228817,
-                processed_nodes: 172660,
+                inserted_nodes: 1228940,
+                processed_nodes: 172691,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 3619,
