@@ -147,6 +147,20 @@ impl eframe::App for MacroSolverApp {
                     SolverException::Interrupted => {
                         self.solver_error = None;
                     }
+                    SolverException::SearchQueueCapacityExceeded => {
+                        ui.label(
+                            egui::RichText::new(t!(locale, "Search Queue Capacity Exceeded"))
+                                .strong(),
+                        );
+                        ui.separator();
+                        ui.label(t!(locale, "The number of nodes in the search queue exceeded the limit of the 32-bit web version."));
+                        ui.label(t!(locale, "Solving this configuration requires a 64-bit version of Raphael."));
+                        ui.add(egui::Hyperlink::from_label_and_url(
+                            egui::RichText::new(t!(locale, "Download latest release from GitHub"))
+                                .small(),
+                            "https://github.com/KonaeAkira/raphael-rs/releases/latest",
+                        ));
+                    }
                     SolverException::InternalError(message) => {
                         ui.label(egui::RichText::new(t!(locale, "Internal Solver Error")).strong());
                         ui.separator();

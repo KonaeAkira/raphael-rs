@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::{
-    SolverSettings,
+    SolverException, SolverSettings,
     actions::{ActionCombo, use_action_combo},
 };
 
@@ -116,9 +116,10 @@ impl SearchQueue {
         score: SearchScore,
         action: ActionCombo,
         parent_idx: usize,
-    ) -> Result<(), ()> {
+    ) -> Result<(), SolverException> {
         let node = SearchNode::new()
-            .with_parent_idx_checked(parent_idx)?
+            .with_parent_idx_checked(parent_idx)
+            .map_err(|_| SolverException::SearchQueueCapacityExceeded)?
             .with_action(action);
         match self.batches.entry(score) {
             Entry::Occupied(occupied_entry) => {
