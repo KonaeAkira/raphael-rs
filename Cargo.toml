@@ -46,9 +46,9 @@ raphael-solver = { workspace = true, features = ["serde"] }
 raphael-data = { workspace = true, features = ["serde"] }
 raphael-translations = { workspace = true }
 
-egui = "0.34.1"
-egui_extras = { version = "0.34.1", features = ["http", "webp"] }
-eframe = { version = "0.34.1", features = ["persistence"] }
+egui = { git = "https://github.com/KonaeAkira/egui", rev = "8f51c42" }
+egui_extras = { git = "https://github.com/KonaeAkira/egui", rev = "8f51c42", features = ["http", "webp"] }
+eframe = { git = "https://github.com/KonaeAkira/egui", rev = "8f51c42", features = ["persistence"] }
 
 rayon = { workspace = true }
 serde = { workspace = true }
