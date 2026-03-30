@@ -37,8 +37,24 @@ impl ParetoFrontBuilder {
         self.result.clear();
     }
 
-    pub fn push(&mut self, value: ParetoValue) {
-        self.push_slice(std::iter::once(value));
+    pub fn push(&mut self, mut value: ParetoValue) {
+        if value.quality == 0 {
+            // Fast path for the most common use case.
+            value.progress = value.progress.min(self.cutoff.progress);
+            let Some(last) = self.result.last_mut() else {
+                self.result.push(value);
+                return;
+            };
+            if last.progress < value.progress {
+                if last.quality > 0 {
+                    self.result.push(value);
+                } else {
+                    last.progress = value.progress;
+                }
+            }
+        } else {
+            self.push_slice(std::iter::once(value));
+        }
     }
 
     pub fn push_slice(&mut self, values: impl Iterator<Item = ParetoValue>) {
