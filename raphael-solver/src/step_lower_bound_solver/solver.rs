@@ -1,7 +1,4 @@
-use std::{
-    num::{NonZero, NonZeroU8},
-    ops::Deref,
-};
+use std::num::{NonZero, NonZeroU8};
 
 use crate::{
     SolverException, SolverSettings,
@@ -10,50 +7,57 @@ use crate::{
     utils::{self, ParetoFrontBuilder, ParetoValue, compute_iq_quality_lut},
 };
 
+use bump_scope::{BumpPool, BumpPoolGuard};
 use raphael_sim::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::state::ReducedState;
 
-type NonEmptyParetoFront = nunny::Slice<ParetoValue>;
-type SolvedStates = FxHashMap<ReducedState, Box<NonEmptyParetoFront>>;
+type ParetoFront<'alloc> = &'alloc [ParetoValue];
+type SolvedStates<'alloc> = FxHashMap<ReducedState, ParetoFront<'alloc>>;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
     pub states_on_main: usize,
     pub states_on_shards: usize,
     pub values: usize,
 }
 
-#[derive(Debug, Clone)]
-struct StepLbSolverContext {
+#[derive(Clone)]
+struct StepLbSolverContext<'alloc> {
+    allocator: &'alloc BumpPool,
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
     iq_quality_lut: [u16; 11],
     largest_progress_increase: u16,
 }
 
-pub struct StepLbSolver {
-    context: StepLbSolverContext,
-    solved_states: SolvedStates,
+pub struct StepLbSolver<'alloc> {
+    context: StepLbSolverContext<'alloc>,
+    solved_states: SolvedStates<'alloc>,
     num_states_solved_on_shards: usize,
 }
 
-pub struct StepLbSolverShard<'a> {
-    context: &'a StepLbSolverContext,
-    shared_states: &'a SolvedStates,
-    local_states: SolvedStates,
+pub struct StepLbSolverShard<'main, 'alloc> {
+    context: &'main StepLbSolverContext<'alloc>,
+    shared_states: &'main SolvedStates<'alloc>,
+    local_states: SolvedStates<'alloc>,
     pf_builder: ParetoFrontBuilder,
 }
 
-impl StepLbSolver {
-    pub fn new(mut settings: SolverSettings, interrupt_signal: utils::AtomicFlag) -> Self {
+impl<'alloc> StepLbSolver<'alloc> {
+    pub fn new(
+        mut settings: SolverSettings,
+        interrupt_signal: utils::AtomicFlag,
+        allocator: &'alloc BumpPool,
+    ) -> Self {
         let iq_quality_lut = compute_iq_quality_lut(&settings);
         settings.simulator_settings.adversarial = false;
         ReducedState::optimize_action_mask(&mut settings.simulator_settings);
         Self {
             context: StepLbSolverContext {
+                allocator,
                 settings,
                 interrupt_signal,
                 iq_quality_lut,
@@ -66,7 +70,7 @@ impl StepLbSolver {
         }
     }
 
-    pub fn create_shard(&self) -> StepLbSolverShard<'_> {
+    pub fn create_shard<'main>(&'main self) -> StepLbSolverShard<'main, 'alloc> {
         StepLbSolverShard {
             context: &self.context,
             shared_states: &self.solved_states,
@@ -75,7 +79,7 @@ impl StepLbSolver {
         }
     }
 
-    pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates) {
+    pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates<'alloc>) {
         let len_before = self.solved_states.len();
         self.solved_states.extend(new_solved_states);
         let len_after = self.solved_states.len();
@@ -125,7 +129,7 @@ impl StepLbSolver {
             state.effects.set_muscle_memory(0);
         }
         let reduced_state = ReducedState::from_state(state, step_budget);
-        let pareto_front = if let Some(solution) = self.solved_states.get(&reduced_state) {
+        let pareto_front = if let Some(solution) = self.solved_states.get(&reduced_state).copied() {
             solution
         } else {
             solve_state_parallel(reduced_state, &self.context, &mut self.solved_states)?
@@ -144,8 +148,8 @@ impl StepLbSolver {
     }
 }
 
-impl<'a> StepLbSolverShard<'a> {
-    pub fn solved_states(self) -> SolvedStates {
+impl<'main, 'alloc> StepLbSolverShard<'main, 'alloc> {
+    pub fn solved_states(self) -> SolvedStates<'alloc> {
         self.local_states
     }
 
@@ -186,9 +190,9 @@ impl<'a> StepLbSolverShard<'a> {
             state.effects.set_muscle_memory(0);
         }
         let reduced_state = ReducedState::from_state(state, step_budget);
-        let pareto_front = if let Some(solution) = self.shared_states.get(&reduced_state) {
+        let pareto_front = if let Some(solution) = self.shared_states.get(&reduced_state).copied() {
             solution
-        } else if let Some(solution) = self.local_states.get(&reduced_state) {
+        } else if let Some(solution) = self.local_states.get(&reduced_state).copied() {
             solution
         } else {
             solve_state_sequential(
@@ -236,12 +240,13 @@ fn discover_unsolved_states(
     unsolved_states
 }
 
-fn construct_solution<'a>(
+fn construct_solution<'alloc>(
     state: ReducedState,
-    context: &StepLbSolverContext,
+    context: &StepLbSolverContext<'alloc>,
     pf_builder: &mut ParetoFrontBuilder,
-    get_solution: impl Fn(ReducedState) -> Option<&'a Box<NonEmptyParetoFront>>,
-) -> Result<Box<nunny::Slice<ParetoValue>>, SolverException> {
+    get_solution: impl Fn(ReducedState) -> Option<&'alloc [ParetoValue]>,
+    allocator: &BumpPoolGuard<'alloc>,
+) -> Result<ParetoFront<'alloc>, SolverException> {
     let min_quality = context.iq_quality_lut[usize::from(state.effects.inner_quiet())];
     let cutoff = ParetoValue::new(
         context.settings.max_progress(),
@@ -279,56 +284,59 @@ fn construct_solution<'a>(
             }
         }
     }
-    pf_builder.result().try_into().map_err(|_| {
-        internal_error!(
+    let solution = allocator
+        .alloc_slice_copy(pf_builder.result_as_slice())
+        .into_ref();
+    if solution.is_empty() {
+        return Err(internal_error!(
             "Solver produced empty Pareto front.",
             context.settings,
             state
-        )
-    })
+        ));
+    }
+    Ok(solution)
 }
 
-fn solve_state_sequential<'a>(
+fn solve_state_sequential<'alloc>(
     seed_state: ReducedState,
-    context: &StepLbSolverContext,
-    shared_states: &'a SolvedStates,
-    local_states: &'a mut SolvedStates,
+    context: &StepLbSolverContext<'alloc>,
+    shared_states: &SolvedStates<'alloc>,
+    local_states: &mut SolvedStates<'alloc>,
     pf_builder: &mut ParetoFrontBuilder,
-) -> Result<&'a nunny::Slice<ParetoValue>, SolverException> {
+) -> Result<ParetoFront<'alloc>, SolverException> {
     let mut unsolved_states = {
         let has_solution =
             |state| shared_states.contains_key(&state) || local_states.contains_key(&state);
         discover_unsolved_states(seed_state, &context.settings, has_solution)
     };
     unsolved_states.sort_unstable_by_key(|state| state.steps_budget);
+    let allocator = context.allocator.get();
     for state in unsolved_states {
         let solution = {
             let get_solution = |state| {
                 shared_states
                     .get(&state)
                     .or_else(|| local_states.get(&state))
+                    .copied()
             };
-            construct_solution(state, context, pf_builder, get_solution)?
+            construct_solution(state, context, pf_builder, get_solution, &allocator)?
         };
         local_states.insert(state, solution);
     }
-    local_states
-        .get(&seed_state)
-        .map(Box::deref)
-        .ok_or_else(|| {
-            internal_error!(
-                "State not found in memoization after solving",
-                context.settings,
-                seed_state
-            )
-        })
+    local_states.get(&seed_state).copied().ok_or_else(|| {
+        internal_error!(
+            "State not found in memoization after solving",
+            context.settings,
+            seed_state
+        )
+    })
 }
 
-fn solve_state_parallel<'a>(
+fn solve_state_parallel<'alloc>(
     seed_state: ReducedState,
-    context: &StepLbSolverContext,
-    solved_states: &'a mut SolvedStates,
-) -> Result<&'a nunny::Slice<ParetoValue>, SolverException> {
+    context: &StepLbSolverContext<'alloc>,
+    solved_states: &mut SolvedStates<'alloc>,
+) -> Result<ParetoFront<'alloc>, SolverException> {
     let mut unsolved_states = {
         let has_solution = |state| solved_states.contains_key(&state);
         discover_unsolved_states(seed_state, &context.settings, has_solution)
@@ -345,14 +353,19 @@ fn solve_state_parallel<'a>(
         }
         let current_batch = &unsolved_states[idx_begin..idx_end];
         let current_batch_solutions = {
-            let get_solution = |state| solved_states.get(&state);
+            let get_solution = |state| solved_states.get(&state).copied();
             current_batch
                 .par_iter()
                 .map_init(
-                    ParetoFrontBuilder::new,
-                    |pf_builder, state| -> Result<_, SolverException> {
-                        let solution =
-                            construct_solution(*state, context, pf_builder, get_solution)?;
+                    || (ParetoFrontBuilder::new(), context.allocator.get()),
+                    |(pf_builder, allocator), state| -> Result<_, SolverException> {
+                        let solution = construct_solution(
+                            *state,
+                            context,
+                            pf_builder,
+                            get_solution,
+                            allocator,
+                        )?;
                         Ok((*state, solution))
                     },
                 )
@@ -361,14 +374,11 @@ fn solve_state_parallel<'a>(
         solved_states.extend(current_batch_solutions);
         idx_begin = idx_end;
     }
-    solved_states
-        .get(&seed_state)
-        .map(Box::deref)
-        .ok_or_else(|| {
-            internal_error!(
-                "State not found in memoization after solving",
-                context.settings,
-                seed_state
-            )
-        })
+    solved_states.get(&seed_state).copied().ok_or_else(|| {
+        internal_error!(
+            "State not found in memoization after solving",
+            context.settings,
+            seed_state
+        )
+    })
 }

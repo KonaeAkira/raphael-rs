@@ -20,7 +20,7 @@ struct QualityUbSolverContext {
     largest_progress_increase: u16,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct QualityUbSolverStats {
     pub states_on_main: usize,
     pub states_on_shards: usize,
