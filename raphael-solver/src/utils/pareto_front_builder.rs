@@ -73,10 +73,6 @@ impl ParetoFrontBuilder {
         })
     }
 
-    pub fn result(&mut self) -> Box<[ParetoValue]> {
-        self.result.as_slice().into()
-    }
-
     pub fn result_as_slice(&mut self) -> &[ParetoValue] {
         self.result.as_slice()
     }

@@ -1,3 +1,4 @@
+use bump_scope::BumpPool;
 use raphael_sim::*;
 
 use crate::{
@@ -12,7 +13,8 @@ use super::QualityUbSolver;
 /// It is consistent if the step-lb of a parent state is never greater than the step-lb of a child state.
 /// It is admissible if the quality-ub of a state is never less than the quality of a reachable final state.
 fn check_consistency(solver_settings: SolverSettings) {
-    let mut solver = QualityUbSolver::new(solver_settings, Default::default());
+    let allocator = BumpPool::default();
+    let mut solver = QualityUbSolver::new(solver_settings, Default::default(), &allocator);
     solver.precompute().unwrap();
     let mut solver_shard = solver.create_shard();
     for state in generate_random_states(solver_settings, 1_000_000)
