@@ -24,7 +24,7 @@ pub struct ParetoFrontBuilder {
 }
 
 impl ParetoFrontBuilder {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             cutoff: ParetoValue::new(u16::MAX, u16::MAX),
             result: Vec::new(),
