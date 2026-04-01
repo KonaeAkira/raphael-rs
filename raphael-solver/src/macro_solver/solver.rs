@@ -96,9 +96,17 @@ impl<'a> MacroSolver<'a> {
         quality_ub_solver.precompute()?;
         drop(timer);
 
-        let timer = ScopedTimer::new("Step LB Solver");
-        step_lb_solver.precompute()?;
-        drop(timer);
+        // The StepLbSolver is only queried when a state has the potential to reach max_quality.
+        // If the quality upper-bound of the initial state is less than max_quality, then no
+        // subsequent state can reach max_quality, which in turn means the StepLbSolver is not needed.
+        let mut quality_ub_solver_shard = quality_ub_solver.create_shard();
+        let initial_state_quality_ub =
+            quality_ub_solver_shard.quality_upper_bound(initial_state)?;
+        quality_ub_solver.extend_solved_states(quality_ub_solver_shard.solved_states());
+        if initial_state_quality_ub >= self.settings.max_quality() {
+            let _timer = ScopedTimer::new("Step LB Solver");
+            step_lb_solver.precompute()?;
+        }
 
         let timer = ScopedTimer::new("Search");
         let actions = self
