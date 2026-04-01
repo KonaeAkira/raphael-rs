@@ -12,15 +12,8 @@ use rustc_hash::FxHashMap;
 
 use super::state::ReducedState;
 
-#[derive(Clone)]
-struct QualityUbSolverContext<'alloc> {
-    settings: SolverSettings,
-    interrupt_signal: utils::AtomicFlag,
-    iq_quality_lut: [u16; 11],
-    durability_cost: u16,
-    largest_progress_increase: u16,
-    allocator: &'alloc BumpPool,
-}
+type ParetoFront = nunny::Slice<ParetoValue>;
+type SolvedStates<'alloc> = FxHashMap<ReducedState, &'alloc ParetoFront>;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct QualityUbSolverStats {
@@ -29,8 +22,15 @@ pub struct QualityUbSolverStats {
     pub values: usize,
 }
 
-type ParetoFront = nunny::Slice<ParetoValue>;
-type SolvedStates<'alloc> = FxHashMap<ReducedState, &'alloc ParetoFront>;
+#[derive(Clone)]
+struct QualityUbSolverContext<'alloc> {
+    allocator: &'alloc BumpPool,
+    settings: SolverSettings,
+    interrupt_signal: utils::AtomicFlag,
+    iq_quality_lut: [u16; 11],
+    durability_cost: u16,
+    largest_progress_increase: u16,
+}
 
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
@@ -59,6 +59,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
         };
         Self {
             context: QualityUbSolverContext {
+                allocator,
                 settings,
                 interrupt_signal,
                 iq_quality_lut: utils::compute_iq_quality_lut(&settings),
@@ -66,7 +67,6 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 largest_progress_increase: utils::maximum_muscle_memory_utilization(
                     &settings.simulator_settings,
                 ),
-                allocator,
             },
             solved_states: FxHashMap::default(),
             maximal_templates: FxHashMap::default(),
@@ -86,7 +86,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
             context: &self.context,
             maximal_templates: &self.maximal_templates,
             shared_states: &self.solved_states,
-            local_states: FxHashMap::default(),
+            local_states: SolvedStates::default(),
         }
     }
 
@@ -325,23 +325,24 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
             }
         }
 
-        let pareto_front = if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied() {
-            pareto_front
-        } else if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
-            pareto_front
-        } else {
-            let allocator = self.context.allocator.get();
-            self.solve_state(reduced_state, &allocator)?;
-            if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
+        let pareto_front =
+            if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied() {
+                pareto_front
+            } else if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
                 pareto_front
             } else {
-                return Err(internal_error!(
-                    "State not found in memoization table after solve.",
-                    self.context.settings,
-                    reduced_state
-                ));
-            }
-        };
+                let allocator = self.context.allocator.get();
+                self.solve_state(reduced_state, &allocator)?;
+                if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
+                    pareto_front
+                } else {
+                    return Err(internal_error!(
+                        "State not found in memoization table after solve.",
+                        self.context.settings,
+                        reduced_state
+                    ));
+                }
+            };
         let i = pareto_front.partition_point(|value| value.progress < required_progress);
         let quality = pareto_front
             .get(i)
@@ -383,9 +384,16 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
                         child_pareto_front
                     } else {
                         self.solve_state(child_state, allocator)?;
-                        self.local_states.get(&child_state).copied().ok_or(internal_error!(
-                            "State not found in memoization table after solving.",
-                        ))?
+                        self.local_states
+                            .get(&child_state)
+                            .copied()
+                            .ok_or_else(|| {
+                                internal_error!(
+                                    "State not found in memoization table after solving.",
+                                    self.context.settings,
+                                    child_state
+                                )
+                            })?
                     };
                     pareto_front_builder.push_slice(
                         child_pareto_front

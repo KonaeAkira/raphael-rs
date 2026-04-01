@@ -325,7 +325,7 @@ fn solve_state_sequential<'alloc>(
     }
     local_states.get(&seed_state).copied().ok_or_else(|| {
         internal_error!(
-            "State not found in memoization after solving",
+            "State not found in memoization table after solving.",
             context.settings,
             seed_state
         )
@@ -376,7 +376,7 @@ fn solve_state_parallel<'alloc>(
     }
     solved_states.get(&seed_state).copied().ok_or_else(|| {
         internal_error!(
-            "State not found in memoization after solving",
+            "State not found in memoization table after solving.",
             context.settings,
             seed_state
         )
