@@ -508,3 +508,34 @@ fn daring_touch_interrupted_combo() {
         ]
     );
 }
+
+#[test]
+#[ignore]
+/// https://github.com/KonaeAkira/raphael-rs/issues/298
+fn low_level_steplbsolver_crash() {
+    let simulator_settings = Settings {
+        max_cp: 10,
+        max_durability: 60,
+        max_progress: 45,
+        max_quality: 250,
+        base_progress: 22,
+        base_quality: 68,
+        job_level: 6,
+        allowed_actions: ActionMask::regular(),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 0,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: true,
+    };
+    let expected_score = expect![[r#"
+        TODO
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        TODO
+    "#]];
+    let actions = test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+    assert_eq!(actions, []);
+}
