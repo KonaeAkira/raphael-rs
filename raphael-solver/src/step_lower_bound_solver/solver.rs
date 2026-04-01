@@ -14,8 +14,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::state::ReducedState;
 
-type ParetoFront<'alloc> = &'alloc nunny::Slice<ParetoValue>;
-type SolvedStates<'alloc> = FxHashMap<ReducedState, ParetoFront<'alloc>>;
+type ParetoFront = nunny::Slice<ParetoValue>;
+type SolvedStates<'alloc> = FxHashMap<ReducedState, &'alloc ParetoFront>;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
@@ -244,9 +244,9 @@ fn construct_solution<'alloc>(
     state: ReducedState,
     context: &StepLbSolverContext<'alloc>,
     pf_builder: &mut ParetoFrontBuilder,
-    get_solution: impl Fn(ReducedState) -> Option<ParetoFront<'alloc>>,
+    get_solution: impl Fn(ReducedState) -> Option<&'alloc ParetoFront>,
     allocator: &BumpPoolGuard<'alloc>,
-) -> Result<ParetoFront<'alloc>, SolverException> {
+) -> Result<&'alloc ParetoFront, SolverException> {
     let min_quality = context.iq_quality_lut[usize::from(state.effects.inner_quiet())];
     let cutoff = ParetoValue::new(
         context.settings.max_progress(),
@@ -303,7 +303,7 @@ fn solve_state_sequential<'alloc>(
     shared_states: &SolvedStates<'alloc>,
     local_states: &mut SolvedStates<'alloc>,
     pf_builder: &mut ParetoFrontBuilder,
-) -> Result<ParetoFront<'alloc>, SolverException> {
+) -> Result<&'alloc ParetoFront, SolverException> {
     let mut unsolved_states = {
         let has_solution =
             |state| shared_states.contains_key(&state) || local_states.contains_key(&state);
@@ -336,7 +336,7 @@ fn solve_state_parallel<'alloc>(
     seed_state: ReducedState,
     context: &StepLbSolverContext<'alloc>,
     solved_states: &mut SolvedStates<'alloc>,
-) -> Result<ParetoFront<'alloc>, SolverException> {
+) -> Result<&'alloc ParetoFront, SolverException> {
     let mut unsolved_states = {
         let has_solution = |state| solved_states.contains_key(&state);
         discover_unsolved_states(seed_state, &context.settings, has_solution)

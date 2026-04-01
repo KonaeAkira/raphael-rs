@@ -29,8 +29,8 @@ pub struct QualityUbSolverStats {
     pub values: usize,
 }
 
-type ParetoFront<'alloc> = &'alloc nunny::Slice<ParetoValue>;
-type SolvedStates<'alloc> = FxHashMap<ReducedState, ParetoFront<'alloc>>;
+type ParetoFront = nunny::Slice<ParetoValue>;
+type SolvedStates<'alloc> = FxHashMap<ReducedState, &'alloc ParetoFront>;
 
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
@@ -221,7 +221,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
         pf_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
         allocator: &BumpPoolGuard<'alloc>,
-    ) -> Result<ParetoFront<'alloc>, SolverException> {
+    ) -> Result<&'alloc ParetoFront, SolverException> {
         let cutoff = ParetoValue::new(
             self.context.settings.max_progress(),
             self.context.settings.max_quality().saturating_sub(
