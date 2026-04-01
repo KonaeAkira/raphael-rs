@@ -100,9 +100,9 @@ fn rinascita_3700_3280() {
                 values: 16783500,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 579412,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 6563554,
+                values: 0,
             },
         }
     "#]];
@@ -154,9 +154,9 @@ fn pactmaker_3240_3130() {
                 values: 13132176,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 579412,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 6355536,
+                values: 0,
             },
         }
     "#]];
@@ -210,9 +210,9 @@ fn pactmaker_3240_3130_heart_and_soul() {
                 values: 27637851,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 1089001,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 13225920,
+                values: 0,
             },
         }
     "#]];
@@ -264,9 +264,9 @@ fn diadochos_4021_3660() {
                 values: 17344815,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 638953,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 8453810,
+                values: 0,
             },
         }
     "#]];
@@ -318,9 +318,9 @@ fn indagator_3858_4057() {
                 values: 16209295,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 460345,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 5446159,
+                values: 0,
             },
         }
     "#]];

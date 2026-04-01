@@ -285,9 +285,9 @@ fn test_indagator_3858_4057() {
                 values: 64645870,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 505459,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 10416852,
+                values: 0,
             },
         }
     "#]];
@@ -400,9 +400,9 @@ fn issue_113() {
                 values: 120610497,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 1525536,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 49094405,
+                values: 0,
             },
         }
     "#]];

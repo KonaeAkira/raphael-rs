@@ -100,9 +100,9 @@ fn rinascita_3700_3280() {
                 values: 22751757,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 631128,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 11674974,
+                values: 0,
             },
         }
     "#]];
@@ -154,9 +154,9 @@ fn pactmaker_3240_3130() {
                 values: 17736621,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 631128,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 11652491,
+                values: 0,
             },
         }
     "#]];
@@ -210,9 +210,9 @@ fn pactmaker_3240_3130_heart_and_soul() {
                 values: 37644777,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 1178831,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 23063578,
+                values: 0,
             },
         }
     "#]];
@@ -264,9 +264,9 @@ fn diadochos_4021_3660() {
                 values: 23497998,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 693970,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 14559312,
+                values: 0,
             },
         }
     "#]];
@@ -318,9 +318,9 @@ fn indagator_3858_4057() {
                 values: 21397668,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 505459,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 9590744,
+                values: 0,
             },
         }
     "#]];
@@ -976,9 +976,9 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
                 values: 39004486,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 370097,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 6336270,
+                values: 0,
             },
         }
     "#]];
@@ -1087,9 +1087,9 @@ fn ce_high_progress_zero_achieved_quality() {
                 values: 2232866,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 450021,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 1030226,
+                values: 0,
             },
         }
     "#]];

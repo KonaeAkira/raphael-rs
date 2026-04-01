@@ -150,9 +150,9 @@ fn zero_quality() {
                 values: 109398,
             },
             step_lb_stats: StepLbSolverStats {
-                states_on_main: 26538,
+                states_on_main: 0,
                 states_on_shards: 0,
-                values: 194222,
+                values: 0,
             },
         }
     "#]];
