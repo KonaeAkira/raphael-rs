@@ -51,7 +51,7 @@ impl CpProgressBreakpoints {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct FinishSolverStats {
     pub states: usize,
     pub values: usize,

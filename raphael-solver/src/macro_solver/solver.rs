@@ -1,3 +1,4 @@
+use bump_scope::BumpPool;
 use raphael_sim::*;
 use rayon::prelude::*;
 
@@ -32,7 +33,7 @@ impl Solution {
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
 type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct MacroSolverStats {
     pub search_queue_stats: SearchQueueStats,
     pub finish_solver_stats: FinishSolverStats,
@@ -45,10 +46,8 @@ pub struct MacroSolver<'a> {
     solution_callback: Box<SolutionCallback<'a>>,
     progress_callback: Box<ProgressCallback<'a>>,
     finish_solver: FinishSolver,
-    quality_ub_solver: QualityUbSolver,
-    step_lb_solver: StepLbSolver,
-    search_queue_stats: SearchQueueStats, // stats of last solve
     interrupt_signal: AtomicFlag,
+    last_solve_runtime_stats: MacroSolverStats,
 }
 
 impl<'a> MacroSolver<'a> {
@@ -63,10 +62,8 @@ impl<'a> MacroSolver<'a> {
             solution_callback,
             progress_callback,
             finish_solver: FinishSolver::new(settings),
-            quality_ub_solver: QualityUbSolver::new(settings, interrupt_signal.clone()),
-            step_lb_solver: StepLbSolver::new(settings, interrupt_signal.clone()),
-            search_queue_stats: SearchQueueStats::default(),
             interrupt_signal,
+            last_solve_runtime_stats: MacroSolverStats::default(),
         }
     }
 
@@ -76,6 +73,13 @@ impl<'a> MacroSolver<'a> {
             rayon::current_num_threads()
         );
 
+        self.last_solve_runtime_stats = MacroSolverStats::default();
+        let allocator = BumpPool::default();
+        let mut quality_ub_solver =
+            QualityUbSolver::new(self.settings, self.interrupt_signal.clone(), &allocator);
+        let mut step_lb_solver =
+            StepLbSolver::new(self.settings, self.interrupt_signal.clone(), &allocator);
+
         let _total_time = ScopedTimer::new("Total Time");
 
         let initial_state = SimulationState::new(&self.settings.simulator_settings);
@@ -83,20 +87,23 @@ impl<'a> MacroSolver<'a> {
         let timer = ScopedTimer::new("Finish Solver");
         self.finish_solver.precompute()?;
         if !self.finish_solver.can_finish(&initial_state)? {
+            self.last_solve_runtime_stats.finish_solver_stats = self.finish_solver.runtime_stats();
             return Err(SolverException::NoSolution);
         }
         drop(timer);
 
         let timer = ScopedTimer::new("Quality UB Solver");
-        self.quality_ub_solver.precompute()?;
+        quality_ub_solver.precompute()?;
         drop(timer);
 
         let timer = ScopedTimer::new("Step LB Solver");
-        self.step_lb_solver.precompute()?;
+        step_lb_solver.precompute()?;
         drop(timer);
 
         let timer = ScopedTimer::new("Search");
-        let actions = self.do_solve(initial_state)?.actions();
+        let actions = self
+            .do_solve(&mut quality_ub_solver, &mut step_lb_solver, initial_state)?
+            .actions();
         drop(timer);
 
         log::debug!("{:?}", self.runtime_stats());
@@ -104,7 +111,12 @@ impl<'a> MacroSolver<'a> {
         Ok(actions)
     }
 
-    fn do_solve(&mut self, state: SimulationState) -> Result<Solution, SolverException> {
+    fn do_solve<'alloc>(
+        &mut self,
+        quality_ub_solver: &mut QualityUbSolver<'alloc>,
+        step_lb_solver: &mut StepLbSolver<'alloc>,
+        state: SimulationState,
+    ) -> Result<Solution, SolverException> {
         let mut search_queue = SearchQueue::new(self.settings, state);
         let mut solution: Option<Solution> = None;
         let mut min_accepted_score = SearchScore::MIN;
@@ -122,8 +134,8 @@ impl<'a> MacroSolver<'a> {
             let create_worker_data = || WorkerData {
                 settings: &self.settings,
                 finish_solver: &self.finish_solver,
-                quality_ub_solver_shard: self.quality_ub_solver.create_shard(),
-                step_lb_solver_shard: self.step_lb_solver.create_shard(),
+                quality_ub_solver_shard: quality_ub_solver.create_shard(),
+                step_lb_solver_shard: step_lb_solver.create_shard(),
                 min_accepted_score,
                 candidate_states: Vec::new(),
             };
@@ -179,37 +191,38 @@ impl<'a> MacroSolver<'a> {
                 })
                 .collect::<Vec<_>>();
             for solved_states in solved_states_per_worker {
-                self.quality_ub_solver.extend_solved_states(solved_states.0);
-                self.step_lb_solver.extend_solved_states(solved_states.1);
+                quality_ub_solver.extend_solved_states(solved_states.0);
+                step_lb_solver.extend_solved_states(solved_states.1);
             }
 
             (self.progress_callback)(search_queue.runtime_stats().processed_nodes);
         }
 
-        self.search_queue_stats = search_queue.runtime_stats();
+        self.last_solve_runtime_stats = MacroSolverStats {
+            search_queue_stats: search_queue.runtime_stats(),
+            finish_solver_stats: self.finish_solver.runtime_stats(),
+            quality_ub_stats: quality_ub_solver.runtime_stats(),
+            step_lb_stats: step_lb_solver.runtime_stats(),
+        };
+
         solution.ok_or(SolverException::NoSolution)
     }
 
     pub fn runtime_stats(&self) -> MacroSolverStats {
-        MacroSolverStats {
-            search_queue_stats: self.search_queue_stats,
-            finish_solver_stats: self.finish_solver.runtime_stats(),
-            quality_ub_stats: self.quality_ub_solver.runtime_stats(),
-            step_lb_stats: self.step_lb_solver.runtime_stats(),
-        }
+        self.last_solve_runtime_stats
     }
 }
 
-struct WorkerData<'a> {
-    settings: &'a SolverSettings,
-    finish_solver: &'a FinishSolver,
-    quality_ub_solver_shard: QualityUbSolverShard<'a>,
-    step_lb_solver_shard: StepLbSolverShard<'a>,
+struct WorkerData<'main, 'alloc> {
+    settings: &'main SolverSettings,
+    finish_solver: &'main FinishSolver,
+    quality_ub_solver_shard: QualityUbSolverShard<'main, 'alloc>,
+    step_lb_solver_shard: StepLbSolverShard<'main, 'alloc>,
     min_accepted_score: SearchScore,
     candidate_states: Vec<(SimulationState, SearchScore, ActionCombo, usize)>,
 }
 
-impl<'a> WorkerData<'a> {
+impl<'main, 'alloc> WorkerData<'main, 'alloc> {
     fn update_min_score(&mut self, score: SearchScore) {
         self.min_accepted_score = std::cmp::max(self.min_accepted_score, score);
     }
