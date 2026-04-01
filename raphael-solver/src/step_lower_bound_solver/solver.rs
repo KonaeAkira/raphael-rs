@@ -14,7 +14,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::state::ReducedState;
 
-type ParetoFront<'alloc> = &'alloc [ParetoValue];
+type ParetoFront<'alloc> = &'alloc nunny::Slice<ParetoValue>;
 type SolvedStates<'alloc> = FxHashMap<ReducedState, ParetoFront<'alloc>>;
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -244,7 +244,7 @@ fn construct_solution<'alloc>(
     state: ReducedState,
     context: &StepLbSolverContext<'alloc>,
     pf_builder: &mut ParetoFrontBuilder,
-    get_solution: impl Fn(ReducedState) -> Option<&'alloc [ParetoValue]>,
+    get_solution: impl Fn(ReducedState) -> Option<ParetoFront<'alloc>>,
     allocator: &BumpPoolGuard<'alloc>,
 ) -> Result<ParetoFront<'alloc>, SolverException> {
     let min_quality = context.iq_quality_lut[usize::from(state.effects.inner_quiet())];
@@ -284,17 +284,17 @@ fn construct_solution<'alloc>(
             }
         }
     }
-    let solution = allocator
+    allocator
         .alloc_slice_copy(pf_builder.result_as_slice())
-        .into_ref();
-    if solution.is_empty() {
-        return Err(internal_error!(
-            "Solver produced empty Pareto front.",
-            context.settings,
-            state
-        ));
-    }
-    Ok(solution)
+        .into_ref()
+        .try_into()
+        .map_err(|_| {
+            internal_error!(
+                "Solver produced empty Pareto front.",
+                context.settings,
+                state
+            )
+        })
 }
 
 fn solve_state_sequential<'alloc>(

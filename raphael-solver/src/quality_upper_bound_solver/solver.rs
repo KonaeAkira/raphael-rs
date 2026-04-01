@@ -235,7 +235,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
             {
                 let action_value = ParetoValue::new(progress, quality);
                 if !new_state.is_final(self.context.durability_cost) {
-                    if let Some(pareto_front) = self.solved_states.get(&new_state) {
+                    if let Some(pareto_front) = self.solved_states.get(&new_state).copied() {
                         pf_builder.push_slice(
                             pareto_front
                                 .iter()
@@ -310,7 +310,7 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
                 cp: required_cp,
                 ..reduced_state
             };
-            if let Some(pareto_front) = self.shared_states.get(&reduced_state)
+            if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied()
                 && pareto_front.first().progress >= required_progress
                 && pareto_front.first().quality.saturating_add(state.quality)
                     >= self.context.settings.max_quality()
@@ -325,14 +325,14 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
             }
         }
 
-        let pareto_front = if let Some(pareto_front) = self.shared_states.get(&reduced_state) {
+        let pareto_front = if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied() {
             pareto_front
-        } else if let Some(pareto_front) = self.local_states.get(&reduced_state) {
+        } else if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
             pareto_front
         } else {
             let allocator = self.context.allocator.get();
             self.solve_state(reduced_state, &allocator)?;
-            if let Some(pareto_front) = self.local_states.get(&reduced_state) {
+            if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
                 pareto_front
             } else {
                 return Err(internal_error!(
@@ -374,14 +374,16 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
                 let action_value = ParetoValue::new(progress, quality);
                 if !child_state.is_final(self.context.durability_cost) {
                     let child_pareto_front = if let Some(child_pareto_front) =
-                        self.shared_states.get(&child_state)
+                        self.shared_states.get(&child_state).copied()
                     {
                         child_pareto_front
-                    } else if let Some(child_pareto_front) = self.local_states.get(&child_state) {
+                    } else if let Some(child_pareto_front) =
+                        self.local_states.get(&child_state).copied()
+                    {
                         child_pareto_front
                     } else {
                         self.solve_state(child_state, allocator)?;
-                        self.local_states.get(&child_state).ok_or(internal_error!(
+                        self.local_states.get(&child_state).copied().ok_or(internal_error!(
                             "State not found in memoization table after solving.",
                         ))?
                     };
