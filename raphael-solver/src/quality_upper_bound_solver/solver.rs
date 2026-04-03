@@ -7,7 +7,7 @@ use crate::{
 
 use bump_scope::{BumpPool, BumpPoolGuard};
 use raphael_sim::*;
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 use super::state::ReducedState;
@@ -34,14 +34,12 @@ struct QualityUbSolverContext<'alloc> {
 
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
-    maximal_templates: FxHashMap<TemplateData, u16>,
     solved_states: SolvedStates<'alloc>,
     num_states_solved_on_shards: usize,
 }
 
 pub struct QualityUbSolverShard<'main, 'alloc> {
     context: &'main QualityUbSolverContext<'alloc>,
-    maximal_templates: &'main FxHashMap<TemplateData, u16>,
     shared_states: &'main SolvedStates<'alloc>,
     local_states: SolvedStates<'alloc>,
 }
@@ -69,7 +67,6 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 ),
             },
             solved_states: FxHashMap::default(),
-            maximal_templates: FxHashMap::default(),
             num_states_solved_on_shards: 0,
         }
     }
@@ -84,7 +81,6 @@ impl<'alloc> QualityUbSolver<'alloc> {
     pub fn create_shard<'main>(&'main self) -> QualityUbSolverShard<'main, 'alloc> {
         QualityUbSolverShard {
             context: &self.context,
-            maximal_templates: &self.maximal_templates,
             shared_states: &self.solved_states,
             local_states: SolvedStates::default(),
         }
@@ -154,7 +150,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
             [(false, false), (false, true), (true, false), (true, true)]
         {
             for stellar_steady_hand in 0..3 {
-                let mut templates: Vec<_> = all_templates
+                let templates: Vec<_> = all_templates
                     .iter()
                     .filter(|template| {
                         template.data.effects.heart_and_soul_available() == heart_and_soul
@@ -174,43 +170,19 @@ impl<'alloc> QualityUbSolver<'alloc> {
                         return Err(SolverException::Interrupted);
                     }
                     let solved_states = templates
-                        .par_iter_mut()
-                        .filter_map(|template| {
-                            template.instantiate(cp).map(|state| (template, state))
-                        })
+                        .par_iter()
+                        .filter_map(|template| template.instantiate(cp))
                         .map_init(
                             || (ParetoFrontBuilder::new(), self.context.allocator.get()),
-                            |(pf_builder, allocator),
-                             (template, state)|
-                             -> Result<_, SolverException> {
+                            |(pf_builder, allocator), state| -> Result<_, SolverException> {
                                 let pareto_front =
                                     self.solve_precompute_state(pf_builder, state, allocator)?;
-                                let template_is_maximal = {
-                                    // A template is "maximal" if there is no benefit of solving it with higher CP
-                                    let required_progress = self.context.settings.max_progress();
-                                    let required_quality =
-                                        self.context.settings.max_quality().saturating_sub(
-                                            self.context.iq_quality_lut
-                                                [usize::from(state.effects.inner_quiet())],
-                                        );
-                                    pareto_front.first().progress >= required_progress
-                                        && pareto_front.first().quality >= required_quality
-                                };
-                                if template_is_maximal {
-                                    template.required_cp_for_max_progress_and_quality = Some(cp);
-                                }
                                 Ok((state, pareto_front))
                             },
                         )
                         .collect::<Result<Vec<_>, SolverException>>()?;
                     self.solved_states.extend(solved_states);
                 }
-                self.maximal_templates
-                    .extend(templates.into_iter().filter_map(|template| {
-                        template
-                            .required_cp_for_max_progress_and_quality
-                            .map(|required_cp| (template.data, required_cp))
-                    }));
             }
         }
         Ok(())
@@ -228,6 +200,21 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 self.context.iq_quality_lut[usize::from(state.effects.inner_quiet())],
             ),
         );
+
+        // Check for a lesser state that has reached the cutoff value, in which case we
+        // can use the solution of the lesser state.
+        let lesser_state = ReducedState {
+            cp: state.cp - 2,
+            ..state
+        };
+        if let Some(pareto_front) = self.solved_states.get(&lesser_state) {
+            let lesser_state_is_maximal = pareto_front.first().progress >= cutoff.progress
+                && pareto_front.first().quality >= cutoff.quality;
+            if lesser_state_is_maximal {
+                return Ok(pareto_front);
+            }
+        }
+
         pf_builder.initialize_with_cutoff(cutoff);
         for action in FULL_SEARCH_ACTIONS {
             if let Some((new_state, progress, quality)) =
@@ -295,36 +282,8 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
                 required_progress.saturating_sub(self.context.largest_progress_increase);
             state.effects.set_muscle_memory(0);
         }
-
         let reduced_state =
             ReducedState::from_state(state, &self.context.settings, self.context.durability_cost);
-
-        let template_data = TemplateData::new(
-            reduced_state.effects,
-            reduced_state.compressed_unreliable_quality,
-        );
-        if let Some(&required_cp) = self.maximal_templates.get(&template_data)
-            && reduced_state.cp >= required_cp
-        {
-            let reduced_state = ReducedState {
-                cp: required_cp,
-                ..reduced_state
-            };
-            if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied()
-                && pareto_front.first().progress >= required_progress
-                && pareto_front.first().quality.saturating_add(state.quality)
-                    >= self.context.settings.max_quality()
-            {
-                return Ok(self.context.settings.max_quality());
-            } else {
-                return Err(internal_error!(
-                    "Maximal template list is inconsistent with actual solved states.",
-                    self.context.settings,
-                    reduced_state
-                ));
-            }
-        }
-
         let pareto_front =
             if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied() {
                 pareto_front
@@ -365,6 +324,7 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
                 self.context.iq_quality_lut[usize::from(state.effects.inner_quiet())],
             ),
         );
+
         let mut pareto_front_builder = ParetoFrontBuilder::new();
         pareto_front_builder.initialize_with_cutoff(cutoff);
 
@@ -463,12 +423,6 @@ struct Template {
     /// The purpose of this limit is to avoid instantiating unreachable states.
     /// For example, if the solve configuration has a max CP of 500, then instantiating a template with Waste Not II at 450 CP is not useful as the instantiated state cannot be reached from the initial state using any action sequence.
     max_instantiated_cp: u16,
-
-    /// Minimum amount of CP required for the instantiated state to reach max Progress and max Quality.
-    ///
-    /// This also takes into account the minimum existing Quality of the state (e.g. a template with 10 Inner Quiet must already have some Quality, so it's not necessary for the template to reach max Quality on its own).
-    required_cp_for_max_progress_and_quality: Option<u16>,
-
     data: TemplateData,
 }
 
@@ -476,18 +430,12 @@ impl Template {
     pub fn new(max_cp: u16, data: TemplateData) -> Self {
         Self {
             max_instantiated_cp: max_cp,
-            required_cp_for_max_progress_and_quality: None,
             data,
         }
     }
 
     pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
         if cp > self.max_instantiated_cp {
-            return None;
-        }
-        if let Some(max_cp) = self.required_cp_for_max_progress_and_quality
-            && cp > max_cp
-        {
             return None;
         }
         Some(ReducedState {

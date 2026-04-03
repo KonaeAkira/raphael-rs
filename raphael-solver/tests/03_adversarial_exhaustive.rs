@@ -110,9 +110,9 @@ fn stuffed_peppers() {
                 values: 210965,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 2271577,
-                states_on_shards: 19,
-                values: 39200089,
+                states_on_main: 2490500,
+                states_on_shards: 3678,
+                values: 39422681,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 366835,
@@ -226,9 +226,9 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 values: 3551,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 1800421,
-                states_on_shards: 42375,
-                values: 16756721,
+                states_on_main: 1839923,
+                states_on_shards: 49719,
+                values: 16825304,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 28922,
@@ -450,9 +450,9 @@ fn issue_118() {
                 values: 22096,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 1930860,
-                states_on_shards: 61638,
-                values: 25588474,
+                states_on_main: 1931055,
+                states_on_shards: 61657,
+                values: 25588830,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 100860,
