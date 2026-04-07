@@ -63,6 +63,7 @@ impl ReducedState {
             state
                 .effects
                 .with_great_strides(if great_strides_active { 3 } else { 0 })
+                .with_muscle_memory(0)
         };
         Some(Self {
             cp,

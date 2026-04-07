@@ -1,8 +1,13 @@
+use std::{
+    collections::{VecDeque, hash_map::Entry},
+    sync::atomic::{AtomicUsize, Ordering},
+};
+
 use crate::{
     SolverException, SolverSettings,
     actions::FULL_SEARCH_ACTIONS,
     macros::internal_error,
-    utils::{self, ParetoFrontBuilder, ParetoValue},
+    utils::{self, ParetoFrontBuilder, ParetoValue, ScopedTimer},
 };
 
 use bump_scope::{BumpPool, BumpPoolGuard};
@@ -86,104 +91,22 @@ impl<'alloc> QualityUbSolver<'alloc> {
         }
     }
 
-    fn generate_precompute_templates(&self) -> Box<[Template]> {
-        let mut templates = rustc_hash::FxHashMap::<TemplateData, u16>::default();
-        let mut heap = std::collections::BinaryHeap::<Template>::default();
-
-        let seed_template = {
-            let seed_effects = Effects::initial(&self.context.settings.simulator_settings)
-                .with_special_quality_state(SpecialQualityState::Normal)
-                .with_trained_perfection_available(false)
-                .with_combo(Combo::None);
-            Template::new(
-                self.context.settings.max_cp(),
-                TemplateData::new(seed_effects, 0),
-            )
-        };
-        heap.push(seed_template);
-
-        while let Some(template) = heap.pop() {
-            let entry = templates.entry(template.data).or_default();
-            if template.max_instantiated_cp > *entry {
-                *entry = template.max_instantiated_cp;
-                let state = template.instantiate(template.max_instantiated_cp).unwrap();
-                for action in FULL_SEARCH_ACTIONS {
-                    if let Some((new_state, _, _)) = state.use_action(
-                        action,
-                        &self.context.settings,
-                        self.context.durability_cost,
-                    ) {
-                        let new_template_data = TemplateData {
-                            effects: new_state.effects,
-                            compressed_unreliable_quality: new_state.compressed_unreliable_quality,
-                        };
-                        let new_template = Template::new(
-                            new_state.cp,
-                            TemplateData::new(
-                                new_state.effects,
-                                new_state.compressed_unreliable_quality,
-                            ),
-                        );
-                        let new_entry = templates.entry(new_template_data).or_default();
-                        if new_template.max_instantiated_cp > *new_entry {
-                            heap.push(new_template);
-                        }
-                    }
-                }
-            }
-        }
-
-        templates
-            .into_iter()
-            .map(|(template_data, max_cp)| Template::new(max_cp, template_data))
-            .collect()
-    }
-
     pub fn precompute(&mut self) -> Result<(), SolverException> {
-        let all_templates = self.generate_precompute_templates();
-        // States are computed in order of less CP to more CP.
-        // States currently being computed assume that child states have already been computed.
-        // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
-        // HeartAndSoul enables the use of TricksOfTrade, which restores CP.
-        // QuickInnovation requires no CP (and no durability, so durability cost in terms of CP is 0).
-        for (heart_and_soul, quick_innovation) in
-            [(false, false), (false, true), (true, false), (true, true)]
-        {
-            for stellar_steady_hand in 0..3 {
-                let templates: Vec<_> = all_templates
-                    .iter()
-                    .filter(|template| {
-                        template.data.effects.heart_and_soul_available() == heart_and_soul
-                            && template.data.effects.quick_innovation_available()
-                                == quick_innovation
-                            && template.data.effects.stellar_steady_hand_charges()
-                                == stellar_steady_hand
-                    })
-                    .copied()
-                    .collect();
-                // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
-                // See `ReducedState::is_final` for details.
-                for cp in
-                    (2 * self.context.durability_cost..=self.context.settings.max_cp()).step_by(2)
-                {
-                    if self.context.interrupt_signal.is_set() {
-                        return Err(SolverException::Interrupted);
-                    }
-                    let solved_states = templates
-                        .par_iter()
-                        .filter_map(|template| template.instantiate(cp))
-                        .map_init(
-                            || (ParetoFrontBuilder::new(), self.context.allocator.get()),
-                            |(pf_builder, allocator), state| -> Result<_, SolverException> {
-                                let pareto_front =
-                                    self.solve_precompute_state(pf_builder, state, allocator)?;
-                                Ok((state, pareto_front))
-                            },
-                        )
-                        .collect::<Result<Vec<_>, SolverException>>()?;
-                    self.solved_states.extend(solved_states);
-                }
-            }
+        let batches =
+            generate_precompute_states(&self.context.settings, self.context.durability_cost);
+        for batch in batches {
+            let solved_states = batch
+                .into_par_iter()
+                .map_init(
+                    || (ParetoFrontBuilder::new(), self.context.allocator.get()),
+                    |(pf_builder, allocator), state| -> Result<_, SolverException> {
+                        let pareto_front =
+                            self.solve_precompute_state(pf_builder, state, allocator)?;
+                        Ok((state, pareto_front))
+                    },
+                )
+                .collect::<Result<Vec<_>, SolverException>>()?;
+            self.solved_states.extend(solved_states);
         }
         Ok(())
     }
@@ -401,47 +324,73 @@ fn durability_cost(settings: &Settings) -> u16 {
     cost
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
-struct TemplateData {
-    effects: Effects,
-    compressed_unreliable_quality: u8,
-}
+fn generate_precompute_states(
+    settings: &SolverSettings,
+    durability_cost: u16,
+) -> Vec<Vec<ReducedState>> {
+    let mut queue = VecDeque::default();
 
-impl TemplateData {
-    pub fn new(effects: Effects, compressed_unreliable_quality: u8) -> Self {
-        Self {
-            effects,
-            compressed_unreliable_quality,
+    let seed_state = ReducedState::from_state(
+        SimulationState::new(&settings.simulator_settings),
+        settings,
+        durability_cost,
+    );
+    queue.push_back(seed_state);
+
+    let timer = ScopedTimer::new("Discovery");
+    // Discover all states and keep track of their in degrees.
+    let mut in_degree = FxHashMap::<ReducedState, AtomicUsize>::default();
+    while let Some(state) = queue.pop_front() {
+        for action in FULL_SEARCH_ACTIONS {
+            let Some((next_state, _action_progress, _action_quality)) =
+                state.use_action(action, settings, durability_cost)
+            else {
+                continue;
+            };
+            if next_state.is_final(durability_cost) {
+                continue;
+            }
+            match in_degree.entry(next_state) {
+                Entry::Occupied(entry) => {
+                    entry.into_mut().fetch_add(1, Ordering::Relaxed);
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(AtomicUsize::new(1));
+                    queue.push_back(next_state);
+                }
+            }
         }
     }
-}
+    drop(timer);
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct Template {
-    /// The maximum amount of CP the template can be instantiated with.
-    ///
-    /// The purpose of this limit is to avoid instantiating unreachable states.
-    /// For example, if the solve configuration has a max CP of 500, then instantiating a template with Waste Not II at 450 CP is not useful as the instantiated state cannot be reached from the initial state using any action sequence.
-    max_instantiated_cp: u16,
-    data: TemplateData,
-}
-
-impl Template {
-    pub fn new(max_cp: u16, data: TemplateData) -> Self {
-        Self {
-            max_instantiated_cp: max_cp,
-            data,
-        }
+    let timer = ScopedTimer::new("Sorting");
+    // Topological sorting of the states into batches that can be processed in parallel later.
+    let mut batches = Vec::new();
+    let mut next_batch = boxcar::vec![seed_state];
+    while !next_batch.is_empty() {
+        let current_batch = std::mem::take(&mut next_batch)
+            .into_iter()
+            .collect::<Vec<_>>();
+        current_batch.par_iter().for_each(|state| {
+            for action in FULL_SEARCH_ACTIONS {
+                let Some((next_state, _action_progress, _action_quality)) =
+                    state.use_action(action, settings, durability_cost)
+                else {
+                    continue;
+                };
+                if next_state.is_final(durability_cost) {
+                    continue;
+                }
+                let in_degree = in_degree.get(&next_state).unwrap();
+                if in_degree.fetch_sub(1, Ordering::Relaxed) == 1 {
+                    next_batch.push(next_state);
+                }
+            }
+        });
+        batches.push(current_batch);
     }
+    batches.reverse();
+    drop(timer);
 
-    pub fn instantiate(&self, cp: u16) -> Option<ReducedState> {
-        if cp > self.max_instantiated_cp {
-            return None;
-        }
-        Some(ReducedState {
-            cp,
-            compressed_unreliable_quality: self.data.compressed_unreliable_quality,
-            effects: self.data.effects,
-        })
-    }
+    batches
 }

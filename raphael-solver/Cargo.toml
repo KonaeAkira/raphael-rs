@@ -21,6 +21,7 @@ nunny = "0.2.2"
 strum = "0.27"
 smallvec = { version = "1.15.1", features = ["const_generics", "union"] }
 bump-scope = "2.2.0"
+boxcar = "0.2.14"
 
 [features]
 serde = ["dep:serde", "raphael-sim/serde"]

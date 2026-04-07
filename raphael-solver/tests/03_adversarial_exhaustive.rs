@@ -110,9 +110,9 @@ fn stuffed_peppers() {
                 values: 210965,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 2490500,
-                states_on_shards: 3678,
-                values: 39422681,
+                states_on_main: 3246933,
+                states_on_shards: 5,
+                values: 40739988,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 366835,
@@ -166,9 +166,9 @@ fn test_rare_tacos_2() {
                 values: 308710,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 2490500,
-                states_on_shards: 77975,
-                values: 70123379,
+                states_on_main: 3246933,
+                states_on_shards: 5,
+                values: 81948995,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 878246,
@@ -226,9 +226,9 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 values: 3551,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 1839923,
-                states_on_shards: 49719,
-                values: 16825304,
+                states_on_main: 2539711,
+                states_on_shards: 6,
+                values: 19473185,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 28922,
@@ -280,9 +280,9 @@ fn test_indagator_3858_4057() {
                 values: 102529,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 2515254,
-                states_on_shards: 147927,
-                values: 64921336,
+                states_on_main: 3461119,
+                states_on_shards: 5,
+                values: 89901821,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -338,9 +338,9 @@ fn test_rare_tacos_4628_4410() {
                 values: 65772,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 2623346,
-                states_on_shards: 75251,
-                values: 78241975,
+                states_on_main: 3379779,
+                states_on_shards: 5,
+                values: 92603334,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 213458,
@@ -395,9 +395,9 @@ fn issue_113() {
                 values: 437006,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 3043236,
-                states_on_shards: 87698,
-                values: 121049151,
+                states_on_main: 3828388,
+                states_on_shards: 5,
+                values: 160750413,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -450,9 +450,9 @@ fn issue_118() {
                 values: 22096,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 1931055,
-                states_on_shards: 61657,
-                values: 25588830,
+                states_on_main: 2478907,
+                states_on_shards: 6,
+                values: 31157193,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 100860,
