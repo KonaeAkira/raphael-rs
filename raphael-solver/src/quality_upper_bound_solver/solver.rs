@@ -92,8 +92,11 @@ impl<'alloc> QualityUbSolver<'alloc> {
     }
 
     pub fn precompute(&mut self) -> Result<(), SolverException> {
-        let batches =
-            generate_precompute_states(&self.context.settings, self.context.durability_cost);
+        let batches = generate_precompute_states(
+            &self.context.settings,
+            self.context.durability_cost,
+            self.context.largest_progress_increase,
+        );
         for batch in batches {
             let solved_states = batch
                 .into_par_iter()
@@ -140,9 +143,12 @@ impl<'alloc> QualityUbSolver<'alloc> {
 
         pf_builder.initialize_with_cutoff(cutoff);
         for action in FULL_SEARCH_ACTIONS {
-            if let Some((new_state, progress, quality)) =
-                state.use_action(action, &self.context.settings, self.context.durability_cost)
-            {
+            if let Some((new_state, progress, quality)) = state.use_action(
+                action,
+                &self.context.settings,
+                self.context.durability_cost,
+                self.context.largest_progress_increase,
+            ) {
                 let action_value = ParetoValue::new(progress, quality);
                 if !new_state.is_final(self.context.durability_cost) {
                     if let Some(pareto_front) = self.solved_states.get(&new_state).copied() {
@@ -252,9 +258,12 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
         pareto_front_builder.initialize_with_cutoff(cutoff);
 
         for action in FULL_SEARCH_ACTIONS {
-            if let Some((child_state, progress, quality)) =
-                state.use_action(action, &self.context.settings, self.context.durability_cost)
-            {
+            if let Some((child_state, progress, quality)) = state.use_action(
+                action,
+                &self.context.settings,
+                self.context.durability_cost,
+                self.context.largest_progress_increase,
+            ) {
                 let action_value = ParetoValue::new(progress, quality);
                 if !child_state.is_final(self.context.durability_cost) {
                     let child_pareto_front = if let Some(child_pareto_front) =
@@ -327,6 +336,7 @@ fn durability_cost(settings: &Settings) -> u16 {
 fn generate_precompute_states(
     settings: &SolverSettings,
     durability_cost: u16,
+    largest_progress_increase: u16,
 ) -> Vec<Vec<ReducedState>> {
     let mut queue = VecDeque::default();
 
@@ -344,7 +354,7 @@ fn generate_precompute_states(
     while let Some(state) = queue.pop_front() {
         for action in FULL_SEARCH_ACTIONS {
             let Some((next_state, _action_progress, _action_quality)) =
-                state.use_action(action, settings, durability_cost)
+                state.use_action(action, settings, durability_cost, largest_progress_increase)
             else {
                 continue;
             };
@@ -375,7 +385,7 @@ fn generate_precompute_states(
         current_batch.par_iter().for_each(|state| {
             for action in FULL_SEARCH_ACTIONS {
                 let Some((next_state, _action_progress, _action_quality)) =
-                    state.use_action(action, settings, durability_cost)
+                    state.use_action(action, settings, durability_cost, largest_progress_increase)
                 else {
                     continue;
                 };

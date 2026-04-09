@@ -97,7 +97,7 @@ fn rinascita_3700_3280() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 975035,
                 states_on_shards: 6226,
-                values: 22349468,
+                values: 22349473,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -151,7 +151,7 @@ fn pactmaker_3240_3130() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 836875,
                 states_on_shards: 6613,
-                values: 17321071,
+                values: 17321073,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -207,7 +207,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1726159,
                 states_on_shards: 8998,
-                values: 36879291,
+                values: 36879292,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -261,7 +261,7 @@ fn diadochos_4021_3660() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 905955,
                 states_on_shards: 7625,
-                values: 22979606,
+                values: 22979611,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -315,7 +315,7 @@ fn indagator_3858_4057() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 988851,
                 states_on_shards: 7323,
-                values: 21184926,
+                values: 21184927,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -1084,7 +1084,7 @@ fn ce_high_progress_zero_achieved_quality() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 959200,
                 states_on_shards: 0,
-                values: 2191008,
+                values: 2191009,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,

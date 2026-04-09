@@ -282,7 +282,7 @@ fn test_indagator_3858_4057() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2607109,
                 states_on_shards: 31705,
-                values: 63895647,
+                values: 63895649,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -397,7 +397,7 @@ fn issue_113() {
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 3107224,
                 states_on_shards: 9191,
-                values: 120055360,
+                values: 120055365,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,

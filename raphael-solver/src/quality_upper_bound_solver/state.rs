@@ -63,7 +63,6 @@ impl ReducedState {
             state
                 .effects
                 .with_great_strides(if great_strides_active { 3 } else { 0 })
-                .with_muscle_memory(0)
         };
         Some(Self {
             cp,
@@ -98,6 +97,7 @@ impl ReducedState {
         action: ActionCombo,
         settings: &SolverSettings,
         durability_cost: u16,
+        largest_progress_increase: u16,
     ) -> Option<(Self, u16, u16)> {
         match action {
             ActionCombo::Single(
@@ -106,7 +106,13 @@ impl ReducedState {
             _ => {
                 let state = self.to_simulation_state(settings);
                 match use_action_combo(settings, state, action) {
-                    Ok(state) => {
+                    Ok(mut state) => {
+                        if state.effects.muscle_memory() != 0 {
+                            // Assume MuscleMemory can be used to its max potential and remove the effect to reduce the number of states that need to be solved.
+                            state.progress =
+                                state.progress.saturating_add(largest_progress_increase);
+                            state.effects.set_muscle_memory(0);
+                        }
                         let solver_state =
                             Self::from_state_inner(&state, settings, durability_cost)?;
                         Some((solver_state, state.progress, state.quality))
