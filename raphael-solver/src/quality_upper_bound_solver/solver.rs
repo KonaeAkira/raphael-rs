@@ -330,11 +330,12 @@ fn generate_precompute_states(
 ) -> Vec<Vec<ReducedState>> {
     let mut queue = VecDeque::default();
 
-    let seed_state = ReducedState::from_state(
+    let mut seed_state = ReducedState::from_state(
         SimulationState::new(&settings.simulator_settings),
         settings,
         durability_cost,
     );
+    seed_state.cp = settings.max_cp();
     queue.push_back(seed_state);
 
     let timer = ScopedTimer::new("Discovery");
