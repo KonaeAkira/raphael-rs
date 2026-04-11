@@ -239,7 +239,7 @@ impl<'alloc> Context<'alloc> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ScoreUpperBound {
     pub quality: u16,
     pub step_count: u8,
@@ -311,9 +311,9 @@ impl<'alloc> ScoreUbSolver<'alloc> {
         } else {
             let mut query_solution = |state, solution| {
                 if let Some(solution) = solution {
-                    if self.solved_states.len() % 1024 == 0 {
-                        dbg!(self.solved_states.len());
-                    }
+                    // if self.solved_states.len() % 1024 == 0 {
+                    //     dbg!(self.solved_states.len());
+                    // }
                     self.solved_states.insert(state, solution)
                 } else {
                     self.solved_states.get(&state).copied()
@@ -404,5 +404,84 @@ fn extend_pareto_front(current_values: &mut Vec<Value>, new_values: &[Value]) {
         if !dominated {
             current_values.push(*new_value);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_utils::*;
+    use bump_scope::BumpPool;
+    use raphael_sim::*;
+
+    /// Test that the solver is consistent and admissible.
+    fn check_consistency(solver_settings: SolverSettings) -> Result<(), SolverException> {
+        let allocator = BumpPool::default();
+        let mut solver = ScoreUbSolver::new(solver_settings, Default::default(), allocator.get());
+        for state in generate_random_states(solver_settings, 1_000_000) {
+            let score_ub = solver.score_upper_bound(state, 0)?;
+            for action in FULL_SEARCH_ACTIONS {
+                let Ok(next_state) = use_action_combo(&solver_settings, state, action) else {
+                    continue;
+                };
+                if !next_state.is_final(&solver_settings.simulator_settings) {
+                    let next_score_ub = solver.score_upper_bound(next_state, action.steps())?;
+                    if score_ub < next_score_ub {
+                        return Err(internal_error!(
+                            "Solver is not consistent.",
+                            solver_settings,
+                            state,
+                            action,
+                            score_ub,
+                            next_score_ub
+                        ));
+                    }
+                } else if next_state.progress >= solver_settings.max_progress() {
+                    let next_score_ub = ScoreUpperBound {
+                        quality: next_state.quality.min(solver_settings.max_quality()),
+                        step_count: action.steps(),
+                    };
+                    if score_ub < next_score_ub {
+                        return Err(internal_error!(
+                            "Solver is not admissible.",
+                            solver_settings,
+                            state,
+                            action,
+                            score_ub,
+                            next_score_ub
+                        ));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    #[test_case::test_matrix(
+        [20, 60, 80],
+        [REGULAR_ACTIONS]
+    )]
+    fn consistency(
+        max_durability: u16,
+        allowed_actions: ActionMask,
+    ) -> Result<(), SolverException> {
+        let simulator_settings = Settings {
+            max_progress: 1000,
+            max_quality: 2000,
+            max_durability,
+            max_cp: 500,
+            base_progress: 100,
+            base_quality: 100,
+            job_level: 100,
+            allowed_actions,
+            adversarial: false,
+            backload_progress: false,
+            stellar_steady_hand_charges: 1,
+        };
+        let solver_settings = SolverSettings {
+            simulator_settings,
+            allow_non_max_quality_solutions: true,
+        };
+        check_consistency(solver_settings)
     }
 }
