@@ -9,6 +9,8 @@ use quality_upper_bound_solver::QualityUbSolver;
 mod step_lower_bound_solver;
 use step_lower_bound_solver::StepLbSolver;
 
+mod score_ub_solver;
+
 mod macro_solver;
 pub use macro_solver::MacroSolver;
 
