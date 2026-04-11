@@ -96,7 +96,7 @@ impl State {
                 Action::Groundwork => context.big_action_durability_cost,
                 Action::DelicateSynthesis => context.normal_action_durability_cost,
                 Action::IntensiveSynthesis => context.normal_action_durability_cost,
-                Action::TrainedEye => 0,
+                Action::TrainedEye => context.normal_action_durability_cost,
                 Action::HeartAndSoul => 0,
                 Action::PrudentSynthesis => context.small_action_durability_cost,
                 Action::TrainedFinesse => 0,
