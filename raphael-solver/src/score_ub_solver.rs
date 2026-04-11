@@ -39,8 +39,9 @@ impl State {
         (state, simulation_state.progress, simulation_state.quality)
     }
 
-    fn is_final<'alloc>(self, context: &Context<'alloc>, state: State) -> bool {
-        state.cp >= context.normal_action_durability_cost
+    fn is_final<'alloc>(self, context: &Context<'alloc>) -> bool {
+        // A state is final when it is no longer possible to use BasicSynthesis.
+        self.cp < context.normal_action_durability_cost
     }
 
     fn use_action<'alloc>(
@@ -157,7 +158,7 @@ struct Context<'alloc> {
 
 impl<'alloc> Context<'alloc> {
     pub fn new(
-        settings: SolverSettings,
+        mut settings: SolverSettings,
         interrupt_signal: utils::AtomicFlag,
         allocator: BumpPoolGuard<'alloc>,
     ) -> Self {
@@ -200,6 +201,14 @@ impl<'alloc> Context<'alloc> {
             4 * durability_refund,
             2 * durability_refund + waste_not_refund,
         );
+
+        // Disable certain actions to prevent infinite recursion when solving states.
+        settings.simulator_settings.allowed_actions = settings
+            .simulator_settings
+            .allowed_actions
+            .remove(Action::Manipulation)
+            .remove(Action::WasteNot)
+            .remove(Action::WasteNot2);
 
         Self {
             allocator,
@@ -314,7 +323,8 @@ fn solve_state<'alloc>(
         let Ok((next_state, progress, quality)) = state.use_action(context, action) else {
             continue;
         };
-        let next_state_pareto_front = if next_state.is_final(context, next_state) {
+        let next_state_pareto_front = if next_state.is_final(context) {
+            // The last action must be a Progress-increasing action.
             if progress > 0 {
                 &[Value::default()]
             } else {
@@ -337,7 +347,6 @@ fn solve_state<'alloc>(
         .try_into()
         .map_err(|_| internal_error!("Empty ParetoFront.", context.settings, state))?;
     query_solution(state, Some(checked_slice));
-    dbg!(state, checked_slice);
     Ok(checked_slice)
 }
 
