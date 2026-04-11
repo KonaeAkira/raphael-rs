@@ -300,16 +300,16 @@ impl<'alloc> ScoreUbSolver<'alloc> {
 
     pub fn score_upper_bound(
         &mut self,
-        simulation_state: SimulationState,
+        mut simulation_state: SimulationState,
         current_step_count: u8,
     ) -> Result<ScoreUpperBound, SolverException> {
-        let (mut state, current_progress, current_quality) =
-            State::from_simulation_state(&self.context, simulation_state);
         // An extra 5 durability is refunded because actions that cost 10-durability can still
         // be used at 5 durability, resulting in the final state having -5 durability.
         let durability_refund =
             (simulation_state.durability + 5) / 5 * self.context.durability_refund;
-        state.cp += durability_refund;
+        simulation_state.cp += durability_refund;
+        let (state, current_progress, current_quality) =
+            State::from_simulation_state(&self.context, simulation_state);
         let pareto_front = if let Some(pareto_front) = self.solved_states.get(&state) {
             pareto_front.as_slice()
         } else {
