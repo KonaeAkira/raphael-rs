@@ -188,7 +188,7 @@ fn max_quality() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 221313,
-                values: 8485709,
+                values: 2885296,
             },
         }
     "#]];
@@ -290,7 +290,7 @@ fn backload_progress_single_delicate_synthesis() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 10756,
-                values: 29287,
+                values: 10756,
             },
         }
     "#]];
@@ -321,31 +321,25 @@ fn issue_216_steplbsolver_crash() {
         Ok(
             SolutionScore {
                 capped_quality: 8600,
-                steps: 10,
-                duration: 25,
-                overflow_quality: 596,
+                steps: 11,
+                duration: 32,
+                overflow_quality: 18,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 436375,
-                processed_nodes: 21747,
+                inserted_nodes: 216209,
+                processed_nodes: 13154,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 9851,
                 values: 12801,
             },
-            quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 318520,
-                states_on_shards: 6,
-                values: 1267769,
-            },
-            step_lb_stats: StepLbSolverStats {
-                states_on_main: 36739,
-                states_on_shards: 29009,
-                values: 289165,
+            score_ub_solver_stats: ScoreUbSolverStats {
+                states: 433747,
+                values: 2539439,
             },
         }
     "#]];
@@ -394,7 +388,7 @@ fn issue_312_quick_innovation_reflect() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 17735,
-                values: 45715,
+                values: 26115,
             },
         }
     "#]];
@@ -456,7 +450,7 @@ fn daring_touch_interrupted_combo() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 7542,
-                values: 15515,
+                values: 12950,
             },
         }
     "#]];

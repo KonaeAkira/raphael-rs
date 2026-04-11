@@ -133,18 +133,6 @@ impl Value {
     }
 }
 
-impl std::ops::Add for Value {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            progress: self.progress + rhs.progress,
-            quality: self.quality + rhs.quality,
-            step_count: self.step_count + rhs.step_count,
-        }
-    }
-}
-
 struct Context<'alloc> {
     allocator: BumpPoolGuard<'alloc>,
     settings: SolverSettings,
@@ -335,7 +323,9 @@ impl<'alloc> ScoreUbSolver<'alloc> {
         };
         let mut score_ub = ScoreUpperBound::MIN;
         for value in pareto_front {
-            if current_progress + value.progress >= self.context.settings.max_progress() {
+            if current_progress.saturating_add(value.progress)
+                >= self.context.settings.max_progress()
+            {
                 let candidate_score_ub = ScoreUpperBound {
                     quality: self
                         .context
@@ -376,12 +366,22 @@ fn solve_state<'alloc>(
         } else {
             solve_state(context, query_solution, next_state)?.as_slice()
         };
-        let offset = Value {
-            progress,
-            quality,
-            step_count: action.steps(),
-        };
-        extend_pareto_front(&mut pareto_front, next_state_pareto_front, offset);
+        let new_values = next_state_pareto_front
+            .iter()
+            .copied()
+            .map(|value| Value {
+                progress: context
+                    .settings
+                    .max_progress()
+                    .min(value.progress.saturating_add(progress)),
+                quality: context
+                    .settings
+                    .max_quality()
+                    .min(value.quality.saturating_add(quality)),
+                step_count: value.step_count + action.steps(),
+            })
+            .collect::<Vec<_>>();
+        extend_pareto_front(&mut pareto_front, &new_values);
     }
     let allocated_slice = context.allocator.alloc_slice_move(pareto_front).into_ref();
     let checked_slice = allocated_slice
@@ -391,23 +391,18 @@ fn solve_state<'alloc>(
     Ok(checked_slice)
 }
 
-fn extend_pareto_front(
-    current_values: &mut Vec<Value>,
-    new_values: &[Value],
-    new_values_offset: Value,
-) {
+fn extend_pareto_front(current_values: &mut Vec<Value>, new_values: &[Value]) {
     current_values.retain(|value| {
         !new_values
             .iter()
-            .any(|new_value| (*new_value + new_values_offset).dominates(value))
+            .any(|new_value| new_value.dominates(value))
     });
     for new_value in new_values {
-        let new_value = *new_value + new_values_offset;
         let dominated = current_values
             .iter()
             .any(|value| value.dominates(&new_value));
         if !dominated {
-            current_values.push(new_value);
+            current_values.push(*new_value);
         }
     }
 }
