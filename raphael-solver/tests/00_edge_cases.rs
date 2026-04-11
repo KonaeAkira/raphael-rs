@@ -188,7 +188,7 @@ fn max_quality() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 221313,
-                values: 2885296,
+                values: 2820290,
             },
         }
     "#]];
@@ -339,7 +339,7 @@ fn issue_216_steplbsolver_crash() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 433747,
-                values: 2539439,
+                values: 2312442,
             },
         }
     "#]];
@@ -388,7 +388,7 @@ fn issue_312_quick_innovation_reflect() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 17735,
-                values: 26115,
+                values: 25915,
             },
         }
     "#]];
@@ -450,7 +450,7 @@ fn daring_touch_interrupted_combo() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 7542,
-                values: 12950,
+                values: 12905,
             },
         }
     "#]];

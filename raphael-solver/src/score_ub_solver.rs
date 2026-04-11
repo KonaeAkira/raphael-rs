@@ -303,6 +303,8 @@ impl<'alloc> ScoreUbSolver<'alloc> {
     ) -> Result<ScoreUpperBound, SolverException> {
         let (mut state, current_progress, current_quality) =
             State::from_simulation_state(&self.context, simulation_state);
+        // An extra 5 durability is refunded because actions that cost 10-durability can still
+        // be used at 5 durability, resulting in the final state having -5 durability.
         let durability_refund =
             (simulation_state.durability + 5) / 5 * self.context.durability_refund;
         state.cp += durability_refund;
@@ -366,22 +368,18 @@ fn solve_state<'alloc>(
         } else {
             solve_state(context, query_solution, next_state)?.as_slice()
         };
-        let new_values = next_state_pareto_front
-            .iter()
-            .copied()
-            .map(|value| Value {
-                progress: context
-                    .settings
-                    .max_progress()
-                    .min(value.progress.saturating_add(progress)),
-                quality: context
-                    .settings
-                    .max_quality()
-                    .min(value.quality.saturating_add(quality)),
-                step_count: value.step_count + action.steps(),
-            })
-            .collect::<Vec<_>>();
-        extend_pareto_front(&mut pareto_front, &new_values);
+        let new_values = next_state_pareto_front.iter().copied().map(|value| Value {
+            progress: context
+                .settings
+                .max_progress()
+                .min(value.progress.saturating_add(progress)),
+            quality: context
+                .settings
+                .max_quality()
+                .min(value.quality.saturating_add(quality)),
+            step_count: value.step_count + action.steps(),
+        });
+        extend_pareto_front(&mut pareto_front, new_values);
     }
     let allocated_slice = context.allocator.alloc_slice_move(pareto_front).into_ref();
     let checked_slice = allocated_slice
@@ -391,18 +389,17 @@ fn solve_state<'alloc>(
     Ok(checked_slice)
 }
 
-fn extend_pareto_front(current_values: &mut Vec<Value>, new_values: &[Value]) {
-    current_values.retain(|value| {
-        !new_values
-            .iter()
-            .any(|new_value| new_value.dominates(value))
-    });
+fn extend_pareto_front(
+    current_values: &mut Vec<Value>,
+    new_values: impl ExactSizeIterator<Item = Value>,
+) {
     for new_value in new_values {
-        let dominated = current_values
+        let new_value_is_dominated = current_values
             .iter()
             .any(|value| value.dominates(&new_value));
-        if !dominated {
-            current_values.push(*new_value);
+        if !new_value_is_dominated {
+            current_values.retain(|value| !new_value.dominates(value));
+            current_values.push(new_value);
         }
     }
 }
