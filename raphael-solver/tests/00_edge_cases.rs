@@ -139,8 +139,8 @@ fn zero_quality() {
                 values: 49135,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 9626,
-                values: 35231,
+                states: 6228,
+                values: 26070,
             },
         }
     "#]];
@@ -179,16 +179,16 @@ fn max_quality() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 4984507,
-                processed_nodes: 1769720,
+                inserted_nodes: 4995336,
+                processed_nodes: 1771454,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
                 values: 66696,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 160214,
-                values: 4210616,
+                states: 84802,
+                values: 2309169,
             },
         }
     "#]];
@@ -289,8 +289,8 @@ fn backload_progress_single_delicate_synthesis() {
                 values: 3478,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 10116,
-                values: 14728,
+                states: 5935,
+                values: 8912,
             },
         }
     "#]];
@@ -338,8 +338,8 @@ fn issue_216_steplbsolver_crash() {
                 values: 12801,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 335283,
-                values: 5053877,
+                states: 190329,
+                values: 2928217,
             },
         }
     "#]];
@@ -387,8 +387,8 @@ fn issue_312_quick_innovation_reflect() {
                 values: 10228,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 15498,
-                values: 30242,
+                states: 10726,
+                values: 23041,
             },
         }
     "#]];
@@ -449,8 +449,8 @@ fn daring_touch_interrupted_combo() {
                 values: 24476,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 6838,
-                values: 12013,
+                states: 5233,
+                values: 9773,
             },
         }
     "#]];

@@ -24,20 +24,20 @@ impl State {
         context: &Context<'alloc>,
         simulation_state: SimulationState,
     ) -> (Self, u16, u16) {
-        let manipulation_refund =
-            u16::from(simulation_state.effects.manipulation()) * context.manipulation_refund;
-        let waste_not_refund =
-            u16::from(simulation_state.effects.waste_not()) * context.waste_not_refund;
-        let trained_perfection_available = simulation_state.effects.trained_perfection_active()
-            | simulation_state.effects.trained_perfection_available();
-        let trained_perfection_refund =
-            u16::from(trained_perfection_available) * context.trained_perfection_refund;
+        let cp = {
+            let manipulation_refund =
+                u16::from(simulation_state.effects.manipulation()) * context.manipulation_refund;
+            let waste_not_refund =
+                u16::from(simulation_state.effects.waste_not()) * context.waste_not_refund;
+            let trained_perfection_available = simulation_state.effects.trained_perfection_active()
+                | simulation_state.effects.trained_perfection_available();
+            let trained_perfection_refund =
+                u16::from(trained_perfection_available) * context.trained_perfection_refund;
+            simulation_state.cp + manipulation_refund + waste_not_refund + trained_perfection_refund
+        };
         let great_strides_active = simulation_state.effects.great_strides() != 0;
         let state = Self {
-            cp: simulation_state.cp
-                + manipulation_refund
-                + waste_not_refund
-                + trained_perfection_refund,
+            cp: cp.next_multiple_of(2),
             unreliable_quality: simulation_state.unreliable_quality,
             effects: simulation_state
                 .effects
