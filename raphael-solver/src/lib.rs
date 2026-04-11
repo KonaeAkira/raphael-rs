@@ -10,6 +10,7 @@ mod step_lower_bound_solver;
 use step_lower_bound_solver::StepLbSolver;
 
 mod score_ub_solver;
+use score_ub_solver::ScoreUbSolver;
 
 mod macro_solver;
 pub use macro_solver::MacroSolver;

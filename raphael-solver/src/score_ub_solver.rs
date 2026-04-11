@@ -24,13 +24,12 @@ impl State {
         context: &Context<'alloc>,
         simulation_state: SimulationState,
     ) -> (Self, u16, u16) {
-        let durability_refund = (simulation_state.durability + 5) / 5 * context.durability_refund;
         let manipulation_refund =
             u16::from(simulation_state.effects.manipulation()) * context.manipulation_refund;
         let waste_not_refund =
             u16::from(simulation_state.effects.waste_not()) * context.waste_not_refund;
         let state = Self {
-            cp: simulation_state.cp + durability_refund + manipulation_refund + waste_not_refund,
+            cp: simulation_state.cp + manipulation_refund + waste_not_refund,
             unreliable_quality: simulation_state.unreliable_quality,
             effects: simulation_state
                 .effects
@@ -59,7 +58,6 @@ impl State {
         };
         let mut next_simulation_state =
             use_action_combo(&context.settings, simulation_state, action_combo)?;
-        next_simulation_state.durability = 0;
         let mut durability_cost = 0;
         for action in action_combo.actions() {
             durability_cost += match action {
@@ -138,7 +136,7 @@ impl std::ops::Add for Value {
 }
 
 struct Context<'alloc> {
-    allocator: &'alloc BumpPoolGuard<'alloc>,
+    allocator: BumpPoolGuard<'alloc>,
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
 
@@ -161,7 +159,7 @@ impl<'alloc> Context<'alloc> {
     pub fn new(
         settings: SolverSettings,
         interrupt_signal: utils::AtomicFlag,
-        allocator: &'alloc BumpPoolGuard,
+        allocator: BumpPoolGuard<'alloc>,
     ) -> Self {
         let manipulation_available = settings
             .simulator_settings
@@ -219,8 +217,8 @@ impl<'alloc> Context<'alloc> {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ScoreUpperBound {
-    quality: u16,
-    step_count: u8,
+    pub quality: u16,
+    pub step_count: u8,
 }
 
 impl ScoreUpperBound {
@@ -253,7 +251,7 @@ impl<'alloc> ScoreUbSolver<'alloc> {
     pub fn new(
         settings: SolverSettings,
         interrupt_signal: utils::AtomicFlag,
-        allocator: &'alloc BumpPoolGuard,
+        allocator: BumpPoolGuard<'alloc>,
     ) -> Self {
         Self {
             context: Context::new(settings, interrupt_signal, allocator),
@@ -264,9 +262,13 @@ impl<'alloc> ScoreUbSolver<'alloc> {
     pub fn score_upper_bound(
         &mut self,
         simulation_state: SimulationState,
+        current_step_count: u8,
     ) -> Result<ScoreUpperBound, SolverException> {
-        let (state, progress, _quality) =
+        let (mut state, current_progress, current_quality) =
             State::from_simulation_state(&self.context, simulation_state);
+        let durability_refund =
+            (simulation_state.durability + 5) / 5 * self.context.durability_refund;
+        state.cp += durability_refund;
         let pareto_front = if let Some(pareto_front) = self.solved_states.get(&state) {
             pareto_front.as_slice()
         } else {
@@ -277,14 +279,20 @@ impl<'alloc> ScoreUbSolver<'alloc> {
                     self.solved_states.get(&state).copied()
                 }
             };
-            solve_state(&self.context, &mut query_solution, state)?.as_slice()
+            let ret = solve_state(&self.context, &mut query_solution, state)?.as_slice();
+            dbg!(self.solved_states.len());
+            ret
         };
         let mut score_ub = ScoreUpperBound::MIN;
         for value in pareto_front {
-            if progress + value.progress >= self.context.settings.max_progress() {
+            if current_progress + value.progress >= self.context.settings.max_progress() {
                 let candidate_score_ub = ScoreUpperBound {
-                    quality: value.quality,
-                    step_count: value.step_count,
+                    quality: self
+                        .context
+                        .settings
+                        .max_quality()
+                        .min(current_quality.saturating_add(value.quality)),
+                    step_count: current_step_count + value.step_count,
                 };
                 score_ub = std::cmp::max(score_ub, candidate_score_ub);
             }
@@ -298,13 +306,20 @@ fn solve_state<'alloc>(
     query_solution: &mut impl FnMut(State, Option<&'alloc ParetoFront>) -> Option<&'alloc ParetoFront>,
     state: State,
 ) -> Result<&'alloc ParetoFront, SolverException> {
+    if context.interrupt_signal.is_set() {
+        return Err(SolverException::Interrupted);
+    }
     let mut pareto_front = Vec::new();
     for action in FULL_SEARCH_ACTIONS {
         let Ok((next_state, progress, quality)) = state.use_action(context, action) else {
             continue;
         };
         let next_state_pareto_front = if next_state.is_final(context, next_state) {
-            &[Value::default()]
+            if progress > 0 {
+                &[Value::default()]
+            } else {
+                [].as_slice()
+            }
         } else if let Some(pareto_front) = query_solution(next_state, None) {
             pareto_front.as_slice()
         } else {
@@ -322,6 +337,7 @@ fn solve_state<'alloc>(
         .try_into()
         .map_err(|_| internal_error!("Empty ParetoFront.", context.settings, state))?;
     query_solution(state, Some(checked_slice));
+    dbg!(state, checked_slice);
     Ok(checked_slice)
 }
 

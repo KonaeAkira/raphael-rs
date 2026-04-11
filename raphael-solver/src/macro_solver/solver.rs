@@ -7,11 +7,13 @@ use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
 use crate::finish_solver::FinishSolverStats;
 use crate::macro_solver::search_queue::{Batch, SearchQueue};
 use crate::quality_upper_bound_solver::{QualityUbSolverShard, QualityUbSolverStats};
+use crate::score_ub_solver::ScoreUbSolver;
 use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats};
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
 use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
 
+use std::sync::Mutex;
 use std::vec::Vec;
 
 #[derive(Clone)]
@@ -75,10 +77,11 @@ impl<'a> MacroSolver<'a> {
 
         self.last_solve_runtime_stats = MacroSolverStats::default();
         let allocator = BumpPool::default();
-        let mut quality_ub_solver =
-            QualityUbSolver::new(self.settings, self.interrupt_signal.clone(), &allocator);
-        let mut step_lb_solver =
-            StepLbSolver::new(self.settings, self.interrupt_signal.clone(), &allocator);
+        let score_ub_solver = Mutex::new(ScoreUbSolver::new(
+            self.settings,
+            self.interrupt_signal.clone(),
+            allocator.get(),
+        ));
 
         let _total_time = ScopedTimer::new("Total Time");
 
@@ -92,26 +95,8 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
-        let timer = ScopedTimer::new("Quality UB Solver");
-        quality_ub_solver.precompute()?;
-        drop(timer);
-
-        // The StepLbSolver is only queried when a state has the potential to reach max_quality.
-        // If the quality upper-bound of the initial state is less than max_quality, then no
-        // subsequent state can reach max_quality, which in turn means the StepLbSolver is not needed.
-        let mut quality_ub_solver_shard = quality_ub_solver.create_shard();
-        let initial_state_quality_ub =
-            quality_ub_solver_shard.quality_upper_bound(initial_state)?;
-        quality_ub_solver.extend_solved_states(quality_ub_solver_shard.solved_states());
-        if initial_state_quality_ub >= self.settings.max_quality() {
-            let _timer = ScopedTimer::new("Step LB Solver");
-            step_lb_solver.precompute()?;
-        }
-
         let timer = ScopedTimer::new("Search");
-        let actions = self
-            .do_solve(&mut quality_ub_solver, &mut step_lb_solver, initial_state)?
-            .actions();
+        let actions = self.do_solve(&score_ub_solver, initial_state)?.actions();
         drop(timer);
 
         log::debug!("{:?}", self.runtime_stats());
@@ -121,8 +106,7 @@ impl<'a> MacroSolver<'a> {
 
     fn do_solve<'alloc>(
         &mut self,
-        quality_ub_solver: &mut QualityUbSolver<'alloc>,
-        step_lb_solver: &mut StepLbSolver<'alloc>,
+        score_ub_solver: &Mutex<ScoreUbSolver<'alloc>>,
         state: SimulationState,
     ) -> Result<Solution, SolverException> {
         let mut search_queue = SearchQueue::new(self.settings, state);
@@ -142,8 +126,7 @@ impl<'a> MacroSolver<'a> {
             let create_worker_data = || WorkerData {
                 settings: &self.settings,
                 finish_solver: &self.finish_solver,
-                quality_ub_solver_shard: quality_ub_solver.create_shard(),
-                step_lb_solver_shard: step_lb_solver.create_shard(),
+                score_ub_solver,
                 min_accepted_score,
                 candidate_states: Vec::new(),
             };
@@ -187,30 +170,14 @@ impl<'a> MacroSolver<'a> {
                 }
             }
 
-            // Map each `WorkerData` instance to just the hashmaps containing all the newly solved states.
-            // This drops all shared references to `self` which allows for mutating the inner solvers.
-            let solved_states_per_worker = worker_results
-                .into_iter()
-                .map(|worker_data| {
-                    (
-                        worker_data.quality_ub_solver_shard.solved_states(),
-                        worker_data.step_lb_solver_shard.solved_states(),
-                    )
-                })
-                .collect::<Vec<_>>();
-            for solved_states in solved_states_per_worker {
-                quality_ub_solver.extend_solved_states(solved_states.0);
-                step_lb_solver.extend_solved_states(solved_states.1);
-            }
-
             (self.progress_callback)(search_queue.runtime_stats().processed_nodes);
         }
 
         self.last_solve_runtime_stats = MacroSolverStats {
             search_queue_stats: search_queue.runtime_stats(),
             finish_solver_stats: self.finish_solver.runtime_stats(),
-            quality_ub_stats: quality_ub_solver.runtime_stats(),
-            step_lb_stats: step_lb_solver.runtime_stats(),
+            quality_ub_stats: Default::default(),
+            step_lb_stats: Default::default(),
         };
 
         solution.ok_or(SolverException::NoSolution)
@@ -224,8 +191,7 @@ impl<'a> MacroSolver<'a> {
 struct WorkerData<'main, 'alloc> {
     settings: &'main SolverSettings,
     finish_solver: &'main FinishSolver,
-    quality_ub_solver_shard: QualityUbSolverShard<'main, 'alloc>,
-    step_lb_solver_shard: StepLbSolverShard<'main, 'alloc>,
+    score_ub_solver: &'main Mutex<ScoreUbSolver<'alloc>>,
     min_accepted_score: SearchScore,
     candidate_states: Vec<(SimulationState, SearchScore, ActionCombo, usize)>,
 }
@@ -269,36 +235,15 @@ impl<'main, 'alloc> WorkerData<'main, 'alloc> {
                         ..SearchScore::MIN
                     });
 
-                    let quality_upper_bound = if state.quality >= self.settings.max_quality() {
-                        self.settings.max_quality()
-                    } else {
-                        std::cmp::min(
-                            score.quality_upper_bound,
-                            self.quality_ub_solver_shard.quality_upper_bound(state)?,
-                        )
-                    };
-
-                    if !self.settings.allow_non_max_quality_solutions
-                        && quality_upper_bound < self.settings.max_quality()
-                    {
-                        continue;
-                    }
-
-                    let step_lb_hint = score
-                        .steps_lower_bound
-                        .saturating_sub(score.current_steps + action.steps());
-                    let steps_lower_bound = match quality_upper_bound >= self.settings.max_quality()
-                    {
-                        true => self
-                            .step_lb_solver_shard
-                            .step_lower_bound(state, step_lb_hint)?
-                            .saturating_add(score.current_steps + action.steps()),
-                        false => score.current_steps + action.steps(),
-                    };
+                    let score_ub = self
+                        .score_ub_solver
+                        .lock()
+                        .unwrap()
+                        .score_upper_bound(state, score.current_steps)?;
 
                     let child_score = SearchScore {
-                        quality_upper_bound,
-                        steps_lower_bound,
+                        quality_upper_bound: score_ub.quality,
+                        steps_lower_bound: score_ub.step_count,
                         duration_lower_bound: score.current_duration + action.duration() + 3,
                         current_steps: score.current_steps + action.steps(),
                         current_duration: score.current_duration + action.duration(),
