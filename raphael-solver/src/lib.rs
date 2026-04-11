@@ -3,12 +3,6 @@ mod actions;
 mod finish_solver;
 use finish_solver::FinishSolver;
 
-mod quality_upper_bound_solver;
-use quality_upper_bound_solver::QualityUbSolver;
-
-mod step_lower_bound_solver;
-use step_lower_bound_solver::StepLbSolver;
-
 mod score_ub_solver;
 use score_ub_solver::ScoreUbSolver;
 

@@ -6,12 +6,9 @@ use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
 use crate::finish_solver::FinishSolverStats;
 use crate::macro_solver::search_queue::{Batch, SearchQueue};
-use crate::quality_upper_bound_solver::{QualityUbSolverShard, QualityUbSolverStats};
-use crate::score_ub_solver::ScoreUbSolver;
-use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats};
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
-use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
+use crate::{FinishSolver, ScoreUbSolver, SolverException, SolverSettings};
 
 use std::sync::Mutex;
 use std::vec::Vec;
@@ -39,8 +36,6 @@ type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 pub struct MacroSolverStats {
     pub search_queue_stats: SearchQueueStats,
     pub finish_solver_stats: FinishSolverStats,
-    pub quality_ub_stats: QualityUbSolverStats,
-    pub step_lb_stats: StepLbSolverStats,
 }
 
 pub struct MacroSolver<'a> {
@@ -176,8 +171,6 @@ impl<'a> MacroSolver<'a> {
         self.last_solve_runtime_stats = MacroSolverStats {
             search_queue_stats: search_queue.runtime_stats(),
             finish_solver_stats: self.finish_solver.runtime_stats(),
-            quality_ub_stats: Default::default(),
-            step_lb_stats: Default::default(),
         };
 
         solution.ok_or(SolverException::NoSolution)
