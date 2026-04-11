@@ -6,6 +6,7 @@ use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
 use crate::finish_solver::FinishSolverStats;
 use crate::macro_solver::search_queue::{Batch, SearchQueue};
+use crate::score_ub_solver::ScoreUbSolverStats;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
 use crate::{FinishSolver, ScoreUbSolver, SolverException, SolverSettings};
@@ -36,6 +37,7 @@ type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 pub struct MacroSolverStats {
     pub search_queue_stats: SearchQueueStats,
     pub finish_solver_stats: FinishSolverStats,
+    pub score_ub_solver_stats: ScoreUbSolverStats,
 }
 
 pub struct MacroSolver<'a> {
@@ -171,6 +173,7 @@ impl<'a> MacroSolver<'a> {
         self.last_solve_runtime_stats = MacroSolverStats {
             search_queue_stats: search_queue.runtime_stats(),
             finish_solver_stats: self.finish_solver.runtime_stats(),
+            score_ub_solver_stats: score_ub_solver.lock().unwrap().runtime_stats(),
         };
 
         solution.ok_or(SolverException::NoSolution)

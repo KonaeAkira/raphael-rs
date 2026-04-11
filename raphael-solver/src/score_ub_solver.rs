@@ -278,6 +278,12 @@ impl Ord for ScoreUpperBound {
     }
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ScoreUbSolverStats {
+    pub states: usize,
+    pub values: usize,
+}
+
 pub struct ScoreUbSolver<'alloc> {
     context: Context<'alloc>,
     solved_states: FxHashMap<State, &'alloc ParetoFront>,
@@ -292,6 +298,13 @@ impl<'alloc> ScoreUbSolver<'alloc> {
         Self {
             context: Context::new(settings, interrupt_signal, allocator),
             solved_states: FxHashMap::default(),
+        }
+    }
+
+    pub fn runtime_stats(&self) -> ScoreUbSolverStats {
+        ScoreUbSolverStats {
+            states: self.solved_states.len(),
+            values: self.solved_states.values().map(|value| value.len()).sum(),
         }
     }
 
@@ -310,14 +323,15 @@ impl<'alloc> ScoreUbSolver<'alloc> {
         } else {
             let mut query_solution = |state, solution| {
                 if let Some(solution) = solution {
+                    if self.solved_states.len() % 1024 == 0 {
+                        dbg!(self.solved_states.len());
+                    }
                     self.solved_states.insert(state, solution)
                 } else {
                     self.solved_states.get(&state).copied()
                 }
             };
-            let ret = solve_state(&self.context, &mut query_solution, state)?.as_slice();
-            dbg!(self.solved_states.len());
-            ret
+            solve_state(&self.context, &mut query_solution, state)?.as_slice()
         };
         let mut score_ub = ScoreUpperBound::MIN;
         for value in pareto_front {
@@ -350,13 +364,13 @@ fn solve_state<'alloc>(
         let Ok((next_state, progress, quality)) = state.use_action(context, action) else {
             continue;
         };
+        assert_ne!(state, next_state);
         let next_state_pareto_front = if next_state.is_final(context) {
-            // The last action must be a Progress-increasing action.
-            if progress > 0 {
-                &[Value::default()]
-            } else {
-                [].as_slice()
+            if progress == 0 {
+                // The last action must be a Progress-increasing action.
+                continue;
             }
+            &[Value::default()]
         } else if let Some(pareto_front) = query_solution(next_state, None) {
             pareto_front.as_slice()
         } else {
