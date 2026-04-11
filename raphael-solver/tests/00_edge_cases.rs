@@ -131,8 +131,8 @@ fn zero_quality() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 48,
-                processed_nodes: 38,
+                inserted_nodes: 52,
+                processed_nodes: 42,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
@@ -140,7 +140,7 @@ fn zero_quality() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 12262,
-                values: 36605,
+                values: 42364,
             },
         }
     "#]];
@@ -179,16 +179,16 @@ fn max_quality() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 10452891,
-                processed_nodes: 1072355,
+                inserted_nodes: 4944981,
+                processed_nodes: 1752152,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
                 values: 66696,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 221313,
-                values: 2820290,
+                states: 221729,
+                values: 5600396,
             },
         }
     "#]];
@@ -290,7 +290,7 @@ fn backload_progress_single_delicate_synthesis() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 10756,
-                values: 10756,
+                values: 15632,
             },
         }
     "#]];
@@ -321,25 +321,25 @@ fn issue_216_steplbsolver_crash() {
         Ok(
             SolutionScore {
                 capped_quality: 8600,
-                steps: 11,
-                duration: 32,
-                overflow_quality: 18,
+                steps: 10,
+                duration: 25,
+                overflow_quality: 596,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 216209,
-                processed_nodes: 13154,
+                inserted_nodes: 3556650,
+                processed_nodes: 941897,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 9851,
                 values: 12801,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 433747,
-                values: 2312442,
+                states: 455422,
+                values: 6866783,
             },
         }
     "#]];
@@ -379,16 +379,16 @@ fn issue_312_quick_innovation_reflect() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 45,
-                processed_nodes: 28,
+                inserted_nodes: 19,
+                processed_nodes: 14,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 10142,
                 values: 10228,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 17735,
-                values: 25915,
+                states: 17624,
+                values: 33728,
             },
         }
     "#]];
@@ -441,8 +441,8 @@ fn daring_touch_interrupted_combo() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 30,
-                processed_nodes: 11,
+                inserted_nodes: 25,
+                processed_nodes: 16,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 24476,
@@ -450,7 +450,7 @@ fn daring_touch_interrupted_combo() {
             },
             score_ub_solver_stats: ScoreUbSolverStats {
                 states: 7542,
-                values: 12905,
+                values: 13025,
             },
         }
     "#]];

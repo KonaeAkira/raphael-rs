@@ -356,30 +356,36 @@ fn solve_state<'alloc>(
         let Ok((next_state, progress, quality)) = state.use_action(context, action) else {
             continue;
         };
-        assert_ne!(state, next_state);
-        let next_state_pareto_front = if next_state.is_final(context) {
-            if progress == 0 {
-                // The last action must be a Progress-increasing action.
-                continue;
-            }
-            &[Value::default()]
-        } else if let Some(pareto_front) = query_solution(next_state, None) {
-            pareto_front.as_slice()
-        } else {
-            solve_state(context, query_solution, next_state)?.as_slice()
-        };
-        let new_values = next_state_pareto_front.iter().copied().map(|value| Value {
-            progress: context
-                .settings
-                .max_progress()
-                .min(value.progress.saturating_add(progress)),
-            quality: context
-                .settings
-                .max_quality()
-                .min(value.quality.saturating_add(quality)),
-            step_count: value.step_count + action.steps(),
-        });
-        extend_pareto_front(&mut pareto_front, new_values);
+
+        if !next_state.is_final(context) {
+            let next_state_pareto_front = match query_solution(next_state, None) {
+                Some(pareto_front) => pareto_front,
+                None => solve_state(context, query_solution, next_state)?,
+            };
+            let new_values = next_state_pareto_front.iter().copied().map(|value| Value {
+                progress: context
+                    .settings
+                    .max_progress()
+                    .min(value.progress.saturating_add(progress)),
+                quality: context
+                    .settings
+                    .max_quality()
+                    .min(value.quality.saturating_add(quality)),
+                step_count: value.step_count + action.steps(),
+            });
+            extend_pareto_front(&mut pareto_front, new_values);
+        }
+
+        // Terminate the synthesis at this action.
+        // Can only be done the action increases Progress.
+        if progress > 0 {
+            let new_value = Value {
+                progress,
+                quality,
+                step_count: action.steps(),
+            };
+            extend_pareto_front(&mut pareto_front, std::iter::once(new_value));
+        }
     }
     let allocated_slice = context.allocator.alloc_slice_move(pareto_front).into_ref();
     let checked_slice = allocated_slice
@@ -428,6 +434,7 @@ mod tests {
                             "Solver is not consistent.",
                             solver_settings,
                             state,
+                            next_state,
                             action,
                             score_ub,
                             next_score_ub
@@ -443,6 +450,7 @@ mod tests {
                             "Solver is not admissible.",
                             solver_settings,
                             state,
+                            next_state,
                             action,
                             score_ub,
                             next_score_ub
@@ -456,7 +464,7 @@ mod tests {
 
     #[test_case::test_matrix(
         [20, 60, 80],
-        [REGULAR_ACTIONS]
+        [REGULAR_ACTIONS, NO_MANIPULATION, WITH_SPECIALIST_ACTIONS]
     )]
     fn consistency(
         max_durability: u16,
