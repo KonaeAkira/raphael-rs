@@ -9,7 +9,7 @@ use crate::{
     SolverException, SolverSettings,
     actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo},
     macros::internal_error,
-    utils,
+    utils::{self, compute_iq_quality_lut},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -140,6 +140,8 @@ struct Context<'alloc> {
     settings: SolverSettings,
     interrupt_signal: utils::AtomicFlag,
 
+    iq_quality_lut: [u16; 11],
+
     /// The amount of CP refunded for every tick of Manipulation still active.
     manipulation_refund: u16,
     /// The amount of CP refunded for every tick of WasteNot still active.
@@ -230,6 +232,7 @@ impl<'alloc> Context<'alloc> {
             allocator,
             settings,
             interrupt_signal,
+            iq_quality_lut: compute_iq_quality_lut(&settings),
             manipulation_refund,
             waste_not_refund,
             trained_perfection_refund,
@@ -364,15 +367,16 @@ fn solve_state<'alloc>(
                 Some(pareto_front) => pareto_front,
                 None => solve_state(context, query_solution, next_state)?,
             };
+            let progress_cutoff = context.settings.max_progress();
+            let min_state_quality =
+                context.iq_quality_lut[usize::from(state.effects.inner_quiet())];
+            let quality_cutoff = context
+                .settings
+                .max_quality()
+                .saturating_sub(min_state_quality);
             let new_values = next_state_pareto_front.iter().copied().map(|value| Value {
-                progress: context
-                    .settings
-                    .max_progress()
-                    .min(value.progress.saturating_add(progress)),
-                quality: context
-                    .settings
-                    .max_quality()
-                    .min(value.quality.saturating_add(quality)),
+                progress: progress_cutoff.min(value.progress.saturating_add(progress)),
+                quality: quality_cutoff.min(value.quality.saturating_add(quality)),
                 step_count: value.step_count + action.steps(),
             });
             extend_pareto_front(&mut pareto_front, new_values);
