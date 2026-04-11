@@ -28,10 +28,11 @@ impl State {
             u16::from(simulation_state.effects.manipulation()) * context.manipulation_refund;
         let waste_not_refund =
             u16::from(simulation_state.effects.waste_not()) * context.waste_not_refund;
-        let trained_perfection = simulation_state.effects.trained_perfection_active()
+        let trained_perfection_available = simulation_state.effects.trained_perfection_active()
             | simulation_state.effects.trained_perfection_available();
         let trained_perfection_refund =
-            u16::from(trained_perfection) * context.trained_perfection_refund;
+            u16::from(trained_perfection_available) * context.trained_perfection_refund;
+        let great_strides_active = simulation_state.effects.great_strides() != 0;
         let state = Self {
             cp: simulation_state.cp
                 + manipulation_refund
@@ -40,6 +41,7 @@ impl State {
             unreliable_quality: simulation_state.unreliable_quality,
             effects: simulation_state
                 .effects
+                .with_great_strides(u8::from(great_strides_active) * 3)
                 .with_manipulation(0)
                 .with_waste_not(0)
                 .with_trained_perfection_active(false)

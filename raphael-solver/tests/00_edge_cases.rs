@@ -139,8 +139,8 @@ fn zero_quality() {
                 values: 49135,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 12262,
-                values: 42364,
+                states: 9626,
+                values: 35231,
             },
         }
     "#]];
@@ -179,16 +179,16 @@ fn max_quality() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 4944981,
-                processed_nodes: 1752152,
+                inserted_nodes: 4984507,
+                processed_nodes: 1769720,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
                 values: 66696,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 221729,
-                values: 5600396,
+                states: 160214,
+                values: 4210616,
             },
         }
     "#]];
@@ -289,8 +289,8 @@ fn backload_progress_single_delicate_synthesis() {
                 values: 3478,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 10756,
-                values: 15632,
+                states: 10116,
+                values: 14728,
             },
         }
     "#]];
@@ -330,16 +330,16 @@ fn issue_216_steplbsolver_crash() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 3556650,
-                processed_nodes: 941897,
+                inserted_nodes: 3557272,
+                processed_nodes: 942205,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 9851,
                 values: 12801,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 455422,
-                values: 6866783,
+                states: 335283,
+                values: 5053877,
             },
         }
     "#]];
@@ -387,8 +387,8 @@ fn issue_312_quick_innovation_reflect() {
                 values: 10228,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 17624,
-                values: 33728,
+                states: 15498,
+                values: 30242,
             },
         }
     "#]];
@@ -449,8 +449,8 @@ fn daring_touch_interrupted_combo() {
                 values: 24476,
             },
             score_ub_solver_stats: ScoreUbSolverStats {
-                states: 7542,
-                values: 13025,
+                states: 6838,
+                values: 12013,
             },
         }
     "#]];
