@@ -1,7 +1,7 @@
 use bump_scope::BumpPoolGuard;
 use raphael_sim::{
     Action, ActionError, Effects, ImmaculateMend, Manipulation, MasterMend, SimulationState,
-    WasteNot, WasteNot2,
+    TrainedPerfection, WasteNot, WasteNot2,
 };
 use rustc_hash::FxHashMap;
 
@@ -28,13 +28,22 @@ impl State {
             u16::from(simulation_state.effects.manipulation()) * context.manipulation_refund;
         let waste_not_refund =
             u16::from(simulation_state.effects.waste_not()) * context.waste_not_refund;
+        let trained_perfection = simulation_state.effects.trained_perfection_active()
+            | simulation_state.effects.trained_perfection_available();
+        let trained_perfection_refund =
+            u16::from(trained_perfection) * context.trained_perfection_refund;
         let state = Self {
-            cp: simulation_state.cp + manipulation_refund + waste_not_refund,
+            cp: simulation_state.cp
+                + manipulation_refund
+                + waste_not_refund
+                + trained_perfection_refund,
             unreliable_quality: simulation_state.unreliable_quality,
             effects: simulation_state
                 .effects
                 .with_manipulation(0)
-                .with_waste_not(0),
+                .with_waste_not(0)
+                .with_trained_perfection_active(false)
+                .with_trained_perfection_available(false),
         };
         (state, simulation_state.progress, simulation_state.quality)
     }
@@ -145,6 +154,8 @@ struct Context<'alloc> {
     manipulation_refund: u16,
     /// The amount of CP refunded for every tick of WasteNot still active.
     waste_not_refund: u16,
+    /// The amount of CP refunded if TrainedPerfection is active or available.
+    trained_perfection_refund: u16,
     /// The amount of CP "refunded" for every 5 durability.
     durability_refund: u16,
 
@@ -170,6 +181,9 @@ impl<'alloc> Context<'alloc> {
         let immaculate_mend_available = settings
             .simulator_settings
             .is_action_allowed::<ImmaculateMend>();
+        let trained_perfection_available = settings
+            .simulator_settings
+            .is_action_allowed::<TrainedPerfection>();
 
         let manipulation_refund = if manipulation_available {
             Manipulation::CP_COST / 8
@@ -202,13 +216,25 @@ impl<'alloc> Context<'alloc> {
             2 * durability_refund + waste_not_refund,
         );
 
+        let trained_perfection_refund = if trained_perfection_available {
+            // Assume TrainedPerfection can be used at max potential.
+            small_action_durability_cost
+                .max(normal_action_durability_cost)
+                .max(big_action_durability_cost)
+        } else {
+            0
+        };
+
         // Disable certain actions to prevent infinite recursion when solving states.
         settings.simulator_settings.allowed_actions = settings
             .simulator_settings
             .allowed_actions
             .remove(Action::Manipulation)
             .remove(Action::WasteNot)
-            .remove(Action::WasteNot2);
+            .remove(Action::WasteNot2)
+            .remove(Action::TrainedPerfection)
+            .remove(Action::ImmaculateMend)
+            .remove(Action::MasterMend);
 
         Self {
             allocator,
@@ -216,6 +242,7 @@ impl<'alloc> Context<'alloc> {
             interrupt_signal,
             manipulation_refund,
             waste_not_refund,
+            trained_perfection_refund,
             durability_refund,
             small_action_durability_cost,
             normal_action_durability_cost,
