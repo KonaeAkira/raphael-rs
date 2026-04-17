@@ -97,6 +97,7 @@ impl ReducedState {
         action: ActionCombo,
         settings: &SolverSettings,
         durability_cost: u16,
+        max_muscle_memory_progress: u16,
     ) -> Option<(Self, u16, u16)> {
         match action {
             ActionCombo::Single(
@@ -105,7 +106,11 @@ impl ReducedState {
             _ => {
                 let state = self.to_simulation_state(settings);
                 match use_action_combo(settings, state, action) {
-                    Ok(state) => {
+                    Ok(mut state) => {
+                        if state.effects.muscle_memory() != 0 {
+                            state.effects.set_muscle_memory(0);
+                            state.progress += max_muscle_memory_progress;
+                        }
                         let solver_state =
                             Self::from_state_inner(&state, settings, durability_cost)?;
                         Some((solver_state, state.progress, state.quality))

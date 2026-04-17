@@ -146,8 +146,8 @@ fn zero_quality() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 31147,
-                states_on_shards: 7301,
-                values: 128831,
+                states_on_shards: 4301,
+                values: 120278,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,

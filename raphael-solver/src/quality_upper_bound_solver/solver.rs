@@ -116,6 +116,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                         action,
                         &self.context.settings,
                         self.context.durability_cost,
+                        self.context.largest_progress_increase,
                     ) {
                         let new_template_data = TemplateData {
                             effects: new_state.effects,
@@ -230,9 +231,12 @@ impl<'alloc> QualityUbSolver<'alloc> {
         );
         pf_builder.initialize_with_cutoff(cutoff);
         for action in FULL_SEARCH_ACTIONS {
-            if let Some((new_state, progress, quality)) =
-                state.use_action(action, &self.context.settings, self.context.durability_cost)
-            {
+            if let Some((new_state, progress, quality)) = state.use_action(
+                action,
+                &self.context.settings,
+                self.context.durability_cost,
+                self.context.largest_progress_increase,
+            ) {
                 let action_value = ParetoValue::new(progress, quality);
                 if !new_state.is_final(self.context.durability_cost) {
                     if let Some(pareto_front) = self.solved_states.get(&new_state).copied() {
@@ -369,9 +373,12 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
         pareto_front_builder.initialize_with_cutoff(cutoff);
 
         for action in FULL_SEARCH_ACTIONS {
-            if let Some((child_state, progress, quality)) =
-                state.use_action(action, &self.context.settings, self.context.durability_cost)
-            {
+            if let Some((child_state, progress, quality)) = state.use_action(
+                action,
+                &self.context.settings,
+                self.context.durability_cost,
+                self.context.largest_progress_increase,
+            ) {
                 let action_value = ParetoValue::new(progress, quality);
                 if !child_state.is_final(self.context.durability_cost) {
                     let child_pareto_front = if let Some(child_pareto_front) =

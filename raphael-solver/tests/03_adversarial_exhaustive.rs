@@ -281,8 +281,8 @@ fn test_indagator_3858_4057() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2515254,
-                states_on_shards: 147927,
-                values: 64921336,
+                states_on_shards: 140907,
+                values: 64646242,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -339,8 +339,8 @@ fn test_rare_tacos_4628_4410() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 2623346,
-                states_on_shards: 75251,
-                values: 78241975,
+                states_on_shards: 69380,
+                values: 78045032,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 213458,
@@ -396,8 +396,8 @@ fn issue_113() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 3043236,
-                states_on_shards: 87698,
-                values: 121049151,
+                states_on_shards: 80505,
+                values: 120610538,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,

@@ -96,8 +96,8 @@ fn rinascita_3700_3280() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 957930,
-                states_on_shards: 42909,
-                values: 16783607,
+                states_on_shards: 42814,
+                values: 16783512,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -150,8 +150,8 @@ fn pactmaker_3240_3130() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 818130,
-                states_on_shards: 45029,
-                values: 13132295,
+                states_on_shards: 44934,
+                values: 13132200,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -206,8 +206,8 @@ fn pactmaker_3240_3130_heart_and_soul() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 1690660,
-                states_on_shards: 84804,
-                values: 27638058,
+                states_on_shards: 84618,
+                values: 27637872,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -260,8 +260,8 @@ fn diadochos_4021_3660() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 888030,
-                states_on_shards: 44493,
-                values: 17344936,
+                states_on_shards: 44398,
+                values: 17344841,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
@@ -314,8 +314,8 @@ fn indagator_3858_4057() {
             },
             quality_ub_stats: QualityUbSolverStats {
                 states_on_main: 971910,
-                states_on_shards: 46068,
-                values: 16209392,
+                states_on_shards: 45973,
+                values: 16209297,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 0,
