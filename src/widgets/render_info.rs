@@ -301,7 +301,7 @@ impl<'a> RenderInfo<'a> {
 
         if self.state.plot_cpu_usage {
             let color = ui.visuals().text_color();
-            let line_stroke = Stroke::new(1.0, color);
+            let line_stroke = Stroke::new(1.0f32, color);
             self.add_samples(
                 &mut shapes,
                 cpu_usage_history,
@@ -312,7 +312,7 @@ impl<'a> RenderInfo<'a> {
         }
         if self.state.plot_frame_time {
             let color = ui.visuals().weak_text_color();
-            let line_stroke = Stroke::new(1.0, color);
+            let line_stroke = Stroke::new(1.0f32, color);
             self.add_samples(
                 &mut shapes,
                 &self.state.frame_time_history,
@@ -325,7 +325,7 @@ impl<'a> RenderInfo<'a> {
         // Add hover line & text
         let rect = rect.shrink(4.0);
         let color = ui.visuals().strong_text_color();
-        let line_stroke = Stroke::new(1.0, color);
+        let line_stroke = Stroke::new(1.0f32, color);
         if let Some(pointer_pos) = response.hover_pos() {
             let y = pointer_pos.y;
             shapes.push(Shape::line_segment(
