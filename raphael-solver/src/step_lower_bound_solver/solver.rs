@@ -14,8 +14,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::state::ReducedState;
 
-type ParetoFront = nunny::Slice<ParetoValue>;
-type SolvedStates<'alloc> = FxHashMap<ReducedState, &'alloc ParetoFront>;
+pub type ParetoFront = nunny::Slice<ParetoValue>;
+pub type SolvedStates<'alloc> = FxHashMap<ReducedState, &'alloc ParetoFront>;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct StepLbSolverStats {
