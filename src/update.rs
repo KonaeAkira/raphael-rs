@@ -69,7 +69,7 @@ pub fn check_for_update() {
     );
 }
 
-pub fn show_dialogues(ui: &mut egui::Ui, locale: Locale) {
+pub fn show_dialogues(ctx: &egui::Context, locale: Locale) {
     let modal_id = egui::Id::new("UPDATE_MODAL");
     let mut update_status = UPDATE_STATUS.lock().unwrap();
     match update_status.clone() {
@@ -78,7 +78,7 @@ pub fn show_dialogues(ui: &mut egui::Ui, locale: Locale) {
             latest_version,
             asset_url,
         } => {
-            egui::Modal::new(modal_id.with("AVAILABLE")).show(ui, |ui| {
+            egui::Modal::new(modal_id.with("AVAILABLE")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new(t!(locale, "New version available!")).strong());
                 ui.separator();
@@ -104,7 +104,7 @@ pub fn show_dialogues(ui: &mut egui::Ui, locale: Locale) {
             });
         }
         UpdateStatus::Updating => {
-            egui::Modal::new(modal_id.with("UPDATING")).show(ui, |ui| {
+            egui::Modal::new(modal_id.with("UPDATING")).show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.spinner();
                     ui.label(t!(locale, "Updating..."));
@@ -112,7 +112,7 @@ pub fn show_dialogues(ui: &mut egui::Ui, locale: Locale) {
             });
         }
         UpdateStatus::Error(error_message) => {
-            egui::Modal::new(modal_id.with("ERROR")).show(ui, |ui| {
+            egui::Modal::new(modal_id.with("ERROR")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new(t!(locale, "Error")).strong());
                 ui.separator();
@@ -126,7 +126,7 @@ pub fn show_dialogues(ui: &mut egui::Ui, locale: Locale) {
             });
         }
         UpdateStatus::Success => {
-            egui::Modal::new(modal_id.with("SUCCESS")).show(ui, |ui| {
+            egui::Modal::new(modal_id.with("SUCCESS")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
                 ui.label(egui::RichText::new(t!(locale, "Success")).strong());
                 ui.separator();
@@ -138,7 +138,7 @@ pub fn show_dialogues(ui: &mut egui::Ui, locale: Locale) {
                 ui.vertical_centered_justified(|ui| {
                     if ui.button(t!(locale, "Close")).clicked() {
                         // Gracefully close the application.
-                        ui.send_viewport_cmd(egui::ViewportCommand::Close);
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
             });

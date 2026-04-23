@@ -95,18 +95,18 @@ impl MacroSolverApp {
 
 impl eframe::App for MacroSolverApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let locale = self.app_context.locale;
         #[cfg(target_arch = "wasm32")]
-        self.load_fonts_dyn(ui);
+        self.load_fonts_dyn(ctx);
 
         self.process_solver_events();
 
         #[cfg(not(target_arch = "wasm32"))]
-        crate::update::show_dialogues(ui, locale);
+        crate::update::show_dialogues(ctx, locale);
 
         if self.missing_stats_error_window_open {
-            egui::Modal::new(egui::Id::new("min_stats_warning")).show(ui, |ui| {
+            egui::Modal::new(egui::Id::new("min_stats_warning")).show(ctx, |ui| {
                 let req_cms = self.app_context.recipe_config.recipe().req_craftsmanship;
                 let req_ctrl = self.app_context.recipe_config.recipe().req_control;
                 ui.style_mut().spacing.item_spacing = egui::vec2(3.0, 3.0);
@@ -130,9 +130,9 @@ impl eframe::App for MacroSolverApp {
         }
 
         if let Some(error) = self.solver_error.clone() {
-            egui::Modal::new(egui::Id::new("solver_error")).show(ui, |ui| {
+            egui::Modal::new(egui::Id::new("solver_error")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-                ui.set_width(480.0f32.min(ui.content_rect().width() - 32.0));
+                ui.set_width(480.0f32.min(ctx.content_rect().width() - 32.0));
                 match error {
                     SolverException::NoSolution => {
                         ui.label(egui::RichText::new(t!(locale, "No solution")).strong());
@@ -186,7 +186,7 @@ impl eframe::App for MacroSolverApp {
                 eframe::wasm_bindgen::throw_val("OOM panic".into());
             }
             let interrupt_pending = self.solver_interrupt.is_set();
-            egui::Modal::new(egui::Id::new("solver_busy")).show(ui, |ui| {
+            egui::Modal::new(egui::Id::new("solver_busy")).show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                 ui.set_width(180.0);
                 ui.horizontal(|ui| {
@@ -233,14 +233,14 @@ impl eframe::App for MacroSolverApp {
             });
         }
 
-        egui::Panel::top("top_panel").show_inside(ui, |ui| {
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::ScrollArea::horizontal()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
                     egui::containers::menu::MenuBar::new().ui(ui, |ui| {
                         ui.label(egui::RichText::new("Raphael  |  FFXIV Crafting Solver").strong());
                         ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
-                        self.draw_app_config_menu_button(ui);
+                        self.draw_app_config_menu_button(ui, ctx);
 
                         let selectable_locales = [
                             Locale::EN,
@@ -303,15 +303,15 @@ impl eframe::App for MacroSolverApp {
 
         #[cfg(any(debug_assertions, feature = "dev-panel"))]
         if self.dev_panel_state.show_dev_panel {
-            egui::Panel::right("dev_panel")
+            egui::SidePanel::right("dev_panel")
                 .resizable(true)
-                .show_inside(ui, |ui| {
+                .show(ctx, |ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                     RenderInfo::new(&mut self.dev_panel_state.render_info_state).ui(ui, _frame);
                 });
         }
 
-        egui::CentralPanel::default().show_inside(ui, |ui| {
+        egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 self.draw_simulator_widget(ui);
                 ui.with_layout(
@@ -378,7 +378,7 @@ impl eframe::App for MacroSolverApp {
         });
 
         let maximum_visible_window_size =
-            (ui.content_rect().size() - egui::Vec2::new(14.0, 45.0)).max(egui::Vec2::ZERO);
+            (ctx.content_rect().size() - egui::Vec2::new(14.0, 45.0)).max(egui::Vec2::ZERO);
         let stats_edit_window_size = maximum_visible_window_size.min(egui::Vec2::new(412.0, 650.0));
         egui::Window::new(
             egui::RichText::new(t!(locale, "Crafter stats"))
@@ -391,7 +391,7 @@ impl eframe::App for MacroSolverApp {
         .resizable(false)
         .min_size(stats_edit_window_size)
         .max_size(stats_edit_window_size)
-        .show(ui, |ui| {
+        .show(ctx, |ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(StatsEdit::new(&mut self.app_context));
         });
@@ -405,7 +405,7 @@ impl eframe::App for MacroSolverApp {
         .open(&mut self.saved_rotations_window_open)
         .collapsible(false)
         .default_size((400.0, 600.0))
-        .show(ui, |ui| {
+        .show(ctx, |ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.add(SavedRotationsWidget::new(
                 &mut self.app_context,
@@ -449,7 +449,7 @@ impl MacroSolverApp {
         }
     }
 
-    fn draw_app_config_menu_button(&mut self, ui: &mut egui::Ui) {
+    fn draw_app_config_menu_button(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         let locale = self.app_context.locale;
         ui.add_enabled_ui(true, |ui| {
             ui.reset_style();
@@ -464,7 +464,7 @@ impl MacroSolverApp {
                     ui.horizontal(|ui| {
                         ui.label(t!(locale, "Zoom"));
 
-                        let mut zoom_percentage = (ui.zoom_factor() * 100.0).round() as u16;
+                        let mut zoom_percentage = (ctx.zoom_factor() * 100.0).round() as u16;
                         ui.horizontal(|ui| {
                             ui.style_mut().spacing.item_spacing.x = 4.0;
                             ui.add_enabled_ui(zoom_percentage > 50, |ui| {
@@ -494,7 +494,7 @@ impl MacroSolverApp {
                         );
 
                         self.app_context.app_config.zoom_percentage = zoom_percentage;
-                        ui.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
+                        ctx.set_zoom_factor(f32::from(zoom_percentage) * 0.01);
                     });
 
                     ui.separator();
@@ -587,9 +587,9 @@ impl MacroSolverApp {
                     }
                     ui.add_space(-5.0);
                     ui.vertical_centered_justified(|ui| {
-                        let text_color = ui.global_style().visuals.selection.stroke.color;
+                        let text_color = ui.ctx().style().visuals.selection.stroke.color;
                         let text = egui::RichText::new(t!(locale, "Solve")).color(text_color);
-                        let fill_color = ui.global_style().visuals.selection.bg_fill;
+                        let fill_color = ui.ctx().style().visuals.selection.bg_fill;
                         let id = egui::Id::new("SOLVE_INITIATED");
                         let mut solve_initiated = ui
                             .ctx()

@@ -97,9 +97,10 @@ impl Widget for FoodSelect<'_> {
                 }
                 ui.separator();
 
-                let search_result = ui.ctx().memory_mut(|mem| {
+                let mut search_result = Vec::new();
+                ui.ctx().memory_mut(|mem| {
                     let search_cache = mem.caches.cache::<FoodSearchCache<'_>>();
-                    search_cache.get((&search_text, self.locale)).clone()
+                    search_result = search_cache.get((&search_text, self.locale));
                 });
 
                 ui.ctx().data_mut(|data| {

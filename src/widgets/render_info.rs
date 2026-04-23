@@ -211,10 +211,6 @@ impl<'a> RenderInfo<'a> {
                 driver,
                 driver_info,
                 backend,
-                device_pci_bus_id,
-                subgroup_min_size,
-                subgroup_max_size,
-                transient_saves_memory,
             } = &adapter.get_info();
 
             ui.horizontal(|ui| {
@@ -250,19 +246,6 @@ impl<'a> RenderInfo<'a> {
                             ui.label(format!("0x{device:02X}"));
                             ui.end_row();
                         }
-                        if !device_pci_bus_id.is_empty() {
-                            ui.label("PCI Bus ID:");
-                            ui.label(device_pci_bus_id.as_str());
-                            ui.end_row();
-                        }
-                        if *subgroup_min_size != 0 || *subgroup_max_size != 0 {
-                            ui.label("Subgroup size:");
-                            ui.label(format!("{subgroup_min_size}..={subgroup_max_size}"));
-                            ui.end_row();
-                        }
-                        ui.label("Transient saves memory:");
-                        ui.label(format!("{transient_saves_memory}"));
-                        ui.end_row();
                     });
                 });
             });
