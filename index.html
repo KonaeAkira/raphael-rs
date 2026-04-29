@@ -239,6 +239,14 @@
                 <hr />
                 <p style="margin-inline: auto;">Reload the page after to try again</p>
             </div>
+            <div id="unexpected_error_modal" class="modal weak-text" style="display: none;">
+                <p class="strong-text">Error: Unexpected exception occured!</p>
+                <hr />
+                <p>Details:</p>
+                <textarea id="unexpected_error_raw" class="code_block" rows="4" readonly></textarea>
+                <hr />
+                <p style="margin-inline: auto;">Reload the page to reset the app</p>
+            </div>
         </div>
         <!-- The WASM code will resize the canvas dynamically -->
         <!-- the id is hardcoded in main.rs . so, make sure both match. -->
@@ -247,14 +255,20 @@
         <script>
             window.addEventListener("error", (event) => {
                 console.error(event);
-                modal_container.removeAttribute("style");
-                const raphael_related = /raphael-xiv.*.wasm/.test(event.filename) || /raphael-xiv.*.js/.test(event.filename);
-                if (raphael_related && event.error === "OOM panic") {
-                    memory_error_modal.removeAttribute("style");
-                } else if (raphael_related && event.error.startsWith("failed to create wgpu surface")) {
-                    wgpu_error_raw.innerText = event.error;
-                    wgpu_error_modal.removeAttribute("style");
-                }
+
+                const raphael_related = /raphael-xiv.*\.(wasm|js)/.test(event.filename);
+                if (raphael_related) {
+                    modal_container.removeAttribute("style");
+                    if (event.error === "OOM panic") {
+                        memory_error_modal.removeAttribute("style");
+                    } else if (typeof event.error === "string" && event.error.startsWith("failed to create wgpu surface")) {
+                        wgpu_error_raw.innerText = event.error;
+                        wgpu_error_modal.removeAttribute("style");
+                    } else {
+                        unexpected_error_raw.innerText = event.error;
+                        unexpected_error_modal.removeAttribute("style");
+                    }
+                } 
             });
         </script>
     </body>
