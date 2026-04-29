@@ -33,17 +33,14 @@
             :root {
                 color-scheme: light dark;
 
-                /* Colors and style roughly matching egui's default themes */
-                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1387 */
+                /* Colors and style roughly matching egui's default themes (see egui's `crates/egui/src/style.rs`) */
                 --hyperlink-color: light-dark(rgb(0, 155, 255), rgb(90, 170, 255));
-                --window-panel-fill-dark: rgb(27, 27, 27);
-                --window-panel-fill-light: rgb(248, 248, 248);
-                --window-panel-fill-color: light-dark(var(--window-panel-fill-light), var(--window-panel-fill-dark));
+                --extreme-bg-color: light-dark(rgb(255, 255, 255), rgb(10, 10, 10));
+                --code-bg-color: light-dark(rgb(230, 230, 230), rgb(64, 64, 64));
+                --window-panel-fill-color: light-dark(rgb(248, 248, 248), rgb(27, 27, 27));
                 --window-separator-stroke-color: light-dark(rgb(190, 190, 190), rgb(60, 60, 60));
                 --shadow-color: light-dark(rgb(0, 0, 0, 0.0980), rgb(0, 0, 0, 0.3765)); /*  a=25, a=96 */
-                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1499 */
                 --selection-bg-fill-color: light-dark(rgb(144, 209, 255), rgb(0, 92, 128));
-                /* https://github.com/emilk/egui/blob/main/crates/egui/src/style.rs#L1521 */
                 --noninteractive-fg-stroke-color: light-dark(rgb(80, 80, 80), rgb(140, 140, 140));
                 --active-fg-stroke-color: light-dark(black, white);
             }
@@ -87,6 +84,14 @@
                 height: 100%;
             }
 
+            code {
+                background-color: var(--code-bg-color);
+            }
+
+            textarea {
+                background-color: var(--extreme-bg-color);
+            }
+
             .centering {
                 position: absolute;
                 display: grid;
@@ -94,6 +99,15 @@
                 place-items: center;
 
                 pointer-events: none;
+            }
+
+            .code_block {
+                box-sizing: border-box;
+                width: 100%;
+                border: none;
+                resize: none;
+
+                font: lighter 1em monospace;
             }
 
             /* Loading animation from https://cssloaders.github.io/ */
@@ -215,12 +229,28 @@
                 <hr />
                 <p style="margin-inline: auto;">Reload the page to reset the app</p>
             </div>
-             <div id="webgl_error_modal" class="modal weak-text" style="display: none;">
-                <p class="strong-text">Error: WebGL is not available!</p>
+            <div id="wgpu_error_modal" class="modal weak-text" style="display: none;">
+                <p class="strong-text">Error: <code>wgpu</code> failed to initialize!</p>
                 <hr />
-                <p>Please enable WebGL support in your browser.</p>
+                <p>Please enable WebGL 2.0 or WebGPU support in your browser.</p>
+                <details name="wgpu_error_details"><summary>Details</summary>
+                    <textarea id="wgpu_error_raw" class="code_block" rows="4" readonly></textarea>
+                    <table>
+                        <tr><td><label for="WebGPU_support">WebGPU</label></td><td><input type="checkbox" name="WebGPU_support" disabled/></td></tr>
+                        <tr><td><label for="WebGL2_support">WebGL 2.0</label></td><td><input type="checkbox" name="WebGL2_support" disabled/></td></tr>
+                        <tr><td><label for="WebGL1_support">WebGL 1.0</label></td><td><input type="checkbox" name="WebGL1_support" disabled/></td></tr>
+                    </table>
+                </details>
                 <hr />
                 <p style="margin-inline: auto;">Reload the page after to try again</p>
+            </div>
+            <div id="unexpected_error_modal" class="modal weak-text" style="display: none;">
+                <p class="strong-text">Error: Unexpected exception occured!</p>
+                <hr />
+                <p>Details:</p>
+                <textarea id="unexpected_error_raw" class="code_block" rows="4" readonly></textarea>
+                <hr />
+                <p style="margin-inline: auto;">Reload the page to reset the app</p>
             </div>
         </div>
         <!-- The WASM code will resize the canvas dynamically -->
@@ -230,13 +260,24 @@
         <script>
             window.addEventListener("error", (event) => {
                 console.error(event);
-                modal_container.removeAttribute("style");
-                const raphael_related = /raphael-xiv.*.wasm/.test(event.filename) || /raphael-xiv.*.js/.test(event.filename);
-                if (raphael_related && event.error === "OOM panic") {
-                    memory_error_modal.removeAttribute("style");
-                } else if (raphael_related && event.error === "WebGL isn't supported") {
-                    webgl_error_modal.removeAttribute("style");
-                }
+
+                const raphael_related = /raphael-xiv.*\.(wasm|js)/.test(event.filename);
+                if (raphael_related) {
+                    modal_container.removeAttribute("style");
+                    if (event.error === "OOM panic") {
+                        memory_error_modal.removeAttribute("style");
+                    } else if (typeof event.error === "string" && event.error.startsWith("failed to create wgpu surface")) {
+                        wgpu_error_raw.innerText = event.error;
+                        document.getElementsByName("WebGPU_support")[0].checked = navigator.gpu && document.createElement("canvas").getContext("webgpu");
+                        document.getElementsByName("WebGL2_support")[0].checked = document.createElement("canvas").getContext("webgl2");
+                        document.getElementsByName("WebGL1_support")[0].checked = document.createElement("canvas").getContext("webgl");
+
+                        wgpu_error_modal.removeAttribute("style");
+                    } else {
+                        unexpected_error_raw.innerText = event.error;
+                        unexpected_error_modal.removeAttribute("style");
+                    }
+                } 
             });
         </script>
     </body>
