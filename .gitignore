@@ -21,3 +21,6 @@ distrib/
 # Ignore perf data
 perf.data
 perf.data.old
+
+# raphael-data-updater version check
+raphael-data-updater/latest-versions.toml

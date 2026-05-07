@@ -1,7 +1,8 @@
 mod recipe;
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{Read, Seek, Write},
+    path::Path,
 };
 
 pub use recipe::Recipe;
@@ -88,15 +89,24 @@ pub struct LatestVersions {
 
 impl LatestVersions {
     pub fn new(global: String, cn: String, kr: String, tw: String) -> Self {
-        let mut file = std::fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("latest-versions.toml"))
-            .expect("Failed to open latest versions TOML file!");
-        file.lock().unwrap();
-        let mut latest_versions = String::new();
-        file.read_to_string(&mut latest_versions).unwrap();
-        let toml = latest_versions.parse::<DocumentMut>().unwrap();
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("latest-versions.toml");
+        let (file, toml) = if path.is_file() {
+            let mut file = fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(path)
+                .expect("Failed to open latest versions TOML file");
+            file.lock().unwrap();
+            let mut latest_versions = String::new();
+            file.read_to_string(&mut latest_versions).unwrap();
+            let toml = latest_versions.parse::<DocumentMut>().unwrap();
+            (file, toml)
+        } else {
+            let file = File::create(path).expect("Failed to create latest versions TOML file");
+            file.lock().unwrap();
+            let toml = DocumentMut::new();
+            (file, toml)
+        };
 
         Self {
             global,
@@ -109,7 +119,8 @@ impl LatestVersions {
     }
 
     pub fn versions_match_saved(&self) -> bool {
-        self.toml["global"].as_str() == Some(&self.global)
+        !self.toml.is_empty()
+            && self.toml["global"].as_str() == Some(&self.global)
             && self.toml["cn"].as_str() == Some(&self.cn)
             && self.toml["kr"].as_str() == Some(&self.kr)
             && self.toml["tw"].as_str() == Some(&self.tw)
