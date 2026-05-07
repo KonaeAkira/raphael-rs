@@ -78,17 +78,27 @@ impl Lang {
     }
 }
 
+pub struct XivapiVersionInfo {
+    pub key: String,
+    pub name: Option<String>,
+}
+
 pub struct LatestVersions {
-    pub global: String,
-    pub cn: String,
-    pub kr: String,
-    pub tw: String,
+    pub global: XivapiVersionInfo,
+    pub cn: XivapiVersionInfo,
+    pub kr: XivapiVersionInfo,
+    pub tw: XivapiVersionInfo,
     file: File,
     toml: DocumentMut,
 }
 
 impl LatestVersions {
-    pub fn new(global: String, cn: String, kr: String, tw: String) -> Self {
+    pub fn new(
+        global: XivapiVersionInfo,
+        cn: XivapiVersionInfo,
+        kr: XivapiVersionInfo,
+        tw: XivapiVersionInfo,
+    ) -> Self {
         let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("latest-versions.toml");
         let (file, toml) = if path.is_file() {
             let mut file = fs::OpenOptions::new()
@@ -120,17 +130,29 @@ impl LatestVersions {
 
     pub fn versions_match_saved(&self) -> bool {
         !self.toml.is_empty()
-            && self.toml["global"].as_str() == Some(&self.global)
-            && self.toml["cn"].as_str() == Some(&self.cn)
-            && self.toml["kr"].as_str() == Some(&self.kr)
-            && self.toml["tw"].as_str() == Some(&self.tw)
+            && self.toml["global"].as_str() == Some(&self.global.key)
+            && self.toml["cn"].as_str() == Some(&self.cn.key)
+            && self.toml["kr"].as_str() == Some(&self.kr.key)
+            && self.toml["tw"].as_str() == Some(&self.tw.key)
     }
 
     pub fn write_versions_to_file(mut self) {
-        self.toml["global"] = toml_edit::value(self.global);
-        self.toml["cn"] = toml_edit::value(self.cn);
-        self.toml["kr"] = toml_edit::value(self.kr);
-        self.toml["tw"] = toml_edit::value(self.tw);
+        for (version, version_info) in [
+            ("global", self.global),
+            ("cn", self.cn),
+            ("kr", self.kr),
+            ("tw", self.tw),
+        ] {
+            let XivapiVersionInfo { key, name } = version_info;
+            let value = toml_edit::Value::String(toml_edit::Formatted::new(key)).decorated(
+                " ",
+                name.map_or::<toml_edit::RawString, _>("".into(), |name| {
+                    format!(" # {}", name).into()
+                }),
+            );
+            self.toml[version] = toml_edit::Item::Value(value);
+        }
+
         self.file.set_len(0).unwrap();
         self.file.rewind().unwrap();
         self.file
@@ -139,7 +161,7 @@ impl LatestVersions {
     }
 }
 
-pub async fn fetch_latest_version_key(lang: Lang) -> Result<String, reqwest::Error> {
+pub async fn fetch_latest_version_info(lang: Lang) -> Result<XivapiVersionInfo, reqwest::Error> {
     let response_text = reqwest::Client::new()
         .get(format!("{}/version", lang.api_endpoint()))
         .send()
@@ -151,7 +173,17 @@ pub async fn fetch_latest_version_key(lang: Lang) -> Result<String, reqwest::Err
         .members()
         .find_map(|version| {
             if version["names"].contains("latest") {
-                Some(version["key"].as_str().unwrap().to_string())
+                Some(XivapiVersionInfo {
+                    key: version["key"].as_str().unwrap().to_string(),
+                    name: version["names"].members().find_map(|name| {
+                        let name = name.as_str().unwrap();
+                        if name != "latest" {
+                            Some(name.to_string())
+                        } else {
+                            None
+                        }
+                    }),
+                })
             } else {
                 None
             }

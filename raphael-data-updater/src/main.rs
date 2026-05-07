@@ -144,10 +144,10 @@ async fn main() {
         env_logger::builder().format_timestamp(None).init();
     }
 
-    let global_version = tokio::spawn(fetch_latest_version_key(Lang::EN));
-    let cn_version = tokio::spawn(fetch_latest_version_key(Lang::CN));
-    let kr_version = tokio::spawn(fetch_latest_version_key(Lang::KR));
-    let tw_version = tokio::spawn(fetch_latest_version_key(Lang::TW));
+    let global_version = tokio::spawn(fetch_latest_version_info(Lang::EN));
+    let cn_version = tokio::spawn(fetch_latest_version_info(Lang::CN));
+    let kr_version = tokio::spawn(fetch_latest_version_info(Lang::KR));
+    let tw_version = tokio::spawn(fetch_latest_version_info(Lang::TW));
 
     let global_version = global_version.await.unwrap().unwrap();
     let cn_version = cn_version.await.unwrap().unwrap();
