@@ -58,11 +58,7 @@ fn step_lower_bound_unreachable_quality_no_panic() {
         base_progress: 9,
         base_quality: 38,
         job_level: 5,
-        allowed_actions: ActionMask::all()
-            .remove(Action::Manipulation)
-            .remove(Action::TrainedEye)
-            .remove(Action::HeartAndSoul)
-            .remove(Action::QuickInnovation),
+        allowed_actions: ActionMask::regular(),
         adversarial: false,
         backload_progress: false,
         stellar_steady_hand_charges: 0,
