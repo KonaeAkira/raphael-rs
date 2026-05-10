@@ -50,24 +50,6 @@ fn check_consistency(solver_settings: SolverSettings) {
 /// 3 quality actions that can generate at most 124 quality — never reaching max_quality=130.
 #[test]
 fn step_lower_bound_unreachable_quality_no_panic() {
-    // Recipe: Fingerless Leather Gloves (recipe_id=309, item_id=3530)
-    // Crafter: level 5 Leatherworker, craftsmanship=39, control=9, cp=180
-    //
-    // max_progress, max_quality, max_durability:
-    //   rlvls.rs index 4: { max_progress: 21, max_quality: 130, max_durability: 60, ... }
-    //   multiplied by recipe progress_factor/quality_factor/durability_factor (all 100)
-    //
-    // base_progress = craftsmanship*10 / progress_div + 2 = 39*10/50 + 2 = 9.8 → 9
-    //   (progress_div=50 from rlvls.rs; crafter level 5 > recipe job_level 4, no modifier penalty)
-    //
-    // base_quality = control*10 / quality_div + 35 = 9*10/30 + 35 = 38.0 → 38
-    //   (quality_div=30 from rlvls.rs; same level rule as above)
-    //
-    // allowed_actions: ActionMask::all() minus the four actions get_game_settings removes:
-    //   Manipulation  — crafter_stats.manipulation = false (level 65 skill, not unlocked)
-    //   TrainedEye    — crafter level (5) < recipe job_level (4) + 10 = 14
-    //   HeartAndSoul  — crafter_stats.heart_and_soul = false
-    //   QuickInnovation — crafter_stats.quick_innovation = false
     let simulator_settings = Settings {
         max_progress: 21,
         max_quality: 130,
