@@ -10,11 +10,14 @@ else
     export BASE_URL=$CF_PAGES_URL
 fi
 
+# Load shared Rust toolchain version
+. ./rust-versions.env
+
 # Install the Rust toolchain
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 . "$HOME/.cargo/env"
 
-rustup update nightly && rustup default nightly
+rustup install "$TOOLCHAIN" && rustup default "$TOOLCHAIN"
 rustup component add rust-src
 rustup target add wasm32-unknown-unknown
 
