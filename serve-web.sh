@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 
-set -exo pipefail
+# set -exo pipefail
 
 export BASE_URL="http://localhost:8080"
 
-# Requires nightly toolchain, rust-src component, and wasm32-unknown-unkown target
-# rustup update nightly && rustup default nightly
-# rustup component add rust-src
-# rustup target add wasm32-unknown-unknown
+# Load shared Rust toolchain version (scoped to this script — does not change rustup default)
+. ./rust-versions.env
+
+# Makes trunk use the right toolchain version without changing the global default toolchain.
+export RUSTUP_TOOLCHAIN="$TOOLCHAIN"
+
+rustup toolchain install "$TOOLCHAIN" --no-self-update
+rustup component add --toolchain "$TOOLCHAIN" rust-src
+rustup target add --toolchain "$TOOLCHAIN" wasm32-unknown-unknown
 
 cp --no-target-directory ./.cargo/config.toml ./.cargo/config.toml.backup
 cp --no-target-directory ./.cargo/config_wasm.toml ./.cargo/config.toml
