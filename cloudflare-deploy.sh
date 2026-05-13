@@ -11,12 +11,8 @@ else
 fi
 
 # Install the Rust toolchain
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none
 . "$HOME/.cargo/env"
-
-rustup update nightly && rustup default nightly
-rustup component add rust-src
-rustup target add wasm32-unknown-unknown
 
 cp --no-target-directory ./.cargo/config.toml ./.cargo/config.toml.backup
 cp --no-target-directory ./.cargo/config_wasm.toml ./.cargo/config.toml
