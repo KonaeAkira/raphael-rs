@@ -5,7 +5,7 @@ set -euxo pipefail
 
 # Base URL used to fetch assets
 if [ "$CF_PAGES_BRANCH" == "main" ]; then
-    export BASE_URL="https://www.raphael-xiv.com"`
+    export BASE_URL="https://www.raphael-xiv.com"
 else
     export BASE_URL=$CF_PAGES_URL
 fi
