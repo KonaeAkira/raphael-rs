@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  MSRV: 1.92.0
 
 jobs:
   check-linux:
@@ -15,21 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check that workspace builds with MSRV
-        run: cargo +1.92.0 check --workspace
-
-      - name: Install required components
-        run: rustup component add --toolchain nightly clippy rust-src
+        run: cargo +${{ env.MSRV }} check --workspace
       - name: Check for clippy warnings when building native version
-        run: cargo +nightly clippy --workspace -- -Dwarnings
+        run: cargo clippy --workspace -- -Dwarnings
       - name: Check for clippy warnings when building web version
-        run: BASE_URL=localhost cargo +nightly clippy --config ./.cargo/config_wasm.toml -- -Dwarnings
+        run: BASE_URL=localhost cargo clippy --config ./.cargo/config_wasm.toml -- -Dwarnings
 
   check-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - name: Check that workspace builds with MSRV
-        run: cargo +1.92.0 check --workspace
+        run: cargo +${{ env.MSRV }} check --workspace
 
   run-tests:
     runs-on: ubuntu-latest

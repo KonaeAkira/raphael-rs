@@ -110,7 +110,10 @@ impl<'alloc> StepLbSolver<'alloc> {
             .quality_upper_bound(state, hint)?
             .is_none_or(|quality_ub| quality_ub < self.context.settings.max_quality())
         {
-            hint = hint.checked_add(1).unwrap();
+            match hint.checked_add(1) {
+                Some(new_hint) => hint = new_hint,
+                None => return Ok(u8::MAX),
+            }
         }
         Ok(hint.get())
     }
@@ -171,7 +174,10 @@ impl<'main, 'alloc> StepLbSolverShard<'main, 'alloc> {
             .quality_upper_bound(state, hint)?
             .is_none_or(|quality_ub| quality_ub < self.context.settings.max_quality())
         {
-            hint = hint.checked_add(1).unwrap();
+            match hint.checked_add(1) {
+                Some(new_hint) => hint = new_hint,
+                None => return Ok(u8::MAX),
+            }
         }
         Ok(hint.get())
     }

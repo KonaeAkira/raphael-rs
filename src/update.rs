@@ -45,7 +45,7 @@ pub fn check_for_update() {
             let latest_version =
                 semver::Version::parse(parsed_response.tag_name.trim_start_matches('v'))?;
             if CURRENT_VERSION.ge(&latest_version) {
-                log::info!("Already up-to-date. Latest version: {}.", &latest_version);
+                log::info!("Already up-to-date. Latest version: {}.", latest_version);
                 return Ok(());
             }
             let asset_url = parsed_response
@@ -169,7 +169,7 @@ fn download_and_replace_executable(asset_url: &str) {
         move |result: ehttp::Result<ehttp::Response>| {
             if let Err(error) = process_response(result) {
                 let error_message = format!("{:?}", error);
-                log::error!("Error when updating to latest version: {}", &error_message);
+                log::error!("Error when updating to latest version: {}", error_message);
                 *UPDATE_STATUS.lock().unwrap() = UpdateStatus::Error(error_message);
             }
         },
