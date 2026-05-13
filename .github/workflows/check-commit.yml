@@ -8,8 +8,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_STABLE_VERSION: 1.92.0
-  RUST_NIGHTLY_VERSION: nightly-2026-05-10
+  MSRV: 1.92.0
+  CLIPPY_VERSION: nightly-2026-05-10
 
 jobs:
   check-linux:
@@ -17,21 +17,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check that workspace builds with MSRV
-        run: cargo +${{ env.RUST_STABLE_VERSION }} check --workspace
+        run: cargo +${{ env.MSRV }} check --workspace
 
       - name: Install required components
-        run: rustup component add --toolchain ${{ env.RUST_NIGHTLY_VERSION }} clippy rust-src
+        run: rustup component add --toolchain ${{ env.CLIPPY_VERSION }} clippy rust-src
       - name: Check for clippy warnings when building native version
-        run: cargo +${{ env.RUST_NIGHTLY_VERSION }} clippy --workspace -- -Dwarnings
+        run: cargo +${{ env.CLIPPY_VERSION }} clippy --workspace -- -Dwarnings
       - name: Check for clippy warnings when building web version
-        run: BASE_URL=localhost cargo +${{ env.RUST_NIGHTLY_VERSION }} clippy --config ./.cargo/config_wasm.toml -- -Dwarnings
+        run: BASE_URL=localhost cargo +${{ env.CLIPPY_VERSION }} clippy --config ./.cargo/config_wasm.toml -- -Dwarnings
 
   check-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - name: Check that workspace builds with MSRV
-        run: cargo +${{ env.RUST_STABLE_VERSION }} check --workspace
+        run: cargo +${{ env.MSRV }} check --workspace
 
   run-tests:
     runs-on: ubuntu-latest
