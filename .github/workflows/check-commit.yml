@@ -40,5 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Load Rust toolchain versions
+        run: cat rust-versions.env >> $GITHUB_ENV
       - name: Run all tests
-        run: cargo test --verbose --workspace
+        run: cargo +${{ env.TOOLCHAIN }} test --verbose --workspace
