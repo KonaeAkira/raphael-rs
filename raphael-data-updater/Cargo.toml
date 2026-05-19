@@ -1,13 +1,15 @@
 [package]
 name = "raphael-data-updater"
+version = "0.1.0"
 edition = "2024"
 
 [lints]
 workspace = true
 
 [dependencies]
-tokio = { version = "1.48.0", features = ["full"] }
-reqwest = "0.12.24"
+tokio = { version = "1.52", features = ["full"] }
+reqwest = { version = "0.13", features = ["zstd"] }
 json = "0.12.4"
+toml_edit = { workspace = true }
 log = { workspace = true }
 env_logger = "0.11.8"

@@ -134,7 +134,36 @@ fn export_stellar_mission_names(stellar_mission_names: &[StellarMissionName], la
 
 #[tokio::main]
 async fn main() {
-    env_logger::builder().format_timestamp(None).init();
+    // Set log level to `Info` if not specified via `env_logger`'s default environment variable
+    if std::env::var_os("RUST_LOG").is_none() {
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .format_timestamp(None)
+            .init();
+    } else {
+        env_logger::builder().format_timestamp(None).init();
+    }
+
+    let global_version = tokio::spawn(fetch_latest_version_info(Lang::EN));
+    let cn_version = tokio::spawn(fetch_latest_version_info(Lang::CN));
+    let kr_version = tokio::spawn(fetch_latest_version_info(Lang::KR));
+    let tw_version = tokio::spawn(fetch_latest_version_info(Lang::TW));
+
+    let global_version = global_version.await.unwrap().unwrap();
+    let cn_version = cn_version.await.unwrap().unwrap();
+    let kr_version = kr_version.await.unwrap().unwrap();
+    let tw_version = tw_version.await.unwrap().unwrap();
+
+    let latest_versions = LatestVersions::new(global_version, cn_version, kr_version, tw_version);
+
+    if std::env::var_os("RAPHAEL_DATA_UPDATER_SKIP_VERSION_CHECK").is_none()
+        && latest_versions.versions_match_saved()
+    {
+        log::info!(
+            "Already up to date. Set the environment variable `RAPHAEL_DATA_UPDATER_SKIP_VERSION_CHECK` to force the updater to run."
+        );
+        std::process::exit(0);
+    }
 
     let rlvls = tokio::spawn(fetch_and_parse::<RecipeLevel>(Lang::EN));
     let level_adjust_table = tokio::spawn(fetch_and_parse::<LevelAdjustTableEntry>(Lang::EN));
@@ -280,4 +309,6 @@ async fn main() {
     export_stellar_mission_names(&stellar_mission_names_cn, Lang::CN.shortcode());
     export_stellar_mission_names(&stellar_mission_names_kr, Lang::KR.shortcode());
     export_stellar_mission_names(&stellar_mission_names_tw, Lang::TW.shortcode());
+
+    latest_versions.write_versions_to_file();
 }
