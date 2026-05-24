@@ -510,7 +510,6 @@ fn daring_touch_interrupted_combo() {
 }
 
 #[test]
-#[ignore]
 /// https://github.com/KonaeAkira/raphael-rs/issues/298
 fn low_level_steplbsolver_crash() {
     let simulator_settings = Settings {
@@ -531,13 +530,38 @@ fn low_level_steplbsolver_crash() {
         allow_non_max_quality_solutions: true,
     };
     let expected_score = expect![[r#"
-        TODO
+        Ok(
+            SolutionScore {
+                capped_quality: 0,
+                steps: 3,
+                duration: 9,
+                overflow_quality: 0,
+            },
+        )
     "#]];
     let expected_runtime_stats = expect![[r#"
-        TODO
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 3,
+                processed_nodes: 3,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 6,
+                values: 6,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 556,
+                states_on_shards: 1,
+                values: 1278,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 0,
+                states_on_shards: 0,
+                values: 0,
+            },
+        }
     "#]];
-    let actions = test_with_settings(solver_settings, expected_score, expected_runtime_stats);
-    assert_eq!(actions, []);
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
 
 #[test]
