@@ -563,13 +563,8 @@ fn solution_must_reach_target_quality() {
         allow_non_max_quality_solutions: false,
     };
     let expected_score = expect![[r#"
-        Ok(
-            SolutionScore {
-                capped_quality: 9338,
-                steps: 25,
-                duration: 66,
-                overflow_quality: 0,
-            },
+        Err(
+            NoSolution,
         )
     "#]];
     let expected_runtime_stats = expect![[r#"

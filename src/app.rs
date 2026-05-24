@@ -138,6 +138,7 @@ impl eframe::App for MacroSolverApp {
                         ui.label(egui::RichText::new(t!(locale, "No solution")).strong());
                         ui.separator();
                         ui.label(t!(locale, "Cannot complete synthesis."));
+                        self.actions.clear();
                         if self.app_context.solver_config.must_reach_target_quality
                             && self.app_context.game_settings().max_quality != 0
                         {
