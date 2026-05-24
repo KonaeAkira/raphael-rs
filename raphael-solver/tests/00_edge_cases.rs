@@ -539,3 +539,55 @@ fn low_level_steplbsolver_crash() {
     let actions = test_with_settings(solver_settings, expected_score, expected_runtime_stats);
     assert_eq!(actions, []);
 }
+
+#[test]
+/// Test a bug where the solver would sometimes give a macro that does not reach target quality
+/// even with `allow_non_max_quality_solutions = false`.
+/// https://github.com/KonaeAkira/raphael-rs/issues/352
+fn solution_must_reach_target_quality() {
+    let simulator_settings = Settings {
+        max_cp: 710,
+        max_durability: 35,
+        max_progress: 5622,
+        max_quality: 14204,
+        base_progress: 300,
+        base_quality: 280,
+        job_level: 100,
+        allowed_actions: ActionMask::regular(),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 0,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: false,
+    };
+    let expected_score = expect![[r#"
+        Err(
+            NoSolution,
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 3294,
+                processed_nodes: 2866,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 7042,
+                values: 91214,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 975933,
+                states_on_shards: 24437,
+                values: 21621882,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 472838,
+                states_on_shards: 69855,
+                values: 10657631,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}

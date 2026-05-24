@@ -211,6 +211,13 @@ impl<'a> MacroSolver<'a> {
             step_lb_stats: step_lb_solver.runtime_stats(),
         };
 
+        if let Some(solution) = &solution
+            && solution.score.0.quality_upper_bound < self.settings.max_quality()
+            && !self.settings.allow_non_max_quality_solutions
+        {
+            return Err(SolverException::NoSolution);
+        }
+
         solution.ok_or(SolverException::NoSolution)
     }
 
