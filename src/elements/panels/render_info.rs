@@ -48,6 +48,8 @@ impl EguiWindows {
 
 #[derive(Debug, Clone)]
 pub struct RenderInfoState {
+    pub shown: bool,
+
     run_mode: RunMode,
     cpu_usage_history: History<f32>,
     frame_time_history: History<f32>,
@@ -105,6 +107,8 @@ impl RenderInfoState {
 impl Default for RenderInfoState {
     fn default() -> Self {
         Self {
+            shown: false,
+
             run_mode: RunMode::Reactive,
             cpu_usage_history: History::new(0..300, 1.0),
             frame_time_history: History::new(0..300, 1.0),
@@ -119,15 +123,12 @@ impl Default for RenderInfoState {
     }
 }
 
-pub struct RenderInfo<'a> {
-    state: &'a mut RenderInfoState,
+#[derive(Debug, Default)]
+pub struct RenderInfo {
+    pub state: RenderInfoState,
 }
 
-impl<'a> RenderInfo<'a> {
-    pub fn new(state: &'a mut RenderInfoState) -> Self {
-        Self { state }
-    }
-
+impl RenderInfo {
     pub fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         self.state.update(ui.ctx(), frame);
 

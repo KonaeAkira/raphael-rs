@@ -24,4 +24,4 @@ pub use saved_rotations::{
 #[cfg(any(debug_assertions, feature = "dev-panel"))]
 mod render_info;
 #[cfg(any(debug_assertions, feature = "dev-panel"))]
-pub use render_info::{RenderInfo, RenderInfoState};
+pub use render_info::RenderInfo;

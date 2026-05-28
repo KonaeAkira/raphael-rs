@@ -23,18 +23,8 @@ enum SolverEvent {
     Finished(Option<SolverException>),
 }
 
-#[cfg(any(debug_assertions, feature = "dev-panel"))]
-#[derive(Debug, Default)]
-struct DevPanelState {
-    show_dev_panel: bool,
-    render_info_state: RenderInfoState,
-}
-
 pub struct MacroSolverApp {
     app_context: AppContext,
-
-    #[cfg(any(debug_assertions, feature = "dev-panel"))]
-    dev_panel_state: DevPanelState,
 
     stats_edit_window_open: bool,
     saved_rotations_window_open: bool,
@@ -49,6 +39,9 @@ pub struct MacroSolverApp {
 
     solver_events: Arc<Mutex<VecDeque<SolverEvent>>>,
     solver_interrupt: raphael_solver::AtomicFlag,
+
+    #[cfg(any(debug_assertions, feature = "dev-panel"))]
+    render_info: RenderInfo,
 }
 
 impl MacroSolverApp {
@@ -76,9 +69,6 @@ impl MacroSolverApp {
         Self {
             app_context,
 
-            #[cfg(any(debug_assertions, feature = "dev-panel"))]
-            dev_panel_state: DevPanelState::default(),
-
             stats_edit_window_open: false,
             saved_rotations_window_open: false,
             missing_stats_error_window_open: false,
@@ -92,6 +82,9 @@ impl MacroSolverApp {
 
             solver_events: Arc::new(Mutex::new(VecDeque::new())),
             solver_interrupt: raphael_solver::AtomicFlag::new(),
+
+            #[cfg(any(debug_assertions, feature = "dev-panel"))]
+            render_info: RenderInfo::default(),
         }
     }
 }
@@ -292,11 +285,10 @@ impl eframe::App for MacroSolverApp {
                         #[cfg(any(debug_assertions, feature = "dev-panel"))]
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             if ui
-                                .selectable_label(self.dev_panel_state.show_dev_panel, "Dev Panel")
+                                .selectable_label(self.render_info.state.shown, "Dev Panel")
                                 .clicked()
                             {
-                                self.dev_panel_state.show_dev_panel =
-                                    !self.dev_panel_state.show_dev_panel;
+                                self.render_info.state.shown = !self.render_info.state.shown;
                             }
                             egui::warn_if_debug_build(ui);
                             ui.separator();
@@ -306,12 +298,12 @@ impl eframe::App for MacroSolverApp {
         });
 
         #[cfg(any(debug_assertions, feature = "dev-panel"))]
-        if self.dev_panel_state.show_dev_panel {
+        if self.render_info.state.shown {
             egui::Panel::right("dev_panel")
                 .resizable(true)
                 .show_inside(ui, |ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
-                    RenderInfo::new(&mut self.dev_panel_state.render_info_state).ui(ui, _frame);
+                    self.render_info.ui(ui, _frame);
                 });
         }
 
