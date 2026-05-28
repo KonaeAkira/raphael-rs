@@ -1,4 +1,4 @@
-use crate::widgets::util::max_text_width;
+use crate::elements::util::max_text_width;
 
 pub struct DropDown<'a, T, const N: usize, Formatter> {
     id: egui::Id,

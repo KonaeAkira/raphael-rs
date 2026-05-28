@@ -6,7 +6,7 @@ use raphael_translations::t;
 use crate::{
     config::CrafterConfig,
     context::AppContext,
-    widgets::util::{add_sized_labeled_widget, text_width},
+    elements::{util, widgets::add_sized_labeled_widget},
 };
 
 pub struct StatsEdit<'a> {
@@ -109,7 +109,11 @@ impl Widget for StatsEdit<'_> {
                             input_enabled,
                             egui::TextEdit::singleline(input_string)
                                 .hint_text(hint_text)
-                                .desired_width(text_width(ui, hint_text, egui::TextStyle::Body)),
+                                .desired_width(util::text_width(
+                                    ui,
+                                    hint_text,
+                                    egui::TextStyle::Body,
+                                )),
                         );
                         if input_response.changed()
                             && let Ok(crafter_config) = ron::from_str(input_string)

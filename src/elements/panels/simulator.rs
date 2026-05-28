@@ -5,10 +5,8 @@ use raphael_translations::{t, t_format};
 use crate::{
     config::QualityTarget,
     context::{AppContext, SolverConfig},
-    widgets::util::max_text_width,
+    elements::{util, widgets::HelpText},
 };
-
-use super::{HelpText, util};
 
 pub struct Simulator<'a> {
     settings: Settings,
@@ -91,7 +89,7 @@ impl Simulator<'_> {
 
                 ui.separator();
 
-                let max_text_width = max_text_width(
+                let max_text_width = util::max_text_width(
                     ui,
                     [
                         t!(locale, "Progress"),
@@ -231,9 +229,10 @@ impl Simulator<'_> {
                             .add(image)
                             .on_hover_text(raphael_data::action_name(*action, self.locale));
                         if error.is_err() {
-                            egui::Image::new(egui::include_image!(
-                                "../../assets/action-icons/disabled.webp"
-                            ))
+                            egui::Image::new(egui::include_image!(concat!(
+                                env!("CARGO_MANIFEST_DIR"),
+                                "/assets/action-icons/disabled.webp"
+                            )))
                             .tint(egui::Color32::GRAY)
                             .paint_at(ui, response.rect);
                         }

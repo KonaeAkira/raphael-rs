@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::{
     config::{AppConfig, CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
-    widgets::{MacroViewConfig, SavedRotationsConfig, SavedRotationsData},
+    elements::panels::{MacroViewConfig, SavedRotationsConfig, SavedRotationsData},
 };
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {

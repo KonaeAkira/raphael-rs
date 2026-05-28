@@ -6,8 +6,8 @@ pub use app::MacroSolverApp;
 
 mod config;
 mod context;
+mod elements;
 mod thread_pool;
-mod widgets;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod update;

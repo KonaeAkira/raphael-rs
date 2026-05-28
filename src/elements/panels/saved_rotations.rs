@@ -11,10 +11,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
     context::{AppContext, SolverConfig},
-    widgets::util::max_text_width,
+    elements::{util, widgets::collapse_temporary},
 };
-
-use super::util;
 
 fn generate_unique_rotation_id() -> u64 {
     let mut hasher = std::hash::DefaultHasher::new();
@@ -314,7 +312,7 @@ impl<'a> RotationWidget<'a> {
     fn show_rotation_title(&mut self, ui: &mut egui::Ui, collapsed: &mut bool) {
         let locale = self.locale;
         ui.horizontal(|ui| {
-            util::collapse_temporary(ui, self.id_salt("collapsed").into(), collapsed);
+            collapse_temporary(ui, self.id_salt("collapsed").into(), collapsed);
             ui.label(egui::RichText::new(&self.rotation.name).strong());
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.add(egui::Button::new("🗑")).clicked() {
@@ -480,7 +478,7 @@ impl<'a> RotationWidget<'a> {
             level = self.rotation.crafter_stats.level,
             job = job_id.map_or("", |job_id| raphael_data::get_job_name(job_id, locale))
         );
-        let max_key_width = max_text_width(
+        let max_key_width = util::max_text_width(
             ui,
             [
                 t!(locale, "Recipe"),

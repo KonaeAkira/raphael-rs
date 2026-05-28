@@ -8,11 +8,12 @@ use raphael_translations::t;
 
 use crate::{
     context::AppContext,
-    widgets::GameDataNameLabel,
-    widgets::util::{TableColumnWidth, calculate_column_widths},
+    elements::{
+        util::{self, TableColumnWidth},
+        widgets::GameDataNameLabel,
+        widgets::collapse_persisted,
+    },
 };
-
-use super::util;
 
 #[derive(Default)]
 struct PotionFinder {}
@@ -55,11 +56,7 @@ impl Widget for PotionSelect<'_> {
             ui.vertical(|ui| {
                 let mut collapsed = false;
                 ui.horizontal(|ui| {
-                    util::collapse_persisted(
-                        ui,
-                        Id::new("POTION_SEARCH_COLLAPSED"),
-                        &mut collapsed,
-                    );
+                    collapse_persisted(ui, Id::new("POTION_SEARCH_COLLAPSED"), &mut collapsed);
                     ui.label(egui::RichText::new(t!(locale, "Potion")).strong());
                     match self.selected_consumable {
                         None => ui.label(t!(locale, "None")),
@@ -114,7 +111,7 @@ impl Widget for PotionSelect<'_> {
                 let table_height = 4.3 * line_height + 4.0 * line_spacing;
 
                 // Column::remainder().clip(true) is buggy when resizing the table
-                let column_widths = calculate_column_widths(
+                let column_widths = util::calculate_column_widths(
                     ui,
                     [
                         TableColumnWidth::SelectButton,

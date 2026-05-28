@@ -11,7 +11,10 @@ use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovatio
 
 use crate::config::{QualitySource, QualityTarget};
 use crate::context::AppContext;
-use crate::{thread_pool, widgets::*};
+use crate::{
+    elements::{panels::*, widgets::*},
+    thread_pool,
+};
 
 enum SolverEvent {
     NodesVisited(usize),

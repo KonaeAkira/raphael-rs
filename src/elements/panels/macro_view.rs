@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     context::AppContext,
-    widgets::{HelpText, MultilineMonospace},
+    elements::widgets::{HelpText, MultilineMonospace},
 };
 
 #[inline]

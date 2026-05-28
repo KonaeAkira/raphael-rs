@@ -12,13 +12,11 @@ use raphael_translations::{t, t_format};
 use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
     context::{AppContext, SolverConfig},
-    widgets::{
-        DropDown, GameDataNameLabel, NameSource,
-        util::{TableColumnWidth, calculate_column_widths},
+    elements::{
+        util::{self, TableColumnWidth},
+        widgets::{DropDown, GameDataNameLabel, NameSource, collapse_persisted},
     },
 };
-
-use super::util;
 
 #[derive(Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 enum SearchDomain {
@@ -180,7 +178,7 @@ impl<'a> RecipeSelect<'a> {
         let table_height = 6.3 * line_height + 6.0 * line_spacing;
 
         // Column::remainder().clip(true) is buggy when resizing the table
-        let column_widths = calculate_column_widths(
+        let column_widths = util::calculate_column_widths(
             ui,
             [
                 TableColumnWidth::SelectButton,
@@ -233,7 +231,7 @@ impl<'a> RecipeSelect<'a> {
         });
 
         // See above note, 'Column::remainder().clip(true) is buggy [...]'
-        let column_widths = calculate_column_widths(
+        let column_widths = util::calculate_column_widths(
             ui,
             [TableColumnWidth::JobName, TableColumnWidth::Remaining],
             locale,
@@ -464,11 +462,7 @@ impl Widget for RecipeSelect<'_> {
                 let mut collapsed = false;
 
                 ui.horizontal(|ui| {
-                    util::collapse_persisted(
-                        ui,
-                        Id::new("RECIPE_SEARCH_COLLAPSED"),
-                        &mut collapsed,
-                    );
+                    collapse_persisted(ui, Id::new("RECIPE_SEARCH_COLLAPSED"), &mut collapsed);
                     ui.label(egui::RichText::new(t!(locale, "Recipe")).strong());
                     ui.add(GameDataNameLabel::new(self.recipe_config.recipe(), locale));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
