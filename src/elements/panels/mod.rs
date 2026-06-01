@@ -5,7 +5,7 @@ mod simulator;
 pub use simulator::Simulator;
 
 mod recipe_select;
-pub use recipe_select::RecipeSelect;
+pub use recipe_select::{RecipeSelect, SearchDomain as RecipeSearchDomain};
 
 mod food_select;
 pub use food_select::FoodSelect;

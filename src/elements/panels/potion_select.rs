@@ -7,11 +7,10 @@ use raphael_data::{Consumable, CrafterStats, Locale, find_potions};
 use raphael_translations::t;
 
 use crate::{
-    context::AppContext,
+    context::{AppContext, GenericSearchState},
     elements::{
         util::{self, TableColumnWidth},
-        widgets::GameDataNameLabel,
-        widgets::collapse_persisted,
+        widgets::{GameDataNameLabel, collapse_persisted},
     },
 };
 
@@ -27,6 +26,7 @@ impl ComputerMut<(&str, Locale), Vec<&'static Consumable>> for PotionFinder {
 type PotionSearchCache<'a> = FrameCache<Vec<&'static Consumable>, PotionFinder>;
 
 pub struct PotionSelect<'a> {
+    search_state: &'a mut GenericSearchState,
     crafter_stats: &'a CrafterStats,
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
@@ -36,11 +36,13 @@ impl<'a> PotionSelect<'a> {
     pub fn new(app_context: &'a mut AppContext) -> Self {
         let AppContext {
             locale,
+            search_state,
             selected_potion: selected_consumable,
             crafter_config,
             ..
         } = app_context;
         Self {
+            search_state: &mut search_state.potion,
             crafter_stats: crafter_config.active_stats(),
             selected_consumable,
             locale: *locale,
@@ -51,6 +53,7 @@ impl<'a> PotionSelect<'a> {
 impl Widget for PotionSelect<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let locale = self.locale;
+        let GenericSearchState { search_text } = self.search_state;
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
@@ -78,32 +81,19 @@ impl Widget for PotionSelect<'_> {
 
                 ui.separator();
 
-                let id = Id::new("POTION_SEARCH_TEXT");
-
-                let mut search_text = String::new();
-                ui.ctx().data_mut(|data| {
-                    if let Some(text) = data.get_persisted::<String>(id) {
-                        search_text = text;
-                    }
-                });
-
-                if egui::TextEdit::singleline(&mut search_text)
+                if egui::TextEdit::singleline(search_text)
                     .desired_width(f32::INFINITY)
                     .hint_text(t!(locale, "🔍 Search"))
                     .ui(ui)
                     .changed()
                 {
-                    search_text = search_text.replace('\0', "");
+                    *search_text = search_text.replace('\0', "");
                 }
                 ui.separator();
 
                 let search_result = ui.ctx().memory_mut(|mem| {
                     let search_cache = mem.caches.cache::<PotionSearchCache<'_>>();
                     search_cache.get((&search_text, self.locale)).clone()
-                });
-
-                ui.ctx().data_mut(|data| {
-                    data.insert_persisted(id, search_text);
                 });
 
                 let line_height = ui.spacing().interact_size.y;

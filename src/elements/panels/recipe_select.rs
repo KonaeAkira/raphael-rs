@@ -11,15 +11,15 @@ use raphael_translations::{t, t_format};
 
 use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
-    context::{AppContext, SolverConfig},
+    context::{AppContext, RecipeSearchState, SolverConfig},
     elements::{
         util::{self, TableColumnWidth},
         widgets::{DropDown, GameDataNameLabel, NameSource, collapse_persisted},
     },
 };
 
-#[derive(Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-enum SearchDomain {
+#[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+pub enum SearchDomain {
     #[default]
     Recipes,
     StellarMissions,
@@ -63,6 +63,7 @@ type StellarMissionSearchCache<'a> =
     FrameCache<Vec<raphael_data::StellarMissionSearchEntry>, StellarMissionFinder>;
 
 pub struct RecipeSelect<'a> {
+    search_state: &'a mut RecipeSearchState,
     crafter_config: &'a mut CrafterConfig,
     recipe_config: &'a mut RecipeConfiguration,
     solver_config: &'a mut SolverConfig,
@@ -75,6 +76,7 @@ impl<'a> RecipeSelect<'a> {
     pub fn new(app_context: &'a mut AppContext) -> Self {
         let AppContext {
             locale,
+            search_state,
             recipe_config,
             selected_food,
             selected_potion,
@@ -84,6 +86,7 @@ impl<'a> RecipeSelect<'a> {
         } = app_context;
 
         Self {
+            search_state: &mut search_state.recipe,
             crafter_config,
             recipe_config,
             solver_config,
@@ -108,33 +111,30 @@ impl<'a> RecipeSelect<'a> {
 
     fn draw_normal_recipe_select(&mut self, ui: &mut egui::Ui) {
         let locale = self.locale;
-        let mut search_text = String::new();
-        let mut search_domain = SearchDomain::default();
-        ui.ctx().data_mut(|data| {
-            if let Some(text) = data.get_persisted::<String>(Id::new("RECIPE_SEARCH_TEXT")) {
-                search_text = text;
-            }
-            if let Some(domain) =
-                data.get_persisted::<SearchDomain>(Id::new("RECIPE_SEARCH_DOMAIN"))
-            {
-                search_domain = domain;
-            }
-        });
+        let Self {
+            search_state:
+                RecipeSearchState {
+                    search_domain,
+                    search_text,
+                    ..
+                },
+            ..
+        } = self;
 
         ui.horizontal(|ui| {
             ui.add(DropDown::new(
                 "RECIPE_SEARCH_DOMAIN",
-                &mut search_domain,
+                search_domain,
                 [SearchDomain::Recipes, SearchDomain::StellarMissions],
                 |search_domain: SearchDomain| search_domain.display(locale),
             ));
-            if egui::TextEdit::singleline(&mut search_text)
+            if egui::TextEdit::singleline(search_text)
                 .desired_width(f32::INFINITY)
                 .hint_text(t!(locale, "🔍 Search"))
                 .ui(ui)
                 .changed()
             {
-                search_text = search_text.replace('\0', "");
+                *search_text = search_text.replace('\0', "");
             }
         });
 
@@ -160,11 +160,6 @@ impl<'a> RecipeSelect<'a> {
                 self.draw_mission_recipe_select(ui, search_result);
             }
         }
-
-        ui.ctx().data_mut(|data| {
-            data.insert_persisted(Id::new("RECIPE_SEARCH_TEXT"), search_text);
-            data.insert_persisted(Id::new("RECIPE_SEARCH_DOMAIN"), search_domain);
-        });
     }
 
     fn draw_recipe_select_table(
@@ -446,15 +441,6 @@ impl<'a> RecipeSelect<'a> {
 impl Widget for RecipeSelect<'_> {
     fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
         let locale = self.locale;
-        let mut show_custom_recipe_select = false;
-        ui.ctx().data_mut(|data| {
-            if let RecipeSource::Custom { .. } = self.recipe_config.recipe_source
-                && let Some(selection) =
-                    data.get_persisted(Id::new("RECIPE_SEARCH_CUSTOM_SELECTED"))
-            {
-                show_custom_recipe_select = selection;
-            }
-        });
 
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
@@ -467,9 +453,12 @@ impl Widget for RecipeSelect<'_> {
                     ui.add(GameDataNameLabel::new(self.recipe_config.recipe(), locale));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui
-                            .checkbox(&mut show_custom_recipe_select, t!(locale, "Custom"))
+                            .checkbox(
+                                &mut self.search_state.show_custom_recipe_select,
+                                t!(locale, "Custom"),
+                            )
                             .changed()
-                            && show_custom_recipe_select
+                            && self.search_state.show_custom_recipe_select
                             && let RecipeSource::Normal { .. } = self.recipe_config.recipe_source
                         {
                             let default_game_settings = get_game_settings(
@@ -495,18 +484,11 @@ impl Widget for RecipeSelect<'_> {
 
                 ui.separator();
 
-                if show_custom_recipe_select {
+                if self.search_state.show_custom_recipe_select {
                     self.draw_custom_recipe_select(ui);
                 } else {
                     self.draw_normal_recipe_select(ui);
                 }
-
-                ui.ctx().data_mut(|data| {
-                    data.insert_persisted(
-                        Id::new("RECIPE_SEARCH_CUSTOM_SELECTED"),
-                        show_custom_recipe_select,
-                    );
-                });
             });
         })
         .response

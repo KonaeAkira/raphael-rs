@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::{
     config::{AppConfig, CrafterConfig, QualitySource, QualityTarget, RecipeConfiguration},
-    elements::panels::{MacroViewConfig, SavedRotationsConfig, SavedRotationsData},
+    elements::panels::{
+        MacroViewConfig, RecipeSearchDomain, SavedRotationsConfig, SavedRotationsData,
+    },
 };
 
 fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str, default: T) -> T {
@@ -11,6 +13,25 @@ fn load<T: DeserializeOwned>(cc: &eframe::CreationContext<'_>, key: &'static str
         Some(storage) => eframe::get_value(storage, key).unwrap_or(default),
         None => default,
     }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SearchState {
+    pub recipe: RecipeSearchState,
+    pub food: GenericSearchState,
+    pub potion: GenericSearchState,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RecipeSearchState {
+    pub show_custom_recipe_select: bool,
+    pub search_domain: RecipeSearchDomain,
+    pub search_text: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct GenericSearchState {
+    pub search_text: String,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -27,6 +48,7 @@ pub struct SolverConfig {
 pub struct AppContext {
     pub locale: Locale,
     pub app_config: AppConfig,
+    pub search_state: SearchState,
     pub recipe_config: RecipeConfiguration,
     pub selected_food: Option<Consumable>,
     pub selected_potion: Option<Consumable>,
@@ -42,6 +64,7 @@ impl AppContext {
         Self {
             locale: load(cc, "LOCALE", Locale::EN),
             app_config: load(cc, "APP_CONFIG", AppConfig::default()),
+            search_state: load(cc, "SEARCH_STATE", SearchState::default()),
             recipe_config: load(cc, "RECIPE_CONFIG", RecipeConfiguration::default()),
             selected_food: load(cc, "SELECTED_FOOD", None),
             selected_potion: load(cc, "SELECTED_POTION", None),
@@ -60,6 +83,7 @@ impl AppContext {
     pub fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, "LOCALE", &self.locale);
         eframe::set_value(storage, "APP_CONFIG", &self.app_config);
+        eframe::set_value(storage, "SEARCH_STATE", &self.search_state);
         eframe::set_value(storage, "RECIPE_CONFIG", &self.recipe_config);
         eframe::set_value(storage, "SELECTED_FOOD", &self.selected_food);
         eframe::set_value(storage, "SELECTED_POTION", &self.selected_potion);
