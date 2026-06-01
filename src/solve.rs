@@ -208,6 +208,7 @@ impl SolveState {
                 duration: web_time::Duration::default(),
                 loaded_from_history: true,
             });
+			self.status = SolveStatus::Idle;
         } else {
             let target_quality = app_context
                 .solver_config
