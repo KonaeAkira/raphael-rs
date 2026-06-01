@@ -11,6 +11,7 @@ use crate::{
     config::RecipeConfiguration,
     context::{AppContext, SolverConfig},
     elements::panels::Rotation,
+    thread_pool,
 };
 
 #[derive(Debug)]
@@ -86,6 +87,13 @@ impl SolveState {
         }
     }
 
+    pub fn pending(&self) -> bool {
+        match self.status {
+            SolveStatus::Pending => true,
+            _ => false,
+        }
+    }
+
     pub fn interrupted(&self) -> bool {
         self.solver_interrupt.is_set()
     }
@@ -158,6 +166,15 @@ impl SolveState {
     }
 
     pub fn solve(&mut self, app_context: &AppContext) {
+        if !thread_pool::is_initialized() {
+            thread_pool::attempt_initialization(app_context.app_config.num_threads);
+
+            if !thread_pool::is_initialized() {
+                self.status = SolveStatus::Pending;
+                return;
+            }
+        }
+
         self.solver_interrupt.clear();
 
         let mut game_settings = app_context.game_settings();

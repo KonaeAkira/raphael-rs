@@ -1,7 +1,7 @@
 use raphael_solver::SolverException;
 use raphael_translations::{t, t_format};
 
-use egui::{Align, CursorIcon, Id, Layout, TextStyle};
+use egui::{Align, CursorIcon, Layout, TextStyle};
 use raphael_data::{Locale, action_name, get_job_name};
 
 use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovation};
@@ -547,22 +547,13 @@ impl MacroSolverApp {
                         let text_color = ui.global_style().visuals.selection.stroke.color;
                         let text = egui::RichText::new(t!(locale, "Solve")).color(text_color);
                         let fill_color = ui.global_style().visuals.selection.bg_fill;
-                        let id = egui::Id::new("SOLVE_INITIATED");
-                        let mut solve_initiated = ui
-                            .ctx()
-                            .data(|data| data.get_temp::<bool>(id).unwrap_or_default());
-                        let button = ui.add_enabled(
-                            !solve_initiated,
-                            egui::Button::new(text).fill(fill_color),
-                        );
-                        if button.clicked() {
-                            ui.ctx().data_mut(|data| {
-                                data.insert_temp(id, true);
-                            });
-                            solve_initiated = true;
-                        }
-                        if solve_initiated {
-                            self.on_solve_initiated(ui.ctx());
+                        let solve_pending = self.solve_state.pending();
+                        let button = ui
+                            .add_enabled(!solve_pending, egui::Button::new(text).fill(fill_color));
+                        if button.clicked() || solve_pending {
+                            self.on_solve_initiated();
+
+                            ui.ctx().request_repaint();
                         }
                     });
                 });
@@ -924,39 +915,30 @@ impl MacroSolverApp {
         }
     }
 
-    fn on_solve_initiated(&mut self, ctx: &egui::Context) {
-        if thread_pool::is_initialized() {
-            ctx.data_mut(|data| {
-                data.insert_temp(Id::new("SOLVE_INITIATED"), false);
-            });
-
-            let craftsmanship_req = self.app_context.recipe_config.recipe().req_craftsmanship;
-            let control_req = self.app_context.recipe_config.recipe().req_control;
-            let active_stats = self.app_context.active_stats();
-            let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
-                active_stats.craftsmanship,
-                &[
-                    self.app_context.selected_food,
-                    self.app_context.selected_potion,
-                ],
-            );
-            let control_bonus = raphael_data::control_bonus(
-                active_stats.control,
-                &[
-                    self.app_context.selected_food,
-                    self.app_context.selected_potion,
-                ],
-            );
-            if active_stats.craftsmanship + craftsmanship_bonus >= craftsmanship_req
-                && active_stats.control + control_bonus >= control_req
-            {
-                self.solve_state.solve(&self.app_context);
-            } else {
-                self.missing_stats_error_window_open = true;
-            }
+    fn on_solve_initiated(&mut self) {
+        let craftsmanship_req = self.app_context.recipe_config.recipe().req_craftsmanship;
+        let control_req = self.app_context.recipe_config.recipe().req_control;
+        let active_stats = self.app_context.active_stats();
+        let craftsmanship_bonus = raphael_data::craftsmanship_bonus(
+            active_stats.craftsmanship,
+            &[
+                self.app_context.selected_food,
+                self.app_context.selected_potion,
+            ],
+        );
+        let control_bonus = raphael_data::control_bonus(
+            active_stats.control,
+            &[
+                self.app_context.selected_food,
+                self.app_context.selected_potion,
+            ],
+        );
+        if active_stats.craftsmanship + craftsmanship_bonus >= craftsmanship_req
+            && active_stats.control + control_bonus >= control_req
+        {
+            self.solve_state.solve(&self.app_context);
         } else {
-            thread_pool::attempt_initialization(self.app_context.app_config.num_threads);
-            ctx.request_repaint();
+            self.missing_stats_error_window_open = true;
         }
     }
 
