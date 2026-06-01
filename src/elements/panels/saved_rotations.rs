@@ -119,7 +119,7 @@ impl Rotation {
             actions,
             recipe_info: Some(RecipeInfo::from(&recipe_config.recipe_source)),
             solve_info: Some(SolveInfo::new(
-                &game_settings,
+                game_settings,
                 *initial_quality,
                 solver_config,
             )),

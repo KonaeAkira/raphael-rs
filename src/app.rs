@@ -160,7 +160,7 @@ impl eframe::App for MacroSolverApp {
         }) = self.solve_state.running_solve_info()
         {
             let running_duration = start_time.elapsed().as_secs_f32();
-            let solver_progress = solver_progress.clone();
+            let solver_progress = *solver_progress;
             #[cfg(target_arch = "wasm32")]
             if crate::OOM_PANIC_OCCURED.load(std::sync::atomic::Ordering::Relaxed) {
                 eframe::wasm_bindgen::throw_val("OOM panic".into());

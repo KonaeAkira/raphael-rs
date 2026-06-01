@@ -102,17 +102,11 @@ impl SolveState {
     }
 
     pub fn pending(&self) -> bool {
-        match self.status {
-            SolveStatus::Pending => true,
-            _ => false,
-        }
+        matches!(self.status, SolveStatus::Pending)
     }
 
     pub fn solving(&self) -> bool {
-        match self.status {
-            SolveStatus::Solving { .. } => true,
-            _ => false,
-        }
+        matches!(self.status, SolveStatus::Solving { .. })
     }
 
     pub fn interrupted(&self) -> bool {
@@ -131,9 +125,8 @@ impl SolveState {
     }
 
     pub fn resolve_error(&mut self) {
-        match &self.status {
-            SolveStatus::Failed { .. } => self.status = SolveStatus::Idle,
-            _ => {}
+        if let SolveStatus::Failed { .. } = &self.status {
+            self.status = SolveStatus::Idle
         }
     }
 
@@ -143,51 +136,45 @@ impl SolveState {
 
     pub fn process_solver_events(&mut self, app_context: &mut AppContext) {
         let mut solver_events = self.solver_events.lock().unwrap();
-        match &mut self.status {
-            SolveStatus::Solving { info } => {
-                while let Some(event) = solver_events.pop_front() {
-                    match event {
-                        SolverEvent::NodesVisited(count) => info.solver_progress = count,
-                        SolverEvent::Actions(actions) => self.actions = actions,
-                        SolverEvent::Finished(exception) => {
-                            self.solver_interrupt.clear();
+        if let SolveStatus::Solving { info } = &mut self.status {
+            while let Some(event) = solver_events.pop_front() {
+                match event {
+                    SolverEvent::NodesVisited(count) => info.solver_progress = count,
+                    SolverEvent::Actions(actions) => self.actions = actions,
+                    SolverEvent::Finished(exception) => {
+                        self.solver_interrupt.clear();
 
-                            let last_solve_info = LastSolveInfo {
-                                solve_params: info.solve_params.clone(),
-                                duration: info.start_time.elapsed(),
-                                loaded_from_history: false,
-                            };
+                        let last_solve_info = LastSolveInfo {
+                            solve_params: info.solve_params.clone(),
+                            duration: info.start_time.elapsed(),
+                            loaded_from_history: false,
+                        };
 
-                            match exception {
-                                Some(exception) => match exception {
-                                    SolverException::Interrupted => {
-                                        self.status = SolveStatus::Idle;
-                                        break;
-                                    }
-                                    _ => self.status = SolveStatus::Failed { error: exception },
-                                },
-                                None => {
-                                    let new_rotation = Rotation::new(
-                                        &info,
-                                        self.actions.clone(),
-                                        app_context.locale,
-                                    );
-                                    app_context.saved_rotations_data.add_solved_rotation(
-                                        new_rotation,
-                                        &app_context.saved_rotations_config,
-                                    );
+                        match exception {
+                            Some(exception) => match exception {
+                                SolverException::Interrupted => {
                                     self.status = SolveStatus::Idle;
+                                    break;
                                 }
+                                _ => self.status = SolveStatus::Failed { error: exception },
+                            },
+                            None => {
+                                let new_rotation =
+                                    Rotation::new(info, self.actions.clone(), app_context.locale);
+                                app_context.saved_rotations_data.add_solved_rotation(
+                                    new_rotation,
+                                    &app_context.saved_rotations_config,
+                                );
+                                self.status = SolveStatus::Idle;
                             }
-                            self.last_solve_info = Some(last_solve_info);
-                            break;
                         }
+                        self.last_solve_info = Some(last_solve_info);
+                        break;
                     }
                 }
-
-                assert!(solver_events.is_empty());
             }
-            _ => {}
+
+            assert!(solver_events.is_empty());
         }
     }
 
