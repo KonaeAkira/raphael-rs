@@ -12,6 +12,7 @@ use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
     context::{AppContext, SolverConfig},
     elements::{util, widgets::collapse_temporary},
+    solve::{RunningSolveInfo, SolveParameters},
 };
 
 fn generate_unique_rotation_id() -> u64 {
@@ -83,19 +84,21 @@ pub struct Rotation {
 }
 
 impl Rotation {
-    pub fn new(app_context: &AppContext, actions: Vec<Action>) -> Self {
-        let AppContext {
-            locale,
+    pub fn new(info: &RunningSolveInfo, actions: Vec<Action>, locale: Locale) -> Self {
+        let RunningSolveInfo {
+            solve_params:
+                SolveParameters {
+                    settings: game_settings,
+                    initial_quality,
+                    solver_config,
+                },
             recipe_config,
-            selected_food: food,
-            selected_potion: potion,
-            crafter_config,
-            solver_config,
+            food,
+            potion,
+            stats,
             ..
-        } = app_context;
-        let game_settings = app_context.game_settings();
-        let initial_quality = app_context.initial_quality();
-        let name = raphael_data::get_item_name(recipe_config.recipe().item_id, false, *locale)
+        } = info;
+        let name = raphael_data::get_item_name(recipe_config.recipe().item_id, false, locale)
             .unwrap_or(t!(locale, "Unknown item").to_owned());
         let solver_params = format!(
             "Raphael v{}{}{}",
@@ -117,12 +120,12 @@ impl Rotation {
             recipe_info: Some(RecipeInfo::from(&recipe_config.recipe_source)),
             solve_info: Some(SolveInfo::new(
                 &game_settings,
-                initial_quality,
+                *initial_quality,
                 solver_config,
             )),
             food: food.map(|consumable| (consumable.item_id, consumable.hq)),
             potion: potion.map(|consumable| (consumable.item_id, consumable.hq)),
-            crafter_stats: *crafter_config.active_stats(),
+            crafter_stats: *stats,
         }
     }
 }
