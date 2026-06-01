@@ -7,11 +7,8 @@ pub use simulator::Simulator;
 mod recipe_select;
 pub use recipe_select::{RecipeSelect, SearchDomain as RecipeSearchDomain};
 
-mod food_select;
-pub use food_select::FoodSelect;
-
-mod potion_select;
-pub use potion_select::PotionSelect;
+mod consumable_select;
+pub use consumable_select::{FoodSelect, PotionSelect};
 
 mod stats_edit;
 pub use stats_edit::StatsEdit;
