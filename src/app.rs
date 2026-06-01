@@ -516,11 +516,7 @@ impl MacroSolverApp {
     }
 
     fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        ui.add(Simulator::new(
-            &self.app_context,
-            ui.ctx(),
-            self.solve_state.actions_mut(),
-        )); // TODO: last solve params etc.
+        ui.add(Simulator::new(&self.app_context, &self.solve_state));
     }
 
     fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {

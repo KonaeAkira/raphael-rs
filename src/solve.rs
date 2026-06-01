@@ -28,6 +28,16 @@ pub struct SolveParameters {
     pub solver_config: SolverConfig,
 }
 
+impl From<&AppContext> for SolveParameters {
+    fn from(app_context: &AppContext) -> Self {
+        Self {
+            settings: app_context.game_settings(),
+            initial_quality: app_context.initial_quality(),
+            solver_config: app_context.solver_config,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct RunningSolveInfo {
     pub recipe_config: RecipeConfiguration,
@@ -74,6 +84,10 @@ pub struct SolveState {
 impl SolveState {
     pub fn reset_actions(&mut self) {
         self.actions.clear();
+    }
+
+    pub fn actions(&self) -> &[Action] {
+        &self.actions
     }
 
     pub fn actions_mut(&mut self) -> &mut Vec<Action> {
@@ -181,22 +195,16 @@ impl SolveState {
         let initial_quality = app_context.initial_quality();
         let solver_config = app_context.solver_config;
 
-        let solve_params = SolveParameters {
-            settings: game_settings,
-            initial_quality,
-            solver_config: app_context.solver_config,
-        };
-
         if app_context.saved_rotations_config.load_from_saved_rotations
             && let Some(actions) = app_context.saved_rotations_data.find_solved_rotation(
-                &solve_params.settings,
-                solve_params.initial_quality,
-                &solve_params.solver_config,
+                &game_settings,
+                initial_quality,
+                &solver_config,
             )
         {
             self.actions = actions;
             self.last_solve_info = Some(LastSolveInfo {
-                solve_params,
+                solve_params: SolveParameters::from(app_context),
                 duration: web_time::Duration::default(),
                 loaded_from_history: true,
             });
@@ -219,7 +227,7 @@ impl SolveState {
                     food: app_context.selected_food,
                     potion: app_context.selected_potion,
                     stats: *app_context.active_stats(),
-                    solve_params,
+                    solve_params: SolveParameters::from(app_context),
                     start_time,
                     solver_progress,
                 },

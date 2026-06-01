@@ -4,8 +4,9 @@ use raphael_translations::{t, t_format};
 
 use crate::{
     config::QualityTarget,
-    context::{AppContext, SolverConfig},
+    context::AppContext,
     elements::{util, widgets::HelpText},
+    solve::{SolveParameters, SolveState},
 };
 
 pub struct Simulator<'a> {
@@ -18,30 +19,18 @@ pub struct Simulator<'a> {
     locale: Locale,
 }
 
-fn config_changed(
-    settings: &raphael_sim::Settings,
-    initial_quality: u16,
-    solver_config: &SolverConfig,
-    ctx: &egui::Context,
-) -> bool {
-    ctx.data(|data| {
-        match data.get_temp::<(Settings, u16, SolverConfig)>(egui::Id::new("LAST_SOLVE_PARAMS")) {
-            Some((saved_settings, saved_initial_quality, saved_solver_config)) => {
-                *settings != saved_settings
-                    || initial_quality != saved_initial_quality
-                    || *solver_config != saved_solver_config
-            }
-            None => false,
-        }
-    })
+fn config_changed(app_context: &AppContext, solve_state: &SolveState) -> bool {
+    solve_state
+        .last_solve_info()
+        .is_some_and(|info| info.solve_params != SolveParameters::from(app_context))
 }
 
 impl<'a> Simulator<'a> {
-    pub fn new(app_context: &'a AppContext, ctx: &egui::Context, actions: &'a [Action]) -> Self {
+    pub fn new(app_context: &'a AppContext, solve_state: &'a SolveState) -> Self {
+        let config_changed = config_changed(app_context, solve_state);
         let AppContext {
             locale,
             recipe_config,
-            solver_config,
             crafter_config,
             ..
         } = app_context;
@@ -51,12 +40,11 @@ impl<'a> Simulator<'a> {
             .get(recipe_config.recipe().item_id)
             .map(|item| item.always_collectable)
             .unwrap_or_default();
-        let config_changed = config_changed(&settings, initial_quality, solver_config, ctx);
         Self {
             settings,
             initial_quality,
             job_id: crafter_config.selected_job,
-            actions,
+            actions: solve_state.actions(),
             item_always_collectable,
             config_changed,
             locale: *locale,
