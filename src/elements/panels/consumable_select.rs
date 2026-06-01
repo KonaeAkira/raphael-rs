@@ -123,7 +123,7 @@ where
                     let search_cache = mem
                         .caches
                         .cache::<FrameCache<Vec<&'static Consumable>, Type>>();
-                    search_cache.get((&search_text, locale)).clone()
+                    search_cache.get((search_text, locale)).clone()
                 });
 
                 let line_height = ui.spacing().interact_size.y;
