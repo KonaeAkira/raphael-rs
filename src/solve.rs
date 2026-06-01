@@ -108,6 +108,13 @@ impl SolveState {
         }
     }
 
+    pub fn solving(&self) -> bool {
+        match self.status {
+            SolveStatus::Solving { .. } => true,
+            _ => false,
+        }
+    }
+
     pub fn interrupted(&self) -> bool {
         self.solver_interrupt.is_set()
     }
@@ -143,18 +150,22 @@ impl SolveState {
                         SolverEvent::NodesVisited(count) => info.solver_progress = count,
                         SolverEvent::Actions(actions) => self.actions = actions,
                         SolverEvent::Finished(exception) => {
-                            self.last_solve_info = Some(LastSolveInfo {
+                            self.solver_interrupt.clear();
+
+                            let last_solve_info = LastSolveInfo {
                                 solve_params: info.solve_params.clone(),
                                 duration: info.start_time.elapsed(),
                                 loaded_from_history: false,
-                            });
-
-                            self.solver_interrupt.clear();
+                            };
 
                             match exception {
-                                Some(exception) => {
-                                    self.status = SolveStatus::Failed { error: exception }
-                                }
+                                Some(exception) => match exception {
+                                    SolverException::Interrupted => {
+                                        self.status = SolveStatus::Idle;
+                                        break;
+                                    }
+                                    _ => self.status = SolveStatus::Failed { error: exception },
+                                },
                                 None => {
                                     let new_rotation = Rotation::new(
                                         &info,
@@ -168,6 +179,7 @@ impl SolveState {
                                     self.status = SolveStatus::Idle;
                                 }
                             }
+                            self.last_solve_info = Some(last_solve_info);
                             break;
                         }
                     }
@@ -208,7 +220,7 @@ impl SolveState {
                 duration: web_time::Duration::default(),
                 loaded_from_history: true,
             });
-			self.status = SolveStatus::Idle;
+            self.status = SolveStatus::Idle;
         } else {
             let target_quality = app_context
                 .solver_config

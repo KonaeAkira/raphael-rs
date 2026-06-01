@@ -20,9 +20,10 @@ pub struct Simulator<'a> {
 }
 
 fn config_changed(app_context: &AppContext, solve_state: &SolveState) -> bool {
-    solve_state
-        .last_solve_info()
-        .is_some_and(|info| info.solve_params != SolveParameters::from(app_context))
+    !solve_state.solving()
+        && solve_state
+            .last_solve_info()
+            .is_some_and(|info| info.solve_params != SolveParameters::from(app_context))
 }
 
 impl<'a> Simulator<'a> {
@@ -62,7 +63,7 @@ impl Simulator<'_> {
                     ui.label(egui::RichText::new(t!(locale, "Simulation")).strong());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_visible(
-                            !self.actions.is_empty() && self.config_changed,
+                            self.config_changed,
                             egui::Label::new(
                                 egui::RichText::new(t!(
                                     locale,
