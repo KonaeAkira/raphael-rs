@@ -1117,6 +1117,10 @@ impl ActionImpl for HastyTouch {
         if state.effects.stellar_steady_hand() == 0 {
             return Err(ActionError::UnreliableAction);
         }
+        if state.effects.expedience() {
+            // Hasty Touch gets upgraded to Daring Touch when expedience is active.
+            return Err(ActionError::SpecialConditionNotMet);
+        }
         Ok(())
     }
 
