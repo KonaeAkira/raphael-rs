@@ -1137,14 +1137,14 @@ fn ce_stellar_steady_hand() {
                 values: 107674,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 2408386,
-                states_on_shards: 84287,
-                values: 50005757,
+                states_on_main: 2407520,
+                states_on_shards: 84378,
+                values: 49937176,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 673566,
-                states_on_shards: 203080,
-                values: 17231284,
+                states_on_shards: 203064,
+                values: 17231130,
             },
         }
     "#]];
@@ -1184,22 +1184,22 @@ fn ce_stellar_steady_hand_2() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1458986,
-                processed_nodes: 151383,
+                inserted_nodes: 1446535,
+                processed_nodes: 150173,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 16581,
                 values: 113302,
             },
             quality_ub_stats: QualityUbSolverStats {
-                states_on_main: 4310883,
-                states_on_shards: 39628,
-                values: 74576233,
+                states_on_main: 4309420,
+                states_on_shards: 39876,
+                values: 74698419,
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 1079473,
-                states_on_shards: 451445,
-                values: 29106449,
+                states_on_shards: 451339,
+                values: 29105727,
             },
         }
     "#]];
