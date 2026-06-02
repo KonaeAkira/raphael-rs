@@ -31,7 +31,7 @@ pub struct Effects {
     #[bits(2)]
     pub combo: Combo,
 
-    #[bits(2)]
+    // 32-bit boundary
     /// Remaining usages of the Stellar Steady Hand action.
     pub stellar_steady_hand_charges: u8,
     #[bits(2)]
@@ -41,7 +41,7 @@ pub struct Effects {
     /// Combo effect from Hasty Touch that enables usage of Daring Touch.
     pub expedience: bool,
 
-    #[bits(27)]
+    #[bits(21)]
     pub _padding: u32,
 }
 

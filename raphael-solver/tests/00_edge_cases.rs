@@ -615,3 +615,59 @@ fn solution_must_reach_target_quality() {
     "#]];
     test_with_settings(solver_settings, expected_score, expected_runtime_stats);
 }
+
+#[test]
+/// https://github.com/KonaeAkira/raphael-rs/issues/355
+fn high_max_stellar_steady_hand_charges() {
+    // Regrowth Formula Compounds - 5855/5424/776
+    let simulator_settings = Settings {
+        max_cp: 776,
+        max_durability: 45,
+        max_progress: 6900,
+        max_quality: 22100,
+        base_progress: 311,
+        base_quality: 297,
+        job_level: 100,
+        allowed_actions: ActionMask::regular(),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 4,
+    };
+    let solver_settings = SolverSettings {
+        simulator_settings,
+        allow_non_max_quality_solutions: false,
+    };
+    let expected_score = expect![[r#"
+        Ok(
+            SolutionScore {
+                capped_quality: 22100,
+                steps: 34,
+                duration: 85,
+                overflow_quality: 186,
+            },
+        )
+    "#]];
+    let expected_runtime_stats = expect![[r#"
+        MacroSolverStats {
+            search_queue_stats: SearchQueueStats {
+                inserted_nodes: 45477821,
+                processed_nodes: 13954584,
+            },
+            finish_solver_stats: FinishSolverStats {
+                states: 89742,
+                values: 330130,
+            },
+            quality_ub_stats: QualityUbSolverStats {
+                states_on_main: 10285984,
+                states_on_shards: 4621938,
+                values: 219692514,
+            },
+            step_lb_stats: StepLbSolverStats {
+                states_on_main: 11719233,
+                states_on_shards: 3006471,
+                values: 308917227,
+            },
+        }
+    "#]];
+    test_with_settings(solver_settings, expected_score, expected_runtime_stats);
+}
