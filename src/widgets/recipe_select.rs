@@ -147,7 +147,8 @@ impl<'a> RecipeSelect<'a> {
                 let search_result = ui.ctx().memory_mut(|mem| {
                     mem.caches
                         .cache::<RecipeSearchCache<'_>>()
-                        .get((&search_text, locale)).clone()
+                        .get((&search_text, locale))
+                        .clone()
                 });
                 self.draw_recipe_select_table(ui, search_result);
             }
@@ -155,7 +156,8 @@ impl<'a> RecipeSelect<'a> {
                 let search_result = ui.ctx().memory_mut(|mem| {
                     mem.caches
                         .cache::<StellarMissionSearchCache<'_>>()
-                        .get((&search_text, locale)).clone()
+                        .get((&search_text, locale))
+                        .clone()
                 });
                 self.draw_mission_recipe_select(ui, search_result);
             }
@@ -308,7 +310,7 @@ impl<'a> RecipeSelect<'a> {
         ui.label(egui::RichText::new(t_format!(
             locale,
             "⚠ Patch {ffxiv_patch} recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.",
-            ffxiv_patch = "7.41"
+            ffxiv_patch = "7.51"
         )).small().color(ui.visuals().warn_fg_color));
         ui.separator();
         ui.horizontal_top(|ui| {
