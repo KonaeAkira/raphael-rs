@@ -140,14 +140,14 @@ impl SimulationState {
             state.effects.set_combo(Combo::SynthesisBegin);
         }
 
-        A::transform(&mut state, settings, condition);
-
         if A::INCREASES_STEP_COUNT {
             if state.effects.manipulation() != 0 {
                 state.durability = std::cmp::min(settings.max_durability, state.durability + 5);
             }
             state.effects = state.effects.tick_down();
         }
+
+        A::transform(&mut state, settings, condition);
 
         state.effects =
             Effects::from_bits(state.effects.into_bits() | A::EFFECT_SET_MASK.into_bits());
