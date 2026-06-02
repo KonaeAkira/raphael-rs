@@ -8,6 +8,7 @@ use raphael_sim::{Action, ActionImpl, HeartAndSoul, Manipulation, QuickInnovatio
 
 use crate::config::{QualitySource, QualityTarget};
 use crate::context::AppContext;
+use crate::fonts::FontLoadingState;
 use crate::solve::{LastSolveInfo, RunningSolveInfo, SolveState};
 use crate::{
     elements::{panels::*, widgets::*},
@@ -22,6 +23,8 @@ pub struct MacroSolverApp {
     missing_stats_error_window_open: bool,
 
     solve_state: SolveState,
+
+    font_loading_state: FontLoadingState,
 
     #[cfg(any(debug_assertions, feature = "dev-panel"))]
     render_info: RenderInfo,
@@ -44,7 +47,8 @@ impl MacroSolverApp {
         cc.egui_ctx
             .data_mut(egui::util::IdTypeMap::remove_by_type::<egui::scroll_area::State>);
 
-        load_fonts(&cc.egui_ctx);
+        // load_fonts(&cc.egui_ctx);
+        let font_loading_state = FontLoadingState::new(&cc.egui_ctx, app_context.locale);
 
         #[cfg(not(target_arch = "wasm32"))]
         crate::update::check_for_update();
@@ -58,6 +62,8 @@ impl MacroSolverApp {
 
             solve_state: SolveState::default(),
 
+            font_loading_state,
+
             #[cfg(any(debug_assertions, feature = "dev-panel"))]
             render_info: RenderInfo::default(),
         }
@@ -68,8 +74,6 @@ impl eframe::App for MacroSolverApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let locale = self.app_context.locale;
-        #[cfg(target_arch = "wasm32")]
-        self.load_fonts_dyn(ui);
 
         self.solve_state
             .process_solver_events(&mut self.app_context);
@@ -236,6 +240,13 @@ impl eframe::App for MacroSolverApp {
                             selectable_locales,
                             Locale::short_code,
                         ));
+                        let locale = self.app_context.locale;
+                        if self.font_loading_state.loaded_fonts_for_locale != locale {
+                            self.font_loading_state.load_fonts(ui.ctx(), locale, false);
+                            if self.font_loading_state.loaded_fonts_for_locale == locale {
+                                ui.ctx().request_discard("font change");
+                            }
+                        }
 
                         ui.add(
                             egui::Hyperlink::from_label_and_url(
@@ -957,148 +968,4 @@ impl MacroSolverApp {
             "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely."
         );
     }
-
-    #[cfg(target_arch = "wasm32")]
-    fn load_fonts_dyn(&self, ctx: &egui::Context) {
-        if self.app_context.locale == Locale::JP {
-            let uri = concat!(
-                env!("BASE_URL"),
-                "/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
-            );
-            load_font_dyn(ctx, "NotoSansJP-Regular", uri);
-        } else if self.app_context.locale == Locale::CN {
-            let uri = concat!(
-                env!("BASE_URL"),
-                "/fonts/Noto_Sans_SC/static/NotoSansSC-Regular.ttf"
-            );
-            load_font_dyn(ctx, "NotoSansSC-Regular", uri);
-        } else if self.app_context.locale == Locale::KR {
-            let uri = concat!(
-                env!("BASE_URL"),
-                "/fonts/Noto_Sans_KR/static/NotoSansKR-Regular.ttf"
-            );
-            load_font_dyn(ctx, "NotoSansKR-Regular", uri);
-        } else if self.app_context.locale == Locale::TW {
-            let uri = concat!(
-                env!("BASE_URL"),
-                "/fonts/Noto_Sans_TC/static/NotoSansTC-Regular.ttf"
-            );
-            load_font_dyn(ctx, "NotoSansTC-Regular", uri);
-        }
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-fn load_font_dyn(ctx: &egui::Context, font_name: &str, uri: &str) {
-    use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
-    let id = egui::Id::new(format!("{} loaded", uri));
-    if ctx.data(|data| data.get_temp(id).unwrap_or(false)) {
-        return;
-    }
-    if let Ok(egui::load::BytesPoll::Ready { bytes, .. }) = ctx.try_load_bytes(uri) {
-        ctx.add_font(FontInsert::new(
-            font_name,
-            egui::FontData::from_owned(bytes.to_vec()),
-            vec![
-                InsertFontFamily {
-                    family: egui::FontFamily::Proportional,
-                    priority: FontPriority::Lowest,
-                },
-                InsertFontFamily {
-                    family: egui::FontFamily::Monospace,
-                    priority: FontPriority::Lowest,
-                },
-            ],
-        ));
-        ctx.data_mut(|data| *data.get_temp_mut_or_default(id) = true);
-        log::debug!("Font loaded: {}", font_name);
-    }
-}
-
-fn load_fonts(ctx: &egui::Context) {
-    use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
-    ctx.add_font(FontInsert::new(
-        "XIV_Icon_Recreations",
-        egui::FontData::from_static(include_bytes!(
-            "../assets/fonts/XIV_Icon_Recreations/XIV_Icon_Recreations.ttf"
-        )),
-        vec![
-            InsertFontFamily {
-                family: egui::FontFamily::Proportional,
-                priority: FontPriority::Lowest,
-            },
-            InsertFontFamily {
-                family: egui::FontFamily::Monospace,
-                priority: FontPriority::Lowest,
-            },
-        ],
-    ));
-    #[cfg(not(target_arch = "wasm32"))]
-    ctx.add_font(FontInsert::new(
-        "NotoSansJP-Regular",
-        egui::FontData::from_static(include_bytes!(
-            "../assets/fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf"
-        )),
-        vec![
-            InsertFontFamily {
-                family: egui::FontFamily::Proportional,
-                priority: FontPriority::Lowest,
-            },
-            InsertFontFamily {
-                family: egui::FontFamily::Monospace,
-                priority: FontPriority::Lowest,
-            },
-        ],
-    ));
-    #[cfg(not(target_arch = "wasm32"))]
-    ctx.add_font(FontInsert::new(
-        "NotoSansSC-Regular",
-        egui::FontData::from_static(include_bytes!(
-            "../assets/fonts/Noto_Sans_SC/static/NotoSansSC-Regular.ttf"
-        )),
-        vec![
-            InsertFontFamily {
-                family: egui::FontFamily::Proportional,
-                priority: FontPriority::Lowest,
-            },
-            InsertFontFamily {
-                family: egui::FontFamily::Monospace,
-                priority: FontPriority::Lowest,
-            },
-        ],
-    ));
-    #[cfg(not(target_arch = "wasm32"))]
-    ctx.add_font(FontInsert::new(
-        "NotoSansKR-Regular",
-        egui::FontData::from_static(include_bytes!(
-            "../assets/fonts/Noto_Sans_KR/static/NotoSansKR-Regular.ttf"
-        )),
-        vec![
-            InsertFontFamily {
-                family: egui::FontFamily::Proportional,
-                priority: FontPriority::Lowest,
-            },
-            InsertFontFamily {
-                family: egui::FontFamily::Monospace,
-                priority: FontPriority::Lowest,
-            },
-        ],
-    ));
-    #[cfg(not(target_arch = "wasm32"))]
-    ctx.add_font(FontInsert::new(
-        "NotoSansTC-Regular",
-        egui::FontData::from_static(include_bytes!(
-            "../assets/fonts/Noto_Sans_TC/static/NotoSansTC-Regular.ttf"
-        )),
-        vec![
-            InsertFontFamily {
-                family: egui::FontFamily::Proportional,
-                priority: FontPriority::Lowest,
-            },
-            InsertFontFamily {
-                family: egui::FontFamily::Monospace,
-                priority: FontPriority::Lowest,
-            },
-        ],
-    ));
 }

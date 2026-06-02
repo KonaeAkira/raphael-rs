@@ -7,6 +7,7 @@ pub use app::MacroSolverApp;
 mod config;
 mod context;
 mod elements;
+mod fonts;
 mod solve;
 mod thread_pool;
 
