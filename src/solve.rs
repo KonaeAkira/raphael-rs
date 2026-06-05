@@ -50,6 +50,9 @@ pub struct RunningSolveInfo {
     pub solver_progress: usize, // Number of nodes visited
 }
 
+// Lint is only triggered for the web version. Additionally, there (currently)
+// is only one `SolveStatus` in use at a time so the difference is not important
+#[cfg_attr(target_arch = "wasm32", expect(clippy::large_enum_variant))]
 #[derive(Debug, Default)]
 pub enum SolveStatus {
     #[default]
