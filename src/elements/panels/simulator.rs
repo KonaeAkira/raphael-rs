@@ -293,7 +293,7 @@ fn progress_bar_text<T: Copy + std::cmp::Ord + std::ops::Sub<Output = T> + std::
 ) -> impl Into<egui::WidgetText> {
     let text = if value > maximum {
         let overflow = value - maximum;
-        t_format!(locale, "{value} / {maximum}  (+{overflow} overflow)") // TODO: update `translations.toml`
+        t_format!(locale, "{value} / {maximum}  (+{overflow} overflow)")
     } else {
         format!("{} / {}", value, maximum)
     };
