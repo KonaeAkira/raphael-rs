@@ -176,8 +176,6 @@ impl SolveState {
                     }
                 }
             }
-
-            assert!(solver_events.is_empty());
         }
     }
 

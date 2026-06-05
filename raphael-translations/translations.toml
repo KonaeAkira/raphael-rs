@@ -38,7 +38,7 @@ chs = '''你的属性不满足该配方的最低要求。'''
 tc = '''你的屬性低於此配方的最低要求。'''
 ko = '''이 제작법을 실행하기에는 능력치가 부족합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:93:21"]
+appearances = ["src/app.rs:92:21"]
 
 ["Y80Ti6XzzJh0HsgP3We95Q=="]
 en = '''Requirement: {req_cms} Craftsmanship, {req_ctrl} Control.'''
@@ -48,7 +48,7 @@ chs = '''属性要求：作业精度 {req_cms}，加工精度 {req_ctrl}。'''
 tc = '''屬性要求：作業精度 {req_cms}，加工精度 {req_ctrl}。'''
 ko = '''필요 능력치: 작업 숙련도 {req_cms}, 가공 숙련도 {req_ctrl}'''
 version = "0.1.0"
-appearances = ["src/app.rs:97:21"]
+appearances = ["src/app.rs:96:21"]
 
 ["Y5J9bsBCle+CMto6M6JHxw=="]
 en = '''Close'''
@@ -58,7 +58,7 @@ chs = '''关闭'''
 tc = '''關閉'''
 ko = '''닫기'''
 version = "0.1.0"
-appearances = ["src/app.rs:101:45", "src/app.rs:153:45", "src/elements/panels/macro_view.rs:221:37", "src/update.rs:100:45", "src/update.rs:122:45", "src/update.rs:139:45"]
+appearances = ["src/app.rs:100:45", "src/app.rs:152:45", "src/elements/panels/macro_view.rs:221:37", "src/update.rs:100:45", "src/update.rs:122:45", "src/update.rs:139:45"]
 
 ["pgzB+gD4MKo66zNoY8FNpQ=="]
 en = '''No solution'''
@@ -68,7 +68,7 @@ chs = '''没有求解结果'''
 tc = '''無解法'''
 ko = '''완성 불가능'''
 version = "0.1.0"
-appearances = ["src/app.rs:114:65"]
+appearances = ["src/app.rs:113:65"]
 
 ["M7yKz7+xN0NbELcsdUS9mQ=="]
 en = '''Internal Solver Error'''
@@ -78,7 +78,7 @@ chs = '''求解器内部错误'''
 tc = '''內部求解器錯誤'''
 ko = '''내부 연산 오류'''
 version = "0.1.0"
-appearances = ["src/app.rs:142:65"]
+appearances = ["src/app.rs:141:65"]
 
 ["RGfRJgcMUrxdE5tDqHmKmw=="]
 en = '''Cancelling ...'''
@@ -88,7 +88,7 @@ chs = '''正在取消……'''
 tc = '''正在取消...'''
 ko = '''취소중...'''
 version = "0.1.0"
-appearances = ["src/app.rs:182:48"]
+appearances = ["src/app.rs:181:48"]
 
 ["jjl4qe3qMoWXStCHXMxtQw=="]
 en = '''Solving ...'''
@@ -98,7 +98,7 @@ chs = '''求解中……'''
 tc = '''求解中...'''
 ko = '''계산중...'''
 version = "0.1.0"
-appearances = ["src/app.rs:184:48"]
+appearances = ["src/app.rs:183:48"]
 
 ["CzGfkdakyiaZV+pcVtpfIA=="]
 en = '''Computing ...'''
@@ -108,7 +108,7 @@ chs = '''计算中……'''
 tc = '''計算中...'''
 ko = '''처리중...'''
 version = "0.1.0"
-appearances = ["src/app.rs:191:49"]
+appearances = ["src/app.rs:190:49"]
 
 ["BARUl+J0medS35cQtNh2aQ=="]
 en = '''{num} nodes visited'''
@@ -118,7 +118,7 @@ chs = '''已访问 {num} 个节点'''
 tc = '''已訪問 {num} 個節點'''
 ko = '''검색한 노드 수: {num}'''
 version = "0.1.0"
-appearances = ["src/app.rs:203:56"]
+appearances = ["src/app.rs:202:56"]
 
 ["OoX2q/JxMzmzTwg2Ed6zIA=="]
 en = '''Cancel'''
@@ -128,7 +128,7 @@ chs = '''取消'''
 tc = '''取消'''
 ko = '''취소'''
 version = "0.1.0"
-appearances = ["src/app.rs:211:89"]
+appearances = ["src/app.rs:210:89"]
 
 ["cg3EbR6nwnyIL1Q//glDgQ=="]
 en = '''View source on GitHub'''
@@ -138,7 +138,7 @@ chs = '''在 Github 上查看源代码'''
 tc = '''在 GitHub 上查看原始碼'''
 ko = '''GitHub에서 소스코드를 보기'''
 version = "0.1.0"
-appearances = ["src/app.rs:253:44"]
+appearances = ["src/app.rs:252:44"]
 
 ["lWmzPzSl47iiMaVVE3XEhg=="]
 en = '''Join Discord'''
@@ -148,7 +148,7 @@ chs = '''加入 Discord 服务器'''
 tc = '''加入 Discord'''
 ko = '''Discord에 참가'''
 version = "0.1.0"
-appearances = ["src/app.rs:261:44"]
+appearances = ["src/app.rs:260:44"]
 
 ["R8QWfFt31+imn5zc8sqPpQ=="]
 en = '''Support me on Ko-fi'''
@@ -158,7 +158,7 @@ chs = '''在 Ko-fi 上支持我'''
 tc = '''在 Ko-fi 上支持我'''
 ko = '''Ko-fi에서 후원하기'''
 version = "0.1.0"
-appearances = ["src/app.rs:269:44"]
+appearances = ["src/app.rs:268:44"]
 
 ["j6ZOcmHFeUUvSQL3tC6w8Q=="]
 en = '''Saved macros & solve history'''
@@ -168,7 +168,7 @@ chs = '''保存的宏 & 求解历史'''
 tc = '''已保存的巨集與求解紀錄'''
 ko = '''저장된 매크로 & 매크로 이력'''
 version = "0.1.0"
-appearances = ["src/app.rs:389:44"]
+appearances = ["src/app.rs:388:44"]
 
 ["1hnF2qPsDblAcEC031aNiQ=="]
 en = '''⚙ Settings'''
@@ -178,7 +178,7 @@ chs = '''⚙ 设置'''
 tc = '''⚙ 設定'''
 ko = '''⚙ 설정'''
 version = "0.1.0"
-appearances = ["src/app.rs:420:64"]
+appearances = ["src/app.rs:419:64"]
 
 ["io7ohp3lMzZa3WQzo2EXwA=="]
 en = '''Zoom'''
@@ -188,7 +188,7 @@ chs = '''缩放'''
 tc = '''縮放'''
 ko = '''줌'''
 version = "0.1.0"
-appearances = ["src/app.rs:429:45"]
+appearances = ["src/app.rs:428:45"]
 
 ["M8PiJj/aRi0rpRN+ej1g9A=="]
 en = '''Reset'''
@@ -198,7 +198,7 @@ chs = '''重置'''
 tc = '''重置'''
 ko = '''리셋'''
 version = "0.1.0"
-appearances = ["src/app.rs:440:57"]
+appearances = ["src/app.rs:439:57"]
 
 ["pONACX6lY+V99UWTe/kqrg=="]
 en = '''Theme'''
@@ -208,7 +208,7 @@ chs = '''主题'''
 tc = '''主題'''
 ko = '''테마'''
 version = "0.1.0"
-appearances = ["src/app.rs:466:45"]
+appearances = ["src/app.rs:465:45"]
 
 ["Dzp4BVgWJRKCJfNNkYIVlg=="]
 en = '''Max solver threads'''
@@ -218,7 +218,7 @@ chs = '''最大求解器线程数'''
 tc = '''最大求解器執行緒數'''
 ko = '''최대 연산 스레드 수'''
 version = "0.1.0"
-appearances = ["src/app.rs:472:45"]
+appearances = ["src/app.rs:471:45"]
 
 ["jShO4IYyVbGBOM8dCrtLKg=="]
 en = '''Auto'''
@@ -228,7 +228,7 @@ chs = '''自动'''
 tc = '''自動'''
 ko = '''자동'''
 version = "0.1.0"
-appearances = ["src/app.rs:477:78"]
+appearances = ["src/app.rs:476:78"]
 
 ["BLHRlxc+VXt0l9NBBt9tfw=="]
 en = '''Reload the page to change max solver threads.'''
@@ -238,7 +238,7 @@ chs = '''重新加载页面以修改最大求解器线程数'''
 tc = '''重新載入頁面以修改最大求解器執行緒數'''
 ko = '''최대 스레드 수를 변경하기 위해서는, 페이지를 새로고침 해주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:507:40"]
+appearances = ["src/app.rs:506:40"]
 
 ["vjDFd4nGKfXhhYyK/tHwPA=="]
 en = '''Restart the app to change max solver threads.'''
@@ -248,7 +248,7 @@ chs = '''重启 App 以修改最大求解器线程数'''
 tc = '''重新啟動應用程式以修改最大求解器執行緒數'''
 ko = '''최대 스레드 수를 변경하기 위해서는, 프로그램을 다시 실행해 주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:510:40"]
+appearances = ["src/app.rs:509:40"]
 
 ["nn9ZpD3bAAqndQIWAbRgFw=="]
 en = '''⚠ Unavailable after the solver was started.'''
@@ -258,7 +258,7 @@ chs = '''⚠ 在求解开始后不可用'''
 tc = '''⚠ 在計算開始後不可用'''
 ko = '''⚠ 계산 시작 후에는 사용할수 없습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:514:33"]
+appearances = ["src/app.rs:513:33"]
 
 ["zmui7MOfCBvDo46GmrsyHQ=="]
 en = '''Solve'''
@@ -268,7 +268,7 @@ chs = '''求解'''
 tc = '''開始計算'''
 ko = '''계산 시작'''
 version = "0.1.0"
-appearances = ["src/app.rs:555:67"]
+appearances = ["src/app.rs:554:67"]
 
 ["1U/QcBQBwNxZFTVzOiPbZQ=="]
 en = '''Loaded from saved rotations'''
@@ -278,7 +278,7 @@ chs = '''从已保存的手法中加载'''
 tc = '''從已保存的求解紀錄中載入'''
 ko = '''저장된 매크로를 불러오기'''
 version = "0.1.0"
-appearances = ["src/app.rs:575:49"]
+appearances = ["src/app.rs:574:49"]
 
 ["GHsBdCyhgje4wH1aGIXomA=="]
 en = '''Elapsed time: {dur:.2}s'''
@@ -288,7 +288,7 @@ chs = '''运行时间：{dur:.2}秒'''
 tc = '''經過時間: {dur:.2}秒'''
 ko = '''경과 시간: {dur:.2}초'''
 version = "0.1.0"
-appearances = ["src/app.rs:579:33"]
+appearances = ["src/app.rs:578:33"]
 
 ["86xP6SinOkg3PnEMcQj2jQ=="]
 en = '''Configuration'''
@@ -298,7 +298,7 @@ chs = '''设置'''
 tc = '''設定'''
 ko = '''설정'''
 version = "0.1.0"
-appearances = ["src/app.rs:599:53"]
+appearances = ["src/app.rs:598:53"]
 
 ["L2JTnghPt1d+Oa4OEEF1JA=="]
 en = '''Crafter stats'''
@@ -308,7 +308,7 @@ chs = '''装备属性'''
 tc = '''能工巧匠屬性'''
 ko = '''제작자 능력치'''
 version = "0.1.0"
-appearances = ["src/app.rs:373:44", "src/app.rs:618:49", "src/elements/panels/saved_rotations.rs:493:28", "src/elements/panels/saved_rotations.rs:511:43"]
+appearances = ["src/app.rs:372:44", "src/app.rs:617:49", "src/elements/panels/saved_rotations.rs:493:28", "src/elements/panels/saved_rotations.rs:511:43"]
 
 ["djUZraHVrnziMltlgh1vrw=="]
 en = '''Craftsmanship'''
@@ -318,7 +318,7 @@ chs = '''作业精度'''
 tc = '''作業精度'''
 ko = '''작업 숙련도'''
 version = "0.1.0"
-appearances = ["src/app.rs:620:33", "src/elements/panels/stats_edit.rs:48:44"]
+appearances = ["src/app.rs:619:33", "src/elements/panels/stats_edit.rs:48:44"]
 
 ["KJUTCL5V/kZ2/dZUokILbw=="]
 en = '''Control'''
@@ -328,7 +328,7 @@ chs = '''加工精度'''
 tc = '''加工精度'''
 ko = '''가공 숙련도'''
 version = "0.1.0"
-appearances = ["src/app.rs:652:33", "src/elements/panels/stats_edit.rs:54:44"]
+appearances = ["src/app.rs:651:33", "src/elements/panels/stats_edit.rs:54:44"]
 
 ["xiuBlBU0Sotio+aM9OVj/g=="]
 en = '''CP'''
@@ -338,7 +338,7 @@ chs = '''制作力'''
 tc = '''CP'''
 ko = '''CP'''
 version = "0.1.0"
-appearances = ["src/app.rs:684:33", "src/elements/panels/simulator.rs:87:36", "src/elements/panels/simulator.rs:155:45", "src/elements/panels/stats_edit.rs:60:44"]
+appearances = ["src/app.rs:683:33", "src/elements/panels/simulator.rs:87:36", "src/elements/panels/simulator.rs:155:45", "src/elements/panels/stats_edit.rs:60:44"]
 
 ["gvQDIapOj6o9a+eE3FQ/4w=="]
 en = '''Job level'''
@@ -348,7 +348,7 @@ chs = '''职业等级'''
 tc = '''職業等級'''
 ko = '''잡 레벨'''
 version = "0.1.0"
-appearances = ["src/app.rs:715:33", "src/elements/panels/stats_edit.rs:66:44"]
+appearances = ["src/app.rs:714:33", "src/elements/panels/stats_edit.rs:66:44"]
 
 ["cC4Pa/1y2f2sfxzRiK/t7w=="]
 en = '''HQ materials'''
@@ -358,7 +358,7 @@ chs = '''HQ 素材'''
 tc = '''HQ 素材'''
 ko = '''HQ 재료'''
 version = "0.1.0"
-appearances = ["src/app.rs:725:49"]
+appearances = ["src/app.rs:724:49"]
 
 ["kUunSSnuVLUo8LUXOeOV3g=="]
 en = '''None'''
@@ -368,7 +368,7 @@ chs = '''无'''
 tc = '''無'''
 ko = '''없음'''
 version = "0.1.0"
-appearances = ["src/app.rs:751:33", "src/elements/panels/macro_view.rs:334:32", "src/elements/panels/macro_view.rs:340:32", "src/elements/panels/consumable_select.rs:93:53", "src/elements/panels/saved_rotations.rs:468:32"]
+appearances = ["src/app.rs:750:33", "src/elements/panels/macro_view.rs:334:32", "src/elements/panels/macro_view.rs:340:32", "src/elements/panels/consumable_select.rs:93:53", "src/elements/panels/saved_rotations.rs:468:32"]
 
 ["zx/fjNOuB8BwC8A4Cf9wEQ=="]
 en = '''Actions'''
@@ -378,7 +378,7 @@ chs = '''技能'''
 tc = '''技能'''
 ko = '''기술'''
 version = "0.1.0"
-appearances = ["src/app.rs:755:49"]
+appearances = ["src/app.rs:754:49"]
 
 ["Nqynjr3uw4cXS6wQ7r6QMQ=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage.'''
@@ -388,7 +388,7 @@ chs = '''⚠ 使用专家技能会大幅增加求解时间和内存使用量'''
 tc = '''⚠ 使用專家技能會大幅增加求解時間和記憶體使用量'''
 ko = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:825:21"]
+appearances = ["src/app.rs:824:21"]
 
 ["78TQLq2ZFZ/qmx/LqLc/Xg=="]
 en = '''⚠ Specialist actions substantially increase solve time and memory usage. It is recommended that you download and use the native version if you want to enable specialist actions.'''
@@ -398,7 +398,7 @@ chs = '''⚠ 使用专家技能会大幅增加求解时间和内存使用量。�
 tc = '''⚠ 使用專家技能會大幅增加求解時間和記憶體使用量。建議下載並使用應用程式版本以啟用專家技能。'''
 ko = '''⚠ 전문장인 기술은 계산시간과 메모리 사용량이 대폭 늘어납니다. 사용하시는 경우에는 프로그램 버전 사용을 추천합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:834:36"]
+appearances = ["src/app.rs:833:36"]
 
 ["dN6QqcmCiKeFu4Xi+6XZsA=="]
 en = '''Download latest release from GitHub'''
@@ -408,7 +408,7 @@ chs = '''从 Github 下载最新版本'''
 tc = '''從 GitHub 下載最新版本'''
 ko = '''GitHub에서 최신 릴리즈를 다운로드'''
 version = "0.1.0"
-appearances = ["src/app.rs:136:60", "src/app.rs:840:52"]
+appearances = ["src/app.rs:135:60", "src/app.rs:839:52"]
 
 ["yngZyyailHQ73P49MTwWog=="]
 en = '''Solver settings'''
@@ -418,7 +418,7 @@ chs = '''求解器设置'''
 tc = '''求解器設定'''
 ko = '''계산 설정'''
 version = "0.1.0"
-appearances = ["src/app.rs:847:49"]
+appearances = ["src/app.rs:846:49"]
 
 ["F6hizp5LhBRSpJLhSSSKSw=="]
 en = '''Target quality'''
@@ -428,7 +428,7 @@ chs = '''目标品质'''
 tc = '''目標品質'''
 ko = '''목표 품질'''
 version = "0.1.0"
-appearances = ["src/app.rs:849:33"]
+appearances = ["src/app.rs:848:33"]
 
 ["2AVyYXMX37CrN/9Gvhfyuw=="]
 en = '''Solution must reach target quality'''
@@ -438,7 +438,7 @@ chs = '''解决方案必须满足目标品质'''
 tc = '''解法必須達到目標品質'''
 ko = '''목표 품질을 반드시 달성합니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:890:28"]
+appearances = ["src/app.rs:889:28"]
 
 ["p7HyJWFYYWHKe39OAg2LrQ=="]
 en = '''Reduce memory usage by skipping candidate solutions that cannot reach the target quality. Basically, you either get a solution that reaches the target quality or you get no solution at all. If you want to know how close you are to reaching the target quality, keep this option turned off.'''
@@ -448,7 +448,7 @@ chs = '''通过跳过无法达到目标品质的候选解决方案来减少内�
 tc = '''透過無視無法達到目標品質的候選解法來減少記憶體使用量。基本上，要麼得到一個達到目標品質的解，否則就沒有解。如果想知道距離達到目標品質的差距，請保持該選項關閉。'''
 ko = '''목표 품질에 도달하지 못하는 경우를 제외해서 메모리 사용량을 줄입니다. 기본적으로는 목표 품질을 달성하거나, 매크로를 완성하지 못합니다. 목표 품질을 어느정도까지 달성할수 있는지 확인하고 싶은 경우에는, 이 옵션을 꺼주세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:892:45"]
+appearances = ["src/app.rs:891:45"]
 
 ["ao5RTXAU8JPfZa/+YXPWLQ=="]
 en = '''Backload progress'''
@@ -458,7 +458,7 @@ chs = '''后置作业技能'''
 tc = '''後置作業技能'''
 ko = '''작업량을 나중에 달성'''
 version = "0.1.0"
-appearances = ["src/app.rs:898:28"]
+appearances = ["src/app.rs:897:28"]
 
 ["wFvVGJ0ERIy0TrxLLi5LAw=="]
 en = '''Find a rotation that only uses Progress-increasing actions at the end of the rotation.\n  - May decrease achievable Quality.\n  - May increase macro duration.'''
@@ -468,7 +468,7 @@ chs = '''仅考虑在宏的最后使用作业技能的手法。\n  - 可能导�
 ts = '''僅考慮在巨集的最後使用作業技能的手法。\n  - 可能導致可達到的品質更低。\n  - 可能導致巨集的長度更長。'''
 ko = '''매크로의 뒷부분에서만 작업을 진행합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다.\n - 매크로의 작업시간이 길어질 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:900:45"]
+appearances = ["src/app.rs:899:45"]
 
 ["4TrzziJN2b/3+NIwV86LoQ=="]
 en = '''Ensure 100% reliability'''
@@ -478,7 +478,7 @@ chs = '''确保 100% 可靠（防黑球）'''
 tc = '''確保 100% 可靠'''
 ko = '''품질 100％를 보증'''
 version = "0.1.0"
-appearances = ["src/app.rs:911:32"]
+appearances = ["src/app.rs:910:32"]
 
 ["seCI2n41FD+21Bg6X3etyQ=="]
 en = '''Find a rotation that can reach the target quality no matter how unlucky the random conditions are.\n  - May decrease achievable Quality.\n  - May increase macro duration.\n  - Much longer solve time.\nThe solver never tries to use Tricks of the Trade to \"eat\" Excellent quality procs, so in some cases this option does not produce the optimal macro.'''
@@ -488,7 +488,7 @@ chs = '''找出能确保无论运气多差，出现何种制作状态均能保�
 tc = '''找出能確保無論運氣多差，出現何種製作狀態均能保證達到目標品質的手法。\n  - 可能導致可達到的品質更低。\n  - 可能導致巨集的長度更長。\n  - 求解所需的時間更久。\n求解器不會嘗試用秘訣技能“吃掉”最高品質狀態，所以部分情況下這個選項不會產生最優的巨集。'''
 ko = '''저품질 비레고로 인한 품질 하락을 방지합니다.\n - 달성 가능한 품질이 하락할 가능성이 있습니다.\n - 매크로의 작업시간이 길어질 가능성이 있습니다.\n - 계산시간이 대폭 늘어날 가능성이 있습니다.\n - 계산기가 '비결'을 사용해서 품질을 더 올릴수는 없기때문에, 이 옵션이 최적의 매크로를 생성하지 못할 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:914:45"]
+appearances = ["src/app.rs:913:45"]
 
 ["+DwRW5ozbiRozBNupYmv0A=="]
 en = '''⚠ EXPERIMENTAL FEATURE\nThis option may use a lot of memory (sometimes well above 4GB) which may cause your system to run out of memory.'''
@@ -498,7 +498,7 @@ chs = '''⚠ 实验性特性\n这个选项可能需要非常多的内存（有�
 tc = '''⚠ 實驗性功能\n此選項可能會使用大量記憶體（有時甚至超過4GB），可能導致系統記憶體不足。'''
 ko = '''⚠ 실험실 기능\n이 옵션은 메모리를 많이 사용할 가능성이 있습니다 (경우에 따라서 4GB 이상): 시스템의 메모리가 부족하게 되는 경우가 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:963:13"]
+appearances = ["src/app.rs:962:13"]
 
 ["l/rSN+oK2pKV8ohfHf/Ovg=="] # This is no longer accurate with the change to the web versions OOM panic handling, all expected crashes are now caught via JavaScript and always show a (currently untranslated) modal. (WebAssembly is also misspelled)
 en = '''⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely.'''
@@ -508,7 +508,7 @@ chs = '''⚠ 实验性特性\n由于32位WebAssembly的限制，求解器在使�
 tc = '''⚠ 實驗性功能\n當達到32位元WebAssembly的4GB記憶體上限時，可能會導致求解器當機，並使使用者介面無限期停留在「求解中」狀態。'''
 ko = '''⚠ 실험실 기능\n32비트 WebAssembly의 메모리 상한 4GB에 도달하면, 계산기가 작동을 멈추고 UI가 '계산중' 상태에서 영원히 정지할 가능성이 있습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:968:13"]
+appearances = ["src/app.rs:967:13"]
 
 ["sVLTzHCZb8cp/NrYNctl5Q=="]
 en = '''0% quality'''
@@ -1374,25 +1374,25 @@ appearances = ["src/update.rs:135:21"]
 en = '''Cannot complete synthesis.'''
 ko = '''제작을 완료할 수 없습니다.'''
 version = "0.1.0"
-appearances = ["src/app.rs:116:45"]
+appearances = ["src/app.rs:115:45"]
 
 ["0B9HEzrjVznLUlK3rkpsmA=="]
 en = '''Try lowering target quality.'''
 ko = '''목표 품질을 낮춰 보세요.'''
 version = "0.1.0"
-appearances = ["src/app.rs:121:49"]
+appearances = ["src/app.rs:120:49"]
 
 ["sbHR6gqzNNKX1lr4YoUgnw=="]
 en = '''Search Queue Capacity Exceeded'''
 version = "0.1.0"
-appearances = ["src/app.rs:129:60"]
+appearances = ["src/app.rs:128:60"]
 
 ["IBSuLXJlQo/EFkZnCQyr5Q=="]
 en = '''The number of nodes in the search queue exceeded the limit of the 32-bit web version.'''
 version = "0.1.0"
-appearances = ["src/app.rs:133:45"]
+appearances = ["src/app.rs:132:45"]
 
 ["qwfrfe+6PcQ624J4auw4Eg=="]
 en = '''Solving this configuration requires a 64-bit version of Raphael.'''
 version = "0.1.0"
-appearances = ["src/app.rs:134:45"]
+appearances = ["src/app.rs:133:45"]

@@ -47,7 +47,6 @@ impl MacroSolverApp {
         cc.egui_ctx
             .data_mut(egui::util::IdTypeMap::remove_by_type::<egui::scroll_area::State>);
 
-        // load_fonts(&cc.egui_ctx);
         let font_loading_state = FontLoadingState::new(&cc.egui_ctx, app_context.locale);
 
         #[cfg(not(target_arch = "wasm32"))]
