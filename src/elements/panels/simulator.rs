@@ -88,6 +88,8 @@ impl Simulator<'_> {
                     ],
                     egui::TextStyle::Body,
                 );
+                let max_value_text_width =
+                    5.0 * util::max_text_width(ui, 0..=9, egui::TextStyle::Body);
 
                 let text_size = egui::vec2(max_text_width, ui.spacing().interact_size.y);
                 let text_layout = egui::Layout::right_to_left(egui::Align::Center);
@@ -101,8 +103,10 @@ impl Simulator<'_> {
                             state.progress as f32 / self.settings.max_progress as f32,
                         )
                         .text(progress_bar_text(
+                            ui,
                             state.progress,
                             self.settings.max_progress,
+                            max_value_text_width,
                             locale,
                         ))
                         .corner_radius(0),
@@ -117,8 +121,10 @@ impl Simulator<'_> {
                     ui.add(
                         egui::ProgressBar::new(quality as f32 / self.settings.max_quality as f32)
                             .text(progress_bar_text(
+                                ui,
                                 quality,
                                 self.settings.max_quality,
+                                max_value_text_width,
                                 locale,
                             ))
                             .corner_radius(0),
@@ -134,8 +140,10 @@ impl Simulator<'_> {
                             state.durability as f32 / self.settings.max_durability as f32,
                         )
                         .text(progress_bar_text(
+                            ui,
                             state.durability,
                             self.settings.max_durability,
+                            max_value_text_width,
                             locale,
                         ))
                         .corner_radius(0),
@@ -148,7 +156,13 @@ impl Simulator<'_> {
                     });
                     ui.add(
                         egui::ProgressBar::new(state.cp as f32 / self.settings.max_cp as f32)
-                            .text(progress_bar_text(state.cp, self.settings.max_cp, locale))
+                            .text(progress_bar_text(
+                                ui,
+                                state.cp,
+                                self.settings.max_cp,
+                                max_value_text_width,
+                                locale,
+                            ))
                             .corner_radius(0),
                     );
                 });
@@ -271,14 +285,31 @@ impl egui::Widget for Simulator<'_> {
 }
 
 fn progress_bar_text<T: Copy + std::cmp::Ord + std::ops::Sub<Output = T> + std::fmt::Display>(
+    ui: &egui::Ui,
     value: T,
     maximum: T,
+    max_value_text_width: f32,
     locale: Locale,
-) -> String {
-    if value > maximum {
+) -> impl Into<egui::WidgetText> {
+    let text = if value > maximum {
         let overflow = value - maximum;
-        t_format!(locale, "{value: >5} / {maximum}  (+{overflow} overflow)")
+        t_format!(locale, "{value} / {maximum}  (+{overflow} overflow)") // TODO: update `translations.toml`
     } else {
-        format!("{: >5} / {}", value, maximum)
-    }
+        format!("{} / {}", value, maximum)
+    };
+
+    let value_text_width = util::text_width(ui, value, egui::TextStyle::Body);
+
+    let style = ui.style();
+    let mut job = egui::text::LayoutJob::default();
+    job.append(
+        &text,
+        max_value_text_width - value_text_width,
+        egui::TextFormat {
+            font_id: egui::TextStyle::Body.resolve(style),
+            color: egui::Color32::PLACEHOLDER,
+            ..Default::default()
+        },
+    );
+    job
 }

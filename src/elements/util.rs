@@ -48,10 +48,10 @@ pub fn effect_string(
     effect
 }
 
-pub fn text_width(ui: &egui::Ui, text: impl Into<String>, text_style: TextStyle) -> f32 {
+pub fn text_width(ui: &egui::Ui, text: impl ToString, text_style: TextStyle) -> f32 {
     let font_id = text_style.resolve(ui.style());
     ui.fonts_mut(|fonts| {
-        let galley = fonts.layout_no_wrap(text.into(), font_id, egui::Color32::default());
+        let galley = fonts.layout_no_wrap(text.to_string(), font_id, egui::Color32::default());
         galley.rect.width()
     })
 }
