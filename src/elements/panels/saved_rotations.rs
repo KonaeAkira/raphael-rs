@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
-    context::{AppContext, SolverConfig},
+    context::{AppContext, RecipeSearchState, SearchState, SolverConfig},
     elements::{util, widgets::collapse_temporary},
     solve::{RunningSolveInfo, SolveParameters},
 };
@@ -268,6 +268,7 @@ struct RotationWidget<'a> {
     deleted: &'a mut bool,
     rotation: &'a Rotation,
     actions: &'a mut Vec<Action>,
+    show_custom_recipe_select: &'a mut bool,
     crafter_config: &'a mut CrafterConfig,
     solver_config: &'a mut SolverConfig,
     recipe_config: &'a mut RecipeConfiguration,
@@ -278,6 +279,7 @@ struct RotationWidget<'a> {
 struct LimitedAppContext<'a> {
     pub locale: Locale,
     pub default_load_operation: LoadOperation,
+    pub show_custom_recipe_select: &'a mut bool,
     pub recipe_config: &'a mut RecipeConfiguration,
     pub selected_food: &'a mut Option<Consumable>,
     pub selected_potion: &'a mut Option<Consumable>,
@@ -300,6 +302,7 @@ impl<'a> RotationWidget<'a> {
             deleted,
             rotation,
             actions,
+            show_custom_recipe_select: limited_app_context.show_custom_recipe_select,
             crafter_config: limited_app_context.crafter_config,
             solver_config: limited_app_context.solver_config,
             recipe_config: limited_app_context.recipe_config,
@@ -407,6 +410,7 @@ impl<'a> RotationWidget<'a> {
                         };
                         self.crafter_config.selected_job = recipe.job_id;
                         self.solver_config.stellar_steady_hand_charges = 0;
+                        *self.show_custom_recipe_select = false;
                     } else {
                         log::debug!("Unable to find recipe with recipe_id={:?}", recipe_id);
                     }
@@ -421,6 +425,7 @@ impl<'a> RotationWidget<'a> {
                     };
                     self.crafter_config.selected_job = recipe.job_id;
                     self.solver_config.stellar_steady_hand_charges = 0;
+                    *self.show_custom_recipe_select = true;
                 }
             }
         }
@@ -590,6 +595,15 @@ impl egui::Widget for SavedRotationsWidget<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let AppContext {
             locale,
+            search_state:
+                SearchState {
+                    recipe:
+                        RecipeSearchState {
+                            show_custom_recipe_select,
+                            ..
+                        },
+                    ..
+                },
             recipe_config,
             selected_food,
             selected_potion,
@@ -602,6 +616,7 @@ impl egui::Widget for SavedRotationsWidget<'_> {
         let mut limited_app_context = LimitedAppContext {
             locale: *locale,
             default_load_operation: config.default_load_operation,
+            show_custom_recipe_select,
             recipe_config,
             selected_food,
             selected_potion,
