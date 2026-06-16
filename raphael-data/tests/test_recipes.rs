@@ -557,9 +557,9 @@ fn habitat_chair() {
 
 #[test]
 fn habitat_chair_jobid() {
-    let nonmatching_recipes =
+    let results_with_wrong_job =
         find_recipes_exact("Habitat Chair", Locale::EN, Some(5)).collect::<Vec<_>>();
-    assert!(nonmatching_recipes.is_empty());
+    assert!(results_with_wrong_job.is_empty());
 
     let matching_recipes =
         find_recipes_exact("Habitat Chair", Locale::EN, Some(0)).collect::<Vec<_>>();

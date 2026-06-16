@@ -263,13 +263,13 @@ fn ex_natural_remedy_inspection_ii() {
 
 #[test]
 fn ex_natural_remedy_inspection_ii_jobids() {
-    let nonmatching_missions = find_stellar_missions(StellarSearchQuery {
+    let results_with_wrong_job = find_stellar_missions(StellarSearchQuery {
         text: "EX: Natural Remedy Inspection II",
         locale: Locale::EN,
         job_id: Some(0),
     })
     .collect::<Vec<_>>();
-    assert_eq!(nonmatching_missions.len(), 0);
+    assert!(results_with_wrong_job.is_empty());
 
     let matching_missions = find_stellar_missions(StellarSearchQuery {
         text: "EX: Natural Remedy Inspection II",
