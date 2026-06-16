@@ -4,7 +4,7 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{
-    Consumable, Locale, RLVLS, Recipe, RecipeSearchQuery, StellarSearchQuery, find_recipes,
+    Consumable, Locale, RLVLS, Recipe, RecipeSearchEntry, RecipeSearchQuery, StellarMissionSearchEntry, StellarSearchQuery, find_recipes,
     find_stellar_missions, get_game_settings, get_job_name,
 };
 use raphael_translations::{t, t_format};
@@ -37,35 +37,35 @@ impl SearchDomain {
 #[derive(Default)]
 struct RecipeFinder {}
 
-impl ComputerMut<raphael_data::RecipeSearchQuery<'_>, Vec<raphael_data::RecipeSearchEntry>>
+impl ComputerMut<RecipeSearchQuery<'_>, Vec<RecipeSearchEntry>>
     for RecipeFinder
 {
     fn compute(
         &mut self,
-        query: raphael_data::RecipeSearchQuery,
-    ) -> Vec<raphael_data::RecipeSearchEntry> {
+        query: RecipeSearchQuery,
+    ) -> Vec<RecipeSearchEntry> {
         find_recipes(query).collect::<Vec<_>>()
     }
 }
 
-type RecipeSearchCache<'a> = FrameCache<Vec<raphael_data::RecipeSearchEntry>, RecipeFinder>;
+type RecipeSearchCache<'a> = FrameCache<Vec<RecipeSearchEntry>, RecipeFinder>;
 
 #[derive(Default)]
 struct StellarMissionFinder {}
 
-impl ComputerMut<raphael_data::StellarSearchQuery<'_>, Vec<raphael_data::StellarMissionSearchEntry>>
+impl ComputerMut<StellarSearchQuery<'_>, Vec<StellarMissionSearchEntry>>
     for StellarMissionFinder
 {
     fn compute(
         &mut self,
-        query: raphael_data::StellarSearchQuery,
-    ) -> Vec<raphael_data::StellarMissionSearchEntry> {
+        query: StellarSearchQuery,
+    ) -> Vec<StellarMissionSearchEntry> {
         find_stellar_missions(query).collect::<Vec<_>>()
     }
 }
 
 type StellarMissionSearchCache<'a> =
-    FrameCache<Vec<raphael_data::StellarMissionSearchEntry>, StellarMissionFinder>;
+    FrameCache<Vec<StellarMissionSearchEntry>, StellarMissionFinder>;
 
 pub struct RecipeSelect<'a> {
     search_state: &'a mut RecipeSearchState,
@@ -181,7 +181,7 @@ impl<'a> RecipeSelect<'a> {
     fn draw_recipe_select_table(
         &mut self,
         ui: &mut egui::Ui,
-        search_result: Vec<raphael_data::RecipeSearchEntry>,
+        search_result: Vec<RecipeSearchEntry>,
     ) {
         let locale = self.locale;
         let line_height = ui.spacing().interact_size.y;
