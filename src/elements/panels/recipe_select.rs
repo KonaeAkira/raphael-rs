@@ -127,16 +127,20 @@ impl<'a> RecipeSelect<'a> {
                 [SearchDomain::Recipes, SearchDomain::StellarMissions],
                 |search_domain: SearchDomain| search_domain.display(locale),
             ));
-            if ui.button("⚙").clicked() {
-                set_filter_modal_visibility(ui.ctx(), true);
-            }
+            let search_text_edit_width = ui.available_width()
+                - (util::text_width(ui, "⚙", egui::TextStyle::Button)
+                    + ui.style().spacing.button_padding.x * 2.0)
+                - ui.style().spacing.item_spacing.x;
             if egui::TextEdit::singleline(search_text)
-                .desired_width(f32::INFINITY)
+                .desired_width(search_text_edit_width)
                 .hint_text(t!(locale, "🔍 Search"))
                 .ui(ui)
                 .changed()
             {
                 *search_text = search_text.replace('\0', "");
+            }
+            if ui.button("⚙").clicked() {
+                set_filter_modal_visibility(ui.ctx(), true);
             }
         });
 
@@ -446,7 +450,7 @@ impl<'a> RecipeSelect<'a> {
             });
         });
     }
-    fn draw_config_menu(&mut self, ctx: &egui::Context) {
+    fn draw_recipe_filter_modal(&mut self, ctx: &egui::Context) {
         let locale = self.locale;
         egui::containers::Modal::new(egui::Id::new("RECIPE_FILTER_MODAL")).show(ctx, |ui| {
             ui.set_width(
@@ -454,11 +458,11 @@ impl<'a> RecipeSelect<'a> {
                     .clamp(0.0, 360.0),
             );
             ui.style_mut().spacing.item_spacing.y = 3.0;
-            ui.label(egui::RichText::new(t!(locale, "Recipe Filter Settings")).strong());
+            ui.label(egui::RichText::new(t!(locale, "Recipe filters")).strong());
             ui.separator();
             ui.checkbox(
                 &mut self.search_state.active_job_only,
-                t!(locale, "Active Job Only"),
+                t!(locale, "Active job only"),
             );
             ui.separator();
             ui.vertical_centered_justified(|ui| {
@@ -484,7 +488,7 @@ impl Widget for RecipeSelect<'_> {
         let locale = self.locale;
 
         if filter_modal_is_visible(ui.ctx()) {
-            self.draw_config_menu(ui.ctx());
+            self.draw_recipe_filter_modal(ui.ctx());
         }
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);

@@ -1397,12 +1397,12 @@ en = '''Solving this configuration requires a 64-bit version of Raphael.'''
 version = "0.1.0"
 appearances = ["src/app.rs:133:45"]
 
-["dEkpIt0ZyrnzZHGx2Iuilw=="]
-en = '''Recipe Filter Settings'''
+["gXjI6djzbLN63op2crXLCg=="]
+en = '''Recipe filters'''
 version = "0.1.0"
 appearances = ["src/elements/panels/recipe_select.rs:457:53"]
 
-["HOE4QGs+EZhKpOBh3JbvPg=="]
-en = '''Active Job Only'''
+["Jmc3mzQWJhKQYa7M+LM3gA=="]
+en = '''Active job only'''
 version = "0.1.0"
 appearances = ["src/elements/panels/recipe_select.rs:461:28"]
