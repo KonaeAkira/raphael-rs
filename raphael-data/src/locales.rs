@@ -74,7 +74,7 @@ pub fn get_job_id(job_name: &str, locale: Locale) -> Option<u8> {
     };
     job_names
         .iter()
-        .position(|&n| n == job_name)
+        .position(|&name| name == job_name)
         .map(|i| i as u8)
 }
 
