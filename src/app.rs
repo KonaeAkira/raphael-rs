@@ -11,7 +11,7 @@ use crate::context::AppContext;
 use crate::fonts::FontLoadingState;
 use crate::solve::{LastSolveInfo, RunningSolveInfo, SolveState};
 use crate::{
-    elements::{panels::*, widgets::*},
+    elements::{panels::*, util, widgets::*},
     thread_pool,
 };
 
@@ -611,8 +611,6 @@ impl MacroSolverApp {
         });
         ui.separator();
 
-        const BUFFED_STAT_BG_COLOR: egui::Color32 =
-            egui::Color32::from_rgba_unmultiplied_const(144, 238, 144, 128);
         let consumables = &[selected_food, selected_potion];
         ui.label(egui::RichText::new(t!(locale, "Crafter stats")).strong());
         ui.horizontal(|ui| {
@@ -624,9 +622,7 @@ impl MacroSolverApp {
                 ui.scope(|ui| {
                     let cms_bonus = raphael_data::craftsmanship_bonus(*cms_base, consumables);
                     if cms_bonus != 0 {
-                        ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
-                        ui.visuals_mut().widgets.hovered.weak_bg_fill = BUFFED_STAT_BG_COLOR;
-                        ui.visuals_mut().widgets.active.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        util::use_highlighted_widget_bg_color(ui);
                     }
 
                     let buffed = *cms_base + cms_bonus;
@@ -656,9 +652,7 @@ impl MacroSolverApp {
                 ui.scope(|ui| {
                     let control_bonus = raphael_data::control_bonus(*control_base, consumables);
                     if control_bonus != 0 {
-                        ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
-                        ui.visuals_mut().widgets.hovered.weak_bg_fill = BUFFED_STAT_BG_COLOR;
-                        ui.visuals_mut().widgets.active.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        util::use_highlighted_widget_bg_color(ui);
                     }
 
                     let buffed = *control_base + control_bonus;
@@ -688,9 +682,7 @@ impl MacroSolverApp {
                 ui.scope(|ui| {
                     let cp_bonus = raphael_data::cp_bonus(*cp_base, consumables);
                     if cp_bonus != 0 {
-                        ui.visuals_mut().widgets.inactive.weak_bg_fill = BUFFED_STAT_BG_COLOR;
-                        ui.visuals_mut().widgets.hovered.weak_bg_fill = BUFFED_STAT_BG_COLOR;
-                        ui.visuals_mut().widgets.active.weak_bg_fill = BUFFED_STAT_BG_COLOR;
+                        util::use_highlighted_widget_bg_color(ui);
                     }
 
                     let buffed = *cp_base + cp_bonus;

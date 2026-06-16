@@ -30,6 +30,12 @@ pub struct RecipeSearchState {
     pub search_text: String,
 }
 
+impl RecipeSearchState {
+    pub fn filters_active(&self) -> bool {
+        self.active_job_only
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct GenericSearchState {
     pub search_text: String,

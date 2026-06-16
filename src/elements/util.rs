@@ -5,6 +5,15 @@ use raphael_data::{
 use raphael_sim::*;
 use raphael_translations::{t, t_format};
 
+pub const HIGHLIGHTED_WIDGET_BG_COLOR: egui::Color32 =
+    egui::Color32::from_rgba_unmultiplied_const(144, 238, 144, 128);
+
+pub fn use_highlighted_widget_bg_color(ui: &mut egui::Ui) {
+    ui.visuals_mut().widgets.inactive.weak_bg_fill = HIGHLIGHTED_WIDGET_BG_COLOR;
+    ui.visuals_mut().widgets.hovered.weak_bg_fill = HIGHLIGHTED_WIDGET_BG_COLOR;
+    ui.visuals_mut().widgets.active.weak_bg_fill = HIGHLIGHTED_WIDGET_BG_COLOR;
+}
+
 pub fn effect_string(
     consumable: Consumable,
     crater_stats: &CrafterStats,

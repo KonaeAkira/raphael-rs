@@ -107,6 +107,7 @@ impl<'a> RecipeSelect<'a> {
 
     fn draw_normal_recipe_select(&mut self, ui: &mut egui::Ui) {
         let locale = self.locale;
+        let filters_active = self.search_state.filters_active();
         let Self {
             search_state:
                 RecipeSearchState {
@@ -139,9 +140,14 @@ impl<'a> RecipeSelect<'a> {
             {
                 *search_text = search_text.replace('\0', "");
             }
-            if ui.button("⚙").clicked() {
-                set_filter_modal_visibility(ui.ctx(), true);
-            }
+            ui.scope(|ui| {
+                if filters_active {
+                    util::use_highlighted_widget_bg_color(ui);
+                }
+                if ui.button("⚙").clicked() {
+                    set_filter_modal_visibility(ui.ctx(), true);
+                }
+            });
         });
 
         ui.separator();
