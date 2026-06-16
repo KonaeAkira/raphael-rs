@@ -62,6 +62,22 @@ pub fn get_job_name(job_id: u8, locale: Locale) -> &'static str {
     }
 }
 
+pub fn get_job_id(job_name: &str, locale: Locale) -> Option<u8> {
+    let job_names = match locale {
+        Locale::EN => JOB_NAMES_EN,
+        Locale::DE => JOB_NAMES_DE,
+        Locale::FR => JOB_NAMES_FR,
+        Locale::JP => JOB_NAMES_JP,
+        Locale::CN => JOB_NAMES_CN,
+        Locale::KR => JOB_NAMES_KR,
+        Locale::TW => JOB_NAMES_TW,
+    };
+    job_names
+        .iter()
+        .position(|&n| n == job_name)
+        .map(|i| i as u8)
+}
+
 pub const ITEM_NAMES_EN: NciArray<u32, &str> = include!("../data/item_names_en.rs");
 pub const ITEM_NAMES_DE: NciArray<u32, &str> = include!("../data/item_names_de.rs");
 pub const ITEM_NAMES_FR: NciArray<u32, &str> = include!("../data/item_names_fr.rs");

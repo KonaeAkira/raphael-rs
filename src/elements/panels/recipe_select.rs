@@ -4,8 +4,8 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{
-    Consumable, Locale, RLVLS, Recipe, find_recipes, find_stellar_missions, get_game_settings,
-    get_job_name,
+    Consumable, Locale, RLVLS, Recipe, RecipeSearchQuery, StellarSearchQuery, find_recipes,
+    find_stellar_missions, get_game_settings, get_job_name,
 };
 use raphael_translations::{t, t_format};
 
@@ -37,9 +37,14 @@ impl SearchDomain {
 #[derive(Default)]
 struct RecipeFinder {}
 
-impl ComputerMut<(&str, Locale), Vec<raphael_data::RecipeSearchEntry>> for RecipeFinder {
-    fn compute(&mut self, (text, locale): (&str, Locale)) -> Vec<raphael_data::RecipeSearchEntry> {
-        find_recipes(text, locale).collect::<Vec<_>>()
+impl ComputerMut<raphael_data::RecipeSearchQuery<'_>, Vec<raphael_data::RecipeSearchEntry>>
+    for RecipeFinder
+{
+    fn compute(
+        &mut self,
+        query: raphael_data::RecipeSearchQuery,
+    ) -> Vec<raphael_data::RecipeSearchEntry> {
+        find_recipes(query).collect::<Vec<_>>()
     }
 }
 
@@ -48,14 +53,14 @@ type RecipeSearchCache<'a> = FrameCache<Vec<raphael_data::RecipeSearchEntry>, Re
 #[derive(Default)]
 struct StellarMissionFinder {}
 
-impl ComputerMut<(&str, Locale), Vec<raphael_data::StellarMissionSearchEntry>>
+impl ComputerMut<raphael_data::StellarSearchQuery<'_>, Vec<raphael_data::StellarMissionSearchEntry>>
     for StellarMissionFinder
 {
     fn compute(
         &mut self,
-        (text, locale): (&str, Locale),
+        query: raphael_data::StellarSearchQuery,
     ) -> Vec<raphael_data::StellarMissionSearchEntry> {
-        find_stellar_missions(text, locale).collect::<Vec<_>>()
+        find_stellar_missions(query).collect::<Vec<_>>()
     }
 }
 
@@ -116,10 +121,13 @@ impl<'a> RecipeSelect<'a> {
                 RecipeSearchState {
                     search_domain,
                     search_text,
+                    active_job_only,
                     ..
                 },
             ..
         } = self;
+
+        let job_id = active_job_only.then_some(self.crafter_config.selected_job);
 
         ui.horizontal(|ui| {
             ui.add(DropDown::new(
@@ -145,7 +153,11 @@ impl<'a> RecipeSelect<'a> {
                 let search_result = ui.ctx().memory_mut(|mem| {
                     mem.caches
                         .cache::<RecipeSearchCache<'_>>()
-                        .get((search_text, locale))
+                        .get(RecipeSearchQuery {
+                            text: search_text,
+                            locale,
+                            job_id,
+                        })
                         .clone()
                 });
                 self.draw_recipe_select_table(ui, search_result);
@@ -154,7 +166,11 @@ impl<'a> RecipeSelect<'a> {
                 let search_result = ui.ctx().memory_mut(|mem| {
                     mem.caches
                         .cache::<StellarMissionSearchCache<'_>>()
-                        .get((search_text, locale))
+                        .get(StellarSearchQuery {
+                            text: search_text,
+                            locale,
+                            job_id,
+                        })
                         .clone()
                 });
                 self.draw_mission_recipe_select(ui, search_result);
@@ -475,6 +491,10 @@ impl Widget for RecipeSelect<'_> {
                                 );
                             self.recipe_config.quality_source = QualitySource::Value(0);
                         }
+                        ui.checkbox(
+                            &mut self.search_state.active_job_only,
+                            t!(locale, "Active Job Only"),
+                        );
                     });
                 });
 

@@ -25,6 +25,7 @@ pub struct SearchState {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RecipeSearchState {
     pub show_custom_recipe_select: bool,
+    pub active_job_only: bool,
     pub search_domain: RecipeSearchDomain,
     pub search_text: String,
 }

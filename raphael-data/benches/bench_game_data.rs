@@ -27,13 +27,25 @@ fn bench_random_access(c: &mut Criterion) {
 
 fn bench_find_recipes(c: &mut Criterion) {
     c.bench_function("find_recipes", |b| {
-        b.iter(|| find_recipes("", Locale::EN));
+        b.iter(|| {
+            find_recipes(RecipeSearchQuery {
+                text: "",
+                locale: Locale::EN,
+                job_id: None,
+            })
+        });
     });
 }
 
 fn bench_find_stellar_missions(c: &mut Criterion) {
     c.bench_function("find_stellar_missions", |b| {
-        b.iter(|| find_stellar_missions("", Locale::EN));
+        b.iter(|| {
+            find_stellar_missions(StellarSearchQuery {
+                text: "",
+                locale: Locale::EN,
+                job_id: None,
+            })
+        });
     });
 }
 

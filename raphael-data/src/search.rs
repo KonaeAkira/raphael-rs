@@ -29,6 +29,13 @@ impl<T> AsRef<str> for MatcherCandidate<T> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
+pub struct RecipeSearchQuery<'a> {
+    pub text: &'a str,
+    pub locale: crate::Locale,
+    pub job_id: Option<u8>,
+}
+
 fn preprocess_pattern(pattern: &str) -> String {
     pattern
         .chars()
@@ -37,17 +44,19 @@ fn preprocess_pattern(pattern: &str) -> String {
 }
 
 pub type RecipeSearchEntry = (u32, &'static crate::Recipe);
-pub fn find_recipes(
-    search_string: &str,
-    locale: crate::Locale,
-) -> impl Iterator<Item = RecipeSearchEntry> {
+pub fn find_recipes(query: RecipeSearchQuery) -> impl Iterator<Item = RecipeSearchEntry> {
     let pattern = Pattern::parse(
-        &preprocess_pattern(search_string),
+        &preprocess_pattern(query.text),
         CaseMatching::Ignore,
         Normalization::Smart,
     );
     let entries = RECIPES.entries().filter_map(|(recipe_id, recipe)| {
-        let item_name = get_raw_item_name(recipe.item_id, locale)?;
+        let item_name = get_raw_item_name(recipe.item_id, query.locale)?;
+        if let Some(job_id) = query.job_id
+            && job_id != recipe.job_id
+        {
+            return None;
+        }
         Some(MatcherCandidate {
             haystack: item_name,
             associated_data: (recipe_id, recipe),
@@ -59,20 +68,30 @@ pub fn find_recipes(
         .map(|(entry, _score)| entry.associated_data)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
+pub struct StellarSearchQuery<'a> {
+    pub text: &'a str,
+    pub locale: crate::Locale,
+    pub job_id: Option<u8>,
+}
 pub type StellarMissionSearchEntry = (u32, &'static crate::StellarMission);
 pub fn find_stellar_missions(
-    search_string: &str,
-    locale: crate::Locale,
+    query: StellarSearchQuery,
 ) -> impl Iterator<Item = StellarMissionSearchEntry> {
     let pattern = Pattern::parse(
-        &preprocess_pattern(search_string),
+        &preprocess_pattern(query.text),
         CaseMatching::Ignore,
         Normalization::Smart,
     );
     let mission_entries = STELLAR_MISSIONS
         .entries()
         .filter_map(|(mission_id, mission)| {
-            let mission_name = get_stellar_mission_name(mission_id, locale)?;
+            let mission_name = get_stellar_mission_name(mission_id, query.locale)?;
+            if let Some(job_id) = query.job_id
+                && job_id != mission.job_id
+            {
+                return None;
+            }
             Some(MatcherCandidate {
                 haystack: mission_name,
                 associated_data: (mission_id, mission),
@@ -83,7 +102,12 @@ pub fn find_stellar_missions(
         .flat_map(|(mission_id, mission)| {
             mission.recipe_ids.iter().filter_map(move |&recipe_id| {
                 let recipe = RECIPES.get(recipe_id)?;
-                let item_name = get_raw_item_name(recipe.item_id, locale)?;
+                let item_name = get_raw_item_name(recipe.item_id, query.locale)?;
+                if let Some(job_id) = query.job_id
+                    && job_id != recipe.job_id
+                {
+                    return None;
+                }
                 Some(MatcherCandidate {
                     haystack: item_name,
                     associated_data: (mission_id, mission),

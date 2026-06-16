@@ -27,8 +27,14 @@ fn all_recipe_items_exist() {
 fn find_recipes_exact(
     item_name: &str,
     locale: raphael_data::Locale,
+    job_id: Option<u8>,
 ) -> impl Iterator<Item = &'static raphael_data::Recipe> {
-    raphael_data::find_recipes(item_name, locale).filter_map(move |(_recipe_id, recipe)| {
+    raphael_data::find_recipes(RecipeSearchQuery {
+        text: item_name,
+        locale,
+        job_id,
+    })
+    .filter_map(move |(_recipe_id, recipe)| {
         let recipe_item_name = raphael_data::get_raw_item_name(recipe.item_id, locale).unwrap();
         if item_name == recipe_item_name {
             Some(recipe)
@@ -40,7 +46,8 @@ fn find_recipes_exact(
 
 #[test]
 fn medical_supplies() {
-    let matching_recipes = find_recipes_exact("Medical Supplies", Locale::EN).collect::<Vec<_>>();
+    let matching_recipes =
+        find_recipes_exact("Medical Supplies", Locale::EN, None).collect::<Vec<_>>();
     let expected = expect![[r#"
         [
             Recipe {
@@ -362,7 +369,7 @@ fn medical_supplies() {
 
 #[test]
 fn ipe_lumber() {
-    let matching_recipes = find_recipes_exact("Ipe Lumber", Locale::EN).collect::<Vec<_>>();
+    let matching_recipes = find_recipes_exact("Ipe Lumber", Locale::EN, None).collect::<Vec<_>>();
     let expected = expect![[r#"
         [
             Recipe {
@@ -412,7 +419,7 @@ fn ipe_lumber() {
 #[test]
 fn uncharted_course_resin() {
     let matching_recipes =
-        find_recipes_exact("Uncharted Course Resin", Locale::EN).collect::<Vec<_>>();
+        find_recipes_exact("Uncharted Course Resin", Locale::EN, None).collect::<Vec<_>>();
     let expected = expect![[r#"
         [
             Recipe {
@@ -500,7 +507,63 @@ fn uncharted_course_resin() {
 
 #[test]
 fn habitat_chair() {
-    let matching_recipes = find_recipes_exact("Habitat Chair", Locale::EN).collect::<Vec<_>>();
+    let matching_recipes =
+        find_recipes_exact("Habitat Chair", Locale::EN, None).collect::<Vec<_>>();
+    let expected = expect![[r#"
+        [
+            Recipe {
+                job_id: 0,
+                item_id: 48295,
+                max_level_scaling: 100,
+                recipe_level: 690,
+                progress_factor: 54,
+                quality_factor: 87,
+                durability_factor: 88,
+                material_factor: 0,
+                ingredients: [
+                    Ingredient {
+                        item_id: 0,
+                        amount: 0,
+                    },
+                    Ingredient {
+                        item_id: 0,
+                        amount: 0,
+                    },
+                    Ingredient {
+                        item_id: 0,
+                        amount: 0,
+                    },
+                    Ingredient {
+                        item_id: 0,
+                        amount: 0,
+                    },
+                    Ingredient {
+                        item_id: 0,
+                        amount: 0,
+                    },
+                    Ingredient {
+                        item_id: 0,
+                        amount: 0,
+                    },
+                ],
+                is_expert: false,
+                req_craftsmanship: 0,
+                req_control: 0,
+            },
+        ]
+    "#]];
+    expected.assert_debug_eq(&matching_recipes);
+}
+
+#[test]
+fn habitat_chair_jobid() {
+    let nonmatching_recipes =
+        find_recipes_exact("Habitat Chair", Locale::EN, Some(5)).collect::<Vec<_>>();
+    assert!(nonmatching_recipes.is_empty());
+
+    let matching_recipes =
+        find_recipes_exact("Habitat Chair", Locale::EN, Some(0)).collect::<Vec<_>>();
+    assert_eq!(matching_recipes.len(), 1);
     let expected = expect![[r#"
         [
             Recipe {
