@@ -58,7 +58,7 @@ chs = '''关闭'''
 tc = '''關閉'''
 ko = '''닫기'''
 version = "0.1.0"
-appearances = ["src/app.rs:100:45", "src/app.rs:152:45", "src/elements/panels/macro_view.rs:221:37", "src/update.rs:100:45", "src/update.rs:122:45", "src/update.rs:139:45"]
+appearances = ["src/app.rs:100:45", "src/app.rs:152:45", "src/elements/panels/macro_view.rs:221:37", "src/elements/panels/recipe_select.rs:465:41", "src/update.rs:100:45", "src/update.rs:122:45", "src/update.rs:139:45"]
 
 ["pgzB+gD4MKo66zNoY8FNpQ=="]
 en = '''No solution'''
@@ -578,7 +578,7 @@ chs = '''自定义'''
 tc = '''自訂'''
 ko = '''사용자 설정'''
 version = "0.1.0"
-appearances = ["src/config.rs:175:43", "src/elements/panels/recipe_select.rs:458:44"]
+appearances = ["src/config.rs:175:43", "src/elements/panels/recipe_select.rs:502:44"]
 
 ["u8MNP8lLoB18+dt06cfdzQ=="]
 en = '''The format can be any arbitrary text or FFXIV command.\n\nThe following placeholders can be used to output their respective value:\n  - {index} : the index or number of the macro block\n  - {max_index} : the maximum index or number of macro blocks\n  - {item_name} : the name of the selected recipe's item result\n  - {food} : the name of the selected food\n  - {potion} : the name of the selected potion\n  - {craftsmanship} : the base craftsmanship stat\n  - {control} : the base control stat\n  - {cp} : the base CP stat'''
@@ -858,7 +858,7 @@ chs = '''配方'''
 tc = '''配方'''
 ko = '''제작법'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:31:41"]
+appearances = ["src/elements/panels/recipe_select.rs:32:41"]
 
 ["s/ovMAAC5l5RoZQTq5NHTg=="]
 en = '''Missions'''
@@ -868,7 +868,7 @@ chs = '''任务'''
 tc = '''任務'''
 ko = '''임무'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:32:49"]
+appearances = ["src/elements/panels/recipe_select.rs:33:49"]
 
 ["3ninXzetsJO21k7Af0PZuA=="]
 en = '''🔍 Search'''
@@ -878,7 +878,7 @@ chs = '''🔍 搜索'''
 tc = '''🔍 搜尋'''
 ko = '''🔍 검색'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:133:39", "src/elements/panels/consumable_select.rs:114:43"]
+appearances = ["src/elements/panels/recipe_select.rs:135:39", "src/elements/panels/consumable_select.rs:114:43"]
 
 ["UfUIG2T4uxtuhNjcxVbhIw=="]
 en = '''Select'''
@@ -888,7 +888,7 @@ chs = '''选择'''
 tc = '''選擇'''
 ko = '''선택'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:199:45", "src/elements/panels/recipe_select.rs:273:57", "src/elements/panels/consumable_select.rs:161:53", "src/elements/util.rs:97:43"]
+appearances = ["src/elements/panels/recipe_select.rs:209:45", "src/elements/panels/recipe_select.rs:283:57", "src/elements/panels/consumable_select.rs:161:53", "src/elements/util.rs:97:43"]
 
 ["U71vRCskzp/0ZNKDCqyXYw=="]
 en = '''⚠ Patch {ffxiv_patch} recipes and items are already included. Only use custom recipes if you are an advanced user or if new recipes haven't been added yet.'''
@@ -898,7 +898,7 @@ chs = '''⚠ 已包含 {ffxiv_patch} 版本更新的配方和物品。仅推荐�
 tc = '''⚠ 已包含 {ffxiv_patch} 版本更新的配方和物品。僅推薦專業使用者或新配方資料尚未更新時使用自訂配方功能'''
 ko = '''⚠ 패치 {ffxiv_patch}의 제작법과 아이템이 이미 포함되어 있습니다. 사용자정의 제작법은 숙련자용 또는 신규 제작법이 아직 추가되지 않은 경우에만 사용해 주세요.'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:305:13"]
+appearances = ["src/elements/panels/recipe_select.rs:315:13"]
 
 ["d7HtKDFSNezpnAEROlmBfA=="]
 en = '''Level:'''
@@ -908,7 +908,7 @@ chs = '''等级：'''
 tc = '''等級：'''
 ko = '''레벨:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:313:41"]
+appearances = ["src/elements/panels/recipe_select.rs:323:41"]
 
 ["X9WQkgT1iJzBPCuNN/JvnA=="]
 en = '''Recipe Level:'''
@@ -918,7 +918,7 @@ chs = '''配方等级：'''
 tc = '''配方等級：'''
 ko = '''제작법 레벨:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:324:45"]
+appearances = ["src/elements/panels/recipe_select.rs:334:45"]
 
 ["YFBU1I3swO+hctnHg9pD9g=="]
 en = '''Progress:'''
@@ -928,7 +928,7 @@ chs = '''进展：'''
 tc = '''進展：'''
 ko = '''작업량:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:335:41"]
+appearances = ["src/elements/panels/recipe_select.rs:345:41"]
 
 ["1SwYHyOKKUpeJrqxy6qw3g=="]
 en = '''Quality:'''
@@ -938,7 +938,7 @@ chs = '''品质：'''
 tc = '''品質：'''
 ko = '''품질:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:341:41"]
+appearances = ["src/elements/panels/recipe_select.rs:351:41"]
 
 ["jZQbTryjaUmYZZvlsHUtAQ=="]
 en = '''Initial Quality:'''
@@ -948,7 +948,7 @@ chs = '''初期品质：'''
 tc = '''初期品質：'''
 ko = '''초기 품질:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:350:45"]
+appearances = ["src/elements/panels/recipe_select.rs:360:45"]
 
 ["W60Qz/MbXdea5Fbt8w36dQ=="]
 en = '''Durability:'''
@@ -958,7 +958,7 @@ chs = '''耐久：'''
 tc = '''耐久：'''
 ko = '''내구도:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:355:41"]
+appearances = ["src/elements/panels/recipe_select.rs:365:41"]
 
 ["JWHlmVKKcwQdoBto+WywoQ=="]
 en = '''Expert recipe'''
@@ -968,7 +968,7 @@ chs = '''专家配方'''
 tc = '''專家配方'''
 ko = '''고난도 제작법:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:361:63"]
+appearances = ["src/elements/panels/recipe_select.rs:371:63"]
 
 ["NnIkZMZ1I6bzAw6z+/Mkrw=="]
 en = '''Progress divider'''
@@ -978,7 +978,7 @@ chs = '''作业难度系数'''
 tc = '''作業難度系數'''
 ko = '''작업량 분리:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:368:45"]
+appearances = ["src/elements/panels/recipe_select.rs:378:45"]
 
 ["utcfvalMOEH1HXXDxo0QiQ=="]
 en = '''Quality divider'''
@@ -988,7 +988,7 @@ chs = '''加工难度系数'''
 tc = '''加工難度系數'''
 ko = '''품질 분리:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:372:45"]
+appearances = ["src/elements/panels/recipe_select.rs:382:45"]
 
 ["xG5frC1m0GiyFaKYj6hUbw=="]
 en = '''Progress modifier'''
@@ -997,7 +997,7 @@ de = '''Fortschritt-Modifikator'''
 chs = '''作业压制系数'''
 ko = '''작업량 보정:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:376:45"]
+appearances = ["src/elements/panels/recipe_select.rs:386:45"]
 
 ["IUbEtNqmPZ2zGIfJxqZ8ew=="]
 en = '''Quality modifier'''
@@ -1006,7 +1006,7 @@ de = '''Qualität-Modifikator'''
 chs = '''加工压制系数'''
 ko = '''품질 보정:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:380:45"]
+appearances = ["src/elements/panels/recipe_select.rs:390:45"]
 
 ["Ku75COVkZS7vs5feP8xfIg=="]
 en = '''Progress per 100% efficiency:'''
@@ -1015,7 +1015,7 @@ de = '''Fortschritt pro 100% Effizienz:'''
 chs = '''每100效率推动进展'''
 ko = '''효율 100%시의 작업량:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:386:41"]
+appearances = ["src/elements/panels/recipe_select.rs:396:41"]
 
 ["1lyQv8FR7jN32SKj8OGAEQ=="]
 en = '''Quality per 100% efficiency:'''
@@ -1024,7 +1024,7 @@ de = '''Qualität pro 100% Effizienz:'''
 chs = '''每100效率推动品质'''
 ko = '''효율 100%시의 품질'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:403:41"]
+appearances = ["src/elements/panels/recipe_select.rs:413:41"]
 
 ["+HWqDKvIsGRlyEP1fjeelQ=="]
 en = '''Override per 100% efficiency values'''
@@ -1033,7 +1033,7 @@ de = '''Werte für 100% Effizienz überschreiben'''
 chs = '''覆盖每100效率的数值'''
 ko = '''효율 100%의 수치를 덮어쓰기:'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:422:36"]
+appearances = ["src/elements/panels/recipe_select.rs:432:36"]
 
 ["xg14pFym75QkPxg+VMf70w=="]
 en = '''Recipe'''
@@ -1043,7 +1043,7 @@ chs = '''配方'''
 tc = '''配方'''
 ko = '''제작법'''
 version = "0.1.0"
-appearances = ["src/elements/panels/recipe_select.rs:452:61", "src/elements/panels/saved_rotations.rs:492:28", "src/elements/panels/saved_rotations.rs:505:28"]
+appearances = ["src/elements/panels/recipe_select.rs:496:61", "src/elements/panels/saved_rotations.rs:492:28", "src/elements/panels/saved_rotations.rs:505:28"]
 
 ["pwNUD9CFWaFvbreERTHQww=="]
 en = '''Food'''
@@ -1396,3 +1396,13 @@ appearances = ["src/app.rs:132:45"]
 en = '''Solving this configuration requires a 64-bit version of Raphael.'''
 version = "0.1.0"
 appearances = ["src/app.rs:133:45"]
+
+["dEkpIt0ZyrnzZHGx2Iuilw=="]
+en = '''Recipe Filter Settings'''
+version = "0.1.0"
+appearances = ["src/elements/panels/recipe_select.rs:457:53"]
+
+["HOE4QGs+EZhKpOBh3JbvPg=="]
+en = '''Active Job Only'''
+version = "0.1.0"
+appearances = ["src/elements/panels/recipe_select.rs:461:28"]
