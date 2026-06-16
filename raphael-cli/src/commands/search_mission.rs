@@ -52,7 +52,7 @@ pub fn execute(args: &SearchArgs) {
         let job_id = args
             .job
             .as_ref()
-            .and_then(|job_name| Some(get_job_id(job_name, locale).expect("Unknown job!")));
+            .map(|job_name| get_job_id(job_name, locale).expect("Unknown job!"));
         matches.extend(raphael_data::find_stellar_missions(StellarSearchQuery {
             text: pattern_arg,
             locale,
