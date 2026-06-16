@@ -52,9 +52,7 @@ pub fn find_recipes(query: RecipeSearchQuery) -> impl Iterator<Item = RecipeSear
     );
     let entries = RECIPES.entries().filter_map(|(recipe_id, recipe)| {
         let item_name = get_raw_item_name(recipe.item_id, query.locale)?;
-        if let Some(job_id) = query.job_id
-            && job_id != recipe.job_id
-        {
+        if query.job_id.is_some_and(|job_id| job_id != recipe.job_id) {
             return None;
         }
         Some(MatcherCandidate {
@@ -87,9 +85,7 @@ pub fn find_stellar_missions(
         .entries()
         .filter_map(|(mission_id, mission)| {
             let mission_name = get_stellar_mission_name(mission_id, query.locale)?;
-            if let Some(job_id) = query.job_id
-                && job_id != mission.job_id
-            {
+            if query.job_id.is_some_and(|job_id| job_id != mission.job_id) {
                 return None;
             }
             Some(MatcherCandidate {
@@ -103,9 +99,7 @@ pub fn find_stellar_missions(
             mission.recipe_ids.iter().filter_map(move |&recipe_id| {
                 let recipe = RECIPES.get(recipe_id)?;
                 let item_name = get_raw_item_name(recipe.item_id, query.locale)?;
-                if let Some(job_id) = query.job_id
-                    && job_id != recipe.job_id
-                {
+                if query.job_id.is_some_and(|job_id| job_id != recipe.job_id) {
                     return None;
                 }
                 Some(MatcherCandidate {
