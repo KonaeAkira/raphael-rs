@@ -127,6 +127,9 @@ impl<'a> RecipeSelect<'a> {
                 [SearchDomain::Recipes, SearchDomain::StellarMissions],
                 |search_domain: SearchDomain| search_domain.display(locale),
             ));
+            if ui.button("⚙").clicked() {
+                set_filter_modal_visibility(ui.ctx(), true);
+            }
             if egui::TextEdit::singleline(search_text)
                 .desired_width(f32::INFINITY)
                 .hint_text(t!(locale, "🔍 Search"))
@@ -443,12 +446,46 @@ impl<'a> RecipeSelect<'a> {
             });
         });
     }
+    fn draw_config_menu(&mut self, ctx: &egui::Context) {
+        let locale = self.locale;
+        egui::containers::Modal::new(egui::Id::new("RECIPE_FILTER_MODAL")).show(ctx, |ui| {
+            ui.set_width(
+                (ctx.content_rect().width() - ui.style().spacing.item_spacing.x * 4.0)
+                    .clamp(0.0, 360.0),
+            );
+            ui.style_mut().spacing.item_spacing.y = 3.0;
+            ui.label(egui::RichText::new(t!(locale, "Recipe Filter Settings")).strong());
+            ui.separator();
+            ui.checkbox(
+                &mut self.search_state.active_job_only,
+                t!(locale, "Active Job Only"),
+            );
+            ui.separator();
+            ui.vertical_centered_justified(|ui| {
+                if ui.button(t!(locale, "Close")).clicked() {
+                    set_filter_modal_visibility(ctx, false);
+                }
+            });
+        });
+    }
+}
+fn filter_modal_is_visible(ctx: &egui::Context) -> bool {
+    let id = egui::Id::new("RECIPE_FILTER_MODAL_VISIBLE");
+    ctx.data(|data| data.get_temp(id) == Some(true))
+}
+
+fn set_filter_modal_visibility(ctx: &egui::Context, visible: bool) {
+    let id = egui::Id::new("RECIPE_FILTER_MODAL_VISIBLE");
+    ctx.data_mut(|data| data.insert_temp(id, visible));
 }
 
 impl Widget for RecipeSelect<'_> {
     fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
         let locale = self.locale;
 
+        if filter_modal_is_visible(ui.ctx()) {
+            self.draw_config_menu(ui.ctx());
+        }
         ui.group(|ui| {
             ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
             ui.vertical(|ui| {
@@ -482,10 +519,6 @@ impl Widget for RecipeSelect<'_> {
                                 );
                             self.recipe_config.quality_source = QualitySource::Value(0);
                         }
-                        ui.checkbox(
-                            &mut self.search_state.active_job_only,
-                            t!(locale, "Active Job Only"),
-                        );
                     });
                 });
 
