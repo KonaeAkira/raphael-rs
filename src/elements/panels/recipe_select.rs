@@ -4,8 +4,9 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{
-    Consumable, Locale, RLVLS, Recipe, RecipeSearchEntry, RecipeSearchQuery, StellarMissionSearchEntry, StellarSearchQuery, find_recipes,
-    find_stellar_missions, get_game_settings, get_job_name,
+    Consumable, Locale, RLVLS, Recipe, RecipeSearchEntry, RecipeSearchQuery,
+    StellarMissionSearchEntry, StellarSearchQuery, find_recipes, find_stellar_missions,
+    get_game_settings, get_job_name,
 };
 use raphael_translations::{t, t_format};
 
@@ -37,13 +38,8 @@ impl SearchDomain {
 #[derive(Default)]
 struct RecipeFinder {}
 
-impl ComputerMut<RecipeSearchQuery<'_>, Vec<RecipeSearchEntry>>
-    for RecipeFinder
-{
-    fn compute(
-        &mut self,
-        query: RecipeSearchQuery,
-    ) -> Vec<RecipeSearchEntry> {
+impl ComputerMut<RecipeSearchQuery<'_>, Vec<RecipeSearchEntry>> for RecipeFinder {
+    fn compute(&mut self, query: RecipeSearchQuery) -> Vec<RecipeSearchEntry> {
         find_recipes(query).collect::<Vec<_>>()
     }
 }
@@ -53,13 +49,8 @@ type RecipeSearchCache<'a> = FrameCache<Vec<RecipeSearchEntry>, RecipeFinder>;
 #[derive(Default)]
 struct StellarMissionFinder {}
 
-impl ComputerMut<StellarSearchQuery<'_>, Vec<StellarMissionSearchEntry>>
-    for StellarMissionFinder
-{
-    fn compute(
-        &mut self,
-        query: StellarSearchQuery,
-    ) -> Vec<StellarMissionSearchEntry> {
+impl ComputerMut<StellarSearchQuery<'_>, Vec<StellarMissionSearchEntry>> for StellarMissionFinder {
+    fn compute(&mut self, query: StellarSearchQuery) -> Vec<StellarMissionSearchEntry> {
         find_stellar_missions(query).collect::<Vec<_>>()
     }
 }
