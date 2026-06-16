@@ -62,7 +62,7 @@ pub fn execute(args: &SearchArgs) {
         }
     }
     if let Some(pattern_arg) = &args.pattern {
-        let job_id = args.job.as_ref().and_then(|j| get_job_id(j, locale));
+        let job_id = args.job.as_ref().and_then(|job_name| get_job_id(job_name, locale));
         if let Some(job_arg) = &args.job
             && job_id.is_none()
         {
