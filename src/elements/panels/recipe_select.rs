@@ -4,15 +4,15 @@ use egui::{
 };
 use egui_extras::Column;
 use raphael_data::{
-    Consumable, Locale, RLVLS, Recipe, RecipeSearchEntry, RecipeSearchQuery,
+    Consumable, CosmicExplorationZone, Locale, RLVLS, Recipe, RecipeSearchEntry, RecipeSearchQuery,
     StellarMissionSearchEntry, StellarSearchQuery, find_recipes, find_stellar_missions,
-    get_game_settings, get_job_name,
+    get_cosmic_exploration_zone_name, get_game_settings, get_job_name,
 };
 use raphael_translations::{t, t_format};
 
 use crate::{
     config::{CrafterConfig, QualitySource, RecipeConfiguration, RecipeSource},
-    context::{AppContext, RecipeSearchState, SolverConfig},
+    context::{AppContext, RecipeSearchFilters, RecipeSearchState, SolverConfig},
     elements::{
         util::{self, TableColumnWidth},
         widgets::{DropDown, GameDataNameLabel, NameSource, collapse_persisted},
@@ -113,13 +113,11 @@ impl<'a> RecipeSelect<'a> {
                 RecipeSearchState {
                     search_domain,
                     search_text,
-                    active_job_only,
+                    filters,
                     ..
                 },
             ..
         } = self;
-
-        let job_id = active_job_only.then_some(self.crafter_config.selected_job);
 
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 4.0;
@@ -155,7 +153,7 @@ impl<'a> RecipeSelect<'a> {
                         .get(RecipeSearchQuery {
                             text: search_text,
                             locale,
-                            job_id,
+                            filters: filters.construct_recipe_filter(self.crafter_config),
                         })
                         .clone()
                 });
@@ -168,7 +166,7 @@ impl<'a> RecipeSelect<'a> {
                         .get(StellarSearchQuery {
                             text: search_text,
                             locale,
-                            job_id,
+                            filters: filters.construct_stellar_mission_filter(self.crafter_config),
                         })
                         .clone()
                 });
@@ -454,18 +452,45 @@ impl<'a> RecipeSelect<'a> {
 
     fn draw_recipe_filter_modal(&mut self, ctx: &egui::Context) {
         let locale = self.locale;
+        let RecipeSearchFilters {
+            active_job_only,
+            cosmic_exploration_zone,
+        } = &mut self.search_state.filters;
+
         egui::containers::Modal::new(egui::Id::new("RECIPE_FILTER_MODAL")).show(ctx, |ui| {
             ui.set_width(
                 (ctx.content_rect().width() - ui.style().spacing.item_spacing.x * 4.0)
-                    .clamp(0.0, 360.0),
+                    .clamp(0.0, 395.0),
             );
-            ui.style_mut().spacing.item_spacing.y = 3.0;
+            ui.style_mut().spacing.item_spacing = egui::Vec2::new(4.0, 4.0);
             ui.label(egui::RichText::new(t!(locale, "Recipe filters")).strong());
             ui.separator();
-            ui.checkbox(
-                &mut self.search_state.active_job_only,
-                t!(locale, "Active job only"),
+            ui.checkbox(active_job_only, t!(locale, "Active job only"));
+            ui.separator();
+            ui.label(
+                egui::RichText::new(t!(locale, "Stellar missions"))
+                    .color(ui.visuals().widgets.hovered.text_color()),
             );
+            ui.horizontal_wrapped(|ui| {
+                for zone in [
+                    CosmicExplorationZone::SinusArdorum,
+                    CosmicExplorationZone::Phaenna,
+                    CosmicExplorationZone::Oizys,
+                    CosmicExplorationZone::Auxesia,
+                ] {
+                    let response = ui.selectable_label(
+                        cosmic_exploration_zone.is_none_or(|selected| selected == zone),
+                        get_cosmic_exploration_zone_name(zone, locale),
+                    );
+                    if response.clicked() {
+                        if *cosmic_exploration_zone != Some(zone) {
+                            *cosmic_exploration_zone = Some(zone);
+                        } else {
+                            *cosmic_exploration_zone = None;
+                        }
+                    }
+                }
+            });
             ui.separator();
             ui.vertical_centered_justified(|ui| {
                 if ui.button(t!(locale, "Close")).clicked()

@@ -1,4 +1,4 @@
-use crate::{CL_ICON_CHAR, HQ_ICON_CHAR, ITEMS, NciArray, nci_array};
+use crate::{CL_ICON_CHAR, CosmicExplorationZone, HQ_ICON_CHAR, ITEMS, NciArray, nci_array};
 use raphael_sim::Action;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -76,6 +76,60 @@ pub fn get_job_id(job_name: &str, locale: Locale) -> Option<u8> {
         .iter()
         .position(|&name| name == job_name)
         .map(|i| i as u8)
+}
+
+pub fn get_cosmic_exploration_zone_name(
+    zone: CosmicExplorationZone,
+    locale: Locale,
+) -> &'static str {
+    match locale {
+        Locale::EN | Locale::DE | Locale::FR => cosmic_exploration_zone_name_latin_characters(zone),
+        Locale::JP => cosmic_exploration_zone_jp(zone),
+        Locale::CN => cosmic_exploration_zone_cn(zone),
+        Locale::KR => cosmic_exploration_zone_kr(zone),
+        Locale::TW => cosmic_exploration_zone_tw(zone),
+    }
+}
+
+fn cosmic_exploration_zone_name_latin_characters(zone: CosmicExplorationZone) -> &'static str {
+    match zone {
+        CosmicExplorationZone::SinusArdorum => "Sinus Ardorum",
+        CosmicExplorationZone::Phaenna => "Phaenna",
+        CosmicExplorationZone::Oizys => "Oizys",
+        CosmicExplorationZone::Auxesia => "Auxesia",
+    }
+}
+
+fn cosmic_exploration_zone_jp(zone: CosmicExplorationZone) -> &'static str {
+    match zone {
+        CosmicExplorationZone::SinusArdorum => "焦がれの入江",
+        CosmicExplorationZone::Phaenna => "惑星パエンナ",
+        CosmicExplorationZone::Oizys => "惑星オイジュス",
+        CosmicExplorationZone::Auxesia => "惑星アウクセシア",
+    }
+}
+
+fn cosmic_exploration_zone_cn(zone: CosmicExplorationZone) -> &'static str {
+    match zone {
+        CosmicExplorationZone::SinusArdorum => "憧憬湾",
+        CosmicExplorationZone::Phaenna => "法恩娜行星",
+        CosmicExplorationZone::Oizys => "俄匊斯行星",
+        CosmicExplorationZone::Auxesia => "奥克塞西亚行星",
+    }
+}
+
+fn cosmic_exploration_zone_kr(zone: CosmicExplorationZone) -> &'static str {
+    match zone {
+        CosmicExplorationZone::SinusArdorum => "동경의 만",
+        CosmicExplorationZone::Phaenna => "행성 파엔나",
+        CosmicExplorationZone::Oizys => "행성 오이지스",
+        CosmicExplorationZone::Auxesia => "행성 아욱세시아",
+    }
+}
+
+fn cosmic_exploration_zone_tw(zone: CosmicExplorationZone) -> &'static str {
+    // TW is currently still at patch 7.11 & the first zone will be added with 7.21
+    cosmic_exploration_zone_name_latin_characters(zone)
 }
 
 pub const ITEM_NAMES_EN: NciArray<u32, &str> = include!("../data/item_names_en.rs");

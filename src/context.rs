@@ -1,4 +1,4 @@
-use raphael_data::{Consumable, CrafterStats, Locale};
+use raphael_data::{Consumable, CosmicExplorationZone, CrafterStats, Locale};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::{
@@ -23,16 +23,51 @@ pub struct SearchState {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RecipeSearchFilters {
+    pub active_job_only: bool,
+    pub cosmic_exploration_zone: Option<CosmicExplorationZone>,
+}
+
+impl RecipeSearchFilters {
+    pub fn construct_recipe_filter(
+        &self,
+        crafter_config: &CrafterConfig,
+    ) -> raphael_data::RecipeFilters {
+        raphael_data::RecipeFilters {
+            job_id: self.active_job_only.then_some(crafter_config.selected_job),
+        }
+    }
+
+    pub fn construct_stellar_mission_filter(
+        &self,
+        crafter_config: &CrafterConfig,
+    ) -> raphael_data::StellarMissionFilters {
+        raphael_data::StellarMissionFilters {
+            job_id: self.active_job_only.then_some(crafter_config.selected_job),
+            zone: self.cosmic_exploration_zone,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RecipeSearchState {
     pub show_custom_recipe_select: bool,
-    pub active_job_only: bool,
+
     pub search_domain: RecipeSearchDomain,
     pub search_text: String,
+
+    #[serde(default)]
+    pub filters: RecipeSearchFilters,
 }
 
 impl RecipeSearchState {
     pub fn filters_active(&self) -> bool {
-        self.active_job_only
+        match self.search_domain {
+            RecipeSearchDomain::Recipes => self.filters.active_job_only,
+            RecipeSearchDomain::StellarMissions => {
+                self.filters.active_job_only || self.filters.cosmic_exploration_zone.is_some()
+            }
+        }
     }
 }
 

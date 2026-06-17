@@ -69,6 +69,38 @@ pub struct Recipe {
     pub req_control: u16,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[repr(u8)]
+pub enum CosmicExplorationZone {
+    SinusArdorum,
+    Phaenna,
+    Oizys,
+    Auxesia,
+}
+
+impl CosmicExplorationZone {
+    pub fn from_mission_id(mission_id: u32) -> Self {
+        match mission_id {
+            ..545 => Self::SinusArdorum,
+            545..1040 => Self::Phaenna,
+            1040..1370 => Self::Oizys,
+            1370.. => Self::Auxesia,
+        }
+    }
+
+    pub fn from_zone_name(zone_name: &str, locale: Locale) -> Option<Self> {
+        [
+            Self::SinusArdorum,
+            Self::Phaenna,
+            Self::Oizys,
+            Self::Auxesia,
+        ]
+        .into_iter()
+        .find(|&zone| get_cosmic_exploration_zone_name(zone, locale) == zone_name)
+    }
+}
+
 #[derive(Debug)]
 pub struct StellarMission {
     pub job_id: u8,
