@@ -122,6 +122,7 @@ impl<'a> RecipeSelect<'a> {
         let job_id = active_job_only.then_some(self.crafter_config.selected_job);
 
         ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 4.0;
             ui.add(DropDown::new(
                 "RECIPE_SEARCH_DOMAIN",
                 search_domain,
