@@ -218,7 +218,9 @@ fn draw_config_menu(ctx: &egui::Context, config: &mut MacroViewConfig, locale: L
         });
         ui.separator();
         ui.vertical_centered_justified(|ui| {
-            if ui.button(t!(locale, "Close")).clicked() {
+            if ui.button(t!(locale, "Close")).clicked()
+                || ui.input(|i| i.key_pressed(egui::Key::Escape))
+            {
                 set_config_menu_visibility(ctx, false);
             }
         });

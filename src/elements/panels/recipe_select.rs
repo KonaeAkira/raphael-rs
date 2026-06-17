@@ -468,7 +468,9 @@ impl<'a> RecipeSelect<'a> {
             );
             ui.separator();
             ui.vertical_centered_justified(|ui| {
-                if ui.button(t!(locale, "Close")).clicked() {
+                if ui.button(t!(locale, "Close")).clicked()
+                    || ui.input(|i| i.key_pressed(egui::Key::Escape))
+                {
                     set_filter_modal_visibility(ctx, false);
                 }
             });
