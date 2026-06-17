@@ -1,7 +1,7 @@
 use clap::Args;
 use raphael_data::{
-    RECIPES, STELLAR_MISSIONS, StellarMission, StellarSearchQuery, get_job_id, get_job_name,
-    get_stellar_mission_name,
+    CosmicExplorationZone, RECIPES, STELLAR_MISSIONS, StellarMission, StellarMissionFilters,
+    StellarSearchQuery, get_job_id, get_job_name, get_stellar_mission_name,
 };
 
 use crate::commands::Language;
@@ -12,9 +12,13 @@ pub struct SearchArgs {
     #[arg(short, long, required_unless_present_any(["recipe_id", "item_id", "mission_id"]), conflicts_with_all(["recipe_id", "item_id"]))]
     pub pattern: Option<String>,
 
-    /// Job name to limit searches to
+    /// Job name to limit search to
     #[arg(short, long, requires("pattern"), conflicts_with_all(["recipe_id", "item_id"]))]
     pub job: Option<String>,
+
+    /// Cosmic exploration zone name to limit search to
+    #[arg(short, long, requires("pattern"), conflicts_with_all(["recipe_id", "item_id"]))]
+    pub zone: Option<String>,
 
     /// Recipe ID to search for
     #[arg(short, long, required_unless_present_any(["pattern", "item_id", "mission_id"]), conflicts_with = "item_id")]
@@ -53,10 +57,13 @@ pub fn execute(args: &SearchArgs) {
             .job
             .as_ref()
             .map(|job_name| get_job_id(job_name, locale).expect("Unknown job!"));
+        let zone = args.zone.as_ref().map(|zone_name| {
+            CosmicExplorationZone::from_zone_name(zone_name, locale).expect("Unknown zone!")
+        });
         matches.extend(raphael_data::find_stellar_missions(StellarSearchQuery {
             text: pattern_arg,
             locale,
-            job_id,
+            filters: StellarMissionFilters { job_id, zone },
         }));
     }
     if let Some(recipe_id_arg) = args.recipe_id {

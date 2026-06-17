@@ -1,6 +1,6 @@
 use clap::Args;
 use raphael_data::{
-    RECIPES, Recipe, RecipeSearchQuery, STELLAR_MISSIONS, get_job_id, get_job_name,
+    RECIPES, Recipe, RecipeFilters, RecipeSearchQuery, STELLAR_MISSIONS, get_job_id, get_job_name,
     get_raw_item_name,
 };
 
@@ -12,7 +12,7 @@ pub struct SearchArgs {
     #[arg(short, long, required_unless_present_any(["recipe_id", "item_id", "mission_id"]), conflicts_with_all(["recipe_id", "item_id"]))]
     pub pattern: Option<String>,
 
-    /// Job name to limit searches to
+    /// Job name to limit search to
     #[arg(short, long, requires("pattern"), conflicts_with_all(["recipe_id", "item_id"]))]
     pub job: Option<String>,
 
@@ -69,7 +69,7 @@ pub fn execute(args: &SearchArgs) {
         matches.extend(raphael_data::find_recipes(RecipeSearchQuery {
             text: pattern_arg,
             locale,
-            job_id,
+            filters: RecipeFilters { job_id },
         }));
     }
     if let Some(recipe_id_arg) = args.recipe_id {

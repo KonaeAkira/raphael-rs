@@ -31,7 +31,7 @@ fn bench_find_recipes(c: &mut Criterion) {
             find_recipes(RecipeSearchQuery {
                 text: "",
                 locale: Locale::EN,
-                job_id: None,
+                filters: RecipeFilters::default(),
             })
         });
     });
@@ -43,7 +43,7 @@ fn bench_find_stellar_missions(c: &mut Criterion) {
             find_stellar_missions(StellarSearchQuery {
                 text: "",
                 locale: Locale::EN,
-                job_id: None,
+                filters: StellarMissionFilters::default(),
             })
         });
     });
