@@ -68,7 +68,7 @@ fn gathering_miscellany() {
     let matching_missions = find_stellar_missions(StellarSearchQuery {
         text: "Gathering Miscellany",
         locale: Locale::EN,
-        job_id: None,
+        filters: StellarMissionFilters::default(),
     })
     .collect::<Vec<_>>();
     assert_eq!(matching_missions.len(), 1);
@@ -100,7 +100,7 @@ fn meteoric_material_test_processing() {
     let matching_missions = find_stellar_missions(StellarSearchQuery {
         text: "Meteoric Material Test Processing",
         locale: Locale::EN,
-        job_id: None,
+        filters: StellarMissionFilters::default(),
     })
     .collect::<Vec<_>>();
     assert_eq!(matching_missions.len(), 3); // BSM, ARM, GSM
@@ -234,7 +234,7 @@ fn ex_natural_remedy_inspection_ii() {
     let matching_missions = find_stellar_missions(StellarSearchQuery {
         text: "EX: Natural Remedy Inspection II",
         locale: Locale::EN,
-        job_id: None,
+        filters: StellarMissionFilters::default(),
     })
     .collect::<Vec<_>>();
     assert_eq!(matching_missions.len(), 1);
@@ -266,7 +266,10 @@ fn ex_natural_remedy_inspection_ii_jobids() {
     let results_with_wrong_job = find_stellar_missions(StellarSearchQuery {
         text: "EX: Natural Remedy Inspection II",
         locale: Locale::EN,
-        job_id: Some(0),
+        filters: StellarMissionFilters {
+            job_id: Some(0),
+            ..Default::default()
+        },
     })
     .collect::<Vec<_>>();
     assert!(results_with_wrong_job.is_empty());
@@ -274,7 +277,10 @@ fn ex_natural_remedy_inspection_ii_jobids() {
     let matching_missions = find_stellar_missions(StellarSearchQuery {
         text: "EX: Natural Remedy Inspection II",
         locale: Locale::EN,
-        job_id: Some(6),
+        filters: StellarMissionFilters {
+            job_id: Some(6),
+            ..Default::default()
+        },
     })
     .collect::<Vec<_>>();
     assert_eq!(matching_missions.len(), 1);
@@ -294,6 +300,98 @@ fn ex_natural_remedy_inspection_ii_jobids() {
                     progress: 7500,
                     quality: 15400,
                     durability: 75,
+                },
+            ],
+        }
+    "#]];
+    expected_details.assert_debug_eq(&mission_details);
+}
+
+#[test]
+fn stellar_missions_zone_filter() {
+    let result_with_only_sinus_ardorum = find_stellar_missions(StellarSearchQuery {
+        text: "",
+        locale: Locale::EN,
+        filters: StellarMissionFilters {
+            zone: Some(CosmicExplorationZone::SinusArdorum),
+            ..Default::default()
+        },
+    })
+    .collect::<Vec<_>>();
+    assert_eq!(result_with_only_sinus_ardorum.len(), 400);
+
+    let matches_wrong_zone_filtered = find_stellar_missions(StellarSearchQuery {
+        text: "Standard Glass",
+        locale: Locale::EN,
+        filters: StellarMissionFilters {
+            zone: Some(CosmicExplorationZone::SinusArdorum),
+            ..Default::default()
+        },
+    })
+    .collect::<Vec<_>>();
+    assert_eq!(matches_wrong_zone_filtered.len(), 0);
+
+    let matching_missions = find_stellar_missions(StellarSearchQuery {
+        text: "Standard Glass Fiber",
+        locale: Locale::EN,
+        filters: StellarMissionFilters {
+            zone: Some(CosmicExplorationZone::Phaenna),
+            ..Default::default()
+        },
+    })
+    .collect::<Vec<_>>();
+    assert_eq!(matching_missions.len(), 4 * 3); // Phaenna has 4 matches for CRP, LTW & WVR
+
+    let mission_id = matching_missions[11].0;
+    let mission_details = DetailedMissionInfo::from_mission_id(mission_id);
+    let expected_details = expect![[r#"
+        DetailedMissionInfo {
+            job_id: 5,
+            recipes: [
+                DetailedRecipeInfo {
+                    recipe_id: 37262,
+                    resulting_item: DetailedItemInfo {
+                        item_id: 48797,
+                        item_name: "Standard Glass Fiber",
+                    },
+                    progress: 14900,
+                    quality: 700,
+                    durability: 80,
+                },
+            ],
+        }
+    "#]];
+    expected_details.assert_debug_eq(&mission_details);
+}
+
+#[test]
+fn combined_jobid_and_zone_filter() {
+    let matching_missions = find_stellar_missions(StellarSearchQuery {
+        text: "Standard Glass Fiber",
+        locale: Locale::EN,
+        filters: StellarMissionFilters {
+            job_id: Some(5),
+            zone: Some(CosmicExplorationZone::Phaenna),
+        },
+    })
+    .collect::<Vec<_>>();
+    assert_eq!(matching_missions.len(), 4);
+
+    let mission_id = matching_missions[3].0;
+    let mission_details = DetailedMissionInfo::from_mission_id(mission_id);
+    let expected_details = expect![[r#"
+        DetailedMissionInfo {
+            job_id: 5,
+            recipes: [
+                DetailedRecipeInfo {
+                    recipe_id: 37262,
+                    resulting_item: DetailedItemInfo {
+                        item_id: 48797,
+                        item_name: "Standard Glass Fiber",
+                    },
+                    progress: 14900,
+                    quality: 700,
+                    durability: 80,
                 },
             ],
         }
