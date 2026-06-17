@@ -128,9 +128,10 @@ impl<'a> RecipeSelect<'a> {
                 [SearchDomain::Recipes, SearchDomain::StellarMissions],
                 |search_domain: SearchDomain| search_domain.display(locale),
             ));
+            let button_text_size = egui::TextStyle::Button.resolve(ui.style()).size;
+            let icon_size = egui::Vec2::splat(button_text_size);
             let search_text_edit_width = ui.available_width()
-                - (util::text_width(ui, "⚙", egui::TextStyle::Button)
-                    + ui.style().spacing.button_padding.x * 2.0)
+                - (icon_size.x + ui.style().spacing.button_padding.x * 2.0)
                 - ui.style().spacing.item_spacing.x;
             if egui::TextEdit::singleline(search_text)
                 .desired_width(search_text_edit_width)
@@ -140,14 +141,7 @@ impl<'a> RecipeSelect<'a> {
             {
                 *search_text = search_text.replace('\0', "");
             }
-            ui.scope(|ui| {
-                if filters_active {
-                    util::use_highlighted_widget_bg_color(ui);
-                }
-                if ui.button("⚙").clicked() {
-                    set_filter_modal_visibility(ui.ctx(), true);
-                }
-            });
+            Self::draw_recipe_filter_button(ui, filters_active, icon_size);
         });
 
         ui.separator();
@@ -456,6 +450,7 @@ impl<'a> RecipeSelect<'a> {
             });
         });
     }
+
     fn draw_recipe_filter_modal(&mut self, ctx: &egui::Context) {
         let locale = self.locale;
         egui::containers::Modal::new(egui::Id::new("RECIPE_FILTER_MODAL")).show(ctx, |ui| {
@@ -478,7 +473,52 @@ impl<'a> RecipeSelect<'a> {
             });
         });
     }
+
+    fn draw_recipe_filter_button(ui: &mut egui::Ui, filters_active: bool, icon_size: egui::Vec2) {
+        // Placing the first point at the top left causes the shape to be misdrawn.
+        // As a workaround, the first point is placed in the middle horizontally and the top left one is added at the end.
+        const FUNNEL_POINTS_RELATIVE: [[f32; 2]; 7] = [
+            [0.5, 0.055],
+            [1.0, 0.055],
+            [0.6, 0.55],
+            [0.6, 0.975],
+            [0.4, 0.875],
+            [0.4, 0.55],
+            [0.0, 0.055],
+        ];
+
+        ui.scope(|ui| {
+            if filters_active {
+                util::use_highlighted_widget_bg_color(ui);
+            }
+            let icon_id = ui.next_auto_id();
+            let response = egui::Button::new(egui::Atom::custom(icon_id, icon_size)).atom_ui(ui);
+            if let Some(rect) = response.rect(icon_id) {
+                let points = FUNNEL_POINTS_RELATIVE
+                    .into_iter()
+                    .map(|point| rect.lerp_inside(point))
+                    .collect();
+                let fill = if response.hovered() {
+                    ui.visuals().widgets.hovered.text_color()
+                } else if response.is_pointer_button_down_on() {
+                    ui.visuals().widgets.active.text_color()
+                } else {
+                    ui.visuals().widgets.inactive.text_color()
+                };
+                ui.painter_at(rect).add(egui::epaint::PathShape {
+                    points,
+                    closed: true,
+                    fill,
+                    stroke: egui::epaint::PathStroke::NONE,
+                });
+            }
+            if response.clicked() {
+                set_filter_modal_visibility(ui.ctx(), true);
+            }
+        });
+    }
 }
+
 fn filter_modal_is_visible(ctx: &egui::Context) -> bool {
     let id = egui::Id::new("RECIPE_FILTER_MODAL_VISIBLE");
     ctx.data(|data| data.get_temp(id) == Some(true))
