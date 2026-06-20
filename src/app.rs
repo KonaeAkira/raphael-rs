@@ -300,8 +300,11 @@ impl eframe::App for MacroSolverApp {
         }
 
         egui::CentralPanel::default().show_inside(ui, |ui| {
+            // Captured before the scroll area: inside `ScrollArea::both` the available
+            // height is unbounded, so this is the only place to read the real panel height.
+            let panel_height = ui.available_height();
             egui::ScrollArea::both().show(ui, |ui| {
-                self.draw_simulator_widget(ui);
+                let simulator_height = self.draw_simulator_widget(ui).rect.height();
                 ui.with_layout(
                     Layout::left_to_right(Align::TOP).with_main_wrap(true),
                     |ui| {
@@ -313,6 +316,10 @@ impl eframe::App for MacroSolverApp {
                         let config_width;
                         let macro_width;
 
+                        // Only stretch the left column when all three columns fit side by
+                        // side. In any wrapping layout the wrapped column would be pushed
+                        // off-screen, so we keep natural (content) heights there.
+                        let mut columns_fit_side_by_side = false;
                         let row_width = ui.available_width();
                         if row_width >= select_min_width + config_min_width + macro_min_width {
                             select_width = row_width
@@ -321,6 +328,7 @@ impl eframe::App for MacroSolverApp {
                                 - 2.0 * ui.spacing().item_spacing.x;
                             config_width = config_min_width;
                             macro_width = macro_min_width;
+                            columns_fit_side_by_side = true;
                         } else if row_width >= select_min_width + config_min_width {
                             select_width =
                                 row_width - config_min_width - ui.spacing().item_spacing.x;
@@ -337,10 +345,20 @@ impl eframe::App for MacroSolverApp {
                             macro_width = row_width;
                         }
 
+                        // Vertical space left for the columns row, floored at 0. The recipe
+                        // list grows to fill it; the outer scroll area handles the case where
+                        // the minimum content is taller than the window.
+                        let fill_budget = columns_fit_side_by_side.then(|| {
+                            (panel_height - simulator_height - ui.spacing().item_spacing.y).max(0.0)
+                        });
+
                         let response = ui
-                            .allocate_ui(egui::vec2(select_width, 0.0), |ui| {
-                                self.draw_list_select_widgets(ui);
-                            })
+                            .allocate_ui(
+                                egui::vec2(select_width, fill_budget.unwrap_or(0.0)),
+                                |ui| {
+                                    self.draw_list_select_widgets(ui, fill_budget);
+                                },
+                            )
                             .response;
 
                         let config_min_height = match ui.available_size_before_wrap().x {
@@ -451,7 +469,7 @@ impl MacroSolverApp {
                             egui::DragValue::new(&mut zoom_percentage)
                                 .range(50..=500)
                                 .suffix("%")
-                                // dragging would cause the UI scale to jump arround erratically
+                                // dragging would cause the UI scale to jump around erratically
                                 .speed(0.0)
                                 .update_while_editing(false),
                         );
@@ -525,16 +543,168 @@ impl MacroSolverApp {
         });
     }
 
-    fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) {
-        ui.add(Simulator::new(&self.app_context, &self.solve_state));
+    fn draw_simulator_widget(&mut self, ui: &mut egui::Ui) -> egui::Response {
+        ui.add(Simulator::new(&self.app_context, &self.solve_state))
     }
 
-    fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui) {
+    /// Fraction of the surplus vertical space given to the recipe / food / potion search
+    /// tables when the left column stretches to fill the window. Weights are renormalized
+    /// over the panels that actually show a table, so collapsed (and custom-recipe) panels
+    /// donate their share to the rest. Adjust here to change the default proportions.
+    const LEFT_COLUMN_TABLE_WEIGHTS: [f32; 3] = [0.6, 0.2, 0.2];
+
+    fn draw_list_select_widgets(&mut self, ui: &mut egui::Ui, fill_budget: Option<f32>) {
+        let Some(budget) = fill_budget else {
+            // Wrapped / mobile layout: every panel keeps its natural content height.
+            ui.vertical(|ui| {
+                ui.add(RecipeSelect::new(&mut self.app_context).table_height(None));
+                ui.add(FoodSelect::new(&mut self.app_context).table_height(None));
+                ui.add(PotionSelect::new(&mut self.app_context).table_height(None));
+            });
+            return;
+        };
+
+        // The non-table ("fixed") height of each panel — header, search box, separators,
+        // group frame — does not depend on its table height. We remember the previous pass's
+        // measurement and, whenever it changes (window resize, collapse toggle, custom-recipe
+        // toggle, font load), re-run the same frame via `request_discard` so the panels reach
+        // their final size in a single painted frame instead of settling over several.
+        let fixed_id = egui::Id::new("LEFT_COLUMN_PANEL_FIXED_HEIGHTS");
+        let cached_fixed: Option<[f32; 3]> = ui.ctx().data(|data| data.get_temp(fixed_id));
+
+        // Which panels show a stretchable table this frame. The recipe panel shows none when
+        // collapsed or in custom-recipe mode (a fixed-size config form, not a search table).
+        let has_table = [
+            !Self::panel_collapsed(ui, "RECIPE_SEARCH_COLLAPSED")
+                && !self
+                    .app_context
+                    .search_state
+                    .recipe
+                    .show_custom_recipe_select,
+            !Self::panel_collapsed(ui, "FOOD_SEARCH_COLLAPSED"),
+            !Self::panel_collapsed(ui, "POTION_SEARCH_COLLAPSED"),
+        ];
+        let table_min_heights = [
+            recipe_table_min_height(ui),
+            consumable_table_min_height(ui),
+            consumable_table_min_height(ui),
+        ];
+
+        // Until the first measurement lands, fall back to the table minimums; the discard
+        // pass below corrects the sizes before anything is painted.
+        let table_heights = match cached_fixed {
+            Some(fixed) => Self::distribute_table_heights(
+                budget,
+                ui.spacing().item_spacing.y,
+                &fixed,
+                &has_table,
+                &table_min_heights,
+                &Self::LEFT_COLUMN_TABLE_WEIGHTS,
+            ),
+            None => table_min_heights,
+        };
+
+        let mut panel_heights = [0.0; 3];
         ui.vertical(|ui| {
-            ui.add(RecipeSelect::new(&mut self.app_context));
-            ui.add(FoodSelect::new(&mut self.app_context));
-            ui.add(PotionSelect::new(&mut self.app_context));
+            panel_heights[0] = ui
+                .add(RecipeSelect::new(&mut self.app_context).table_height(Some(table_heights[0])))
+                .rect
+                .height();
+            panel_heights[1] = ui
+                .add(FoodSelect::new(&mut self.app_context).table_height(Some(table_heights[1])))
+                .rect
+                .height();
+            panel_heights[2] = ui
+                .add(PotionSelect::new(&mut self.app_context).table_height(Some(table_heights[2])))
+                .rect
+                .height();
         });
+
+        // A panel without a table renders at its fixed height alone; otherwise the table
+        // contributes exactly `table_heights[i]` (it is pinned by `min_scrolled_height` /
+        // `max_scroll_height` with `auto_shrink(false)`), so the rest is the fixed height.
+        let mut measured_fixed = [0.0; 3];
+        for i in 0..3 {
+            measured_fixed[i] = if has_table[i] {
+                (panel_heights[i] - table_heights[i]).max(0.0)
+            } else {
+                panel_heights[i]
+            };
+        }
+
+        let changed = cached_fixed
+            .map(|cached| (0..3).any(|i| (cached[i] - measured_fixed[i]).abs() > 0.5))
+            .unwrap_or(true);
+        if changed {
+            ui.ctx()
+                .data_mut(|data| data.insert_temp(fixed_id, measured_fixed));
+            ui.ctx().request_discard("left column panel sizes changed");
+        }
+    }
+
+    /// Reads a select panel's persisted collapsed flag (written by `collapse_persisted`).
+    fn panel_collapsed(ui: &egui::Ui, collapse_id: &str) -> bool {
+        ui.ctx()
+            .data_mut(|data| data.get_persisted::<bool>(egui::Id::new(collapse_id)))
+            .unwrap_or(false)
+    }
+
+    /// Splits `budget` of vertical space among the three select panels' tables.
+    ///
+    /// Each panel's fixed (non-table) height and the inter-panel gaps are subtracted first;
+    /// the remaining pool is shared between the panels that show a table, in proportion to
+    /// `weights`, with each table floored at its minimum. Minimums are honored by water-
+    /// filling: a panel whose proportional share would dip below its minimum is locked there
+    /// and its weight removed, then the rest re-split the remaining pool. If the minimums do
+    /// not fit, every table ends at its minimum and the column overflows `budget` (the outer
+    /// scroll area then scrolls). Returns `0.0` for panels without a table.
+    fn distribute_table_heights(
+        budget: f32,
+        gap: f32,
+        fixed: &[f32; 3],
+        has_table: &[bool; 3],
+        table_min_heights: &[f32; 3],
+        weights: &[f32; 3],
+    ) -> [f32; 3] {
+        let fixed_total: f32 = fixed.iter().sum();
+        let gaps = gap * 2.0;
+        let mut pool = (budget - fixed_total - gaps).max(0.0);
+
+        let mut result = [0.0; 3];
+        let mut active = *has_table;
+
+        loop {
+            let total_weight: f32 = (0..3).filter(|&i| active[i]).map(|i| weights[i]).sum();
+            if total_weight <= 0.0 {
+                break;
+            }
+            // Lock every active panel whose proportional share would fall below its minimum,
+            // using a single consistent `pool`/`total_weight` snapshot for the whole round.
+            let mut lock_now = [false; 3];
+            let mut any_locked = false;
+            for i in 0..3 {
+                if active[i] && pool * weights[i] / total_weight < table_min_heights[i] {
+                    lock_now[i] = true;
+                    any_locked = true;
+                }
+            }
+            if !any_locked {
+                for i in 0..3 {
+                    if active[i] {
+                        result[i] = pool * weights[i] / total_weight;
+                    }
+                }
+                break;
+            }
+            for i in 0..3 {
+                if lock_now[i] {
+                    result[i] = table_min_heights[i];
+                    pool -= table_min_heights[i];
+                    active[i] = false;
+                }
+            }
+        }
+        result
     }
 
     fn draw_config_and_results_widget(&mut self, ui: &mut egui::Ui) {
@@ -957,6 +1127,103 @@ impl MacroSolverApp {
         return t!(
             locale,
             "⚠ EXPERIMENTAL FEATURE\nMay crash the solver due to reaching the 4GB memory limit of 32-bit web assembly, causing the UI to get stuck in the \"solving\" state indefinitely."
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Algorithm tests pass these explicit weights so they stay valid regardless of the
+    // production `LEFT_COLUMN_TABLE_WEIGHTS` default (covered separately by
+    // `default_weights_are_sane`).
+    const TEST_LEFT_COLUMN_WEIGHTS: [f32; 3] = [0.5, 0.25, 0.25];
+
+    fn assert_close(actual: [f32; 3], expected: [f32; 3]) {
+        for i in 0..3 {
+            assert!(
+                (actual[i] - expected[i]).abs() < 0.01,
+                "index {i}: got {actual:?}, expected {expected:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn splits_surplus_by_weight_when_space_is_plentiful() {
+        // pool = 600 - (50+40+40) - 2*5 = 460, split 0.5/0.25/0.25.
+        let result = MacroSolverApp::distribute_table_heights(
+            600.0,
+            5.0,
+            &[50.0, 40.0, 40.0],
+            &[true; 3],
+            &[60.0, 30.0, 30.0],
+            &TEST_LEFT_COLUMN_WEIGHTS,
+        );
+        assert_close(result, [230.0, 115.0, 115.0]);
+        // Fixed heights + tables + inter-panel gaps fill the budget exactly.
+        let total = result.iter().sum::<f32>() + 50.0 + 40.0 + 40.0 + 2.0 * 5.0;
+        assert!((total - 600.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn panel_without_a_table_donates_its_share() {
+        // Middle panel (food) collapsed: recipe and potion split the pool 0.5 : 0.25.
+        let result = MacroSolverApp::distribute_table_heights(
+            600.0,
+            5.0,
+            &[50.0, 40.0, 40.0],
+            &[true, false, true],
+            &[60.0, 30.0, 30.0],
+            &TEST_LEFT_COLUMN_WEIGHTS,
+        );
+        assert_close(result, [306.667, 0.0, 153.333]);
+    }
+
+    #[test]
+    fn minimum_is_respected_and_remainder_redistributed() {
+        // Potion's proportional share (25) is below its minimum (40): it locks at 40 and the
+        // freed pool is re-split between recipe and food.
+        let result = MacroSolverApp::distribute_table_heights(
+            100.0,
+            0.0,
+            &[0.0; 3],
+            &[true; 3],
+            &[10.0, 10.0, 40.0],
+            &TEST_LEFT_COLUMN_WEIGHTS,
+        );
+        assert_close(result, [40.0, 20.0, 40.0]);
+    }
+
+    #[test]
+    fn falls_back_to_minimums_when_space_is_insufficient() {
+        // Minimums (sum 120) exceed the budget (50): every table ends at its minimum and the
+        // column overflows, leaving the outer scroll area to scroll.
+        let result = MacroSolverApp::distribute_table_heights(
+            50.0,
+            0.0,
+            &[0.0; 3],
+            &[true; 3],
+            &[60.0, 30.0, 30.0],
+            &TEST_LEFT_COLUMN_WEIGHTS,
+        );
+        assert_close(result, [60.0, 30.0, 30.0]);
+    }
+
+    #[test]
+    fn default_weights_are_sane() {
+        let weights = MacroSolverApp::LEFT_COLUMN_TABLE_WEIGHTS;
+        assert!(
+            (weights.iter().sum::<f32>() - 1.0).abs() < 1e-6,
+            "weights should sum to 1: {weights:?}"
+        );
+        assert!(
+            weights.iter().all(|&w| w > 0.0),
+            "every weight should be positive: {weights:?}"
+        );
+        assert!(
+            weights[0] >= weights[1] && weights[0] >= weights[2],
+            "recipe should get the largest share: {weights:?}"
         );
     }
 }

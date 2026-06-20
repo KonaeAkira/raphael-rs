@@ -66,6 +66,9 @@ pub struct RecipeSelect<'a> {
     selected_food: Option<Consumable>, // used for base prog/qual display
     selected_potion: Option<Consumable>, // used for base prog/qual display
     locale: Locale,
+    // Height of the search result table. `None` uses the default minimum height; `Some`
+    // lets the caller stretch the table to fill available vertical space.
+    table_height: Option<f32>,
 }
 
 impl<'a> RecipeSelect<'a> {
@@ -89,7 +92,15 @@ impl<'a> RecipeSelect<'a> {
             selected_food: *selected_food,
             selected_potion: *selected_potion,
             locale: *locale,
+            table_height: None,
         }
+    }
+
+    /// Sets an explicit height for the search result table. The caller is responsible for
+    /// flooring this at [`recipe_table_min_height`] when a minimum is desired.
+    pub fn table_height(mut self, table_height: Option<f32>) -> Self {
+        self.table_height = table_height;
+        self
     }
 
     fn select_normal_recipe(&mut self, recipe_id: u32, recipe: Recipe) {
@@ -182,8 +193,9 @@ impl<'a> RecipeSelect<'a> {
     ) {
         let locale = self.locale;
         let line_height = ui.spacing().interact_size.y;
-        let line_spacing = ui.spacing().item_spacing.y;
-        let table_height = 6.3 * line_height + 6.0 * line_spacing;
+        let table_height = self
+            .table_height
+            .unwrap_or_else(|| recipe_table_min_height(ui));
 
         // Column::remainder().clip(true) is buggy when resizing the table
         let column_widths = util::calculate_column_widths(
@@ -231,7 +243,9 @@ impl<'a> RecipeSelect<'a> {
         let locale = self.locale;
         let line_height = ui.spacing().interact_size.y;
         let line_spacing = ui.spacing().item_spacing.y;
-        let table_height = 6.3 * line_height + 6.0 * line_spacing;
+        let table_height = self
+            .table_height
+            .unwrap_or_else(|| recipe_table_min_height(ui));
 
         let line_heights = search_result.iter().map(|(_mission_id, mission)| {
             let recipe_count = mission.recipe_ids.len();
@@ -547,6 +561,17 @@ impl<'a> RecipeSelect<'a> {
     }
 }
 
+/// Default and minimum height of the recipe/mission search result table, in points
+/// (~6 rows). Used as the floor when stretching the table to fill vertical space.
+///
+/// Uses the panel's own [`PANEL_ITEM_SPACING`](super::PANEL_ITEM_SPACING) rather than the
+/// caller's ambient item spacing, so the result matches the table the panel actually lays
+/// out (the panel overrides item spacing on its first line).
+pub fn recipe_table_min_height(ui: &egui::Ui) -> f32 {
+    let line_height = ui.spacing().interact_size.y;
+    6.3 * line_height + 6.0 * super::PANEL_ITEM_SPACING.y
+}
+
 fn filter_modal_is_visible(ctx: &egui::Context) -> bool {
     let id = egui::Id::new("RECIPE_FILTER_MODAL_VISIBLE");
     ctx.data(|data| data.get_temp(id) == Some(true))
@@ -565,7 +590,7 @@ impl Widget for RecipeSelect<'_> {
             self.draw_recipe_filter_modal(ui.ctx());
         }
         ui.group(|ui| {
-            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+            ui.style_mut().spacing.item_spacing = super::PANEL_ITEM_SPACING;
             ui.vertical(|ui| {
                 let mut collapsed = false;
 
