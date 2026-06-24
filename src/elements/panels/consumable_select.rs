@@ -30,7 +30,20 @@ struct ConsumableSelect<'a, Type> {
     crafter_stats: &'a CrafterStats,
     selected_consumable: &'a mut Option<Consumable>,
     locale: Locale,
+    // Height of the search result table. `None` uses the default minimum height; `Some` lets
+    // the caller stretch the table to fill available vertical space.
+    table_height: Option<f32>,
     r#type: PhantomData<Type>,
+}
+
+/// Default and minimum height of a consumable (food/potion) search result table, in points
+/// (~4 rows). Used as the floor when stretching the table to fill vertical space.
+///
+/// Like [`recipe_table_min_height`](super::recipe_table_min_height), this uses the panel's own
+/// [`PANEL_ITEM_SPACING`](super::PANEL_ITEM_SPACING) rather than the caller's ambient spacing.
+pub fn consumable_table_min_height(ui: &egui::Ui) -> f32 {
+    let line_height = ui.spacing().interact_size.y;
+    4.3 * line_height + 4.0 * super::PANEL_ITEM_SPACING.y
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -62,8 +75,16 @@ where
             crafter_stats: crafter_config.active_stats(),
             selected_consumable,
             locale: *locale,
+            table_height: None,
             r#type: PhantomData,
         }
+    }
+
+    /// Sets an explicit height for the search result table. The caller is responsible for
+    /// flooring this at [`consumable_table_min_height`] when a minimum is desired.
+    pub fn table_height(mut self, table_height: Option<f32>) -> Self {
+        self.table_height = table_height;
+        self
     }
 }
 
@@ -79,10 +100,11 @@ where
             crafter_stats,
             selected_consumable,
             locale,
+            table_height,
             ..
         } = self;
         ui.group(|ui| {
-            ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
+            ui.style_mut().spacing.item_spacing = super::PANEL_ITEM_SPACING;
             ui.vertical(|ui| {
                 let mut collapsed = false;
 
@@ -127,8 +149,7 @@ where
                 });
 
                 let line_height = ui.spacing().interact_size.y;
-                let line_spacing = ui.spacing().item_spacing.y;
-                let table_height = 4.3 * line_height + 4.0 * line_spacing;
+                let table_height = table_height.unwrap_or_else(|| consumable_table_min_height(ui));
 
                 // Column::remainder().clip(true) is buggy when resizing the table
                 let column_widths = util::calculate_column_widths(
@@ -208,6 +229,12 @@ impl<'a> FoodSelect<'a> {
             inner: ConsumableSelect::new(app_context),
         }
     }
+
+    #[inline]
+    pub fn table_height(mut self, table_height: Option<f32>) -> Self {
+        self.inner = self.inner.table_height(table_height);
+        self
+    }
 }
 
 impl Widget for FoodSelect<'_> {
@@ -248,6 +275,12 @@ impl<'a> PotionSelect<'a> {
         Self {
             inner: ConsumableSelect::new(app_context),
         }
+    }
+
+    #[inline]
+    pub fn table_height(mut self, table_height: Option<f32>) -> Self {
+        self.inner = self.inner.table_height(table_height);
+        self
     }
 }
 
