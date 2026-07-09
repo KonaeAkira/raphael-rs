@@ -102,7 +102,7 @@ fn stuffed_peppers() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1806300,
+                inserted_nodes: 1776654,
                 processed_nodes: 85863,
             },
             finish_solver_stats: FinishSolverStats {
@@ -218,7 +218,7 @@ fn test_mountain_chromite_ingot_no_manipulation() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 484906,
+                inserted_nodes: 442462,
                 processed_nodes: 33166,
             },
             finish_solver_stats: FinishSolverStats {
@@ -272,7 +272,7 @@ fn test_indagator_3858_4057() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 231358,
+                inserted_nodes: 227444,
                 processed_nodes: 20794,
             },
             finish_solver_stats: FinishSolverStats {
@@ -330,7 +330,7 @@ fn test_rare_tacos_4628_4410() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 4881826,
+                inserted_nodes: 4868050,
                 processed_nodes: 1055885,
             },
             finish_solver_stats: FinishSolverStats {
@@ -387,7 +387,7 @@ fn issue_113() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 22701824,
+                inserted_nodes: 22701815,
                 processed_nodes: 1410264,
             },
             finish_solver_stats: FinishSolverStats {
@@ -442,7 +442,7 @@ fn issue_118() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 18992408,
+                inserted_nodes: 18811544,
                 processed_nodes: 1375324,
             },
             finish_solver_stats: FinishSolverStats {

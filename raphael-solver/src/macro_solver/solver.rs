@@ -10,6 +10,7 @@ use crate::quality_upper_bound_solver::{
     QualityUbSolverShard, QualityUbSolverStats, QualityUbStates,
 };
 use crate::step_lower_bound_solver::{StepLbSolverShard, StepLbSolverStats, StepLbStates};
+use crate::seed_solver;
 use crate::utils::AtomicFlag;
 use crate::utils::ScopedTimer;
 use crate::{FinishSolver, QualityUbSolver, SolverException, SolverSettings, StepLbSolver};
@@ -94,6 +95,11 @@ impl<'a> MacroSolver<'a> {
         }
         drop(timer);
 
+        let seed = {
+            let _timer = ScopedTimer::new("Seed Solver");
+            seed_solver::beam_seed(&self.settings)
+        };
+
         let timer = ScopedTimer::new("Quality UB Solver");
         quality_ub_solver.precompute()?;
         drop(timer);
@@ -112,7 +118,7 @@ impl<'a> MacroSolver<'a> {
 
         let timer = ScopedTimer::new("Search");
         let actions = self
-            .do_solve(&mut quality_ub_solver, &mut step_lb_solver, initial_state)?
+            .do_solve(&mut quality_ub_solver, &mut step_lb_solver, initial_state, seed)?
             .actions();
         drop(timer);
 
@@ -121,15 +127,62 @@ impl<'a> MacroSolver<'a> {
         Ok(actions)
     }
 
+    /// Replays `seed` from `state`. Returns the final state and its solution
+    /// score if the rotation is valid and completes the craft.
+    fn replay_seed(
+        settings: &SolverSettings,
+        mut state: SimulationState,
+        seed: &[ActionCombo],
+    ) -> Option<(SimulationState, SearchScore)> {
+        let mut steps: u8 = 0;
+        let mut duration: u8 = 0;
+        for &combo in seed {
+            state = use_action_combo(settings, state, combo).ok()?;
+            steps = steps.saturating_add(combo.steps());
+            duration = duration.saturating_add(combo.duration());
+        }
+        if state.progress < settings.max_progress() {
+            return None;
+        }
+        let score = SearchScore {
+            quality_upper_bound: std::cmp::min(state.quality, settings.max_quality()),
+            steps_lower_bound: steps,
+            duration_lower_bound: duration,
+            current_steps: steps,
+            current_duration: duration,
+        };
+        Some((state, score))
+    }
+
     fn do_solve<'alloc>(
         &mut self,
         quality_ub_solver: &mut QualityUbSolver<'alloc>,
         step_lb_solver: &mut StepLbSolver<'alloc>,
         state: SimulationState,
+        seed: Option<Vec<ActionCombo>>,
     ) -> Result<Solution, SolverException> {
         let mut search_queue = SearchQueue::new(self.settings, state);
         let mut solution: Option<Solution> = None;
         let mut min_accepted_score = SearchScore::MIN;
+
+        // Replay-validate the seed rotation and install it as the initial
+        // solution, so the search starts with a non-trivial score lower-bound.
+        // A seed that fails validation is simply discarded.
+        if let Some(seed) = seed
+            && let Some((seed_state, seed_score)) = Self::replay_seed(&self.settings, state, &seed)
+        {
+            min_accepted_score = seed_score;
+            solution = Some(Solution {
+                score: (seed_score, seed_state.quality),
+                solver_actions: seed,
+            });
+            (self.solution_callback)(&solution.as_ref().unwrap().actions());
+            log::debug!(
+                "seed solution installed: quality {}, {} steps",
+                seed_state.quality,
+                seed_score.current_steps,
+            );
+        }
 
         while let Some(Batch {
             score,
