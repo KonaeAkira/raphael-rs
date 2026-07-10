@@ -1,187 +1,172 @@
 //! Warm-start seeding for the macro solver.
-//!
-//! `beam_seed` runs a small beam search over the solver's action alphabet to
-//! produce a complete, valid rotation before the main search starts. The macro
-//! solver replays the seed and installs it as the initial solution, giving the
-//! search a non-trivial score lower-bound from the first batch instead of
-//! discovering one gradually. This only reduces the number of nodes inserted
-//! into the search queue; nodes required to prove optimality are unaffected,
-//! so the final solution is unchanged.
-//!
-//! Beam states are ranked by the quality of a greedy "close-out" rollout
-//! (finishing the craft from that state immediately), not by their held
-//! resources: a partial rotation is only worth what it can be converted into.
-//! The rollout of the best-ranked state doubles as the seed candidate.
 
-use raphael_sim::{Action, Condition, Settings, SimulationState};
+use raphael_sim::{Action, SimulationState};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
-use crate::SolverSettings;
-use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
+use crate::actions::{
+    ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo,
+};
+use crate::{FinishSolver, SolverSettings};
 
 // Arbitrary. On M4 MBA this takes ~300ms. Might be worth benchmarking,
 // as weaker hardware might experience too much additional time during
 // this search to be worth the savings that only show up in harder crafts
 const BEAM_WIDTH: usize = 4096;
 const MAX_DEPTH: usize = 40;
+/// Only the best `PRE_RANK_WIDTH` candidates (by held resources) of each
+/// depth receive a close-out rollout
+const PRE_RANK_WIDTH: usize = 4 * BEAM_WIDTH;
 
-const PROGRESS_ACTIONS: [Action; 6] = [
-    Action::RapidSynthesis,
-    Action::Groundwork,
-    Action::PrudentSynthesis,
-    Action::CarefulSynthesis,
-    Action::DelicateSynthesis,
-    Action::BasicSynthesis,
+/// Cheap state score used for pre-ranking and tie-breaking.
+fn resource_score(state: &SimulationState) -> u32 {
+    u32::from(state.quality) + 30 * u32::from(state.cp) + 55 * u32::from(state.durability)
+}
+
+/// Quality actions that can cash in a freshly applied buff.
+/// The rollout only casts a buff if at least one of these is usable afterwards.
+const CASH_ACTIONS: [Action; 4] = [
+    Action::ByregotsBlessing,
+    Action::TrainedFinesse,
+    Action::PrudentTouch,
+    Action::BasicTouch,
 ];
 
-/// Greedily completes Progress from `state`.
-/// Returns the capped Quality of the finished craft and the used actions.
-fn close_progress(
-    settings: &Settings,
+fn use_single(
+    settings: &SolverSettings,
+    state: SimulationState,
+    action: Action,
+) -> Option<SimulationState> {
+    use_action_combo(settings, state, ActionCombo::Single(action)).ok()
+}
+
+/// Greedy close-out rollout: spends CP on Quality for as long as the finish
+/// solver confirms the craft remains finishable, then completes Progress by
+/// walking the finish-solver table.
+/// Returns the capped Quality of the finished craft and, if `RECORD` is set,
+/// the used actions (otherwise the returned `Vec` is empty).
+fn close_out<const RECORD: bool>(
+    settings: &SolverSettings,
+    finish_solver: &FinishSolver,
     mut state: SimulationState,
-    mut actions: Vec<Action>,
-) -> Option<(u16, Vec<Action>)> {
-    for _ in 0..20 {
-        if state.progress >= settings.max_progress {
-            return Some((std::cmp::min(state.quality, settings.max_quality), actions));
+) -> Option<(u16, Vec<ActionCombo>)> {
+    let finishable = |state: &SimulationState| {
+        state.durability > 0 && finish_solver.can_finish(state).unwrap_or(false)
+    };
+    if !finishable(&state) {
+        return None;
+    }
+    let mut actions = Vec::new();
+    // Quality phase: greedy priority ladder. Every step must keep the craft
+    // finishable, and a buff must be cashable by at least one follow-up touch.
+    'quality: for _ in 0..24 {
+        if state.quality >= settings.max_quality() {
+            break;
         }
-        // Any single action that finishes the craft right now, cheapest CP first.
-        let mut finisher: Option<(u16, Action, SimulationState)> = None;
-        for action in PROGRESS_ACTIONS {
-            if let Ok(child) = state.use_action(action, Condition::Normal, settings)
-                && child.progress >= settings.max_progress
-            {
-                let cp_cost = state.cp - child.cp;
-                if finisher.as_ref().is_none_or(|(cost, _, _)| cp_cost < *cost) {
-                    finisher = Some((cp_cost, action, child));
-                }
-            }
-        }
-        if let Some((_, action, child)) = finisher {
-            actions.push(action);
-            state = child;
-            continue;
-        }
-        // Build-up: Stellar Steady Hand, Veneration, a mend if durability-starved,
-        // then the strongest affordable Progress action.
+        let effects = state.effects;
         let mut candidates: Vec<Action> = Vec::new();
-        if state.effects.stellar_steady_hand_charges() > 0
-            && state.effects.stellar_steady_hand() == 0
-        {
-            candidates.push(Action::StellarSteadyHand);
+        if effects.inner_quiet() >= 8 && effects.great_strides() > 0 && effects.innovation() > 0 {
+            candidates.push(Action::ByregotsBlessing);
         }
-        if state.effects.veneration() == 0 && state.cp >= 18 + 7 {
-            candidates.push(Action::Veneration);
-        }
-        if state.durability <= 10 {
-            if state.cp >= 112 && settings.max_durability - state.durability > 30 {
-                candidates.push(Action::ImmaculateMend);
-            }
-            if state.cp >= 88 {
-                candidates.push(Action::MasterMend);
+        if effects.innovation() == 0 {
+            if effects.quick_innovation_available() {
+                candidates.push(Action::QuickInnovation);
+            } else {
+                candidates.push(Action::Innovation);
             }
         }
-        candidates.extend(PROGRESS_ACTIONS);
-        let mut advanced = false;
+        if effects.inner_quiet() == 10 && effects.great_strides() == 0 && effects.innovation() > 1 {
+            candidates.push(Action::GreatStrides);
+        }
+        if effects.inner_quiet() == 10 {
+            candidates.push(Action::TrainedFinesse);
+        }
+        candidates.push(Action::PrudentTouch);
+        candidates.push(Action::BasicTouch);
+        if effects.inner_quiet() > 0 {
+            candidates.push(Action::ByregotsBlessing); // last call before Progress
+        }
         for action in candidates {
-            if let Ok(child) = state.use_action(action, Condition::Normal, settings) {
-                let is_progress_action = !matches!(
-                    action,
-                    Action::StellarSteadyHand
-                        | Action::Veneration
-                        | Action::ImmaculateMend
-                        | Action::MasterMend
-                );
-                if is_progress_action
-                    && child.durability == 0
-                    && child.progress < settings.max_progress
-                {
-                    continue; // would deadlock the rollout
+            let Some(child) = use_single(settings, state, action) else {
+                continue;
+            };
+            if !finishable(&child) {
+                continue;
+            }
+            let is_buff = matches!(
+                action,
+                Action::Innovation | Action::QuickInnovation | Action::GreatStrides
+            );
+            if is_buff
+                && !CASH_ACTIONS.iter().any(|&touch| {
+                    use_single(settings, child, touch).is_some_and(|gc| finishable(&gc))
+                })
+            {
+                continue;
+            }
+            if RECORD {
+                actions.push(ActionCombo::Single(action));
+            }
+            state = child;
+            continue 'quality;
+        }
+        break; // no quality action keeps the craft finishable
+    }
+    // Finish phase: extract a finishing line from the finish-solver table.
+    // A finishable child always exists here (Bellman property of the table);
+    // the refresh guard below can rarely hide it, in which case the rollout
+    // is simply discarded.
+    for _ in 0..20 {
+        if state.progress >= settings.max_progress() {
+            return Some((std::cmp::min(state.quality, settings.max_quality()), actions));
+        }
+        let mut chosen: Option<(SimulationState, ActionCombo)> = None;
+        for &combo in &PROGRESS_ONLY_SEARCH_ACTIONS {
+            // Refreshing an already-active timer never brings the craft closer
+            // to finishing; without this guard the greedy pick below can spin
+            // on re-casting buffs (each re-cast is still "finishable").
+            let is_pointless_refresh = match combo {
+                ActionCombo::Single(Action::Veneration) => state.effects.veneration() > 0,
+                ActionCombo::Single(Action::WasteNot | Action::WasteNot2) => {
+                    state.effects.waste_not() > 0
                 }
-                actions.push(action);
-                state = child;
-                advanced = true;
-                break;
+                ActionCombo::Single(Action::Manipulation) => state.effects.manipulation() > 0,
+                ActionCombo::Single(Action::StellarSteadyHand) => {
+                    state.effects.stellar_steady_hand() > 0
+                }
+                _ => false,
+            };
+            if is_pointless_refresh {
+                continue;
+            }
+            let Ok(child) = use_action_combo(settings, state, combo) else {
+                continue;
+            };
+            // Rank by progress gained, then durability (so a mend is chosen
+            // exactly when it heals and no progress action is viable).
+            if (child.progress >= settings.max_progress() || finishable(&child))
+                && chosen.as_ref().is_none_or(|(best, _)| {
+                    (child.progress, child.durability) > (best.progress, best.durability)
+                })
+            {
+                chosen = Some((child, combo));
             }
         }
-        if !advanced {
-            return None;
+        let (child, combo) = chosen?;
+        if RECORD {
+            actions.push(combo);
         }
+        state = child;
     }
     None
 }
 
-/// Greedy close-out rollout: spends CP on Quality while reserving enough
-/// resources to complete Progress, then completes Progress.
-/// Returns the capped Quality of the finished craft and the used actions.
-fn close_out(settings: &Settings, mut state: SimulationState) -> Option<(u16, Vec<Action>)> {
-    let mut actions = Vec::new();
-    // Resources reserved for the Progress phase of the rollout.
-    let (reserve_cp, reserve_durability): (u16, u16) =
-        if state.effects.stellar_steady_hand_charges() > 0
-            || state.effects.stellar_steady_hand() >= 3
-        {
-            // Veneration + guaranteed Rapid Synthesis spam
-            (18, 30)
-        } else {
-            // Veneration + Careful Synthesis spam
-            (18 + 9 * 7, 90)
-        };
-    for _ in 0..24 {
-        if state.quality >= settings.max_quality {
-            break;
-        }
-        let effects = state.effects;
-        let mut budget = state.cp.saturating_sub(reserve_cp);
-        if state.durability < reserve_durability {
-            budget = budget.saturating_sub(88); // price in a Master's Mend
-        }
-        let action = if budget >= 24
-            && effects.inner_quiet() >= 8
-            && effects.great_strides() > 0
-            && effects.innovation() > 0
-        {
-            Some(Action::ByregotsBlessing)
-        } else if budget >= 50 && effects.innovation() == 0 {
-            if effects.quick_innovation_available() {
-                Some(Action::QuickInnovation)
-            } else {
-                Some(Action::Innovation)
-            }
-        } else if budget >= 56
-            && effects.inner_quiet() == 10
-            && effects.great_strides() == 0
-            && effects.innovation() > 1
-        {
-            Some(Action::GreatStrides)
-        } else if budget >= 32 && effects.inner_quiet() == 10 {
-            Some(Action::TrainedFinesse)
-        } else if budget >= 25 && state.durability > 5 && effects.waste_not() == 0 {
-            Some(Action::PrudentTouch)
-        } else if budget >= 18 && state.durability > 10 {
-            Some(Action::BasicTouch)
-        } else if budget >= 24 && effects.inner_quiet() > 0 {
-            Some(Action::ByregotsBlessing)
-        } else {
-            None
-        };
-        let Some(action) = action else { break };
-        let Ok(child) = state.use_action(action, Condition::Normal, settings) else {
-            break;
-        };
-        if child.durability == 0 {
-            break;
-        }
-        actions.push(action);
-        state = child;
-    }
-    close_progress(settings, state, actions)
-}
-
 /// Produces a complete rotation to be used as the macro solver's initial
 /// solution, or `None` if no complete rotation was found.
-pub fn beam_seed(settings: &SolverSettings) -> Option<Vec<ActionCombo>> {
+pub fn beam_seed(
+    settings: &SolverSettings,
+    finish_solver: &FinishSolver,
+) -> Option<Vec<ActionCombo>> {
     let sim_settings = &settings.simulator_settings;
     let initial_state = SimulationState::new(sim_settings);
 
@@ -219,7 +204,10 @@ pub fn beam_seed(settings: &SolverSettings) -> Option<Vec<ActionCombo>> {
             if child.progress >= sim_settings.max_progress {
                 // Completed within the beam itself.
                 let quality = std::cmp::min(child.quality, sim_settings.max_quality);
-                if best.as_ref().is_none_or(|(best_quality, _)| quality > *best_quality) {
+                if best
+                    .as_ref()
+                    .is_none_or(|(best_quality, _)| quality > *best_quality)
+                {
                     let mut combos = rotation_of(&arena, parent_index);
                     combos.push(combo);
                     best = Some((quality, combos));
@@ -232,15 +220,36 @@ pub fn beam_seed(settings: &SolverSettings) -> Option<Vec<ActionCombo>> {
             break;
         }
 
-        // Rank candidates by the quality of their close-out rollout.
-        let mut scored: Vec<(u16, u32, SimulationState, usize, ActionCombo, Vec<Action>)> = dedup
+        let mut candidates: Vec<(SimulationState, usize, ActionCombo)> = dedup
+            .into_iter()
+            .map(|(child, (parent_index, combo))| (child, parent_index, combo))
+            .collect();
+        if candidates.len() > PRE_RANK_WIDTH {
+            candidates.par_sort_unstable_by_key(|&(state, ..)| {
+                (
+                    std::cmp::Reverse(resource_score(&state)),
+                    state.effects.into_bits(),
+                    state.cp,
+                    state.durability,
+                    state.progress,
+                    state.quality,
+                )
+            });
+            candidates.truncate(PRE_RANK_WIDTH);
+        }
+
+        // Rank candidates by the quality of their close-out rollout
+        let mut scored: Vec<(u16, u32, SimulationState, usize, ActionCombo)> = candidates
             .into_par_iter()
-            .filter_map(|(child, (parent_index, combo))| {
-                let (rollout_quality, rollout) = close_out(sim_settings, child)?;
-                let tie_break = u32::from(child.quality)
-                    + 30 * u32::from(child.cp)
-                    + 55 * u32::from(child.durability);
-                Some((rollout_quality, tie_break, child, parent_index, combo, rollout))
+            .filter_map(|(child, parent_index, combo)| {
+                let (rollout_quality, _) = close_out::<false>(settings, finish_solver, child)?;
+                Some((
+                    rollout_quality,
+                    resource_score(&child),
+                    child,
+                    parent_index,
+                    combo,
+                ))
             })
             .collect();
         // The final state-derived key makes truncation deterministic across runs.
@@ -257,18 +266,21 @@ pub fn beam_seed(settings: &SolverSettings) -> Option<Vec<ActionCombo>> {
         });
         scored.truncate(BEAM_WIDTH);
 
-        if let Some((rollout_quality, _, _, parent_index, combo, rollout)) = scored.first()
-            && best.as_ref().is_none_or(|(best_quality, _)| *rollout_quality > *best_quality)
+        if let Some(&(rollout_quality, _, state, parent_index, combo)) = scored.first()
+            && best
+                .as_ref()
+                .is_none_or(|(best_quality, _)| rollout_quality > *best_quality)
+            && let Some((quality, rollout)) = close_out::<true>(settings, finish_solver, state)
         {
-            let mut combos = rotation_of(&arena, *parent_index);
-            combos.push(*combo);
-            combos.extend(rollout.iter().copied().map(ActionCombo::Single));
-            best = Some((*rollout_quality, combos));
+            let mut combos = rotation_of(&arena, parent_index);
+            combos.push(combo);
+            combos.extend(rollout);
+            best = Some((quality, combos));
         }
 
         frontier = scored
             .into_iter()
-            .map(|(_, _, child, parent_index, combo, _)| {
+            .map(|(_, _, child, parent_index, combo)| {
                 arena.push((parent_index, combo));
                 (child, arena.len() - 1)
             })

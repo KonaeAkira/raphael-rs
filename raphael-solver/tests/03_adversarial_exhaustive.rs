@@ -272,7 +272,7 @@ fn test_indagator_3858_4057() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 227444,
+                inserted_nodes: 193565,
                 processed_nodes: 20794,
             },
             finish_solver_stats: FinishSolverStats {
@@ -330,7 +330,7 @@ fn test_rare_tacos_4628_4410() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 4868050,
+                inserted_nodes: 4659968,
                 processed_nodes: 1055885,
             },
             finish_solver_stats: FinishSolverStats {
@@ -387,7 +387,7 @@ fn issue_113() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 22701815,
+                inserted_nodes: 18420360,
                 processed_nodes: 1410264,
             },
             finish_solver_stats: FinishSolverStats {
@@ -442,7 +442,7 @@ fn issue_118() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 18811544,
+                inserted_nodes: 15560156,
                 processed_nodes: 1375324,
             },
             finish_solver_stats: FinishSolverStats {

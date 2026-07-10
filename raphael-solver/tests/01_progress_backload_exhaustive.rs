@@ -87,7 +87,7 @@ fn rinascita_3700_3280() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 5063,
+                inserted_nodes: 2786,
                 processed_nodes: 457,
             },
             finish_solver_stats: FinishSolverStats {
@@ -141,7 +141,7 @@ fn pactmaker_3240_3130() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 42206,
+                inserted_nodes: 9790,
                 processed_nodes: 4631,
             },
             finish_solver_stats: FinishSolverStats {
@@ -197,7 +197,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 7415,
+                inserted_nodes: 6355,
                 processed_nodes: 578,
             },
             finish_solver_stats: FinishSolverStats {
@@ -251,7 +251,7 @@ fn diadochos_4021_3660() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 7609,
+                inserted_nodes: 6403,
                 processed_nodes: 1627,
             },
             finish_solver_stats: FinishSolverStats {
@@ -305,7 +305,7 @@ fn indagator_3858_4057() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 23991,
+                inserted_nodes: 16851,
                 processed_nodes: 3360,
             },
             finish_solver_stats: FinishSolverStats {
@@ -585,7 +585,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 3486,
+                inserted_nodes: 3119,
                 processed_nodes: 261,
             },
             finish_solver_stats: FinishSolverStats {
@@ -801,7 +801,7 @@ fn rarefied_tacos_de_carne_asada_4966_4817() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 15033,
+                inserted_nodes: 15034,
                 processed_nodes: 930,
             },
             finish_solver_stats: FinishSolverStats {

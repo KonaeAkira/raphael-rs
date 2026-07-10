@@ -97,7 +97,7 @@ impl<'a> MacroSolver<'a> {
 
         let seed = {
             let _timer = ScopedTimer::new("Seed Solver");
-            seed_solver::beam_seed(&self.settings)
+            seed_solver::beam_seed(&self.settings, &self.finish_solver)
         };
 
         let timer = ScopedTimer::new("Quality UB Solver");
