@@ -32,17 +32,76 @@ struct QualityUbSolverContext<'alloc> {
     largest_progress_increase: u16,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct TemplateRecord {
+    slots_start: u32,
+    max_instantiated_cp: u16,
+    /// Minimum CP at which the template reaches max Progress and max Quality,
+    /// or `u16::MAX` if it never does.
+    required_cp_for_max: u16,
+}
+
+const UNSOLVED_SLOT: u32 = u32::MAX;
+
+const ARENA_SEGMENT_BITS: u32 = 20;
+const ARENA_SEGMENT_LEN: usize = 1 << ARENA_SEGMENT_BITS;
+
+/// Append-only storage for Pareto fronts
+#[derive(Default)]
+struct ValueArena {
+    segments: Vec<Vec<ParetoValue>>,
+}
+
+impl ValueArena {
+    fn push_front(&mut self, front: &[ParetoValue]) -> Option<u32> {
+        let needed = front.len() + 1;
+        debug_assert!(needed <= ARENA_SEGMENT_LEN);
+        if self
+            .segments
+            .last()
+            .is_none_or(|segment| ARENA_SEGMENT_LEN - segment.len() < needed)
+        {
+            self.segments.push(Vec::with_capacity(ARENA_SEGMENT_LEN));
+        }
+        let segment_index = self.segments.len() - 1;
+        let segment = self.segments.last_mut().unwrap();
+        let offset = u32::try_from(
+            (segment_index as u64) << ARENA_SEGMENT_BITS | segment.len() as u64,
+        )
+        .ok()
+        .filter(|&offset| offset != UNSOLVED_SLOT)?;
+        segment.push(ParetoValue::new(front.len() as u16, 0));
+        segment.extend_from_slice(front);
+        Some(offset)
+    }
+
+    fn resolve(&self, offset: u32) -> &[ParetoValue] {
+        let segment = &self.segments[(offset >> ARENA_SEGMENT_BITS) as usize];
+        let index = (offset as usize) & (ARENA_SEGMENT_LEN - 1);
+        let len = usize::from(segment[index].progress);
+        &segment[index + 1..index + 1 + len]
+    }
+}
+
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
-    maximal_templates: FxHashMap<TemplateData, u16>,
-    solved_states: SolvedStates<'alloc>,
+    templates: FxHashMap<TemplateData, TemplateRecord>,
+    /// indexed by `(cp - min_solved_cp) / 2`
+    slots: Vec<u32>,
+    arena: ValueArena,
+    /// States solved by shards during the search and merged back
+    overflow: SolvedStates<'alloc>,
+    states_on_main: usize,
+    values_on_main: usize,
     num_states_solved_on_shards: usize,
 }
 
 pub struct QualityUbSolverShard<'main, 'alloc> {
     context: &'main QualityUbSolverContext<'alloc>,
-    maximal_templates: &'main FxHashMap<TemplateData, u16>,
-    shared_states: &'main SolvedStates<'alloc>,
+    templates: &'main FxHashMap<TemplateData, TemplateRecord>,
+    slots: &'main [u32],
+    arena: &'main ValueArena,
+    overflow: &'main SolvedStates<'alloc>,
     local_states: SolvedStates<'alloc>,
 }
 
@@ -68,24 +127,30 @@ impl<'alloc> QualityUbSolver<'alloc> {
                     &settings.simulator_settings,
                 ),
             },
-            solved_states: FxHashMap::default(),
-            maximal_templates: FxHashMap::default(),
+            templates: FxHashMap::default(),
+            slots: Vec::new(),
+            arena: ValueArena::default(),
+            overflow: SolvedStates::default(),
+            states_on_main: 0,
+            values_on_main: 0,
             num_states_solved_on_shards: 0,
         }
     }
 
     pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates<'alloc>) {
-        let len_before = self.solved_states.len();
-        self.solved_states.extend(new_solved_states);
-        let len_after = self.solved_states.len();
+        let len_before = self.overflow.len();
+        self.overflow.extend(new_solved_states);
+        let len_after = self.overflow.len();
         self.num_states_solved_on_shards += len_after - len_before;
     }
 
     pub fn create_shard<'main>(&'main self) -> QualityUbSolverShard<'main, 'alloc> {
         QualityUbSolverShard {
             context: &self.context,
-            maximal_templates: &self.maximal_templates,
-            shared_states: &self.solved_states,
+            templates: &self.templates,
+            slots: &self.slots,
+            arena: &self.arena,
+            overflow: &self.overflow,
             local_states: SolvedStates::default(),
         }
     }
@@ -144,8 +209,48 @@ impl<'alloc> QualityUbSolver<'alloc> {
             .collect()
     }
 
+    fn min_solved_cp(&self) -> u16 {
+        2 * self.context.durability_cost
+    }
+
+    fn lookup_slot(&self, state: &ReducedState) -> Option<&ParetoFront> {
+        lookup_slot(
+            &self.templates,
+            &self.slots,
+            &self.arena,
+            self.min_solved_cp(),
+            state,
+        )
+    }
+
     pub fn precompute(&mut self) -> Result<(), SolverException> {
-        let all_templates = self.generate_precompute_templates();
+        let min_solved_cp = self.min_solved_cp();
+        let mut all_templates = self.generate_precompute_templates();
+
+        // Lay out each template's CP range as a contiguous span
+        let mut total_slots: usize = 0;
+        for template in &mut all_templates {
+            template.slots_start = total_slots as u32;
+            if template.max_instantiated_cp >= min_solved_cp {
+                total_slots +=
+                    usize::from((template.max_instantiated_cp - min_solved_cp) / 2) + 1;
+            }
+        }
+        self.slots = vec![UNSOLVED_SLOT; total_slots];
+        self.templates = all_templates
+            .iter()
+            .map(|template| {
+                (
+                    template.data,
+                    TemplateRecord {
+                        slots_start: template.slots_start,
+                        max_instantiated_cp: template.max_instantiated_cp,
+                        required_cp_for_max: u16::MAX,
+                    },
+                )
+            })
+            .collect();
+
         // States are computed in order of less CP to more CP.
         // States currently being computed assume that child states have already been computed.
         // This is the reason why states with HeartAndSoul and QuickInnovation available must be computed separately.
@@ -168,9 +273,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                     .collect();
                 // 2 * durability_cost is the minimum CP a state must have to not be considered "final".
                 // See `ReducedState::is_final` for details.
-                for cp in
-                    (2 * self.context.durability_cost..=self.context.settings.max_cp()).step_by(2)
-                {
+                for cp in (min_solved_cp..=self.context.settings.max_cp()).step_by(2) {
                     if self.context.interrupt_signal.is_set() {
                         return Err(SolverException::Interrupted);
                     }
@@ -180,12 +283,10 @@ impl<'alloc> QualityUbSolver<'alloc> {
                             template.instantiate(cp).map(|state| (template, state))
                         })
                         .map_init(
-                            || (ParetoFrontBuilder::new(), self.context.allocator.get()),
-                            |(pf_builder, allocator),
-                             (template, state)|
-                             -> Result<_, SolverException> {
+                            ParetoFrontBuilder::new,
+                            |pf_builder, (template, state)| -> Result<_, SolverException> {
                                 let pareto_front =
-                                    self.solve_precompute_state(pf_builder, state, allocator)?;
+                                    self.solve_precompute_state(pf_builder, state)?;
                                 let template_is_maximal = {
                                     // A template is "maximal" if there is no benefit of solving it with higher CP
                                     let required_progress = self.context.settings.max_progress();
@@ -194,24 +295,40 @@ impl<'alloc> QualityUbSolver<'alloc> {
                                             self.context.iq_quality_lut
                                                 [usize::from(state.effects.inner_quiet())],
                                         );
-                                    pareto_front.first().progress >= required_progress
-                                        && pareto_front.first().quality >= required_quality
+                                    pareto_front[0].progress >= required_progress
+                                        && pareto_front[0].quality >= required_quality
                                 };
                                 if template_is_maximal {
                                     template.required_cp_for_max_progress_and_quality = Some(cp);
                                 }
-                                Ok((state, pareto_front))
+                                let slot = template.slots_start as usize
+                                    + usize::from((cp - min_solved_cp) / 2);
+                                Ok((slot, pareto_front))
                             },
                         )
                         .collect::<Result<Vec<_>, SolverException>>()?;
-                    self.solved_states.extend(solved_states);
+                    self.states_on_main += solved_states.len();
+                    for (slot, pareto_front) in solved_states {
+                        let offset =
+                            self.arena.push_front(&pareto_front).ok_or_else(|| {
+                                internal_error!(
+                                    "QualityUbSolver value arena exceeds u32 offsets.",
+                                    self.context.settings
+                                )
+                            })?;
+                        self.slots[slot] = offset;
+                        self.values_on_main += pareto_front.len();
+                    }
                 }
-                self.maximal_templates
-                    .extend(templates.into_iter().filter_map(|template| {
-                        template
-                            .required_cp_for_max_progress_and_quality
-                            .map(|required_cp| (template.data, required_cp))
-                    }));
+                for template in templates {
+                    if let Some(required_cp) = template.required_cp_for_max_progress_and_quality
+                    {
+                        self.templates
+                            .get_mut(&template.data)
+                            .unwrap()
+                            .required_cp_for_max = required_cp;
+                    }
+                }
             }
         }
         Ok(())
@@ -221,8 +338,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
         &self,
         pf_builder: &mut ParetoFrontBuilder,
         state: ReducedState,
-        allocator: &BumpPoolGuard<'alloc>,
-    ) -> Result<&'alloc ParetoFront, SolverException> {
+    ) -> Result<Vec<ParetoValue>, SolverException> {
         let cutoff = ParetoValue::new(
             self.context.settings.max_progress(),
             self.context.settings.max_quality().saturating_sub(
@@ -239,7 +355,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
             ) {
                 let action_value = ParetoValue::new(progress, quality);
                 if !new_state.is_final(self.context.durability_cost) {
-                    if let Some(pareto_front) = self.solved_states.get(&new_state).copied() {
+                    if let Some(pareto_front) = self.lookup_slot(&new_state) {
                         pf_builder.push_slice(
                             pareto_front
                                 .iter()
@@ -262,23 +378,27 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 }
             }
         }
-        let pareto_front = allocator
-            .alloc_slice_copy(pf_builder.result_as_slice())
-            .into_ref();
-        pareto_front.try_into().map_err(|_| {
-            internal_error!(
+        let pareto_front = pf_builder.result_as_slice();
+        if pareto_front.is_empty() {
+            return Err(internal_error!(
                 "Empty precompute Pareto front.",
                 self.context.settings,
                 state
-            )
-        })
+            ));
+        }
+        Ok(pareto_front.to_vec())
     }
 
     pub fn runtime_stats(&self) -> QualityUbSolverStats {
         QualityUbSolverStats {
-            states_on_main: self.solved_states.len() - self.num_states_solved_on_shards,
+            states_on_main: self.states_on_main,
             states_on_shards: self.num_states_solved_on_shards,
-            values: self.solved_states.values().map(|value| value.len()).sum(),
+            values: self.values_on_main
+                + self
+                    .overflow
+                    .values()
+                    .map(|front| front.len())
+                    .sum::<usize>(),
         }
     }
 }
@@ -286,6 +406,17 @@ impl<'alloc> QualityUbSolver<'alloc> {
 impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
     pub fn solved_states(self) -> SolvedStates<'alloc> {
         self.local_states
+    }
+
+    fn lookup_shared(&self, state: &ReducedState) -> Option<&'main ParetoFront> {
+        lookup_slot(
+            self.templates,
+            self.slots,
+            self.arena,
+            2 * self.context.durability_cost,
+            state,
+        )
+        .or_else(|| self.overflow.get(state).copied())
     }
 
     pub fn quality_upper_bound(
@@ -307,14 +438,15 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
             reduced_state.effects,
             reduced_state.compressed_unreliable_quality,
         );
-        if let Some(&required_cp) = self.maximal_templates.get(&template_data)
-            && reduced_state.cp >= required_cp
+        if let Some(record) = self.templates.get(&template_data)
+            && record.required_cp_for_max != u16::MAX
+            && reduced_state.cp >= record.required_cp_for_max
         {
             let reduced_state = ReducedState {
-                cp: required_cp,
+                cp: record.required_cp_for_max,
                 ..reduced_state
             };
-            if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied()
+            if let Some(pareto_front) = self.lookup_shared(&reduced_state)
                 && pareto_front.first().progress >= required_progress
                 && pareto_front.first().quality.saturating_add(state.quality)
                     >= self.context.settings.max_quality()
@@ -330,7 +462,7 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
         }
 
         let pareto_front =
-            if let Some(pareto_front) = self.shared_states.get(&reduced_state).copied() {
+            if let Some(pareto_front) = self.lookup_shared(&reduced_state) {
                 pareto_front
             } else if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
                 pareto_front
@@ -382,7 +514,7 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
                 let action_value = ParetoValue::new(progress, quality);
                 if !child_state.is_final(self.context.durability_cost) {
                     let child_pareto_front = if let Some(child_pareto_front) =
-                        self.shared_states.get(&child_state).copied()
+                        self.lookup_shared(&child_state)
                     {
                         child_pareto_front
                     } else if let Some(child_pareto_front) =
@@ -428,6 +560,27 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
         self.local_states.insert(state, pareto_front);
         Ok(())
     }
+}
+
+fn lookup_slot<'arena>(
+    templates: &FxHashMap<TemplateData, TemplateRecord>,
+    slots: &[u32],
+    arena: &'arena ValueArena,
+    min_solved_cp: u16,
+    state: &ReducedState,
+) -> Option<&'arena ParetoFront> {
+    let data = TemplateData::new(state.effects, state.compressed_unreliable_quality);
+    let record = templates.get(&data)?;
+    if state.cp < min_solved_cp || state.cp > record.max_instantiated_cp {
+        return None;
+    }
+    let index = record.slots_start as usize + usize::from((state.cp - min_solved_cp) / 2);
+    let offset = slots[index];
+    if offset == UNSOLVED_SLOT {
+        return None;
+    }
+    let front = arena.resolve(offset);
+    Some(front.try_into().expect("arena Pareto fronts are never empty"))
 }
 
 /// Calculates the CP cost to "magically" restore 5 durability
@@ -477,6 +630,10 @@ struct Template {
     required_cp_for_max_progress_and_quality: Option<u16>,
 
     data: TemplateData,
+
+    /// Start of this template's span in `QualityUbSolver::slots`.
+    /// Assigned at the start of `QualityUbSolver::precompute`.
+    slots_start: u32,
 }
 
 impl Template {
@@ -485,6 +642,7 @@ impl Template {
             max_instantiated_cp: max_cp,
             required_cp_for_max_progress_and_quality: None,
             data,
+            slots_start: 0,
         }
     }
 
