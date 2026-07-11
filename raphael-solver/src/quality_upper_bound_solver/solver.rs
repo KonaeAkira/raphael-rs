@@ -41,54 +41,11 @@ struct TemplateRecord {
     required_cp_for_max: u16,
 }
 
-const UNSOLVED_SLOT: u32 = u32::MAX;
-
-const ARENA_SEGMENT_BITS: u32 = 20;
-const ARENA_SEGMENT_LEN: usize = 1 << ARENA_SEGMENT_BITS;
-
-/// Append-only storage for Pareto fronts
-#[derive(Default)]
-struct ValueArena {
-    segments: Vec<Vec<ParetoValue>>,
-}
-
-impl ValueArena {
-    fn push_front(&mut self, front: &[ParetoValue]) -> Option<u32> {
-        let needed = front.len() + 1;
-        debug_assert!(needed <= ARENA_SEGMENT_LEN);
-        if self
-            .segments
-            .last()
-            .is_none_or(|segment| ARENA_SEGMENT_LEN - segment.len() < needed)
-        {
-            self.segments.push(Vec::with_capacity(ARENA_SEGMENT_LEN));
-        }
-        let segment_index = self.segments.len() - 1;
-        let segment = self.segments.last_mut().unwrap();
-        let offset = u32::try_from(
-            (segment_index as u64) << ARENA_SEGMENT_BITS | segment.len() as u64,
-        )
-        .ok()
-        .filter(|&offset| offset != UNSOLVED_SLOT)?;
-        segment.push(ParetoValue::new(front.len() as u16, 0));
-        segment.extend_from_slice(front);
-        Some(offset)
-    }
-
-    fn resolve(&self, offset: u32) -> &[ParetoValue] {
-        let segment = &self.segments[(offset >> ARENA_SEGMENT_BITS) as usize];
-        let index = (offset as usize) & (ARENA_SEGMENT_LEN - 1);
-        let len = usize::from(segment[index].progress);
-        &segment[index + 1..index + 1 + len]
-    }
-}
-
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
     templates: FxHashMap<TemplateData, TemplateRecord>,
     /// indexed by `(cp - min_solved_cp) / 2`
-    slots: Vec<u32>,
-    arena: ValueArena,
+    slots: Vec<Option<&'alloc ParetoFront>>,
     /// States solved by shards during the search and merged back
     overflow: SolvedStates<'alloc>,
     states_on_main: usize,
@@ -99,8 +56,7 @@ pub struct QualityUbSolver<'alloc> {
 pub struct QualityUbSolverShard<'main, 'alloc> {
     context: &'main QualityUbSolverContext<'alloc>,
     templates: &'main FxHashMap<TemplateData, TemplateRecord>,
-    slots: &'main [u32],
-    arena: &'main ValueArena,
+    slots: &'main [Option<&'alloc ParetoFront>],
     overflow: &'main SolvedStates<'alloc>,
     local_states: SolvedStates<'alloc>,
 }
@@ -129,7 +85,6 @@ impl<'alloc> QualityUbSolver<'alloc> {
             },
             templates: FxHashMap::default(),
             slots: Vec::new(),
-            arena: ValueArena::default(),
             overflow: SolvedStates::default(),
             states_on_main: 0,
             values_on_main: 0,
@@ -149,7 +104,6 @@ impl<'alloc> QualityUbSolver<'alloc> {
             context: &self.context,
             templates: &self.templates,
             slots: &self.slots,
-            arena: &self.arena,
             overflow: &self.overflow,
             local_states: SolvedStates::default(),
         }
@@ -213,14 +167,8 @@ impl<'alloc> QualityUbSolver<'alloc> {
         2 * self.context.durability_cost
     }
 
-    fn lookup_slot(&self, state: &ReducedState) -> Option<&ParetoFront> {
-        lookup_slot(
-            &self.templates,
-            &self.slots,
-            &self.arena,
-            self.min_solved_cp(),
-            state,
-        )
+    fn lookup_slot(&self, state: &ReducedState) -> Option<&'alloc ParetoFront> {
+        lookup_slot(&self.templates, &self.slots, self.min_solved_cp(), state)
     }
 
     pub fn precompute(&mut self) -> Result<(), SolverException> {
@@ -232,11 +180,10 @@ impl<'alloc> QualityUbSolver<'alloc> {
         for template in &mut all_templates {
             template.slots_start = total_slots as u32;
             if template.max_instantiated_cp >= min_solved_cp {
-                total_slots +=
-                    usize::from((template.max_instantiated_cp - min_solved_cp) / 2) + 1;
+                total_slots += usize::from((template.max_instantiated_cp - min_solved_cp) / 2) + 1;
             }
         }
-        self.slots = vec![UNSOLVED_SLOT; total_slots];
+        self.slots = vec![None; total_slots];
         self.templates = all_templates
             .iter()
             .map(|template| {
@@ -250,6 +197,8 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 )
             })
             .collect();
+
+        let allocator = self.context.allocator.get();
 
         // States are computed in order of less CP to more CP.
         // States currently being computed assume that child states have already been computed.
@@ -309,20 +258,19 @@ impl<'alloc> QualityUbSolver<'alloc> {
                         .collect::<Result<Vec<_>, SolverException>>()?;
                     self.states_on_main += solved_states.len();
                     for (slot, pareto_front) in solved_states {
-                        let offset =
-                            self.arena.push_front(&pareto_front).ok_or_else(|| {
-                                internal_error!(
-                                    "QualityUbSolver value arena exceeds u32 offsets.",
-                                    self.context.settings
-                                )
-                            })?;
-                        self.slots[slot] = offset;
+                        let allocated = allocator.alloc_slice_copy(&pareto_front).into_ref();
+                        let length_checked = allocated.try_into().map_err(|_| {
+                            internal_error!(
+                                "QualityUbSolver::precompute produced empty Pareto front.",
+                                self.context.settings
+                            )
+                        })?;
+                        self.slots[slot] = Some(length_checked);
                         self.values_on_main += pareto_front.len();
                     }
                 }
                 for template in templates {
-                    if let Some(required_cp) = template.required_cp_for_max_progress_and_quality
-                    {
+                    if let Some(required_cp) = template.required_cp_for_max_progress_and_quality {
                         self.templates
                             .get_mut(&template.data)
                             .unwrap()
@@ -408,11 +356,10 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
         self.local_states
     }
 
-    fn lookup_shared(&self, state: &ReducedState) -> Option<&'main ParetoFront> {
+    fn lookup_shared(&self, state: &ReducedState) -> Option<&'alloc ParetoFront> {
         lookup_slot(
             self.templates,
             self.slots,
-            self.arena,
             2 * self.context.durability_cost,
             state,
         )
@@ -461,24 +408,23 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
             }
         }
 
-        let pareto_front =
-            if let Some(pareto_front) = self.lookup_shared(&reduced_state) {
-                pareto_front
-            } else if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
+        let pareto_front = if let Some(pareto_front) = self.lookup_shared(&reduced_state) {
+            pareto_front
+        } else if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
+            pareto_front
+        } else {
+            let allocator = self.context.allocator.get();
+            self.solve_state(reduced_state, &allocator)?;
+            if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
                 pareto_front
             } else {
-                let allocator = self.context.allocator.get();
-                self.solve_state(reduced_state, &allocator)?;
-                if let Some(pareto_front) = self.local_states.get(&reduced_state).copied() {
-                    pareto_front
-                } else {
-                    return Err(internal_error!(
-                        "State not found in memoization table after solve.",
-                        self.context.settings,
-                        reduced_state
-                    ));
-                }
-            };
+                return Err(internal_error!(
+                    "State not found in memoization table after solve.",
+                    self.context.settings,
+                    reduced_state
+                ));
+            }
+        };
         let i = pareto_front.partition_point(|value| value.progress < required_progress);
         let quality = pareto_front
             .get(i)
@@ -513,27 +459,26 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
             ) {
                 let action_value = ParetoValue::new(progress, quality);
                 if !child_state.is_final(self.context.durability_cost) {
-                    let child_pareto_front = if let Some(child_pareto_front) =
-                        self.lookup_shared(&child_state)
-                    {
-                        child_pareto_front
-                    } else if let Some(child_pareto_front) =
-                        self.local_states.get(&child_state).copied()
-                    {
-                        child_pareto_front
-                    } else {
-                        self.solve_state(child_state, allocator)?;
-                        self.local_states
-                            .get(&child_state)
-                            .copied()
-                            .ok_or_else(|| {
-                                internal_error!(
-                                    "State not found in memoization table after solving.",
-                                    self.context.settings,
-                                    child_state
-                                )
-                            })?
-                    };
+                    let child_pareto_front =
+                        if let Some(child_pareto_front) = self.lookup_shared(&child_state) {
+                            child_pareto_front
+                        } else if let Some(child_pareto_front) =
+                            self.local_states.get(&child_state).copied()
+                        {
+                            child_pareto_front
+                        } else {
+                            self.solve_state(child_state, allocator)?;
+                            self.local_states
+                                .get(&child_state)
+                                .copied()
+                                .ok_or_else(|| {
+                                    internal_error!(
+                                        "State not found in memoization table after solving.",
+                                        self.context.settings,
+                                        child_state
+                                    )
+                                })?
+                        };
                     pareto_front_builder.push_slice(
                         child_pareto_front
                             .iter()
@@ -562,25 +507,19 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
     }
 }
 
-fn lookup_slot<'arena>(
+fn lookup_slot<'alloc>(
     templates: &FxHashMap<TemplateData, TemplateRecord>,
-    slots: &[u32],
-    arena: &'arena ValueArena,
+    slots: &[Option<&'alloc ParetoFront>],
     min_solved_cp: u16,
     state: &ReducedState,
-) -> Option<&'arena ParetoFront> {
+) -> Option<&'alloc ParetoFront> {
     let data = TemplateData::new(state.effects, state.compressed_unreliable_quality);
     let record = templates.get(&data)?;
     if state.cp < min_solved_cp || state.cp > record.max_instantiated_cp {
         return None;
     }
     let index = record.slots_start as usize + usize::from((state.cp - min_solved_cp) / 2);
-    let offset = slots[index];
-    if offset == UNSOLVED_SLOT {
-        return None;
-    }
-    let front = arena.resolve(offset);
-    Some(front.try_into().expect("arena Pareto fronts are never empty"))
+    slots[index]
 }
 
 /// Calculates the CP cost to "magically" restore 5 durability
