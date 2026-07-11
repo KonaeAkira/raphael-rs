@@ -44,10 +44,7 @@ struct TemplateRecord<'alloc> {
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
     templates: FxHashMap<TemplateData, TemplateRecord<'alloc>>,
-    states_on_main: usize,
-    values_on_main: usize,
-    states_on_shards: usize,
-    values_on_shards: usize,
+    stats: QualityUbSolverStats,
 }
 
 pub struct QualityUbSolverShard<'main, 'alloc> {
@@ -79,10 +76,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 ),
             },
             templates: FxHashMap::default(),
-            states_on_main: 0,
-            values_on_main: 0,
-            states_on_shards: 0,
-            values_on_shards: 0,
+            stats: QualityUbSolverStats::default(),
         }
     }
 
@@ -97,8 +91,8 @@ impl<'alloc> QualityUbSolver<'alloc> {
             }
             if slots[index].is_none() {
                 slots[index] = Some(pareto_front);
-                self.states_on_shards += 1;
-                self.values_on_shards += pareto_front.len();
+                self.stats.states_on_shards += 1;
+                self.stats.values += pareto_front.len();
             }
         }
     }
@@ -248,7 +242,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                             },
                         )
                         .collect::<Result<Vec<_>, SolverException>>()?;
-                    self.states_on_main += solved_states.len();
+                    self.stats.states_on_main += solved_states.len();
                     for (template_data, pareto_front) in solved_states {
                         let allocated = allocator.alloc_slice_copy(&pareto_front).into_ref();
                         let length_checked = allocated.try_into().map_err(|_| {
@@ -260,7 +254,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                         let slots = &mut self.templates.get_mut(&template_data).unwrap().slots;
                         let index = usize::from((cp - min_solved_cp) / 2);
                         slots[index] = Some(length_checked);
-                        self.values_on_main += pareto_front.len();
+                        self.stats.values += pareto_front.len();
                     }
                 }
                 for template in templates {
@@ -332,11 +326,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
     }
 
     pub fn runtime_stats(&self) -> QualityUbSolverStats {
-        QualityUbSolverStats {
-            states_on_main: self.states_on_main,
-            states_on_shards: self.states_on_shards,
-            values: self.values_on_main + self.values_on_shards,
-        }
+        self.stats
     }
 }
 
