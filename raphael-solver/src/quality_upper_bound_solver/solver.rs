@@ -32,29 +32,27 @@ struct QualityUbSolverContext<'alloc> {
     largest_progress_increase: u16,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 struct TemplateRecord<'alloc> {
     /// Indexed by `(cp - min_solved_cp) / 2`
     slots: Vec<Option<&'alloc ParetoFront>>,
     /// Minimum CP at which the template reaches max Progress and max Quality,
-    /// or `u16::MAX` if it never does.
-    required_cp_for_max: u16,
+    /// or `None` if it never does.
+    required_cp_for_max: Option<u16>,
 }
 
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
     templates: FxHashMap<TemplateData, TemplateRecord<'alloc>>,
-    /// States solved by shards during the search and merged back
-    overflow: SolvedStates<'alloc>,
     states_on_main: usize,
     values_on_main: usize,
-    num_states_solved_on_shards: usize,
+    states_on_shards: usize,
+    values_on_shards: usize,
 }
 
 pub struct QualityUbSolverShard<'main, 'alloc> {
     context: &'main QualityUbSolverContext<'alloc>,
     templates: &'main FxHashMap<TemplateData, TemplateRecord<'alloc>>,
-    overflow: &'main SolvedStates<'alloc>,
     local_states: SolvedStates<'alloc>,
 }
 
@@ -81,25 +79,34 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 ),
             },
             templates: FxHashMap::default(),
-            overflow: SolvedStates::default(),
             states_on_main: 0,
             values_on_main: 0,
-            num_states_solved_on_shards: 0,
+            states_on_shards: 0,
+            values_on_shards: 0,
         }
     }
 
     pub fn extend_solved_states(&mut self, new_solved_states: SolvedStates<'alloc>) {
-        let len_before = self.overflow.len();
-        self.overflow.extend(new_solved_states);
-        let len_after = self.overflow.len();
-        self.num_states_solved_on_shards += len_after - len_before;
+        let min_solved_cp = self.min_solved_cp();
+        for (state, pareto_front) in new_solved_states {
+            let key = TemplateData::new(state.effects, state.compressed_unreliable_quality);
+            let slots = &mut self.templates.entry(key).or_default().slots;
+            let index = usize::from((state.cp - min_solved_cp) / 2);
+            if slots.len() <= index {
+                slots.resize_with(index + 1, Default::default);
+            }
+            if slots[index].is_none() {
+                slots[index] = Some(pareto_front);
+                self.states_on_shards += 1;
+                self.values_on_shards += pareto_front.len();
+            }
+        }
     }
 
     pub fn create_shard<'main>(&'main self) -> QualityUbSolverShard<'main, 'alloc> {
         QualityUbSolverShard {
             context: &self.context,
             templates: &self.templates,
-            overflow: &self.overflow,
             local_states: SolvedStates::default(),
         }
     }
@@ -179,7 +186,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                     .div_ceil(2);
                 let record = TemplateRecord {
                     slots: vec![None; usize::from(num_slots)],
-                    required_cp_for_max: u16::MAX,
+                    required_cp_for_max: None,
                 };
                 (template.data, record)
             })
@@ -261,7 +268,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                         self.templates
                             .get_mut(&template.data)
                             .unwrap()
-                            .required_cp_for_max = required_cp;
+                            .required_cp_for_max = Some(required_cp);
                     }
                 }
             }
@@ -327,13 +334,8 @@ impl<'alloc> QualityUbSolver<'alloc> {
     pub fn runtime_stats(&self) -> QualityUbSolverStats {
         QualityUbSolverStats {
             states_on_main: self.states_on_main,
-            states_on_shards: self.num_states_solved_on_shards,
-            values: self.values_on_main
-                + self
-                    .overflow
-                    .values()
-                    .map(|front| front.len())
-                    .sum::<usize>(),
+            states_on_shards: self.states_on_shards,
+            values: self.values_on_main + self.values_on_shards,
         }
     }
 }
@@ -345,7 +347,6 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
 
     fn lookup_shared(&self, state: &ReducedState) -> Option<&'alloc ParetoFront> {
         lookup_slot(self.templates, 2 * self.context.durability_cost, state)
-            .or_else(|| self.overflow.get(state).copied())
     }
 
     pub fn quality_upper_bound(
@@ -368,11 +369,11 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
             reduced_state.compressed_unreliable_quality,
         );
         if let Some(record) = self.templates.get(&template_data)
-            && record.required_cp_for_max != u16::MAX
-            && reduced_state.cp >= record.required_cp_for_max
+            && let Some(required_cp_for_max) = record.required_cp_for_max
+            && reduced_state.cp >= required_cp_for_max
         {
             let reduced_state = ReducedState {
-                cp: record.required_cp_for_max,
+                cp: required_cp_for_max,
                 ..reduced_state
             };
             if let Some(pareto_front) = self.lookup_shared(&reduced_state)
