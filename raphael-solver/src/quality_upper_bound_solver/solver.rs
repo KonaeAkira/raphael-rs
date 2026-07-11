@@ -32,10 +32,10 @@ struct QualityUbSolverContext<'alloc> {
     largest_progress_increase: u16,
 }
 
-#[derive(Debug, Clone, Copy)]
-struct TemplateRecord {
-    slots_start: u32,
-    max_instantiated_cp: u16,
+#[derive(Debug, Clone)]
+struct TemplateRecord<'alloc> {
+    /// Indexed by `(cp - min_solved_cp) / 2`
+    slots: Vec<Option<&'alloc ParetoFront>>,
     /// Minimum CP at which the template reaches max Progress and max Quality,
     /// or `u16::MAX` if it never does.
     required_cp_for_max: u16,
@@ -43,9 +43,7 @@ struct TemplateRecord {
 
 pub struct QualityUbSolver<'alloc> {
     context: QualityUbSolverContext<'alloc>,
-    templates: FxHashMap<TemplateData, TemplateRecord>,
-    /// indexed by `(cp - min_solved_cp) / 2`
-    slots: Vec<Option<&'alloc ParetoFront>>,
+    templates: FxHashMap<TemplateData, TemplateRecord<'alloc>>,
     /// States solved by shards during the search and merged back
     overflow: SolvedStates<'alloc>,
     states_on_main: usize,
@@ -55,8 +53,7 @@ pub struct QualityUbSolver<'alloc> {
 
 pub struct QualityUbSolverShard<'main, 'alloc> {
     context: &'main QualityUbSolverContext<'alloc>,
-    templates: &'main FxHashMap<TemplateData, TemplateRecord>,
-    slots: &'main [Option<&'alloc ParetoFront>],
+    templates: &'main FxHashMap<TemplateData, TemplateRecord<'alloc>>,
     overflow: &'main SolvedStates<'alloc>,
     local_states: SolvedStates<'alloc>,
 }
@@ -84,7 +81,6 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 ),
             },
             templates: FxHashMap::default(),
-            slots: Vec::new(),
             overflow: SolvedStates::default(),
             states_on_main: 0,
             values_on_main: 0,
@@ -103,7 +99,6 @@ impl<'alloc> QualityUbSolver<'alloc> {
         QualityUbSolverShard {
             context: &self.context,
             templates: &self.templates,
-            slots: &self.slots,
             overflow: &self.overflow,
             local_states: SolvedStates::default(),
         }
@@ -168,33 +163,25 @@ impl<'alloc> QualityUbSolver<'alloc> {
     }
 
     fn lookup_slot(&self, state: &ReducedState) -> Option<&'alloc ParetoFront> {
-        lookup_slot(&self.templates, &self.slots, self.min_solved_cp(), state)
+        lookup_slot(&self.templates, self.min_solved_cp(), state)
     }
 
     pub fn precompute(&mut self) -> Result<(), SolverException> {
         let min_solved_cp = self.min_solved_cp();
-        let mut all_templates = self.generate_precompute_templates();
+        let all_templates = self.generate_precompute_templates();
 
-        // Lay out each template's CP range as a contiguous span
-        let mut total_slots: usize = 0;
-        for template in &mut all_templates {
-            template.slots_start = total_slots as u32;
-            if template.max_instantiated_cp >= min_solved_cp {
-                total_slots += usize::from((template.max_instantiated_cp - min_solved_cp) / 2) + 1;
-            }
-        }
-        self.slots = vec![None; total_slots];
         self.templates = all_templates
             .iter()
             .map(|template| {
-                (
-                    template.data,
-                    TemplateRecord {
-                        slots_start: template.slots_start,
-                        max_instantiated_cp: template.max_instantiated_cp,
-                        required_cp_for_max: u16::MAX,
-                    },
-                )
+                let num_slots = 1 + template
+                    .max_instantiated_cp
+                    .saturating_sub(min_solved_cp)
+                    .div_ceil(2);
+                let record = TemplateRecord {
+                    slots: vec![None; usize::from(num_slots)],
+                    required_cp_for_max: u16::MAX,
+                };
+                (template.data, record)
             })
             .collect();
 
@@ -250,14 +237,12 @@ impl<'alloc> QualityUbSolver<'alloc> {
                                 if template_is_maximal {
                                     template.required_cp_for_max_progress_and_quality = Some(cp);
                                 }
-                                let slot = template.slots_start as usize
-                                    + usize::from((cp - min_solved_cp) / 2);
-                                Ok((slot, pareto_front))
+                                Ok((template.data, pareto_front))
                             },
                         )
                         .collect::<Result<Vec<_>, SolverException>>()?;
                     self.states_on_main += solved_states.len();
-                    for (slot, pareto_front) in solved_states {
+                    for (template_data, pareto_front) in solved_states {
                         let allocated = allocator.alloc_slice_copy(&pareto_front).into_ref();
                         let length_checked = allocated.try_into().map_err(|_| {
                             internal_error!(
@@ -265,7 +250,9 @@ impl<'alloc> QualityUbSolver<'alloc> {
                                 self.context.settings
                             )
                         })?;
-                        self.slots[slot] = Some(length_checked);
+                        let slots = &mut self.templates.get_mut(&template_data).unwrap().slots;
+                        let index = usize::from((cp - min_solved_cp) / 2);
+                        slots[index] = Some(length_checked);
                         self.values_on_main += pareto_front.len();
                     }
                 }
@@ -357,13 +344,8 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
     }
 
     fn lookup_shared(&self, state: &ReducedState) -> Option<&'alloc ParetoFront> {
-        lookup_slot(
-            self.templates,
-            self.slots,
-            2 * self.context.durability_cost,
-            state,
-        )
-        .or_else(|| self.overflow.get(state).copied())
+        lookup_slot(self.templates, 2 * self.context.durability_cost, state)
+            .or_else(|| self.overflow.get(state).copied())
     }
 
     pub fn quality_upper_bound(
@@ -508,18 +490,14 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
 }
 
 fn lookup_slot<'alloc>(
-    templates: &FxHashMap<TemplateData, TemplateRecord>,
-    slots: &[Option<&'alloc ParetoFront>],
+    templates: &FxHashMap<TemplateData, TemplateRecord<'alloc>>,
     min_solved_cp: u16,
     state: &ReducedState,
 ) -> Option<&'alloc ParetoFront> {
     let data = TemplateData::new(state.effects, state.compressed_unreliable_quality);
     let record = templates.get(&data)?;
-    if state.cp < min_solved_cp || state.cp > record.max_instantiated_cp {
-        return None;
-    }
-    let index = record.slots_start as usize + usize::from((state.cp - min_solved_cp) / 2);
-    slots[index]
+    let index = usize::from(state.cp.checked_sub(min_solved_cp)? / 2);
+    *record.slots.get(index)?
 }
 
 /// Calculates the CP cost to "magically" restore 5 durability
@@ -569,10 +547,6 @@ struct Template {
     required_cp_for_max_progress_and_quality: Option<u16>,
 
     data: TemplateData,
-
-    /// Start of this template's span in `QualityUbSolver::slots`.
-    /// Assigned at the start of `QualityUbSolver::precompute`.
-    slots_start: u32,
 }
 
 impl Template {
@@ -581,7 +555,6 @@ impl Template {
             max_instantiated_cp: max_cp,
             required_cp_for_max_progress_and_quality: None,
             data,
-            slots_start: 0,
         }
     }
 
