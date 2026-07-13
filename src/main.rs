@@ -73,8 +73,10 @@ fn main() -> eframe::Result<()> {
         });
 
     let wgpu_options = eframe::egui_wgpu::WgpuConfiguration {
-        present_mode,
-        desired_maximum_frame_latency,
+        surface: eframe::egui_wgpu::SurfaceConfig {
+            present_mode,
+            desired_maximum_frame_latency,
+        },
         ..Default::default()
     };
 

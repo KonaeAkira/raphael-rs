@@ -1,6 +1,6 @@
 use egui::{
     Align, Id, Layout, Widget,
-    util::cache::{ComputerMut, FrameCache},
+    cache::{ComputerMut, FrameCache},
 };
 use egui_extras::Column;
 use raphael_data::{

@@ -215,7 +215,7 @@ impl eframe::App for MacroSolverApp {
             });
         }
 
-        egui::Panel::top("top_panel").show_inside(ui, |ui| {
+        egui::Panel::top("top_panel").show(ui, |ui| {
             egui::ScrollArea::horizontal()
                 .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
                 .show(ui, |ui| {
@@ -293,13 +293,13 @@ impl eframe::App for MacroSolverApp {
         if self.render_info.state.shown {
             egui::Panel::right("dev_panel")
                 .resizable(true)
-                .show_inside(ui, |ui| {
+                .show(ui, |ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(8.0, 3.0);
                     self.render_info.ui(ui, _frame);
                 });
         }
 
-        egui::CentralPanel::default().show_inside(ui, |ui| {
+        egui::CentralPanel::default().show(ui, |ui| {
             egui::ScrollArea::both().show(ui, |ui| {
                 self.draw_simulator_widget(ui);
                 ui.with_layout(

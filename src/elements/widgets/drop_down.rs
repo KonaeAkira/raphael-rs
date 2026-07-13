@@ -9,7 +9,7 @@ pub struct DropDown<'a, T, const N: usize, Formatter> {
 
 impl<'a, T, const N: usize, Formatter> DropDown<'a, T, N, Formatter> {
     pub fn new(
-        id: impl std::hash::Hash,
+        id: impl egui::AsId,
         current_value: &'a mut T,
         selectable_values: [T; N],
         value_formatter: Formatter,
