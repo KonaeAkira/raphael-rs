@@ -34,7 +34,7 @@ web-time = "1.1.0"
 
 [package]
 name = "raphael-xiv"
-version = "0.28.5"
+version = "0.28.6"
 edition = "2024"
 default-run = "raphael-xiv"
 
@@ -47,9 +47,9 @@ raphael-solver = { workspace = true, features = ["serde"] }
 raphael-data = { workspace = true, features = ["serde"] }
 raphael-translations = { workspace = true }
 
-egui = "0.34.3"
-egui_extras = { version = "0.34.3", features = ["http", "webp"] }
-eframe = { version = "0.34.3", features = ["persistence"] }
+egui = "0.35.0"
+egui_extras = { version = "0.35.0", features = ["http", "webp"] }
+eframe = { version = "0.35.0", features = ["persistence"] }
 
 rayon = { workspace = true }
 serde = { workspace = true }
