@@ -128,8 +128,11 @@ fn cosmic_exploration_zone_kr(zone: CosmicExplorationZone) -> &'static str {
 }
 
 fn cosmic_exploration_zone_tw(zone: CosmicExplorationZone) -> &'static str {
-    // TW is currently still at patch 7.11 & the first zone will be added with 7.21
-    cosmic_exploration_zone_name_latin_characters(zone)
+    match zone {
+        CosmicExplorationZone::SinusArdorum => "渴望灣",
+        // Rest will be added in TW version's 7.3, 7.4 & 7.5
+        _ => cosmic_exploration_zone_name_latin_characters(zone),
+    }
 }
 
 pub const ITEM_NAMES_EN: NciArray<u32, &str> = include!("../data/item_names_en.rs");
