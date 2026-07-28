@@ -1414,5 +1414,6 @@ fr = '''Missions cosmiques'''
 ja = '''コスモミッション'''
 chs = '''探索任务'''
 ko = '''우주 임무'''
+tc = '''探索任務'''
 version = "0.1.0"
 appearances = ["src/elements/panels/recipe_select.rs:471:48"]
