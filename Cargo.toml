@@ -47,9 +47,9 @@ raphael-solver = { workspace = true, features = ["serde"] }
 raphael-data = { workspace = true, features = ["serde"] }
 raphael-translations = { workspace = true }
 
-egui = "0.35.0"
-egui_extras = { version = "0.35.0", features = ["http", "webp"] }
-eframe = { version = "0.35.0", features = ["persistence"] }
+egui = "0.36.1"
+egui_extras = { version = "0.36.1", features = ["http", "webp"] }
+eframe = { version = "0.36.1", features = ["persistence"] }
 
 rayon = { workspace = true }
 serde = { workspace = true }
