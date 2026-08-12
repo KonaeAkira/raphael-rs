@@ -82,7 +82,14 @@ impl FinishSolver {
         {
             return Ok(true);
         }
-        let key = (state.durability, state.effects.strip_quality_effects());
+        // Basic/Standard Touch combo state is irrelevant to a progress-only
+        // finish check. Regular macro solving resets partial quality combos before
+        // querying this solver, but a live state can legitimately carry one.
+        let mut finish_effects = state.effects.strip_quality_effects();
+        if finish_effects.combo() != Combo::SynthesisBegin {
+            finish_effects.set_combo(Combo::None);
+        }
+        let key = (state.durability, finish_effects);
         let breakpoints = self.solved_states.get(&key).ok_or_else(|| {
             internal_error!(
                 "State not found in FinishSolver solved states.",

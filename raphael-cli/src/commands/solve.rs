@@ -1,4 +1,4 @@
-use clap::Args;
+use clap::{Args, ValueEnum};
 use log::error;
 use raphael_data::{
     CrafterStats, CustomRecipeOverrides, MEALS, POTIONS, RECIPES, get_game_settings,
@@ -84,6 +84,75 @@ pub struct SolveArgs {
     #[arg(long, alias = "target")]
     pub target_quality: Option<u16>,
 
+    /// Resume solving from a live synthesis state
+    ///
+    /// QUALITY is the total quality displayed in game, including initial quality
+    /// from HQ ingredients.
+    #[arg(
+        long,
+        num_args = 4,
+        value_names = ["CP", "DURABILITY", "PROGRESS", "QUALITY"]
+    )]
+    pub current_state: Vec<u16>,
+
+    /// Timed effects in a live synthesis state
+    #[arg(
+        long,
+        num_args = 7,
+        value_names = [
+            "INNER_QUIET",
+            "WASTE_NOT",
+            "INNOVATION",
+            "VENERATION",
+            "GREAT_STRIDES",
+            "MUSCLE_MEMORY",
+            "MANIPULATION"
+        ],
+        requires = "current_state"
+    )]
+    pub current_effects: Vec<u8>,
+
+    /// Combo active in the live synthesis state
+    #[arg(long, value_enum, default_value_t = CliCombo::None, requires = "current_state")]
+    pub current_combo: CliCombo,
+
+    /// Current in-game crafting condition. It applies only to the next synthesis step;
+    /// future unknown conditions are treated as Normal.
+    #[arg(long, value_enum, default_value_t = CliCondition::Normal, requires = "current_state")]
+    pub condition: CliCondition,
+
+    /// Trained Perfection has not been consumed yet in the live synthesis
+    #[arg(long, requires = "current_state")]
+    pub trained_perfection_available: bool,
+
+    /// Heart and Soul has not been consumed yet in the live synthesis
+    #[arg(long, requires = "current_state")]
+    pub heart_and_soul_available: bool,
+
+    /// Quick Innovation has not been consumed yet in the live synthesis
+    #[arg(long, requires = "current_state")]
+    pub quick_innovation_available: bool,
+
+    /// Trained Perfection is active for the next durability-consuming action
+    #[arg(long, requires = "current_state")]
+    pub trained_perfection_active: bool,
+
+    /// Heart and Soul is active
+    #[arg(long, requires = "current_state")]
+    pub heart_and_soul_active: bool,
+
+    /// Remaining Stellar Steady Hand effect duration
+    #[arg(long, default_value_t = 0, requires = "current_state")]
+    pub stellar_steady_hand_active: u8,
+
+    /// Remaining Stellar Steady Hand uses
+    #[arg(long, requires = "current_state")]
+    pub stellar_steady_hand_charges_remaining: Option<u8>,
+
+    /// Expedience is active, enabling Daring Touch
+    #[arg(long, requires = "current_state")]
+    pub expedience: bool,
+
     /// Enable adversarial simulator (ensure 100% reliability)
     #[arg(long, default_value_t = false)]
     pub adversarial: bool,
@@ -136,6 +205,46 @@ pub enum ConsumableArg {
     NQ(u32),
     /// HQ Consumable
     HQ(u32),
+}
+
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+pub enum CliCondition {
+    #[default]
+    Normal,
+    Good,
+    Excellent,
+    Poor,
+}
+
+impl From<CliCondition> for raphael_sim::Condition {
+    fn from(value: CliCondition) -> Self {
+        match value {
+            CliCondition::Normal => Self::Normal,
+            CliCondition::Good => Self::Good,
+            CliCondition::Excellent => Self::Excellent,
+            CliCondition::Poor => Self::Poor,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+pub enum CliCombo {
+    #[default]
+    None,
+    SynthesisBegin,
+    BasicTouch,
+    StandardTouch,
+}
+
+impl From<CliCombo> for raphael_sim::Combo {
+    fn from(value: CliCombo) -> Self {
+        match value {
+            CliCombo::None => Self::None,
+            CliCombo::SynthesisBegin => Self::SynthesisBegin,
+            CliCombo::BasicTouch => Self::BasicTouch,
+            CliCombo::StandardTouch => Self::StandardTouch,
+        }
+    }
 }
 
 fn map_and_clamp_hq_ingredients(recipe: &raphael_data::Recipe, hq_ingredients: [u8; 6]) -> [u8; 6] {
@@ -354,9 +463,88 @@ pub fn execute(args: &SolveArgs) {
         Box::new(|_| {}),
         AtomicFlag::new(),
     );
-    let actions = solver.solve().expect("Failed to solve");
 
-    let final_state = SimulationState::from_macro(&settings, &actions).unwrap();
+    let current_state = if args.current_state.is_empty() {
+        None
+    } else {
+        let effects = if args.current_effects.is_empty() {
+            [0; 7]
+        } else {
+            args.current_effects.clone().try_into().unwrap()
+        };
+        let [
+            inner_quiet,
+            waste_not,
+            innovation,
+            veneration,
+            great_strides,
+            muscle_memory,
+            manipulation,
+        ] = effects;
+        let current_total_quality = args.current_state[3].min(recipe_max_quality);
+        let state_quality = current_total_quality
+            .saturating_sub(initial_quality)
+            .min(settings.max_quality);
+        let stellar_steady_hand_charges = args
+            .stellar_steady_hand_charges_remaining
+            .unwrap_or(settings.stellar_steady_hand_charges)
+            .min(3);
+        Some(SimulationState {
+            cp: args.current_state[0],
+            durability: args.current_state[1],
+            progress: args.current_state[2],
+            quality: state_quality,
+            unreliable_quality: 0,
+            effects: raphael_sim::Effects::new()
+                .with_inner_quiet(inner_quiet.min(10))
+                .with_waste_not(waste_not.min(15))
+                .with_innovation(innovation.min(7))
+                .with_veneration(veneration.min(7))
+                .with_great_strides(great_strides.min(3))
+                .with_muscle_memory(muscle_memory.min(7))
+                .with_manipulation(manipulation.min(15))
+                .with_trained_perfection_available(args.trained_perfection_available)
+                .with_heart_and_soul_available(args.heart_and_soul_available)
+                .with_quick_innovation_available(args.quick_innovation_available)
+                .with_trained_perfection_active(args.trained_perfection_active)
+                .with_heart_and_soul_active(args.heart_and_soul_active)
+                .with_special_quality_state(raphael_sim::SpecialQualityState::Normal)
+                .with_combo(args.current_combo.into())
+                .with_stellar_steady_hand_charges(stellar_steady_hand_charges)
+                .with_stellar_steady_hand(args.stellar_steady_hand_active.min(3))
+                .with_expedience(args.expedience),
+        })
+    };
+
+    let actions = match current_state {
+        Some(state) => solver
+            .solve_from_state_with_condition(state, args.condition.into())
+            .expect("Failed to solve from current state"),
+        None => solver.solve().expect("Failed to solve"),
+    };
+
+    let mut final_state = current_state.unwrap_or_else(|| SimulationState::new(&settings));
+    let first_condition = args.condition.into();
+    let mut current_condition_known = current_state.is_some();
+    for action in &actions {
+        final_state = final_state
+            .use_action(
+                *action,
+                if current_condition_known {
+                    first_condition
+                } else {
+                    raphael_sim::Condition::Normal
+                },
+                &settings,
+            )
+            .unwrap();
+        if !matches!(
+            action,
+            raphael_sim::Action::HeartAndSoul | raphael_sim::Action::QuickInnovation
+        ) {
+            current_condition_known = false;
+        }
+    }
     let state_quality = final_state.quality;
     let final_quality = state_quality.saturating_add(initial_quality);
     let steps = actions.len();

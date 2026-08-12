@@ -118,6 +118,55 @@ impl ActionCombo {
     }
 }
 
+pub const LIVE_FIRST_ACTIONS: [ActionCombo; 39] = [
+    // Direct condition-gated actions are candidates only for a known live
+    // Good/Excellent condition. Keeping them out of FULL_SEARCH_ACTIONS avoids
+    // expanding the regular macro solver's state space.
+    ActionCombo::Single(Action::TricksOfTheTrade),
+    ActionCombo::Single(Action::IntensiveSynthesis),
+    ActionCombo::Single(Action::PreciseTouch),
+    ActionCombo::AdvancedTouch,
+    ActionCombo::TricksOfTheTrade,
+    ActionCombo::IntensiveSynthesis,
+    ActionCombo::PreciseTouch,
+    ActionCombo::StandardTouch,
+    ActionCombo::FocusedTouch,
+    ActionCombo::RefinedTouch,
+    // progress
+    ActionCombo::Single(Action::BasicSynthesis),
+    ActionCombo::Single(Action::Veneration),
+    ActionCombo::Single(Action::MuscleMemory),
+    ActionCombo::Single(Action::CarefulSynthesis),
+    ActionCombo::Single(Action::Groundwork),
+    ActionCombo::Single(Action::PrudentSynthesis),
+    ActionCombo::Single(Action::RapidSynthesis),
+    // quality
+    ActionCombo::Single(Action::BasicTouch),
+    ActionCombo::Single(Action::StandardTouch),
+    ActionCombo::Single(Action::GreatStrides),
+    ActionCombo::Single(Action::Innovation),
+    ActionCombo::Single(Action::ByregotsBlessing),
+    ActionCombo::Single(Action::PrudentTouch),
+    ActionCombo::Single(Action::Reflect),
+    ActionCombo::Single(Action::PreparatoryTouch),
+    ActionCombo::Single(Action::AdvancedTouch),
+    ActionCombo::Single(Action::TrainedFinesse),
+    ActionCombo::Single(Action::TrainedEye),
+    ActionCombo::Single(Action::QuickInnovation),
+    ActionCombo::Single(Action::HastyTouch),
+    ActionCombo::Single(Action::DaringTouch),
+    // durability
+    ActionCombo::Single(Action::MasterMend),
+    ActionCombo::Single(Action::WasteNot),
+    ActionCombo::Single(Action::WasteNot2),
+    ActionCombo::Single(Action::Manipulation),
+    ActionCombo::Single(Action::ImmaculateMend),
+    ActionCombo::Single(Action::TrainedPerfection),
+    // misc
+    ActionCombo::Single(Action::DelicateSynthesis),
+    ActionCombo::Single(Action::StellarSteadyHand),
+];
+
 pub const FULL_SEARCH_ACTIONS: [ActionCombo; 36] = [
     ActionCombo::AdvancedTouch,
     ActionCombo::TricksOfTheTrade,
@@ -185,11 +234,30 @@ pub const PROGRESS_ONLY_SEARCH_ACTIONS: [ActionCombo; 16] = [
 
 pub fn use_action_combo(
     settings: &SolverSettings,
-    mut state: SimulationState,
+    state: SimulationState,
     action_combo: ActionCombo,
 ) -> Result<SimulationState, ActionError> {
+    use_action_combo_with_condition(settings, state, action_combo, Condition::Normal)
+}
+
+/// Applies an action combo with a known condition for its first synthesis step.
+///
+/// Actions which do not advance the synthesis step (for example Heart and Soul)
+/// preserve the known condition for the following action. Once an action advances
+/// the step, later actions in the combo use Normal because their future condition is
+/// not known.
+pub fn use_action_combo_with_condition(
+    settings: &SolverSettings,
+    mut state: SimulationState,
+    action_combo: ActionCombo,
+    condition: Condition,
+) -> Result<SimulationState, ActionError> {
+    let mut action_condition = condition;
     for action in action_combo.actions() {
-        state = state.use_action(*action, Condition::Normal, &settings.simulator_settings)?;
+        state = state.use_action(*action, action_condition, &settings.simulator_settings)?;
+        if !matches!(action, Action::HeartAndSoul | Action::QuickInnovation) {
+            action_condition = Condition::Normal;
+        }
     }
     // All combos are already implemented as ActionCombo, so we reset the combo to None for cases
     // where the full combo is not used, reducing state space.

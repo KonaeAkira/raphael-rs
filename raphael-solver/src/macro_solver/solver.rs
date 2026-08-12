@@ -3,7 +3,10 @@ use raphael_sim::*;
 use rayon::prelude::*;
 
 use super::search_queue::{SearchQueueStats, SearchScore};
-use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
+use crate::actions::{
+    ActionCombo, FULL_SEARCH_ACTIONS, LIVE_FIRST_ACTIONS, use_action_combo,
+    use_action_combo_with_condition,
+};
 use crate::finish_solver::FinishSolverStats;
 use crate::macro_solver::search_queue::{Batch, SearchQueue};
 use crate::quality_upper_bound_solver::{
@@ -70,10 +73,29 @@ impl<'a> MacroSolver<'a> {
     }
 
     pub fn solve(&mut self) -> Result<Vec<Action>, SolverException> {
+        self.solve_from_state(SimulationState::new(&self.settings.simulator_settings))
+    }
+
+    /// Solves the remainder of a synthesis from an arbitrary live state.
+    ///
+    /// The supplied state is treated as the root of the returned action list. Future
+    /// crafting conditions are simulated according to the solver settings, exactly as
+    /// they are for a fresh synthesis.
+    pub fn solve_from_state(
+        &mut self,
+        initial_state: SimulationState,
+    ) -> Result<Vec<Action>, SolverException> {
         log::debug!(
             "rayon::current_num_threads() = {}",
             rayon::current_num_threads()
         );
+
+        if initial_state.is_final(&self.settings.simulator_settings)
+            || initial_state.cp > self.settings.max_cp()
+            || initial_state.durability > self.settings.max_durability()
+        {
+            return Err(SolverException::NoSolution);
+        }
 
         self.last_solve_runtime_stats = MacroSolverStats::default();
         let allocator = BumpPool::default();
@@ -83,8 +105,6 @@ impl<'a> MacroSolver<'a> {
             StepLbSolver::new(self.settings, self.interrupt_signal.clone(), &allocator);
 
         let _total_time = ScopedTimer::new("Total Time");
-
-        let initial_state = SimulationState::new(&self.settings.simulator_settings);
 
         let timer = ScopedTimer::new("Finish Solver");
         self.finish_solver.precompute()?;
@@ -118,6 +138,129 @@ impl<'a> MacroSolver<'a> {
 
         log::debug!("{:?}", self.runtime_stats());
 
+        Ok(actions)
+    }
+
+    /// Solves from a live synthesis state, applying `condition` to the first
+    /// synthesis step and assuming Normal for later, not-yet-observed steps.
+    ///
+    /// Calling this method again after every in-game action produces an online
+    /// policy: Good/Excellent/Poor can change the selected next action while the
+    /// remainder is still optimized by the regular macro solver.
+    pub fn solve_from_state_with_condition(
+        &mut self,
+        initial_state: SimulationState,
+        condition: Condition,
+    ) -> Result<Vec<Action>, SolverException> {
+        if condition == Condition::Normal {
+            return self.solve_from_state(initial_state);
+        }
+        if initial_state.is_final(&self.settings.simulator_settings)
+            || initial_state.cp > self.settings.max_cp()
+            || initial_state.durability > self.settings.max_durability()
+        {
+            return Err(SolverException::NoSolution);
+        }
+
+        let mut best: Option<(u16, usize, u16, Vec<Action>, MacroSolverStats)> = None;
+        for action_combo in LIVE_FIRST_ACTIONS {
+            if self.interrupt_signal.is_set() {
+                return Err(SolverException::Interrupted);
+            }
+            let Ok(child_state) = use_action_combo_with_condition(
+                &self.settings,
+                initial_state,
+                action_combo,
+                condition,
+            ) else {
+                continue;
+            };
+
+            let (remaining_actions, child_stats) =
+                if child_state.is_final(&self.settings.simulator_settings) {
+                    if child_state.progress < self.settings.max_progress() {
+                        continue;
+                    }
+                    (Vec::new(), MacroSolverStats::default())
+                } else {
+                    let mut child_solver = Self::new(
+                        self.settings,
+                        Box::new(|_| {}),
+                        Box::new(|_| {}),
+                        self.interrupt_signal.clone(),
+                    );
+                    let condition_was_consumed = action_combo.actions().iter().any(|action| {
+                        !matches!(action, Action::HeartAndSoul | Action::QuickInnovation)
+                    });
+                    let child_result = if condition_was_consumed {
+                        child_solver.solve_from_state(child_state)
+                    } else {
+                        child_solver.solve_from_state_with_condition(child_state, condition)
+                    };
+                    match child_result {
+                        Ok(actions) => (actions, child_solver.runtime_stats()),
+                        Err(SolverException::NoSolution) => continue,
+                        Err(error) => return Err(error),
+                    }
+                };
+
+            let mut actions = action_combo.actions().to_vec();
+            actions.extend(remaining_actions);
+
+            let mut final_state = child_state;
+            let mut valid = true;
+            let mut condition_was_consumed = action_combo
+                .actions()
+                .iter()
+                .any(|action| !matches!(action, Action::HeartAndSoul | Action::QuickInnovation));
+            for action in &actions[action_combo.actions().len()..] {
+                match final_state.use_action(
+                    *action,
+                    if condition_was_consumed {
+                        Condition::Normal
+                    } else {
+                        condition
+                    },
+                    &self.settings.simulator_settings,
+                ) {
+                    Ok(state) => {
+                        final_state = state;
+                        condition_was_consumed |=
+                            !matches!(action, Action::HeartAndSoul | Action::QuickInnovation);
+                    }
+                    Err(_) => {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+            if !valid || final_state.progress < self.settings.max_progress() {
+                continue;
+            }
+
+            let quality = final_state.quality.min(self.settings.max_quality());
+            let steps = actions.len();
+            let duration = actions
+                .iter()
+                .map(|action| u16::from(action.time_cost()))
+                .sum();
+            let is_better =
+                best.as_ref()
+                    .is_none_or(|(best_quality, best_steps, best_duration, _, _)| {
+                        quality > *best_quality
+                            || (quality == *best_quality && steps < *best_steps)
+                            || (quality == *best_quality
+                                && steps == *best_steps
+                                && duration < *best_duration)
+                    });
+            if is_better {
+                best = Some((quality, steps, duration, actions, child_stats));
+            }
+        }
+
+        let (_, _, _, actions, stats) = best.ok_or(SolverException::NoSolution)?;
+        self.last_solve_runtime_stats = stats;
+        (self.solution_callback)(&actions);
         Ok(actions)
     }
 
