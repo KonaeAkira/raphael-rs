@@ -244,8 +244,8 @@ pub fn use_action_combo(
 ///
 /// Actions which do not advance the synthesis step (for example Heart and Soul)
 /// preserve the known condition for the following action. Once an action advances
-/// the step, later actions in the combo use Normal because their future condition is
-/// not known.
+/// the step, the forced normal-recipe transition is used: Excellent becomes Poor;
+/// Good and Poor become Normal; an unknown roll after Normal is approximated as Normal.
 pub fn use_action_combo_with_condition(
     settings: &SolverSettings,
     mut state: SimulationState,
@@ -256,7 +256,7 @@ pub fn use_action_combo_with_condition(
     for action in action_combo.actions() {
         state = state.use_action(*action, action_condition, &settings.simulator_settings)?;
         if !matches!(action, Action::HeartAndSoul | Action::QuickInnovation) {
-            action_condition = Condition::Normal;
+            action_condition = action_condition.next_after_step();
         }
     }
     // All combos are already implemented as ActionCombo, so we reset the combo to None for cases

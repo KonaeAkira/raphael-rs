@@ -197,6 +197,16 @@ fn dynamic_exploits_excellent_and_avoids_poor() {
     print_comparison("Excellent -> Poor chains", &static_run, &dynamic_run);
 
     assert!(dynamic_run.quality > static_run.quality);
+
+    // The dynamic solver must plan through the forced Excellent -> Poor edge,
+    // not merely react when the test harness reaches the following step.
+    assert_eq!(dynamic_run.decisions[4].1, Condition::Excellent);
+    assert_eq!(dynamic_run.decisions[5].1, Condition::Poor);
+    assert_eq!(dynamic_run.decisions[5].2, Action::Groundwork);
+    assert_eq!(dynamic_run.decisions[15].1, Condition::Excellent);
+    assert_eq!(dynamic_run.decisions[16].1, Condition::Poor);
+    assert_eq!(dynamic_run.decisions[16].2, Action::Veneration);
+
     let quality_actions = [
         Action::BasicTouch,
         Action::StandardTouch,

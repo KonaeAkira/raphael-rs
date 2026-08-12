@@ -524,25 +524,20 @@ pub fn execute(args: &SolveArgs) {
     };
 
     let mut final_state = current_state.unwrap_or_else(|| SimulationState::new(&settings));
-    let first_condition = args.condition.into();
-    let mut current_condition_known = current_state.is_some();
+    let mut action_condition = if current_state.is_some() {
+        args.condition.into()
+    } else {
+        raphael_sim::Condition::Normal
+    };
     for action in &actions {
         final_state = final_state
-            .use_action(
-                *action,
-                if current_condition_known {
-                    first_condition
-                } else {
-                    raphael_sim::Condition::Normal
-                },
-                &settings,
-            )
+            .use_action(*action, action_condition, &settings)
             .unwrap();
         if !matches!(
             action,
             raphael_sim::Action::HeartAndSoul | raphael_sim::Action::QuickInnovation
         ) {
-            current_condition_known = false;
+            action_condition = action_condition.next_after_step();
         }
     }
     let state_quality = final_state.quality;

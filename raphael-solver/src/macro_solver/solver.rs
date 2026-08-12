@@ -142,7 +142,8 @@ impl<'a> MacroSolver<'a> {
     }
 
     /// Solves from a live synthesis state, applying `condition` to the first
-    /// synthesis step and assuming Normal for later, not-yet-observed steps.
+    /// synthesis step and honoring forced normal-recipe transitions. In particular,
+    /// Excellent is followed by Poor. Random, not-yet-observed rolls are Normal.
     ///
     /// Calling this method again after every in-game action produces an online
     /// policy: Good/Excellent/Poor can change the selected next action while the
@@ -176,57 +177,62 @@ impl<'a> MacroSolver<'a> {
                 continue;
             };
 
-            let (remaining_actions, child_stats) =
-                if child_state.is_final(&self.settings.simulator_settings) {
-                    if child_state.progress < self.settings.max_progress() {
-                        continue;
-                    }
-                    (Vec::new(), MacroSolverStats::default())
-                } else {
-                    let mut child_solver = Self::new(
-                        self.settings,
-                        Box::new(|_| {}),
-                        Box::new(|_| {}),
-                        self.interrupt_signal.clone(),
-                    );
-                    let condition_was_consumed = action_combo.actions().iter().any(|action| {
-                        !matches!(action, Action::HeartAndSoul | Action::QuickInnovation)
-                    });
-                    let child_result = if condition_was_consumed {
+            let (remaining_actions, child_stats) = if child_state
+                .is_final(&self.settings.simulator_settings)
+            {
+                if child_state.progress < self.settings.max_progress() {
+                    continue;
+                }
+                (Vec::new(), MacroSolverStats::default())
+            } else {
+                let mut child_solver = Self::new(
+                    self.settings,
+                    Box::new(|_| {}),
+                    Box::new(|_| {}),
+                    self.interrupt_signal.clone(),
+                );
+                let condition_was_consumed = action_combo.actions().iter().any(|action| {
+                    !matches!(action, Action::HeartAndSoul | Action::QuickInnovation)
+                });
+                let child_result = if condition_was_consumed {
+                    let next_condition = condition.next_after_step();
+                    if next_condition == Condition::Normal {
                         child_solver.solve_from_state(child_state)
                     } else {
-                        child_solver.solve_from_state_with_condition(child_state, condition)
-                    };
-                    match child_result {
-                        Ok(actions) => (actions, child_solver.runtime_stats()),
-                        Err(SolverException::NoSolution) => continue,
-                        Err(error) => return Err(error),
+                        child_solver.solve_from_state_with_condition(child_state, next_condition)
                     }
+                } else {
+                    child_solver.solve_from_state_with_condition(child_state, condition)
                 };
+                match child_result {
+                    Ok(actions) => (actions, child_solver.runtime_stats()),
+                    Err(SolverException::NoSolution) => continue,
+                    Err(error) => return Err(error),
+                }
+            };
 
             let mut actions = action_combo.actions().to_vec();
             actions.extend(remaining_actions);
 
             let mut final_state = child_state;
             let mut valid = true;
-            let mut condition_was_consumed = action_combo
-                .actions()
-                .iter()
-                .any(|action| !matches!(action, Action::HeartAndSoul | Action::QuickInnovation));
+            let mut continuation_condition = condition;
+            for action in action_combo.actions() {
+                if !matches!(action, Action::HeartAndSoul | Action::QuickInnovation) {
+                    continuation_condition = continuation_condition.next_after_step();
+                }
+            }
             for action in &actions[action_combo.actions().len()..] {
                 match final_state.use_action(
                     *action,
-                    if condition_was_consumed {
-                        Condition::Normal
-                    } else {
-                        condition
-                    },
+                    continuation_condition,
                     &self.settings.simulator_settings,
                 ) {
                     Ok(state) => {
                         final_state = state;
-                        condition_was_consumed |=
-                            !matches!(action, Action::HeartAndSoul | Action::QuickInnovation);
+                        if !matches!(action, Action::HeartAndSoul | Action::QuickInnovation) {
+                            continuation_condition = continuation_condition.next_after_step();
+                        }
                     }
                     Err(_) => {
                         valid = false;
