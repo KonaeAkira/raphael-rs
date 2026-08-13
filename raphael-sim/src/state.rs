@@ -117,6 +117,13 @@ impl SimulationState {
         } else {
             state.quality = state.quality.saturating_add(quality_increase);
         }
+        // Quality above the target has no in-game value. Canonicalizing it keeps
+        // all max-quality states equivalent for solver deduplication and scoring.
+        state.quality = state.quality.min(settings.max_quality);
+        state.unreliable_quality = state
+            .unreliable_quality
+            .min(settings.max_quality.saturating_sub(state.quality));
+
         if quality_increase != 0 && settings.job_level >= 11 {
             state
                 .effects

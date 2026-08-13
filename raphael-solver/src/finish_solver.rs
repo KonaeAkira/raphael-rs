@@ -4,7 +4,10 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, use_action_combo},
+    actions::{
+        ActionCombo, FULL_SEARCH_ACTIONS, PROGRESS_ONLY_SEARCH_ACTIONS, enabled_action_combos,
+        use_action_combo,
+    },
     macros::internal_error,
 };
 
@@ -64,6 +67,7 @@ pub struct FinishSolver {
     /// `None` if no such CP value exists.
     /// The purpose of this value is to skip the hashmap lookup for states with high enough CP.
     cp_for_guaranteed_finish: Option<u16>,
+    progress_actions: Vec<ActionCombo>,
 }
 
 impl FinishSolver {
@@ -72,6 +76,7 @@ impl FinishSolver {
             settings,
             solved_states: FxHashMap::default(),
             cp_for_guaranteed_finish: None,
+            progress_actions: enabled_action_combos(&settings, PROGRESS_ONLY_SEARCH_ACTIONS),
         }
     }
 
@@ -165,7 +170,7 @@ impl FinishSolver {
             effects: template.effects,
         };
         let mut result = 0;
-        for action in PROGRESS_ONLY_SEARCH_ACTIONS {
+        for &action in &self.progress_actions {
             if let Ok(child_state) = use_action_combo(&self.settings, state, action) {
                 let key = (child_state.durability, child_state.effects);
                 if child_state.is_final(&self.settings.simulator_settings) {
@@ -208,6 +213,7 @@ fn generate_templates(settings: &SolverSettings) -> Vec<Template> {
     let mut initial_state = SimulationState::new(&settings.simulator_settings);
     initial_state.cp = 1000;
     initial_state.effects = initial_state.effects.strip_quality_effects();
+    let search_actions = enabled_action_combos(settings, FULL_SEARCH_ACTIONS);
     let mut templates = FxHashSet::default();
     templates.insert((initial_state.durability, initial_state.effects));
     let mut stack = vec![initial_state];
@@ -215,7 +221,7 @@ fn generate_templates(settings: &SolverSettings) -> Vec<Template> {
         state
             .effects
             .set_special_quality_state(SpecialQualityState::Normal);
-        for action in FULL_SEARCH_ACTIONS {
+        for &action in &search_actions {
             if let Ok(mut new_state) = use_action_combo(settings, state, action)
                 && new_state.durability > 0
             {

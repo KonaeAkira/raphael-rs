@@ -9,8 +9,11 @@
 //! ```
 //!
 //! Increase `RAPHAEL_MONTE_CARLO_ITERATIONS` for long-running experiments.
+//! Every iteration logs its exact derived seed. Reproduce iteration `N` directly
+//! by setting `RAPHAEL_MONTE_CARLO_SEED` to that logged decimal or `0x...` seed
+//! and `RAPHAEL_MONTE_CARLO_ITERATIONS=1`.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 use rand::{Rng, SeedableRng, rngs::StdRng};
 use raphael_sim::{Action, ActionMask, Condition, Settings, SimulationState};
@@ -168,7 +171,7 @@ fn finish_result(
 ) -> RunResult {
     RunResult {
         success: state.progress >= SETTINGS.max_progress,
-        quality: state.quality,
+        quality: state.quality.min(SETTINGS.max_quality),
         steps: actions.len(),
         duration: actions
             .iter()
@@ -180,16 +183,62 @@ fn finish_result(
     }
 }
 
-fn run_static(actions: &[Action], seed: u64) -> (RunResult, Vec<Action>) {
+#[derive(Debug)]
+struct StepLog {
+    step: usize,
+    condition: Condition,
+    action: Action,
+    solve_ms: u128,
+    state_before: SimulationState,
+    state_after: SimulationState,
+}
+
+fn print_steps(strategy: &str, steps: &[StepLog]) {
+    println!("{strategy} actions:");
+    for step in steps {
+        println!(
+            concat!(
+                "  step={:02} condition={:?} action={:?} solve_ms={} ",
+                "before={{cp:{}, durability:{}, progress:{}, quality:{}}} ",
+                "after={{cp:{}, durability:{}, progress:{}, quality:{}}}"
+            ),
+            step.step,
+            step.condition,
+            step.action,
+            step.solve_ms,
+            step.state_before.cp,
+            step.state_before.durability,
+            step.state_before.progress,
+            step.state_before.quality,
+            step.state_after.cp,
+            step.state_after.durability,
+            step.state_after.progress,
+            step.state_after.quality,
+        );
+    }
+}
+
+fn run_static(actions: &[Action], seed: u64) -> (RunResult, Vec<Action>, Vec<StepLog>) {
     let mut state = SimulationState::new(&SETTINGS);
     let mut conditions = ConditionRng::new(seed);
     let mut executed = Vec::new();
+    let mut step_logs = Vec::new();
     for &action in actions {
-        let Ok(next_state) = state.use_action(action, conditions.current, &SETTINGS) else {
+        let state_before = state;
+        let condition = conditions.current;
+        let Ok(next_state) = state.use_action(action, condition, &SETTINGS) else {
             break;
         };
         state = next_state;
         executed.push(action);
+        step_logs.push(StepLog {
+            step: executed.len(),
+            condition,
+            action,
+            solve_ms: 0,
+            state_before,
+            state_after: state,
+        });
         if consumes_condition(action) {
             conditions.advance();
         }
@@ -197,30 +246,84 @@ fn run_static(actions: &[Action], seed: u64) -> (RunResult, Vec<Action>) {
             break;
         }
     }
-    (finish_result(state, &conditions, &executed), executed)
+    (
+        finish_result(state, &conditions, &executed),
+        executed,
+        step_logs,
+    )
 }
 
-fn run_dynamic(seed: u64) -> (RunResult, Vec<Action>) {
+fn run_dynamic(seed: u64) -> (RunResult, Vec<Action>, Vec<StepLog>) {
     let mut state = SimulationState::new(&SETTINGS);
     let mut conditions = ConditionRng::new(seed);
+    let mut dynamic_solver = solver();
     let mut executed = Vec::new();
+    let mut step_logs = Vec::new();
     while !state.is_final(&SETTINGS) && executed.len() < 100 {
-        let Ok(plan) = solver().solve_from_state_with_condition(state, conditions.current) else {
-            break;
+        let state_before = state;
+        let condition = conditions.current;
+        println!(
+            "  dynamic step={:02} condition={condition:?} solve=running state={{cp:{}, durability:{}, progress:{}, quality:{}}}",
+            executed.len() + 1,
+            state.cp,
+            state.durability,
+            state.progress,
+            state.quality,
+        );
+        let solve_start = Instant::now();
+        let solve_result = dynamic_solver.solve_from_state_with_condition(state, condition);
+        let solve_ms = solve_start.elapsed().as_millis();
+        let plan = match solve_result {
+            Ok(plan) => plan,
+            Err(error) => {
+                println!(
+                    "  dynamic step={:02} solve_ms={solve_ms} error={error:?}",
+                    executed.len() + 1
+                );
+                break;
+            }
         };
         let Some(&action) = plan.first() else {
+            println!(
+                "  dynamic step={:02} solve_ms={solve_ms} error=empty-plan",
+                executed.len() + 1
+            );
             break;
         };
-        let Ok(next_state) = state.use_action(action, conditions.current, &SETTINGS) else {
+        let Ok(next_state) = state.use_action(action, condition, &SETTINGS) else {
+            println!(
+                "  dynamic step={:02} solve_ms={solve_ms} action={action:?} error=invalid-action",
+                executed.len() + 1
+            );
             break;
         };
         state = next_state;
         executed.push(action);
+        step_logs.push(StepLog {
+            step: executed.len(),
+            condition,
+            action,
+            solve_ms,
+            state_before,
+            state_after: state,
+        });
+        println!(
+            "  dynamic step={:02} condition={condition:?} action={action:?} solve_ms={solve_ms} result={{cp:{}, durability:{}, progress:{}, quality:{}}}",
+            executed.len(),
+            state.cp,
+            state.durability,
+            state.progress,
+            state.quality,
+        );
         if consumes_condition(action) {
             conditions.advance();
         }
     }
-    (finish_result(state, &conditions, &executed), executed)
+    (
+        finish_result(state, &conditions, &executed),
+        executed,
+        step_logs,
+    )
 }
 
 fn env_usize(name: &str, default: usize) -> usize {
@@ -230,11 +333,71 @@ fn env_usize(name: &str, default: usize) -> usize {
         .unwrap_or(default)
 }
 
+fn parse_seed(value: &str) -> Option<u64> {
+    value
+        .strip_prefix("0x")
+        .or_else(|| value.strip_prefix("0X"))
+        .map_or_else(
+            || value.parse().ok(),
+            |hex| u64::from_str_radix(hex, 16).ok(),
+        )
+}
+
 fn env_u64(name: &str, default: u64) -> u64 {
     std::env::var(name)
         .ok()
-        .and_then(|value| value.parse().ok())
+        .as_deref()
+        .and_then(parse_seed)
         .unwrap_or(default)
+}
+
+#[test]
+fn hexadecimal_and_decimal_seeds_are_reproducible() {
+    assert_eq!(parse_seed("0x5eedc0de6178"), Some(DEFAULT_SEED));
+    assert_eq!(parse_seed(&DEFAULT_SEED.to_string()), Some(DEFAULT_SEED));
+}
+
+#[test]
+fn default_seed_condition_prefix_is_stable() {
+    let mut conditions = ConditionRng::new(DEFAULT_SEED);
+    let actual = (0..26)
+        .map(|_| {
+            let current = conditions.current;
+            conditions.advance();
+            current
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        actual,
+        [
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Good,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Good,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Excellent,
+            Condition::Poor,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Good,
+            Condition::Normal,
+            Condition::Normal,
+            Condition::Good,
+            Condition::Normal,
+            Condition::Normal,
+        ]
+    );
 }
 
 #[test]
@@ -242,7 +405,6 @@ fn env_u64(name: &str, default: u64) -> u64 {
 fn compare_static_and_dynamic_over_random_conditions() {
     let iterations = env_usize("RAPHAEL_MONTE_CARLO_ITERATIONS", DEFAULT_ITERATIONS);
     let seed = env_u64("RAPHAEL_MONTE_CARLO_SEED", DEFAULT_SEED);
-    let static_actions = solver().solve().expect("static solve failed");
     let mut static_totals = Totals::default();
     let mut dynamic_totals = Totals::default();
     let mut dynamic_wins = 0;
@@ -256,9 +418,31 @@ fn compare_static_and_dynamic_over_random_conditions() {
     );
 
     for iteration in 0..iterations {
+        let iteration_start = Instant::now();
         let run_seed = seed.wrapping_add(iteration as u64);
-        let (static_run, static_executed) = run_static(&static_actions, run_seed);
-        let (dynamic_run, dynamic_executed) = run_dynamic(run_seed);
+        println!("iteration={iteration} seed={run_seed:#x} start");
+        let static_start = Instant::now();
+        let static_actions = solver().solve().expect("static solve failed");
+        let (static_run, static_executed, static_steps) = run_static(&static_actions, run_seed);
+        let static_ms = static_start.elapsed().as_millis();
+        println!(
+            "iteration={iteration} seed={run_seed:#x} static={{quality:{}, success:{}, steps:{}, duration:{}, run_ms:{static_ms}}}",
+            static_run.quality, static_run.success, static_run.steps, static_run.duration
+        );
+        print_steps("static", &static_steps);
+
+        let dynamic_start = Instant::now();
+        let (dynamic_run, dynamic_executed, dynamic_steps) = run_dynamic(run_seed);
+        let dynamic_ms = dynamic_start.elapsed().as_millis();
+        println!(
+            "iteration={iteration} seed={run_seed:#x} dynamic={{quality:{}, success:{}, steps:{}, duration:{}, run_ms:{dynamic_ms}}}",
+            dynamic_run.quality, dynamic_run.success, dynamic_run.steps, dynamic_run.duration
+        );
+        print_steps("dynamic", &dynamic_steps);
+        println!(
+            "iteration={iteration} seed={run_seed:#x} complete elapsed_ms={}",
+            iteration_start.elapsed().as_millis()
+        );
         match dynamic_run.quality.cmp(&static_run.quality) {
             std::cmp::Ordering::Greater => dynamic_wins += 1,
             std::cmp::Ordering::Equal => ties += 1,

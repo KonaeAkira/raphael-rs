@@ -1,6 +1,6 @@
 use crate::{
     SolverException, SolverSettings,
-    actions::FULL_SEARCH_ACTIONS,
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, enabled_action_combos},
     macros::internal_error,
     utils::{self, ParetoFrontBuilder, ParetoValue},
 };
@@ -30,6 +30,7 @@ struct QualityUbSolverContext<'alloc> {
     iq_quality_lut: [u16; 11],
     durability_cost: u16,
     largest_progress_increase: u16,
+    search_actions: Vec<ActionCombo>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -74,6 +75,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
                 largest_progress_increase: utils::maximum_muscle_memory_utilization(
                     &settings.simulator_settings,
                 ),
+                search_actions: enabled_action_combos(&settings, FULL_SEARCH_ACTIONS),
             },
             templates: FxHashMap::default(),
             stats: QualityUbSolverStats::default(),
@@ -126,7 +128,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
             if template.max_instantiated_cp > *entry {
                 *entry = template.max_instantiated_cp;
                 let state = template.instantiate(template.max_instantiated_cp).unwrap();
-                for action in FULL_SEARCH_ACTIONS {
+                for &action in &self.context.search_actions {
                     if let Some((new_state, _, _)) = state.use_action(
                         action,
                         &self.context.settings,
@@ -282,7 +284,7 @@ impl<'alloc> QualityUbSolver<'alloc> {
             ),
         );
         pf_builder.initialize_with_cutoff(cutoff);
-        for action in FULL_SEARCH_ACTIONS {
+        for &action in &self.context.search_actions {
             if let Some((new_state, progress, quality)) = state.use_action(
                 action,
                 &self.context.settings,
@@ -423,7 +425,7 @@ impl<'main, 'alloc> QualityUbSolverShard<'main, 'alloc> {
         let mut pareto_front_builder = ParetoFrontBuilder::new();
         pareto_front_builder.initialize_with_cutoff(cutoff);
 
-        for action in FULL_SEARCH_ACTIONS {
+        for &action in &self.context.search_actions {
             if let Some((child_state, progress, quality)) = state.use_action(
                 action,
                 &self.context.settings,

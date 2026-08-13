@@ -39,6 +39,10 @@ fn solver() -> MacroSolver<'static> {
     )
 }
 
+fn consumes_condition(action: Action) -> bool {
+    !matches!(action, Action::HeartAndSoul | Action::QuickInnovation)
+}
+
 fn condition_at(conditions: &[Condition], step: usize) -> Condition {
     conditions
         .get(step - 1)
@@ -176,8 +180,8 @@ fn dynamic_replans_on_hardcoded_good_steps_and_beats_static() {
     // Same stats, recipe and exact condition timeline. The only difference is
     // whether the solver observes each condition and replans.
     assert_eq!(static_run.quality, 6520);
-    assert_eq!(dynamic_run.quality, 8521);
-    assert_eq!(dynamic_run.quality - static_run.quality, 2001);
+    assert_eq!(dynamic_run.quality, 8876);
+    assert_eq!(dynamic_run.quality - static_run.quality, 2356);
 
     assert_eq!(static_run.decisions[11].2, Action::BasicTouch);
     assert_eq!(dynamic_run.decisions[11].2, Action::PreciseTouch);
@@ -229,4 +233,68 @@ fn dynamic_exploits_excellent_and_avoids_poor() {
             );
         }
     }
+}
+
+/// Regression for Monte Carlo seed 0x5eedc0de6178, iteration 0.
+/// The first conditions are Normal, Normal, Good, so the live state immediately
+/// before step 3 is deterministic and can be reproduced without the Monte Carlo
+/// harness.
+#[test]
+fn live_good_state_after_muscle_memory_and_trained_perfection_has_a_solution() {
+    let settings = Settings {
+        max_cp: 508,
+        max_durability: 80,
+        max_progress: 6600,
+        max_quality: 12_000,
+        base_progress: 229,
+        base_quality: 222,
+        job_level: 100,
+        allowed_actions: ActionMask::all()
+            .remove(Action::Manipulation)
+            .remove(Action::TrainedEye)
+            .remove(Action::HeartAndSoul)
+            .remove(Action::QuickInnovation),
+        adversarial: false,
+        backload_progress: false,
+        stellar_steady_hand_charges: 0,
+    };
+    let mut state = SimulationState::new(&settings);
+    state = state
+        .use_action(Action::MuscleMemory, Condition::Normal, &settings)
+        .unwrap();
+    state = state
+        .use_action(Action::TrainedPerfection, Condition::Normal, &settings)
+        .unwrap();
+
+    assert_eq!(state.cp, 502);
+    assert_eq!(state.durability, 70);
+    assert_eq!(state.progress, 687);
+    assert_eq!(state.quality, 0);
+
+    let mut solver = MacroSolver::new(
+        SolverSettings {
+            simulator_settings: settings,
+            allow_non_max_quality_solutions: true,
+        },
+        Box::new(|_| {}),
+        Box::new(|_| {}),
+        AtomicFlag::new(),
+    );
+    let actions = solver
+        .solve_from_state_with_condition(state, Condition::Good)
+        .expect("the live Good state must remain solvable");
+    assert_eq!(actions.first(), Some(&Action::PreciseTouch));
+
+    let mut condition = Condition::Good;
+    let final_state = actions
+        .iter()
+        .try_fold(state, |state, &action| {
+            let state = state.use_action(action, condition, &settings)?;
+            if consumes_condition(action) {
+                condition = condition.next_after_step();
+            }
+            Ok::<_, raphael_sim::ActionError>(state)
+        })
+        .unwrap();
+    assert!(final_state.progress >= settings.max_progress);
 }

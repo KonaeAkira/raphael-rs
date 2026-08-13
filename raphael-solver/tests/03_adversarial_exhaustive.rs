@@ -95,15 +95,15 @@ fn stuffed_peppers() {
                 capped_quality: 11400,
                 steps: 16,
                 duration: 45,
-                overflow_quality: 282,
+                overflow_quality: 0,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1806300,
-                processed_nodes: 85863,
+                inserted_nodes: 1806115,
+                processed_nodes: 85852,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -151,7 +151,7 @@ fn test_rare_tacos_2() {
                 capped_quality: 12000,
                 steps: 32,
                 duration: 91,
-                overflow_quality: 138,
+                overflow_quality: 0,
             },
         )
     "#]];
@@ -159,7 +159,7 @@ fn test_rare_tacos_2() {
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
                 inserted_nodes: 9016822,
-                processed_nodes: 3801980,
+                processed_nodes: 3801979,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 15891,
@@ -211,15 +211,15 @@ fn test_mountain_chromite_ingot_no_manipulation() {
                 capped_quality: 8200,
                 steps: 14,
                 duration: 38,
-                overflow_quality: 32,
+                overflow_quality: 0,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 484906,
-                processed_nodes: 33166,
+                inserted_nodes: 484750,
+                processed_nodes: 33149,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 798,
@@ -435,7 +435,7 @@ fn issue_118() {
                 capped_quality: 8400,
                 steps: 19,
                 duration: 52,
-                overflow_quality: 84,
+                overflow_quality: 0,
             },
         )
     "#]];

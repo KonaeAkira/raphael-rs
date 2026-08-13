@@ -3,6 +3,7 @@ use raphael_data::Locale;
 pub mod ingredients;
 pub mod search_mission;
 pub mod search_recipe;
+pub mod session;
 pub mod solve;
 
 #[derive(Copy, Clone, clap::ValueEnum, Debug)]

@@ -184,15 +184,15 @@ fn max_quality() {
                 capped_quality: 1000,
                 steps: 11,
                 duration: 28,
-                overflow_quality: 100,
+                overflow_quality: 0,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 97351,
-                processed_nodes: 6915,
+                inserted_nodes: 93129,
+                processed_nodes: 6194,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 4659,
@@ -205,8 +205,8 @@ fn max_quality() {
             },
             step_lb_stats: StepLbSolverStats {
                 states_on_main: 26538,
-                states_on_shards: 50910,
-                values: 486877,
+                states_on_shards: 50904,
+                values: 486865,
             },
         }
     "#]];
@@ -347,15 +347,15 @@ fn issue_216_steplbsolver_crash() {
                 capped_quality: 8600,
                 steps: 10,
                 duration: 25,
-                overflow_quality: 596,
+                overflow_quality: 0,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 436375,
-                processed_nodes: 21747,
+                inserted_nodes: 433156,
+                processed_nodes: 21566,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 9851,
@@ -643,15 +643,15 @@ fn high_max_stellar_steady_hand_charges() {
                 capped_quality: 22100,
                 steps: 34,
                 duration: 85,
-                overflow_quality: 186,
+                overflow_quality: 0,
             },
         )
     "#]];
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 43468032,
-                processed_nodes: 13519786,
+                inserted_nodes: 43468016,
+                processed_nodes: 13519773,
             },
             finish_solver_stats: FinishSolverStats {
                 states: 89742,

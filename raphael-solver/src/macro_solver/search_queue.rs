@@ -86,28 +86,46 @@ pub struct SearchQueueStats {
     pub processed_nodes: usize,
 }
 
+struct SearchRoot {
+    state: SimulationState,
+    prefix: Vec<ActionCombo>,
+}
+
 pub struct SearchQueue {
     settings: SolverSettings,
     pareto_front: ParetoFront,
     batch_ordering: BTreeSet<SearchScore>,
     batches: FxHashMap<SearchScore, Vec<SearchNode>>,
     visited_nodes: Vec<SearchNode>,
+    visited_root_ids: Vec<usize>,
+    roots: Vec<SearchRoot>,
     num_inserted_nodes: usize,
-    initial_state: SimulationState,
 }
 
 impl SearchQueue {
-    pub fn new(settings: SolverSettings, initial_state: SimulationState) -> Self {
+    pub fn new(
+        settings: SolverSettings,
+        roots: Vec<(SearchScore, SimulationState, Vec<ActionCombo>)>,
+    ) -> Self {
         let mut search_queue = Self {
             settings,
             pareto_front: ParetoFront::default(),
             batch_ordering: BTreeSet::default(),
             batches: FxHashMap::default(),
             visited_nodes: Vec::new(),
+            visited_root_ids: Vec::new(),
+            roots: roots
+                .iter()
+                .map(|(_, state, prefix)| SearchRoot {
+                    state: *state,
+                    prefix: prefix.clone(),
+                })
+                .collect(),
             num_inserted_nodes: 0,
-            initial_state,
         };
-        let _ = search_queue.push(SearchScore::MAX, ActionCombo::None, 0);
+        for (root_id, (score, _, _)) in roots.into_iter().enumerate() {
+            let _ = search_queue.push(score, ActionCombo::None, root_id);
+        }
         search_queue
     }
 
@@ -156,13 +174,20 @@ impl SearchQueue {
             let batch = batch
                 .into_par_iter()
                 .map(|search_node| {
-                    let mut state = self.initial_state;
-                    let actions = self.get_actions_from_node_idx(search_node.parent_idx());
-                    for action in actions {
-                        state = use_action_combo(&self.settings, state, action).unwrap();
+                    if search_node.action() == ActionCombo::None {
+                        let root_id = search_node.parent_idx();
+                        (search_node, self.roots[root_id].state, root_id)
+                    } else {
+                        let parent_idx = search_node.parent_idx();
+                        let root_id = self.visited_root_ids[parent_idx];
+                        let mut state = self.roots[root_id].state;
+                        for action in self.get_actions_after_root(parent_idx) {
+                            state = use_action_combo(&self.settings, state, action).unwrap();
+                        }
+                        state =
+                            use_action_combo(&self.settings, state, search_node.action()).unwrap();
+                        (search_node, state, root_id)
                     }
-                    state = use_action_combo(&self.settings, state, search_node.action()).unwrap();
-                    (search_node, state)
                 })
                 .collect();
             // Filter out Pareto-dominated nodes.
@@ -182,6 +207,11 @@ impl SearchQueue {
                     })
                     .collect(),
             };
+            self.visited_root_ids.extend(
+                non_dominated_nodes
+                    .iter()
+                    .map(|expanded_node| expanded_node.2),
+            );
             self.visited_nodes.extend(
                 non_dominated_nodes
                     .into_iter()
@@ -193,14 +223,24 @@ impl SearchQueue {
         }
     }
 
-    pub fn get_actions_from_node_idx(&self, mut idx: usize) -> SmallVec<[ActionCombo; 56]> {
+    fn get_actions_after_root(&self, mut idx: usize) -> SmallVec<[ActionCombo; 56]> {
         let mut actions = SmallVec::new();
-        while idx > 0 {
+        loop {
             let search_node = self.visited_nodes[idx];
+            if search_node.action() == ActionCombo::None {
+                break;
+            }
             actions.push(search_node.action());
             idx = search_node.parent_idx();
         }
         actions.reverse();
+        actions
+    }
+
+    pub fn get_actions_from_node_idx(&self, idx: usize) -> SmallVec<[ActionCombo; 56]> {
+        let root_id = self.visited_root_ids[idx];
+        let mut actions = SmallVec::from_slice(&self.roots[root_id].prefix);
+        actions.extend(self.get_actions_after_root(idx));
         actions
     }
 

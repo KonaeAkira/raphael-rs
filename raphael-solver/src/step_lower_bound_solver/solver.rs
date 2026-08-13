@@ -2,7 +2,7 @@ use std::num::{NonZero, NonZeroU8};
 
 use crate::{
     SolverException, SolverSettings,
-    actions::{FULL_SEARCH_ACTIONS, use_action_combo},
+    actions::{ActionCombo, FULL_SEARCH_ACTIONS, enabled_action_combos, use_action_combo},
     macros::internal_error,
     utils::{self, ParetoFrontBuilder, ParetoValue, compute_iq_quality_lut},
 };
@@ -31,6 +31,7 @@ struct StepLbSolverContext<'alloc> {
     interrupt_signal: utils::AtomicFlag,
     iq_quality_lut: [u16; 11],
     largest_progress_increase: u16,
+    search_actions: Vec<ActionCombo>,
 }
 
 pub struct StepLbSolver<'alloc> {
@@ -64,6 +65,7 @@ impl<'alloc> StepLbSolver<'alloc> {
                 largest_progress_increase: utils::maximum_muscle_memory_utilization(
                     &settings.simulator_settings,
                 ),
+                search_actions: enabled_action_combos(&settings, FULL_SEARCH_ACTIONS),
             },
             solved_states: SolvedStates::default(),
             num_states_solved_on_shards: 0,
@@ -220,6 +222,7 @@ impl<'main, 'alloc> StepLbSolverShard<'main, 'alloc> {
 fn discover_unsolved_states(
     seed_state: ReducedState,
     settings: &SolverSettings,
+    search_actions: &[ActionCombo],
     has_solution: impl Fn(ReducedState) -> bool,
 ) -> Vec<ReducedState> {
     let mut unsolved_states = vec![seed_state];
@@ -228,7 +231,7 @@ fn discover_unsolved_states(
     while idx < unsolved_states.len() {
         let parent = unsolved_states[idx];
         let full_parent = parent.to_state();
-        for action in FULL_SEARCH_ACTIONS {
+        for &action in search_actions {
             if let Ok(step_budget) =
                 NonZero::try_from(parent.steps_budget.get().saturating_sub(action.steps()))
                 && let Ok(full_child) = use_action_combo(settings, full_parent, action)
@@ -259,7 +262,7 @@ fn construct_solution<'alloc>(
         context.settings.max_quality().saturating_sub(min_quality),
     );
     pf_builder.initialize_with_cutoff(cutoff);
-    for action in FULL_SEARCH_ACTIONS {
+    for &action in &context.search_actions {
         if state.steps_budget.get() < action.steps() {
             continue;
         }
@@ -313,7 +316,12 @@ fn solve_state_sequential<'alloc>(
     let mut unsolved_states = {
         let has_solution =
             |state| shared_states.contains_key(&state) || local_states.contains_key(&state);
-        discover_unsolved_states(seed_state, &context.settings, has_solution)
+        discover_unsolved_states(
+            seed_state,
+            &context.settings,
+            &context.search_actions,
+            has_solution,
+        )
     };
     unsolved_states.sort_unstable_by_key(|state| state.steps_budget);
     let allocator = context.allocator.get();
@@ -345,7 +353,12 @@ fn solve_state_parallel<'alloc>(
 ) -> Result<&'alloc ParetoFront, SolverException> {
     let mut unsolved_states = {
         let has_solution = |state| solved_states.contains_key(&state);
-        discover_unsolved_states(seed_state, &context.settings, has_solution)
+        discover_unsolved_states(
+            seed_state,
+            &context.settings,
+            &context.search_actions,
+            has_solution,
+        )
     };
     unsolved_states.par_sort_unstable_by_key(|state| state.steps_budget);
     let mut idx_begin = 0;

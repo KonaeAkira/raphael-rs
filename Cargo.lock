@@ -3579,6 +3579,8 @@ dependencies = [
  "raphael-sim",
  "raphael-solver",
  "rayon",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -3633,6 +3635,7 @@ dependencies = [
  "raphael-sim",
  "rayon",
  "rustc-hash 2.1.1",
+ "self_cell",
  "serde",
  "smallvec",
  "strum",

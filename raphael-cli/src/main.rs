@@ -20,6 +20,8 @@ enum Commands {
     Solve(commands::solve::SolveArgs),
     /// Show ingredients for a recipe
     Ingredients(commands::ingredients::IngredientsArgs),
+    /// Run a persistent JSON-lines solver session over stdin/stdout
+    Session(commands::session::SessionArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -58,5 +60,6 @@ fn main() {
         },
         Commands::Solve(args) => commands::solve::execute(args),
         Commands::Ingredients(args) => commands::ingredients::execute(args),
+        Commands::Session(args) => commands::session::execute(args),
     }
 }

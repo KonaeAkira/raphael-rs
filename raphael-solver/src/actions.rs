@@ -110,12 +110,71 @@ impl ActionCombo {
     }
 
     pub const fn steps(self) -> u8 {
-        self.actions().len() as u8
+        match self {
+            Self::AdvancedTouch => 3,
+            Self::TricksOfTheTrade
+            | Self::IntensiveSynthesis
+            | Self::PreciseTouch
+            | Self::StandardTouch
+            | Self::FocusedTouch
+            | Self::RefinedTouch => 2,
+            Self::None => 0,
+            Self::Single(_) => 1,
+        }
     }
 
-    pub fn duration(self) -> u8 {
-        self.actions().iter().map(|action| action.time_cost()).sum()
+    pub const fn duration(self) -> u8 {
+        match self {
+            Self::AdvancedTouch => 9,
+            Self::TricksOfTheTrade
+            | Self::IntensiveSynthesis
+            | Self::PreciseTouch
+            | Self::StandardTouch
+            | Self::FocusedTouch
+            | Self::RefinedTouch => 6,
+            Self::None => 0,
+            Self::Single(action) => action.time_cost(),
+        }
     }
+}
+
+/// Search action with metadata precomputed outside the hot expansion loop.
+#[derive(Debug, Clone, Copy)]
+pub struct SearchAction {
+    pub combo: ActionCombo,
+    pub steps: u8,
+    pub duration: u8,
+}
+
+/// Removes actions that are disabled for the entire solve. State-dependent
+/// preconditions are still checked by the simulator during expansion.
+pub fn enabled_action_combos<const N: usize>(
+    settings: &SolverSettings,
+    actions: [ActionCombo; N],
+) -> Vec<ActionCombo> {
+    actions
+        .into_iter()
+        .filter(|combo| {
+            combo
+                .actions()
+                .iter()
+                .all(|&action| settings.simulator_settings.allowed_actions.has(action))
+        })
+        .collect()
+}
+
+pub fn enabled_search_actions<const N: usize>(
+    settings: &SolverSettings,
+    actions: [ActionCombo; N],
+) -> Vec<SearchAction> {
+    enabled_action_combos(settings, actions)
+        .into_iter()
+        .map(|combo| SearchAction {
+            combo,
+            steps: combo.steps(),
+            duration: combo.duration(),
+        })
+        .collect()
 }
 
 pub const LIVE_FIRST_ACTIONS: [ActionCombo; 39] = [

@@ -71,6 +71,7 @@ mod macros {
 }
 
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SolverSettings {
     pub simulator_settings: raphael_sim::Settings,
     pub allow_non_max_quality_solutions: bool,

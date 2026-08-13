@@ -8,11 +8,13 @@ name = "bench_cli"
 harness = false
 
 [dependencies]
-raphael-sim = { workspace = true }
-raphael-solver = { workspace = true }
+raphael-sim = { workspace = true, features = ["serde"] }
+raphael-solver = { workspace = true, features = ["serde"] }
 raphael-data = { workspace = true }
 rayon = { workspace = true }
 log = { workspace = true }
+serde = { workspace = true }
+serde_json = "1.0"
 
 clap = { version = "4.5.51", features = ["derive", "wrap_help", "env"] }
 

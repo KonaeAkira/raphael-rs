@@ -540,8 +540,10 @@ pub fn execute(args: &SolveArgs) {
             action_condition = action_condition.next_after_step();
         }
     }
-    let state_quality = final_state.quality;
-    let final_quality = state_quality.saturating_add(initial_quality);
+    let state_quality = final_state.quality.min(settings.max_quality);
+    let final_quality = state_quality
+        .saturating_add(initial_quality)
+        .min(recipe_max_quality);
     let steps = actions.len();
     let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
     let action_ids: Vec<u32> = actions.iter().map(|f| f.action_id()).collect();
