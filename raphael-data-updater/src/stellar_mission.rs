@@ -41,7 +41,7 @@ impl SheetData for StellarMission {
         "ClassJobCategory@as(raw)",
         "WKSMissionRecipe.Recipe@as(raw)",
         "MissionToDo[].TemporaryAction@as(raw)",
-        "MissionToDo[].Unknown14@as(raw)",
+        "MissionToDo[].TemporaryActionCount@as(raw)",
     ];
 
     fn row_id(&self) -> u32 {
@@ -73,7 +73,9 @@ impl SheetData for StellarMission {
                             .as_u32()
                             .unwrap(),
                     ),
-                    member["fields"]["Unknown14@as(raw)"].as_u8().unwrap(),
+                    member["fields"]["TemporaryActionCount@as(raw)"]
+                        .as_u8()
+                        .unwrap(),
                 )
             })
             .next()
