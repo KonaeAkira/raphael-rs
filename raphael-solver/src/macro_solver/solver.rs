@@ -165,7 +165,7 @@ impl<'a> MacroSolver<'a> {
 
             // Finalize the workers to drop all shared references to `self` to satisfy the borrow checker.
             let worker_results = worker_results
-                .into_iter()
+                .into_par_iter()
                 .map(WorkerData::finalize)
                 .collect::<Vec<_>>();
 
@@ -188,10 +188,14 @@ impl<'a> MacroSolver<'a> {
 
             // Add all eligible candidate states to the search queue.
             for worker_data in &worker_results {
-                for &(score, action, parent_id) in &worker_data.candidate_states {
-                    if score >= min_accepted_score {
-                        search_queue.push(score, action, parent_id)?;
-                    }
+                let candidates = &worker_data.candidate_states;
+                let first_eligible =
+                    candidates.partition_point(|(score, ..)| *score < min_accepted_score);
+                for group in candidates[first_eligible..].chunk_by(|lhs, rhs| lhs.0 == rhs.0) {
+                    let nodes = group
+                        .iter()
+                        .map(|&(_, action, parent_id)| (action, parent_id));
+                    search_queue.push_batch(group[0].0, nodes)?;
                 }
             }
 
@@ -246,7 +250,8 @@ struct WorkerData<'main, 'alloc> {
 }
 
 impl<'main, 'alloc> WorkerData<'main, 'alloc> {
-    fn finalize(self) -> WorkerResult<'alloc> {
+    fn finalize(mut self) -> WorkerResult<'alloc> {
+        self.candidate_states.sort_by_key(|(score, ..)| *score);
         WorkerResult {
             quality_ub_states: self.quality_ub_solver_shard.solved_states(),
             step_lb_states: self.step_lb_solver_shard.solved_states(),

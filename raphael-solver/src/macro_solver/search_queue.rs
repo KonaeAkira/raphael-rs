@@ -117,20 +117,30 @@ impl SearchQueue {
         action: ActionCombo,
         parent_idx: usize,
     ) -> Result<(), SolverException> {
-        let node = SearchNode::new()
-            .with_parent_idx_checked(parent_idx)
-            .map_err(|_| SolverException::SearchQueueCapacityExceeded)?
-            .with_action(action);
-        match self.batches.entry(score) {
-            Entry::Occupied(occupied_entry) => {
-                occupied_entry.into_mut().push(node);
-            }
+        self.push_batch(score, std::iter::once((action, parent_idx)))
+    }
+
+    pub fn push_batch(
+        &mut self,
+        score: SearchScore,
+        nodes: impl ExactSizeIterator<Item = (ActionCombo, usize)>,
+    ) -> Result<(), SolverException> {
+        self.num_inserted_nodes += nodes.len();
+        let batch = match self.batches.entry(score) {
+            Entry::Occupied(occupied_entry) => occupied_entry.into_mut(),
             Entry::Vacant(vacant_entry) => {
                 self.batch_ordering.insert(score);
-                vacant_entry.insert(vec![node]);
+                vacant_entry.insert(Vec::new())
             }
+        };
+        batch.reserve(nodes.len());
+        for (action, parent_idx) in nodes {
+            let node = SearchNode::new()
+                .with_parent_idx_checked(parent_idx)
+                .map_err(|_| SolverException::SearchQueueCapacityExceeded)?
+                .with_action(action);
+            batch.push(node);
         }
-        self.num_inserted_nodes += 1;
         Ok(())
     }
 
