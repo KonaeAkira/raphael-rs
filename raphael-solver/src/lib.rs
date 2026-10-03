@@ -30,7 +30,7 @@ pub enum SolverException {
     /// This means that there can be a maximum of 67,108,864 nodes visited before
     /// the indices are exhausted.
     ///
-    /// On 64-bit platforms, the index is a 56-bit integer, so this error is realistically
+    /// On 64-bit platforms, the index is a 58-bit integer, so this error is realistically
     /// never raised on 64-bit platforms.
     SearchQueueCapacityExceeded,
     InternalError(String),

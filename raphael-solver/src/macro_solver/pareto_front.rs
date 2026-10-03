@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 // It is important that this mask doesn't use any effect to its full bit range.
-// Otherwise, `Value::effect_dominates` will break.
+// Otherwise, `Value::dominates` will break.
 const EFFECTS_VALUE_MASK: u64 = Effects::new()
     .with_inner_quiet(1)
     .with_manipulation(3)

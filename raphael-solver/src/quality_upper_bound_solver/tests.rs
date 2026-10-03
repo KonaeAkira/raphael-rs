@@ -10,7 +10,7 @@ use crate::{
 use super::QualityUbSolver;
 
 /// Test that the QualityUbSolver is consistent and admissible.
-/// It is consistent if the step-lb of a parent state is never greater than the step-lb of a child state.
+/// It is consistent if the quality-ub of a parent state is never less than the quality-ub of a child state.
 /// It is admissible if the quality-ub of a state is never less than the quality of a reachable final state.
 fn check_consistency(solver_settings: SolverSettings) {
     let allocator = BumpPool::default();
