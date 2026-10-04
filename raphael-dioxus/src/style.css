@@ -36,9 +36,6 @@
     --font-ui: "XIV Icons", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     --font-mono: "XIV Icons", ui-monospace, "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
 
-    --radius-sm: 6px;
-    --radius: 10px;
-    --radius-lg: 14px;
     --row-h: 34px;
 
     /* Dark palette (default) */
@@ -137,6 +134,11 @@ html, body {
 
 *, *::before, *::after {
     box-sizing: border-box;
+}
+
+/* Browsers round native form controls by default. */
+button, input, select, textarea {
+    border-radius: 0;
 }
 
 .app {
@@ -248,7 +250,6 @@ h2, h3, p {
     display: inline-flex;
     align-items: center;
     padding: 1px 8px;
-    border-radius: 999px;
     background: var(--surface-3);
     color: var(--text-muted);
     font-size: 11.5px;
@@ -313,7 +314,6 @@ h2, h3, p {
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
     min-width: 0;
 }
 
@@ -376,7 +376,6 @@ h2, h3, p {
     gap: 6px;
     height: 32px;
     padding: 0 12px;
-    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface-2);
     color: var(--text);
@@ -465,14 +464,7 @@ h2, h3, p {
     display: inline-flex;
 }
 
-.split-btn > .btn:first-child {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
 .split-btn > .btn:nth-child(2) {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
     border-left: 1px solid rgba(255, 255, 255, 0.2);
     width: 28px;
 }
@@ -495,14 +487,12 @@ h2, h3, p {
     flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
 }
 
 .menu > button {
     text-align: left;
     padding: 7px 10px;
     border: none;
-    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--text);
     font: inherit;
@@ -525,7 +515,6 @@ h2, h3, p {
 
 .chip {
     padding: 5px 12px;
-    border-radius: 999px;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-muted);
@@ -549,14 +538,12 @@ h2, h3, p {
     display: inline-flex;
     padding: 3px;
     gap: 2px;
-    border-radius: var(--radius-sm);
     background: var(--surface-3);
 }
 
 .segmented button {
     padding: 4px 12px;
     border: none;
-    border-radius: 4px;
     background: transparent;
     color: var(--text-muted);
     font: inherit;
@@ -574,7 +561,6 @@ h2, h3, p {
     display: inline-flex;
     align-items: center;
     height: 30px;
-    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface-2);
     transition: border-color 0.12s, background 0.12s;
@@ -641,7 +627,6 @@ h2, h3, p {
 .select select {
     height: 32px;
     padding: 0 30px 0 10px;
-    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface-2);
     color: var(--text);
@@ -687,7 +672,6 @@ h2, h3, p {
     width: 100%;
     height: 32px;
     padding: 0 10px;
-    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--surface-2);
     color: var(--text);
@@ -737,7 +721,6 @@ h2, h3, p {
     width: 18px;
     height: 18px;
     flex: none;
-    border-radius: 5px;
     border: 1.5px solid var(--border-strong);
     background: var(--surface-2);
     color: transparent;
@@ -758,10 +741,6 @@ h2, h3, p {
 .check input:focus-visible + .check-box {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
-}
-
-.check.radio .check-box {
-    border-radius: 50%;
 }
 
 .check.radio input:checked + .check-box {
@@ -814,7 +793,6 @@ h2, h3, p {
     width: max-content;
     max-width: min(340px, 80vw);
     padding: 10px 12px;
-    border-radius: var(--radius);
     background: var(--surface-3);
     border: 1px solid var(--border-strong);
     color: var(--text);
@@ -843,7 +821,6 @@ h2, h3, p {
     display: flex;
     gap: 10px;
     padding: 10px 12px;
-    border-radius: var(--radius);
     background: var(--warn-soft);
     color: var(--warn);
     font-size: 12.5px;
@@ -867,7 +844,6 @@ h2, h3, p {
     display: inline-flex;
     align-items: center;
     padding: 3px 10px;
-    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
@@ -956,14 +932,12 @@ h2, h3, p {
 .bar {
     position: relative;
     height: 12px;
-    border-radius: 999px;
     background: var(--bar-track);
     overflow: hidden;
 }
 
 .bar-fill {
     height: 100%;
-    border-radius: inherit;
     transition: width 0.25s ease;
 }
 
@@ -1046,7 +1020,6 @@ h2, h3, p {
     position: relative;
     overflow-y: auto;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     background: var(--surface-2);
     scrollbar-width: thin;
 }
@@ -1117,7 +1090,6 @@ h2, h3, p {
 .list {
     overflow-y: auto;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     background: var(--surface-2);
     scrollbar-width: thin;
 }
@@ -1196,7 +1168,6 @@ h2, h3, p {
     height: 42px;
     font-size: 15px;
     font-weight: 650;
-    border-radius: var(--radius);
     background: linear-gradient(135deg, var(--accent), #6f5ce0);
 }
 
@@ -1218,7 +1189,6 @@ h2, h3, p {
 
 .macro-block {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     background: var(--surface-2);
     overflow: hidden;
 }
@@ -1245,7 +1215,6 @@ h2, h3, p {
     place-items: center;
     height: 140px;
     border: 1.5px dashed var(--border);
-    border-radius: var(--radius);
     color: var(--text-faint);
 }
 
@@ -1312,7 +1281,6 @@ fieldset:disabled {
     flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
     outline: none;
     animation: pop-in 0.14s ease;
 }
@@ -1381,7 +1349,6 @@ fieldset:disabled {
     max-height: 320px;
     overflow: auto;
     padding: 10px 12px;
-    border-radius: var(--radius);
     background: var(--surface-2);
     font-size: 12.5px;
     white-space: pre-wrap;
@@ -1424,7 +1391,6 @@ fieldset:disabled {
 .job-stats {
     padding: 12px;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     background: var(--surface-2);
     display: flex;
     flex-direction: column;
@@ -1485,7 +1451,6 @@ fieldset:disabled {
 
 .subcard {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
     background: var(--surface-2);
 }
 
@@ -1538,7 +1503,6 @@ fieldset:disabled {
     gap: 3px 16px;
     margin: 0;
     padding: 8px 10px;
-    border-radius: var(--radius-sm);
     background: var(--surface);
     font-size: 13px;
 }
@@ -1571,7 +1535,6 @@ fieldset:disabled {
 
 .app ::-webkit-scrollbar-thumb {
     background: var(--border-strong);
-    border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
