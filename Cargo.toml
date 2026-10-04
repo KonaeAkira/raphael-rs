@@ -6,6 +6,7 @@ members = [
     "raphael-data-updater",
     "raphael-cli",
     "raphael-translations",
+    "raphael-dioxus",
 ]
 resolver = "2"
 

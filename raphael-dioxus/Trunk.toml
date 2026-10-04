@@ -1,0 +1,7 @@
+[build]
+target = "index.html"
+dist = "distrib"
+
+[serve]
+# Cross-origin isolation is required for SharedArrayBuffer, which the multi-threaded solver relies on.
+headers = { "Cross-Origin-Embedder-Policy" = "require-corp", "Cross-Origin-Opener-Policy" = "same-origin" }

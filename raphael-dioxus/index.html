@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="color-scheme" content="dark light" />
+        <title>Raphael | FFXIV Crafting Solver</title>
+        <meta
+            name="description"
+            content="Raphael is a crafting rotation optimizer and macro generator for Final Fantasy XIV."
+        />
+
+        <link
+            data-trunk
+            rel="rust"
+            href="Cargo.toml"
+            data-wasm-opt="2"
+            data-bin="raphael-dioxus"
+            data-type="main"
+            data-bindgen-target="web"
+        />
+
+        <link data-trunk rel="icon" href="../assets/favicon-64x64.png" />
+        <link data-trunk rel="copy-file" href="../assets/_headers" />
+        <link data-trunk rel="copy-dir" href="../assets/action-icons/" />
+        <link data-trunk rel="copy-dir" href="../assets/fonts/" />
+
+        <style>
+            html,
+            body {
+                margin: 0;
+                background: #0e1015;
+            }
+            @media (prefers-color-scheme: light) {
+                html,
+                body {
+                    background: #f4f5f9;
+                }
+            }
+            #loading {
+                position: fixed;
+                inset: 0;
+                display: grid;
+                place-items: center;
+            }
+            #loading::after {
+                content: "";
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 3px solid rgba(139, 124, 246, 0.2);
+                border-top-color: #8b7cf6;
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loading"></div>
+        <div id="main"></div>
+    </body>
+</html>
