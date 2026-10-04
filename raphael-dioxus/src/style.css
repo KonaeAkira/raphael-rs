@@ -206,18 +206,6 @@ h2, h3, p {
     gap: 10px;
 }
 
-.brand-mark {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-    background: linear-gradient(135deg, var(--accent), #2dc4b4);
-    color: white;
-    font-weight: 800;
-    font-size: 17px;
-}
-
 .brand-text {
     display: flex;
     flex-direction: column;
@@ -237,8 +225,7 @@ h2, h3, p {
 
 .links {
     display: flex;
-    gap: 16px;
-    font-size: 13px;
+    gap: 2px;
 }
 
 .links a {
@@ -306,9 +293,6 @@ h2, h3, p {
 @media (max-width: 860px) {
     .columns {
         grid-template-columns: minmax(0, 1fr);
-    }
-    .links {
-        display: none;
     }
     .main {
         padding: 12px;

@@ -31,7 +31,6 @@ pub fn Header() -> Element {
     rsx! {
         header { class: "topbar",
             div { class: "brand",
-                span { class: "brand-mark", "R" }
                 div { class: "brand-text",
                     span { class: "brand-name", "Raphael" }
                     span { class: "brand-sub", "FFXIV Crafting Solver" }
@@ -39,23 +38,20 @@ pub fn Header() -> Element {
                 span { class: "pill", "v{env!(\"CARGO_PKG_VERSION\")}" }
             }
             nav { class: "links",
-                a {
+                ExternalLink {
                     href: "https://github.com/KonaeAkira/raphael-rs",
-                    target: "_blank",
-                    rel: "noopener",
-                    {t!(locale, "View source on GitHub")}
+                    title: t!(locale, "View source on GitHub"),
+                    icon: IconKind::GitHub,
                 }
-                a {
+                ExternalLink {
                     href: "https://discord.com/invite/m2aCy3y8he",
-                    target: "_blank",
-                    rel: "noopener",
-                    {t!(locale, "Join Discord")}
+                    title: t!(locale, "Join Discord"),
+                    icon: IconKind::Discord,
                 }
-                a {
+                ExternalLink {
                     href: "https://ko-fi.com/konaeakira",
-                    target: "_blank",
-                    rel: "noopener",
-                    {t!(locale, "Support me on Ko-fi")}
+                    title: t!(locale, "Support me on Ko-fi"),
+                    icon: IconKind::KoFi,
                 }
             }
             div { class: "topbar-actions",
@@ -78,6 +74,21 @@ pub fn Header() -> Element {
                     Icon { kind: IconKind::Settings }
                 }
             }
+        }
+    }
+}
+
+#[component]
+fn ExternalLink(href: &'static str, title: &'static str, icon: IconKind) -> Element {
+    rsx! {
+        a {
+            class: "btn icon-btn ghost",
+            href,
+            target: "_blank",
+            rel: "noopener",
+            title,
+            "aria-label": title,
+            Icon { kind: icon }
         }
     }
 }
