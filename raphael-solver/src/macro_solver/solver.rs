@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use super::search_queue::{SearchQueueStats, SearchScore};
 use crate::actions::{ActionCombo, FULL_SEARCH_ACTIONS, use_action_combo};
 use crate::finish_solver::FinishSolverStats;
-use crate::macro_solver::search_queue::{Batch, SearchQueue};
+use crate::macro_solver::search_queue::{Batch, Candidate, SearchQueue};
 use crate::quality_upper_bound_solver::{
     QualityUbSolverShard, QualityUbSolverStats, QualityUbStates,
 };
@@ -31,6 +31,10 @@ impl Solution {
         actions
     }
 }
+
+/// Chunks per thread for the main search loop node expansion and filtering.
+/// A lower number reduces the number of worker shards but deteriorates load balancing.
+const CHUNKS_PER_THREAD: usize = 16;
 
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
 type ProgressCallback<'a> = dyn Fn(usize) + 'a;
@@ -134,7 +138,7 @@ impl<'a> MacroSolver<'a> {
         while let Some(Batch {
             score,
             nodes: batch,
-        }) = search_queue.pop_batch()
+        }) = search_queue.pop_batch()?
             && score >= min_accepted_score
         {
             if self.interrupt_signal.is_set() {
@@ -152,20 +156,22 @@ impl<'a> MacroSolver<'a> {
                 best_intermediate_solution: None,
             };
 
+            let num_chunks = CHUNKS_PER_THREAD * rayon::current_num_threads();
+            let chunk_len = std::cmp::max(1, batch.len().div_ceil(num_chunks));
             let worker_results = batch
-                .into_par_iter()
-                .try_fold(
-                    create_worker_data,
-                    |mut worker_data, (state, backtrack_id)| {
+                .par_chunks(chunk_len)
+                .map(|chunk| {
+                    let mut worker_data = create_worker_data();
+                    for &(state, backtrack_id) in chunk {
                         worker_data.process_state(state, score, backtrack_id)?;
-                        Ok(worker_data)
-                    },
-                )
+                    }
+                    Ok(worker_data)
+                })
                 .collect::<Result<Vec<_>, SolverException>>()?;
 
             // Finalize the workers to drop all shared references to `self` to satisfy the borrow checker.
             let worker_results = worker_results
-                .into_iter()
+                .into_par_iter()
                 .map(WorkerData::finalize)
                 .collect::<Vec<_>>();
 
@@ -187,13 +193,16 @@ impl<'a> MacroSolver<'a> {
             search_queue.drop_nodes_below_score(min_accepted_score);
 
             // Add all eligible candidate states to the search queue.
-            for worker_data in &worker_results {
-                for &(score, action, parent_id) in &worker_data.candidate_states {
-                    if score >= min_accepted_score {
-                        search_queue.push(score, action, parent_id)?;
-                    }
-                }
-            }
+            let candidate_lists: Vec<&[Candidate]> = worker_results
+                .iter()
+                .map(|worker_data| {
+                    let candidates = &worker_data.candidate_states;
+                    let first_eligible = candidates
+                        .partition_point(|candidate| candidate.score < min_accepted_score);
+                    &candidates[first_eligible..]
+                })
+                .collect();
+            search_queue.push_sorted(&candidate_lists);
 
             // Extend inner solvers with local states from all workers.
             for worker_result in worker_results {
@@ -230,7 +239,7 @@ struct WorkerResult<'alloc> {
     quality_ub_states: QualityUbStates<'alloc>,
     step_lb_states: StepLbStates<'alloc>,
     min_accepted_score: SearchScore,
-    candidate_states: Vec<(SearchScore, ActionCombo, usize)>,
+    candidate_states: Vec<Candidate>,
     best_intermediate_solution: Option<Solution>,
 }
 
@@ -241,12 +250,14 @@ struct WorkerData<'main, 'alloc> {
     step_lb_solver_shard: StepLbSolverShard<'main, 'alloc>,
     search_queue: &'main SearchQueue,
     min_accepted_score: SearchScore,
-    candidate_states: Vec<(SearchScore, ActionCombo, usize)>,
+    candidate_states: Vec<Candidate>,
     best_intermediate_solution: Option<Solution>,
 }
 
 impl<'main, 'alloc> WorkerData<'main, 'alloc> {
-    fn finalize(self) -> WorkerResult<'alloc> {
+    fn finalize(mut self) -> WorkerResult<'alloc> {
+        self.candidate_states
+            .sort_by_key(|candidate| candidate.score);
         WorkerResult {
             quality_ub_states: self.quality_ub_solver_shard.solved_states(),
             step_lb_states: self.step_lb_solver_shard.solved_states(),
@@ -266,7 +277,7 @@ impl<'main, 'alloc> WorkerData<'main, 'alloc> {
         score: SearchScore,
         action: ActionCombo,
         parent_id: usize,
-    ) {
+    ) -> Result<(), SolverException> {
         if state.progress >= self.settings.max_progress() {
             if self
                 .best_intermediate_solution
@@ -281,8 +292,10 @@ impl<'main, 'alloc> WorkerData<'main, 'alloc> {
                 });
             }
         } else if score >= self.min_accepted_score {
-            self.candidate_states.push((score, action, parent_id));
+            self.candidate_states
+                .push(Candidate::try_new(score, action, parent_id)?);
         }
+        Ok(())
     }
 
     fn process_state(
@@ -340,7 +353,7 @@ impl<'main, 'alloc> WorkerData<'main, 'alloc> {
                         current_steps: score.current_steps + action.steps(),
                         current_duration: score.current_duration + action.duration(),
                     };
-                    self.add_candidate_state(state, child_score, action, backtrack_id);
+                    self.add_candidate_state(state, child_score, action, backtrack_id)?;
                 } else if state.progress >= self.settings.max_progress() {
                     let solution_score = SearchScore {
                         quality_upper_bound: std::cmp::min(
@@ -353,7 +366,7 @@ impl<'main, 'alloc> WorkerData<'main, 'alloc> {
                         current_duration: score.current_duration + action.duration(),
                     };
                     self.update_min_score(solution_score);
-                    self.add_candidate_state(state, solution_score, action, backtrack_id);
+                    self.add_candidate_state(state, solution_score, action, backtrack_id)?;
                 }
             }
         }
