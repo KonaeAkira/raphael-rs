@@ -38,6 +38,15 @@ impl SearchScore {
         current_steps: 0,
         current_duration: 0,
     };
+
+    /// Search score as a single numerical value for faster comparison.
+    const fn ordinal(&self) -> u64 {
+        (self.quality_upper_bound as u64) << 32
+            | (!self.steps_lower_bound as u64) << 24
+            | (!self.duration_lower_bound as u64) << 16
+            | (!self.current_steps as u64) << 8
+            | (!self.current_duration as u64)
+    }
 }
 
 impl std::cmp::PartialOrd for SearchScore {
@@ -48,12 +57,7 @@ impl std::cmp::PartialOrd for SearchScore {
 
 impl std::cmp::Ord for SearchScore {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.quality_upper_bound
-            .cmp(&other.quality_upper_bound)
-            .then(other.steps_lower_bound.cmp(&self.steps_lower_bound))
-            .then(other.duration_lower_bound.cmp(&self.duration_lower_bound))
-            .then(other.current_steps.cmp(&self.current_steps))
-            .then(other.current_duration.cmp(&self.current_duration))
+        self.ordinal().cmp(&other.ordinal())
     }
 }
 
