@@ -425,6 +425,7 @@ fn solve_state_parallel<'alloc>(
         let has_solution = |state| solved_states.contains_key(&state);
         discover_unsolved_states_parallel(seed_state, &context.settings, has_solution)
     };
+    solved_states.reserve(unsolved_states.len());
     let mut idx_begin = 0;
     let mut idx_end = 0;
     while idx_begin < unsolved_states.len() {
