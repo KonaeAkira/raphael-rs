@@ -32,6 +32,10 @@ impl Solution {
     }
 }
 
+/// Chunks per thread for the main search loop node expansion and filtering.
+/// A lower number reduces the number of worker shards but deteriorates load balancing.
+const CHUNKS_PER_THREAD: usize = 16;
+
 type SolutionCallback<'a> = dyn Fn(&[Action]) + 'a;
 type ProgressCallback<'a> = dyn Fn(usize) + 'a;
 
@@ -152,15 +156,17 @@ impl<'a> MacroSolver<'a> {
                 best_intermediate_solution: None,
             };
 
+            let num_chunks = CHUNKS_PER_THREAD * rayon::current_num_threads();
+            let chunk_len = std::cmp::max(1, batch.len().div_ceil(num_chunks));
             let worker_results = batch
-                .into_par_iter()
-                .try_fold(
-                    create_worker_data,
-                    |mut worker_data, (state, backtrack_id)| {
+                .par_chunks(chunk_len)
+                .map(|chunk| {
+                    let mut worker_data = create_worker_data();
+                    for &(state, backtrack_id) in chunk {
                         worker_data.process_state(state, score, backtrack_id)?;
-                        Ok(worker_data)
-                    },
-                )
+                    }
+                    Ok(worker_data)
+                })
                 .collect::<Result<Vec<_>, SolverException>>()?;
 
             // Finalize the workers to drop all shared references to `self` to satisfy the borrow checker.
