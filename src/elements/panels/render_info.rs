@@ -216,6 +216,7 @@ impl RenderInfo {
                 subgroup_min_size,
                 subgroup_max_size,
                 transient_saves_memory,
+                limit_bucket,
             } = &adapter.get_info();
 
             ui.horizontal(|ui| {
@@ -262,7 +263,10 @@ impl RenderInfo {
                             ui.end_row();
                         }
                         ui.label("Transient saves memory:");
-                        ui.label(format!("{transient_saves_memory}"));
+                        ui.label(format!("{transient_saves_memory:?}"));
+                        ui.end_row();
+                        ui.label("Limit bucket:");
+                        ui.label(format!("{limit_bucket:?}"));
                         ui.end_row();
                     });
                 });

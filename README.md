@@ -42,7 +42,7 @@ If you find a macro that beats the generated macro according to the specificatio
 ## Building from source
 
 The [Rust](https://www.rust-lang.org/) toolchain is required to build the solver.
-The current minimal supported Rust version (MSRV) is 1.92.0.
+The current minimal supported Rust version (MSRV) is 1.95.0.
 
 ### Native GUI
 
