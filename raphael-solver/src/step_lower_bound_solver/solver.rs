@@ -246,6 +246,84 @@ fn discover_unsolved_states(
     unsolved_states
 }
 
+/// Sharded hash set for parallel deduplication of discovered states.
+struct ShardedStateSet {
+    shards: Vec<std::sync::Mutex<FxHashSet<ReducedState>>>,
+}
+
+impl ShardedStateSet {
+    /// Must be a power of two.
+    const NUM_SHARDS: usize = 256;
+
+    fn new() -> Self {
+        Self {
+            shards: (0..Self::NUM_SHARDS)
+                .map(|_| std::sync::Mutex::new(FxHashSet::default()))
+                .collect(),
+        }
+    }
+
+    /// Returns `true` if the state was not yet in the set.
+    fn insert(&self, state: ReducedState) -> bool {
+        use std::hash::{BuildHasher, Hasher};
+        let mut hasher = rustc_hash::FxBuildHasher.build_hasher();
+        std::hash::Hash::hash(&state, &mut hasher);
+        // Need to remix the hash to avoid bucket collisions in the inner hash sets.
+        let remixed = hasher.finish().wrapping_mul(0x9E37_79B9_7F4A_7C15);
+        let shard = (remixed >> (64 - Self::NUM_SHARDS.trailing_zeros())) as usize;
+        self.shards[shard].lock().unwrap().insert(state)
+    }
+}
+
+fn discover_unsolved_states_parallel(
+    seed_state: ReducedState,
+    settings: &SolverSettings,
+    has_solution: impl Fn(ReducedState) -> bool + Sync,
+) -> Vec<ReducedState> {
+    let max_budget = usize::from(seed_state.steps_budget.get());
+    let mut pending: Vec<Vec<ReducedState>> = vec![Vec::new(); max_budget + 1];
+    let mut layers: Vec<Vec<ReducedState>> = Vec::new();
+    let discovered = ShardedStateSet::new();
+    if has_solution(seed_state) {
+        return Vec::new();
+    }
+    pending[max_budget].push(seed_state);
+    for budget in (1..=max_budget).rev() {
+        let mut layer = std::mem::take(&mut pending[budget]);
+        if layer.is_empty() {
+            continue;
+        }
+        // Make the order of states within a layer independent of thread scheduling.
+        layer.par_sort_unstable_by_key(|state| (state.durability, state.effects));
+        let has_solution = &has_solution;
+        let discovered = &discovered;
+        let children: Vec<ReducedState> = layer
+            .par_iter()
+            .with_min_len(64)
+            .flat_map_iter(|parent| {
+                let full_parent = parent.to_state();
+                let parent_budget = parent.steps_budget;
+                FULL_SEARCH_ACTIONS.into_iter().filter_map(move |action| {
+                    let step_budget =
+                        NonZero::try_from(parent_budget.get().saturating_sub(action.steps()))
+                            .ok()?;
+                    let full_child = use_action_combo(settings, full_parent, action).ok()?;
+                    if full_child.is_final(&settings.simulator_settings) {
+                        return None;
+                    }
+                    let child = ReducedState::from_state(full_child, step_budget);
+                    (!has_solution(child) && discovered.insert(child)).then_some(child)
+                })
+            })
+            .collect();
+        for child in children {
+            pending[usize::from(child.steps_budget.get())].push(child);
+        }
+        layers.push(layer);
+    }
+    layers.into_iter().rev().flatten().collect()
+}
+
 fn construct_solution<'alloc>(
     state: ReducedState,
     context: &StepLbSolverContext<'alloc>,
@@ -343,11 +421,11 @@ fn solve_state_parallel<'alloc>(
     context: &StepLbSolverContext<'alloc>,
     solved_states: &mut SolvedStates<'alloc>,
 ) -> Result<&'alloc ParetoFront, SolverException> {
-    let mut unsolved_states = {
+    let unsolved_states = {
         let has_solution = |state| solved_states.contains_key(&state);
-        discover_unsolved_states(seed_state, &context.settings, has_solution)
+        discover_unsolved_states_parallel(seed_state, &context.settings, has_solution)
     };
-    unsolved_states.par_sort_unstable_by_key(|state| state.steps_budget);
+    solved_states.reserve(unsolved_states.len());
     let mut idx_begin = 0;
     let mut idx_end = 0;
     while idx_begin < unsolved_states.len() {
