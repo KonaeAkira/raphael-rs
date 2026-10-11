@@ -247,8 +247,9 @@ pre {
 
 .brand-text {
     display: flex;
-    flex-direction: column;
-    line-height: 1.15;
+    align-items: baseline;
+    gap: var(--element-gap);
+    white-space: nowrap;
 }
 
 .brand-name {
@@ -258,7 +259,7 @@ pre {
 }
 
 .brand-sub {
-    font-size: 11.5px;
+    font-size: 15px;
     color: var(--text-muted);
 }
 

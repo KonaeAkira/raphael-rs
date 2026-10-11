@@ -33,7 +33,7 @@ pub fn Header() -> Element {
             div { class: "brand",
                 div { class: "brand-text",
                     span { class: "brand-name", "Raphael" }
-                    span { class: "brand-sub", "FFXIV Crafting Solver" }
+                    span { class: "brand-sub", "| FFXIV Crafting Solver" }
                 }
                 span { class: "pill", "v{env!(\"CARGO_PKG_VERSION\")}" }
             }
