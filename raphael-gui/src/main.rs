@@ -82,7 +82,7 @@ fn main() {
     let config = Config::new()
         .with_window(window)
         .with_menu(None)
-        .with_background_color((16, 18, 24, 255))
+        .with_background_color((34, 31, 34, 255))
         .with_disable_context_menu(!cfg!(debug_assertions));
     dioxus::LaunchBuilder::desktop()
         .with_cfg(config)
