@@ -5,7 +5,7 @@
     font-family: "XIV Icons";
     src: url("fonts/XIV_Icon_Recreations/XIV_Icon_Recreations.ttf")
         format("truetype");
-    unicode-range: U+E000-E0FF;
+    unicode-range: U+E000-E1FF;
     font-display: swap;
 }
 
