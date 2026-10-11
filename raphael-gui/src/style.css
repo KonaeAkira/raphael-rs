@@ -1064,7 +1064,6 @@ pre {
     width: 40px;
     height: 40px;
     flex: none;
-    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -1090,7 +1089,6 @@ pre {
     right: 0;
     bottom: 0;
     padding: 0 3px;
-    border-top-left-radius: 4px;
     background: rgba(0, 0, 0, 0.72);
     font-size: 10.5px;
     font-weight: 700;
