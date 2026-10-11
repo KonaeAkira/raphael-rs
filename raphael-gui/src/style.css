@@ -591,6 +591,9 @@ h2, h3, p {
     background: transparent;
     color: var(--text);
     font: inherit;
+    /* Without the icon font: WebKit measures `ch` (used for the width) from the first listed font,
+       and the icon font has no digits. */
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     font-variant-numeric: tabular-nums;
     text-align: right;
     outline: none;

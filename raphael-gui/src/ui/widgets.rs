@@ -61,8 +61,6 @@ pub fn NumberInput(
     if disabled {
         class.push_str(" disabled");
     }
-    // Fit the widest allowed value, plus horizontal padding.
-    let width = format!("calc({}ch + 18px)", max.to_string().len().max(2) + 1);
     rsx! {
         div { class, title,
             if !prefix.is_empty() {
@@ -71,7 +69,7 @@ pub fn NumberInput(
             input {
                 r#type: "number",
                 inputmode: "numeric",
-                style: "width: {width}",
+                style: "width: calc(5ch + 20px)",
                 min,
                 max,
                 disabled,
