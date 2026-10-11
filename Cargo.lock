@@ -4773,8 +4773,6 @@ dependencies = [
  "ehttp",
  "env_logger",
  "expect-test",
- "futures-channel",
- "futures-util",
  "gloo-timers",
  "include_dir",
  "log",

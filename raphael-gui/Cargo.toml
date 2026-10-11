@@ -13,8 +13,6 @@ raphael-data = { workspace = true, features = ["serde"] }
 raphael-translations = { workspace = true }
 
 dioxus = { version = "0.7.10", default-features = false, features = ["launch", "logger", "lib"] }
-futures-channel = "0.3"
-futures-util = { version = "0.3", default-features = false, features = ["std"] }
 
 rayon = { workspace = true }
 serde = { workspace = true }
