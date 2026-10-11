@@ -241,13 +241,21 @@ pub async fn solve(mut app_context: Signal<AppContext>, mut solve_state: Signal<
                 SolverEvent::Actions(new_actions) => *actions = new_actions,
                 SolverEvent::Finished(exception) => {
                     let info = (**info).clone();
-                    state.last_solve_info = Some(LastSolveInfo {
-                        solve_params: info.solve_params.clone(),
-                        duration: info.start_time.elapsed(),
-                        loaded_from_history: false,
-                    });
+                    if exception != Some(SolverException::Interrupted) {
+                        state.last_solve_info = Some(LastSolveInfo {
+                            solve_params: info.solve_params.clone(),
+                            duration: info.start_time.elapsed(),
+                            loaded_from_history: false,
+                        });
+                    }
                     state.status = match exception {
                         Some(SolverException::Interrupted) => SolveStatus::Idle,
+                        Some(SolverException::NoSolution) => {
+                            state.actions = Vec::new();
+                            SolveStatus::Failed {
+                                error: SolverException::NoSolution,
+                            }
+                        }
                         Some(error) => SolveStatus::Failed { error },
                         None => {
                             let mut ctx = app_context.write();
