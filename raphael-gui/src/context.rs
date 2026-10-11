@@ -28,8 +28,15 @@ impl RecipeSearchDomain {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct SearchState {
     pub recipe: RecipeSearchState,
-    pub food: GenericSearchState,
-    pub potion: GenericSearchState,
+}
+
+/// Contents of the search fields. Kept out of [`AppContext`] so that typing doesn't trigger a save,
+/// and never stored, so that searches start out empty.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct SearchText {
+    pub recipe: String,
+    pub food: String,
+    pub potion: String,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -64,7 +71,6 @@ pub struct RecipeSearchState {
     pub show_custom_recipe_select: bool,
 
     pub search_domain: RecipeSearchDomain,
-    pub search_text: String,
 
     #[serde(default)]
     pub filters: RecipeSearchFilters,
@@ -79,11 +85,6 @@ impl RecipeSearchState {
             }
         }
     }
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-pub struct GenericSearchState {
-    pub search_text: String,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]

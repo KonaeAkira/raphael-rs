@@ -17,7 +17,12 @@ pub use widgets::Modal;
 use dioxus::{core::Task, prelude::*};
 use raphael_data::Locale;
 
-use crate::{config::ThemePreference, context::AppContext, platform, solve::SolveState};
+use crate::{
+    config::ThemePreference,
+    context::{AppContext, SearchText},
+    platform,
+    solve::SolveState,
+};
 
 const STYLE: &str = include_str!("../style.css");
 
@@ -33,6 +38,10 @@ pub struct DialogState {
 }
 
 pub fn use_app_context() -> Signal<AppContext> {
+    use_context()
+}
+
+pub fn use_search_text() -> Signal<SearchText> {
     use_context()
 }
 
@@ -87,6 +96,7 @@ fn use_autosave(app_context: Signal<AppContext>) {
 #[component]
 pub fn App() -> Element {
     let app_context = use_context_provider(|| Signal::new(AppContext::load()));
+    use_context_provider(|| Signal::new(SearchText::default()));
     use_context_provider(|| Signal::new(SolveState::default()));
     use_context_provider(|| Signal::new(DialogState::default()));
 

@@ -9,11 +9,11 @@ use raphael_translations::{t, t_format};
 
 use super::{
     icons::{Icon, IconKind},
-    use_app_context,
+    use_app_context, use_search_text,
     virtual_list::VirtualList,
     widgets::{CardHeader, GameDataName, NameSource, strip_icon},
 };
-use crate::context::AppContext;
+use crate::context::{AppContext, SearchText};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConsumableKind {
@@ -29,17 +29,17 @@ impl ConsumableKind {
         }
     }
 
-    fn search_text(self, app_context: &AppContext) -> &String {
+    fn search_text(self, search_text: &SearchText) -> &String {
         match self {
-            Self::Food => &app_context.search_state.food.search_text,
-            Self::Potion => &app_context.search_state.potion.search_text,
+            Self::Food => &search_text.food,
+            Self::Potion => &search_text.potion,
         }
     }
 
-    fn search_text_mut(self, app_context: &mut AppContext) -> &mut String {
+    fn search_text_mut(self, search_text: &mut SearchText) -> &mut String {
         match self {
-            Self::Food => &mut app_context.search_state.food.search_text,
-            Self::Potion => &mut app_context.search_state.potion.search_text,
+            Self::Food => &mut search_text.food,
+            Self::Potion => &mut search_text.potion,
         }
     }
 
@@ -107,10 +107,11 @@ impl PartialEq for Results {
 #[component]
 pub fn ConsumablePanel(kind: ConsumableKind) -> Element {
     let mut app_context = use_app_context();
+    let mut search = use_search_text();
     let collapsed = use_signal(|| false);
     let query = use_memo(move || {
         let ctx = app_context.read();
-        (kind.search_text(&ctx).clone(), ctx.locale)
+        (kind.search_text(&search.read()).clone(), ctx.locale)
     });
     let results = use_memo(move || {
         let (text, locale) = query();
@@ -125,7 +126,7 @@ pub fn ConsumablePanel(kind: ConsumableKind) -> Element {
         let ctx = app_context.read();
         (
             ctx.locale,
-            kind.search_text(&ctx).clone(),
+            kind.search_text(&search.read()).clone(),
             kind.selected(&ctx),
             *ctx.active_stats(),
         )
@@ -177,7 +178,7 @@ pub fn ConsumablePanel(kind: ConsumableKind) -> Element {
                             placeholder: strip_icon(t!(locale, "🔍 Search")),
                             value: "{search_text}",
                             oninput: move |event| {
-                                *kind.search_text_mut(&mut app_context.write()) = event.value().replace('\0', "");
+                                *kind.search_text_mut(&mut search.write()) = event.value().replace('\0', "");
                             },
                         }
                     }

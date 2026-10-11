@@ -10,7 +10,7 @@ use raphael_translations::{t, t_format};
 
 use super::{
     icons::{Icon, IconKind},
-    use_app_context, use_dialogs,
+    use_app_context, use_dialogs, use_search_text,
     virtual_list::VirtualList,
     widgets::{
         CardHeader, Checkbox, GameDataName, Modal, NameSource, NumberInput, Select, Warning,
@@ -112,15 +112,12 @@ pub fn RecipePanel() -> Element {
 fn RecipeSearch() -> Element {
     let mut app_context = use_app_context();
     let mut dialogs = use_dialogs();
-    let (locale, domain, search_text, filters_active) = {
+    let mut search = use_search_text();
+    let search_text = search.read().recipe.clone();
+    let (locale, domain, filters_active) = {
         let ctx = app_context.read();
         let search = &ctx.search_state.recipe;
-        (
-            ctx.locale,
-            search.search_domain,
-            search.search_text.clone(),
-            search.filters_active(),
-        )
+        (ctx.locale, search.search_domain, search.filters_active())
     };
     let domains = [
         RecipeSearchDomain::Recipes,
@@ -141,9 +138,7 @@ fn RecipeSearch() -> Element {
                     placeholder: strip_icon(t!(locale, "🔍 Search")),
                     value: "{search_text}",
                     oninput: move |event| {
-                        app_context.write().search_state.recipe.search_text = event
-                            .value()
-                            .replace('\0', "");
+                        search.write().recipe = event.value().replace('\0', "");
                     },
                 }
             }
@@ -168,11 +163,12 @@ fn RecipeSearch() -> Element {
 #[component]
 fn RecipeList() -> Element {
     let mut app_context = use_app_context();
+    let search_text = use_search_text();
     let query = use_memo(move || {
         let ctx = app_context.read();
         let search = &ctx.search_state.recipe;
         (
-            search.search_text.clone(),
+            search_text.read().recipe.clone(),
             ctx.locale,
             search.filters.construct_recipe_filter(&ctx.crafter_config),
         )
@@ -229,11 +225,12 @@ fn RecipeList() -> Element {
 #[component]
 fn MissionList() -> Element {
     let mut app_context = use_app_context();
+    let search_text = use_search_text();
     let query = use_memo(move || {
         let ctx = app_context.read();
         let search = &ctx.search_state.recipe;
         (
-            search.search_text.clone(),
+            search_text.read().recipe.clone(),
             ctx.locale,
             search
                 .filters
