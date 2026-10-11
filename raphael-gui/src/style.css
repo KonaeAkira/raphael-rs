@@ -196,8 +196,8 @@ h2, h3, p {
     z-index: 20;
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 10px 24px;
+    gap: 10px;
+    padding: 10px var(--panel-gap);
     background: var(--surface);
     border-bottom: 1px solid var(--border);
 }
@@ -259,26 +259,31 @@ h2, h3, p {
 
 /* ---------- Layout ---------- */
 
+/* Spacing between panels, and between the panels and the window edge. */
+.app {
+    --panel-gap: 10px;
+}
+
 .main {
     max-width: 1680px;
     margin: 0 auto;
-    padding: 20px 24px 40px;
+    padding: var(--panel-gap);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--panel-gap);
 }
 
 .columns {
     display: grid;
     grid-template-columns: minmax(0, 1.55fr) minmax(310px, 1fr) minmax(300px, 1fr);
-    gap: 16px;
+    gap: var(--panel-gap);
     align-items: start;
 }
 
 .col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--panel-gap);
     min-width: 0;
 }
 
@@ -295,11 +300,8 @@ h2, h3, p {
     .columns {
         grid-template-columns: minmax(0, 1fr);
     }
-    .main {
-        padding: 12px;
-    }
     .topbar {
-        padding: 8px 12px;
+        padding: 8px var(--panel-gap);
     }
 }
 
@@ -321,8 +323,8 @@ h2, h3, p {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 52px;
-    padding: 10px 16px;
+    min-height: calc(32px + 2 * var(--panel-gap));
+    padding: var(--panel-gap);
     min-width: 0;
 }
 
@@ -338,7 +340,7 @@ h2, h3, p {
 }
 
 .card-body {
-    padding: 14px 16px 16px;
+    padding: var(--panel-gap);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -347,7 +349,7 @@ h2, h3, p {
 
 .card-footer {
     border-top: 1px solid var(--border);
-    padding: 12px 16px;
+    padding: var(--panel-gap);
 }
 
 .collapse-btn {
@@ -762,7 +764,7 @@ h2, h3, p {
 .check-list.horizontal {
     flex-direction: row;
     flex-wrap: wrap;
-    column-gap: 16px;
+    column-gap: 10px;
 }
 
 .check-with-help {
@@ -792,7 +794,7 @@ h2, h3, p {
     z-index: 40;
     width: max-content;
     max-width: min(340px, 80vw);
-    padding: 10px 12px;
+    padding: var(--panel-gap);
     background: var(--surface-3);
     border: 1px solid var(--border-strong);
     color: var(--text);
@@ -820,7 +822,7 @@ h2, h3, p {
 .warning {
     display: flex;
     gap: 10px;
-    padding: 10px 12px;
+    padding: var(--panel-gap);
     background: var(--warn-soft);
     color: var(--warn);
     font-size: 12.5px;
@@ -909,16 +911,16 @@ h2, h3, p {
 /* ---------- Simulator ---------- */
 
 .sim-body {
-    padding: 14px 16px 16px;
+    padding: var(--panel-gap);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
 }
 
 .stat-bars {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr) max-content;
-    column-gap: 14px;
+    column-gap: 10px;
     row-gap: 10px;
     align-items: center;
 }
@@ -957,15 +959,13 @@ h2, h3, p {
 .action-strip {
     display: flex;
     gap: 6px;
-    min-height: 44px;
-    padding: 4px 2px 8px;
+    min-height: 40px;
     overflow-x: auto;
     scrollbar-width: thin;
 }
 
 .action-strip.compact {
     min-height: 0;
-    padding-bottom: 4px;
 }
 
 .action-strip.compact .action {
@@ -1043,8 +1043,8 @@ h2, h3, p {
 .row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 0 12px;
+    gap: 10px;
+    padding: 0 var(--panel-gap);
     min-width: 0;
     min-height: var(--row-h);
 }
@@ -1107,7 +1107,7 @@ h2, h3, p {
 }
 
 .row.sub {
-    padding-left: calc(12px + 7.5em + 12px);
+    padding-left: calc(var(--panel-gap) + 7.5em + 10px);
 }
 
 /* ---------- Custom recipe ---------- */
@@ -1115,14 +1115,14 @@ h2, h3, p {
 .custom-recipe {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px 24px;
+    gap: 10px 10px;
 }
 
 .form-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 6px 12px;
+    gap: 6px 10px;
 }
 
 .form-grid > label {
@@ -1184,7 +1184,7 @@ h2, h3, p {
 /* ---------- Macro ---------- */
 
 .macro-body {
-    gap: 12px;
+    gap: 10px;
 }
 
 .macro-block {
@@ -1197,13 +1197,13 @@ h2, h3, p {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 6px 4px 12px;
+    padding: 4px 6px 4px var(--panel-gap);
     border-bottom: 1px solid var(--border);
 }
 
 .macro-block pre {
     margin: 0;
-    padding: 10px 12px;
+    padding: var(--panel-gap);
     font-size: 12.5px;
     line-height: 1.55;
     overflow-x: auto;
@@ -1269,7 +1269,7 @@ fieldset:disabled {
     z-index: 50;
     display: grid;
     place-items: center;
-    padding: 16px;
+    padding: var(--panel-gap);
     background: rgba(5, 7, 12, 0.6);
     animation: fade-in 0.12s ease;
 }
@@ -1294,8 +1294,8 @@ fieldset:disabled {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 14px 16px 12px 20px;
+    gap: 10px;
+    padding: var(--panel-gap);
     border-bottom: 1px solid var(--border);
 }
 
@@ -1305,7 +1305,7 @@ fieldset:disabled {
 }
 
 .modal-body {
-    padding: 16px 20px;
+    padding: var(--panel-gap);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -1317,7 +1317,7 @@ fieldset:disabled {
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 12px 20px 16px;
+    padding: var(--panel-gap);
     border-top: 1px solid var(--border);
 }
 
@@ -1337,7 +1337,7 @@ fieldset:disabled {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
     align-items: center;
-    gap: 14px 16px;
+    gap: 10px 10px;
 }
 
 .settings-grid > label {
@@ -1348,7 +1348,7 @@ fieldset:disabled {
     margin: 0;
     max-height: 320px;
     overflow: auto;
-    padding: 10px 12px;
+    padding: var(--panel-gap);
     background: var(--surface-2);
     font-size: 12.5px;
     white-space: pre-wrap;
@@ -1357,7 +1357,7 @@ fieldset:disabled {
 .solving {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
 }
 
 .solving-time {
@@ -1389,7 +1389,7 @@ fieldset:disabled {
 }
 
 .job-stats {
-    padding: 12px;
+    padding: var(--panel-gap);
     border: 1px solid var(--border);
     background: var(--surface-2);
     display: flex;
@@ -1459,7 +1459,7 @@ fieldset:disabled {
     align-items: center;
     gap: 8px;
     width: 100%;
-    padding: 10px 12px;
+    padding: var(--panel-gap);
     border: none;
     background: transparent;
     color: var(--text);
@@ -1472,11 +1472,11 @@ fieldset:disabled {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 0 12px 12px;
+    padding: 0 var(--panel-gap) var(--panel-gap);
 }
 
 .rotation {
-    padding: 8px 10px;
+    padding: var(--panel-gap);
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -1500,9 +1500,9 @@ fieldset:disabled {
 .info-table {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    gap: 3px 16px;
+    gap: 3px 10px;
     margin: 0;
-    padding: 8px 10px;
+    padding: var(--panel-gap);
     background: var(--surface);
     font-size: 13px;
 }
