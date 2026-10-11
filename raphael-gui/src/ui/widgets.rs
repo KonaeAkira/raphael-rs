@@ -233,7 +233,9 @@ pub fn CopyButton(
             class: if copied() { "copied" },
             title,
             disabled,
-            onclick: move |_| {
+            onclick: move |event| {
+                // Don't trigger the surrounding element, e.g. selecting a list row.
+                event.stop_propagation();
                 platform::copy_to_clipboard(text.clone());
                 copied.set(true);
                 spawn(async move {
