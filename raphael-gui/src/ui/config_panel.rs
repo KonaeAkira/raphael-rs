@@ -349,7 +349,6 @@ pub fn ConfigPanel() -> Element {
                     class: "btn primary solve-btn",
                     disabled: busy,
                     onclick: on_solve,
-                    Icon { kind: IconKind::Sparkles }
                     span { {t!(locale, "Solve")} }
                 }
                 if let Some(LastSolveInfo { duration, loaded_from_history, .. }) = last_solve_info {

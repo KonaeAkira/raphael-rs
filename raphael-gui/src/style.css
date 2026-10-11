@@ -1260,11 +1260,6 @@ pre {
     background: linear-gradient(135deg, var(--accent), #6f5ce0);
 }
 
-.solve-btn .icon {
-    width: 18px;
-    height: 18px;
-}
-
 .solve-info {
     text-align: center;
     font-size: 12.5px;
