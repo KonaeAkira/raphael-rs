@@ -502,7 +502,8 @@ pre {
 }
 
 .split-btn > .btn:nth-child(2) {
-    border-left: 1px solid color-mix(in srgb, var(--accent-contrast) 25%, transparent);
+    border-left: 1px solid
+        color-mix(in srgb, var(--accent-contrast) 25%, transparent);
     width: 28px;
 }
 
@@ -944,7 +945,7 @@ pre {
 }
 
 .card-header .game-name-text {
-    font-weight: 550;
+    color: var(--accent-strong);
 }
 
 .expert-icon {
