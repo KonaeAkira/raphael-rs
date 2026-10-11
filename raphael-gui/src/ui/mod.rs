@@ -14,10 +14,10 @@ mod widgets;
 #[cfg(not(target_arch = "wasm32"))]
 pub use widgets::Modal;
 
-use dioxus::prelude::*;
+use dioxus::{core::Task, prelude::*};
 use raphael_data::Locale;
 
-use crate::{config::ThemePreference, context::AppContext, solve::SolveState};
+use crate::{config::ThemePreference, context::AppContext, platform, solve::SolveState};
 
 const STYLE: &str = include_str!("../style.css");
 
@@ -56,6 +56,34 @@ fn lang_code(locale: Locale) -> &'static str {
     }
 }
 
+/// How long the app state must stay unchanged before it is written to storage.
+const SAVE_DEBOUNCE: web_time::Duration = web_time::Duration::from_millis(500);
+
+/// Persists the app state once it stops changing, and right before the app closes.
+///
+/// Saving serializes every stored key, including the whole solve history, so doing it on every
+/// keystroke or slider tick would be too expensive.
+fn use_autosave(app_context: Signal<AppContext>) {
+    let mut pending_save: Signal<Option<Task>> = use_signal(|| None);
+    use_effect(move || {
+        // Subscribe to every change of the app state.
+        let _ = &*app_context.read();
+        if let Some(task) = pending_save.take() {
+            task.cancel();
+        }
+        let task = spawn(async move {
+            platform::sleep(SAVE_DEBOUNCE).await;
+            // Clear the handle before saving so a later change can't cancel a finished task
+            // whose id may already have been reused.
+            pending_save.set(None);
+            app_context.peek().save();
+        });
+        pending_save.set(Some(task));
+    });
+    // Stored values that haven't changed are skipped, so this is cheap when nothing is pending.
+    platform::use_on_exit(move || app_context.peek().save());
+}
+
 #[component]
 pub fn App() -> Element {
     let app_context = use_context_provider(|| Signal::new(AppContext::load()));
@@ -70,8 +98,7 @@ pub fn App() -> Element {
         }
     });
 
-    // Persist the app state whenever it changes.
-    use_effect(move || app_context.read().save());
+    use_autosave(app_context);
 
     #[cfg(not(target_arch = "wasm32"))]
     crate::native::use_native_asset_handlers();

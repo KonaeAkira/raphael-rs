@@ -12,6 +12,38 @@ pub async fn sleep(duration: web_time::Duration) {
     tokio::time::sleep(duration).await;
 }
 
+/// Runs `callback` right before the app closes: on page hide on the web, on window close on
+/// native. The callback must be synchronous because the app may exit as soon as it returns.
+#[cfg(target_arch = "wasm32")]
+pub fn use_on_exit(callback: impl FnMut() + 'static) {
+    use dioxus::prelude::*;
+    use std::rc::Rc;
+    use wasm_bindgen::{JsCast, closure::Closure};
+    // The closure is kept in the hook state so the browser can still call it for as long as the
+    // component lives.
+    use_hook(move || {
+        let closure = Rc::new(Closure::<dyn FnMut()>::new(callback));
+        if let Some(window) = web_sys::window() {
+            window.set_onpagehide(Some(closure.as_ref().as_ref().unchecked_ref()));
+        }
+        closure
+    });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn use_on_exit(mut callback: impl FnMut() + 'static) {
+    use dioxus::desktop::{WindowEvent, tao::event::Event, use_wry_event_handler};
+    use_wry_event_handler(move |event, _| {
+        if let Event::WindowEvent {
+            event: WindowEvent::CloseRequested,
+            ..
+        } = event
+        {
+            callback();
+        }
+    });
+}
+
 #[cfg(target_arch = "wasm32")]
 pub fn copy_to_clipboard(text: String) {
     let Some(window) = web_sys::window() else {
