@@ -260,7 +260,7 @@ fn SolvingDialog() -> Element {
     let mut tick = use_signal(|| 0u32);
     use_future(move || async move {
         loop {
-            platform::sleep(web_time::Duration::from_millis(100)).await;
+            platform::sleep(web_time::Duration::from_millis(33)).await;
             tick += 1;
         }
     });
