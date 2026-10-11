@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
+# Builds the web version of the Dioxus app into `distrib`.
 
-# set -exo pipefail
-
-export BASE_URL="http://localhost:8080"
+set -euo pipefail
+cd "$(dirname "$0")/.."
 
 cp --no-target-directory ./.cargo/config.toml ./.cargo/config.toml.backup
 cp --no-target-directory ./.cargo/config_wasm.toml ./.cargo/config.toml
 trap "mv --no-target-directory ./.cargo/config.toml.backup ./.cargo/config.toml" EXIT
 
-trunk serve index.html --release --features=dev-panel
+trunk build --config raphael-gui/Trunk.toml --release "$@"

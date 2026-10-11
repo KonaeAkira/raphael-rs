@@ -112,7 +112,7 @@ pub struct AppContext {
 }
 
 /// Keys under which each part of the [`AppContext`] is persisted.
-/// These match the keys used by the egui version of the app.
+/// These match the keys used by the previous (egui-based) versions of the app.
 pub mod keys {
     pub const LOCALE: &str = "LOCALE";
     pub const APP_CONFIG: &str = "APP_CONFIG";

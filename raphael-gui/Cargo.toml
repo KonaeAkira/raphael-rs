@@ -1,5 +1,5 @@
 [package]
-name = "raphael-dioxus"
+name = "raphael-gui"
 version = "0.28.6"
 edition = "2024"
 

@@ -16,6 +16,7 @@ It produces crafting macros that are tailored to your stats.
 - [How does it work?](#how-does-it-work)
 - [Building from source](#building-from-source)
   - [Native GUI](#native-gui)
+  - [Web GUI](#web-gui)
   - [Native CLI](#native-cli)
 - [Contributing](#contributing)
 
@@ -46,11 +47,27 @@ The current minimal supported Rust version (MSRV) is 1.92.0.
 
 ### Native GUI
 
-To build and run the application:
+The GUI is built with [Dioxus](https://dioxuslabs.com). To build and run the application:
 
 ```
-cargo run --release
+cargo run --release --package raphael-gui
 ```
+
+On Linux, the native GUI needs WebKitGTK and libxdo:
+
+- Arch: `pacman -S webkit2gtk-4.1 xdotool`
+- Debian/Ubuntu: `apt install libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev`
+
+### Web GUI
+
+The web version is built with [Trunk](https://trunkrs.dev) and needs a nightly toolchain (pinned in `rust-toolchain.toml`) for the multi-threaded solver:
+
+```
+./raphael-gui/serve-web.sh   # dev server on http://localhost:8080
+./raphael-gui/build-web.sh   # production build into distrib/
+```
+
+See [raphael-gui/README.md](raphael-gui/README.md) for details.
 
 ### Native CLI
 

@@ -22,9 +22,7 @@ jobs:
       - name: Check for clippy warnings when building native version
         run: cargo clippy --workspace -- -Dwarnings
       - name: Check for clippy warnings when building web version
-        run: BASE_URL=localhost cargo clippy --config ./.cargo/config_wasm.toml -- -Dwarnings
-      - name: Check for clippy warnings when building web version of the Dioxus app
-        run: cargo clippy --config ./.cargo/config_wasm.toml --package raphael-dioxus -- -Dwarnings
+        run: cargo clippy --config ./.cargo/config_wasm.toml --package raphael-gui -- -Dwarnings
 
   check-windows:
     runs-on: windows-latest

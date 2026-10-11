@@ -1,10 +1,10 @@
 //! Key-value persistence.
 //!
-//! Values are stored as RON strings under the same keys the egui version of the app uses, so
-//! existing settings, crafter stats and saved rotations carry over:
+//! Values are stored as RON strings under the same keys the previous (egui-based) versions of the
+//! app used, so existing settings, crafter stats and saved rotations carry over:
 //! - Web: one `localStorage` entry per key (same layout as eframe's web storage).
 //! - Native: a RON-encoded `HashMap<String, String>` in the app's data directory. On first launch
-//!   the entries are imported from the egui version's `app.ron`.
+//!   the entries are imported from the previous versions' `app.ron`.
 
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -118,7 +118,7 @@ mod imp {
     }
 }
 
-/// Directory used for persisted data, shared with the egui version of the app.
+/// Directory used for persisted data, shared with the previous versions of the app.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn data_dir() -> Option<std::path::PathBuf> {
     directories::ProjectDirs::from("", "", "Raphael XIV").map(|dirs| dirs.data_dir().to_path_buf())

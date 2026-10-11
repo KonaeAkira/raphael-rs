@@ -3,13 +3,6 @@
 
 set -euxo pipefail
 
-# Base URL used to fetch assets
-if [ "$CF_PAGES_BRANCH" == "main" ]; then
-    export BASE_URL="https://www.raphael-xiv.com"
-else
-    export BASE_URL=$CF_PAGES_URL
-fi
-
 # Install the Rust toolchain
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none
 . "$HOME/.cargo/env"
@@ -23,4 +16,4 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 # install trunk
 cargo-binstall --no-confirm --locked trunk
 
-trunk build index.html --release
+trunk build --config raphael-gui/Trunk.toml --release

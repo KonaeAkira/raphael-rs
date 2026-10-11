@@ -1,6 +1,7 @@
 [build]
 target = "index.html"
-dist = "distrib"
+# Cloudflare Pages deploys the `distrib` directory at the repository root.
+dist = "../distrib"
 
 [serve]
 # Cross-origin isolation is required for SharedArrayBuffer, which the multi-threaded solver relies on.

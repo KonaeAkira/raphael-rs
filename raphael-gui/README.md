@@ -1,17 +1,17 @@
-# raphael-dioxus
+# raphael-gui
 
-A rewrite of the Raphael GUI using [Dioxus](https://dioxuslabs.com) 0.7. It is meant to replace the
-egui app in the root crate (`raphael-xiv`). Both apps live side by side until this one reaches parity.
+The Raphael GUI, built with [Dioxus](https://dioxuslabs.com) 0.7.
 
-The solver, simulator, game data and translations are shared with the egui app. This crate only
-contains the UI, which is plain HTML/CSS rendered in the browser (web) or in a system webview (native).
+The solver, simulator, game data and translations live in the other workspace crates. This crate
+only contains the UI, which is plain HTML/CSS rendered in the browser (web) or in a system webview
+(native).
 
 ## Running
 
 ### Native
 
 ```sh
-cargo run --release --package raphael-dioxus
+cargo run --release --package raphael-gui
 ```
 
 On Linux, Dioxus desktop needs WebKitGTK and libxdo:
@@ -23,13 +23,13 @@ Windows uses WebView2 and macOS uses WKWebView, so they need no extra dependenci
 
 ### Web
 
-The web version is built with [Trunk](https://trunkrs.dev), like the egui app. It reuses
+The web version is built with [Trunk](https://trunkrs.dev). It uses
 `.cargo/config_wasm.toml` (atomics, shared memory and `build-std`) so that the solver can run on a
 `wasm-bindgen-rayon` thread pool.
 
 ```sh
-./raphael-dioxus/serve-web.sh   # dev server on http://localhost:8080
-./raphael-dioxus/build-web.sh   # production build into raphael-dioxus/distrib
+./raphael-gui/serve-web.sh   # dev server on http://localhost:8080
+./raphael-gui/build-web.sh   # production build into distrib/ (at the repository root)
 ```
 
 Multithreading needs `SharedArrayBuffer`, so the page must be served with these headers:
@@ -45,17 +45,18 @@ The `dx` CLI is not used. Trunk already supports the custom wasm build configura
 
 ## Persistence
 
-Settings, crafter stats and saved rotations are stored as RON under the same keys the egui app uses:
+Settings, crafter stats and saved rotations are stored as RON under the same keys the previous
+(egui-based) versions of the app used, so existing data carries over:
 
-- **Web:** in `localStorage`. On the same origin, existing data carries over automatically.
-- **Native:** in `settings.ron` in the egui app's data directory (e.g. `~/.local/share/raphaelxiv`).
-  On first launch the data is imported from the egui app's `app.ron`.
+- **Web:** in `localStorage`.
+- **Native:** in `settings.ron` in the app's data directory (e.g. `~/.local/share/raphaelxiv`).
+  On first launch the data is imported from the previous versions' `app.ron`.
 
 ## Layout
 
 | Path                   | Contents                                                          |
 | ---------------------- | ----------------------------------------------------------------- |
-| `src/config.rs`        | Recipe, crafter and quality-target configuration (from egui app)  |
+| `src/config.rs`        | Recipe, crafter and quality-target configuration                   |
 | `src/context.rs`       | `AppContext`: all persisted app state                             |
 | `src/solve.rs`         | Starts the solver on the thread pool and polls its progress       |
 | `src/macros.rs`        | Rotation → in-game macro text                                     |

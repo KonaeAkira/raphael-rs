@@ -17,19 +17,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install system dependencies for Dioxus desktop
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev
       - name: Build
-        run: cargo build --release
+        run: cargo build --release --package raphael-gui
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: "target/release/raphael-xiv"
+          subject-path: "target/release/raphael-gui"
       - name: Upload Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./target/release/raphael-xiv
+          asset_path: ./target/release/raphael-gui
           asset_name: raphael_x86_64_linux
           asset_content_type: application/octet-stream
 
@@ -38,17 +40,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        run: cargo build --release
+        run: cargo build --release --package raphael-gui
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: "target/release/raphael-xiv.exe"
+          subject-path: "target/release/raphael-gui.exe"
       - name: Upload Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./target/release/raphael-xiv.exe
+          asset_path: ./target/release/raphael-gui.exe
           asset_name: raphael_x86_64_windows.exe
           asset_content_type: application/octet-stream
