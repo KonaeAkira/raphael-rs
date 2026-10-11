@@ -146,17 +146,20 @@ impl AppContext {
     }
 
     pub fn save(&self) {
-        storage::store(keys::LOCALE, &self.locale);
-        storage::store(keys::APP_CONFIG, &self.app_config);
-        storage::store(keys::SEARCH_STATE, &self.search_state);
-        storage::store(keys::RECIPE_CONFIG, &self.recipe_config);
-        storage::store(keys::SELECTED_FOOD, &self.selected_food);
-        storage::store(keys::SELECTED_POTION, &self.selected_potion);
-        storage::store(keys::CRAFTER_CONFIG, &self.crafter_config);
-        storage::store(keys::SOLVER_CONFIG, &self.solver_config);
-        storage::store(keys::MACRO_VIEW_CONFIG, &self.macro_view_config);
-        storage::store(keys::SAVED_ROTATIONS_CONFIG, &self.saved_rotations_config);
-        storage::store(keys::SAVED_ROTATIONS, &self.saved_rotations_data);
+        let mut batch = storage::Batch::new();
+        batch
+            .store(keys::LOCALE, &self.locale)
+            .store(keys::APP_CONFIG, &self.app_config)
+            .store(keys::SEARCH_STATE, &self.search_state)
+            .store(keys::RECIPE_CONFIG, &self.recipe_config)
+            .store(keys::SELECTED_FOOD, &self.selected_food)
+            .store(keys::SELECTED_POTION, &self.selected_potion)
+            .store(keys::CRAFTER_CONFIG, &self.crafter_config)
+            .store(keys::SOLVER_CONFIG, &self.solver_config)
+            .store(keys::MACRO_VIEW_CONFIG, &self.macro_view_config)
+            .store(keys::SAVED_ROTATIONS_CONFIG, &self.saved_rotations_config)
+            .store(keys::SAVED_ROTATIONS, &self.saved_rotations_data);
+        batch.commit();
     }
 
     /// Solver config with settings that are unavailable for the current recipe turned off.

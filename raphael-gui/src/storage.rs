@@ -23,11 +23,32 @@ pub fn load_or_default<T: DeserializeOwned + Default>(key: &str) -> T {
     load(key).unwrap_or_default()
 }
 
-/// Serializes `value` and stores it under `key`.
-pub fn store<T: Serialize>(key: &str, value: &T) {
-    match ron::to_string(value) {
-        Ok(string) => imp::set_string(key, string),
-        Err(error) => log::error!("Failed to encode value for key {key}: {error}"),
+/// A set of values to persist together.
+#[derive(Default)]
+#[must_use = "a batch does nothing until it is committed"]
+pub struct Batch {
+    entries: Vec<(String, String)>,
+}
+
+impl Batch {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Serializes `value` and queues it to be stored under `key`.
+    pub fn store<T: Serialize>(&mut self, key: &str, value: &T) -> &mut Self {
+        match ron::to_string(value) {
+            Ok(string) => self.entries.push((key.to_owned(), string)),
+            Err(error) => log::error!("Failed to encode value for key {key}: {error}"),
+        }
+        self
+    }
+
+    /// Writes all queued entries to storage. Entries whose value is unchanged are skipped.
+    pub fn commit(self) {
+        if !self.entries.is_empty() {
+            imp::set_strings(self.entries);
+        }
     }
 }
 
@@ -41,11 +62,14 @@ mod imp {
         local_storage()?.get_item(key).ok()?
     }
 
-    pub fn set_string(key: &str, value: String) {
-        if let Some(storage) = local_storage()
-            && storage.get_item(key).ok().flatten().as_ref() != Some(&value)
-        {
-            let _ = storage.set_item(key, &value);
+    pub fn set_strings(entries: Vec<(String, String)>) {
+        let Some(storage) = local_storage() else {
+            return;
+        };
+        for (key, value) in entries {
+            if storage.get_item(&key).ok().flatten().as_ref() != Some(&value) {
+                let _ = storage.set_item(&key, &value);
+            }
         }
     }
 }
@@ -87,12 +111,18 @@ mod imp {
         STORAGE.lock().unwrap().kv.get(key).cloned()
     }
 
-    pub fn set_string(key: &str, value: String) {
+    pub fn set_strings(entries: Vec<(String, String)>) {
         let mut storage = STORAGE.lock().unwrap();
-        if storage.kv.get(key) == Some(&value) {
+        let mut changed = false;
+        for (key, value) in entries {
+            if storage.kv.get(&key) != Some(&value) {
+                storage.kv.insert(key, value);
+                changed = true;
+            }
+        }
+        if !changed {
             return;
         }
-        storage.kv.insert(key.to_owned(), value);
         let Some(path) = storage.path.clone() else {
             return;
         };
