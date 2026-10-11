@@ -9,32 +9,6 @@
     font-display: swap;
 }
 
-/* Fallback CJK fonts, only downloaded if no system font covers the text. */
-@font-face {
-    font-family: "Raphael Noto JP";
-    src: url("fonts/Noto_Sans_JP/static/NotoSansJP-Regular.ttf")
-        format("truetype");
-    font-display: swap;
-}
-@font-face {
-    font-family: "Raphael Noto SC";
-    src: url("fonts/Noto_Sans_SC/static/NotoSansSC-Regular.ttf")
-        format("truetype");
-    font-display: swap;
-}
-@font-face {
-    font-family: "Raphael Noto KR";
-    src: url("fonts/Noto_Sans_KR/static/NotoSansKR-Regular.ttf")
-        format("truetype");
-    font-display: swap;
-}
-@font-face {
-    font-family: "Raphael Noto TC";
-    src: url("fonts/Noto_Sans_TC/static/NotoSansTC-Regular.ttf")
-        format("truetype");
-    font-display: swap;
-}
-
 /* ---------- Theme ---------- */
 
 .app {
@@ -131,25 +105,22 @@
 .app:lang(ja) {
     --font-ui:
         "XIV Icons", system-ui, -apple-system, "Segoe UI", "Hiragino Sans",
-        "Yu Gothic UI", Meiryo, "Noto Sans CJK JP", "Raphael Noto JP",
-        sans-serif;
+        "Yu Gothic UI", Meiryo, "Noto Sans CJK JP", sans-serif;
 }
 .app:lang(zh-Hans) {
     --font-ui:
         "XIV Icons", system-ui, -apple-system, "Segoe UI", "PingFang SC",
-        "Microsoft YaHei UI", "Noto Sans CJK SC", "Raphael Noto SC", sans-serif;
+        "Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif;
 }
 .app:lang(ko) {
     --font-ui:
         "XIV Icons", system-ui, -apple-system, "Segoe UI",
-        "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR",
-        "Raphael Noto KR", sans-serif;
+        "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif;
 }
 .app:lang(zh-Hant) {
     --font-ui:
         "XIV Icons", system-ui, -apple-system, "Segoe UI", "PingFang TC",
-        "Microsoft JhengHei UI", "Noto Sans CJK TC", "Raphael Noto TC",
-        sans-serif;
+        "Microsoft JhengHei UI", "Noto Sans CJK TC", sans-serif;
 }
 
 /* ---------- Base ---------- */
