@@ -1108,7 +1108,8 @@ pre {
     height: var(--row-h);
 }
 
-.vrow:nth-child(even) {
+.vlist-window:not(.start-odd) > .vrow:nth-child(even),
+.vlist-window.start-odd > .vrow:nth-child(odd) {
     background: color-mix(in srgb, var(--surface-3) 40%, transparent);
 }
 

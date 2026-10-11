@@ -48,7 +48,8 @@ pub fn VirtualList<D: Clone + PartialEq + 'static>(
             div {
                 class: "vlist-inner",
                 style: "--rows: {count}; --start: {start};",
-                div { class: "vlist-window",
+                div {
+                    class: if start % 2 == 1 { "vlist-window start-odd" } else { "vlist-window" },
                     for index in start..end {
                         {render_row.call(index)}
                     }
