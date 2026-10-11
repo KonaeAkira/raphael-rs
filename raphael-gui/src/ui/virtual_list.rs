@@ -2,12 +2,18 @@ use dioxus::prelude::*;
 
 /// Scrollable list that only renders the rows that are currently visible.
 /// All rows must have the same height (set via CSS on `.vrow`).
+///
+/// `render_row` keeps its identity across renders, so the visible rows are only re-rendered when
+/// `count` or `deps` changes. `deps` must hold every value that `render_row` reads from its
+/// surroundings (e.g. the selected row).
 #[component]
-pub fn VirtualList(
+pub fn VirtualList<D: Clone + PartialEq + 'static>(
     count: usize,
+    deps: D,
     render_row: Callback<usize, Element>,
     #[props(into, default)] class: String,
 ) -> Element {
+    let _ = deps;
     const OVERSCAN: usize = 8;
     const INITIAL_VISIBLE_ROWS: usize = 16;
 

@@ -182,7 +182,13 @@ pub fn ConsumablePanel(kind: ConsumableKind) -> Element {
                         }
                     }
                     for key in std::iter::once(format!("{:?}", query())) {
-                        VirtualList { key: "{key}", class: "consumable-list", count, render_row }
+                        VirtualList {
+                            key: "{key}",
+                            class: "consumable-list",
+                            count,
+                            deps: (locale, selected.map(|item| (item.item_id, item.hq)), stats),
+                            render_row,
+                        }
                     }
                 }
             }

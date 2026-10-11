@@ -215,7 +215,13 @@ fn RecipeList() -> Element {
     rsx! {
         // Re-create the list when the query changes so that it scrolls back to the top.
         for key in std::iter::once(list_key) {
-            VirtualList { key: "{key}", class: "recipe-list", count, render_row }
+            VirtualList {
+                key: "{key}",
+                class: "recipe-list",
+                count,
+                deps: (locale, selected_id),
+                render_row,
+            }
         }
     }
 }
