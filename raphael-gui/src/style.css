@@ -1255,14 +1255,13 @@ pre {
 }
 
 .solve-btn {
-    height: 42px;
     font-size: 15px;
     font-weight: 650;
     background: linear-gradient(135deg, var(--accent), #6f5ce0);
 }
 
 .solve-info {
-    text-align: center;
+    text-align: right;
     font-size: 12.5px;
 }
 
