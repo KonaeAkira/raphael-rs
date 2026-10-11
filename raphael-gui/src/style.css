@@ -264,6 +264,7 @@ pre {
 }
 
 .links {
+    margin-left: auto;
     display: flex;
     gap: 2px;
 }
@@ -278,7 +279,6 @@ pre {
 }
 
 .topbar-actions {
-    margin-left: auto;
     display: flex;
     align-items: center;
     gap: var(--element-gap);
@@ -1301,11 +1301,6 @@ pre {
     height: 140px;
     border: 1.5px dashed var(--border);
     color: var(--text-faint);
-}
-
-.empty-state .icon {
-    width: 28px;
-    height: 28px;
 }
 
 .indent {
