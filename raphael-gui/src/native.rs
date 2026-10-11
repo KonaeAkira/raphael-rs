@@ -100,32 +100,27 @@ pub fn check_for_update() {
         tag_name: String,
         assets: Vec<Asset>,
     }
-    let process_response =
-        |fetch_result: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
-            let response = fetch_result?;
-            if !response.ok {
-                return Err(format!("{} {}", response.status, response.status_text).into());
-            }
-            let parsed_response = response.json::<ApiResponse>()?;
-            let latest_version =
-                semver::Version::parse(parsed_response.tag_name.trim_start_matches('v'))?;
-            if CURRENT_VERSION.ge(&latest_version) {
-                log::info!("Already up-to-date. Latest version: {latest_version}.");
-                return Ok(());
-            }
-            let asset_url = parsed_response
-                .assets
-                .into_iter()
-                .find(|asset| is_compatible_executable(&asset.name))
-                .map(|asset| asset.browser_download_url);
-            set_update_status(UpdateStatus::Available {
-                latest_version,
-                asset_url,
-            });
-            Ok(())
-        };
-    ehttp::fetch(ehttp::Request::get(GH_RELEASE_API), move |result| {
-        if let Err(error) = process_response(result) {
+    let fetch_latest_version = || -> Result<(), Box<dyn Error>> {
+        let parsed_response: ApiResponse = ureq::get(GH_RELEASE_API).call()?.into_json()?;
+        let latest_version =
+            semver::Version::parse(parsed_response.tag_name.trim_start_matches('v'))?;
+        if CURRENT_VERSION.ge(&latest_version) {
+            log::info!("Already up-to-date. Latest version: {latest_version}.");
+            return Ok(());
+        }
+        let asset_url = parsed_response
+            .assets
+            .into_iter()
+            .find(|asset| is_compatible_executable(&asset.name))
+            .map(|asset| asset.browser_download_url);
+        set_update_status(UpdateStatus::Available {
+            latest_version,
+            asset_url,
+        });
+        Ok(())
+    };
+    std::thread::spawn(move || {
+        if let Err(error) = fetch_latest_version() {
             log::error!("Error when fetching latest version: {error}");
         }
     });
@@ -137,20 +132,18 @@ fn is_compatible_executable(asset_name: &str) -> bool {
 }
 
 fn download_and_replace_executable(asset_url: &str) {
-    let process_response =
-        |fetch_result: ehttp::Result<ehttp::Response>| -> Result<(), Box<dyn Error>> {
-            let response = fetch_result?;
-            if !response.ok {
-                return Err(format!("{} {}", response.status, response.status_text).into());
-            }
-            let mut temp_exe = tempfile::NamedTempFile::new()?;
-            temp_exe.write_all(&response.bytes)?;
-            self_replace::self_replace(&temp_exe)?;
-            set_update_status(UpdateStatus::Success);
-            Ok(())
-        };
-    ehttp::fetch(ehttp::Request::get(asset_url), move |result| {
-        if let Err(error) = process_response(result) {
+    let asset_url = asset_url.to_owned();
+    let download_and_replace = move || -> Result<(), Box<dyn Error>> {
+        let mut response = ureq::get(&asset_url).call()?.into_reader();
+        let mut temp_exe = tempfile::NamedTempFile::new()?;
+        std::io::copy(&mut response, &mut temp_exe)?;
+        temp_exe.flush()?;
+        self_replace::self_replace(&temp_exe)?;
+        set_update_status(UpdateStatus::Success);
+        Ok(())
+    };
+    std::thread::spawn(move || {
+        if let Err(error) = download_and_replace() {
             let error_message = format!("{error:?}");
             log::error!("Error when updating to latest version: {error_message}");
             set_update_status(UpdateStatus::Error(error_message));
