@@ -245,7 +245,7 @@ fn large_progress_quality_increase() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 76,
+                inserted_nodes: 24,
                 processed_nodes: 18,
             },
             finish_solver_stats: FinishSolverStats {
@@ -409,7 +409,7 @@ fn issue_312_quick_innovation_reflect() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 17,
+                inserted_nodes: 4,
                 processed_nodes: 4,
             },
             finish_solver_stats: FinishSolverStats {
@@ -477,7 +477,7 @@ fn daring_touch_interrupted_combo() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 27,
+                inserted_nodes: 11,
                 processed_nodes: 10,
             },
             finish_solver_stats: FinishSolverStats {

@@ -12,6 +12,8 @@ use step_lower_bound_solver::StepLbSolver;
 mod macro_solver;
 pub use macro_solver::MacroSolver;
 
+mod seed_solver;
+
 mod utils;
 pub use utils::AtomicFlag;
 
