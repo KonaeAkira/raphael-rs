@@ -3,7 +3,6 @@
 set -exo pipefail
 
 RAPHAEL_TRANSLATIONS_RESET_APPEARANCES=true \
-cargo build --package raphael-xiv --features=raphael-translations/update-toml
+cargo build --package raphael-gui --features=raphael-translations/update-toml
 
-RUSTFLAGS='-Ctarget-feature=+atomics,+bulk-memory' BASE_URL='' \
-cargo build --package raphael-xiv --features=raphael-translations/update-toml --target wasm32-unknown-unknown
+cargo build --package raphael-gui --features=raphael-translations/update-toml --config ./.cargo/config_wasm.toml

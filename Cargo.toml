@@ -6,6 +6,7 @@ members = [
     "raphael-data-updater",
     "raphael-cli",
     "raphael-translations",
+    "raphael-gui",
 ]
 resolver = "2"
 
@@ -32,60 +33,12 @@ toml_edit = "0.23"
 log = { version = "0.4", features = ["std"] }
 web-time = "1.1.0"
 
-[package]
-name = "raphael-xiv"
-version = "0.28.6"
-edition = "2024"
-default-run = "raphael-xiv"
-
-[lints]
-workspace = true
-
-[dependencies]
-raphael-sim = { workspace = true, features = ["serde"] }
-raphael-solver = { workspace = true, features = ["serde"] }
-raphael-data = { workspace = true, features = ["serde"] }
-raphael-translations = { workspace = true }
-
-egui = "0.35.0"
-egui_extras = { version = "0.35.0", features = ["http", "webp"] }
-eframe = { version = "0.35.0", features = ["persistence"] }
-
-rayon = { workspace = true }
-serde = { workspace = true }
-log = { workspace = true }
-web-time = { workspace = true }
-ron = "0.11"
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-env_logger = "0.11.8"
-semver = "1.0"
-self-replace = "1.5.0"
-tempfile = "3.24.0"
-ehttp = { version = "0.5.0", features = ["json"] }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-rayon = { version = "1.3", features = ["no-bundler"] }
-wasm-bindgen-futures = "0.4"
-console_error_panic_hook = "0.1.7"
-web-sys = "0.3.85"
-
-[dev-dependencies]
-expect-test = "1.5.1"
-strum = "0.27"
-
 [profile.release]
 opt-level = 3
 lto = "fat"
 overflow-checks = false
 codegen-units = 1
 panic = "abort"
-
-[profile.release.package.egui]
-opt-level = "s"
-
-[profile.release.package.eframe]
-opt-level = "s"
 
 [profile.release-with-debug]
 inherits = "release"
@@ -97,5 +50,3 @@ opt-level = 3
 lto = "thin"
 overflow-checks = true
 
-[features]
-dev-panel = []

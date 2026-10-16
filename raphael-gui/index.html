@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="color-scheme" content="dark light" />
+        <title>Raphael | FFXIV Crafting Solver</title>
+        <meta
+            name="description"
+            content="Raphael is a crafting rotation optimizer and macro generator for Final Fantasy XIV."
+        />
+
+        <link
+            data-trunk
+            rel="rust"
+            href="Cargo.toml"
+            data-wasm-opt="2"
+            data-bin="raphael-gui"
+            data-type="main"
+            data-bindgen-target="web"
+        />
+
+        <link data-trunk rel="icon" href="../assets/favicon-64x64.png" />
+        <link data-trunk rel="copy-file" href="../assets/_headers" />
+        <link data-trunk rel="copy-dir" href="../assets/action-icons/" />
+        <link data-trunk rel="copy-dir" href="../assets/fonts/" />
+
+        <style>
+            /* Tokens mirror `.app` in `src/style.css`. */
+            :root {
+                --bg: #221f22;
+                --surface: #2d2a2e;
+                --surface-2: #353236;
+                --border: #19181a;
+                --border-strong: #5b595c;
+                --text: #fcfcfa;
+                --text-muted: #939293;
+                --accent: #ffd866;
+                --accent-strong: #ffe08a;
+                --accent-contrast: #2d2a2e;
+                --panel-gap: 10px;
+                --element-gap: 6px;
+                --control-height: 30px;
+                --font-ui:
+                    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+                    "Noto Sans", sans-serif;
+                --font-mono:
+                    ui-monospace, "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Menlo,
+                    Consolas, monospace;
+            }
+            @media (prefers-color-scheme: light) {
+                :root {
+                    --bg: #ede7e5;
+                    --surface: #faf4f2;
+                    --surface-2: #f3edeb;
+                    --border: #d3cdcc;
+                    --border-strong: #bfb9ba;
+                    --text: #29242a;
+                    --text-muted: #706b6e;
+                    --accent: #cc7a0a;
+                    --accent-strong: #b36b08;
+                    --accent-contrast: #faf4f2;
+                }
+            }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                background: var(--bg);
+            }
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+
+            /* ---------- Loading screen ---------- */
+
+            #loading {
+                position: fixed;
+                inset: 0;
+                display: grid;
+                place-items: center;
+                align-content: center;
+                gap: 24px;
+            }
+            #loading::before {
+                content: "";
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 3px solid rgba(255, 216, 102, 0.2);
+                border-top-color: var(--accent);
+                animation: spin 0.8s linear infinite;
+            }
+            /* Shown only if loading takes unusually long. */
+            #loading > p {
+                margin: 0;
+                font: 14px/1.45 var(--font-ui);
+                color: var(--text-muted);
+                text-align: center;
+                opacity: 0;
+                animation: appear 0.5s ease-in 20s forwards;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            @keyframes appear {
+                to {
+                    opacity: 1;
+                }
+            }
+
+            /* ---------- Failure screen (mirrors `.modal-backdrop` / `.modal` in `src/style.css`) ---------- */
+
+            #failure {
+                position: fixed;
+                inset: 0;
+                z-index: 50;
+                display: grid;
+                place-items: center;
+                padding: var(--panel-gap);
+                background: rgba(25, 24, 26, 0.6);
+                color: var(--text);
+                font: 14px/1.45 var(--font-ui);
+                -webkit-font-smoothing: antialiased;
+            }
+            #failure[hidden] {
+                display: none;
+            }
+            #failure > div {
+                width: 100%;
+                max-width: 520px;
+                max-height: calc(100vh - 32px);
+                display: flex;
+                flex-direction: column;
+                background: var(--surface);
+                border: 1px solid var(--border-strong);
+            }
+            #failure h2 {
+                margin: 0;
+                padding: var(--panel-gap);
+                border-bottom: 1px solid var(--border);
+                font-size: 15px;
+                font-weight: 650;
+            }
+            #failure-body {
+                display: flex;
+                flex-direction: column;
+                gap: var(--element-gap);
+                padding: var(--panel-gap);
+                overflow-y: auto;
+            }
+            #failure-message {
+                display: flex;
+                flex-direction: column;
+                gap: var(--element-gap);
+            }
+            #failure p {
+                margin: 0;
+            }
+            #failure a {
+                color: var(--accent-strong);
+                text-decoration: none;
+            }
+            #failure a:hover {
+                text-decoration: underline;
+            }
+            #failure code {
+                font-family: var(--font-mono);
+                font-size: 12.5px;
+            }
+            #failure pre {
+                margin: 0;
+                padding: var(--panel-gap);
+                max-height: 160px;
+                overflow: auto;
+                background: var(--surface-2);
+                border: 1px solid var(--border);
+                font: 12.5px/1.55 var(--font-mono);
+                white-space: pre-wrap;
+                word-break: break-word;
+                user-select: text;
+            }
+            #failure pre:empty {
+                display: none;
+            }
+            #failure-footer {
+                padding: var(--panel-gap);
+                border-top: 1px solid var(--border);
+            }
+            #failure button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: var(--control-height);
+                padding: 0 12px;
+                border: 1px solid transparent;
+                border-radius: 0;
+                background: var(--accent);
+                color: var(--accent-contrast);
+                font: inherit;
+                font-weight: 550;
+                cursor: pointer;
+                transition:
+                    background 0.12s,
+                    transform 0.06s;
+            }
+            #failure button:hover {
+                background: var(--accent-strong);
+            }
+            #failure button:active {
+                transform: translateY(1px);
+            }
+            #failure button:focus-visible {
+                outline: 2px solid var(--accent);
+                outline-offset: 1px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loading">
+            <p>
+                This is taking longer than usual.<br />
+                If the app doesn't appear, try reloading the page.
+            </p>
+        </div>
+        <div id="failure" hidden>
+            <div>
+                <h2 id="failure-title"></h2>
+                <div id="failure-body">
+                    <div id="failure-message"></div>
+                    <pre id="failure-details"></pre>
+                </div>
+                <div id="failure-footer">
+                    <button type="button" onclick="location.reload()">Reload page</button>
+                </div>
+            </div>
+        </div>
+        <div id="main"></div>
+
+        <script>
+            // Shows a message instead of the loading spinner when the app can't start, or when it
+            // crashes after starting. This must be a classic (non-module) script so that it runs
+            // before the module script that Trunk injects to load the WebAssembly bundle.
+            (() => {
+                const RELEASES_URL = "https://github.com/KonaeAkira/raphael-rs/releases/latest";
+                const ISSUES_URL = "https://github.com/KonaeAkira/raphael-rs/issues";
+                const DISCORD_URL = "https://discord.com/invite/m2aCy3y8he";
+                const GITHUB_LINK = `<a target="_blank" href="${ISSUES_URL}">report it on GitHub</a>`;
+                const DISCORD_LINK = `<a target="_blank" href="${DISCORD_URL}">ask for help on Discord</a>`;
+                const NATIVE_HINT =
+                    `<p>Alternatively, a native version without the 4GB limit (and with better ` +
+                    `performance) is available from the <a target="_blank" href="${RELEASES_URL}">release ` +
+                    `page on GitHub</a>.</p>`;
+
+                let shown = false;
+                function showFailure(title, messageHtml, details) {
+                    if (shown) return;
+                    shown = true;
+                    document.getElementById("loading")?.remove();
+                    document.getElementById("failure-title").textContent = title;
+                    document.getElementById("failure-message").innerHTML = messageHtml;
+                    document.getElementById("failure-details").textContent = details ?? "";
+                    document.getElementById("failure").hidden = false;
+                }
+
+                function describe(error) {
+                    if (error == null) return "";
+                    if (typeof error === "string") return error;
+                    if (error.stack && String(error.stack).includes(String(error.message))) {
+                        return String(error.stack);
+                    }
+                    return String(error);
+                }
+
+                function isWasmRelated(error, filename) {
+                    return (
+                        (typeof WebAssembly !== "undefined" &&
+                            error instanceof WebAssembly.RuntimeError) ||
+                        /raphael-gui.*\.(wasm|js)/.test(filename ?? "") ||
+                        /raphael-gui.*\.(wasm|js)/.test(error?.stack ?? "")
+                    );
+                }
+
+                function handle(error, filename) {
+                    console.error(error);
+                    const loading = document.getElementById("loading") !== null;
+                    if (error === "OOM panic") {
+                        showFailure(
+                            "The solver ran out of memory",
+                            `<p>The solver reached the 4GB memory limit of 32-bit WebAssembly and crashed.</p>` +
+                                `<p>Consider enabling fewer memory intensive options.</p>` +
+                                NATIVE_HINT +
+                                `<p>Reload the page to reset the app. If you need help, ${DISCORD_LINK}.</p>`,
+                        );
+                    } else if (loading) {
+                        showFailure(
+                            "Raphael failed to load",
+                            `<p>Make sure your browser is up to date, then reload the page. ` +
+                                `If the problem persists, please ${GITHUB_LINK} or ${DISCORD_LINK}, ` +
+                                `and include the details below.</p>` +
+                                NATIVE_HINT,
+                            describe(error),
+                        );
+                    } else if (isWasmRelated(error, filename)) {
+                        showFailure(
+                            "Something went wrong",
+                            `<p>Raphael encountered an unexpected error and needs to be reloaded. ` +
+                                `Your settings and saved rotations are kept.</p>` +
+                                `<p>If this keeps happening, please ${GITHUB_LINK} or ${DISCORD_LINK}, ` +
+                                `and include the details below.</p>`,
+                            describe(error),
+                        );
+                    }
+                }
+
+                window.addEventListener("error", (event) => handle(event.error, event.filename));
+                window.addEventListener("unhandledrejection", (event) => handle(event.reason));
+
+                // Pre-flight checks for requirements that would otherwise fail with obscure errors.
+                if (typeof WebAssembly === "undefined") {
+                    showFailure(
+                        "Your browser doesn't support WebAssembly",
+                        `<p>Raphael needs WebAssembly to run. Please update your browser or try a different one.</p>` +
+                            NATIVE_HINT +
+                            `<p>If you need help, ${DISCORD_LINK}.</p>`,
+                    );
+                } else if (self.crossOriginIsolated === false) {
+                    showFailure(
+                        "This page isn't cross-origin isolated",
+                        `<p>Raphael's multi-threaded solver needs <code>SharedArrayBuffer</code>, which is only ` +
+                            `available when the page is served with the ` +
+                            `<code>Cross-Origin-Opener-Policy: same-origin</code> and ` +
+                            `<code>Cross-Origin-Embedder-Policy: require-corp</code> headers.</p>` +
+                            `<p>If you're hosting Raphael yourself, add these headers to your web server's ` +
+                            `configuration. If you're on the official site, please ${GITHUB_LINK} or ${DISCORD_LINK}.</p>`,
+                    );
+                }
+            })();
+        </script>
+    </body>
+</html>

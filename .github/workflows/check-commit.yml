@@ -15,12 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install system dependencies for Dioxus desktop
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev
       - name: Check that workspace builds with MSRV
         run: cargo +${{ env.MSRV }} check --workspace
       - name: Check for clippy warnings when building native version
         run: cargo clippy --workspace -- -Dwarnings
       - name: Check for clippy warnings when building web version
-        run: BASE_URL=localhost cargo clippy --config ./.cargo/config_wasm.toml -- -Dwarnings
+        run: cargo clippy --config ./.cargo/config_wasm.toml --package raphael-gui -- -Dwarnings
 
   check-windows:
     runs-on: windows-latest
@@ -33,5 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install system dependencies for Dioxus desktop
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev
       - name: Run all tests
         run: cargo test --verbose --workspace
