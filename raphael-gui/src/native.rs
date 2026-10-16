@@ -126,9 +126,14 @@ pub fn check_for_update() {
     });
 }
 
+/// Release assets are named `Raphael_<arch>_<os>[.exe]`.
+///
+/// The capitalized prefix is deliberate: versions before the Dioxus rewrite matched a lowercase
+/// `raphael` prefix. Those versions therefore find no compatible asset and only show the release
+/// page, where the new runtime requirements are listed, instead of auto-updating.
 fn is_compatible_executable(asset_name: &str) -> bool {
     use std::env::consts::{ARCH, OS};
-    asset_name.starts_with("raphael") && asset_name.contains(ARCH) && asset_name.contains(OS)
+    asset_name.starts_with("Raphael") && asset_name.contains(ARCH) && asset_name.contains(OS)
 }
 
 fn download_and_replace_executable(asset_url: &str) {
