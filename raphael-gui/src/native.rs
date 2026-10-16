@@ -130,7 +130,8 @@ pub fn check_for_update() {
 ///
 /// The capitalized prefix is deliberate: versions before the Dioxus rewrite matched a lowercase
 /// `raphael` prefix. Those versions therefore find no compatible asset and only show the release
-/// page, where the new runtime requirements are listed, instead of auto-updating.
+/// page instead of auto-updating. The `notes` job in `.github/workflows/release.yaml` appends
+/// `.github/RELEASE_TEMPLATE.md`, which lists the new runtime requirements, to every release.
 fn is_compatible_executable(asset_name: &str) -> bool {
     use std::env::consts::{ARCH, OS};
     asset_name.starts_with("Raphael") && asset_name.contains(ARCH) && asset_name.contains(OS)

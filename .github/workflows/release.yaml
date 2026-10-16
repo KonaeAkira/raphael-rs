@@ -54,3 +54,18 @@ jobs:
           asset_path: ./target/release/raphael-gui.exe
           asset_name: Raphael_x86_64_windows.exe
           asset_content_type: application/octet-stream
+
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Append runtime requirements to release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          body="$(gh release view "$TAG" --json body --jq .body)"
+          if ! grep -qF '<!-- runtime-requirements -->' <<< "$body"; then
+            printf '%s\n\n%s\n' "$body" "$(cat .github/RELEASE_TEMPLATE.md)" \
+              | gh release edit "$TAG" --notes-file -
+          fi
