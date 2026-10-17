@@ -138,15 +138,22 @@ impl MacroContextData {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Macro {
+    pub text: String,
+    pub duration: u8,
+}
+
 pub fn create_macros(
     context: &MacroContextData,
     config: &MacroViewConfig,
     actions: &[Action],
     newline: &str,
-) -> Vec<String> {
+) -> Vec<Macro> {
     let max_macro_len = if config.split_macro { 15 } else { usize::MAX };
     let mut macros = Vec::new();
     let mut current_macro = Vec::new();
+    let mut current_duration = 0;
     for (current_idx, action) in actions.iter().enumerate() {
         let remaining_actions = actions.len() - current_idx - 1;
         // Macro intro
@@ -166,6 +173,10 @@ pub fn create_macros(
             ));
         } else {
             current_macro.push(format!("/ac \"{}\"", macro_name(*action, context.locale)));
+        }
+        current_duration += action.time_cost();
+        if config.include_delay {
+            current_duration += config.extra_delay;
         }
         // Macro outro
         if config.notification_enabled
@@ -194,14 +205,19 @@ pub fn create_macros(
             current_macro.push(notification_command);
         }
         if current_macro.len() >= max_macro_len || remaining_actions == 0 {
-            macros.push(current_macro.join(newline));
+            macros.push(Macro {
+                text: current_macro.join(newline),
+                duration: current_duration,
+            });
             current_macro.clear();
+            current_duration = 0;
         }
     }
 
     let max_index = macros.len().to_string();
-    for (macro_idx, macro_text) in macros.iter_mut().enumerate() {
-        *macro_text = macro_text
+    for (macro_idx, macro_) in macros.iter_mut().enumerate() {
+        macro_.text = macro_
+            .text
             .replace("{index}", &(macro_idx + 1).to_string())
             .replace("{max_index}", &max_index)
             .replace("{item_name}", &context.item_name)
@@ -281,7 +297,8 @@ mod tests {
             /ac "Precise Touch" <wait.3>
             /ac "Muscle Memory" <wait.3>
             /ac "Careful Synthesis" <wait.3>"#]]
-        .assert_eq(&macros[0]);
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 40);
         expect_test::expect![[r#"
             /ac "Manipulation" <wait.2>
             /ac "Prudent Touch" <wait.3>
@@ -298,14 +315,16 @@ mod tests {
             /ac "Refined Touch" <wait.3>
             /ac "Quick Innovation" <wait.3>
             /ac "Immaculate Mend" <wait.3>"#]]
-        .assert_eq(&macros[1]);
+        .assert_eq(&macros[1].text);
+        assert_eq!(macros[1].duration, 44);
         expect_test::expect![[r#"
             /ac "Trained Perfection" <wait.3>
             /ac "Duty Action II" <wait.2>
             /ac "Rapid Synthesis" <wait.3>
             /ac "Hasty Touch" <wait.3>
             /ac "Hasty Touch" <wait.3>"#]]
-        .assert_eq(&macros[2]);
+        .assert_eq(&macros[2].text);
+        assert_eq!(macros[2].duration, 14);
     }
 
     #[test]
@@ -365,7 +384,8 @@ mod tests {
             /ac "Prudent Touch" <wait.3>
             /ac "Prudent Touch" <wait.3>
             /echo Macro finished (1/2) <se.1>"#]]
-        .assert_eq(&macros[0]);
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 39);
         expect_test::expect![[r#"
             /ac "Master's Mend" <wait.3>
             /ac "Innovation" <wait.2>
@@ -382,7 +402,8 @@ mod tests {
             /ac "Basic Synthesis" <wait.3>
             /ac "Basic Synthesis" <wait.3>
             /ac "Basic Synthesis" <wait.3>"#]]
-        .assert_eq(&macros[1]);
+        .assert_eq(&macros[1].text);
+        assert_eq!(macros[1].duration, 41);
     }
 
     #[test]
@@ -441,7 +462,8 @@ mod tests {
             /ac "Prudent Touch" <wait.3>
             /ac "Prudent Touch" <wait.3>
             /echo Macro finished (1/2) <se.1>"#]]
-        .assert_eq(&macros[0]);
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 36);
         expect_test::expect![[r#"
             /macrolock
             /ac "Prudent Touch" <wait.3>
@@ -458,7 +480,78 @@ mod tests {
             /ac "Great Strides" <wait.2>
             /ac "Byregot's Blessing" <wait.3>
             /ac "Basic Synthesis" <wait.3>"#]]
-        .assert_eq(&macros[1]);
+        .assert_eq(&macros[1].text);
+        assert_eq!(macros[1].duration, 38);
+    }
+
+    #[test]
+    /// Test that the extra delay is added to each action's wait time and to the macro duration.
+    fn extra_delay() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.split_macro = true;
+        config.include_delay = true;
+        config.extra_delay = 2;
+        let actions = [
+            Action::MuscleMemory,
+            Action::WasteNot,
+            Action::Veneration,
+            Action::Groundwork,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::GreatStrides,
+            Action::ByregotsBlessing,
+            Action::BasicSynthesis,
+        ];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 1);
+        expect_test::expect![[r#"
+            /ac "Muscle Memory" <wait.5>
+            /ac "Waste Not" <wait.4>
+            /ac "Veneration" <wait.4>
+            /ac "Groundwork" <wait.5>
+            /ac "Innovation" <wait.4>
+            /ac "Prudent Touch" <wait.5>
+            /ac "Great Strides" <wait.4>
+            /ac "Byregot's Blessing" <wait.5>
+            /ac "Basic Synthesis" <wait.5>"#]]
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 41);
+    }
+
+    #[test]
+    /// Test that the extra delay is ignored when delays are not included in the macro.
+    fn extra_delay_without_include_delay() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.split_macro = true;
+        config.include_delay = false;
+        config.extra_delay = 2;
+        let actions = [
+            Action::MuscleMemory,
+            Action::WasteNot,
+            Action::Veneration,
+            Action::Groundwork,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::GreatStrides,
+            Action::ByregotsBlessing,
+            Action::BasicSynthesis,
+        ];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 1);
+        expect_test::expect![[r#"
+            /ac "Muscle Memory"
+            /ac "Waste Not"
+            /ac "Veneration"
+            /ac "Groundwork"
+            /ac "Innovation"
+            /ac "Prudent Touch"
+            /ac "Great Strides"
+            /ac "Byregot's Blessing"
+            /ac "Basic Synthesis""#]]
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 23);
     }
 
     #[test]
@@ -512,12 +605,14 @@ mod tests {
             /ac "Basic Synthesis" <wait.3>
             /ac "Basic Synthesis" <wait.3>
             /echo Crafting Test Item in progress: 1/2 <se.1>"#]]
-        .assert_eq(&macros[0]);
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 39);
         expect_test::expect![[r#"
             /echo food=Test Food, potion=Test Potion, stats=4900 4800 620 100 <wait.5>
             /ac "Basic Synthesis" <wait.3>
             /ac "Basic Synthesis" <wait.3>
             /echo Crafting Test Item done: 2/2 <se.1>"#]]
-        .assert_eq(&macros[1]);
+        .assert_eq(&macros[1].text);
+        assert_eq!(macros[1].duration, 6);
     }
 }

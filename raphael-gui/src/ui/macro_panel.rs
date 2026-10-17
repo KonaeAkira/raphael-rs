@@ -58,13 +58,15 @@ pub fn MacroPanel() -> Element {
                         Icon { kind: IconKind::Clipboard }
                     }
                 }
-                for (index , text) in macros.into_iter().enumerate() {
+                for (index , macro_) in macros.into_iter().enumerate() {
                     div { key: "{index}", class: "macro-block",
                         div { class: "macro-block-header",
                             span { class: "pill", "{index + 1} / {macro_count}" }
-                            CopyButton { text: text.clone() }
+                            span { class: "pill", "{macro_.duration}s" }
+                            div { class: "spacer" }
+                            CopyButton { text: macro_.text.clone() }
                         }
-                        pre { "{text}" }
+                        pre { "{macro_.text}" }
                     }
                 }
             }
