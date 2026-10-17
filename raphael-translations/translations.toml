@@ -180,6 +180,26 @@ ko = '''⚙ 설정'''
 version = "0.1.0"
 appearances = ["src/app.rs:419:64"]
 
+["io7ohp3lMzZa3WQzo2EXwA=="]
+en = '''Zoom'''
+ja = '''ズーム'''
+de = '''Zoom'''
+chs = '''缩放'''
+tc = '''縮放'''
+ko = '''줌'''
+version = "0.1.0"
+appearances = []
+
+["M8PiJj/aRi0rpRN+ej1g9A=="]
+en = '''Reset'''
+ja = '''リセット'''
+de = '''Zurücksetzen'''
+chs = '''重置'''
+tc = '''重置'''
+ko = '''리셋'''
+version = "0.1.0"
+appearances = []
+
 ["pONACX6lY+V99UWTe/kqrg=="]
 en = '''Theme'''
 ja = '''テーマ'''

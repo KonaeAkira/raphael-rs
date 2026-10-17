@@ -29,6 +29,14 @@ pub enum LayoutPreference {
     Compact,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+pub const DEFAULT_ZOOM_PERCENTAGE: u16 = 100;
+
+#[cfg(not(target_arch = "wasm32"))]
+fn default_webview_zoom_percentage() -> u16 {
+    DEFAULT_ZOOM_PERCENTAGE
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppConfig {
     pub num_threads: Option<NonZeroUsize>,
@@ -36,6 +44,10 @@ pub struct AppConfig {
     pub theme: ThemePreference,
     #[serde(default)]
     pub layout: LayoutPreference,
+    /// Zoom level of the webview. The web version relies on the browser's zoom instead.
+    #[cfg(not(target_arch = "wasm32"))]
+    #[serde(default = "default_webview_zoom_percentage")]
+    pub webview_zoom_percentage: u16,
 }
 
 impl Default for AppConfig {
@@ -44,6 +56,8 @@ impl Default for AppConfig {
             num_threads: None,
             theme: ThemePreference::System,
             layout: LayoutPreference::Default,
+            #[cfg(not(target_arch = "wasm32"))]
+            webview_zoom_percentage: DEFAULT_ZOOM_PERCENTAGE,
         }
     }
 }

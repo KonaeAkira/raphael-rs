@@ -111,7 +111,10 @@ pub fn App() -> Element {
     use_autosave(app_context);
 
     #[cfg(not(target_arch = "wasm32"))]
-    crate::native::use_native_asset_handlers();
+    {
+        crate::native::use_native_asset_handlers();
+        crate::native::use_zoom(app_context);
+    }
 
     let (locale, app_config) = {
         let ctx = app_context.read();

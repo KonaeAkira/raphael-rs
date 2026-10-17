@@ -65,6 +65,19 @@ pub fn use_native_asset_handlers() {
     });
 }
 
+/// Applies the configured zoom level to the webview whenever it changes.
+pub fn use_zoom(app_context: Signal<crate::context::AppContext>) {
+    let window = dioxus::desktop::use_window();
+    let webview_zoom_percentage =
+        use_memo(move || app_context.read().app_config.webview_zoom_percentage);
+    use_effect(move || {
+        let scale_factor = f64::from(webview_zoom_percentage()) / 100.0;
+        if let Err(error) = window.webview.zoom(scale_factor) {
+            log::error!("Failed to set zoom level: {error}");
+        }
+    });
+}
+
 const GH_RELEASE_API: &str = "https://api.github.com/repos/KonaeAkira/raphael-rs/releases/latest";
 const GH_RELEASE_URL: &str = "https://github.com/KonaeAkira/raphael-rs/releases/latest";
 
