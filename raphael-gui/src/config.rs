@@ -24,7 +24,6 @@ pub enum ThemePreference {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppConfig {
-    pub zoom_percentage: u16,
     pub num_threads: Option<NonZeroUsize>,
     #[serde(default)]
     pub theme: ThemePreference,
@@ -33,7 +32,6 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
-            zoom_percentage: 100,
             num_threads: None,
             theme: ThemePreference::System,
         }

@@ -55,10 +55,6 @@ fn SettingsDialog() -> Element {
         let ctx = app_context.read();
         (ctx.locale, ctx.app_config)
     };
-    let zoom = i64::from(app_config.zoom_percentage);
-    let mut set_zoom = move |zoom: i64| {
-        app_context.write().app_config.zoom_percentage = zoom.clamp(50, 500) as u16;
-    };
     let themes = [
         ThemePreference::System,
         ThemePreference::Light,
@@ -80,36 +76,6 @@ fn SettingsDialog() -> Element {
             size: "sm",
             onclose: move |_| dialogs.write().settings = false,
             div { class: "settings-grid",
-                label { {t!(locale, "Zoom")} }
-                div { class: "inline-row",
-                    button {
-                        class: "btn icon-btn mono",
-                        disabled: zoom <= 50,
-                        onclick: move |_| set_zoom(zoom - 10),
-                        "−"
-                    }
-                    button {
-                        class: "btn",
-                        disabled: zoom == 100,
-                        onclick: move |_| set_zoom(100),
-                        {t!(locale, "Reset")}
-                    }
-                    button {
-                        class: "btn icon-btn mono",
-                        disabled: zoom >= 500,
-                        onclick: move |_| set_zoom(zoom + 10),
-                        "+"
-                    }
-                    NumberInput {
-                        value: zoom,
-                        min: 50,
-                        max: 500,
-                        lazy: true,
-                        suffix: "%",
-                        onchange: move |zoom: i64| set_zoom(zoom),
-                    }
-                }
-
                 label { {t!(locale, "Theme")} }
                 Segmented {
                     selected: themes.iter().position(|theme| *theme == app_config.theme).unwrap_or_default(),
