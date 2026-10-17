@@ -520,6 +520,41 @@ mod tests {
     }
 
     #[test]
+    /// Test that the extra delay is ignored when delays are not included in the macro.
+    fn extra_delay_without_include_delay() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.split_macro = true;
+        config.include_delay = false;
+        config.extra_delay = 2;
+        let actions = [
+            Action::MuscleMemory,
+            Action::WasteNot,
+            Action::Veneration,
+            Action::Groundwork,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::GreatStrides,
+            Action::ByregotsBlessing,
+            Action::BasicSynthesis,
+        ];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 1);
+        expect_test::expect![[r#"
+            /ac "Muscle Memory"
+            /ac "Waste Not"
+            /ac "Veneration"
+            /ac "Groundwork"
+            /ac "Innovation"
+            /ac "Prudent Touch"
+            /ac "Great Strides"
+            /ac "Byregot's Blessing"
+            /ac "Basic Synthesis""#]]
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 23);
+    }
+
+    #[test]
     fn custom_formatters() {
         let context = default_context();
         let mut config = MacroViewConfig::default();
