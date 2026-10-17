@@ -175,6 +175,9 @@ pub fn create_macros(
             current_macro.push(format!("/ac \"{}\"", macro_name(*action, context.locale)));
         }
         current_duration += action.time_cost();
+        if config.include_delay {
+            current_duration += config.extra_delay;
+        }
         // Macro outro
         if config.notification_enabled
             && current_macro.len() < max_macro_len // Has place for notification.
@@ -479,6 +482,41 @@ mod tests {
             /ac "Basic Synthesis" <wait.3>"#]]
         .assert_eq(&macros[1].text);
         assert_eq!(macros[1].duration, 38);
+    }
+
+    #[test]
+    /// Test that the extra delay is added to each action's wait time and to the macro duration.
+    fn extra_delay() {
+        let context = default_context();
+        let mut config = MacroViewConfig::default();
+        config.split_macro = true;
+        config.include_delay = true;
+        config.extra_delay = 2;
+        let actions = [
+            Action::MuscleMemory,
+            Action::WasteNot,
+            Action::Veneration,
+            Action::Groundwork,
+            Action::Innovation,
+            Action::PrudentTouch,
+            Action::GreatStrides,
+            Action::ByregotsBlessing,
+            Action::BasicSynthesis,
+        ];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 1);
+        expect_test::expect![[r#"
+            /ac "Muscle Memory" <wait.5>
+            /ac "Waste Not" <wait.4>
+            /ac "Veneration" <wait.4>
+            /ac "Groundwork" <wait.5>
+            /ac "Innovation" <wait.4>
+            /ac "Prudent Touch" <wait.5>
+            /ac "Great Strides" <wait.4>
+            /ac "Byregot's Blessing" <wait.5>
+            /ac "Basic Synthesis" <wait.5>"#]]
+        .assert_eq(&macros[0].text);
+        assert_eq!(macros[0].duration, 41);
     }
 
     #[test]
