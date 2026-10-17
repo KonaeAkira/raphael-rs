@@ -129,7 +129,6 @@ pub fn App() -> Element {
             class: "app",
             "data-theme": theme,
             lang: lang_code(locale),
-            style: "zoom: {app_config.zoom_percentage}%",
             header::Header {}
             main { class: "main",
                 simulator::SimulatorPanel {}

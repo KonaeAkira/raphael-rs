@@ -18,7 +18,7 @@ pub fn VirtualList<D: Clone + PartialEq + 'static>(
     const INITIAL_VISIBLE_ROWS: usize = 16;
 
     // (scroll_top, scroll_height, client_height) of the scroll container.
-    // Rows are located proportionally, so this is unaffected by CSS zoom.
+    // Rows are located proportionally, so this is unaffected by page zoom.
     let mut scroll = use_signal(|| (0.0f64, 0.0f64, 0.0f64));
     let (scroll_top, scroll_height, client_height) = scroll();
 
