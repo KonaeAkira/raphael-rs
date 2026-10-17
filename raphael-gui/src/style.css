@@ -1262,7 +1262,7 @@ pre {
 .macro-block-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: var(--element-gap);
     padding: 4px 6px 4px var(--panel-gap);
     border-bottom: 1px solid var(--border);
 }
