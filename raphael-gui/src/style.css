@@ -285,6 +285,11 @@ pre {
     --element-gap: 6px;
     --control-height: 30px;
     --control-height-small: 26px;
+    --font-size-sm: 13px;
+    --font-size-xs: 12.5px;
+    --action-size: 40px;
+    --action-size-small: 32px;
+    --check-size: 18px;
 }
 
 .main {
@@ -444,7 +449,7 @@ pre {
 .btn.small {
     height: var(--control-height-small);
     padding: 0 8px;
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
 }
 
 .btn.block {
@@ -557,7 +562,7 @@ pre {
     background: transparent;
     color: var(--text-muted);
     font: inherit;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     cursor: pointer;
 }
 
@@ -657,7 +662,7 @@ pre {
     padding: 0 6px;
     color: var(--text-muted);
     font-family: var(--font-mono);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
 }
 
 .num-affix:first-child {
@@ -773,8 +778,8 @@ pre {
 .check-box {
     display: grid;
     place-items: center;
-    width: 18px;
-    height: 18px;
+    width: var(--check-size);
+    height: var(--check-size);
     flex: none;
     border: 1.5px solid var(--border-strong);
     background: var(--surface-2);
@@ -854,7 +859,7 @@ pre {
     background: var(--surface-3);
     border: 1px solid var(--border-strong);
     color: var(--text);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
     line-height: 1.5;
     white-space: pre-line;
     opacity: 0;
@@ -885,7 +890,7 @@ pre {
     padding: var(--panel-gap);
     background: var(--warn-soft);
     color: var(--warn);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
     line-height: 1.5;
 }
 
@@ -989,7 +994,7 @@ pre {
 
 .stat-label {
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     text-align: right;
 }
 
@@ -1019,7 +1024,7 @@ pre {
 }
 
 .bar-text {
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--text);
@@ -1029,7 +1034,7 @@ pre {
 .action-strip {
     display: flex;
     gap: var(--element-gap);
-    min-height: 40px;
+    min-height: var(--action-size);
     overflow-x: auto;
     scrollbar-width: thin;
 }
@@ -1039,14 +1044,14 @@ pre {
 }
 
 .action-strip.compact .action {
-    width: 32px;
-    height: 32px;
+    width: var(--action-size-small);
+    height: var(--action-size-small);
 }
 
 .action {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: var(--action-size);
+    height: var(--action-size);
     flex: none;
     overflow: hidden;
 }
@@ -1145,7 +1150,7 @@ pre {
     flex: none;
     width: 7.5em;
     color: var(--text-muted);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1155,7 +1160,7 @@ pre {
     margin-left: auto;
     flex: none;
     color: var(--text-muted);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
     white-space: nowrap;
 }
 
@@ -1199,7 +1204,7 @@ pre {
 
 .form-grid > label {
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: var(--font-size-sm);
 }
 
 .form-grid .span-2 {
@@ -1244,7 +1249,7 @@ pre {
 
 .solve-info {
     text-align: right;
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
 }
 
 /* ---------- Macro ---------- */
@@ -1270,7 +1275,7 @@ pre {
 .macro-block pre {
     margin: 0;
     padding: var(--panel-gap);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
     line-height: 1.55;
     overflow-x: auto;
     user-select: text;
@@ -1320,7 +1325,7 @@ fieldset:disabled {
 
 .hint {
     color: var(--text-muted);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
 }
 
 /* ---------- Modals ---------- */
@@ -1425,7 +1430,7 @@ fieldset:disabled {
     overflow: auto;
     padding: var(--panel-gap);
     background: var(--surface-2);
-    font-size: 12.5px;
+    font-size: var(--font-size-xs);
     white-space: pre-wrap;
 }
 
@@ -1581,7 +1586,7 @@ fieldset:disabled {
     margin: 0;
     padding: var(--panel-gap);
     background: var(--surface);
-    font-size: 13px;
+    font-size: var(--font-size-sm);
 }
 
 .info-table dt {
@@ -1626,4 +1631,246 @@ fieldset:disabled {
 
 .action-strip:empty {
     display: none;
+}
+
+/* ---------- Compact layout ---------- */
+
+.app[data-layout="compact"] {
+    --row-h: 24px;
+    --panel-gap: 6px;
+    --element-gap: 4px;
+    --control-height: 26px;
+    --control-height-small: 22px;
+    --font-size-sm: 12.5px;
+    --font-size-xs: 12px;
+    --action-size: 32px;
+    --action-size-small: 26px;
+    --check-size: 16px;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+/* Narrower panels and later breakpoints than the default layout, so the three columns stay on
+   one row for longer as the window shrinks. These rules outrank the default breakpoints by
+   specificity, so they must restate the full-row macro panel for the two-column stage. */
+.app[data-layout="compact"] .columns {
+    grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr) minmax(
+            250px,
+            1fr
+        );
+}
+
+.app[data-layout="compact"] .col-macro {
+    grid-column: auto;
+}
+
+@media (max-width: 1040px) {
+    .app[data-layout="compact"] .columns {
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+    }
+    .app[data-layout="compact"] .col-macro {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 720px) {
+    .app[data-layout="compact"] .columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.app[data-layout="compact"] .topbar {
+    padding: 4px var(--panel-gap);
+}
+
+.app[data-layout="compact"] .brand-name,
+.app[data-layout="compact"] .brand-sub,
+.app[data-layout="compact"] .modal-header h2 {
+    font-size: 14px;
+}
+
+.app[data-layout="compact"] .pill {
+    padding: 0 6px;
+    font-size: 11px;
+}
+
+.app[data-layout="compact"] .card-header h2 {
+    font-size: 13px;
+}
+
+.app[data-layout="compact"] .section-title {
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.app[data-layout="compact"] .section-title:first-child {
+    margin-top: 0;
+}
+
+.app[data-layout="compact"] .collapse-btn {
+    margin-left: -4px;
+}
+
+.app[data-layout="compact"] .btn {
+    gap: 4px;
+    padding: 0 8px;
+}
+
+.app[data-layout="compact"] .btn.small {
+    padding: 0 6px;
+}
+
+.app[data-layout="compact"] .btn.icon-btn {
+    padding: 0;
+}
+
+.app[data-layout="compact"] .split-btn > .btn:nth-child(2) {
+    width: 24px;
+}
+
+.app[data-layout="compact"] .menu > button {
+    padding: 5px 8px;
+}
+
+.app[data-layout="compact"] .chip {
+    padding: 3px 8px;
+}
+
+.app[data-layout="compact"] .segmented {
+    padding: 2px;
+}
+
+.app[data-layout="compact"] .segmented button {
+    padding: 2px 8px;
+}
+
+.app[data-layout="compact"] .num input {
+    padding: 0 6px;
+}
+
+.app[data-layout="compact"] .num-affix {
+    padding: 0 4px;
+}
+
+.app[data-layout="compact"] .num-affix:first-child {
+    padding-right: 0;
+}
+
+.app[data-layout="compact"] .num-affix:last-child {
+    padding-left: 0;
+}
+
+.app[data-layout="compact"] .select select {
+    padding: 0 26px 0 8px;
+}
+
+.app[data-layout="compact"] .select .icon {
+    right: 6px;
+}
+
+.app[data-layout="compact"] .search .icon,
+.app[data-layout="compact"] .paste-input .icon {
+    left: 8px;
+}
+
+.app[data-layout="compact"] .search input,
+.app[data-layout="compact"] .paste-input input {
+    padding-left: 28px;
+}
+
+.app[data-layout="compact"] .text-input {
+    padding: 0 8px;
+}
+
+.app[data-layout="compact"] .search input,
+.app[data-layout="compact"] .paste-input input {
+    padding-right: 8px;
+}
+
+.app[data-layout="compact"] .check {
+    min-height: 22px;
+}
+
+.app[data-layout="compact"] .check-box .icon {
+    width: 11px;
+    height: 11px;
+}
+
+.app[data-layout="compact"] .check.radio input:checked + .check-box {
+    border-width: 4px;
+}
+
+.app[data-layout="compact"] .indent,
+.app[data-layout="compact"] fieldset.indent {
+    margin-left: 20px;
+}
+
+.app[data-layout="compact"] .badge {
+    padding: 2px 8px;
+    font-size: 11.5px;
+}
+
+.app[data-layout="compact"] .game-name .btn {
+    width: 20px;
+    height: 20px;
+}
+
+.app[data-layout="compact"] .game-name .btn .icon {
+    width: 12px;
+    height: 12px;
+}
+
+.app[data-layout="compact"] .bar {
+    height: 10px;
+}
+
+.app[data-layout="compact"] .action-step {
+    font-size: 9.5px;
+}
+
+.app[data-layout="compact"] .empty-state {
+    height: 100px;
+}
+
+.app[data-layout="compact"] .solve-btn {
+    font-size: 14px;
+}
+
+.app[data-layout="compact"] .macro-block-header {
+    padding: 2px 4px 2px var(--panel-gap);
+}
+
+.app[data-layout="compact"] .macro-block pre {
+    line-height: 1.45;
+}
+
+.app[data-layout="compact"] .modal {
+    max-height: calc(100vh - 24px);
+}
+
+.app[data-layout="compact"] .solving-time {
+    font-size: 18px;
+}
+
+.app[data-layout="compact"] .spinner {
+    width: 28px;
+    height: 28px;
+}
+
+.app[data-layout="compact"] .job-stats-grid label {
+    gap: 2px;
+    font-size: 11.5px;
+}
+
+.app[data-layout="compact"] .info-table {
+    gap: 2px var(--element-gap);
+}
+
+.app[data-layout="compact"] .history-title {
+    margin-top: 6px;
+}
+
+.app[data-layout="compact"] ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }

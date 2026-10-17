@@ -18,7 +18,7 @@ use dioxus::{core::Task, prelude::*};
 use raphael_data::Locale;
 
 use crate::{
-    config::ThemePreference,
+    config::{LayoutPreference, ThemePreference},
     context::{AppContext, SearchText},
     platform,
     solve::SolveState,
@@ -111,7 +111,10 @@ pub fn App() -> Element {
     use_autosave(app_context);
 
     #[cfg(not(target_arch = "wasm32"))]
-    crate::native::use_native_asset_handlers();
+    {
+        crate::native::use_native_asset_handlers();
+        crate::native::use_zoom(app_context);
+    }
 
     let (locale, app_config) = {
         let ctx = app_context.read();
@@ -122,12 +125,17 @@ pub fn App() -> Element {
         ThemePreference::Light => "light",
         ThemePreference::Dark => "dark",
     };
+    let layout = match app_config.layout {
+        LayoutPreference::Default => "default",
+        LayoutPreference::Compact => "compact",
+    };
 
     rsx! {
         style { {STYLE} }
         div {
             class: "app",
             "data-theme": theme,
+            "data-layout": layout,
             lang: lang_code(locale),
             header::Header {}
             main { class: "main",

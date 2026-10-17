@@ -10,7 +10,13 @@ use super::{
     use_app_context, use_dialogs, use_solve_state,
     widgets::{Checkbox, Modal, NumberInput, Segmented, Warning, format_thousands, strip_icon},
 };
-use crate::{config::ThemePreference, platform, solve::SolveStatus, thread_pool};
+use crate::{
+    config::{LayoutPreference, ThemePreference},
+    context::AppContext,
+    platform,
+    solve::SolveStatus,
+    thread_pool,
+};
 
 #[component]
 pub fn Dialogs() -> Element {
@@ -60,6 +66,7 @@ fn SettingsDialog() -> Element {
         ThemePreference::Light,
         ThemePreference::Dark,
     ];
+    let layouts = [LayoutPreference::Default, LayoutPreference::Compact];
     let pool_attempted = thread_pool::initialization_attempted();
     let shown_thread_count = if pool_attempted {
         rayon::current_num_threads()
@@ -87,7 +94,21 @@ fn SettingsDialog() -> Element {
                     onchange: move |index: usize| app_context.write().app_config.theme = themes[index],
                 }
 
-                label { {t!(locale, "Max solver threads")} }
+                label { {t!(locale, "Layout")} }
+                Segmented {
+                    selected: layouts.iter().position(|layout| *layout == app_config.layout).unwrap_or_default(),
+                    options: vec![
+                        t!(locale, "Default").to_string(),
+                        t!(locale, "Compact").to_string(),
+                    ],
+                    onchange: move |index: usize| app_context.write().app_config.layout = layouts[index],
+                }
+
+                if !platform::IS_WEB {
+                    {zoom_setting(locale, app_context)}
+                }
+
+                label { {t!(locale, "Compute threads")} }
                 div { class: "inline-row",
                     Checkbox {
                         checked: app_config.num_threads.is_none(),
@@ -116,15 +137,66 @@ fn SettingsDialog() -> Element {
                 Warning { text: t!(locale, "⚠ Unavailable after the solver was started."),
                     p {
                         if platform::IS_WEB {
-                            {t!(locale, "Reload the page to change max solver threads.")}
+                            {t!(locale, "Reload the page to change compute threads.")}
                         } else {
-                            {t!(locale, "Restart the app to change max solver threads.")}
+                            {t!(locale, "Restart the app to change compute threads.")}
                         }
                     }
                 }
             }
         }
     }
+}
+
+/// Zoom level of the webview. The web version relies on the browser's zoom instead.
+#[cfg(not(target_arch = "wasm32"))]
+fn zoom_setting(locale: raphael_data::Locale, mut app_context: Signal<AppContext>) -> Element {
+    use crate::config::DEFAULT_ZOOM_PERCENTAGE;
+    const MIN_ZOOM: i64 = 50;
+    const MAX_ZOOM: i64 = 500;
+    const ZOOM_STEP: i64 = 10;
+
+    let zoom = i64::from(app_context.read().app_config.webview_zoom_percentage);
+    let mut set_zoom = move |zoom: i64| {
+        app_context.write().app_config.webview_zoom_percentage =
+            zoom.clamp(MIN_ZOOM, MAX_ZOOM) as u16;
+    };
+    rsx! {
+        label { {t!(locale, "Zoom")} }
+        div { class: "inline-row",
+            button {
+                class: "btn icon-btn mono",
+                disabled: zoom <= MIN_ZOOM,
+                onclick: move |_| set_zoom(zoom - ZOOM_STEP),
+                "−"
+            }
+            button {
+                class: "btn",
+                disabled: zoom == i64::from(DEFAULT_ZOOM_PERCENTAGE),
+                onclick: move |_| set_zoom(i64::from(DEFAULT_ZOOM_PERCENTAGE)),
+                "Reset"
+            }
+            button {
+                class: "btn icon-btn mono",
+                disabled: zoom >= MAX_ZOOM,
+                onclick: move |_| set_zoom(zoom + ZOOM_STEP),
+                "+"
+            }
+            NumberInput {
+                value: zoom,
+                min: MIN_ZOOM,
+                max: MAX_ZOOM,
+                lazy: true,
+                suffix: "%",
+                onchange: move |zoom: i64| set_zoom(zoom),
+            }
+        }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn zoom_setting(_locale: raphael_data::Locale, _app_context: Signal<AppContext>) -> Element {
+    rsx! {}
 }
 
 #[component]
