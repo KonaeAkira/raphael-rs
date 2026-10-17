@@ -190,16 +190,6 @@ ko = '''줌'''
 version = "0.1.0"
 appearances = []
 
-["M8PiJj/aRi0rpRN+ej1g9A=="]
-en = '''Reset'''
-ja = '''リセット'''
-de = '''Zurücksetzen'''
-chs = '''重置'''
-tc = '''重置'''
-ko = '''리셋'''
-version = "0.1.0"
-appearances = []
-
 ["pONACX6lY+V99UWTe/kqrg=="]
 en = '''Theme'''
 ja = '''テーマ'''
@@ -210,13 +200,13 @@ ko = '''테마'''
 version = "0.1.0"
 appearances = ["src/app.rs:465:45"]
 
-["Dzp4BVgWJRKCJfNNkYIVlg=="]
-en = '''Max solver threads'''
-ja = '''最大ソルバースレッド数'''
-de = '''Maximale Anzahl an Berechnungs-Threads'''
-chs = '''最大求解器线程数'''
-tc = '''最大求解器執行緒數'''
-ko = '''최대 연산 스레드 수'''
+["EjAlF3Xdtq3SbncWeeOalw=="]
+en = '''Compute threads'''
+ja = '''計算スレッド数'''
+de = '''Rechenthreads'''
+chs = '''计算线程数'''
+tc = '''計算執行緒數'''
+ko = '''연산 스레드 수'''
 version = "0.1.0"
 appearances = ["src/app.rs:471:45"]
 
@@ -230,23 +220,23 @@ ko = '''자동'''
 version = "0.1.0"
 appearances = ["src/app.rs:476:78"]
 
-["BLHRlxc+VXt0l9NBBt9tfw=="]
-en = '''Reload the page to change max solver threads.'''
-ja = '''最大スレッド数を変更するには、ページを再読み込みしてください。'''
-de = '''Lade die Webseite neu, um diese Einstellung zu ändern.'''
-chs = '''重新加载页面以修改最大求解器线程数'''
-tc = '''重新載入頁面以修改最大求解器執行緒數'''
-ko = '''최대 스레드 수를 변경하기 위해서는, 페이지를 새로고침 해주세요.'''
+["2YpDnihca06zjrv8tTdS9g=="]
+en = '''Reload the page to change compute threads.'''
+ja = '''計算スレッド数を変更するには、ページを再読み込みしてください。'''
+de = '''Lade die Webseite neu, um die Rechenthreads zu ändern.'''
+chs = '''重新加载页面以修改计算线程数'''
+tc = '''重新載入頁面以修改計算執行緒數'''
+ko = '''연산 스레드 수를 변경하기 위해서는, 페이지를 새로고침 해주세요.'''
 version = "0.1.0"
 appearances = ["src/app.rs:506:40"]
 
-["vjDFd4nGKfXhhYyK/tHwPA=="]
-en = '''Restart the app to change max solver threads.'''
-ja = '''最大スレッド数を変更するには、アプリを再起動してください。'''
-de = '''Starte die App neu, um diese Einstellung zu ändern.'''
-chs = '''重启 App 以修改最大求解器线程数'''
-tc = '''重新啟動應用程式以修改最大求解器執行緒數'''
-ko = '''최대 스레드 수를 변경하기 위해서는, 프로그램을 다시 실행해 주세요.'''
+["4s8H4L3rc2ZfDJerFC7XMw=="]
+en = '''Restart the app to change compute threads.'''
+ja = '''計算スレッド数を変更するには、アプリを再起動してください。'''
+de = '''Starte die App neu, um die Rechenthreads zu ändern.'''
+chs = '''重启 App 以修改计算线程数'''
+tc = '''重新啟動應用程式以修改計算執行緒數'''
+ko = '''연산 스레드 수를 변경하기 위해서는, 프로그램을 다시 실행해 주세요.'''
 version = "0.1.0"
 appearances = ["src/app.rs:509:40"]
 

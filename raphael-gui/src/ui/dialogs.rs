@@ -108,7 +108,7 @@ fn SettingsDialog() -> Element {
                     {zoom_setting(locale, app_context)}
                 }
 
-                label { {t!(locale, "Max solver threads")} }
+                label { {t!(locale, "Compute threads")} }
                 div { class: "inline-row",
                     Checkbox {
                         checked: app_config.num_threads.is_none(),
@@ -137,9 +137,9 @@ fn SettingsDialog() -> Element {
                 Warning { text: t!(locale, "⚠ Unavailable after the solver was started."),
                     p {
                         if platform::IS_WEB {
-                            {t!(locale, "Reload the page to change max solver threads.")}
+                            {t!(locale, "Reload the page to change compute threads.")}
                         } else {
-                            {t!(locale, "Restart the app to change max solver threads.")}
+                            {t!(locale, "Restart the app to change compute threads.")}
                         }
                     }
                 }
@@ -174,7 +174,7 @@ fn zoom_setting(locale: raphael_data::Locale, mut app_context: Signal<AppContext
                 class: "btn",
                 disabled: zoom == i64::from(DEFAULT_ZOOM_PERCENTAGE),
                 onclick: move |_| set_zoom(i64::from(DEFAULT_ZOOM_PERCENTAGE)),
-                {t!(locale, "Reset")}
+                "Reset"
             }
             button {
                 class: "btn icon-btn mono",
