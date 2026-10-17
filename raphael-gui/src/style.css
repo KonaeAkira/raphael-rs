@@ -1650,6 +1650,35 @@ fieldset:disabled {
     line-height: 1.35;
 }
 
+/* Narrower panels and later breakpoints than the default layout, so the three columns stay on
+   one row for longer as the window shrinks. These rules outrank the default breakpoints by
+   specificity, so they must restate the full-row macro panel for the two-column stage. */
+.app[data-layout="compact"] .columns {
+    grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr) minmax(
+            250px,
+            1fr
+        );
+}
+
+.app[data-layout="compact"] .col-macro {
+    grid-column: auto;
+}
+
+@media (max-width: 1040px) {
+    .app[data-layout="compact"] .columns {
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+    }
+    .app[data-layout="compact"] .col-macro {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 720px) {
+    .app[data-layout="compact"] .columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 .app[data-layout="compact"] .topbar {
     padding: 4px var(--panel-gap);
 }
