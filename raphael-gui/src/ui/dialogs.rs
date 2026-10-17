@@ -10,7 +10,12 @@ use super::{
     use_app_context, use_dialogs, use_solve_state,
     widgets::{Checkbox, Modal, NumberInput, Segmented, Warning, format_thousands, strip_icon},
 };
-use crate::{config::ThemePreference, platform, solve::SolveStatus, thread_pool};
+use crate::{
+    config::{LayoutPreference, ThemePreference},
+    platform,
+    solve::SolveStatus,
+    thread_pool,
+};
 
 #[component]
 pub fn Dialogs() -> Element {
@@ -60,6 +65,7 @@ fn SettingsDialog() -> Element {
         ThemePreference::Light,
         ThemePreference::Dark,
     ];
+    let layouts = [LayoutPreference::Default, LayoutPreference::Compact];
     let pool_attempted = thread_pool::initialization_attempted();
     let shown_thread_count = if pool_attempted {
         rayon::current_num_threads()
@@ -85,6 +91,16 @@ fn SettingsDialog() -> Element {
                         t!(locale, "Dark").to_string(),
                     ],
                     onchange: move |index: usize| app_context.write().app_config.theme = themes[index],
+                }
+
+                label { {t!(locale, "Layout")} }
+                Segmented {
+                    selected: layouts.iter().position(|layout| *layout == app_config.layout).unwrap_or_default(),
+                    options: vec![
+                        t!(locale, "Default").to_string(),
+                        t!(locale, "Compact").to_string(),
+                    ],
+                    onchange: move |index: usize| app_context.write().app_config.layout = layouts[index],
                 }
 
                 label { {t!(locale, "Max solver threads")} }

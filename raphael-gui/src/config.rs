@@ -22,11 +22,20 @@ pub enum ThemePreference {
     Dark,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum LayoutPreference {
+    #[default]
+    Default,
+    Compact,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppConfig {
     pub num_threads: Option<NonZeroUsize>,
     #[serde(default)]
     pub theme: ThemePreference,
+    #[serde(default)]
+    pub layout: LayoutPreference,
 }
 
 impl Default for AppConfig {
@@ -34,6 +43,7 @@ impl Default for AppConfig {
         Self {
             num_threads: None,
             theme: ThemePreference::System,
+            layout: LayoutPreference::Default,
         }
     }
 }
