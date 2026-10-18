@@ -141,7 +141,7 @@ impl MacroContextData {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Macro {
     pub text: String,
-    pub duration: u8,
+    pub duration: u16,
 }
 
 pub fn create_macros(
@@ -153,7 +153,7 @@ pub fn create_macros(
     let max_macro_len = if config.split_macro { 15 } else { usize::MAX };
     let mut macros = Vec::new();
     let mut current_macro = Vec::new();
-    let mut current_duration = 0;
+    let mut current_duration: u16 = 0;
     for (current_idx, action) in actions.iter().enumerate() {
         let remaining_actions = actions.len() - current_idx - 1;
         // Macro intro
@@ -174,9 +174,9 @@ pub fn create_macros(
         } else {
             current_macro.push(format!("/ac \"{}\"", macro_name(*action, context.locale)));
         }
-        current_duration += action.time_cost();
+        current_duration += u16::from(action.time_cost());
         if config.include_delay {
-            current_duration += config.extra_delay;
+            current_duration += u16::from(config.extra_delay);
         }
         // Macro outro
         if config.notification_enabled
@@ -482,6 +482,21 @@ mod tests {
             /ac "Basic Synthesis" <wait.3>"#]]
         .assert_eq(&macros[1].text);
         assert_eq!(macros[1].duration, 38);
+    }
+
+    #[test]
+    fn long_macro_duration_does_not_overflow() {
+        let context = default_context();
+        let config = MacroViewConfig {
+            split_macro: false,
+            include_delay: true,
+            extra_delay: 9,
+            ..MacroViewConfig::default()
+        };
+        let actions = vec![Action::BasicSynthesis; 23];
+        let macros = create_macros(&context, &config, &actions, "\n");
+        assert_eq!(macros.len(), 1);
+        assert_eq!(macros[0].duration, 23 * (3 + 9));
     }
 
     #[test]

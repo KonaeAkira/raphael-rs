@@ -27,7 +27,7 @@ pub fn MacroPanel() -> Element {
         actions,
         platform::macro_newline(),
     );
-    let duration: u8 = macros.iter().map(|macro_| macro_.duration).sum();
+    let duration: u16 = macros.iter().map(|macro_| macro_.duration).sum();
     let macro_count = macros.len();
     let has_actions = !actions.is_empty();
     drop(solve);
