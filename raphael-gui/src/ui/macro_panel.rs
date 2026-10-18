@@ -66,7 +66,13 @@ pub fn MacroPanel() -> Element {
                             div { class: "spacer" }
                             CopyButton { text: macro_.text.clone() }
                         }
-                        pre { tabindex: 0, "{macro_.text}" }
+                        textarea {
+                            readonly: true,
+                            rows: macro_.text.lines().count(),
+                            spellcheck: false,
+                            "wrap": "off",
+                            value: "{macro_.text}",
+                        }
                     }
                 }
             }

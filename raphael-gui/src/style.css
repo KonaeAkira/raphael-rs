@@ -166,19 +166,6 @@ textarea {
     font-size: 14px;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
-    /* Only the focused macro is selectable, so that Ctrl+A selects just that macro. */
-    user-select: none;
-}
-
-.app input,
-.app select {
-    user-select: none;
-}
-
-/* Ctrl+A outside a text field would otherwise also highlight the contents of every text field. */
-.app input:not(:focus)::selection {
-    background: transparent;
-    color: inherit;
 }
 
 .app a {
@@ -1140,8 +1127,10 @@ pre {
 }
 
 /* Zero specificity so that the hover and selected styles always take precedence. */
-:where(.vlist-window:not(.start-odd) > .vrow:nth-child(even),
-.vlist-window.start-odd > .vrow:nth-child(odd)) {
+:where(
+    .vlist-window:not(.start-odd) > .vrow:nth-child(even),
+    .vlist-window.start-odd > .vrow:nth-child(odd)
+) {
     background: color-mix(in srgb, var(--surface-3) 40%, transparent);
 }
 
@@ -1286,17 +1275,25 @@ pre {
     border-bottom: 1px solid var(--border);
 }
 
-.macro-block pre {
+.macro-block textarea {
+    display: block;
+    width: 100%;
     margin: 0;
     padding: var(--panel-gap);
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-mono);
     font-size: var(--font-size-xs);
     line-height: 1.55;
+    white-space: pre;
     overflow-x: auto;
-}
-
-/* Only the focused macro is selectable, so that Ctrl+A selects just that macro. */
-.macro-block pre:focus {
-    user-select: text;
+    overflow-y: hidden;
+    resize: none;
+    outline: none;
+    caret-color: transparent;
+    scrollbar-width: thin;
+    field-sizing: content;
 }
 
 .empty-state {
@@ -1858,7 +1855,7 @@ fieldset:disabled {
     padding: 2px 4px 2px var(--panel-gap);
 }
 
-.app[data-layout="compact"] .macro-block pre {
+.app[data-layout="compact"] .macro-block textarea {
     line-height: 1.45;
 }
 
