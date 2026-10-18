@@ -66,7 +66,7 @@ pub fn MacroPanel() -> Element {
                             div { class: "spacer" }
                             CopyButton { text: macro_.text.clone() }
                         }
-                        pre { "{macro_.text}" }
+                        pre { tabindex: 0, "{macro_.text}" }
                     }
                 }
             }
