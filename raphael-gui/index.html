@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" translate="no">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="color-scheme" content="dark light" />
+        <meta name="google" content="notranslate" />
         <title>Raphael | FFXIV Crafting Solver</title>
         <meta
             name="description"
@@ -42,11 +43,11 @@
                 --element-gap: 6px;
                 --control-height: 30px;
                 --font-ui:
-                    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-                    "Noto Sans", sans-serif;
+                    system-ui, -apple-system, "Segoe UI", Roboto,
+                    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
                 --font-mono:
-                    ui-monospace, "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Menlo,
-                    Consolas, monospace;
+                    ui-monospace, "SFMono-Regular", "Cascadia Code",
+                    "JetBrains Mono", Menlo, Consolas, monospace;
             }
             @media (prefers-color-scheme: light) {
                 :root {
@@ -236,7 +237,9 @@
                     <pre id="failure-details"></pre>
                 </div>
                 <div id="failure-footer">
-                    <button type="button" onclick="location.reload()">Reload page</button>
+                    <button type="button" onclick="location.reload()">
+                        Reload page
+                    </button>
                 </div>
             </div>
         </div>
@@ -247,8 +250,10 @@
             // crashes after starting. This must be a classic (non-module) script so that it runs
             // before the module script that Trunk injects to load the WebAssembly bundle.
             (() => {
-                const RELEASES_URL = "https://github.com/KonaeAkira/raphael-rs/releases/latest";
-                const ISSUES_URL = "https://github.com/KonaeAkira/raphael-rs/issues";
+                const RELEASES_URL =
+                    "https://github.com/KonaeAkira/raphael-rs/releases/latest";
+                const ISSUES_URL =
+                    "https://github.com/KonaeAkira/raphael-rs/issues";
                 const DISCORD_URL = "https://discord.com/invite/m2aCy3y8he";
                 const GITHUB_LINK = `<a target="_blank" href="${ISSUES_URL}">report it on GitHub</a>`;
                 const DISCORD_LINK = `<a target="_blank" href="${DISCORD_URL}">ask for help on Discord</a>`;
@@ -262,16 +267,22 @@
                     if (shown) return;
                     shown = true;
                     document.getElementById("loading")?.remove();
-                    document.getElementById("failure-title").textContent = title;
-                    document.getElementById("failure-message").innerHTML = messageHtml;
-                    document.getElementById("failure-details").textContent = details ?? "";
+                    document.getElementById("failure-title").textContent =
+                        title;
+                    document.getElementById("failure-message").innerHTML =
+                        messageHtml;
+                    document.getElementById("failure-details").textContent =
+                        details ?? "";
                     document.getElementById("failure").hidden = false;
                 }
 
                 function describe(error) {
                     if (error == null) return "";
                     if (typeof error === "string") return error;
-                    if (error.stack && String(error.stack).includes(String(error.message))) {
+                    if (
+                        error.stack &&
+                        String(error.stack).includes(String(error.message))
+                    ) {
                         return String(error.stack);
                     }
                     return String(error);
@@ -318,8 +329,12 @@
                     }
                 }
 
-                window.addEventListener("error", (event) => handle(event.error, event.filename));
-                window.addEventListener("unhandledrejection", (event) => handle(event.reason));
+                window.addEventListener("error", (event) =>
+                    handle(event.error, event.filename),
+                );
+                window.addEventListener("unhandledrejection", (event) =>
+                    handle(event.reason),
+                );
 
                 // Pre-flight checks for requirements that would otherwise fail with obscure errors.
                 if (typeof WebAssembly === "undefined") {
