@@ -20,7 +20,6 @@ pub fn MacroPanel() -> Element {
     let locale = ctx.locale;
     let solve = solve_state.read();
     let actions = &solve.actions;
-    let duration: u8 = actions.iter().map(|action| action.time_cost()).sum();
     let steps = actions.len();
     let macros = create_macros(
         &MacroContextData::from_app_context(&ctx),
@@ -28,6 +27,7 @@ pub fn MacroPanel() -> Element {
         actions,
         platform::macro_newline(),
     );
+    let duration: u8 = macros.iter().map(|macro_| macro_.duration).sum();
     let macro_count = macros.len();
     let has_actions = !actions.is_empty();
     drop(solve);
