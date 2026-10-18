@@ -166,6 +166,19 @@ textarea {
     font-size: 14px;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
+    /* Only the focused macro is selectable, so that Ctrl+A selects just that macro. */
+    user-select: none;
+}
+
+.app input,
+.app select {
+    user-select: none;
+}
+
+/* Ctrl+A outside a text field would otherwise also highlight the contents of every text field. */
+.app input:not(:focus)::selection {
+    background: transparent;
+    color: inherit;
 }
 
 .app a {
@@ -1279,6 +1292,10 @@ pre {
     font-size: var(--font-size-xs);
     line-height: 1.55;
     overflow-x: auto;
+}
+
+/* Only the focused macro is selectable, so that Ctrl+A selects just that macro. */
+.macro-block pre:focus {
     user-select: text;
 }
 
