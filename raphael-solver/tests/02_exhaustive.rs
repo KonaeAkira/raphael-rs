@@ -87,7 +87,7 @@ fn rinascita_3700_3280() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 51746,
+                inserted_nodes: 36360,
                 processed_nodes: 3719,
             },
             finish_solver_stats: FinishSolverStats {
@@ -141,7 +141,7 @@ fn pactmaker_3240_3130() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 72819,
+                inserted_nodes: 39932,
                 processed_nodes: 5240,
             },
             finish_solver_stats: FinishSolverStats {
@@ -197,7 +197,7 @@ fn pactmaker_3240_3130_heart_and_soul() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 17646,
+                inserted_nodes: 16211,
                 processed_nodes: 1021,
             },
             finish_solver_stats: FinishSolverStats {
@@ -251,7 +251,7 @@ fn diadochos_4021_3660() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 43698,
+                inserted_nodes: 37662,
                 processed_nodes: 6044,
             },
             finish_solver_stats: FinishSolverStats {
@@ -305,7 +305,7 @@ fn indagator_3858_4057() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 5408,
+                inserted_nodes: 3848,
                 processed_nodes: 342,
             },
             finish_solver_stats: FinishSolverStats {
@@ -415,7 +415,7 @@ fn stuffed_peppers_2() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 3886,
+                inserted_nodes: 3882,
                 processed_nodes: 180,
             },
             finish_solver_stats: FinishSolverStats {
@@ -585,7 +585,7 @@ fn rakaznar_lapidary_hammer_4462_4391() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 376873,
+                inserted_nodes: 356785,
                 processed_nodes: 21476,
             },
             finish_solver_stats: FinishSolverStats {
@@ -693,7 +693,7 @@ fn claro_walnut_lumber_4900_4800() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 183400,
+                inserted_nodes: 183219,
                 processed_nodes: 8697,
             },
             finish_solver_stats: FinishSolverStats {
@@ -855,7 +855,7 @@ fn archeo_kingdom_broadsword_4966_4914() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 209791,
+                inserted_nodes: 209790,
                 processed_nodes: 9797,
             },
             finish_solver_stats: FinishSolverStats {
@@ -963,7 +963,7 @@ fn hardened_survey_plank_5558_5216_heart_and_soul_quick_innovation() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 439861,
+                inserted_nodes: 433860,
                 processed_nodes: 41992,
             },
             finish_solver_stats: FinishSolverStats {
@@ -1129,7 +1129,7 @@ fn ce_stellar_steady_hand() {
     let expected_runtime_stats = expect![[r#"
         MacroSolverStats {
             search_queue_stats: SearchQueueStats {
-                inserted_nodes: 1586537,
+                inserted_nodes: 1585580,
                 processed_nodes: 366678,
             },
             finish_solver_stats: FinishSolverStats {
